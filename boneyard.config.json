@@ -1,0 +1,13 @@
+{
+  "breakpoints": [375, 640, 768, 1024, 1280],
+  "out": "./src/bones",
+  "wait": 800,
+  "routes": [
+    "/",
+    "/dashboard",
+    "/projects",
+    "/users",
+    "/templates",
+    "/settings"
+  ]
+}

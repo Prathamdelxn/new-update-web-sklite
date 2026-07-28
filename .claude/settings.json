@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"c:\\\\2026\\\\v2\\\\sky-lite-api\\\\src\\\\app\\\\api\\\\projects\" /s /b)",
+      "Bash(ls \"c:\\\\2026\\\\v2\\\\\" 2>/dev/null || ls /c/2026/v2/)",
+      "Read(//c/2026/v2\" 2>/dev/null || ls /c/2026/**)"
+    ]
+  }
+}
