@@ -487,7 +487,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
                                         
                                         // 1. Try to find member in project context
                                         if (approverId && project?.members) {
-                                          const member = project.members.find((m: any) => String(m._id) === String(approverId) || String(m.user?._id) === String(approverId));
+                                          const member: any = project.members.find((m: any) => String(m._id) === String(approverId) || String(m.user?._id) === String(approverId));
                                           if (member?.name) {
                                             return `${member.name}${member.email ? ` - ${member.email}` : ''}`;
                                           }
