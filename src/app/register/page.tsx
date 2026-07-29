@@ -10,6 +10,7 @@ import 'react-phone-number-input/style.css';
 import PhoneInput from 'react-phone-number-input';
 
 export default function RegisterPage() {
+  const [industryType, setIndustryType] = useState<'construction' | 'interior'>('construction');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -21,7 +22,7 @@ export default function RegisterPage() {
   const [otp, setOtp] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
-  const { register } = useAuth();
+  const { register, login } = useAuth();
   const toast = useToast();
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -31,7 +32,7 @@ export default function RegisterPage() {
     if (password.length < 6) return toast.error('Password must be at least 6 characters');
     setIsLoading(true);
     try {
-      await register({ name, email, password, phoneNumber });
+      await register({ name, email, password, phoneNumber, industryType });
       toast.success('Registration code sent to your email!');
       setShowOtp(true);
     } catch (error: unknown) {
@@ -47,7 +48,8 @@ export default function RegisterPage() {
     try {
       await api.post('/auth/register/verify', { email, otp });
       toast.success('Workspace verified and created successfully!');
-      window.location.href = '/login?registered=true';
+      // Auto-login after verification (matching mobile app logic)
+      await login({ email, password });
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message;
       toast.error(message || 'Verification failed. Please check the OTP.');
@@ -98,6 +100,33 @@ export default function RegisterPage() {
           </div> : <>
             <div className="mb-4 xl:mb-5"><p className="text-[10px] xl:text-xs font-semibold text-blue-600">CREATE YOUR WORKSPACE</p><h2 className="mt-1 xl:mt-2 text-xl xl:text-2xl font-extrabold tracking-tight text-slate-900">Get started with SKYLITE</h2><p className="mt-1 text-xs leading-normal text-slate-500">Set up your account now. Invite teammates and create your first project straight after.</p></div>
             <form onSubmit={handleSubmit} className="space-y-3 xl:space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-700">Select Industry Type</label>
+                <div className="mt-1 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIndustryType('construction')}
+                    className={`flex items-center justify-center gap-1.5 rounded-xl border py-2 px-3 text-xs font-semibold transition ${
+                      industryType === 'construction'
+                        ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
+                        : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>🏗️</span> Construction
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIndustryType('interior')}
+                    className={`flex items-center justify-center gap-1.5 rounded-xl border py-2 px-3 text-xs font-semibold transition ${
+                      industryType === 'interior'
+                        ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
+                        : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>🎨</span> Interior Design
+                  </button>
+                </div>
+              </div>
               <div><label className="text-xs font-semibold text-slate-700">Full name</label><div className="relative mt-1"><User className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" /><input type="text" value={name} onChange={(event) => setName(event.target.value)} className={inputClass} placeholder="John Doe" required /></div></div>
               <div><label className="text-xs font-semibold text-slate-700">Work email</label><div className="relative mt-1"><Mail className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" /><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className={inputClass} placeholder="name@company.com" required /></div></div>
               <div>

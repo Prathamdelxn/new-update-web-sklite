@@ -115,7 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    try {
+    if (authType === 'org') {
       const response = await api.post('/auth/login', payload);
       const { token, refreshToken, user: userData } = response.data;
 
@@ -125,10 +125,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       Cookies.set('token', token, { expires: 7 });
       setUser(userData);
-      router.push('/dashboard');
-    } catch (error: any) {
-      // Do not retry normal credentials against the superadmin endpoint.
-      throw error;
+      const isInteriorOrg = userData?.industryType === 'interior' || userData?.organization?.industryType === 'interior';
+      const targetPath = isInteriorOrg ? '/interior/dashboard' : '/dashboard';
+      router.push(targetPath);
+      return;
+    }
+
+    // Unified Login (Mobile Logic): Try Super Admin login first, then Regular User login
+    try {
+      await handleSuperAdminLogin(payload);
+    } catch {
+      const response = await api.post('/auth/login', payload);
+      const { token, refreshToken, user: userData } = response.data;
+
+      localStorage.setItem('token', token);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      Cookies.set('token', token, { expires: 7 });
+      setUser(userData);
+      console.log('Login userData:', userData);
+      const isInterior = userData?.industryType === 'interior' || userData?.organization?.industryType === 'interior';
+      const targetPath = isInterior ? '/interior/dashboard' : '/dashboard';
+      router.push(targetPath);
     }
   };
 

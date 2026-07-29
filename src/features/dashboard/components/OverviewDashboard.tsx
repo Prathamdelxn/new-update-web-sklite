@@ -180,6 +180,44 @@ export const OverviewDashboard = () => {
       }));
   }, [rs]);
 
+  if ((user?.organization as any)?.industryType === 'interior') {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between bg-purple-50/80 border border-purple-100 rounded-2xl p-6 md:p-8">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-100 border border-purple-200 text-purple-700 text-xs font-semibold">
+              <Sparkles className="w-4 h-4" /> Interior Design & Fit-outs
+            </div>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Hello, {user?.name?.split(' ')[0] || 'User'}! 👋
+            </h2>
+            <p className="text-sm text-slate-600 max-w-2xl leading-relaxed">
+              Welcome to your <strong>Interior Design Workspace</strong>. Specialized tools for room moodboards, FF&E procurement, finish selection approvals, and client presentations will be available in future updates.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { title: 'FF&E Procurement', desc: 'Track furniture, lighting & fixture orders.', icon: '🛋️' },
+            { title: 'Room & Zone Boards', desc: 'Organize design themes by room.', icon: '🏠' },
+            { title: 'Finish Approvals', desc: 'Manage client material & color sign-offs.', icon: '🎨' },
+            { title: '3D & Layout Viewer', desc: 'Share floor plans & renderings.', icon: '📐' },
+          ].map((card, idx) => (
+            <GlassCard key={idx} className="p-5 border border-purple-100 bg-white/80 space-y-3 relative overflow-hidden" gradient>
+              <span className="text-3xl">{card.icon}</span>
+              <h3 className="font-bold text-slate-900 text-base">{card.title}</h3>
+              <p className="text-xs text-slate-500">{card.desc}</p>
+              <span className="inline-block px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold uppercase tracking-wider">
+                Coming Soon
+              </span>
+            </GlassCard>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <SkeletonLoader loading={loading} preset="dashboard">
       <div className="space-y-5 xl:space-y-6">

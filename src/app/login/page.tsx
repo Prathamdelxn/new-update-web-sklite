@@ -16,7 +16,6 @@ function LoginForm() {
   const [fpEmail, setFpEmail] = useState('');
   const [fpLoading, setFpLoading] = useState(false);
   const [fpSent, setFpSent] = useState(false);
-  const [loginType, setLoginType] = useState<'org' | 'superadmin'>('org');
 
   const { login } = useAuth();
   const toast = useToast();
@@ -47,11 +46,7 @@ function LoginForm() {
     setIsLoading(true);
 
     try {
-      await login(
-        loginType === 'superadmin'
-          ? { authType: 'superadmin', email, password }
-          : { email, password }
-      );
+      await login({ email, password });
       toast.success('Welcome back!');
     } catch (error: any) {
       toast.error(
@@ -83,29 +78,25 @@ function LoginForm() {
               </h1>
 
               <p className="mt-3 xl:mt-4 max-w-xl text-blue-100/90 text-xs xl:text-sm leading-normal">
-                Access your workspace, manage teams/budgets, or switch to Super Admin mode.
+                Access your workspace, manage teams, projects, and budgets seamlessly from one place.
               </p>
             </div>
 
             <div className="mt-4 xl:mt-6 rounded-2xl border border-white/10 bg-white/10 p-5 xl:p-6 backdrop-blur-xl">
-              <p className="text-sm uppercase tracking-[0.24em] text-blue-100/80">Login options</p>
-              <div className="mt-4 flex flex-col gap-4">
-                <button
-                  type="button"
-                  onClick={() => setLoginType('org')}
-                  className={`w-full rounded-xl border px-4 py-2.5 text-left text-white transition ${loginType === 'org' ? 'border-blue-300/80 bg-white/10 shadow-lg shadow-blue-900/30' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}
-                >
-                  <span className="block text-sm font-semibold">Organization Login</span>
-                  <span className="text-xs text-blue-100/75">Login as a normal workspace admin or member.</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLoginType('superadmin')}
-                  className={`w-full rounded-xl border px-4 py-2.5 text-left transition ${loginType === 'superadmin' ? 'border-blue-300/80 bg-white/10 shadow-lg shadow-blue-900/30 text-white' : 'border-white/10 bg-white/5 text-blue-100/90 hover:bg-white/10'}`}
-                >
-                  <span className="block text-sm font-semibold">Super Admin Login</span>
-                  <span className="text-xs text-blue-100/75">Use superadmin credentials to manage tenants and platform.</span>
-                </button>
+              <p className="text-xs uppercase tracking-[0.24em] text-blue-100/80">Platform Features</p>
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="grid size-6 shrink-0 place-items-center rounded-full bg-white/20 text-xs font-bold text-white">✓</div>
+                  <p className="text-xs xl:text-sm text-blue-100/90">Unified login for Workspace Members & Super Admins</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="grid size-6 shrink-0 place-items-center rounded-full bg-white/20 text-xs font-bold text-white">✓</div>
+                  <p className="text-xs xl:text-sm text-blue-100/90">Real-time project tracking, BOQs & budget management</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="grid size-6 shrink-0 place-items-center rounded-full bg-white/20 text-xs font-bold text-white">✓</div>
+                  <p className="text-xs xl:text-sm text-blue-100/90">Seamless sync across Web & Expo Mobile app</p>
+                </div>
               </div>
             </div>
           </div>
@@ -118,7 +109,7 @@ function LoginForm() {
                 <h2 className="text-xl xl:text-2xl font-extrabold tracking-tight text-slate-900">Sign in</h2>
                 <p className="mt-0.5 text-xs text-slate-500">Enter your credentials to continue.</p>
               </div>
-              <div className="rounded-xl bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">{loginType === 'org' ? 'Workspace' : 'Super Admin'}</div>
+              <div className="rounded-xl bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">Account Access</div>
             </div>
 
             {registered && (

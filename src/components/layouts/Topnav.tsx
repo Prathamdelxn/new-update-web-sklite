@@ -108,6 +108,10 @@ export const Topnav: React.FC<TopnavProps> = ({ onMenuClick, isSidebarCollapsed,
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+
+  const isInterior =
+    (user as any)?.industryType === 'interior' ||
+    (user?.organization as any)?.industryType === 'interior';
  
   useEffect(() => {
     if (!showMenu) return;
@@ -129,7 +133,9 @@ export const Topnav: React.FC<TopnavProps> = ({ onMenuClick, isSidebarCollapsed,
       "fixed top-0 right-0 left-0 z-30 transition-all duration-300",
       isProjectsListPage
         ? "h-12 bg-[#F8FAFF] border-b-0"
-        : "h-16 bg-white border-b border-gray-200",
+        : isInterior
+          ? "h-16 bg-gradient-to-r from-blue-50/50 via-white to-white border-b border-blue-100"
+          : "h-16 bg-white border-b border-gray-200",
       isSidebarCollapsed ? 'lg:left-20' : 'lg:left-64'
     )}>
       <div className="h-full px-4 lg:px-8 flex items-center justify-between">
@@ -158,14 +164,22 @@ export const Topnav: React.FC<TopnavProps> = ({ onMenuClick, isSidebarCollapsed,
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setShowMenu(v => !v)}
-              className="flex items-center space-x-2.5 p-1.5 rounded-xl hover:bg-gray-100 transition-all"
+              className={cn(
+                "flex items-center space-x-2.5 p-1.5 rounded-xl transition-all",
+                isInterior ? "hover:bg-blue-50" : "hover:bg-gray-100"
+              )}
             >
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-xs font-bold text-white shadow-sm">
+              <div className={cn(
+                "w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm",
+                isInterior ? "bg-gradient-to-br from-blue-600 to-blue-800" : "bg-gradient-to-br from-blue-500 to-blue-700"
+              )}>
                 {user?.name?.charAt(0)?.toUpperCase() || 'U'}
               </div>
               <div className="hidden sm:block text-left">
                 <p className="text-xs font-bold text-gray-900 leading-tight">{user?.name || 'User'}</p>
-                <p className="text-[10px] text-slate-500 leading-tight">{user?.role?.name || 'Member'}</p>
+                <p className={cn("text-[10px] leading-tight font-bold", isInterior ? "text-blue-600" : "text-slate-500")}>
+                  {isInterior ? 'Interior Fit-outs' : (user?.role?.name || 'Member')}
+                </p>
               </div>
               <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${showMenu ? 'rotate-180' : ''}`} />
             </button>
