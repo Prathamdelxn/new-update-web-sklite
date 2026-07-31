@@ -43,10 +43,10 @@ export const RequirementDesignView = ({ leads, onLogRequirements, onUploadDesign
           <tbody className="divide-y divide-slate-100">
             {leads.map((lead, idx) => {
               // Action button states
-              // The lead status is 'Requirement Completed' as soon as it enters this tab, 
-              // so we disable the button only if requirements have actually been filled out.
+              // Requirement is disabled if requirements are already filled or if design is approved.
               const isRequirementDisabled = (lead.requirements && lead.requirements.length > 0) || lead.status === 'Design Approved';
-              const isDesignDisabled = lead.status === 'Design Approved';
+              // Design is disabled if requirements are NOT filled yet, or if design is already approved.
+              const isDesignDisabled = !(lead.requirements && lead.requirements.length > 0) || lead.status === 'Design Approved';
 
               return (
                 <tr 
@@ -110,14 +110,14 @@ export const RequirementDesignView = ({ leads, onLogRequirements, onUploadDesign
                     <button 
                       onClick={() => onLogRequirements(lead._id)}
                       disabled={isRequirementDisabled}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-xs font-bold transition-all shadow-sm"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 text-white hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed rounded-lg text-xs font-bold transition-all shadow-sm"
                     >
                       Requirement
                     </button>
                     <button 
                       onClick={() => onUploadDesign(lead._id)}
                       disabled={isDesignDisabled}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-xs font-bold transition-all shadow-sm"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 text-white hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed rounded-lg text-xs font-bold transition-all shadow-sm"
                     >
                       Design
                     </button>
