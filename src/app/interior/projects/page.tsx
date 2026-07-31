@@ -92,7 +92,7 @@ export default function InteriorProjectsPage() {
 
   return (
     <Shell>
-      <div className="max-w-6xl mx-auto space-y-4 pb-12">
+      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
         {/* Executive Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
           <div>
