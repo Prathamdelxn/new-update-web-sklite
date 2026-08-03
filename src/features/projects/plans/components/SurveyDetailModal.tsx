@@ -79,15 +79,29 @@ export const SurveyDetailModal: React.FC<SurveyDetailModalProps> = ({ isOpen, on
 
               {/* Content */}
               <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
-                {/* Site Assessment */}
+                {/* Site / Interior Assessment */}
                 <div>
                   <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Site Assessment</h3>
                   <div className="bg-gray-50 rounded-2xl p-4 space-y-0">
-                    <InfoRow label="Terrain Notes" value={survey.terrainNotes} />
                     <InfoRow label="Accessibility" value={survey.accessibility} />
-                    <InfoRow label="Soil Type" value={survey.soilType} />
-                    <InfoRow label="Elevation" value={survey.elevation ? `${survey.elevation} m` : null} />
-                    <InfoRow label="Site Area" value={survey.siteArea ? `${survey.siteArea} sq.m` : null} />
+                    {survey.roomCount != null && <InfoRow label="Room Count" value={survey.roomCount} />}
+                    {survey.ceilingHeight && <InfoRow label="Ceiling Height" value={`${survey.ceilingHeight} ${survey.ceilingHeightUnit || 'ft'}`} />}
+                    {survey.naturalLighting && <InfoRow label="Natural Lighting" value={survey.naturalLighting} />}
+                    {survey.wallCondition && <InfoRow label="Wall Condition" value={survey.wallCondition} />}
+                    {survey.dampnessObserved !== undefined && (
+                      <InfoRow
+                        label="Dampness Check"
+                        value={
+                          <span className={cn('font-bold px-2 py-0.5 rounded text-xs', survey.dampnessObserved ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700')}>
+                            {survey.dampnessObserved ? 'Dampness Observed' : 'No Dampness'}
+                          </span>
+                        }
+                      />
+                    )}
+                    {survey.dampnessNotes && <InfoRow label="Dampness Notes" value={survey.dampnessNotes} />}
+                    {survey.electricalPhase && <InfoRow label="Electrical Phase" value={survey.electricalPhase} />}
+                    {survey.elevatorAccessibility && <InfoRow label="Elevator Access" value={survey.elevatorAccessibility} />}
+                    {survey.terrainNotes && <InfoRow label="Terrain Notes" value={survey.terrainNotes} />}
                   </div>
                 </div>
 
@@ -99,14 +113,14 @@ export const SurveyDetailModal: React.FC<SurveyDetailModalProps> = ({ isOpen, on
                       { label: 'Power Supply', value: survey.powerAvailable, icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' },
                       { label: 'Water Supply', value: survey.waterAvailable, icon: Droplets, color: 'text-blue-600', bg: 'bg-blue-50 border-blue-200' },
                       { label: 'Budget Impact', value: survey.affectsBudget, icon: DollarSign, color: 'text-red-600', bg: 'bg-red-50 border-red-200' },
-                      { label: 'Road Access', value: survey.roadAccess, icon: Mountain, color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-200' },
+                      { label: 'Structural Mod', value: survey.structuralModification, icon: Mountain, color: 'text-orange-600', bg: 'bg-orange-50 border-orange-200' },
                     ].map(({ label, value, icon: Icon, color, bg }) => (
                       <div key={label} className={cn('p-4 rounded-2xl border flex items-center space-x-3', value ? bg : 'bg-gray-50 border-gray-200')}>
                         <Icon className={cn('w-5 h-5 shrink-0', value ? color : 'text-gray-300')} />
                         <div>
                           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{label}</p>
                           <p className={cn('text-sm font-bold mt-0.5', value ? 'text-gray-900' : 'text-gray-400')}>
-                            {value ? 'Available' : 'Not Available'}
+                            {value ? 'Yes' : 'No'}
                           </p>
                         </div>
                       </div>
@@ -128,22 +142,27 @@ export const SurveyDetailModal: React.FC<SurveyDetailModalProps> = ({ isOpen, on
                   </div>
                 </div>
 
-                {/* Remarks */}
-                {survey.remarks && (
+                {/* Remarks & Surveyor Comments */}
+                {(survey.remarks || survey.surveyorComments) && (
                   <div>
                     <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Remarks & Observations</h3>
                     <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl">
-                      <p className="text-sm text-amber-800 leading-relaxed italic">"{survey.remarks}"</p>
+                      <p className="text-sm text-amber-800 leading-relaxed italic">"{survey.remarks || survey.surveyorComments}"</p>
                     </div>
                   </div>
                 )}
 
                 {/* Photos */}
-                {survey.photos?.length > 0 && (
+                {((survey.photos && survey.photos.length > 0) || (survey.additionalPhotos && survey.additionalPhotos.length > 0) || survey.observationImage) && (
                   <div>
-                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Site Photos ({survey.photos.length})</h3>
+                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Site & Room Photos</h3>
                     <div className="grid grid-cols-3 gap-2">
-                      {survey.photos.map((photo: string, i: number) => (
+                      {survey.observationImage && (
+                        <a href={survey.observationImage} target="_blank" rel="noreferrer">
+                          <img src={survey.observationImage} alt="Main observation" className="w-full h-24 object-cover rounded-xl border border-blue-300 hover:opacity-90 transition-opacity" />
+                        </a>
+                      )}
+                      {(survey.additionalPhotos || survey.photos || []).map((photo: string, i: number) => (
                         <a key={i} href={photo} target="_blank" rel="noreferrer">
                           <img src={photo} alt={`Site photo ${i + 1}`} className="w-full h-24 object-cover rounded-xl border border-gray-200 hover:opacity-90 transition-opacity" />
                         </a>

@@ -179,6 +179,7 @@ export default function InteriorProjectsPage() {
                   <ProjectCard
                     key={project._id}
                     project={project}
+                    basePath="/interior/projects"
                     onEdit={(p) => { setEditingProject(p); setIsModalOpen(true); }}
                     onDelete={(p) => setDeletingProject(p)}
                   />
@@ -215,7 +216,7 @@ export default function InteriorProjectsPage() {
                                   <FolderKanban className="w-4 h-4" />
                                 </div>
                                 <div className="min-w-0">
-                                  <Link href={`/projects/${project._id}`} className="font-bold text-slate-900 hover:text-blue-600 transition truncate block">
+                                  <Link href={`/interior/projects/${project._id}`} className="font-bold text-slate-900 hover:text-blue-600 transition truncate block">
                                     {project.name}
                                   </Link>
                                   <p className="text-[11px] text-slate-400 truncate">{project.description || 'Interior Fit-out Project'}</p>
@@ -240,7 +241,7 @@ export default function InteriorProjectsPage() {
                             <td className="py-4 px-6 text-right">
                               <div className="flex items-center justify-end gap-2">
                                 <Link
-                                  href={`/projects/${project._id}`}
+                                  href={`/interior/projects/${project._id}`}
                                   className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 px-2 py-1 rounded-lg hover:bg-blue-50 transition"
                                 >
                                   Open <ArrowRight className="w-3.5 h-3.5" />

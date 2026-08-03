@@ -174,7 +174,7 @@ export const InteriorDashboardView = () => {
                       {project.status || 'Ongoing'}
                     </span>
                     <Link
-                      href={`/projects/${project._id}`}
+                      href={`/interior/projects/${project._id}`}
                       className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition"
                       title="Open Project"
                     >

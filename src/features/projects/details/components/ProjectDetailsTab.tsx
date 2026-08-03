@@ -41,6 +41,7 @@ export function ProjectDetailsTab() {
   const router = useRouter();
 
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+  const [isSurveyModalOpen, setIsSurveyModalOpen] = useState(false);
   const [showBudgetHist, setShowBudgetHist] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -127,44 +128,170 @@ export function ProjectDetailsTab() {
 
   return (
     <div className="space-y-4 md:space-y-5">
-      {/* ── Active Site Survey Banner ── */}
-      {project.siteSurveyor && project.status === 'Site Survey' && (
-        <div className="flex items-center space-x-3 p-4 bg-blue-50 border border-blue-100 rounded-2xl">
-          <div className="p-2 rounded-lg bg-white border border-blue-200 text-blue-600 shadow-sm shrink-0">
-            <Compass className="w-5 h-5 animate-spin-slow" />
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-blue-800 uppercase tracking-wider">Active Site Survey</h4>
-            <p className="text-[11px] text-blue-600 mt-0.5">
-              Assigned to <span className="font-extrabold text-blue-900">{(project.siteSurveyor as any).name || 'Site Surveyor'}</span>.
-            </p>
-          </div>
-        </div>
-      )}
+      {/* ── Site Survey Action Banner ── */}
+      {(project.needSiteSurvey || project.status === 'Site Survey' || project.status === 'Initialized' || project.surveyStatus) && (() => {
+        const surveyStatus = project.surveyStatus;
+        const surveyorName = typeof project.siteSurveyor === 'object' ? (project.siteSurveyor as any)?.name : 'Assigned Surveyor';
 
-      {/* ── Pending Budget Action Banner ── */}
-      {canApproveBudget && pendingRequests.length > 0 && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-red-50 border border-red-100 rounded-2xl">
-          <div className="flex items-start space-x-2.5">
-            <div className="p-2 rounded-lg bg-white border border-red-200 text-red-600 shadow-sm shrink-0 mt-0.5">
-              <AlertTriangle className="w-4.5 h-4.5" />
+        if (surveyStatus === 'Approved') {
+          return (
+            <div className="p-4 bg-emerald-50/80 border border-emerald-200/80 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 rounded-xl bg-white border border-emerald-200 text-emerald-600 shadow-2xs shrink-0">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xs font-bold text-emerald-900 uppercase tracking-wider">Site Survey Completed & Approved</h4>
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                      Approved
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-emerald-700 mt-0.5">
+                    {project.siteSurveyor ? `Assigned to: ${surveyorName} • ` : ''}Survey report has been approved by management.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  const surveyPath = project.projectType === 'Interior'
+                    ? `/interior/projects/${projectId}/site-survey`
+                    : `/projects/${projectId}/site-survey`;
+                  router.push(surveyPath);
+                }}
+                className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs shrink-0"
+              >
+                <span>View Survey Report</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
             </div>
-            <div>
-              <h4 className="text-xs font-bold text-red-800">Pending Budget Approvals ({pendingRequests.length})</h4>
-              <p className="text-[11px] text-red-600 mt-0.5">
-                There are active budget lifecycle change requests awaiting your approval.
-              </p>
+          );
+        }
+
+        if (surveyStatus === 'Submitted') {
+          return (
+            <div className="p-4 bg-blue-50/80 border border-blue-200/80 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 rounded-xl bg-white border border-blue-200 text-blue-600 shadow-2xs shrink-0">
+                  <Compass className="w-5 h-5 animate-spin-slow" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xs font-bold text-blue-900 uppercase tracking-wider">Site Survey Submitted</h4>
+                    <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[10px] font-bold">
+                      Pending Approval
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-blue-700 mt-0.5">
+                    Assigned to: {surveyorName} • Awaiting manager review & approval.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  const surveyPath = project.projectType === 'Interior'
+                    ? `/interior/projects/${projectId}/site-survey`
+                    : `/projects/${projectId}/site-survey`;
+                  router.push(surveyPath);
+                }}
+                className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs shrink-0"
+              >
+                <span>View Survey Report</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          );
+        }
+
+        if (surveyStatus === 'Needs Attention') {
+          return (
+            <div className="p-4 bg-amber-50/80 border border-amber-200/80 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 rounded-xl bg-white border border-amber-200 text-amber-600 shadow-2xs shrink-0">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wider">Site Survey Needs Attention</h4>
+                    <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-bold">
+                      Needs Revision
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-amber-700 mt-0.5">
+                    Assigned to: {surveyorName} • {project.surveyRejectionReason ? `Reason: ${project.surveyRejectionReason}` : 'Revision required.'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  const surveyPath = project.projectType === 'Interior'
+                    ? `/interior/projects/${projectId}/site-survey`
+                    : `/projects/${projectId}/site-survey`;
+                  router.push(surveyPath);
+                }}
+                className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs shrink-0"
+              >
+                <span>View Survey Report</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          );
+        }
+
+        return (
+          <div className="p-4 bg-cyan-50/80 border border-cyan-200/80 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+            <div className="flex items-center space-x-3">
+              <div className="p-2.5 rounded-xl bg-white border border-cyan-200 text-cyan-600 shadow-2xs shrink-0">
+                <Map className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-bold text-cyan-900 uppercase tracking-wider">Site Survey Required</h4>
+                  {project.siteSurveyor ? (
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                      Surveyor Assigned
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-bold">
+                      Surveyor Pending
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-cyan-700 mt-0.5">
+                  {project.siteSurveyor
+                    ? `Assigned to: ${surveyorName}`
+                    : 'Assign an authorized surveyor to record site measurements & interior diagnostics before design work.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+              {!project.siteSurveyor ? (
+                <button
+                  onClick={() => setIsSurveyModalOpen(true)}
+                  className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>Assign Surveyor & Send</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    const surveyPath = project.projectType === 'Interior'
+                      ? `/interior/projects/${projectId}/site-survey`
+                      : `/projects/${projectId}/site-survey`;
+                    router.push(surveyPath);
+                  }}
+                  className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-4 py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+                >
+                  <span>View Survey Report</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
           </div>
-          <button
-            onClick={() => setShowBudgetHist(true)}
-            className="flex items-center justify-center space-x-1 px-3 py-1.5 bg-red-600 text-white rounded-xl text-[11px] font-bold hover:bg-red-500 transition-colors shadow-sm self-start sm:self-center"
-          >
-            <span>View Requests</span>
-            <ChevronRight className="w-3 h-3" />
-          </button>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── Under Snagging Banner ── */}
       {project.status === 'Under Snagging' && (
@@ -492,13 +619,19 @@ export function ProjectDetailsTab() {
         </div>
       )}
 
-      {/* Original modally managed configurations */}
+      {/* Modals */}
       <TeamManagementModal
         isOpen={isTeamModalOpen}
         onClose={() => setIsTeamModalOpen(false)}
         onSuccess={fetchProject}
         projectId={projectId}
         currentMembers={project.members || []}
+      />
+      <SendForSurveyModal
+        isOpen={isSurveyModalOpen}
+        onClose={() => setIsSurveyModalOpen(false)}
+        onSuccess={fetchProject}
+        projectId={projectId}
       />
     </div>
   );

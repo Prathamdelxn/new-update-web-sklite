@@ -77,11 +77,22 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
   // Interior-only
   const [roomCount, setRoomCount] = useState('');
   const [ceilingHeight, setCeilingHeight] = useState('');
+  const [ceilingHeightUnit, setCeilingHeightUnit] = useState<'ft' | 'm' | 'in' | 'mm' | 'cm'>('ft');
   const [naturalLighting, setNaturalLighting] = useState('Good');
   const [ventilationAvailable, setVentilationAvailable] = useState(false);
   const [structuralModification, setStructuralModification] = useState(false);
   const [structuralNotes, setStructuralNotes] = useState('');
   const [clientStylePreference, setClientStylePreference] = useState('');
+
+  // Extended Interior Diagnostic fields
+  const [wallCondition, setWallCondition] = useState<'Solid Brick' | 'Gypsum Drywall' | 'RCC Concrete' | 'Mixed'>('Solid Brick');
+  const [dampnessObserved, setDampnessObserved] = useState(false);
+  const [dampnessNotes, setDampnessNotes] = useState('');
+  const [elevatorAccessibility, setElevatorAccessibility] = useState<'Service Elevator Available' | 'Passenger Elevator Only' | 'Stairs Only'>('Service Elevator Available');
+  const [elevatorCapacityKg, setElevatorCapacityKg] = useState('');
+  const [electricalPhase, setElectricalPhase] = useState<'Single Phase' | 'Three Phase' | 'Unsure'>('Single Phase');
+  const [acPipingReady, setAcPipingReady] = useState(false);
+  const [plumbingDrainReady, setPlumbingDrainReady] = useState(false);
 
   // Media files states
   const [observationImage, setObservationImage] = useState<string>('');
@@ -104,11 +115,20 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
     setTerrainNotes('');
     setRoomCount('');
     setCeilingHeight('');
+    setCeilingHeightUnit('ft');
     setNaturalLighting('Good');
     setVentilationAvailable(false);
     setStructuralModification(false);
     setStructuralNotes('');
     setClientStylePreference('');
+    setWallCondition('Solid Brick');
+    setDampnessObserved(false);
+    setDampnessNotes('');
+    setElevatorAccessibility('Service Elevator Available');
+    setElevatorCapacityKg('');
+    setElectricalPhase('Single Phase');
+    setAcPipingReady(false);
+    setPlumbingDrainReady(false);
     setObservationImage('');
     setObservationFile(null);
     setAdditionalPhotos([]);
@@ -128,11 +148,20 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
         setTerrainNotes(existingSurvey.terrainNotes || '');
         setRoomCount(existingSurvey.roomCount?.toString() || '');
         setCeilingHeight(existingSurvey.ceilingHeight || '');
+        setCeilingHeightUnit(existingSurvey.ceilingHeightUnit || 'ft');
         setNaturalLighting(existingSurvey.naturalLighting || 'Good');
         setVentilationAvailable(existingSurvey.ventilationAvailable || false);
         setStructuralModification(existingSurvey.structuralModification || false);
         setStructuralNotes(existingSurvey.structuralNotes || '');
         setClientStylePreference(existingSurvey.clientStylePreference || '');
+        setWallCondition(existingSurvey.wallCondition || 'Solid Brick');
+        setDampnessObserved(existingSurvey.dampnessObserved || false);
+        setDampnessNotes(existingSurvey.dampnessNotes || '');
+        setElevatorAccessibility(existingSurvey.elevatorAccessibility || 'Service Elevator Available');
+        setElevatorCapacityKg(existingSurvey.elevatorCapacityKg?.toString() || '');
+        setElectricalPhase(existingSurvey.electricalPhase || 'Single Phase');
+        setAcPipingReady(existingSurvey.acPipingReady || false);
+        setPlumbingDrainReady(existingSurvey.plumbingDrainReady || false);
         setObservationImage(existingSurvey.observationImage || '');
         setAdditionalPhotos(existingSurvey.additionalPhotos || []);
         setObservationFile(null);
@@ -196,11 +225,20 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
       if (isInterior) {
         payload.roomCount = roomCount ? Number(roomCount) : undefined;
         payload.ceilingHeight = ceilingHeight || undefined;
+        payload.ceilingHeightUnit = ceilingHeightUnit;
         payload.naturalLighting = naturalLighting;
         payload.ventilationAvailable = ventilationAvailable;
         payload.structuralModification = structuralModification;
         payload.structuralNotes = structuralModification ? structuralNotes : undefined;
         payload.clientStylePreference = clientStylePreference || undefined;
+        payload.wallCondition = wallCondition;
+        payload.dampnessObserved = dampnessObserved;
+        payload.dampnessNotes = dampnessObserved ? dampnessNotes : undefined;
+        payload.elevatorAccessibility = elevatorAccessibility;
+        payload.elevatorCapacityKg = elevatorCapacityKg ? Number(elevatorCapacityKg) : undefined;
+        payload.electricalPhase = electricalPhase;
+        payload.acPipingReady = acPipingReady;
+        payload.plumbingDrainReady = plumbingDrainReady;
       } else {
         payload.terrainNotes = terrainNotes;
       }
@@ -339,8 +377,21 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                       </div>
                       <div>
                         <label className="text-sm font-bold text-slate-900 mb-2 block">Ceiling Height</label>
-                        <input type="text" value={ceilingHeight} onChange={e => setCeilingHeight(e.target.value)}
-                          className={inputCls} placeholder="e.g. 3.2m" />
+                        <div className="flex gap-2">
+                          <input type="text" value={ceilingHeight} onChange={e => setCeilingHeight(e.target.value)}
+                            className={`${inputCls} flex-1`} placeholder="e.g. 10.5" />
+                          <select
+                            value={ceilingHeightUnit}
+                            onChange={e => setCeilingHeightUnit(e.target.value as any)}
+                            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                          >
+                            <option value="ft">ft (Feet)</option>
+                            <option value="m">m (Meters)</option>
+                            <option value="in">in (Inches)</option>
+                            <option value="mm">mm (Millimeters)</option>
+                            <option value="cm">cm (Centimeters)</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
                     <div>
@@ -366,6 +417,106 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                       onChange={setVentilationAvailable}
                       activeColor="bg-cyan-500"
                     />
+                  </div>
+
+                  {/* Wall & Moisture Diagnostics */}
+                  <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm space-y-4">
+                    <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest border-b border-slate-100 pb-2">Wall & Moisture Diagnostics</p>
+                    <div>
+                      <label className="text-sm font-bold text-slate-900 mb-2 block">Wall Construction Type</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(['Solid Brick', 'Gypsum Drywall', 'RCC Concrete', 'Mixed'] as const).map(w => (
+                          <button key={w} type="button" onClick={() => setWallCondition(w)}
+                            className={cn('py-2 rounded-xl border text-xs font-bold transition-all text-center',
+                              wallCondition === w
+                                ? 'bg-blue-50 border-blue-400 text-blue-800'
+                                : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                            )}>{w}</button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="border-t border-slate-100 pt-1" />
+
+                    <ToggleRow
+                      label="Dampness / Water Seepage Observed"
+                      subLabel="Check for water stains or damp walls before woodwork"
+                      checked={dampnessObserved}
+                      onChange={setDampnessObserved}
+                      activeColor="bg-rose-600"
+                    />
+
+                    {dampnessObserved && (
+                      <div>
+                        <label className="text-sm font-bold text-slate-900 mb-2 block">Dampness & Leakage Details</label>
+                        <textarea rows={2} value={dampnessNotes} onChange={e => setDampnessNotes(e.target.value)}
+                          className={`${inputCls} resize-none`} placeholder="e.g. Seepage observed on Bedroom 2 outer wall..." />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* MEP & Utility Readiness */}
+                  <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm space-y-4">
+                    <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest border-b border-slate-100 pb-2">MEP & Services Readiness</p>
+                    
+                    <div>
+                      <label className="text-sm font-bold text-slate-900 mb-2 block">Electrical Supply Phase</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {(['Single Phase', 'Three Phase', 'Unsure'] as const).map(phase => (
+                          <button key={phase} type="button" onClick={() => setElectricalPhase(phase)}
+                            className={cn('py-2 rounded-xl border text-xs font-bold transition-all text-center',
+                              electricalPhase === phase
+                                ? 'bg-amber-100 border-amber-400 text-amber-900'
+                                : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                            )}>{phase}</button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="border-t border-slate-100 pt-1" />
+
+                    <ToggleRow
+                      label="AC Copper Piping Laid"
+                      subLabel="Internal refrigerant pipes pre-installed"
+                      checked={acPipingReady}
+                      onChange={setAcPipingReady}
+                      activeColor="bg-teal-600"
+                    />
+
+                    <ToggleRow
+                      label="Plumbing & Waste Outlets Positioned"
+                      subLabel="Drainage points ready for kitchen/baths"
+                      checked={plumbingDrainReady}
+                      onChange={setPlumbingDrainReady}
+                      activeColor="bg-blue-600"
+                    />
+                  </div>
+
+                  {/* Freight & Elevator Access */}
+                  <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm space-y-4">
+                    <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest border-b border-slate-100 pb-2">Material Access & Freight Logistics</p>
+                    
+                    <div>
+                      <label className="text-sm font-bold text-slate-900 mb-2 block">Elevator / Stair Access</label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        {(['Service Elevator Available', 'Passenger Elevator Only', 'Stairs Only'] as const).map(opt => (
+                          <button key={opt} type="button" onClick={() => setElevatorAccessibility(opt)}
+                            className={cn('py-2 px-2 rounded-xl border text-xs font-bold transition-all text-center',
+                              elevatorAccessibility === opt
+                                ? 'bg-indigo-50 border-indigo-400 text-indigo-800'
+                                : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                            )}>{opt}</button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {elevatorAccessibility !== 'Stairs Only' && (
+                      <div>
+                        <label className="text-sm font-bold text-slate-900 mb-1 block">Elevator Capacity (kg)</label>
+                        <input type="number" value={elevatorCapacityKg} onChange={e => setElevatorCapacityKg(e.target.value)}
+                          className={inputCls} placeholder="e.g. 1000" />
+                      </div>
+                    )}
                   </div>
 
                   {/* Structural & Design */}

@@ -64,7 +64,7 @@ const StatusBadge = ({ status, size = 'sm' }: { status: string; size?: 'xs' | 's
 const StatCard = ({
   label, value, icon: Icon, accent, bg, sub,
 }: { label: string; value: string | number; icon: React.ElementType; accent: string; bg: string; sub?: string }) => (
-  <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-5 flex items-center gap-3 sm:gap-4 min-w-0 transition-shadow duration-200 hover:shadow-md">
+  <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 flex items-center gap-3 sm:gap-4 min-w-0 transition-colors duration-200 hover:border-blue-200">
     <div className={cn('w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0', bg)}>
       <Icon className={cn('w-5 h-5', accent)} />
     </div>
@@ -320,7 +320,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
               placeholder="Search groups or items..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-gray-200 rounded-lg py-2 pl-9 pr-4 text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors shadow-sm"
+              className="w-full bg-white border border-gray-200 rounded-lg py-2 pl-9 pr-4 text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
             />
           </div>
 
@@ -328,7 +328,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors cursor-pointer w-full sm:w-auto shadow-sm"
+            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors cursor-pointer w-full sm:w-auto"
           >
             {['All', 'Draft', 'Pending', 'Approved', 'Rejected'].map(s => (
               <option key={s} value={s}>{s === 'All' ? 'All Status' : s}</option>
@@ -339,7 +339,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
           <div className="flex items-center gap-2">
             <button
               onClick={fetchBOQ}
-              className="p-2 bg-white border border-gray-200 rounded-lg text-slate-500 hover:text-gray-900 hover:bg-gray-50 transition-colors shadow-sm"
+              className="p-2 bg-white border border-gray-200 rounded-lg text-slate-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
               title="Refresh"
             >
               <RefreshCw className="w-4 h-4" />
@@ -347,7 +347,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
 
             <button
               onClick={() => setIsImportModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-gray-50 transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-gray-50 transition-colors"
             >
               <Upload className="w-4 h-4" />
               <span className="hidden sm:inline">Import</span>
@@ -355,7 +355,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
             {canCreate && (
               <button
                 onClick={() => { setSelectedItem(null); setIsNewVersion(false); setIsModalOpen(true); }}
-                className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
+                className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-blue-700 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 <span>New BOQ</span>
@@ -383,7 +383,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
             {!searchQuery && statusFilter === 'All' && canCreate && (
               <button
                 onClick={() => { setSelectedItem(null); setIsNewVersion(false); setIsModalOpen(true); }}
-                className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-500 transition-all shadow-md shadow-blue-600/20"
+                className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-500 transition-all"
               >
                 <Plus className="w-4 h-4" />
                 Create BOQ Group
@@ -395,7 +395,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
             {/* ─────────────────────────────────────────────────────────────────
               PROFESSIONAL DATA TABLE
             ───────────────────────────────────────────────────────────────── */}
-            <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm bg-white">
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm text-left">
                   <thead>

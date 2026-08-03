@@ -362,7 +362,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
             className={cn(
               "flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all",
               activeSubTab === tab.id
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                ? "bg-blue-600 text-white"
                 : "text-slate-500 hover:text-gray-900 hover:bg-white"
             )}
           >
@@ -376,11 +376,11 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
         <div className="space-y-6">
           {/* Inventory Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <GlassCard className="p-4 border-gray-200" gradient>
+            <GlassCard className="p-4 border-gray-200 shadow-none" gradient>
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Total Materials</p>
               <p className="text-2xl font-black text-gray-900 mt-1">{materials.length}</p>
             </GlassCard>
-            <GlassCard className="p-4 border-gray-200">
+            <GlassCard className="p-4 border-gray-200 shadow-none">
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Low Stock Items</p>
               <p className="text-2xl font-black text-red-600 mt-1">
                 {materials.filter(m => {
@@ -390,13 +390,13 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                 }).length}
               </p>
             </GlassCard>
-            <GlassCard className="p-4 border-gray-200">
+            <GlassCard className="p-4 border-gray-200 shadow-none">
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Total Received</p>
               <p className="text-2xl font-black text-emerald-600 mt-1">
                 {materials.reduce((sum, m) => sum + (m.totalReceived || 0), 0)}
               </p>
             </GlassCard>
-            <GlassCard className="p-4 border-gray-200">
+            <GlassCard className="p-4 border-gray-200 shadow-none">
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Total Consumed</p>
               <p className="text-2xl font-black text-blue-600 mt-1">
                 {materials.reduce((sum, m) => sum + (m.totalConsumed || 0), 0)}
@@ -405,7 +405,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           </div>
 
           {/* Toolbar */}
-          <GlassCard className="p-4 border-gray-200" gradient>
+          <GlassCard className="p-4 border-gray-200 shadow-none" gradient>
             <div className="flex flex-col md:flex-row gap-4 justify-between">
               <div className="relative flex-1 max-w-md group">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
@@ -425,7 +425,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     setSelectedMaterial(null);
                     setIsModalOpen(true);
                   }}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 border border-blue-500 rounded-xl text-sm font-bold text-white hover:bg-blue-500 shadow-lg shadow-blue-600/20 transition-all"
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 border border-blue-500 rounded-xl text-sm font-bold text-white hover:bg-blue-500 transition-all"
                 >
                   <Plus className="w-4 h-4" />
                   <span>New Material</span>
@@ -449,7 +449,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                   const isLow = !overConsumed && stock <= (material.minimumStock ?? material.minStock ?? 0);
 
                   return (
-                    <GlassCard key={material._id} className="p-4 border-gray-200" gradient>
+                    <GlassCard key={material._id} className="p-4 border-gray-200 shadow-none" gradient>
                       <div className="flex items-start justify-between">
                         <div className="flex items-center space-x-3">
                           <div className="w-10 h-10 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center shrink-0 animate-pulse-subtle">
@@ -692,7 +692,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
 
       {activeSubTab === 'requests' && (
         <div className="space-y-6">
-          <GlassCard className="p-4 border-gray-200" gradient>
+          <GlassCard className="p-4 border-gray-200 shadow-none" gradient>
             <div className="flex flex-col md:flex-row gap-4 justify-between">
               <div className="flex-1 max-w-md">
                 <h3 className="text-lg font-bold text-gray-900">Material Requests</h3>
@@ -701,7 +701,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => setIsRequestModalOpen(true)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 border border-blue-500 rounded-xl text-sm font-bold text-white hover:bg-blue-500 shadow-lg shadow-blue-600/20 transition-all"
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 border border-blue-500 rounded-xl text-sm font-bold text-white hover:bg-blue-500 transition-all"
                 >
                   <Plus className="w-4 h-4" />
                   <span>New Request</span>
@@ -744,7 +744,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           ) : requests.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {requests.map((request) => (
-                <GlassCard key={request._id} className="p-6 border-gray-200 hover:border-blue-500/30 transition-all" gradient>
+                <GlassCard key={request._id} className="p-6 border-gray-200 hover:border-blue-500/30 transition-all shadow-none" gradient>
                   <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center space-x-3">
                       <input
@@ -856,7 +856,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
 
       {activeSubTab === 'receipts' && (
         <div className="space-y-6">
-          <GlassCard className="p-4 border-gray-200" gradient>
+          <GlassCard className="p-4 border-gray-200 shadow-none" gradient>
             <div className="flex flex-col md:flex-row gap-4 justify-between">
               <div className="flex-1 max-w-md">
                 <h3 className="text-lg font-bold text-gray-900">Material Received</h3>
@@ -865,7 +865,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => setIsReceiptModalOpen(true)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-emerald-600 border border-emerald-500 rounded-xl text-sm font-bold text-white hover:bg-emerald-500 shadow-lg shadow-emerald-600/20 transition-all"
+                  className="flex items-center space-x-2 px-4 py-2 bg-emerald-600 border border-emerald-500 rounded-xl text-sm font-bold text-white hover:bg-emerald-500 transition-all"
                 >
                   <FileCheck className="w-4 h-4" />
                   <span>Log Receipt</span>
@@ -881,7 +881,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
               {/* Stacked Cards for Mobile (< md) */}
               <div className="grid grid-cols-1 gap-4 md:hidden">
                 {receipts.map((receipt) => (
-                  <GlassCard key={receipt._id} className="p-4 border-gray-200" gradient>
+                  <GlassCard key={receipt._id} className="p-4 border-gray-200 shadow-none" gradient>
                     <div className="flex justify-between items-start">
                       <div>
                         <p className="text-sm font-bold text-gray-900">GRN-{receipt._id.slice(-6).toUpperCase()}</p>
@@ -1052,7 +1052,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
 
       {activeSubTab === 'purchase' && (
         <div className="space-y-6">
-          <GlassCard className="p-4 border-gray-200" gradient>
+          <GlassCard className="p-4 border-gray-200 shadow-none" gradient>
             <div className="flex flex-col md:flex-row gap-4 justify-between">
               <div className="flex-1 max-w-md">
                 <h3 className="text-lg font-bold text-gray-900">Purchase Orders</h3>
@@ -1060,7 +1060,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
               </div>
               <button
                 onClick={() => setIsPurchaseModalOpen(true)}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 border border-blue-500 rounded-xl text-sm font-bold text-white hover:bg-blue-500 shadow-lg shadow-blue-600/20 transition-all"
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 border border-blue-500 rounded-xl text-sm font-bold text-white hover:bg-blue-500 transition-all"
               >
                 <Plus className="w-4 h-4" />
                 <span>Create PO</span>
@@ -1073,7 +1073,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           ) : purchases.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {purchases.map((po) => (
-                <GlassCard key={po._id} className="p-6 border-gray-200" gradient>
+                <GlassCard key={po._id} className="p-6 border-gray-200 shadow-none" gradient>
                   <div className="flex justify-between items-start mb-6">
                     <div>
                       <p className="text-sm font-bold text-gray-900">{po.poNumber}</p>
@@ -1134,7 +1134,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
 
       {activeSubTab === 'usage' && (
         <div className="space-y-6">
-          <GlassCard className="p-4 border-gray-200" gradient>
+          <GlassCard className="p-4 border-gray-200 shadow-none" gradient>
             <div className="flex flex-col md:flex-row gap-4 justify-between">
               <div className="flex-1 max-w-md">
                 <h3 className="text-lg font-bold text-gray-900">Usage Log</h3>
@@ -1142,7 +1142,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
               </div>
               <button
                 onClick={() => setIsUsageModalOpen(true)}
-                className="flex items-center space-x-2 px-4 py-2 bg-purple-600 border border-purple-500 rounded-xl text-sm font-bold text-white hover:bg-purple-500 shadow-lg shadow-purple-600/20 transition-all"
+                className="flex items-center space-x-2 px-4 py-2 bg-purple-600 border border-purple-500 rounded-xl text-sm font-bold text-white hover:bg-purple-500 transition-all"
               >
                 <Zap className="w-4 h-4" />
                 <span>Log Consumption</span>
@@ -1209,7 +1209,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
 
       {activeSubTab === 'activity' && (
         <div className="space-y-6">
-          <GlassCard className="p-4 border-gray-200" gradient>
+          <GlassCard className="p-4 border-gray-200 shadow-none" gradient>
             <div className="flex-1">
               <h3 className="text-lg font-bold text-gray-900">Activity Log</h3>
               <p className="text-xs text-slate-500">All material activity — requests, purchases, receipts, and consumption — in chronological order.</p>

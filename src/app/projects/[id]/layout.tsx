@@ -5,6 +5,7 @@ import { Shell } from '@/components/layouts/Shell';
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 import { CreateProjectModal } from '@/components/modals/CreateProjectModal';
 import { ProjectProvider, useProjectContext } from '@/features/projects/contexts/ProjectContext';
+import { useAuth } from '@/providers/AuthContext';
 import { cn } from '@/lib/utils';
 import {
   Info, FileText, DollarSign, Package, Files, Map,
@@ -88,19 +89,25 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
   const { project, loading, fetchProject, projectId } = useProjectContext();
   const router = useRouter();
   const pathname = usePathname();
+  const { user } = useAuth();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const visibleTabs = getVisibleTabs(project?.projectType, project?.siteSurveyor);
   const activeTab = (ALL_TABS as readonly { id: string }[]).find(t => pathname.includes(`/${t.id}`))?.id || 'dashboard';
 
-  const isSurveyPending = project?.status === 'Site Survey' || (project?.status === 'Initialized' && project?.needSiteSurvey);
+  const isSurveyPending = (project?.status === 'Site Survey' || (project?.status === 'Initialized' && project?.needSiteSurvey)) && (project as any)?.surveyStatus !== 'Approved';
   const isRestrictedTab = isSurveyPending && RESTRICTED_TABS.includes(activeTab);
+
+  const isInteriorOrg =
+    (user as any)?.industryType === 'interior' ||
+    (user?.organization as any)?.industryType === 'interior';
+  const projectsListRoute = (project?.projectType === 'Interior' || (!project && isInteriorOrg)) ? '/interior/projects' : '/projects';
 
   const headerContent = project ? (
     <div className="flex items-center justify-between w-full pr-4">
       <div className="flex items-center gap-3 min-w-0">
         <button
-          onClick={() => router.push('/projects')}
+          onClick={() => router.push(projectsListRoute)}
           className="p-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-500 hover:text-slate-900 hover:bg-slate-100 hover:border-slate-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] active:scale-95 transition-all duration-200 shrink-0 cursor-pointer"
         >
           <ChevronLeft className="w-4 h-4" />
@@ -137,7 +144,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
           <div className="text-center py-20">
             <h2 className="text-2xl font-bold text-gray-900">Project not found</h2>
             <button
-              onClick={() => router.push('/projects')}
+              onClick={() => router.push(projectsListRoute)}
               className="mt-4 text-blue-600 font-medium hover:text-blue-700"
             >
               Back to Projects
