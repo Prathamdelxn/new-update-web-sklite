@@ -27,7 +27,7 @@ export function SendToQuotationsModal({ isOpen, onClose, customerId, onSuccess, 
     try {
       // Update Customer Status & Assignment
       const updatePayload: any = {
-        status: 'Quotation Sent',
+        status: 'Quotation Pending',
       };
       
       if (assignedSalesExecutive) {

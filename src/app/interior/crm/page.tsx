@@ -74,10 +74,10 @@ export default function CRMDashboardPage() {
       return leads.filter(l => ['Meeting Scheduled', 'Measurement Done'].includes(l.status));
     }
     if (activeTab === 'requirement_design') {
-      return leads.filter(l => ['Requirement Completed', 'Design Approved'].includes(l.status));
+      return leads.filter(l => ['Requirements Gathering', 'Requirement Completed', 'Design Approved'].includes(l.status));
     }
     if (activeTab === 'quotations') {
-      return leads.filter(l => ['Quotation Sent'].includes(l.status));
+      return leads.filter(l => ['Quotation Pending', 'Quotation Sent', 'Negotiation'].includes(l.status));
     }
     // Default fallback
     return leads;

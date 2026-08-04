@@ -27,7 +27,7 @@ export function SendToRequirementsModal({ isOpen, onClose, customerId, onSuccess
     try {
       // 1. Update Customer Status & Assignment
       const updatePayload: any = {
-        status: 'Requirement Completed', // Ideally this is an intermediate state, but Requirement Completed fits the tab logic
+        status: 'Requirements Gathering', 
       };
       
       if (designerAssigned) {

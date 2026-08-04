@@ -158,7 +158,9 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     lead.status === 'New Lead' ? "bg-blue-50 text-blue-600 border-blue-100" :
                     lead.status === 'Contacted' ? "bg-amber-50 text-amber-600 border-amber-100" :
                     lead.status === 'Meeting Scheduled' || lead.status === 'Measurement Done' ? "bg-purple-50 text-purple-600 border-purple-100" :
+                    lead.status === 'Requirements Gathering' ? "bg-indigo-50 text-indigo-600 border-indigo-100" :
                     lead.status === 'Requirement Completed' || lead.status === 'Design Approved' ? "bg-indigo-50 text-indigo-600 border-indigo-100" :
+                    lead.status === 'Quotation Pending' ? "bg-rose-50 text-rose-600 border-rose-100" :
                     lead.status === 'Quotation Sent' || lead.status === 'Negotiation' ? "bg-rose-50 text-rose-600 border-rose-100" :
                     lead.status === 'Converted' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
                     "bg-slate-50 text-slate-600 border-slate-200"
