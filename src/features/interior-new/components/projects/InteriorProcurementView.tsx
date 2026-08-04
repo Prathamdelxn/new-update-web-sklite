@@ -1,0 +1,759 @@
+'use client';
+
+// Port of interior-os-frontend's projects/[projectId]/procurement/page.tsx.
+// Uses window.confirm instead of the source app's useConfirm dialog context
+// (not present in sky-lite-web).
+
+import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  ShoppingCart,
+  Truck,
+  Package,
+  Wrench,
+  Loader2,
+  Clock,
+  Plus,
+  Trash2,
+  X,
+  AlertCircle,
+  History,
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/components/interior/ui';
+import { interiorProjectService } from '@/services/interiorProject.service';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/providers/ToastContext';
+
+interface POItemInput {
+  name: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+}
+
+interface InteriorProcurementViewProps {
+  projectId: string;
+}
+
+export default function InteriorProcurementView({ projectId }: InteriorProcurementViewProps) {
+  const toast = useToast();
+
+  const [activeTab, setActiveTab] = useState<'procurement' | 'inventory'>('procurement');
+  const [pos, setPos] = useState<any[]>([]);
+  const [inventory, setInventory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [isAddPoOpen, setIsAddPoOpen] = useState(false);
+  const [creatingPo, setCreatingPo] = useState(false);
+  const [vendorName, setVendorName] = useState('');
+  const [deliveryDate, setDeliveryDate] = useState('');
+  const [poItems, setPoItems] = useState<POItemInput[]>([]);
+  const [newItem, setNewItem] = useState<POItemInput>({ name: '', quantity: 1, unit: 'nos', unitPrice: 0 });
+
+  const [selectedPo, setSelectedPo] = useState<any>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [updatingPo, setUpdatingPo] = useState(false);
+
+  const [selectedStock, setSelectedStock] = useState<any>(null);
+  const [isInstallOpen, setIsInstallOpen] = useState(false);
+  const [installQty, setInstallQty] = useState('');
+  const [installNotes, setInstallNotes] = useState('');
+  const [loggingInstall, setLoggingInstall] = useState(false);
+  const [installError, setInstallError] = useState('');
+
+  const fetchPOs = async () => {
+    try {
+      const res = await interiorProjectService.getPurchaseOrders(projectId);
+      if (res.success && res.data) {
+        setPos(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to load POs', err);
+    }
+  };
+
+  const fetchInventory = async () => {
+    try {
+      const res = await interiorProjectService.getInventory(projectId);
+      if (res.success && res.data) {
+        setInventory(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to load inventory', err);
+    }
+  };
+
+  const loadAllData = async () => {
+    setLoading(true);
+    await Promise.all([fetchPOs(), fetchInventory()]);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (projectId) {
+      loadAllData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
+
+  const handleAddItem = () => {
+    if (!newItem.name.trim() || newItem.quantity <= 0 || newItem.unitPrice < 0) return;
+    setPoItems((prev) => [...prev, { ...newItem }]);
+    setNewItem({ name: '', quantity: 1, unit: 'nos', unitPrice: 0 });
+  };
+
+  const handleRemoveItem = (index: number) => {
+    setPoItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleCreatePO = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (poItems.length === 0) {
+      toast.error('Please add at least one item to the Purchase Order');
+      return;
+    }
+    try {
+      setCreatingPo(true);
+      await interiorProjectService.createPurchaseOrder(projectId, {
+        vendorName,
+        items: poItems,
+        deliveryDate: deliveryDate || undefined,
+        status: 'pending',
+      });
+      toast.success('Purchase Order created successfully');
+      setIsAddPoOpen(false);
+      setVendorName('');
+      setDeliveryDate('');
+      setPoItems([]);
+      loadAllData();
+    } catch (err) {
+      console.error('Failed to create PO', err);
+      toast.error('Failed to create Purchase Order');
+    } finally {
+      setCreatingPo(false);
+    }
+  };
+
+  const handleUpdateStatus = async (status: string) => {
+    if (!selectedPo) return;
+    try {
+      setUpdatingPo(true);
+      setPos((prev) => prev.map((po) => (po._id === selectedPo._id ? { ...po, status } : po)));
+      const res = await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { status });
+      if (res.success) {
+        setSelectedPo(res.data);
+      }
+      loadAllData();
+    } catch (err) {
+      console.error('Failed to update status', err);
+      toast.error('Failed to update PO status');
+      loadAllData();
+    } finally {
+      setUpdatingPo(false);
+    }
+  };
+
+  const handleDeletePO = async () => {
+    if (!selectedPo) return;
+    const ok = typeof window !== 'undefined' ? window.confirm('Are you sure you want to delete this Purchase Order? This will permanently delete the PO and its material history.') : true;
+    if (!ok) return;
+    try {
+      setUpdatingPo(true);
+      await interiorProjectService.deletePurchaseOrder(projectId, selectedPo._id);
+      toast.success('Purchase Order deleted successfully');
+      setIsDetailOpen(false);
+      setSelectedPo(null);
+      loadAllData();
+    } catch (err) {
+      toast.error('Failed to delete Purchase Order');
+      console.error('Failed to delete PO', err);
+    } finally {
+      setUpdatingPo(false);
+    }
+  };
+
+  const handleLogInstallation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const qty = parseInt(installQty);
+    if (isNaN(qty) || qty <= 0) return;
+
+    const available = selectedStock.totalReceived - selectedStock.installedQuantity;
+    if (qty > available) {
+      setInstallError(`Cannot install more than available stock (${available} ${selectedStock.unit})`);
+      return;
+    }
+
+    try {
+      setLoggingInstall(true);
+      setInstallError('');
+      await interiorProjectService.logInventoryInstall(projectId, {
+        inventoryId: selectedStock._id,
+        quantity: qty,
+        notes: installNotes || undefined,
+      });
+      toast.success('Installation logged successfully');
+      setIsInstallOpen(false);
+      setInstallQty('');
+      setInstallNotes('');
+      loadAllData();
+    } catch (err: any) {
+      console.error('Failed to log installation', err);
+      setInstallError(err.response?.data?.message || 'Failed to log installation');
+    } finally {
+      setLoggingInstall(false);
+    }
+  };
+
+  const pipelines = [
+    { key: 'pending', label: 'Planned', icon: Clock, color: 'text-slate-500' },
+    { key: 'approved', label: 'Approved PO', icon: ShoppingCart, color: 'text-blue-500' },
+    { key: 'ordered', label: 'Manufacturing', icon: Package, color: 'text-amber-500' },
+    { key: 'dispatched', label: 'In Transit', icon: Truck, color: 'text-indigo-500' },
+    { key: 'delivered', label: 'Delivered', icon: Wrench, color: 'text-emerald-500' },
+  ];
+
+  const formatCost = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount || 0);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-[hsl(var(--primary))]" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 lg:p-8 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Procurement & Inventory</h2>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+            Manage trade orders, track deliveries, and log materials installed on-site.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="border border-[hsl(var(--border))] rounded-lg p-0.5 flex bg-[hsl(var(--muted)/0.3)] shrink-0">
+            <button
+              onClick={() => setActiveTab('procurement')}
+              className={cn(
+                'px-3 py-1 text-xs font-semibold rounded-md transition-all',
+                activeTab === 'procurement'
+                  ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-sm'
+                  : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
+              )}
+            >
+              Procurement Board
+            </button>
+            <button
+              onClick={() => setActiveTab('inventory')}
+              className={cn(
+                'px-3 py-1 text-xs font-semibold rounded-md transition-all',
+                activeTab === 'inventory'
+                  ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-sm'
+                  : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
+              )}
+            >
+              Inventory Management
+            </button>
+          </div>
+          {activeTab === 'procurement' && (
+            <Button onClick={() => setIsAddPoOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add PO
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {activeTab === 'procurement' ? (
+        <>
+          {/* Pipeline Board */}
+          <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
+            {pipelines.map((pipe) => {
+              const items = pos.filter((po) => po.status === pipe.key);
+              return (
+                <Card key={pipe.key} className="bg-[hsl(var(--card)/0.4)] backdrop-blur-md flex flex-col h-[480px]">
+                  <CardHeader className="p-4 border-b border-[hsl(var(--border))] flex flex-row items-center justify-between pb-3 shrink-0 space-y-0">
+                    <div className="flex items-center gap-2">
+                      <pipe.icon className={cn('w-4 h-4', pipe.color)} />
+                      <CardTitle className="text-xs font-bold">{pipe.label}</CardTitle>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold bg-[hsl(var(--muted))] px-2 py-0.5 rounded-full">{items.length}</span>
+                  </CardHeader>
+                  <CardContent className="p-3 flex-1 overflow-y-auto space-y-3 scrollbar-none">
+                    {items.length === 0 ? (
+                      <div className="text-center py-12 text-[10px] text-[hsl(var(--muted-foreground))] italic border border-dashed border-[hsl(var(--border))] rounded-lg">
+                        Empty stage
+                      </div>
+                    ) : (
+                      items.map((item) => (
+                        <motion.div
+                          key={item._id}
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          onClick={() => {
+                            setSelectedPo(item);
+                            setIsDetailOpen(true);
+                          }}
+                          className="p-3 border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--card))] shadow-sm space-y-2 hover:border-[hsl(var(--primary)/0.3)] hover:shadow-md transition-all cursor-pointer"
+                        >
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className="font-mono text-[hsl(var(--muted-foreground))]">{item.poNumber}</span>
+                            <span className="font-semibold text-[hsl(var(--foreground))]">{formatCost(item.amount)}</span>
+                          </div>
+                          <h4 className="text-xs font-bold text-[hsl(var(--foreground))] line-clamp-1">{item.materialName}</h4>
+                          <p className="text-[10px] text-[hsl(var(--muted-foreground))] truncate">Vendor: {item.vendorName}</p>
+                          <div className="flex items-center justify-between border-t border-[hsl(var(--border))] pt-1.5 mt-1 text-[9px] text-[hsl(var(--muted-foreground))]">
+                            <span>{item.items?.length || 1} product(s)</span>
+                            {item.deliveryDate && (
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-2.5 h-2.5 text-blue-500" />
+                                {new Date(item.deliveryDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                              </span>
+                            )}
+                          </div>
+                        </motion.div>
+                      ))
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Aggregate Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <Card className="p-4 flex items-center justify-between border-l-4 border-l-blue-500">
+              <div>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">Total Procurement Budget</p>
+                <p className="text-xl font-bold mt-1">{formatCost(pos.reduce((acc, c) => acc + (c.amount || 0), 0))}</p>
+              </div>
+              <ShoppingCart className="w-8 h-8 text-blue-500/20" />
+            </Card>
+            <Card className="p-4 flex items-center justify-between border-l-4 border-l-amber-500">
+              <div>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">Active Purchase Orders</p>
+                <p className="text-xl font-bold mt-1">
+                  {pos.filter((po) => ['approved', 'ordered', 'dispatched'].includes(po.status)).length} POs
+                </p>
+              </div>
+              <Truck className="w-8 h-8 text-amber-500/20" />
+            </Card>
+            <Card className="p-4 flex items-center justify-between border-l-4 border-l-emerald-500">
+              <div>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">POs Received / Delivered</p>
+                <p className="text-xl font-bold mt-1">{pos.filter((po) => po.status === 'delivered').length} POs</p>
+              </div>
+              <Package className="w-8 h-8 text-emerald-500/20" />
+            </Card>
+          </div>
+        </>
+      ) : (
+        /* Inventory Management */
+        <div className="space-y-6">
+          {inventory.length === 0 ? (
+            <Card className="p-12 text-center border border-dashed border-[hsl(var(--border))]">
+              <Package className="w-12 h-12 text-[hsl(var(--muted-foreground))] mx-auto mb-3 opacity-40" />
+              <h3 className="text-sm font-bold">No Products in Inventory</h3>
+              <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1 max-w-sm mx-auto">
+                Stock is created automatically once a Purchase Order status is changed to &quot;Delivered&quot;. Try updating an existing PO!
+              </p>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 gap-6">
+              {inventory.map((item) => {
+                const available = item.totalReceived - item.installedQuantity;
+                const percentInstalled = Math.round((item.installedQuantity / item.totalReceived) * 100) || 0;
+
+                return (
+                  <Card key={item._id} className="overflow-hidden">
+                    <div className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-[hsl(var(--muted)/0.15)] border-b border-[hsl(var(--border))]">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Package className="w-4 h-4 text-[hsl(var(--primary))]" />
+                          <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">{item.productName}</h3>
+                        </div>
+                        <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                          Inventory Unit: <span className="font-semibold text-[hsl(var(--foreground))]">{item.unit}</span>
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-6 text-center">
+                        <div className="space-y-0.5">
+                          <span className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] uppercase">Delivered</span>
+                          <p className="text-sm font-extrabold text-[hsl(var(--foreground))]">
+                            {item.totalReceived} {item.unit}
+                          </p>
+                        </div>
+                        <div className="space-y-0.5">
+                          <span className="text-[10px] font-semibold text-emerald-500 uppercase">Installed</span>
+                          <p className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
+                            {item.installedQuantity} {item.unit}
+                          </p>
+                        </div>
+                        <div className="space-y-0.5">
+                          <span className="text-[10px] font-semibold text-blue-500 uppercase">Available</span>
+                          <p className="text-sm font-extrabold text-blue-600 dark:text-blue-400">
+                            {available} {item.unit}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 shrink-0">
+                        <div className="w-32 space-y-1">
+                          <div className="flex items-center justify-between text-[9px] text-[hsl(var(--muted-foreground))]">
+                            <span>Installation Progress</span>
+                            <span>{percentInstalled}%</span>
+                          </div>
+                          <div className="h-1.5 rounded-full bg-[hsl(var(--muted))] overflow-hidden">
+                            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${percentInstalled}%` }} />
+                          </div>
+                        </div>
+
+                        <Button
+                          disabled={available <= 0}
+                          onClick={() => {
+                            setSelectedStock(item);
+                            setIsInstallOpen(true);
+                          }}
+                          size="sm"
+                          className="text-xs"
+                        >
+                          <Wrench className="w-3.5 h-3.5 mr-1.5" /> Install
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-[hsl(var(--card))]">
+                      <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider flex items-center gap-1.5 mb-3">
+                        <History className="w-3.5 h-3.5" /> Installation Logs History
+                      </span>
+                      {item.installHistory && item.installHistory.length > 0 ? (
+                        <div className="divide-y divide-[hsl(var(--border))] max-h-[140px] overflow-y-auto pr-2">
+                          {item.installHistory.map((log: any, index: number) => (
+                            <div key={log._id || index} className="py-2.5 flex items-start justify-between text-xs gap-4">
+                              <div className="space-y-0.5">
+                                <p className="font-semibold text-[hsl(var(--foreground))]">
+                                  Installed: <span className="text-emerald-600 dark:text-emerald-400">+{log.quantity} {item.unit}</span>
+                                </p>
+                                {log.notes && <p className="text-[11px] text-[hsl(var(--muted-foreground))]">{log.notes}</p>}
+                              </div>
+                              <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
+                                {new Date(log.date).toLocaleDateString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-[hsl(var(--muted-foreground))] italic">
+                          No materials installed yet. Click the &quot;Install&quot; button above to log a site placement.
+                        </p>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Add PO Modal */}
+      <AnimatePresence>
+        {isAddPoOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-lg border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
+                <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
+                  <ShoppingCart className="w-5 h-5 text-[hsl(var(--primary))]" /> Raise Purchase Order
+                </h3>
+                <button onClick={() => setIsAddPoOpen(false)} className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreatePO}>
+                <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Vendor Name</label>
+                      <Input required placeholder="e.g. Supreme Pipes Ltd" value={vendorName} onChange={(e) => setVendorName(e.target.value)} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Est. Delivery Date</label>
+                      <Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
+                    </div>
+                  </div>
+
+                  <div className="border border-[hsl(var(--border))] rounded-lg p-3.5 space-y-3 bg-[hsl(var(--muted)/0.1)]">
+                    <span className="text-[10px] uppercase font-bold text-[hsl(var(--foreground))] tracking-wider">Add Materials Line</span>
+
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Product Name (e.g. Copper pipes 22mm)"
+                        value={newItem.name}
+                        onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                      />
+                      <div className="grid grid-cols-3 gap-2">
+                        <Input
+                          type="number"
+                          min="1"
+                          placeholder="Qty"
+                          value={newItem.quantity || ''}
+                          onChange={(e) => setNewItem({ ...newItem, quantity: parseInt(e.target.value) || 0 })}
+                        />
+                        <Input placeholder="Unit (e.g. rm)" value={newItem.unit} onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })} />
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="Rate (₹)"
+                          value={newItem.unitPrice || ''}
+                          onChange={(e) => setNewItem({ ...newItem, unitPrice: parseFloat(e.target.value) || 0 })}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={handleAddItem}
+                        variant="outline"
+                        className="w-full text-xs font-bold py-1"
+                      >
+                        <Plus className="w-3.5 h-3.5 mr-1" /> Add Item Line
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider">Order Item Details</span>
+                    {poItems.length === 0 ? (
+                      <p className="text-[11px] text-[hsl(var(--muted-foreground))] italic p-4 text-center border border-dashed border-[hsl(var(--border))] rounded-lg">
+                        No items added. Add at least one line above.
+                      </p>
+                    ) : (
+                      <div className="border border-[hsl(var(--border))] rounded-lg divide-y divide-[hsl(var(--border))] max-h-[140px] overflow-y-auto">
+                        {poItems.map((item, idx) => (
+                          <div key={idx} className="p-2.5 flex items-center justify-between text-xs bg-[hsl(var(--card))]">
+                            <div className="min-w-0 flex-1">
+                              <p className="font-bold truncate text-[hsl(var(--foreground))]">{item.name}</p>
+                              <p className="text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
+                                {item.quantity} {item.unit} @ {formatCost(item.unitPrice)} each
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-3 shrink-0">
+                              <span className="font-bold font-mono">{formatCost(item.quantity * item.unitPrice)}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveItem(idx)}
+                                className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {poItems.length > 0 && (
+                    <div className="p-3 border border-[hsl(var(--primary)/0.2)] rounded-lg bg-[hsl(var(--primary)/0.03)] flex items-center justify-between text-xs font-bold">
+                      <span className="text-[hsl(var(--muted-foreground))] uppercase">PO Total Cost</span>
+                      <span className="text-sm font-extrabold text-[hsl(var(--primary))] font-mono">
+                        {formatCost(poItems.reduce((acc, it) => acc + it.quantity * it.unitPrice, 0))}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
+                  <Button variant="outline" type="button" onClick={() => setIsAddPoOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={creatingPo || poItems.length === 0}>
+                    {creatingPo && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                    Submit PO
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* PO Detail & Status Update Drawer */}
+      <AnimatePresence>
+        {isDetailOpen && selectedPo && (
+          <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              className="w-full max-w-md border-l border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-2xl flex flex-col h-full overflow-hidden"
+            >
+              <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
+                <div>
+                  <span className="text-[10px] font-mono font-bold bg-[hsl(var(--muted))] px-2 py-0.5 rounded-full uppercase">{selectedPo.poNumber}</span>
+                  <h3 className="text-base font-bold mt-1 text-[hsl(var(--foreground))]">Purchase Order Details</h3>
+                </div>
+                <button onClick={() => setIsDetailOpen(false)} className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-5 space-y-6 flex-1 overflow-y-auto">
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div className="space-y-0.5 border border-[hsl(var(--border))] rounded-lg p-2.5 bg-[hsl(var(--muted)/0.1)]">
+                    <span className="font-semibold text-[hsl(var(--muted-foreground))] block uppercase text-[10px]">Vendor</span>
+                    <span className="font-bold text-[hsl(var(--foreground))]">{selectedPo.vendorName}</span>
+                  </div>
+                  <div className="space-y-0.5 border border-[hsl(var(--border))] rounded-lg p-2.5 bg-[hsl(var(--muted)/0.1)]">
+                    <span className="font-semibold text-[hsl(var(--muted-foreground))] block uppercase text-[10px]">Target Date</span>
+                    <span className="font-bold text-[hsl(var(--foreground))]">
+                      {selectedPo.deliveryDate ? new Date(selectedPo.deliveryDate).toLocaleDateString() : 'Not specified'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2 border border-[hsl(var(--border))] rounded-lg p-4 bg-[hsl(var(--card))]">
+                  <span className="text-[10px] uppercase font-bold text-[hsl(var(--foreground))] tracking-wider block">Procurement Status Pipeline</span>
+                  <div className="relative">
+                    <select
+                      value={selectedPo.status}
+                      disabled={updatingPo}
+                      onChange={(e) => handleUpdateStatus(e.target.value)}
+                      className="w-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-xs font-semibold text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                    >
+                      <option value="pending">Planned (Pending)</option>
+                      <option value="approved">Approved PO</option>
+                      <option value="ordered">Manufacturing (Ordered)</option>
+                      <option value="dispatched">In Transit (Dispatched)</option>
+                      <option value="delivered">Delivered (Loads to Inventory)</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                    {updatingPo && <Loader2 className="absolute right-3 top-2.5 w-4 h-4 animate-spin text-[hsl(var(--primary))]" />}
+                  </div>
+                  <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1 leading-normal">
+                    Changing the status to &quot;Delivered&quot; automatically inserts these materials into your inventory system for site installation logging.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider">Ordered Products List</span>
+                  <div className="border border-[hsl(var(--border))] rounded-lg divide-y divide-[hsl(var(--border))]">
+                    {selectedPo.items && selectedPo.items.length > 0 ? (
+                      selectedPo.items.map((item: any, idx: number) => (
+                        <div key={idx} className="p-3 flex items-center justify-between text-xs bg-[hsl(var(--card))]">
+                          <div>
+                            <p className="font-bold text-[hsl(var(--foreground))]">{item.name}</p>
+                            <p className="text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
+                              {item.quantity} {item.unit} @ {formatCost(item.unitPrice)} each
+                            </p>
+                          </div>
+                          <span className="font-bold font-mono text-[hsl(var(--foreground))]">{formatCost(item.amount || item.quantity * item.unitPrice)}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-3 flex items-center justify-between text-xs bg-[hsl(var(--card))]">
+                        <div>
+                          <p className="font-bold text-[hsl(var(--foreground))]">{selectedPo.materialName}</p>
+                          <p className="text-[10px] text-[hsl(var(--muted-foreground))]">1 unit</p>
+                        </div>
+                        <span className="font-bold font-mono text-[hsl(var(--foreground))]">{formatCost(selectedPo.amount)}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-4 border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--muted)/0.25)] flex items-center justify-between text-xs font-bold">
+                  <span className="text-[hsl(var(--muted-foreground))] uppercase">Total Amount</span>
+                  <span className="text-sm font-extrabold text-[hsl(var(--foreground))] font-mono">{formatCost(selectedPo.amount)}</span>
+                </div>
+              </div>
+
+              <div className="p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)] flex items-center gap-3">
+                <Button onClick={handleDeletePO} variant="outline" className="w-full text-red-500 hover:bg-red-50 hover:text-red-700 border-red-200">
+                  <Trash2 className="w-4 h-4 mr-2" /> Delete PO
+                </Button>
+                <Button onClick={() => setIsDetailOpen(false)} className="w-full">
+                  Close Detail
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Install Material Modal */}
+      <AnimatePresence>
+        {isInstallOpen && selectedStock && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-md border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
+                <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
+                  <Wrench className="w-5 h-5 text-emerald-500" /> Log Site Installation
+                </h3>
+                <button onClick={() => setIsInstallOpen(false)} className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleLogInstallation}>
+                <div className="p-5 space-y-4">
+                  <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-lg text-xs space-y-1">
+                    <p className="font-bold text-emerald-800 dark:text-emerald-400">Material Name: {selectedStock.productName}</p>
+                    <p className="text-emerald-700 dark:text-emerald-500">
+                      Available Stock: <span className="font-bold">{selectedStock.totalReceived - selectedStock.installedQuantity} {selectedStock.unit}</span>
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Quantity to Install ({selectedStock.unit})</label>
+                    <Input required type="number" min="1" placeholder="e.g. 10" value={installQty} onChange={(e) => setInstallQty(e.target.value)} />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Installation Notes / Comments</label>
+                    <Input
+                      placeholder="e.g. Installed primary copper lines on Floor 4, Zone Alpha"
+                      value={installNotes}
+                      onChange={(e) => setInstallNotes(e.target.value)}
+                    />
+                  </div>
+
+                  {installError && (
+                    <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 text-xs text-red-600 dark:text-red-400 flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span>{installError}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
+                  <Button variant="outline" type="button" onClick={() => setIsInstallOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={loggingInstall || !installQty}>
+                    {loggingInstall && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                    Confirm Install
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

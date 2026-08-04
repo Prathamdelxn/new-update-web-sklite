@@ -101,7 +101,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
   const isInteriorOrg =
     (user as any)?.industryType === 'interior' ||
     (user?.organization as any)?.industryType === 'interior';
-  const projectsListRoute = (project?.projectType === 'Interior' || (!project && isInteriorOrg)) ? '/interior/projects' : '/projects';
+  const projectsListRoute = (project?.projectType === 'Interior' || (!project && isInteriorOrg)) ? '/interior-new/projects' : '/projects';
 
   const headerContent = project ? (
     <div className="flex items-center justify-between w-full pr-4">

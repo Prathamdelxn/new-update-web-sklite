@@ -20,8 +20,6 @@ import {
   Box,
   Palette,
   Layers,
-  Users,
-  Settings,
   CheckCircle2,
   TrendingUp,
   FileCheck,
@@ -57,7 +55,7 @@ export const InteriorDashboardView = () => {
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-5 pb-12">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
       {/* Executive Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         <div>
@@ -80,7 +78,7 @@ export const InteriorDashboardView = () => {
             {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
           </div>
           <Link
-            href="/interior/projects"
+            href="/interior-new/projects"
             className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-xs"
           >
             <Plus className="w-4 h-4" /> New Project
@@ -145,7 +143,7 @@ export const InteriorDashboardView = () => {
                 <p className="text-[11px] text-slate-500 mt-0.5">Active projects currently in planning or execution.</p>
               </div>
               <Link
-                href="/interior/projects"
+                href="/interior-new/projects"
                 className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition"
               >
                 View All <ArrowRight className="w-3.5 h-3.5" />
@@ -174,7 +172,7 @@ export const InteriorDashboardView = () => {
                       {project.status || 'Ongoing'}
                     </span>
                     <Link
-                      href={`/interior/projects/${project._id}`}
+                      href={`/interior-new/projects/${project._id}`}
                       className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition"
                       title="Open Project"
                     >
@@ -194,10 +192,8 @@ export const InteriorDashboardView = () => {
             
             <div className="space-y-2">
               {[
-                { label: 'Interior Projects', href: '/interior/projects', desc: 'Active fit-outs & timelines', icon: FolderKanban, color: 'text-blue-600 bg-blue-50' },
-                { label: 'Client CRM', href: '/interior/crm', desc: 'Leads & consultation schedules', icon: UserCheck, color: 'text-indigo-600 bg-indigo-50' },
-                { label: 'User Management', href: '/interior/users', desc: 'Studio team & roles', icon: Users, color: 'text-emerald-600 bg-emerald-50' },
-                { label: 'Workspace Settings', href: '/interior/settings', desc: 'Company preferences & currency', icon: Settings, color: 'text-slate-600 bg-slate-100' },
+                { label: 'Interior Projects', href: '/interior-new/projects', desc: 'Active fit-outs & timelines', icon: FolderKanban, color: 'text-blue-600 bg-blue-50' },
+                { label: 'Client CRM', href: '/interior-new/crm', desc: 'Leads & consultation schedules', icon: UserCheck, color: 'text-indigo-600 bg-indigo-50' },
               ].map((mod) => (
                 <Link
                   key={mod.label}

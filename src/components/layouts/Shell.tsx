@@ -43,7 +43,7 @@ export const Shell: React.FC<ShellProps> = ({ children, headerContent }) => {
       
       <div 
         className={`${
-          isCollapsed ? 'lg:pl-20' : 'lg:pl-64'
+          isCollapsed ? 'lg:pl-20' : 'lg:pl-[280px]'
         } flex flex-col min-h-screen transition-all duration-300`}
       >
         <Topnav 
@@ -54,7 +54,7 @@ export const Shell: React.FC<ShellProps> = ({ children, headerContent }) => {
         
         <main className={cn(
           "flex-1 px-4 md:px-8 pb-8 transition-all duration-300",
-          pathname === '/projects' ? "pt-12" : "pt-20"
+          pathname === '/projects' ? "pt-12" : "pt-24"
         )}>
           <div className="max-w-7xl mx-auto">
             {children}

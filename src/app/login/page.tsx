@@ -3,13 +3,16 @@
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Building, Eye, EyeOff, Lock, Mail, Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Building, Eye, EyeOff, Lock, Mail, Loader2, ArrowLeft, CheckCircle2, HardHat, Palette } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthContext';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
+import { loginInterior } from '@/lib/interiorAuth';
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [industryType, setIndustryType] = useState<'construction' | 'interior'>('construction');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPw, setShowForgotPw] = useState(false);
@@ -19,6 +22,7 @@ function LoginForm() {
 
   const { login } = useAuth();
   const toast = useToast();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const registered = searchParams.get('registered');
 
@@ -46,10 +50,17 @@ function LoginForm() {
     setIsLoading(true);
 
     try {
-      await login({ email, password });
-      toast.success('Welcome back!');
+      if (industryType === 'interior') {
+        await loginInterior(email, password);
+        toast.success('Welcome back!');
+        router.push('/interior-new');
+      } else {
+        await login({ email, password, industryType });
+        toast.success('Welcome back!');
+      }
     } catch (error: any) {
       toast.error(
+        error?.response?.data?.error ||
         error?.response?.data?.message ||
         error?.message ||
         'Invalid credentials.'
@@ -182,6 +193,36 @@ function LoginForm() {
             ) : (
               <>
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Select Workspace Mode</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIndustryType('construction')}
+                        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-semibold transition ${
+                          industryType === 'construction'
+                            ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
+                            : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        <HardHat className="w-4 h-4" />
+                        Construction
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIndustryType('interior')}
+                        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-semibold transition ${
+                          industryType === 'interior'
+                            ? 'border-purple-600 bg-purple-50 text-purple-700 shadow-sm'
+                            : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        <Palette className="w-4 h-4" />
+                        Interior
+                      </button>
+                    </div>
+                  </div>
+
                   <div>
                     <label className="text-xs font-semibold text-slate-700">Email Address</label>
                     <div className="relative mt-1">
