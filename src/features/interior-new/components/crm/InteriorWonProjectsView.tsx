@@ -37,7 +37,7 @@ export function InteriorWonProjectsView() {
 
   if (!projects || projects.length === 0) {
     return (
-      <div className="py-24 flex flex-col items-center justify-center text-center bg-[hsl(var(--card))] border border-dashed border-[hsl(var(--border))] rounded-3xl shadow-sm">
+      <div className="py-24 flex flex-col items-center justify-center text-center bg-[hsl(var(--card))] border border-dashed border-[hsl(var(--border))] rounded-3xl">
         <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center text-amber-400 mb-4">
           <Trophy size={32} />
         </div>
@@ -52,7 +52,7 @@ export function InteriorWonProjectsView() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {projects.map((project) => (
-        <div key={project.id || project._id} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 shadow-sm hover:shadow-lg transition-all group flex flex-col">
+        <div key={project.id || project._id} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 transition-all group flex flex-col">
 
           <div className="flex justify-between items-start mb-4">
             <div>

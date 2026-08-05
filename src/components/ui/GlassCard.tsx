@@ -20,8 +20,8 @@ export const GlassCard: React.FC<GlassCardProps> = ({ children, className, gradi
     <div
       onClick={onClick}
       className={cn(
-        'bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden',
-        gradient && 'bg-gradient-to-br from-white to-gray-50',
+        'bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl overflow-hidden',
+        gradient && 'bg-gradient-to-br from-[hsl(var(--card))] to-[hsl(var(--muted))]',
         className
       )}
     >

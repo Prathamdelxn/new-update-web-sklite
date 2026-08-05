@@ -132,7 +132,7 @@ export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, exi
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-4xl bg-[hsl(var(--card))] rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
+          className="relative w-full max-w-4xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl flex flex-col max-h-[90vh] overflow-hidden"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)]">
@@ -287,7 +287,7 @@ export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, exi
               type="submit"
               form="interior-quote-form"
               disabled={isSubmitting}
-              className="px-6 py-3 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 disabled:opacity-50 transition-all flex items-center gap-2 active:scale-95"
+              className="px-6 py-3 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center gap-2 active:scale-95"
             >
               <Save size={16} />
               {isSubmitting ? 'Saving...' : 'Save & Generate'}

@@ -139,7 +139,7 @@ export function InteriorProjectBanner({ projectId, project }: InteriorProjectBan
       <div className="flex flex-wrap items-center gap-6 pt-2 text-xs text-[hsl(var(--muted-foreground))]">
         <div className="flex items-center gap-1.5">
           <MapPin className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
-          {project?.location?.city ? `${project.location.city}, ${project.location.country || 'India'}` : 'Location not set'}
+          {project?.location?.city || project?.location?.address ? `${project.location.city || project.location.address}, ${project.location.country || 'India'}` : 'Location not set'}
         </div>
         <div className="flex items-center gap-1.5">
           <Calendar className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />

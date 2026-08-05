@@ -13,7 +13,7 @@ export function InteriorQuotationsView({ leads, onConvertToProject, onCreateQuot
 
   if (!leads || leads.length === 0) {
     return (
-      <div className="py-24 flex flex-col items-center justify-center text-center bg-[hsl(var(--card))] border border-dashed border-[hsl(var(--border))] rounded-3xl shadow-sm">
+      <div className="py-24 flex flex-col items-center justify-center text-center bg-[hsl(var(--card))] border border-dashed border-[hsl(var(--border))] rounded-3xl">
         <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center text-rose-300 mb-4">
           <FileText size={32} />
         </div>
@@ -26,7 +26,7 @@ export function InteriorQuotationsView({ leads, onConvertToProject, onCreateQuot
   }
 
   return (
-    <div className="w-full bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] shadow-sm overflow-hidden">
+    <div className="w-full bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm whitespace-nowrap">
           <thead className="bg-[hsl(var(--muted))] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] uppercase text-[10px] font-black tracking-widest">
@@ -115,14 +115,14 @@ export function InteriorQuotationsView({ leads, onConvertToProject, onCreateQuot
                     {!latestQuote ? (
                       <button
                         onClick={() => onCreateQuotation(lead._id)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white border border-indigo-700 hover:bg-indigo-700 rounded-lg text-xs font-bold transition-all shadow-sm"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white border border-indigo-700 hover:bg-indigo-700 rounded-lg text-xs font-bold transition-all"
                       >
                         Create <FileText size={14} />
                       </button>
                     ) : (
                       <button
                         onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=quotation`)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--card))] text-blue-600 border border-blue-200 hover:bg-blue-50 rounded-lg text-xs font-bold transition-all shadow-sm"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--card))] text-blue-600 border border-blue-200 hover:bg-blue-50 rounded-lg text-xs font-bold transition-all"
                       >
                         Open <ArrowRight size={14} />
                       </button>
@@ -131,7 +131,7 @@ export function InteriorQuotationsView({ leads, onConvertToProject, onCreateQuot
                     {onConvertToProject && (
                       <button
                         onClick={() => onConvertToProject(lead._id)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 text-white hover:bg-amber-600 rounded-lg text-xs font-bold transition-all shadow-sm"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 text-white hover:bg-amber-600 rounded-lg text-xs font-bold transition-all"
                         title="Convert to Project"
                       >
                         <Trophy size={14} /> Convert

@@ -16,6 +16,7 @@ import { InteriorRequirementDesignView } from './InteriorRequirementDesignView';
 import { InteriorQuotationsView } from './InteriorQuotationsView';
 import { InteriorWonProjectsView } from './InteriorWonProjectsView';
 import { InteriorCreateLeadModal } from './modals/InteriorCreateLeadModal';
+import { InteriorEditLeadModal } from './modals/InteriorEditLeadModal';
 import { InteriorScheduleFollowUpModal } from './modals/InteriorScheduleFollowUpModal';
 import { InteriorLogSiteVisitModal } from './modals/InteriorLogSiteVisitModal';
 import { InteriorLogRequirementsModal } from './modals/InteriorLogRequirementsModal';
@@ -28,13 +29,17 @@ import { InteriorQuotationBuilderModal } from './modals/InteriorQuotationBuilder
 import { Calendar, Lightbulb } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { interiorCrmService } from '@/services/interiorCrm.service';
+import { useToast } from '@/providers/ToastContext';
 
 export default function InteriorCrmView() {
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<InteriorCrmStage>('leads');
   const [leads, setLeads] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedLeadToEdit, setSelectedLeadToEdit] = useState<any>(null);
 
   // Quick Action Modal States
   const [actionLeadId, setActionLeadId] = useState<string | null>(null);
@@ -87,6 +92,22 @@ export default function InteriorCrmView() {
     }
     // Default fallback
     return leads;
+  };
+
+  // Handlers for Lead Edit & Delete
+  const openEditModal = (lead: any) => {
+    setSelectedLeadToEdit(lead);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteLead = async (leadId: string) => {
+    try {
+      await interiorCrmService.deleteCustomer(leadId);
+      toast.success('Lead deleted successfully');
+      fetchLeads();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to delete lead');
+    }
   };
 
   // Handlers for Quick Actions
@@ -143,17 +164,17 @@ export default function InteriorCrmView() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-[hsl(var(--foreground))]">
+          <h1 className="text-2xl font-semibold text-[hsl(var(--foreground))]">
             CRM Workspace
           </h1>
-          <p className="text-[hsl(var(--muted-foreground))] mt-1 flex items-center gap-2 text-sm font-medium">
-            <Calendar size={16} /> Manage your entire sales pipeline
+          <p className="text-[hsl(var(--muted-foreground))] mt-1 flex items-center gap-2 text-xs font-normal">
+            <Calendar size={15} /> Manage your entire sales pipeline
           </p>
         </div>
 
         <button
           onClick={() => setIsCreateModalOpen(true)}
-          className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-[hsl(var(--primary-foreground))] px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:shadow-lg active:scale-95"
+          className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-[hsl(var(--primary-foreground))] px-4 py-2 rounded-xl font-medium text-xs transition-all active:scale-95"
         >
           + New Lead
         </button>
@@ -210,7 +231,8 @@ export default function InteriorCrmView() {
             <InteriorLeadsTable
               leads={getFilteredLeads()}
               isLoading={isLoading}
-              onEdit={() => {}}
+              onEdit={openEditModal}
+              onDelete={handleDeleteLead}
               onPassToFollowUp={openFollowUpModal}
             />
           </motion.div>
@@ -221,7 +243,7 @@ export default function InteriorCrmView() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
             transition={{ duration: 0.3 }}
-            className="py-24 flex flex-col items-center justify-center text-center bg-[hsl(var(--card))] border border-dashed border-[hsl(var(--border))] rounded-3xl shadow-sm"
+            className="py-24 flex flex-col items-center justify-center text-center bg-[hsl(var(--card))] border border-dashed border-[hsl(var(--border))] rounded-3xl"
           >
             <div className="w-16 h-16 bg-[hsl(var(--muted))] rounded-full flex items-center justify-center text-[hsl(var(--muted-foreground))] mb-4">
               <Lightbulb size={32} />
@@ -239,6 +261,14 @@ export default function InteriorCrmView() {
       <InteriorCreateLeadModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={fetchLeads}
+      />
+
+      <InteriorEditLeadModal
+        isOpen={isEditModalOpen}
+        onClose={() => { setIsEditModalOpen(false); setSelectedLeadToEdit(null); }}
+        lead={selectedLeadToEdit}
+        users={users}
         onSuccess={fetchLeads}
       />
 

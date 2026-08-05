@@ -85,7 +85,7 @@ export const InteriorUploadDesignModal = ({ isOpen, onClose, customerId, onSucce
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-[hsl(var(--card))] rounded-3xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="bg-[hsl(var(--card))] rounded-3xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
         <div className="flex justify-between items-center p-6 border-b border-[hsl(var(--border))]">
           <div>
@@ -109,7 +109,7 @@ export const InteriorUploadDesignModal = ({ isOpen, onClose, customerId, onSucce
               onChange={handleFileUpload}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             />
-            <div className="bg-[hsl(var(--card))] w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm group-hover:scale-110 transition-transform">
+            <div className="bg-[hsl(var(--card))] w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
               <UploadCloud className="text-blue-500" size={28} />
             </div>
             <p className="text-sm font-bold text-[hsl(var(--foreground))]">Click or drag files here to upload</p>
@@ -148,7 +148,7 @@ export const InteriorUploadDesignModal = ({ isOpen, onClose, customerId, onSucce
             <button
               type="submit"
               disabled={isSubmitting || newFiles.length === 0}
-              className="flex-1 px-4 py-3 rounded-xl font-bold text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] transition-colors shadow-lg disabled:opacity-50"
+              className="flex-1 px-4 py-3 rounded-xl font-bold text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] transition-colors disabled:opacity-50"
             >
               {isSubmitting ? 'Uploading...' : 'Upload Designs'}
             </button>

@@ -32,7 +32,7 @@ export const InteriorRequirementDesignView = ({ leads, onLogRequirements, onUplo
   }
 
   return (
-    <div className="w-full bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] shadow-sm overflow-hidden">
+    <div className="w-full bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm whitespace-nowrap">
           <thead className="bg-[hsl(var(--muted))] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] uppercase text-[10px] font-black tracking-widest">
@@ -111,14 +111,14 @@ export const InteriorRequirementDesignView = ({ leads, onLogRequirements, onUplo
                     <button
                       onClick={() => onLogRequirements(lead._id)}
                       disabled={isRequirementDisabled}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary)/0.9)] disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-xs font-bold transition-all shadow-sm"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary)/0.9)] disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-xs font-bold transition-all"
                     >
                       Requirement
                     </button>
                     <button
                       onClick={() => onUploadDesign(lead._id)}
                       disabled={isDesignDisabled}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary)/0.9)] disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-xs font-bold transition-all shadow-sm"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary)/0.9)] disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-xs font-bold transition-all"
                     >
                       Design
                     </button>

@@ -232,7 +232,7 @@ export default function InteriorNewProjectsView() {
                     <div className="grid grid-cols-2 gap-2 mb-4 text-xs text-[hsl(var(--muted-foreground))]">
                       <span className="flex items-center gap-1.5">
                         <MapPin className="w-3 h-3" />
-                        {project.location?.city || 'Unknown Location'}
+                        {project.location?.city || project.location?.address || 'Unknown Location'}
                       </span>
                       <span className="flex items-center gap-1.5">
                         <Calendar className="w-3 h-3" />
