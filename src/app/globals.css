@@ -25,6 +25,65 @@
   }
 }
 
+/* =============================================================================
+   Interior-OS Theme — scoped tokens for /interior-new, ported from
+   interior-os-frontend's design system so its dashboard JSX (hsl(var(--x)))
+   renders correctly without touching sky-lite's global Tailwind theme.
+   ============================================================================= */
+
+.interior-os-theme {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+
+  --primary: 221.2 83.2% 53.3%;
+  --primary-foreground: 210 40% 98%;
+
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+
+  --success: 142.1 76.2% 36.3%;
+  --success-foreground: 355.7 100% 97.3%;
+
+  --warning: 38 92% 50%;
+  --warning-foreground: 48 96% 89%;
+
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 221.2 83.2% 53.3%;
+
+  --radius: 0.625rem;
+
+  --chart-1: 221.2 83.2% 53.3%;
+  --chart-2: 142.1 76.2% 36.3%;
+  --chart-3: 38 92% 50%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
+}
+
+.interior-os-theme .gradient-mesh {
+  background:
+    radial-gradient(at 40% 20%, hsl(221 83% 53% / 0.08) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsl(280 65% 60% / 0.06) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsl(142 76% 36% / 0.06) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, hsl(38 92% 50% / 0.04) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsl(340 75% 55% / 0.05) 0px, transparent 50%);
+}
+
 @utility glass {
   background-color: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(226, 232, 240, 0.8);

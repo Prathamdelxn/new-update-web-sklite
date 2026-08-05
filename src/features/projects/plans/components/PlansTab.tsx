@@ -8,7 +8,6 @@ import {
   Folder, FolderPlus, MoreVertical, FileText, ChevronRight,
   CheckCircle2, XCircle, Clock, X, Loader2,
 } from 'lucide-react';
-import { GlassCard } from '@/components/ui/GlassCard';
 import { cn } from '@/lib/utils';
 import api from '@/services/api.client';
 import { useToast } from '@/providers/ToastContext';
@@ -122,29 +121,34 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -24 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className="space-y-6"
+            className="space-y-4"
           >
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div>
-                <h3 className="text-xl font-black text-gray-900">Technical Plans & Drawings</h3>
-                <p className="text-sm text-slate-500 mt-0.5">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-semibold text-slate-900 tracking-tight">Technical Plans & Drawings</h3>
+                  <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-medium">
+                    {folders.length} {folders.length === 1 ? 'folder' : 'folders'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
                   {folders.length > 0
-                    ? `${folders.length} folder${folders.length !== 1 ? 's' : ''} · ${folders.reduce((n, f) => n + (f.documents?.length || 0), 0)} plans`
+                    ? `${folders.reduce((n, f) => n + (f.documents?.length || 0), 0)} plans across ${folders.length} folder${folders.length !== 1 ? 's' : ''}`
                     : 'Create folders to organise your drawings and plans.'}
                 </p>
               </div>
               <button
                 onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98]"
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer shrink-0"
               >
-                <FolderPlus className="w-4 h-4" />
+                <FolderPlus className="w-3.5 h-3.5" />
                 <span>New Folder</span>
               </button>
             </div>
 
             {/* Folder grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
               {folders.map(folder => {
                 const docCount  = folder.documents?.length || 0;
                 const approved  = folder.documents?.filter((d: any) => (d.versions?.at(-1)?.approvalStatus || d.approvalStatus) === 'Approved').length || 0;
@@ -152,36 +156,35 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
                 const rejected  = folder.documents?.filter((d: any) => (d.versions?.at(-1)?.approvalStatus || d.approvalStatus) === 'Rejected').length || 0;
 
                 return (
-                  <GlassCard
+                  <div
                     key={folder._id}
-                    className="p-0 overflow-hidden border-gray-200 group/folder hover:border-blue-300 hover:shadow-md transition-all cursor-pointer"
-                    gradient
+                    className="bg-white rounded-xl border border-slate-200 hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer overflow-hidden group/folder"
                     onClick={() => setSelectedFolderId(folder._id)}
                   >
                     {/* Card body */}
-                    <div className="p-5">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="p-3 rounded-2xl bg-blue-50 border border-blue-100 group-hover/folder:bg-blue-100 transition-colors">
-                          <Folder className="w-6 h-6 text-blue-600" />
+                    <div className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="p-2 rounded-lg bg-blue-50 text-blue-600 shrink-0">
+                          <Folder className="w-4 h-4" />
                         </div>
                         <div className="relative" onClick={e => e.stopPropagation()}>
                           <button
                             onClick={() => setFolderMenuId(folderMenuId === folder._id ? null : folder._id)}
-                            className="p-1.5 text-slate-400 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-100"
+                            className="p-1.5 text-slate-400 hover:text-slate-700 transition-colors rounded-lg hover:bg-slate-100 cursor-pointer"
                           >
                             <MoreVertical className="w-4 h-4" />
                           </button>
                           {folderMenuId === folder._id && (
-                            <div className="absolute right-0 top-8 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                            <div className="absolute right-0 top-8 w-36 bg-white border border-slate-200 rounded-lg shadow-lg z-50 overflow-hidden">
                               <button
                                 onClick={() => { setRenamingFolder({ _id: folder._id, name: folder.name }); setFolderMenuId(null); }}
-                                className="w-full px-4 py-2.5 text-left text-sm font-semibold text-slate-600 hover:bg-gray-50 transition-colors"
+                                className="w-full px-3.5 py-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
                               >
                                 Rename
                               </button>
                               <button
                                 onClick={() => handleDeleteFolder(folder._id)}
-                                className="w-full px-4 py-2.5 text-left text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
+                                className="w-full px-3.5 py-2 text-left text-xs font-medium text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                               >
                                 Delete
                               </button>
@@ -190,28 +193,28 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
                         </div>
                       </div>
 
-                      <h4 className="text-base font-black text-gray-900 mb-0.5 group-hover/folder:text-blue-700 transition-colors truncate">
+                      <h4 className="font-semibold text-slate-900 text-sm mb-0.5 group-hover/folder:text-blue-600 transition-colors truncate">
                         {folder.name}
                       </h4>
-                      <p className="text-xs text-slate-400 font-medium">{docCount} plan{docCount !== 1 ? 's' : ''}</p>
+                      <p className="text-[11px] text-slate-400">{docCount} plan{docCount !== 1 ? 's' : ''}</p>
 
                       {/* Approval mini-indicators */}
                       {docCount > 0 && (
-                        <div className="flex items-center gap-3 mt-3">
+                        <div className="flex items-center gap-3 mt-2.5">
                           {approved > 0 && (
-                            <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+                            <div className="flex items-center gap-1 text-[11px] font-medium text-emerald-600">
                               <CheckCircle2 className="w-3 h-3" />
                               {approved}
                             </div>
                           )}
                           {pending > 0 && (
-                            <div className="flex items-center gap-1 text-[10px] font-bold text-amber-600">
+                            <div className="flex items-center gap-1 text-[11px] font-medium text-amber-600">
                               <Clock className="w-3 h-3" />
                               {pending}
                             </div>
                           )}
                           {rejected > 0 && (
-                            <div className="flex items-center gap-1 text-[10px] font-bold text-red-500">
+                            <div className="flex items-center gap-1 text-[11px] font-medium text-red-500">
                               <XCircle className="w-3 h-3" />
                               {rejected}
                             </div>
@@ -221,40 +224,40 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
                     </div>
 
                     {/* Card footer */}
-                    <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 bg-gray-50/50">
+                    <div className="flex items-center justify-between px-4 py-2.5 border-t border-slate-100 bg-slate-50/60">
                       <div className="flex -space-x-1.5">
                         {folder.documents?.slice(0, 4).map((_: any, i: number) => (
-                          <div key={i} className="w-6 h-6 rounded-md bg-white border border-gray-200 flex items-center justify-center shadow-sm">
+                          <div key={i} className="w-5 h-5 rounded-md bg-white border border-slate-200 flex items-center justify-center">
                             <FileText className="w-2.5 h-2.5 text-slate-400" />
                           </div>
                         ))}
                         {docCount > 4 && (
-                          <div className="w-6 h-6 rounded-md bg-gray-100 border border-gray-200 flex items-center justify-center">
-                            <span className="text-[8px] font-black text-slate-400">+{docCount - 4}</span>
+                          <div className="w-5 h-5 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center">
+                            <span className="text-[8px] font-semibold text-slate-400">+{docCount - 4}</span>
                           </div>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 text-xs font-bold text-blue-600 group-hover/folder:gap-2 transition-all">
+                      <div className="flex items-center gap-1 text-[11px] font-medium text-blue-600 group-hover/folder:gap-1.5 transition-all">
                         <span>Open</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
+                        <ChevronRight className="w-3 h-3" />
                       </div>
                     </div>
-                  </GlassCard>
+                  </div>
                 );
               })}
 
               {folders.length === 0 && (
-                <div className="md:col-span-2 lg:col-span-3 py-24 flex flex-col items-center justify-center text-center border-2 border-dashed border-gray-200 rounded-3xl">
-                  <div className="w-16 h-16 rounded-3xl bg-gray-50 border border-gray-200 flex items-center justify-center mb-5">
-                    <Folder className="w-8 h-8 text-gray-300" />
+                <div className="md:col-span-2 lg:col-span-3 py-16 flex flex-col items-center justify-center text-center border border-dashed border-slate-200 rounded-xl bg-white">
+                  <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4">
+                    <Folder className="w-6 h-6" />
                   </div>
-                  <h4 className="text-base font-bold text-slate-500">No folders yet</h4>
-                  <p className="text-sm text-slate-400 mt-1.5 max-w-xs">
+                  <h4 className="text-sm font-semibold text-slate-900">No folders yet</h4>
+                  <p className="text-xs text-slate-500 mt-1 max-w-xs">
                     Create a folder to start organising technical drawings and plans.
                   </p>
                   <button
                     onClick={() => setIsCreateModalOpen(true)}
-                    className="mt-5 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-500 transition-all shadow-sm"
+                    className="mt-5 flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 text-white text-xs font-medium hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     <FolderPlus className="w-4 h-4" />
                     New Folder
@@ -282,10 +285,10 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
               transition={{ duration: 0.15 }}
               className="w-full max-w-md relative z-10"
             >
-              <GlassCard className="p-7 border-gray-200" gradient>
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-black text-gray-900">Rename Folder</h3>
-                  <button onClick={() => setRenamingFolder(null)} className="p-1.5 rounded-xl hover:bg-gray-100 text-slate-400 transition-colors">
+              <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-lg">
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="text-base font-semibold text-slate-900">Rename Folder</h3>
+                  <button onClick={() => setRenamingFolder(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors cursor-pointer">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -294,24 +297,24 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
                     type="text" required autoFocus
                     value={renamingFolder.name}
                     onChange={e => setRenamingFolder(f => f ? { ...f, name: e.target.value } : f)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg py-2.5 px-3.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   />
-                  <div className="flex gap-3">
+                  <div className="flex gap-2">
                     <button
                       type="button" onClick={() => setRenamingFolder(null)}
-                      className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-bold transition-all text-sm"
+                      className="flex-1 py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium transition-colors text-sm cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all text-sm"
+                      className="flex-1 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium transition-colors text-sm cursor-pointer"
                     >
                       Rename
                     </button>
                   </div>
                 </form>
-              </GlassCard>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -333,41 +336,41 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
               transition={{ duration: 0.15 }}
               className="w-full max-w-md relative z-10"
             >
-              <GlassCard className="p-7 border-gray-200" gradient>
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-black text-gray-900">New Plans Folder</h3>
-                  <button onClick={() => setIsCreateModalOpen(false)} className="p-1.5 rounded-xl hover:bg-gray-100 text-slate-400 transition-colors">
+              <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-lg">
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="text-base font-semibold text-slate-900">New Plans Folder</h3>
+                  <button onClick={() => setIsCreateModalOpen(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors cursor-pointer">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
                 <form onSubmit={handleCreateFolder} className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Folder Name</label>
+                    <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Folder Name</label>
                     <input
                       type="text" required autoFocus
                       value={newFolderName}
                       onChange={e => setNewFolderName(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg py-2.5 px-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                       placeholder="e.g. Architectural Drawings"
                     />
                   </div>
-                  <div className="flex gap-3 pt-2">
+                  <div className="flex gap-2 pt-1">
                     <button
                       type="button" onClick={() => setIsCreateModalOpen(false)}
-                      className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-bold transition-all text-sm"
+                      className="flex-1 py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium transition-colors text-sm cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit" disabled={isCreating}
-                      className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="flex-1 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium transition-colors text-sm disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {isCreating && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                       {isCreating ? 'Creating…' : 'Create Folder'}
                     </button>
                   </div>
                 </form>
-              </GlassCard>
+              </div>
             </motion.div>
           </motion.div>
         )}

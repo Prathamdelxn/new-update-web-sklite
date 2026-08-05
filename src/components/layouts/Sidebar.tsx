@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Briefcase, Users, Settings, X, Layers,
-  ChevronLeft, ChevronRight, UserCheck, FolderKanban, UserCog,
+  ChevronLeft, ChevronRight,
   LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -42,30 +42,11 @@ const NAV_SECTIONS = [
   },
 ];
 
-const INTERIOR_NAV_SECTIONS = [
-  {
-    label: 'Workspace',
-    items: [
-      { name: 'Dashboard',           href: '/interior/dashboard', icon: LayoutDashboard },
-      { name: 'CRM',                 href: '/interior/crm',       icon: UserCheck },
-      { name: 'Projects',            href: '/interior/projects',  icon: FolderKanban },
-      { name: 'Templates',           href: '/interior/templates', icon: Layers },
-    ],
-  },
-  {
-    label: 'Management',
-    items: [
-      { name: 'User Management',     href: '/interior/users',     icon: UserCog },
-      { name: 'Settings',            href: '/interior/settings',  icon: Settings },
-    ],
-  },
-];
-
-export const Sidebar: React.FC<SidebarProps> = ({ 
-  isOpen, 
-  onClose, 
-  isCollapsed = false, 
-  onToggleCollapse 
+export const Sidebar: React.FC<SidebarProps> = ({
+  isOpen,
+  onClose,
+  isCollapsed = false,
+  onToggleCollapse
 }) => {
   const pathname = usePathname();
   const { user, logout } = useAuth();
@@ -74,8 +55,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     (user as any)?.industryType === 'interior' ||
     (user?.organization as any)?.industryType === 'interior';
 
-  const navSections = isInterior ? INTERIOR_NAV_SECTIONS : NAV_SECTIONS;
-  const dashboardHome = isInterior ? '/interior/dashboard' : '/dashboard';
+  const navSections = NAV_SECTIONS;
+  const dashboardHome = '/dashboard';
 
   return (
     <>

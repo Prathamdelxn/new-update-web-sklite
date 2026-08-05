@@ -126,7 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       Cookies.set('token', token, { expires: 7 });
       setUser(userData);
       const isInteriorOrg = userData?.industryType === 'interior' || userData?.organization?.industryType === 'interior';
-      const targetPath = isInteriorOrg ? '/interior/dashboard' : '/dashboard';
+      const targetPath = isInteriorOrg ? '/interior-new' : '/dashboard';
       router.push(targetPath);
       return;
     }
@@ -146,7 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(userData);
       console.log('Login userData:', userData);
       const isInterior = userData?.industryType === 'interior' || userData?.organization?.industryType === 'interior';
-      const targetPath = isInterior ? '/interior/dashboard' : '/dashboard';
+      const targetPath = isInterior ? '/interior-new' : '/dashboard';
       router.push(targetPath);
     }
   };
@@ -191,6 +191,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('user');
     localStorage.removeItem('saToken');
     localStorage.removeItem('superAdmin');
+    localStorage.removeItem('interiorAccessToken');
+    localStorage.removeItem('interiorRefreshToken');
+    localStorage.removeItem('interiorUser');
+    localStorage.removeItem('interiorOrganization');
     sessionStorage.removeItem('saToken');
     Cookies.remove('token');
     Cookies.remove('token', { path: '/' });

@@ -20,6 +20,7 @@ interface ProjectCardProps {
       longitude?: number;
     };
   };
+  basePath?: string;
   onEdit?: (project: Project) => void;
   onDelete?: (project: Project) => void;
   onSendForSurvey?: (project: Project) => void;
@@ -28,7 +29,7 @@ interface ProjectCardProps {
 }
 
 const statusColors: Record<string, string> = {
-  'Initialized':         'bg-blue-50 text-blue-750 border-blue-200/60',
+  'Initialized':         'bg-blue-50 text-blue-755 border-blue-200/60',
   'Planning':            'bg-purple-50 text-purple-755 border-purple-200/60',
   'Site Survey':         'bg-cyan-50 text-cyan-755 border-cyan-200/60',
   'Ongoing':             'bg-emerald-50 text-emerald-755 border-emerald-200/60',
@@ -50,7 +51,7 @@ const STATUS_PROGRESS: Record<string, number> = {
 };
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
-  project, onEdit, onDelete, onSendForSurvey, onCompleteSurvey, allUsers = [],
+  project, basePath = '/projects', onEdit, onDelete, onSendForSurvey, onCompleteSurvey, allUsers = [],
 }) => {
   const progress = STATUS_PROGRESS[project.status] ?? 10;
   const { user } = useAuth();
@@ -77,7 +78,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     <div
       className="group hover:border-blue-200 hover:shadow-md transition-all duration-300 flex flex-col h-full shadow-sm relative p-0 overflow-hidden rounded-xl bg-white border border-gray-200"
     >
-      <Link href={`/projects/${project._id}`} className="flex flex-col flex-1 outline-none">
+      <Link href={`${basePath}/${project._id}`} className="flex flex-col flex-1 outline-none">
         
         {/* ── Header ── */}
         <div className="flex items-start justify-between p-4 border-b border-slate-50/50">

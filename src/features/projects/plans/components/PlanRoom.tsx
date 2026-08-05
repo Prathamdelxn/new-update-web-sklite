@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  ArrowLeft, Upload, FileText, Trash2, CheckCircle2, XCircle,
+  ArrowLeft, Upload, Trash2, CheckCircle2, XCircle,
   Clock, Eye, Send, Loader2, UserCheck, MessageSquare, PenLine,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -109,49 +109,42 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* ── Header ── */}
       <div className="flex items-center justify-between gap-3">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-slate-500 hover:text-gray-900 transition-colors group"
-        >
-          <div className="p-2 rounded-xl bg-gray-50 border border-gray-200 group-hover:border-blue-300 group-hover:bg-blue-50 transition-all">
-            <ArrowLeft className="w-4 h-4" />
-          </div>
-          <span className="font-bold text-sm">All Folders</span>
-        </button>
+        <div className="min-w-0">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors cursor-pointer mb-1"
+          >
+            <ArrowLeft className="w-3 h-3" />
+            <span>All Folders</span>
+          </button>
+          <h3 className="text-lg font-semibold text-slate-900 truncate">{folder.name}</h3>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {folder.documents?.length || 0} plan{folder.documents?.length !== 1 ? 's' : ''}
+            {Object.keys(annotationCounts).length > 0 && (
+              <> · <span className="text-blue-600 font-medium">{Object.values(annotationCounts).reduce((a, b) => a + b, 0)} annotations</span></>
+            )}
+          </p>
+        </div>
 
         <label className={cn(
-          'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border transition-all shadow-sm cursor-pointer',
+          'flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer shrink-0',
           isUploading
-            ? 'bg-gray-50 border-gray-200 text-slate-400 pointer-events-none'
-            : 'bg-blue-600 border-blue-600 text-white hover:bg-blue-500 shadow-blue-600/25'
+            ? 'bg-blue-600 text-slate-400 pointer-events-none'
+            : 'bg-blue-600 hover:bg-slate-800 text-white'
         )}>
-          {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-          <span>{isUploading ? 'Uploading…' : 'Upload Plan'}</span>
+          {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+          <span>{isUploading ? 'Uploading…' : 'Upload Document'}</span>
           <input type="file" className="hidden" onChange={handleUpload} disabled={isUploading} />
         </label>
       </div>
 
-      {/* ── Folder info bar ── */}
-      <div className="flex items-center gap-4 px-5 py-4 rounded-2xl bg-white border border-gray-200 shadow-sm">
-        <div className="p-3 rounded-xl bg-blue-50 border border-blue-100">
-          <FileText className="w-6 h-6 text-blue-600" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-lg font-black text-gray-900 truncate">{folder.name}</h3>
-          <p className="text-xs text-slate-400 font-medium mt-0.5">
-            {folder.documents?.length || 0} plan{folder.documents?.length !== 1 ? 's' : ''}
-            {Object.keys(annotationCounts).length > 0 && (
-              <> · <span className="text-blue-600 font-bold">{Object.values(annotationCounts).reduce((a, b) => a + b, 0)} annotations</span></>
-            )}
-          </p>
-        </div>
-      </div>
+      <div className="h-px bg-slate-200" />
 
       {/* ── Document list ── */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {folder.documents?.map((raw: any) => {
           const doc = mapDoc(raw);
           const annCount = annotationCounts[doc._id] || 0;
@@ -160,58 +153,58 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
           return (
             <div
               key={doc._id}
-              className="bg-white border border-gray-200 rounded-2xl hover:border-blue-200 hover:shadow-sm transition-all group/doc"
+              className="bg-white border border-slate-200 rounded-xl hover:border-blue-200 hover:shadow-sm transition-all group/doc"
             >
-              <div className="flex items-center gap-4 px-5 py-4">
+              <div className="flex items-center gap-3.5 px-4 py-3.5">
                 {/* File icon */}
-                <div className="w-11 h-11 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center shrink-0 group-hover/doc:border-blue-200 transition-colors">
-                  <FileIconSvg className="w-5 h-5 text-slate-400" />
+                <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0 group-hover/doc:border-blue-200 transition-colors">
+                  <FileIconSvg className="w-4 h-4 text-slate-400" />
                 </div>
 
                 {/* File info */}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="text-sm font-bold text-gray-900 truncate group-hover/doc:text-blue-700 transition-colors">
+                    <h4 className="text-sm font-semibold text-slate-900 truncate group-hover/doc:text-blue-600 transition-colors">
                       {doc.name}
                     </h4>
-                    <span className={cn('px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border shrink-0', statusStyle)}>
+                    <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-medium shrink-0', statusStyle)}>
                       {doc.approvalStatus}
                     </span>
                     {annCount > 0 && (
-                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[9px] font-black text-blue-700 shrink-0">
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-[10px] font-medium text-blue-700 shrink-0">
                         <MessageSquare className="w-2.5 h-2.5" />
                         {annCount}
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] text-slate-400 font-medium">
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[11px] text-slate-400">
                       {new Date(doc.uploadedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
                     {doc.size > 0 && (
                       <>
-                        <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                        <span className="text-[10px] text-slate-400 font-medium">
+                        <span className="w-1 h-1 bg-slate-300 rounded-full" />
+                        <span className="text-[11px] text-slate-400">
                           {(doc.size / 1024 / 1024).toFixed(2)} MB
                         </span>
                       </>
                     )}
                     {doc.versionNumber && (
                       <>
-                        <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                        <span className="text-[10px] text-slate-400 font-medium">v{doc.versionNumber}</span>
+                        <span className="w-1 h-1 bg-slate-300 rounded-full" />
+                        <span className="text-[11px] text-slate-400">v{doc.versionNumber}</span>
                       </>
                     )}
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1 shrink-0">
                   {/* Approval workflow */}
                   {doc.approvalStatus === 'Draft' && isAdmin && (
                     <button
                       onClick={() => setApproverDocId(doc._id)}
-                      className="p-2 rounded-xl bg-gray-50 border border-gray-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
                       title="Send for Approval"
                     >
                       <Send className="w-3.5 h-3.5" />
@@ -222,7 +215,7 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
                       <button
                         onClick={() => handleAction(doc._id, 'respond', { response: 'Approved', versionId: doc.versionId })}
                         disabled={isProcessing}
-                        className="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 hover:bg-emerald-100 transition-all disabled:opacity-50"
+                        className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-50 cursor-pointer"
                         title="Approve"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" />
@@ -230,7 +223,7 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
                       <button
                         onClick={() => handleAction(doc._id, 'respond', { response: 'Rejected', versionId: doc.versionId })}
                         disabled={isProcessing}
-                        className="p-2 rounded-xl bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 transition-all disabled:opacity-50"
+                        className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 cursor-pointer"
                         title="Reject"
                       >
                         <XCircle className="w-3.5 h-3.5" />
@@ -238,12 +231,12 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
                     </>
                   )}
 
-                  <div className="w-px h-6 bg-gray-200 mx-1" />
+                  <div className="w-px h-5 bg-slate-200 mx-1" />
 
                   {/* View */}
                   <button
                     onClick={() => setViewingDoc(doc)}
-                    className="p-2 rounded-xl bg-gray-50 border border-gray-200 text-slate-400 hover:text-gray-700 hover:border-gray-300 transition-all"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
                     title="View plan"
                   >
                     <Eye className="w-3.5 h-3.5" />
@@ -254,10 +247,10 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
                     <button
                       onClick={() => setAnnotatingDoc(doc)}
                       className={cn(
-                        'flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all',
+                        'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer',
                         annCount > 0
-                          ? 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100'
-                          : 'bg-gray-50 border-gray-200 text-slate-500 hover:border-blue-200 hover:text-blue-600 hover:bg-blue-50'
+                          ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                          : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50'
                       )}
                       title="Open annotations"
                     >
@@ -268,11 +261,11 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
 
                   {isAdmin && (
                     <>
-                      <div className="w-px h-6 bg-gray-200 mx-1" />
+                      <div className="w-px h-5 bg-slate-200 mx-1" />
                       <button
                         onClick={() => handleAction(doc._id, 'deleteDocument')}
                         disabled={isProcessing}
-                        className="p-2 rounded-xl bg-gray-50 border border-gray-200 text-slate-400 hover:text-red-500 hover:bg-red-50 hover:border-red-200 transition-all disabled:opacity-50"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 cursor-pointer"
                         title="Delete"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -284,19 +277,19 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
 
               {/* Approvals row */}
               {doc.approvals?.length > 0 && (
-                <div className="flex items-center gap-4 px-5 pb-3 pt-0 flex-wrap">
+                <div className="flex items-center gap-4 px-4 pb-3 pt-0 flex-wrap">
                   {doc.approvals.map((app: any, i: number) => (
                     <div key={i} className="flex items-center gap-1.5">
                       <div className={cn(
-                        'w-5 h-5 rounded-lg flex items-center justify-center',
+                        'w-5 h-5 rounded-md flex items-center justify-center',
                         app.status === 'Approved' ? 'bg-emerald-100 text-emerald-600' :
                           app.status === 'Rejected' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
                       )}>
                         {app.status === 'Approved' ? <UserCheck className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
                       </div>
-                      <span className="text-[10px] font-bold text-slate-400">{app.userName}</span>
+                      <span className="text-[11px] font-medium text-slate-400">{app.userName}</span>
                       <span className={cn(
-                        'text-[9px] font-black uppercase tracking-widest',
+                        'text-[10px] font-medium',
                         app.status === 'Approved' ? 'text-emerald-600' :
                           app.status === 'Rejected' ? 'text-red-600' : 'text-amber-600'
                       )}>{app.status}</span>
@@ -309,12 +302,12 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
         })}
 
         {(!folder.documents || folder.documents.length === 0) && (
-          <div className="py-24 flex flex-col items-center justify-center text-center border-2 border-dashed border-gray-200 rounded-3xl">
-            <div className="w-16 h-16 rounded-3xl bg-gray-50 border border-gray-200 flex items-center justify-center mb-5">
-              <Upload className="w-8 h-8 text-gray-300" />
+          <div className="py-16 flex flex-col items-center justify-center text-center border border-dashed border-slate-200 rounded-xl bg-white">
+            <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4">
+              <Upload className="w-6 h-6" />
             </div>
-            <h4 className="text-base font-bold text-slate-500">No plans uploaded yet</h4>
-            <p className="text-sm text-slate-400 mt-1.5 max-w-xs">
+            <h4 className="text-sm font-semibold text-slate-900">No plans uploaded yet</h4>
+            <p className="text-xs text-slate-500 mt-1 max-w-xs">
               Upload your first drawing or plan using the button above.
             </p>
           </div>

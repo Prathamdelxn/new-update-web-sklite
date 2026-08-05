@@ -195,7 +195,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             exit={{ opacity: 0, scale: 0.97, y: 10 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
             className="relative z-10 flex rounded-2xl overflow-hidden shadow-2xl bg-white"
-            style={{ width: '95vw', maxWidth: 1120, maxHeight: '92vh', minHeight: 500 }}
+            style={{ width: '95vw', maxWidth: 1120, height: '96vh', maxHeight: '96vh', minHeight: 640 }}
             onClick={e => e.stopPropagation()}
           >
             {/* ════ LEFT: Document viewer ════ */}
@@ -303,7 +303,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                       src={document.url}
                       alt={document.name}
                       className="max-w-full object-contain rounded-xl block shadow-md"
-                      style={{ maxHeight: '72vh' }}
+                      style={{ maxHeight: '84vh' }}
                       draggable={false}
                     />
                   ) : (

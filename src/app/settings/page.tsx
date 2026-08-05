@@ -133,7 +133,7 @@ export default function SettingsPage() {
       .then((res) => {
         setSubscription(res.data);
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => {
         setLoadingPlan(false);
       });
@@ -264,7 +264,7 @@ export default function SettingsPage() {
           />
 
         </Group>
-                {/* Workspace */}
+        {/* Workspace */}
 
         <Group title="Workspace">
 
@@ -275,8 +275,8 @@ export default function SettingsPage() {
               loadingPlan
                 ? "Loading subscription..."
                 : subscription?.planName ||
-                  subscription?.plan ||
-                  "Free Plan"
+                subscription?.plan ||
+                "Free Plan"
             }
             right={<ChevronRight className="w-5 h-5 text-slate-400" />}
             onClick={() => router.push("/settings/plan-billing")}
@@ -284,15 +284,15 @@ export default function SettingsPage() {
 
           <Divider />
 
-            <Row
-              icon={Users}
-              title="User Management"
-              subtitle="Manage team members & roles"
-              right={<ChevronRight className="w-5 h-5 text-slate-400" />}
-              onClick={() => router.push("/settings/user-management")}
-            />
+          <Row
+            icon={Users}
+            title="User Management"
+            subtitle="Manage team members & roles"
+            right={<ChevronRight className="w-5 h-5 text-slate-400" />}
+            onClick={() => router.push("/settings/user-management")}
+          />
 
-            {/* <Row
+          {/* <Row
               icon={Users}
               title="User Management"
               subtitle="Manage team members & roles"
@@ -321,7 +321,7 @@ export default function SettingsPage() {
             title="Terms & Conditions"
             subtitle="Read our terms of service"
             right={<ChevronRight className="w-5 h-5 text-slate-400" />}
-           onClick={() => router.push('/settings/terms')}
+            onClick={() => router.push('/settings/terms')}
           />
 
           <Divider />

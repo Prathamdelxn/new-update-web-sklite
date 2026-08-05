@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Loader2, ChevronLeft, ChevronRight, ChevronDown, FolderOpen,
   FileText, Zap, Upload, Trash2, MapPin, Check,
-  HardHat, Sofa, Plus, Navigation, Eye,
+  Plus, Navigation, Eye,
 } from 'lucide-react';
 import { useToast } from '@/providers/ToastContext';
 import { useAuth } from '@/providers/AuthContext';
@@ -57,6 +57,9 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   const isEditing = !!initialData && !!projectId;
   const toast = useToast();
   const { user } = useAuth();
+  const isInterior =
+    (user as any)?.industryType === 'interior' ||
+    (user?.organization as any)?.industryType === 'interior';
 
   // ── Step state (only for create mode) ──
   const [step, setStep] = useState<'category' | 'template' | 'configure'>('category');
@@ -115,13 +118,13 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         startDate: initialData.startDate ? initialData.startDate.split('T')[0] : '',
         endDate: initialData.endDate ? initialData.endDate.split('T')[0] : '',
         needSiteSurvey: initialData.needSiteSurvey || false,
-        projectType: (initialData.projectType as 'Construction' | 'Interior') || 'Construction',
+        projectType: (initialData.projectType as 'Construction' | 'Interior') || (isInterior ? 'Interior' : 'Construction'),
       });
       setDocuments(initialData.documents || []);
       // If we need to fetch drawings for editing, we could, but editing existing drawings isn't explicitly requested here
     } else {
       setStep('category');
-      setForm(emptyForm);
+      setForm({ ...emptyForm, projectType: isInterior ? 'Interior' : 'Construction' });
       setDocuments([]);
       setDrawings([]);
       setSelectedCategory(null);
@@ -776,32 +779,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                           </label>
                         </div>
                       </div>
-
-                      {/* Project Type toggle — only on create */}
-                      {!isEditing && (
-                        <div>
-                          <label className={labelCls}>Project Type</label>
-                          <div className="grid grid-cols-2 gap-3">
-                            {([
-                              { type: 'Construction', icon: HardHat, desc: 'Site construction, civil works', color: form.projectType === 'Construction' ? 'bg-amber-50 border-amber-400 text-amber-800' : 'bg-gray-50 border-gray-200 text-slate-500 hover:border-amber-300' },
-                              { type: 'Interior', icon: Sofa, desc: 'Interior design, FFE, rooms', color: form.projectType === 'Interior' ? 'bg-blue-50 border-blue-400 text-blue-800' : 'bg-gray-50 border-gray-200 text-slate-500 hover:border-blue-300' },
-                            ] as const).map(({ type, icon: Icon, desc, color }) => (
-                              <button
-                                key={type}
-                                type="button"
-                                onClick={() => setForm(f => ({ ...f, projectType: type }))}
-                                className={cn('flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left', color)}
-                              >
-                                <Icon className="w-5 h-5 shrink-0" />
-                                <div>
-                                  <p className="text-sm font-bold leading-tight">{type}</p>
-                                  <p className="text-[10px] opacity-70 leading-tight mt-0.5">{desc}</p>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
 
                     </div>
 
