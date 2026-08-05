@@ -6,8 +6,9 @@
 
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-const INTERIOR_API_BASE_URL =
+const rawBaseUrl =
   process.env.NEXT_PUBLIC_INTERIOR_API_URL || 'https://interior-os-backend-two.vercel.app';
+const INTERIOR_API_BASE_URL = rawBaseUrl.replace(/\/+$/, '');
 
 export const interiorApiClient = axios.create({
   baseURL: `${INTERIOR_API_BASE_URL}/api/v1`,
