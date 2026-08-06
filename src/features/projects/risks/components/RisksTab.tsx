@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
 import api from '@/services/api.client';
 import { useToast } from '@/providers/ToastContext';
 import { useAuth } from '@/providers/AuthContext';
-import { hasProjectPermission, hasAnyProjectPermissionPrefix } from '@/lib/permissions';
+import { hasProjectPermission, hasAnyProjectPermissionPrefix, isProjectLocked } from '@/lib/permissions';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
 import { RiskModal } from '@/features/projects/risks/components/RiskModal';
 import { RiskDetailModal } from '@/features/projects/risks/components/RiskDetailModal';
@@ -101,10 +101,11 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
   const toast = useToast();
   const { user } = useAuth();
 
+  const isLocked = isProjectLocked(project);
   const canView = hasAnyProjectPermissionPrefix(user, project, 'escalation:');
-  const canCreate = hasProjectPermission(user, project, 'escalation:create');
-  const canUpdate = hasProjectPermission(user, project, 'escalation:update');
-  const canDelete = hasProjectPermission(user, project, 'escalation:delete');
+  const canCreate = !isLocked && hasProjectPermission(user, project, 'escalation:create');
+  const canUpdate = !isLocked && hasProjectPermission(user, project, 'escalation:update');
+  const canDelete = !isLocked && hasProjectPermission(user, project, 'escalation:delete');
   const isAdmin = user?.role?.name === 'Admin' || (user?.role?.permissions?.includes('*') ?? false);
 
   const fetchRisks = async () => {

@@ -24,6 +24,26 @@ export function ChatTab({ projectId }: ChatTabProps) {
   const toast = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Measured (not guessed) height — the space above the chat card varies by route
+  // (project name length, badge count, number of tabs), so a hardcoded vh-minus-Npx
+  // calc drifts and forces the whole page to scroll to reach the input. Instead we
+  // size the card to exactly fill the viewport below wherever it actually sits, so
+  // only the message list scrolls — never the page.
+  const [chatHeight, setChatHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    const updateHeight = () => {
+      if (!containerRef.current) return;
+      const top = containerRef.current.getBoundingClientRect().top;
+      const bottomGutter = 24; // matches the page's bottom padding
+      setChatHeight(Math.max(420, window.innerHeight - top - bottomGutter));
+    };
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, []);
 
   const [messages, setMessages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -238,7 +258,11 @@ export function ChatTab({ projectId }: ChatTabProps) {
   }
 
   return (
-    <div className="flex flex-col h-[700px] bg-gray-50/50 rounded-2xl border border-gray-200 overflow-hidden relative">
+    <div
+      ref={containerRef}
+      style={chatHeight ? { height: chatHeight } : undefined}
+      className="flex flex-col h-[calc(100dvh-260px)] min-h-[420px] sm:h-[700px] bg-gray-50/50 rounded-2xl border border-gray-200 overflow-hidden relative"
+    >
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-3">

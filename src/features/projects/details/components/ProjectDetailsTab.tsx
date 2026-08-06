@@ -7,7 +7,7 @@ import { SendForSurveyModal } from '@/features/projects/site-survey/components/S
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthContext';
 import { useSocket } from '@/providers/SocketContext';
-import { hasProjectPermission } from '@/lib/permissions';
+import { hasProjectPermission, isProjectLocked } from '@/lib/permissions';
 import toast from 'react-hot-toast';
 import {
   Map,
@@ -81,7 +81,7 @@ export function ProjectDetailsTab() {
 
   if (!project) return null;
 
-  const canApproveBudget = hasProjectPermission(user, project, 'budget:approve');
+  const canApproveBudget = !isProjectLocked(project) && hasProjectPermission(user, project, 'budget:approve');
   const pendingRequests = project.budgetHistory?.filter((bh: any) => bh.approvalStatus === 'Pending') || [];
 
   const calculateDaysRemaining = () => {
@@ -445,13 +445,15 @@ export function ProjectDetailsTab() {
                 <Users className="w-4.5 h-4.5 text-slate-700" />
                 <h3 className="text-sm xl:text-base font-bold text-slate-900">Coordination Team</h3>
               </div>
-              <button
-                onClick={() => setIsTeamModalOpen(true)}
-                className="flex items-center space-x-0.5 px-2 py-1 bg-blue-50 border border-blue-100 hover:border-blue-300 text-blue-600 rounded-lg text-[10px] font-black uppercase transition-all"
-              >
-                <Plus className="w-3 h-3" />
-                <span>Manage</span>
-              </button>
+              {!isProjectLocked(project) && (
+                <button
+                  onClick={() => setIsTeamModalOpen(true)}
+                  className="flex items-center space-x-0.5 px-2 py-1 bg-blue-50 border border-blue-100 hover:border-blue-300 text-blue-600 rounded-lg text-[10px] font-black uppercase transition-all"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>Manage</span>
+                </button>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -474,6 +476,12 @@ export function ProjectDetailsTab() {
 
               {/* Members display */}
               {project.members?.filter((m: any) => {
+                // Skip orphaned membership records: if a user is deleted directly from
+                // the DB (there's no "remove member" flow yet to clean up the reference),
+                // `m.user` comes back null/undefined and the card would render a fake
+                // "Member" entry with no real name/email. TODO: remove this guard once
+                // remove-member is implemented and cleans up membership records itself.
+                if (!m.user) return false;
                 const u = m.user || m;
                 return u.email !== project.createdBy?.email;
               }).map((member: any, i: number) => {

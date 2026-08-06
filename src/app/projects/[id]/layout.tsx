@@ -7,6 +7,7 @@ import { CreateProjectModal } from '@/components/modals/CreateProjectModal';
 import { ProjectProvider, useProjectContext } from '@/features/projects/contexts/ProjectContext';
 import { useAuth } from '@/providers/AuthContext';
 import { cn } from '@/lib/utils';
+import { hasProjectPermission, isProjectLocked } from '@/lib/permissions';
 import {
   Info, FileText, DollarSign, Package, Files, Map,
   AlertCircle, ShieldAlert, Calendar,
@@ -103,6 +104,8 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
     (user?.organization as any)?.industryType === 'interior';
   const projectsListRoute = (project?.projectType === 'Interior' || (!project && isInteriorOrg)) ? '/interior-new/projects' : '/projects';
 
+  const canEditProject = !isProjectLocked(project) && hasProjectPermission(user, project, 'projects:update');
+
   const headerContent = project ? (
     <div className="flex items-center justify-between w-full pr-4">
       <div className="flex items-center gap-3 min-w-0">
@@ -127,13 +130,15 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
           </span>
         )}
       </div>
-      <button
-        onClick={() => setIsEditModalOpen(true)}
-        title="Edit project"
-        className="shrink-0 p-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-500 hover:text-slate-900 hover:bg-slate-100 hover:border-slate-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] active:scale-95 transition-all duration-200 cursor-pointer"
-      >
-        <Pencil className="w-4 h-4" />
-      </button>
+      {canEditProject && (
+        <button
+          onClick={() => setIsEditModalOpen(true)}
+          title="Edit project"
+          className="shrink-0 p-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-500 hover:text-slate-900 hover:bg-slate-100 hover:border-slate-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] active:scale-95 transition-all duration-200 cursor-pointer"
+        >
+          <Pencil className="w-4 h-4" />
+        </button>
+      )}
     </div>
   ) : null;
 

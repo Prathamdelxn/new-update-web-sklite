@@ -2,20 +2,23 @@
 
 import { Check, X } from 'lucide-react';
 
-const features = [
-  { name: 'Up to 10 projects', included: true },
-  { name: 'Up to 10 team members', included: true },
-  { name: 'Milestones & Tasks', included: true },
-  { name: 'Materials tracking', included: true },
-  { name: 'Issues & Risks', included: true },
-  { name: 'Custom roles', included: true },
-  { name: 'BOQ Import (XLS/XER)', included: false },
-  { name: 'Interior project type', included: false },
-  { name: 'Export reports', included: false },
-  { name: 'Arabic / RTL interface', included: false },
+const FEATURE_CATALOG = [
+  { key: 'basic_boq', name: 'BOQ Management' },
+  { key: 'milestones', name: 'Milestones & Tasks' },
+  { key: 'materials', name: 'Materials tracking' },
+  { key: 'issues', name: 'Issues & Risks' },
+  { key: 'custom_roles', name: 'Custom roles' },
+  { key: 'boq_import', name: 'BOQ Import (XLS/XER)' },
+  { key: 'interior', name: 'Interior project type' },
+  { key: 'export_reports', name: 'Export reports' },
+  { key: 'arabic', name: 'Arabic / RTL interface' },
 ];
 
-export default function FeatureList() {
+interface FeatureListProps {
+  features: string[];
+}
+
+export default function FeatureList({ features }: FeatureListProps) {
   return (
     <div className="bg-white rounded-3xl border border-slate-200 p-6">
 
@@ -25,36 +28,39 @@ export default function FeatureList() {
 
       <div className="space-y-5">
 
-        {features.map((feature) => (
-          <div
-            key={feature.name}
-            className="flex items-center gap-4"
-          >
+        {FEATURE_CATALOG.map((feature) => {
+          const included = features.includes(feature.key);
+          return (
             <div
-              className={`w-6 h-6 rounded-lg flex items-center justify-center ${
-                feature.included
-                  ? 'bg-green-100 text-green-600'
-                  : 'bg-slate-100 text-slate-400'
-              }`}
+              key={feature.key}
+              className="flex items-center gap-4"
             >
-              {feature.included ? (
-                <Check className="w-4 h-4" />
-              ) : (
-                <X className="w-4 h-4" />
-              )}
-            </div>
+              <div
+                className={`w-6 h-6 rounded-lg flex items-center justify-center ${
+                  included
+                    ? 'bg-green-100 text-green-600'
+                    : 'bg-slate-100 text-slate-400'
+                }`}
+              >
+                {included ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <X className="w-4 h-4" />
+                )}
+              </div>
 
-            <span
-              className={`${
-                feature.included
-                  ? 'text-slate-800'
-                  : 'text-slate-400 line-through'
-              }`}
-            >
-              {feature.name}
-            </span>
-          </div>
-        ))}
+              <span
+                className={`${
+                  included
+                    ? 'text-slate-800'
+                    : 'text-slate-400 line-through'
+                }`}
+              >
+                {feature.name}
+              </span>
+            </div>
+          );
+        })}
 
       </div>
 

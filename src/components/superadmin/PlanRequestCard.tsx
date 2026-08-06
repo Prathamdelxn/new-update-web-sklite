@@ -84,7 +84,7 @@ const handleAction = async(note:string)=>{
          ? 'Approved'
          : 'Rejected',
 
-         note
+         reviewNote: note
       }
     );
 

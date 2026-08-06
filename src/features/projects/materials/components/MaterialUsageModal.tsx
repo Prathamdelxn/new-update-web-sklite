@@ -103,8 +103,8 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
               <div className="p-8 max-h-[90vh] overflow-y-auto custom-scrollbar">
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center space-x-3">
-                    <div className="p-3 rounded-2xl bg-purple-50 border border-purple-200">
-                      <History className="w-6 h-6 text-purple-600" />
+                    <div className="p-3 rounded-2xl bg-blue-50 border border-blue-200">
+                      <History className="w-6 h-6 text-blue-600" />
                     </div>
                     <div>
                       <h2 className="text-xl font-bold text-gray-900">Log Material Usage</h2>
@@ -121,13 +121,13 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-slate-600 ml-1">Work Location</label>
                       <div className="relative group">
-                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-purple-500 transition-colors" />
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                         <input
                           type="text"
                           required
                           value={formData.location}
                           onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 pl-10 pr-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 text-sm transition-all"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 pl-10 pr-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-sm transition-all"
                           placeholder="e.g. Block A, Floor 2"
                         />
                       </div>
@@ -135,13 +135,13 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-slate-600 ml-1">Type of Work</label>
                       <div className="relative group">
-                        <Clipboard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-purple-500 transition-colors" />
+                        <Clipboard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                         <input
                           type="text"
                           required
                           value={formData.workType}
                           onChange={(e) => setFormData({ ...formData, workType: e.target.value })}
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 pl-10 pr-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 text-sm transition-all"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 pl-10 pr-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-sm transition-all"
                           placeholder="e.g. Concreting"
                         />
                       </div>
@@ -154,7 +154,7 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
                       <button
                         type="button"
                         onClick={addItem}
-                        className="text-xs font-bold text-purple-600 hover:text-purple-500 flex items-center space-x-1"
+                        className="text-xs font-bold text-blue-600 hover:text-blue-500 flex items-center space-x-1"
                       >
                         <Plus className="w-3 h-3" />
                         <span>Add Item</span>
@@ -170,7 +170,7 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
                               required
                               value={item.materialId}
                               onChange={(e) => updateItem(index, 'materialId', e.target.value)}
-                              className="w-full bg-white border border-gray-200 rounded-lg py-1.5 px-3 text-xs text-gray-900 focus:outline-none focus:border-purple-400"
+                              className="w-full bg-white border border-gray-200 rounded-lg py-1.5 px-3 text-xs text-gray-900 focus:outline-none focus:border-blue-400"
                             >
                               <option value="">Select Material</option>
                               {materials.map(m => (
@@ -184,8 +184,9 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
                               <input
                                 type="number"
                                 required
-                                value={item.quantity}
-                                onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
+                                placeholder="0"
+                                value={item.quantity === 0 ? '' : item.quantity}
+                                onChange={(e) => updateItem(index, 'quantity', e.target.value === '' ? 0 : Number(e.target.value))}
                                 className="w-full bg-transparent py-1.5 px-3 text-xs text-gray-900 focus:outline-none"
                               />
                               <span className="text-[9px] font-bold text-slate-400 uppercase">{item.unit || '-'}</span>
@@ -216,7 +217,7 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="flex-2 py-3 px-8 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-purple-600/20 flex items-center justify-center space-x-2"
+                      className="flex-2 py-3 px-8 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-blue-600/20 flex items-center justify-center space-x-2"
                     >
                       {isLoading ? (
                         <>

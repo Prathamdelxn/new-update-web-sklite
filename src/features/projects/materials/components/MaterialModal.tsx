@@ -182,8 +182,9 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                           <label className="text-sm font-medium text-slate-600 ml-1">Initial Stock</label>
                           <input
                             type="number"
-                            value={formData.quantity}
-                            onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
+                            placeholder="0"
+                            value={formData.quantity === 0 ? '' : formData.quantity}
+                            onChange={(e) => setFormData({ ...formData, quantity: e.target.value === '' ? 0 : Number(e.target.value) })}
                             className="w-full bg-white border border-gray-200 rounded-xl py-2.5 px-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
                           />
                         </div>
@@ -211,8 +212,9 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                           type="number"
                           required
                           min="1"
-                          value={formData.quantity}
-                          onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
+                          placeholder="0"
+                          value={formData.quantity === 0 ? '' : formData.quantity}
+                          onChange={(e) => setFormData({ ...formData, quantity: e.target.value === '' ? 0 : Number(e.target.value) })}
                           className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 pl-10 pr-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-bold"
                         />
                       </div>
