@@ -512,12 +512,12 @@ export const TemplateList = () => {
                         />
                       </div>
                     ) : (
-                      <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center border border-gray-200 flex-shrink-0">
-                        <Layers className="w-6 h-6 text-gray-400" />
+                      <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center border border-blue-100 flex-shrink-0">
+                        <Layers className="w-6 h-6 text-blue-400" />
                       </div>
                     )}
-                    
-                    <div className="flex-1 min-w-0 grid grid-cols-2 gap-y-1.5 gap-x-2">
+
+                    <div className="flex-1 min-w-0 grid grid-cols-2 gap-y-1.5 gap-x-2 self-center">
                       {/* Budget - Full width row */}
                       {budgetDisplay && (
                         <div className="col-span-2 flex items-center gap-1.5 text-xs font-medium text-gray-700">
@@ -551,12 +551,12 @@ export const TemplateList = () => {
                       )}
                     </div>
                   </div>
-  {/* Description */}
-                  <p className="text-sm text-gray-500 leading-relaxed line-clamp-2 mt-1.5 ">
+                  {/* Description */}
+                  <p className="text-sm text-gray-500 leading-relaxed line-clamp-2 mt-2.5">
                     {template.description || 'No description provided for this template.'}
                   </p>
                   {/* Divider */}
-                  <div className=" pb-3 border-t border-gray-100" />
+                  <div className="my-3 border-t border-gray-100" />
 
                   {/* Footer */}
                   <div className="flex items-center justify-between">

@@ -3,6 +3,7 @@ import { X, CheckCircle2, XCircle, Clock, ShieldCheck, AlertCircle, Hourglass, I
 import { cn, formatCurrency } from '@/lib/utils';
 import api from '@/services/api.client';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
+import { isProjectLocked } from '@/lib/permissions';
 
 interface BOQViewModalProps {
   isOpen: boolean;
@@ -57,8 +58,9 @@ export const BOQViewModal: React.FC<BOQViewModalProps> = ({
   if (!currentView) return null;
 
   // Determine if the user can approve the currently viewing item
+  const isLocked = isProjectLocked(project);
   const isTargetApprover = String(user?.id || user?._id) === String(viewingHistory[0]?.requestedApprover);
-  const canApproveThis = (canApprove || isTargetApprover || isAdmin);
+  const canApproveThis = !isLocked && (canApprove || isTargetApprover || isAdmin);
   const showApprovalButtons = selectedVersionIdx === 0 && viewingHistory[0]?.status === 'Pending' && canApproveThis;
 
   return (

@@ -28,6 +28,21 @@ export default function PlanRequestsPage() {
   const [loading, setLoading] = useState(true);
 
 
+  const counts = useMemo(() => ({
+    All: requests.length,
+    Pending: requests.filter((r) => r.status === 'Pending').length,
+    Approved: requests.filter((r) => r.status === 'Approved').length,
+    Rejected: requests.filter((r) => r.status === 'Rejected').length,
+  }), [requests]);
+
+  const badgeColor: Record<string, string> = {
+    All: 'bg-slate-500',
+    Pending: 'bg-orange-500',
+    Approved: 'bg-green-600',
+    Rejected: 'bg-red-600',
+  };
+
+
 
   const fetchPlanRequests = async () => {
 
@@ -264,8 +279,8 @@ className="h-72"
 
                 onClick={() => setStatus(item)}
 
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
-                  
+                className={`relative px-3 py-2 rounded-lg text-sm font-medium transition ${
+
                   status === item
 
                   ? 'bg-[#33206F] text-white'
@@ -277,6 +292,14 @@ className="h-72"
               >
 
                 {item}
+
+                {counts[item] > 0 && (
+                  <span
+                    className={`absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold text-white flex items-center justify-center border-2 border-white ${badgeColor[item]}`}
+                  >
+                    {counts[item]}
+                  </span>
+                )}
 
               </button>
 

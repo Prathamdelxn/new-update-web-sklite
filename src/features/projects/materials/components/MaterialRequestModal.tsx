@@ -131,8 +131,9 @@ export const MaterialRequestModal: React.FC<MaterialRequestModalProps> = ({
                         <input
                           type="number"
                           min="1"
-                          value={item.quantity}
-                          onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                          placeholder="0"
+                          value={item.quantity === 0 ? '' : item.quantity}
+                          onChange={(e) => handleItemChange(index, 'quantity', e.target.value === '' ? 0 : Number(e.target.value))}
                           className="w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
                         />
                       </div>

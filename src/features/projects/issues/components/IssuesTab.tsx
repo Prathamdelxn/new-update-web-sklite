@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils';
 import api from '@/services/api.client';
 import { useToast } from '@/providers/ToastContext';
 import { useAuth } from '@/providers/AuthContext';
-import { hasProjectPermission } from '@/lib/permissions';
+import { hasProjectPermission, isProjectLocked } from '@/lib/permissions';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
 import { IssueModal } from '@/features/projects/issues/components/IssueModal';
 import { IssueDetailModal } from '@/features/projects/issues/components/IssueDetailModal';
@@ -106,6 +106,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
 
   const handleDeleteIssue = async (e: React.MouseEvent, issueId: string) => {
     e.stopPropagation();
+    if (isProjectLocked(project)) { toast.error('This project is locked and can no longer be modified.'); return; }
     if (!window.confirm(`Delete this ${activeType.toLowerCase()}? This cannot be undone.`)) return;
     setDeletingId(issueId);
     try {
@@ -127,6 +128,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
 
   const handleAssignSnagForFixing = async (assignedUser: any) => {
     if (!assigningSnag) return;
+    if (isProjectLocked(project)) { toast.error('This project is locked and can no longer be modified.'); return; }
     try {
       // 1. Update snag to "In Progress" and set assignedTo
       await api.patch(`/snags/${assigningSnag._id}`, {
@@ -152,6 +154,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
 
   const handleCompleteSnagAction = async (proofUrl: string, details: string) => {
     if (!completingSnag) return;
+    if (isProjectLocked(project)) { toast.error('This project is locked and can no longer be modified.'); return; }
     try {
       await api.patch(`/snags/${completingSnag._id}`, {
         status: 'Resolved',
@@ -170,6 +173,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
   };
 
   const handleBulkSendDrafts = async () => {
+    if (isProjectLocked(project)) { toast.error('This project is locked and can no longer be modified.'); return; }
     const draftSnags = issues.filter(i => i.status === 'Draft');
     if (draftSnags.length === 0) return;
 
@@ -202,6 +206,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
   };
 
   const handleFinalizeSnagging = async () => {
+    if (isProjectLocked(project)) { toast.error('This project is locked and can no longer be modified.'); return; }
     if (!window.confirm('Are you sure you want to finalize the snagging phase? This will set the project status to Snagging Completed.')) return;
 
     setFinalizing(true);
@@ -274,10 +279,27 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
   });
 
   // ── Permissions ────────────────────────────────────────────────────────
-  const isInspector = ((project?.snaggedBy as any)?._id || project?.snaggedBy) === currentUserId;
-  const canAssignSnagging = hasProjectPermission(user, project, 'snag:assign');
-  const canCompleteSnag = hasProjectPermission(user, project, 'snag:complete');
+  const isLocked = isProjectLocked(project);
+  const isInspector = !isLocked && (((project?.snaggedBy as any)?._id || project?.snaggedBy) === currentUserId);
+  const isAdmin = user?.role?.name === 'Admin' || (user?.role?.permissions?.includes('*') ?? false);
+  const canView = isAdmin || hasProjectPermission(user, project, 'snags:view');
+  const canCreate = !isLocked && (isAdmin || hasProjectPermission(user, project, 'snags:create'));
+  const canUpdate = !isLocked && (isAdmin || hasProjectPermission(user, project, 'snags:update'));
+  const canDelete = !isLocked && (isAdmin || hasProjectPermission(user, project, 'snags:delete'));
+  const canAssignSnagging = !isLocked && (isAdmin || hasProjectPermission(user, project, 'snag:assign'));
+  const canCompleteSnag = !isLocked && (isAdmin || hasProjectPermission(user, project, 'snag:complete'));
   const isSnaggingActive = project?.status === 'Under Snagging' || project?.status === 'Snagging Completed';
+
+  if (!canView) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+          <Lock className="w-6 h-6 text-gray-400" />
+        </div>
+        <p className="text-sm font-bold text-slate-500">You don't have permission to view the Snags & Issues Management module.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -344,7 +366,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
               )}
             </>
           )}
-          {(activeType === 'Issue' || isInspector || canAssignSnagging || user?.role?.name === 'Admin') && (
+          {(canCreate || isInspector) && (
             <button
               onClick={() => setIsModalOpen(true)}
               className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all active:scale-[0.98] shadow-lg shadow-blue-600/20"
@@ -552,31 +574,35 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                             </button>
                           )}
 
-                          {item.status === 'Draft' && isInspector && (
+                          {item.status === 'Draft' && isInspector && (canUpdate || canDelete) && (
                             <div className="flex items-center space-x-1">
-                              <button
-                                onClick={() => setEditingIssue(item)}
-                                title="Edit snag"
-                                className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded-xl transition-all"
-                              >
-                                <Pencil className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                onClick={(e) => handleDeleteIssue(e, item._id)}
-                                disabled={deletingId === item._id}
-                                title="Delete snag"
-                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-xl transition-all disabled:opacity-40"
-                              >
-                                {deletingId === item._id ? (
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                ) : (
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                )}
-                              </button>
+                              {canUpdate && (
+                                <button
+                                  onClick={() => setEditingIssue(item)}
+                                  title="Edit snag"
+                                  className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded-xl transition-all"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              {canDelete && (
+                                <button
+                                  onClick={(e) => handleDeleteIssue(e, item._id)}
+                                  disabled={deletingId === item._id}
+                                  title="Delete snag"
+                                  className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-xl transition-all disabled:opacity-40"
+                                >
+                                  {deletingId === item._id ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+                              )}
                             </div>
                           )}
 
-                          {item.status === 'In Progress' && (isAssignee || canCompleteSnag) && (
+                          {item.status === 'In Progress' && !isLocked && (isAssignee || canCompleteSnag) && (
                             <button
                               onClick={() => setCompletingSnag(item)}
                               className="flex items-center space-x-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-xl px-3 py-1.5 text-[10px] font-bold text-emerald-600 transition-all shrink-0 shadow-sm"
@@ -643,23 +669,27 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                         {issue.status}
                       </span>
                       <div className="flex items-center space-x-1" onClick={e => e.stopPropagation()}>
-                        <button
-                          onClick={() => setEditingIssue(issue)}
-                          title="Edit issue"
-                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={(e) => handleDeleteIssue(e, issue._id)}
-                          disabled={deletingId === issue._id}
-                          title="Delete issue"
-                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-40"
-                        >
-                          {deletingId === issue._id
-                            ? <Loader2 className="w-4 h-4 animate-spin" />
-                            : <Trash2 className="w-4 h-4" />}
-                        </button>
+                        {canUpdate && (
+                          <button
+                            onClick={() => setEditingIssue(issue)}
+                            title="Edit issue"
+                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            onClick={(e) => handleDeleteIssue(e, issue._id)}
+                            disabled={deletingId === issue._id}
+                            title="Delete issue"
+                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-40"
+                          >
+                            {deletingId === issue._id
+                              ? <Loader2 className="w-4 h-4 animate-spin" />
+                              : <Trash2 className="w-4 h-4" />}
+                          </button>
+                        )}
                         <button
                           onClick={() => setSelectedIssue(issue)}
                           className="p-2 rounded-lg bg-gray-100 text-slate-500 hover:text-gray-900 transition-all"
@@ -702,6 +732,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
         issue={selectedIssue}
         projectId={projectId}
         type={activeType}
+        isLocked={isLocked}
       />
 
       {/* ESCALATION MATRIX SETUP MODAL */}
@@ -709,6 +740,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
         isOpen={isEscalationOpen}
         onClose={() => { setIsEscalationOpen(false); fetchEscalationMatrix(); }}
         projectId={projectId}
+        isLocked={isLocked}
       />
 
       {/* ASSIGN MEMBER FOR SNAG MODAL */}

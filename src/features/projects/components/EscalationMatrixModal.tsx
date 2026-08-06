@@ -18,9 +18,10 @@ interface EscalationMatrixModalProps {
   isOpen: boolean;
   onClose: () => void;
   projectId: string;
+  isLocked?: boolean;
 }
 
-export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ isOpen, onClose, projectId }) => {
+export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ isOpen, onClose, projectId, isLocked }) => {
   const [rules, setRules]     = useState<EscalationRule[]>([]);
   const [members, setMembers] = useState<{ _id: string; name: string; role?: string }[]>([]);
   const [loading, setLoading] = useState(false);
@@ -105,6 +106,7 @@ export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ is
   };
 
   const handleSave = async () => {
+    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
     // Validate: make sure every escalation level has a person assigned
     for (let i = 0; i < rules.length; i++) {
       if (!rules[i].user) {
@@ -174,13 +176,15 @@ export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ is
                           <span className="text-xs font-black uppercase tracking-widest text-slate-800 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">
                             Escalation Level {rule.level}
                           </span>
-                          <button
-                            onClick={() => removeLevel(i)}
-                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                            title="Remove level"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {!isLocked && (
+                            <button
+                              onClick={() => removeLevel(i)}
+                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                              title="Remove level"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
 
                         <div className="grid grid-cols-1 gap-3">
@@ -191,6 +195,7 @@ export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ is
                                 <select
                                   value={rule.user}
                                   onChange={e => updateRuleUser(i, e.target.value)}
+                                  disabled={isLocked}
                                   className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-all shadow-sm"
                                 >
                                   <option value="">Select Member</option>
@@ -212,13 +217,15 @@ export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ is
                       </div>
                     ))}
 
-                    <button
-                      onClick={addLevel}
-                      className="w-full py-3 border-2 border-dashed border-gray-300 rounded-2xl text-sm font-bold text-slate-500 hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50 transition-all flex items-center justify-center space-x-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Add Escalation Level</span>
-                    </button>
+                    {!isLocked && (
+                      <button
+                        onClick={addLevel}
+                        className="w-full py-3 border-2 border-dashed border-gray-300 rounded-2xl text-sm font-bold text-slate-500 hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50 transition-all flex items-center justify-center space-x-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Add Escalation Level</span>
+                      </button>
+                    )}
 
                     <div className="p-4 bg-orange-50/50 rounded-2xl border border-orange-100">
                       <p className="text-xs text-slate-600 leading-relaxed">
@@ -234,16 +241,18 @@ export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ is
                   onClick={onClose}
                   className="px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-gray-100 transition-all"
                 >
-                  Cancel
+                  {isLocked ? 'Close' : 'Cancel'}
                 </button>
-                <button
-                  onClick={handleSave}
-                  disabled={saving || loading}
-                  className="flex items-center space-x-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 shadow-sm shadow-orange-600/20"
-                >
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  <span>Save Matrix</span>
-                </button>
+                {!isLocked && (
+                  <button
+                    onClick={handleSave}
+                    disabled={saving || loading}
+                    className="flex items-center space-x-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 shadow-sm shadow-orange-600/20"
+                  >
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    <span>Save Matrix</span>
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>

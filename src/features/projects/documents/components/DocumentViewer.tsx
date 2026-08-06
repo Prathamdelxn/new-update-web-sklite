@@ -62,7 +62,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const toast = useToast();
   const { user } = useAuth();
   const { project } = useProjectContext();
-  const isAdmin = hasProjectPermission(user, project, 'land:delete') || user?.role?.name === 'Admin';
+  const isAdmin = user?.role?.name === 'Admin' || (user?.role?.permissions?.includes('*') ?? false);
+  const canAnnotate = isAdmin || hasProjectPermission(user, project, 'annotations:create') || hasProjectPermission(user, project, 'annotations:update');
+  const canDeleteAnnotation = isAdmin || hasProjectPermission(user, project, 'annotations:delete');
 
   const loadAnnotations = useCallback(async () => {
     if (!projectId || !document?._id) return;
@@ -239,7 +241,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                   </button>
 
                   {/* Pin mode toggle */}
-                  {projectId && (
+                  {projectId && canAnnotate && (
                     <button
                       onClick={() => { setPinMode(p => !p); setActivePin(null); }}
                       className={cn(
@@ -461,12 +463,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                           <MapPin className="w-5 h-5 text-gray-300" />
                         </div>
                         <p className="text-sm font-bold text-slate-400">No annotations yet</p>
-                        <p className="text-xs text-slate-400 mt-1 leading-relaxed">Use "Add Pin" above to mark important points on this plan</p>
+                        {canAnnotate && (
+                          <p className="text-xs text-slate-400 mt-1 leading-relaxed">Use "Add Pin" above to mark important points on this plan</p>
+                        )}
                       </div>
                     ) : (
                       <div className="divide-y divide-gray-100">
                         {annotations.map((ann, idx) => {
-                          const canDelete = isAdmin || ann.createdBy === (user as any)?._id;
+                          const canDelete = canDeleteAnnotation || ann.createdBy === (user as any)?._id;
                           const isActive = activePin === ann._id;
                           return (
                             <div
