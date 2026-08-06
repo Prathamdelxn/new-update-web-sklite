@@ -8,6 +8,7 @@ import React, { useEffect, useState } from 'react';
 import { Truck, Star, ShieldCheck, Clock, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
+import { CreateVendorModal } from '@/components/modals/CreateVendorModal';
 
 interface InteriorVendorsViewProps {
   projectId: string;
@@ -16,6 +17,7 @@ interface InteriorVendorsViewProps {
 export default function InteriorVendorsView({ projectId }: InteriorVendorsViewProps) {
   const [pos, setPos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAddVendorOpen, setIsAddVendorOpen] = useState(false);
 
   useEffect(() => {
     const fetchPOs = async () => {
@@ -33,6 +35,11 @@ export default function InteriorVendorsView({ projectId }: InteriorVendorsViewPr
     };
     if (projectId) fetchPOs();
   }, [projectId]);
+
+  const handleVendorAdded = () => {
+    // Optionally re-fetch vendors or pos here if needed
+    // fetchPOs();
+  };
 
   const vendorsMap = new Map<string, { count: number; totalValue: number }>();
   pos.forEach((po) => {
@@ -76,11 +83,19 @@ export default function InteriorVendorsView({ projectId }: InteriorVendorsViewPr
   return (
     <div className="p-6 lg:p-8 space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Project Vendors & Subcontractors</h2>
-        <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-          Review ratings, delivery compliance scores, and contract values for active trade partners.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Project Vendors & Subcontractors</h2>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+            Review active trade partners and contract values.
+          </p>
+        </div>
+        <button
+          onClick={() => setIsAddVendorOpen(true)}
+          className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all"
+        >
+          + Add Vendor
+        </button>
       </div>
 
       {vendors.length === 0 ? (
@@ -88,7 +103,7 @@ export default function InteriorVendorsView({ projectId }: InteriorVendorsViewPr
           No active vendors found. Vendors are dynamically registered here once a Purchase Order is issued.
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {vendors.map((vendor) => (
             <Card key={vendor.name} className="hover:shadow-md hover:border-[hsl(var(--primary)/0.3)] transition-all">
               <CardContent className="p-5 space-y-4">
@@ -102,13 +117,9 @@ export default function InteriorVendorsView({ projectId }: InteriorVendorsViewPr
                       <p className="text-xs text-[hsl(var(--muted-foreground))]">{vendor.trade}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 text-xs font-bold text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full">
-                    <Star className="w-3.5 h-3.5 fill-current" />
-                    {vendor.rating}
-                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-xs border-t border-b border-[hsl(var(--border))] py-3 my-1">
+                <div className="grid grid-cols-2 gap-2 text-xs border-t border-[hsl(var(--border))] pt-4 mt-2">
                   <div>
                     <p className="text-[hsl(var(--muted-foreground))]">Contracts Held</p>
                     <p className="font-semibold mt-0.5">{vendor.contractsCount} Purchase Orders</p>
@@ -118,40 +129,17 @@ export default function InteriorVendorsView({ projectId }: InteriorVendorsViewPr
                     <p className="font-semibold text-[hsl(var(--primary))] mt-0.5">{formatCost(vendor.totalValue)}</p>
                   </div>
                 </div>
-
-                <div className="space-y-3">
-                  <h4 className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Performance Indicators</h4>
-                  <div className="space-y-2">
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="flex items-center gap-1 text-[hsl(var(--muted-foreground))]">
-                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> Quality Compliance
-                        </span>
-                        <span className="font-semibold">{vendor.compliance}%</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-[hsl(var(--muted))] rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${vendor.compliance}%` }} />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="flex items-center gap-1 text-[hsl(var(--muted-foreground))]">
-                          <Clock className="w-3.5 h-3.5 text-blue-500" /> On-Time Delivery Rate
-                        </span>
-                        <span className="font-semibold">{vendor.onTime}%</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-[hsl(var(--muted))] rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-500 rounded-full" style={{ width: `${vendor.onTime}%` }} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      <CreateVendorModal 
+        isOpen={isAddVendorOpen} 
+        onClose={() => setIsAddVendorOpen(false)} 
+        onSuccess={handleVendorAdded} 
+      />
     </div>
   );
 }

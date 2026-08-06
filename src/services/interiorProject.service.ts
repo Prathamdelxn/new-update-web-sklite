@@ -73,6 +73,7 @@ export const interiorProjectService = {
   // Vendors / Inventory
   getInventory: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/inventory`).then((res) => res.data),
   logInventoryInstall: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/inventory`, data).then((res) => res.data),
+  createInventoryMaterial: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/inventory`, { ...data, action: 'create_material' }).then((res) => res.data),
 
   // Drawings
   getDrawings: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/drawings`).then((res) => res.data),
