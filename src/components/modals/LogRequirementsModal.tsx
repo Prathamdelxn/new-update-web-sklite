@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, PenTool, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
+import interiorApiClient from '@/services/interiorApi.client';
 import { motion } from 'framer-motion';
 
 interface Props {
@@ -51,7 +52,7 @@ export const LogRequirementsModal = ({ isOpen, onClose, customerId, onSuccess, u
 
       await api.patch(`/crm/customers/${customerId}`, updatePayload);
 
-      await api.post('/crm/activities', {
+      await interiorApiClient.post('/crm/activities', {
         customer: customerId,
         type: 'Requirement Gathering',
         status: 'Completed',

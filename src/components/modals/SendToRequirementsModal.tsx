@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, PenTool } from 'lucide-react';
 import api from '@/services/api.client';
+import interiorApiClient from '@/services/interiorApi.client';
 import { useToast } from '@/providers/ToastContext';
 
 interface Props {
@@ -39,7 +40,7 @@ export function SendToRequirementsModal({ isOpen, onClose, customerId, onSuccess
       await api.patch(`/crm/customers/${customerId}`, updatePayload);
 
       // 2. Log activity
-      await api.post('/crm/activities', {
+      await interiorApiClient.post('/crm/activities', {
         customer: customerId,
         type: 'Status Change',
         status: 'Completed',

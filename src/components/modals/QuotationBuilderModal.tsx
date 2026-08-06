@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Trash2, Calculator, Save } from 'lucide-react';
 import api from '@/services/api.client';
+import interiorApiClient from '@/services/interiorApi.client';
 import { useToast } from '@/providers/ToastContext';
 
 interface Item {
@@ -97,7 +98,7 @@ export function QuotationBuilderModal({ isOpen, onClose, customerId, existingQuo
       });
 
       // Also log the activity
-      await api.post('/crm/activities', {
+      await interiorApiClient.post('/crm/activities', {
         customer: customerId,
         type: 'Status Change',
         status: 'Completed',

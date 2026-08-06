@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import api from '@/services/api.client';
+import interiorApiClient from '@/services/interiorApi.client';
 import { useToast } from '@/providers/ToastContext';
 
 interface ScheduleFollowUpModalProps {
@@ -34,7 +35,7 @@ export function ScheduleFollowUpModal({ isOpen, onClose, customerId, customerNam
     setIsSubmitting(true);
     try {
       // 1. Create Follow-up Activity
-      await api.post('/crm/activities', {
+      await interiorApiClient.post('/crm/activities', {
         ...form,
         customer: customerId
       });

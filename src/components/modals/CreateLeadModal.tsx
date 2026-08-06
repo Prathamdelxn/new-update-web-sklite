@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, User, Phone, Mail, MapPin, Building, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '@/services/api.client';
+import interiorApiClient from '@/services/interiorApi.client';
 import { useToast } from '@/providers/ToastContext';
 
 interface CreateLeadModalProps {
@@ -36,7 +36,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClos
 
     try {
       setIsSubmitting(true);
-      await api.post('/crm/customers', formData);
+      await interiorApiClient.post('/crm/customers', formData);
       toast.success('Lead created successfully!');
       onSuccess();
       onClose();
@@ -50,7 +50,9 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClos
         projectLocation: '',
       });
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to create lead');
+      console.error('Lead creation error:', error);
+      const errMsg = error.response?.data ? JSON.stringify(error.response.data) : error.message;
+      toast.error(`Error: ${errMsg}`);
     } finally {
       setIsSubmitting(false);
     }

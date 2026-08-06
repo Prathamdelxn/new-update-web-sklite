@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, UploadCloud, MapPin, Ruler, FileText, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
+import interiorApiClient from '@/services/interiorApi.client';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Props {
@@ -59,7 +60,7 @@ export const LogSiteVisitModal = ({ isOpen, onClose, customerId, onSuccess, user
       await api.patch(`/crm/customers/${customerId}`, updatePayload);
 
       // 2. Log Activity
-      await api.post('/crm/activities', {
+      await interiorApiClient.post('/crm/activities', {
         customer: customerId,
         type: 'Site Visit',
         status: 'Completed',

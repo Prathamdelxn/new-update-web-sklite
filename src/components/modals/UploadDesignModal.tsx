@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, UploadCloud, File as FileIcon, Trash2, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
+import interiorApiClient from '@/services/interiorApi.client';
 import { motion } from 'framer-motion';
 
 interface Props {
@@ -55,7 +56,7 @@ export const UploadDesignModal = ({ isOpen, onClose, customerId, onSuccess, exis
         designFiles: updatedFiles,
       });
 
-      await api.post('/crm/activities', {
+      await interiorApiClient.post('/crm/activities', {
         customer: customerId,
         type: 'Design Shared',
         status: 'Completed',

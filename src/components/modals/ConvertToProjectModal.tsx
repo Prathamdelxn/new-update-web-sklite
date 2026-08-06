@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Trophy, DollarSign, Receipt, CalendarClock } from 'lucide-react';
-import api from '@/services/api.client';
+import interiorApiClient from '@/services/interiorApi.client';
 import { useToast } from '@/providers/ToastContext';
 
 interface Props {
@@ -26,9 +26,9 @@ export function ConvertToProjectModal({ isOpen, onClose, customerId, onSuccess }
 
     try {
       // Hit the specific convert API
-      await api.post(`/crm/customers/${customerId}/convert`, {
+      await interiorApiClient.post(`/crm/customers/${customerId}/convert`, {
         startDate: startDate || new Date().toISOString(),
-        remarks
+        remarks: remarks || '',
       });
 
       toast.success('🎉 Congratulations! Lead converted to an Active Project!');
