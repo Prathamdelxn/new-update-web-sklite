@@ -47,7 +47,7 @@ export function InteriorConvertToProjectModal({ isOpen, onClose, customerId, onS
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-lg bg-[hsl(var(--card))] rounded-3xl shadow-2xl p-6 z-[70]">
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-lg bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 z-[70]">
 
         <div className="flex items-center justify-between mb-6 border-b border-[hsl(var(--border))] pb-4">
           <div className="flex items-center gap-3">
@@ -87,7 +87,7 @@ export function InteriorConvertToProjectModal({ isOpen, onClose, customerId, onS
 
           <div className="pt-4 flex justify-end gap-3 border-t border-[hsl(var(--border))]">
             <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-bold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">Cancel</button>
-            <button type="submit" disabled={isSubmitting} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-amber-500 hover:bg-amber-600 disabled:opacity-50 shadow-lg shadow-amber-500/30">
+            <button type="submit" disabled={isSubmitting} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-amber-500 hover:bg-amber-600 disabled:opacity-50">
               {isSubmitting ? 'Converting...' : <><Trophy size={16} /> Convert to Project</>}
             </button>
           </div>

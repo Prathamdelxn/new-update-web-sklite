@@ -12,7 +12,6 @@ import {
   PenTool,
   FileText,
   XCircle,
-  BarChart2,
 } from 'lucide-react';
 
 export type InteriorCrmStage =
@@ -23,8 +22,7 @@ export type InteriorCrmStage =
   | 'quotations'
   | 'won_projects'
   | 'lost_leads'
-  | 'customers'
-  | 'reports';
+  | 'customers';
 
 interface InteriorCrmFlowTabsProps {
   activeTab: InteriorCrmStage;
@@ -38,7 +36,6 @@ const FLOW_STAGES: { id: InteriorCrmStage; label: string; icon: React.ElementTyp
   { id: 'requirement_design', label: 'Requirement & Design', icon: PenTool },
   { id: 'quotations', label: 'Quotations', icon: FileText },
   { id: 'lost_leads', label: 'Lost Leads', icon: XCircle },
-  { id: 'reports', label: 'Reports', icon: BarChart2 },
 ];
 
 export const InteriorCrmFlowTabs: React.FC<InteriorCrmFlowTabsProps> = ({ activeTab, onChange }) => {
@@ -54,18 +51,18 @@ export const InteriorCrmFlowTabs: React.FC<InteriorCrmFlowTabsProps> = ({ active
               key={stage.id}
               onClick={() => onChange(stage.id)}
               className={cn(
-                'relative flex items-center justify-center flex-1 gap-1.5 px-4 py-3.5 text-sm font-bold transition-colors outline-none',
-                isActive ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))]'
+                'relative flex items-center justify-center flex-1 gap-1.5 px-4 py-3 text-xs font-medium transition-colors outline-none',
+                isActive ? 'text-[hsl(var(--primary))] font-semibold' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))]'
               )}
             >
               <Icon
                 className={cn(
-                  'w-4 h-4 stroke-[2.5px] transition-colors',
+                  'w-4 h-4 stroke-[1.75px] transition-colors',
                   isActive ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--muted-foreground))]'
                 )}
               />
 
-              <span className="tracking-wide whitespace-nowrap">{stage.label}</span>
+              <span className="whitespace-nowrap">{stage.label}</span>
 
               {isActive && (
                 <motion.div

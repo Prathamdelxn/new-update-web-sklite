@@ -15,6 +15,8 @@ export const interiorCrmService = {
   createCustomer: (data: any) => interiorApiClient.post('/crm/customers', data).then((res) => res.data),
   updateCustomer: (customerId: string, data: any) =>
     interiorApiClient.patch(`/crm/customers/${customerId}`, data).then((res) => res.data),
+  deleteCustomer: (customerId: string) =>
+    interiorApiClient.delete(`/crm/customers/${customerId}`).then((res) => res.data),
   convertCustomer: (customerId: string, data?: any) =>
     interiorApiClient.post(`/crm/customers/${customerId}/convert`, data).then((res) => res.data),
 

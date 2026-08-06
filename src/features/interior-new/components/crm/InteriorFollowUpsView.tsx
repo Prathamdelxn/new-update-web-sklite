@@ -45,7 +45,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit }: Props) => {
   }, []);
 
   return (
-    <div className="w-full bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] shadow-sm overflow-hidden">
+    <div className="w-full bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">
       <div className="p-6 border-b border-[hsl(var(--border))] flex items-center justify-between">
         <div>
           <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))] flex items-center gap-2">
@@ -149,7 +149,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit }: Props) => {
                   <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => onPassToSiteVisit(act.customer?._id)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-600 hover:text-white rounded-lg text-xs font-bold transition-all shadow-sm group-hover:opacity-100 md:opacity-0"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-600 hover:text-white rounded-lg text-xs font-bold transition-all"
                       title="Send to Site Visit"
                     >
                       Pass <MapPin size={14} />

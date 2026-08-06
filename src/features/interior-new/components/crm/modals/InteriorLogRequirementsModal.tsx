@@ -86,7 +86,7 @@ export const InteriorLogRequirementsModal = ({ isOpen, onClose, customerId, onSu
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-[hsl(var(--card))] rounded-3xl shadow-xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]"
       >
         <div className="flex justify-between items-center p-6 border-b border-[hsl(var(--border))]">
           <div>
@@ -179,7 +179,7 @@ export const InteriorLogRequirementsModal = ({ isOpen, onClose, customerId, onSu
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-4 py-3 rounded-xl font-bold text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] transition-colors shadow-lg disabled:opacity-50"
+              className="flex-1 px-4 py-3 rounded-xl font-bold text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] transition-colors disabled:opacity-50"
             >
               {isSubmitting ? 'Saving...' : 'Save Requirements'}
             </button>

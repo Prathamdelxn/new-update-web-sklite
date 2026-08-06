@@ -45,7 +45,7 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
   }
 
   return (
-    <div className="w-full bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] shadow-sm overflow-hidden">
+    <div className="w-full bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm whitespace-nowrap">
           <thead className="bg-[hsl(var(--muted))] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] uppercase text-[10px] font-black tracking-widest">
@@ -118,19 +118,31 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
 
                 {/* Actions */}
                 <td className="px-6 py-4 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    onClick={() => onLogSiteVisit(lead._id)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary)/0.9)] rounded-lg text-xs font-bold transition-all shadow-sm"
-                  >
-                    Log Visit
-                  </button>
-                  <button
-                    onClick={() => onPassToRequirements(lead._id)}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white rounded-lg text-xs font-bold transition-all"
-                    title="Pass to Requirements"
-                  >
-                    Pass <ArrowRight size={14} />
-                  </button>
+                  {lead.siteMeasurements ? (
+                    <button
+                      onClick={() => onLogSiteVisit(lead._id)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 rounded-lg text-xs font-bold transition-all"
+                      title="Edit Site Visit Measurements & Photos"
+                    >
+                      Visited ✓ (Edit)
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => onLogSiteVisit(lead._id)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white hover:bg-purple-700 rounded-lg text-xs font-bold transition-all"
+                    >
+                      Log Visit
+                    </button>
+                  )}
+                  {lead.siteMeasurements && (
+                    <button
+                      onClick={() => onPassToRequirements(lead._id)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white rounded-lg text-xs font-medium transition-all"
+                      title="Pass to Requirements"
+                    >
+                      Pass <ArrowRight size={14} />
+                    </button>
+                  )}
                 </td>
               </tr>
               );

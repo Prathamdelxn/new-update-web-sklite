@@ -20,6 +20,11 @@ import {
   Database,
   RefreshCw,
   BarChart3,
+  Users,
+  UserCheck,
+  TrendingUp,
+  CheckCircle2,
+  Building2,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -44,11 +49,16 @@ interface DashboardData {
   kpis: {
     activeProjects: number;
     delayedProjects: number;
+    totalLeads: number;
+    newLeads: number;
+    activeLeads: number;
+    wonLeads: number;
     openSnags: number;
     openRFIs: number;
     criticalRisks: number;
     procurementPending: number;
   };
+  leadsPipeline?: Array<{ stage: string; count: number }>;
   progressTrend: Array<{ month: string; planned: number; actual: number }>;
   projectHealth: Array<{ name: string; value: number; color: string }>;
   procurementData: Array<{ status: string; count: number }>;
@@ -133,15 +143,15 @@ export default function InteriorNewDashboardView() {
     );
   }
 
-  const isEmpty = !data || data.kpis.activeProjects === 0;
+  const isEmpty = !data || (data.kpis.activeProjects === 0 && (data.kpis.totalLeads || 0) === 0);
 
   const kpiCards = [
+    { title: 'Total Leads', value: data?.kpis.totalLeads || 0, icon: Users, color: 'hsl(217.2, 91.2%, 59.8%)', bgColor: 'hsl(217.2, 91.2%, 59.8% / 0.1)' },
+    { title: 'New Leads', value: data?.kpis.newLeads || 0, icon: UserCheck, color: 'hsl(271.5, 81.3%, 55.9%)', bgColor: 'hsl(271.5, 81.3%, 55.9% / 0.1)' },
+    { title: 'Active Pipeline', value: data?.kpis.activeLeads || 0, icon: TrendingUp, color: 'hsl(38, 92%, 50%)', bgColor: 'hsl(38, 92%, 50% / 0.1)' },
+    { title: 'Won Projects', value: data?.kpis.wonLeads || 0, icon: CheckCircle2, color: 'hsl(142.1, 76.2%, 36.3%)', bgColor: 'hsl(142.1, 76.2%, 36.3% / 0.1)' },
     { title: 'Active Projects', value: data?.kpis.activeProjects || 0, icon: FolderKanban, color: 'hsl(var(--chart-1))', bgColor: 'hsl(var(--chart-1) / 0.1)' },
-    { title: 'Delayed Projects', value: data?.kpis.delayedProjects || 0, icon: Clock, color: 'hsl(var(--warning))', bgColor: 'hsl(var(--warning) / 0.1)' },
     { title: 'Open Snags', value: data?.kpis.openSnags || 0, icon: Bug, color: 'hsl(var(--destructive))', bgColor: 'hsl(var(--destructive) / 0.1)' },
-    { title: 'Open RFIs', value: data?.kpis.openRFIs || 0, icon: MessageSquare, color: 'hsl(var(--chart-4))', bgColor: 'hsl(var(--chart-4) / 0.1)' },
-    { title: 'Critical Risks', value: data?.kpis.criticalRisks || 0, icon: AlertTriangle, color: 'hsl(var(--warning))', bgColor: 'hsl(var(--warning) / 0.1)' },
-    { title: 'Procurement Pending', value: data?.kpis.procurementPending || 0, icon: ShoppingCart, color: 'hsl(var(--chart-2))', bgColor: 'hsl(var(--chart-2) / 0.1)' },
   ];
 
   return (
@@ -161,12 +171,6 @@ export default function InteriorNewDashboardView() {
             {refreshing ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <RefreshCw className="w-3.5 h-3.5 mr-1.5" />}
             Refresh
           </Button>
-          {!isEmpty && (
-            <Button variant="outline" size="sm" className="text-xs" onClick={handleSeedData} disabled={seeding}>
-              {seeding ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Database className="w-3.5 h-3.5 mr-1.5" />}
-              Reset & Re-Seed Demo
-            </Button>
-          )}
         </div>
       </div>
 
@@ -311,6 +315,37 @@ export default function InteriorNewDashboardView() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <motion.div variants={itemVariants}>
+                <Card className="h-full">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                      <Users className="w-4 h-4 text-blue-500" />
+                      CRM Lead Pipeline
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[200px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={data?.leadsPipeline || []} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                          <XAxis dataKey="stage" tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: 'hsl(var(--popover))',
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '8px',
+                              fontSize: '12px',
+                            }}
+                          />
+                          <Bar dataKey="count" fill="hsl(217.2, 91.2%, 59.8%)" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
               <motion.div variants={itemVariants}>
                 <Card className="h-full">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
