@@ -21,6 +21,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { cn } from '@/lib/utils';
 import api from '@/services/api.client';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { RoleModal } from '@/features/users/components/RoleModal';
 
 export const RoleList = () => {
@@ -32,14 +33,15 @@ export const RoleList = () => {
   const menuRef = useRef<HTMLDivElement>(null);
 
   const toast = useToast();
+  const { confirm } = useConfirm();
 
   const fetchRoles = async () => {
+    setLoading(true);
     try {
-      const response = await api.get('/roles');
-      setRoles(response.data);
+      const res = await api.get('/roles');
+      setRoles(res.data?.data || res.data || []);
     } catch (error) {
-      console.error('Error fetching roles:', error);
-      toast.error('Failed to load access roles');
+      toast.error('Failed to load roles');
     } finally {
       setLoading(false);
     }
@@ -49,8 +51,8 @@ export const RoleList = () => {
     fetchRoles();
   }, []);
 
+  // Close menu on click outside
   useEffect(() => {
-    if (!roleMenuId) return;
     const close = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setRoleMenuId(null);
@@ -62,7 +64,13 @@ export const RoleList = () => {
 
   const handleDeleteRole = async (role: any) => {
     setRoleMenuId(null);
-    if (!window.confirm(`Delete role "${role.name}"? Users with this role will be unassigned.`)) return;
+    const ok = await confirm({
+      title: 'Delete Role',
+      message: `Delete role "${role.name}"? Users with this role will be unassigned.`,
+      confirmText: 'Delete Role',
+      type: 'danger',
+    });
+    if (!ok) return;
     try {
       await api.delete(`/roles/${role._id}`);
       toast.success(`Role "${role.name}" deleted`);

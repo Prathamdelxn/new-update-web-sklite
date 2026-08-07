@@ -64,35 +64,50 @@ export function QuotationBuilderModal({ isOpen, onClose, customerId, existingQuo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (items.some(i => !i.description)) {
+
+    if (items.length === 0) {
+      return toast.error("Please add at least one line item to the quotation.");
+    }
+    if (items.some(i => !i.description || !i.description.trim())) {
       return toast.error("Please provide a description for all items.");
     }
+    if (items.some(i => i.quantity <= 0 || isNaN(i.quantity))) {
+      return toast.error("Quantity must be greater than 0 for all items.");
+    }
+    if (items.some(i => i.unitPrice < 0 || isNaN(i.unitPrice))) {
+      return toast.error("Unit price cannot be negative.");
+    }
+    if (discount < 0 || isNaN(discount)) {
+      return toast.error("Discount cannot be negative.");
+    }
+    if (discount > subtotal + tax) {
+      return toast.error("Discount cannot exceed subtotal plus tax.");
+    }
     if (grandTotal <= 0) {
-      return toast.error("Total amount must be greater than zero.");
+      return toast.error("Grand total amount must be greater than zero.");
     }
 
     setIsSubmitting(true);
-    
+
     const newVersion = (existingQuotations?.length || 0) + 1;
-    
+
     const newQuotation = {
       version: newVersion,
-      items,
+      items: items.map(i => ({ ...i, description: i.description.trim() })),
       subtotal,
       taxPercentage,
       tax,
       discount,
       grandTotal,
-      notes,
+      notes: notes.trim(),
       status: 'Sent'
     };
 
     try {
       // We will append the new quotation and update status to Quotation Sent
       const updatedQuotations = [...(existingQuotations || []), newQuotation];
-      
-      await api.patch(`/crm/customers/${customerId}`, { 
+
+      await interiorApiClient.patch(`/crm/customers/${customerId}`, { 
         quotations: updatedQuotations,
         status: 'Quotation Sent' 
       });

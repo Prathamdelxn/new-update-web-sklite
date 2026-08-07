@@ -28,9 +28,11 @@ import {
   RotateCcw,
   Check,
   ChevronDown,
+  UserPlus,
 } from 'lucide-react';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { cn } from '@/lib/utils';
 
 interface Permission {
@@ -44,9 +46,12 @@ interface ProjectMember {
   permissions: Permission[];
   userId: {
     _id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
+    firstName?: string;
+    lastName?: string;
+    fullName?: string;
+    name?: string;
+    email?: string;
+    role?: any;
     avatar?: string;
     designation?: string;
     department?: string;
@@ -120,6 +125,7 @@ interface InteriorMembersViewProps {
 
 export default function InteriorMembersView({ projectId }: InteriorMembersViewProps) {
   const toast = useToast();
+  const { confirm } = useConfirm();
 
   const [members, setMembers] = useState<ProjectMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -131,6 +137,15 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
     projectRole: 'viewer', designation: '', department: '',
   });
   const [isInviting, setIsInviting] = useState(false);
+
+  // Add existing user state
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [orgUsers, setOrgUsers] = useState<any[]>([]);
+  const [orgUsersLoading, setOrgUsersLoading] = useState(false);
+  const [addMemberSearch, setAddMemberSearch] = useState('');
+  const [addMemberUserId, setAddMemberUserId] = useState('');
+  const [addMemberRole, setAddMemberRole] = useState('viewer');
+  const [isAddingMember, setIsAddingMember] = useState(false);
 
   const [permModalMember, setPermModalMember] = useState<ProjectMember | null>(null);
   const [editedPermissions, setEditedPermissions] = useState<Permission[]>([]);
@@ -153,6 +168,42 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
     if (!projectId) return;
     fetchMembers();
   }, [projectId, fetchMembers]);
+
+  const fetchOrgUsers = useCallback(async () => {
+    setOrgUsersLoading(true);
+    try {
+      const res = await interiorProjectService.getOrgUsers();
+      const list = Array.isArray(res) ? res : (res?.data ?? []);
+      setOrgUsers(list);
+    } catch {
+      toast.error('Failed to load organisation users');
+    } finally {
+      setOrgUsersLoading(false);
+    }
+  }, [toast]);
+
+  const openAddMemberModal = () => {
+    setAddMemberSearch('');
+    setAddMemberUserId('');
+    setAddMemberRole('viewer');
+    setIsAddMemberOpen(true);
+    fetchOrgUsers();
+  };
+
+  const handleAddExistingMember = async () => {
+    if (!addMemberUserId) { toast.error('Please select a user'); return; }
+    setIsAddingMember(true);
+    try {
+      await interiorProjectService.addProjectMember(projectId, { userId: addMemberUserId, projectRole: addMemberRole });
+      toast.success('Member added to project');
+      setIsAddMemberOpen(false);
+      fetchMembers();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? 'Failed to add member');
+    } finally {
+      setIsAddingMember(false);
+    }
+  };
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -177,7 +228,13 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
   };
 
   const handleDeleteMember = async (memberId: string) => {
-    if (!window.confirm('Are you sure you want to remove this member from the project? They will lose access to all tasks and documents.')) return;
+    const ok = await confirm({
+      title: 'Remove Member',
+      message: 'Are you sure you want to remove this member from the project? They will lose access to all tasks and documents.',
+      confirmText: 'Remove Member',
+      type: 'danger',
+    });
+    if (!ok) return;
     try {
       const res = await interiorProjectService.deleteProjectMember(projectId, memberId);
       if (res?.success) {
@@ -276,13 +333,22 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
             Manage users, assign project roles, and configure granular permissions.
           </p>
         </div>
-        <button
-          onClick={() => setIsInviteModalOpen(true)}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))/0.9] rounded-xl transition-all shadow-sm active:scale-95"
-        >
-          <Plus className="w-4 h-4" />
-          Create Member
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={openAddMemberModal}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium border border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] rounded-xl transition-all shadow-sm active:scale-95"
+          >
+            <UserPlus className="w-4 h-4" />
+            Add Member
+          </button>
+          <button
+            onClick={() => setIsInviteModalOpen(true)}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))/0.9] rounded-xl transition-all shadow-sm active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            Create Member
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-[hsl(var(--card))] p-4 rounded-2xl border border-[hsl(var(--border))] shadow-sm">
@@ -398,6 +464,135 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
           </AnimatePresence>
         </div>
       )}
+
+      {/* Add Existing Member Modal */}
+      <AnimatePresence>
+        {isAddMemberOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={() => !isAddingMember && setIsAddMemberOpen(false)} />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative w-full max-w-md bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl shadow-2xl overflow-hidden z-10"
+            >
+              {/* Header */}
+              <div className="p-5 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--muted)/0.3)]">
+                <div>
+                  <h3 className="text-base font-semibold text-[hsl(var(--foreground))]">Add Existing Member</h3>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">Select a user from your organisation and assign a project role.</p>
+                </div>
+                <button onClick={() => setIsAddMemberOpen(false)} disabled={isAddingMember}
+                  className="p-2 text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] rounded-xl transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-5 space-y-4">
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                  <input
+                    type="text"
+                    placeholder="Search by name or email..."
+                    value={addMemberSearch}
+                    onChange={(e) => { setAddMemberSearch(e.target.value); setAddMemberUserId(''); }}
+                    className="w-full pl-9 pr-4 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+                  />
+                </div>
+
+                {/* User list */}
+                <div className="max-h-60 overflow-y-auto rounded-xl border border-[hsl(var(--border))] divide-y divide-[hsl(var(--border))]">
+                  {orgUsersLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-5 h-5 animate-spin text-[hsl(var(--primary))]" />
+                    </div>
+                  ) : (() => {
+                    const alreadyAdded = new Set(members.map((m) => m.userId?._id));
+                    const filtered = orgUsers.filter((u) => {
+                      if (alreadyAdded.has(u._id)) return false;
+                      const q = addMemberSearch.toLowerCase();
+                      if (!q) return true;
+                      return (
+                        `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) ||
+                        (u.email ?? '').toLowerCase().includes(q)
+                      );
+                    });
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="py-8 text-center text-sm text-[hsl(var(--muted-foreground))]">
+                          {addMemberSearch ? 'No users match your search.' : 'All organisation users are already members.'}
+                        </div>
+                      );
+                    }
+                    return filtered.map((u) => (
+                      <button
+                        key={u._id}
+                        type="button"
+                        onClick={() => setAddMemberUserId(u._id)}
+                        className={cn(
+                          'w-full flex items-center gap-3 px-4 py-3 text-left transition-colors',
+                          addMemberUserId === u._id
+                            ? 'bg-[hsl(var(--primary)/0.1)] border-l-2 border-[hsl(var(--primary))]'
+                            : 'hover:bg-[hsl(var(--muted)/0.5)]'
+                        )}
+                      >
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary)/0.6)] flex items-center justify-center text-white text-xs font-bold shrink-0">
+                          {u.firstName?.[0]}{u.lastName?.[0]}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-[hsl(var(--foreground))] truncate">{u.firstName} {u.lastName}</p>
+                          <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">{u.email}</p>
+                        </div>
+                        {addMemberUserId === u._id && (
+                          <Check className="w-4 h-4 text-[hsl(var(--primary))] shrink-0" />
+                        )}
+                      </button>
+                    ));
+                  })()}
+                </div>
+
+                {/* Role selector */}
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-[hsl(var(--foreground))]">Project Role</label>
+                  <select
+                    value={addMemberRole}
+                    onChange={(e) => setAddMemberRole(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+                  >
+                    <option value="viewer">Viewer (Read Only)</option>
+                    <option value="sub_contractor">Sub Contractor</option>
+                    <option value="designer">Designer</option>
+                    <option value="quantity_surveyor">Quantity Surveyor</option>
+                    <option value="site_engineer">Site Engineer</option>
+                    <option value="client_representative">Client Representative</option>
+                    <option value="project_manager">Project Manager</option>
+                  </select>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-3 pt-1">
+                  <button type="button" onClick={() => setIsAddMemberOpen(false)} disabled={isAddingMember}
+                    className="px-4 py-2 text-sm font-medium text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] rounded-xl transition-colors">
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAddExistingMember}
+                    disabled={!addMemberUserId || isAddingMember}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2 text-sm font-medium text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))/0.9] rounded-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {isAddingMember ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+                    {isAddingMember ? 'Adding...' : 'Add to Project'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Create Member Modal */}
       <AnimatePresence>

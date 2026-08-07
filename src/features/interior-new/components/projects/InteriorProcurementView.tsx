@@ -21,8 +21,10 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
+import interiorApiClient from '@/services/interiorApi.client';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 
 interface POItemInput {
   name: string;
@@ -37,10 +39,12 @@ interface InteriorProcurementViewProps {
 
 export default function InteriorProcurementView({ projectId }: InteriorProcurementViewProps) {
   const toast = useToast();
+  const { confirm } = useConfirm();
 
   const [activeTab, setActiveTab] = useState<'procurement' | 'inventory'>('procurement');
   const [pos, setPos] = useState<any[]>([]);
   const [inventory, setInventory] = useState<any[]>([]);
+  const [vendors, setVendors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [isAddPoOpen, setIsAddPoOpen] = useState(false);
@@ -60,6 +64,13 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   const [installNotes, setInstallNotes] = useState('');
   const [loggingInstall, setLoggingInstall] = useState(false);
   const [installError, setInstallError] = useState('');
+
+  // Create Material State
+  const [isCreateMaterialOpen, setIsCreateMaterialOpen] = useState(false);
+  const [creatingMaterial, setCreatingMaterial] = useState(false);
+  const [newMaterialName, setNewMaterialName] = useState('');
+  const [newMaterialUnit, setNewMaterialUnit] = useState('');
+  const [newMaterialStock, setNewMaterialStock] = useState<number | ''>('');
 
   const fetchPOs = async () => {
     try {
@@ -83,9 +94,18 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
     }
   };
 
+  const fetchVendors = async () => {
+    try {
+      const res = await interiorApiClient.get('/vendors');
+      setVendors(res.data?.data || []);
+    } catch (err) {
+      console.error('Failed to load vendors', err);
+    }
+  };
+
   const loadAllData = async () => {
     setLoading(true);
-    await Promise.all([fetchPOs(), fetchInventory()]);
+    await Promise.all([fetchPOs(), fetchInventory(), fetchVendors()]);
     setLoading(false);
   };
 
@@ -97,9 +117,53 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   }, [projectId]);
 
   const handleAddItem = () => {
-    if (!newItem.name.trim() || newItem.quantity <= 0 || newItem.unitPrice < 0) return;
+    if (!newItem.name.trim()) {
+      toast.error('Please select a Product Name before adding the item');
+      return;
+    }
+    if (newItem.quantity <= 0) {
+      toast.error('Quantity must be greater than zero');
+      return;
+    }
+    if (newItem.unitPrice < 0) {
+      toast.error('Rate cannot be negative');
+      return;
+    }
     setPoItems((prev) => [...prev, { ...newItem }]);
-    setNewItem({ name: '', quantity: 1, unit: 'nos', unitPrice: 0 });
+    setNewItem({ name: '', quantity: 1, unit: '', unitPrice: 0 });
+  };
+
+  const handleMaterialChange = (materialName: string) => {
+    const selectedItem = inventory.find(i => i.productName === materialName);
+    if (selectedItem) {
+      setNewItem({ ...newItem, name: materialName, unit: selectedItem.unit });
+    } else {
+      setNewItem({ ...newItem, name: materialName });
+    }
+  };
+
+  const handleCreateMaterial = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMaterialName.trim() || !newMaterialUnit.trim()) return;
+    try {
+      setCreatingMaterial(true);
+      await interiorProjectService.createInventoryMaterial(projectId, {
+        productName: newMaterialName,
+        unit: newMaterialUnit,
+        initialStock: newMaterialStock,
+      });
+      toast.success('Material added to inventory successfully');
+      setNewMaterialName('');
+      setNewMaterialUnit('');
+      setNewMaterialStock('');
+      setIsCreateMaterialOpen(false);
+      fetchInventory();
+    } catch (err: any) {
+      console.error('Failed to create material', err);
+      toast.error(err.response?.data?.error || err.response?.data?.message || 'Failed to create material');
+    } finally {
+      setCreatingMaterial(false);
+    }
   };
 
   const handleRemoveItem = (index: number) => {
@@ -155,7 +219,12 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
   const handleDeletePO = async () => {
     if (!selectedPo) return;
-    const ok = typeof window !== 'undefined' ? window.confirm('Are you sure you want to delete this Purchase Order? This will permanently delete the PO and its material history.') : true;
+    const ok = await confirm({
+      title: 'Delete Purchase Order',
+      message: 'Are you sure you want to delete this Purchase Order? This will permanently delete the PO and its material history.',
+      confirmText: 'Delete PO',
+      type: 'danger',
+    });
     if (!ok) return;
     try {
       setUpdatingPo(true);
@@ -259,10 +328,15 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
               Inventory Management
             </button>
           </div>
-          {activeTab === 'procurement' && (
+          {activeTab === 'procurement' ? (
             <Button onClick={() => setIsAddPoOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Add PO
+            </Button>
+          ) : (
+            <Button onClick={() => setIsCreateMaterialOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Material
             </Button>
           )}
         </div>
@@ -359,60 +433,28 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
               <Package className="w-12 h-12 text-[hsl(var(--muted-foreground))] mx-auto mb-3 opacity-40" />
               <h3 className="text-sm font-bold">No Products in Inventory</h3>
               <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1 max-w-sm mx-auto">
-                Stock is created automatically once a Purchase Order status is changed to &quot;Delivered&quot;. Try updating an existing PO!
+                Click "Add Material" to define your master catalog of materials!
               </p>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {inventory.map((item) => {
                 const available = item.totalReceived - item.installedQuantity;
                 const percentInstalled = Math.round((item.installedQuantity / item.totalReceived) * 100) || 0;
 
                 return (
-                  <Card key={item._id} className="overflow-hidden">
-                    <div className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-[hsl(var(--muted)/0.15)] border-b border-[hsl(var(--border))]">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Package className="w-4 h-4 text-[hsl(var(--primary))]" />
-                          <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">{item.productName}</h3>
-                        </div>
-                        <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                          Inventory Unit: <span className="font-semibold text-[hsl(var(--foreground))]">{item.unit}</span>
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-6 text-center">
-                        <div className="space-y-0.5">
-                          <span className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] uppercase">Delivered</span>
-                          <p className="text-sm font-extrabold text-[hsl(var(--foreground))]">
-                            {item.totalReceived} {item.unit}
-                          </p>
-                        </div>
-                        <div className="space-y-0.5">
-                          <span className="text-[10px] font-semibold text-emerald-500 uppercase">Installed</span>
-                          <p className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
-                            {item.installedQuantity} {item.unit}
-                          </p>
-                        </div>
-                        <div className="space-y-0.5">
-                          <span className="text-[10px] font-semibold text-blue-500 uppercase">Available</span>
-                          <p className="text-sm font-extrabold text-blue-600 dark:text-blue-400">
-                            {available} {item.unit}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-4 shrink-0">
-                        <div className="w-32 space-y-1">
-                          <div className="flex items-center justify-between text-[9px] text-[hsl(var(--muted-foreground))]">
-                            <span>Installation Progress</span>
-                            <span>{percentInstalled}%</span>
+                  <Card key={item._id} className="overflow-hidden flex flex-col h-[400px]">
+                    <div className="p-4 bg-[hsl(var(--muted)/0.15)] border-b border-[hsl(var(--border))] space-y-4 shrink-0">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Package className="w-4 h-4 text-[hsl(var(--primary))]" />
+                            <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">{item.productName}</h3>
                           </div>
-                          <div className="h-1.5 rounded-full bg-[hsl(var(--muted))] overflow-hidden">
-                            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${percentInstalled}%` }} />
-                          </div>
+                          <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                            Unit: <span className="font-semibold text-[hsl(var(--foreground))]">{item.unit}</span>
+                          </p>
                         </div>
-
                         <Button
                           disabled={available <= 0}
                           onClick={() => {
@@ -420,38 +462,71 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                             setIsInstallOpen(true);
                           }}
                           size="sm"
-                          className="text-xs"
+                          className="text-xs h-8 px-3"
                         >
-                          <Wrench className="w-3.5 h-3.5 mr-1.5" /> Install
+                          <Wrench className="w-3 h-3 mr-1.5" /> Install
                         </Button>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 text-center bg-[hsl(var(--card))] p-3 rounded-lg border border-[hsl(var(--border))]">
+                        <div className="space-y-0.5 border-r border-[hsl(var(--border))]">
+                          <span className="text-[9px] font-semibold text-[hsl(var(--muted-foreground))] uppercase">Delivered</span>
+                          <p className="text-xs font-extrabold text-[hsl(var(--foreground))]">
+                            {item.totalReceived}
+                          </p>
+                        </div>
+                        <div className="space-y-0.5 border-r border-[hsl(var(--border))]">
+                          <span className="text-[9px] font-semibold text-emerald-500 uppercase">Installed</span>
+                          <p className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
+                            {item.installedQuantity}
+                          </p>
+                        </div>
+                        <div className="space-y-0.5">
+                          <span className="text-[9px] font-semibold text-blue-500 uppercase">Available</span>
+                          <p className="text-xs font-extrabold text-blue-600 dark:text-blue-400">
+                            {available}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-[10px] text-[hsl(var(--muted-foreground))] font-semibold uppercase">
+                          <span>Installation Progress</span>
+                          <span>{percentInstalled}%</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-[hsl(var(--muted))] overflow-hidden">
+                          <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${percentInstalled}%` }} />
+                        </div>
                       </div>
                     </div>
 
-                    <div className="p-4 bg-[hsl(var(--card))]">
-                      <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider flex items-center gap-1.5 mb-3">
-                        <History className="w-3.5 h-3.5" /> Installation Logs History
+                    <div className="p-4 bg-[hsl(var(--card))] flex-1 flex flex-col overflow-hidden">
+                      <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider flex items-center gap-1.5 mb-3 shrink-0">
+                        <History className="w-3.5 h-3.5" /> Installation Logs
                       </span>
-                      {item.installHistory && item.installHistory.length > 0 ? (
-                        <div className="divide-y divide-[hsl(var(--border))] max-h-[140px] overflow-y-auto pr-2">
-                          {item.installHistory.map((log: any, index: number) => (
-                            <div key={log._id || index} className="py-2.5 flex items-start justify-between text-xs gap-4">
-                              <div className="space-y-0.5">
-                                <p className="font-semibold text-[hsl(var(--foreground))]">
-                                  Installed: <span className="text-emerald-600 dark:text-emerald-400">+{log.quantity} {item.unit}</span>
-                                </p>
-                                {log.notes && <p className="text-[11px] text-[hsl(var(--muted-foreground))]">{log.notes}</p>}
+                      <div className="flex-1 overflow-y-auto pr-2 scrollbar-none">
+                        {item.installHistory && item.installHistory.length > 0 ? (
+                          <div className="divide-y divide-[hsl(var(--border))]">
+                            {item.installHistory.map((log: any, index: number) => (
+                              <div key={log._id || index} className="py-2.5 flex flex-col gap-1 text-xs">
+                                <div className="flex items-center justify-between">
+                                  <p className="font-semibold text-[hsl(var(--foreground))] text-[11px]">
+                                    +<span className="text-emerald-600 dark:text-emerald-400">{log.quantity} {item.unit}</span>
+                                  </p>
+                                  <span className="text-[9px] text-[hsl(var(--muted-foreground))] font-mono">
+                                    {new Date(log.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                                  </span>
+                                </div>
+                                {log.notes && <p className="text-[10px] text-[hsl(var(--muted-foreground))] line-clamp-2">{log.notes}</p>}
                               </div>
-                              <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
-                                {new Date(log.date).toLocaleDateString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-[11px] text-[hsl(var(--muted-foreground))] italic">
-                          No materials installed yet. Click the &quot;Install&quot; button above to log a site placement.
-                        </p>
-                      )}
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-[10px] text-[hsl(var(--muted-foreground))] italic text-center py-4">
+                            No materials installed yet.
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </Card>
                 );
@@ -485,7 +560,17 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Vendor Name</label>
-                      <Input required placeholder="e.g. Supreme Pipes Ltd" value={vendorName} onChange={(e) => setVendorName(e.target.value)} />
+                      <select
+                        required
+                        value={vendorName}
+                        onChange={(e) => setVendorName(e.target.value)}
+                        className="w-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-xs font-semibold text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))] appearance-none"
+                      >
+                        <option value="" disabled>Select Vendor...</option>
+                        {vendors.map((v: any) => (
+                          <option key={v._id} value={v.name}>{v.name}</option>
+                        ))}
+                      </select>
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Est. Delivery Date</label>
@@ -497,11 +582,17 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                     <span className="text-[10px] uppercase font-bold text-[hsl(var(--foreground))] tracking-wider">Add Materials Line</span>
 
                     <div className="space-y-2">
-                      <Input
-                        placeholder="Product Name (e.g. Copper pipes 22mm)"
+                      <select
+                        required
                         value={newItem.name}
-                        onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                      />
+                        onChange={(e) => handleMaterialChange(e.target.value)}
+                        className="w-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))] appearance-none"
+                      >
+                        <option value="" disabled>Select Material from Catalog...</option>
+                        {inventory.map((m: any) => (
+                          <option key={m._id} value={m.productName}>{m.productName}</option>
+                        ))}
+                      </select>
                       <div className="grid grid-cols-3 gap-2">
                         <Input
                           type="number"
@@ -510,7 +601,12 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                           value={newItem.quantity || ''}
                           onChange={(e) => setNewItem({ ...newItem, quantity: parseInt(e.target.value) || 0 })}
                         />
-                        <Input placeholder="Unit (e.g. rm)" value={newItem.unit} onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })} />
+                        <Input 
+                          placeholder="Unit" 
+                          value={newItem.unit} 
+                          disabled 
+                          className="bg-slate-50 opacity-70 cursor-not-allowed"
+                        />
                         <Input
                           type="number"
                           min="0"
@@ -747,6 +843,58 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                   <Button type="submit" disabled={loggingInstall || !installQty}>
                     {loggingInstall && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                     Confirm Install
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Create Material Modal */}
+      <AnimatePresence>
+        {isCreateMaterialOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-md border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
+                <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
+                  <Package className="w-5 h-5 text-[hsl(var(--primary))]" /> Add New Material
+                </h3>
+                <button onClick={() => setIsCreateMaterialOpen(false)} className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateMaterial}>
+                <div className="p-5 space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Material Name *</label>
+                    <Input required placeholder="e.g. Copper pipes 22mm" value={newMaterialName} onChange={(e) => setNewMaterialName(e.target.value)} />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Measurement Unit *</label>
+                    <Input required placeholder="e.g. rm, nos, sqft" value={newMaterialUnit} onChange={(e) => setNewMaterialUnit(e.target.value)} />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Already in Stock (Optional)</label>
+                    <Input type="number" min="0" placeholder="e.g. 100" value={newMaterialStock} onChange={(e) => setNewMaterialStock(e.target.value === '' ? '' : parseInt(e.target.value))} />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
+                  <Button variant="outline" type="button" onClick={() => setIsCreateMaterialOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={creatingMaterial || !newMaterialName || !newMaterialUnit}>
+                    {creatingMaterial && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                    Save Material
                   </Button>
                 </div>
               </form>

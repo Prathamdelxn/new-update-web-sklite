@@ -44,14 +44,17 @@ export const UploadDesignModal = ({ isOpen, onClose, customerId, onSuccess, exis
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newFiles.length === 0) return;
+    if (newFiles.length === 0) {
+      toast.error('Please select at least one design file or image to upload.');
+      return;
+    }
     setIsSubmitting(true);
 
     try {
       // Append new files to existing files
       const updatedFiles = [...existingFiles, ...newFiles];
 
-      await api.patch(`/crm/customers/${customerId}`, {
+      await interiorApiClient.patch(`/crm/customers/${customerId}`, {
         status: 'Design Approved',
         designFiles: updatedFiles,
       });

@@ -85,7 +85,6 @@
 //   };
 
 //   const handleDelete = async (id: string) => {
-//     if (!window.confirm('Are you sure? This will delete all templates in this category.')) return;
 //     try {
 //       await api.delete(`/template-categories/${id}`);
 //       toast.success('Category deleted');
@@ -275,6 +274,7 @@ import {
 import { cn } from '@/lib/utils';
 import api from '@/services/api.client';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 
 export const CategoryList = () => {
   const [categories, setCategories] = useState<any[]>([]);
@@ -283,12 +283,13 @@ export const CategoryList = () => {
   const [search, setSearch] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
+
+  const toast = useToast();
+  const { confirm } = useConfirm();
   const [lastAdded, setLastAdded] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
-
-  const toast = useToast();
 
   const fetchCategories = async () => {
     try {
@@ -340,7 +341,13 @@ export const CategoryList = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure? This will delete all templates in this category.')) return;
+    const ok = await confirm({
+      title: 'Delete Category',
+      message: 'Are you sure? This will delete all templates in this category.',
+      confirmText: 'Delete Category',
+      type: 'danger',
+    });
+    if (!ok) return;
     try {
       await api.delete(`/template-categories/${id}`);
       toast.success('Category deleted');

@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/providers/AuthContext";
 import { ToastProvider } from "@/providers/ToastContext";
+import { ConfirmProvider } from "@/providers/ConfirmContext";
 import { SocketProvider } from "@/providers/SocketContext";
 import "@/bones/registry.js";
 
@@ -33,11 +34,13 @@ export default function RootLayout({
 
         <AuthProvider>
           <ToastProvider>
-            <SocketProvider>
-              <main className="relative z-0">
-                {children}
-              </main>
-            </SocketProvider>
+            <ConfirmProvider>
+              <SocketProvider>
+                <main className="relative z-0">
+                  {children}
+                </main>
+              </SocketProvider>
+            </ConfirmProvider>
           </ToastProvider>
         </AuthProvider>
       </body>

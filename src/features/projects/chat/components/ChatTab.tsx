@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/providers/AuthContext';
 import { useSocket } from '@/providers/SocketContext';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
 import { hasProjectPermission } from '@/lib/permissions';
 import api from '@/services/api.client';
@@ -22,6 +23,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
   const { project } = useProjectContext();
   const { socket } = useSocket();
   const toast = useToast();
+  const { confirm } = useConfirm();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -213,7 +215,13 @@ export function ChatTab({ projectId }: ChatTabProps) {
   };
 
   const deleteMessage = async (messageId: string) => {
-    if (!window.confirm('Are you sure you want to delete this message?')) return;
+    const ok = await confirm({
+      title: 'Delete Message',
+      message: 'Are you sure you want to delete this message?',
+      confirmText: 'Delete Message',
+      type: 'danger',
+    });
+    if (!ok) return;
     try {
       await api.delete(`/projects/${projectId}/messages/${messageId}`);
       setMessages(prev => prev.filter(m => m._id !== messageId));

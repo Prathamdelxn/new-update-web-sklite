@@ -25,6 +25,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { cn } from '@/lib/utils';
 import api from '@/services/api.client';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { useAuth } from '@/providers/AuthContext';
 import { hasProjectPermission, isProjectLocked } from '@/lib/permissions';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
@@ -62,6 +63,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
   const [finalizing, setFinalizing] = useState(false);
 
   const toast = useToast();
+  const { confirm } = useConfirm();
   const { user } = useAuth();
   const { project, fetchProject } = useProjectContext();
 
@@ -177,7 +179,13 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
     const draftSnags = issues.filter(i => i.status === 'Draft');
     if (draftSnags.length === 0) return;
 
-    if (!window.confirm(`Send all ${draftSnags.length} draft snags for fixing?`)) return;
+    const ok = await confirm({
+      title: 'Bulk Send Draft Snags',
+      message: `Send all ${draftSnags.length} draft snags for fixing?`,
+      confirmText: 'Send Snags',
+      type: 'warning',
+    });
+    if (!ok) return;
 
     setBulkSubmitting(true);
     try {

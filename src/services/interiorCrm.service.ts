@@ -19,6 +19,8 @@ export const interiorCrmService = {
     interiorApiClient.delete(`/crm/customers/${customerId}`).then((res) => res.data),
   convertCustomer: (customerId: string, data?: any) =>
     interiorApiClient.post(`/crm/customers/${customerId}/convert`, data).then((res) => res.data),
+  sendQuotationEmail: (customerId: string, data: { quotation: any; recipientEmail?: string }) =>
+    interiorApiClient.post(`/crm/customers/${customerId}/send-quotation-email`, data).then((res) => res.data),
 
   // Activities
   getActivities: (customerId: string) =>

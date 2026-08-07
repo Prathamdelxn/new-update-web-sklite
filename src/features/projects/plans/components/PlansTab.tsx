@@ -43,8 +43,9 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
   const fetchFolders = async () => {
     try {
       const res = await api.get(`/projects/${projectId}/folders`);
-      setFolders(res.data);
+      setFolders(res.data?.data || res.data || []);
     } catch {
+      setFolders([]);
       toast.error('Failed to load plan folders');
     } finally {
       setLoading(false);

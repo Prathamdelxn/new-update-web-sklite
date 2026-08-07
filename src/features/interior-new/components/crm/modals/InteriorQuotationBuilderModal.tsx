@@ -15,15 +15,18 @@ interface Item {
   total: number;
 }
 
+import { Mail, CheckCircle2 } from 'lucide-react';
+
 interface QuotationBuilderModalProps {
   isOpen: boolean;
   onClose: () => void;
   customerId: string;
+  customerEmail?: string;
   existingQuotations: any[];
   onSuccess: () => void;
 }
 
-export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, existingQuotations, onSuccess }: QuotationBuilderModalProps) {
+export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, customerEmail = '', existingQuotations, onSuccess }: QuotationBuilderModalProps) {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -34,6 +37,16 @@ export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, exi
   const [taxPercentage, setTaxPercentage] = useState(18);
   const [discount, setDiscount] = useState(0);
   const [notes, setNotes] = useState('');
+
+  // Email Proforma Invoice State
+  const [shouldSendEmail, setShouldSendEmail] = useState(true);
+  const [recipientEmail, setRecipientEmail] = useState(customerEmail);
+
+  React.useEffect(() => {
+    if (customerEmail) {
+      setRecipientEmail(customerEmail);
+    }
+  }, [customerEmail]);
 
   const subtotal = items.reduce((acc, item) => acc + item.total, 0);
   const tax = (subtotal * taxPercentage) / 100;
@@ -64,11 +77,26 @@ export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, exi
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (items.some(i => !i.description)) {
+    if (items.length === 0) {
+      return toast.error("Please add at least one line item to the quotation.");
+    }
+    if (items.some(i => !i.description || !i.description.trim())) {
       return toast.error("Please provide a description for all items.");
     }
+    if (items.some(i => i.quantity <= 0 || isNaN(i.quantity))) {
+      return toast.error("Quantity must be greater than 0 for all items.");
+    }
+    if (items.some(i => i.unitPrice < 0 || isNaN(i.unitPrice))) {
+      return toast.error("Unit price cannot be negative.");
+    }
+    if (discount < 0 || isNaN(discount)) {
+      return toast.error("Discount cannot be negative.");
+    }
+    if (discount > subtotal + tax) {
+      return toast.error("Discount cannot exceed subtotal plus tax.");
+    }
     if (grandTotal <= 0) {
-      return toast.error("Total amount must be greater than zero.");
+      return toast.error("Grand total amount must be greater than zero.");
     }
 
     setIsSubmitting(true);
@@ -95,14 +123,21 @@ export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, exi
         status: 'Quotation Sent'
       });
 
-      await interiorCrmService.createActivity({
-        customer: customerId,
-        type: 'Status Change',
-        status: 'Completed',
-        remarks: `Generated Quotation v${newVersion} for ₹${grandTotal.toLocaleString('en-IN')}`
-      });
+      let emailSentMessage = '';
+      if (shouldSendEmail && recipientEmail.trim()) {
+        try {
+          await interiorCrmService.sendQuotationEmail(customerId, {
+            quotation: newQuotation,
+            recipientEmail: recipientEmail.trim(),
+          });
+          emailSentMessage = ` & emailed Proforma Invoice to ${recipientEmail.trim()}`;
+        } catch (emailErr: any) {
+          console.error('Failed to send email:', emailErr);
+          toast.error(emailErr.response?.data?.message || 'Quotation saved, but failed to send email');
+        }
+      }
 
-      toast.success('Quotation generated successfully!');
+      toast.success(`Quotation generated successfully${emailSentMessage}!`);
       onSuccess();
       onClose();
       setItems([{ description: '', quantity: 1, unitPrice: 0, total: 0 }]);
@@ -248,7 +283,7 @@ export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, exi
                         className="w-16 px-2 py-1 text-xs rounded border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-center focus:border-indigo-500 outline-none"
                       />
                     </span>
-                    <span className="font-semibold text-[hsl(var(--muted-foreground))]">+ ₹{tax.toLocaleString('en-IN')}</span>
+                    <span className="font-semibold text-[hsl(var(--muted-foreground))]" >+ ₹{tax.toLocaleString('en-IN')}</span>
                   </div>
 
                   <div className="flex justify-between items-center text-sm">
@@ -269,6 +304,37 @@ export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, exi
                     <span className="text-2xl font-black text-indigo-700">₹{grandTotal.toLocaleString('en-IN')}</span>
                   </div>
                 </div>
+              </div>
+
+              {/* Email Proforma Invoice Section */}
+              <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-2xl p-4 sm:p-5 space-y-3">
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={shouldSendEmail}
+                    onChange={(e) => setShouldSendEmail(e.target.checked)}
+                    className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                  />
+                  <span className="font-bold text-sm text-[hsl(var(--foreground))] flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-indigo-600" />
+                    Send Proforma Invoice & Quotation to Lead Email
+                  </span>
+                </label>
+
+                {shouldSendEmail && (
+                  <div className="pl-7 space-y-1.5 animate-in fade-in duration-200">
+                    <input
+                      type="email"
+                      value={recipientEmail}
+                      onChange={(e) => setRecipientEmail(e.target.value)}
+                      placeholder="Enter lead email address (e.g. client@example.com)"
+                      className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:border-indigo-500 outline-none"
+                    />
+                    <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                      An itemized Proforma Invoice with tax and totals will be emailed immediately upon saving.
+                    </p>
+                  </div>
+                )}
               </div>
 
             </form>

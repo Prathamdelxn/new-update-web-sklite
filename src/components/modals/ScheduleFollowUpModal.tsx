@@ -14,9 +14,12 @@ interface ScheduleFollowUpModalProps {
   users?: any[]; // The list of organization users for assignment
 }
 
+import { validateRequiredDate, validateNonEmpty, ValidationErrors } from '@/lib/crmValidation';
+
 export function ScheduleFollowUpModal({ isOpen, onClose, customerId, customerName, onSuccess, users = [] }: ScheduleFollowUpModalProps) {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<ValidationErrors>({});
   const [form, setForm] = useState({
     type: 'Phone Call',
     status: 'Pending',
@@ -27,33 +30,46 @@ export function ScheduleFollowUpModal({ isOpen, onClose, customerId, customerNam
 
   if (!isOpen) return null;
 
+  const validateForm = (): boolean => {
+    const newErrors: ValidationErrors = {
+      scheduledDate: validateRequiredDate(form.scheduledDate, 'Follow-up date & time'),
+      remarks: validateNonEmpty(form.remarks, 'Follow-up goal / notes'),
+    };
+    setErrors(newErrors);
+    return !Object.values(newErrors).some((err) => err !== null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.scheduledDate) return toast.error('Date is required');
-    if (!form.remarks) return toast.error('Remarks are required');
+    if (!validateForm()) {
+      toast.error('Please fix the errors in the form');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       // 1. Create Follow-up Activity
       await interiorApiClient.post('/crm/activities', {
         ...form,
+        remarks: form.remarks.trim(),
         customer: customerId
       });
 
       // 2. Optionally, assign user & auto-update lead status to "Contacted"
       if (form.assignedSalesExecutive) {
-        await api.patch(`/crm/customers/${customerId}`, { 
+        await interiorApiClient.patch(`/crm/customers/${customerId}`, { 
           assignedSalesExecutive: form.assignedSalesExecutive,
           status: 'Contacted' // Pushing to next stage
         });
       } else {
-        await api.patch(`/crm/customers/${customerId}`, { status: 'Contacted' });
+        await interiorApiClient.patch(`/crm/customers/${customerId}`, { status: 'Contacted' });
       }
 
       toast.success('Follow-up scheduled successfully!');
       onSuccess();
       onClose();
       setForm({ type: 'Phone Call', status: 'Pending', scheduledDate: '', remarks: '', assignedSalesExecutive: '' });
+      setErrors({});
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to schedule follow-up');
     } finally {

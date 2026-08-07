@@ -19,6 +19,7 @@ import { useToast } from '@/providers/ToastContext';
 import { useAuth } from '@/providers/AuthContext';
 import { hasProjectPermission, isProjectLocked } from '@/lib/permissions';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { XERImportModal } from '@/features/projects/components/XERImportModal';
 import { TimelineTab } from '@/features/projects/timeline/components/TimelineTab';
 
@@ -60,6 +61,8 @@ const emptyMilestoneForm = () => ({
 
 export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
   const router = useRouter();
+  const toast = useToast();
+  const { confirm } = useConfirm();
   const [milestones, setMilestones]         = useState<any[]>([]);
   const [members, setMembers]               = useState<{ _id: string; name: string }[]>([]);
   const [loading, setLoading]             = useState(true);
@@ -381,7 +384,13 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
   // ── Delete milestone ───────────────────────────────────────────────────────
   const handleDelete = async (id: string, name: string) => {
     setMilestoneMenuId(null);
-    if (!window.confirm(`Delete milestone "${name}"? This cannot be undone.`)) return;
+    const ok = await confirm({
+      title: 'Delete Milestone',
+      message: `Delete milestone "${name}"? This cannot be undone.`,
+      confirmText: 'Delete Milestone',
+      type: 'danger',
+    });
+    if (!ok) return;
     try {
       await api.delete(`/projects/${projectId}/milestones/${id}`);
       toast.success('Milestone deleted');

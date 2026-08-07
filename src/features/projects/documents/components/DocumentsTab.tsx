@@ -36,6 +36,7 @@ import { cn } from '@/lib/utils';
 import api from '@/services/api.client';
 import { uploadToCloudinary } from '@/lib/upload';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { useAuth } from '@/providers/AuthContext';
 import { hasProjectPermission, isProjectLocked } from '@/lib/permissions';
 import { useProjectContext } from '../../contexts/ProjectContext';
@@ -91,6 +92,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const toast = useToast();
+  const { confirm } = useConfirm();
   const { user } = useAuth();
   const { project } = useProjectContext();
   const isLocked = isProjectLocked(project);
@@ -374,7 +376,13 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
   };
 
   const handleDelete = async (docId: string, name: string) => {
-    if (!window.confirm(`Delete "${name}"? This cannot be undone.`)) return;
+    const ok = await confirm({
+      title: 'Delete Document',
+      message: `Delete "${name}"? This cannot be undone.`,
+      confirmText: 'Delete',
+      type: 'danger',
+    });
+    if (!ok) return;
     try {
       await api.delete(`/projects/${projectId}/documents/${docId}`);
       toast.success('Document deleted');

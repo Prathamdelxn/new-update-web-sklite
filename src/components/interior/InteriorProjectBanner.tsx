@@ -49,6 +49,7 @@ const CATEGORIES = (projectId: string) => [
       { label: 'Procurement', href: `/interior-new/projects/${projectId}/procurement` },
       { label: 'Purchase Orders', href: `/interior-new/projects/${projectId}/purchase-orders` },
       { label: 'Vendors', href: `/interior-new/projects/${projectId}/vendors` },
+      { label: 'Payments', href: `/interior-new/projects/${projectId}/payments` },
     ],
   },
   {
@@ -68,6 +69,12 @@ const CATEGORIES = (projectId: string) => [
       { label: 'RFIs Tracker', href: `/interior-new/projects/${projectId}/rfis` },
       { label: 'Utility Checks', href: `/interior-new/projects/${projectId}/utilities` },
       { label: 'Site Details', href: `/interior-new/projects/${projectId}/sitedetails` },
+    ],
+  },
+  {
+    name: 'Handover',
+    icon: '🔑',
+    items: [
       { label: 'Project Handover', href: `/interior-new/projects/${projectId}/handover` },
     ],
   },

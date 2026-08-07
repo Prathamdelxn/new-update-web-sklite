@@ -4,6 +4,7 @@ import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
 import interiorApiClient from '@/services/interiorApi.client';
 import { motion, AnimatePresence } from 'framer-motion';
+import { validatePositiveNumber, ValidationErrors } from '@/lib/crmValidation';
 
 interface Props {
   isOpen: boolean;
@@ -45,19 +46,43 @@ export const LogSiteVisitModal = ({ isOpen, onClose, customerId, onSuccess, user
     setPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
+  const [errors, setErrors] = useState<ValidationErrors>({});
+
+  const validateForm = (): boolean => {
+    const newErrors: ValidationErrors = {};
+    if (measurements.carpetArea && validatePositiveNumber(measurements.carpetArea, 'Carpet Area')) {
+      newErrors.carpetArea = validatePositiveNumber(measurements.carpetArea, 'Carpet Area');
+    }
+    if (measurements.ceilingHeight && validatePositiveNumber(measurements.ceilingHeight, 'Ceiling Height')) {
+      newErrors.ceilingHeight = validatePositiveNumber(measurements.ceilingHeight, 'Ceiling Height');
+    }
+    setErrors(newErrors);
+    return !Object.values(newErrors).some((err) => err !== null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) {
+      toast.error('Please fix the measurement errors');
+      return;
+    }
     setIsSubmitting(true);
 
     try {
       // 1. Update Customer with site data and change status to Measurement Done
       const updatePayload: any = {
         status: 'Measurement Done',
-        siteMeasurements: measurements,
+        siteMeasurements: {
+          ...measurements,
+          carpetArea: measurements.carpetArea.trim(),
+          ceilingHeight: measurements.ceilingHeight.trim(),
+          rooms: measurements.rooms.trim(),
+          notes: measurements.notes.trim(),
+        },
         sitePhotos: photos, // Temporary base64 storage
       };
 
-      await api.patch(`/crm/customers/${customerId}`, updatePayload);
+      await interiorApiClient.patch(`/crm/customers/${customerId}`, updatePayload);
 
       // 2. Log Activity
       await interiorApiClient.post('/crm/activities', {

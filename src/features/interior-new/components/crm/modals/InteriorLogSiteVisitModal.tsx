@@ -7,6 +7,7 @@ import { X, UploadCloud, MapPin, Ruler, FileText, Image as ImageIcon } from 'luc
 import { useToast } from '@/providers/ToastContext';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { motion } from 'framer-motion';
+import { validatePositiveNumber, ValidationErrors } from '@/lib/crmValidation';
 
 interface Props {
   isOpen: boolean;
@@ -19,6 +20,7 @@ interface Props {
 export const InteriorLogSiteVisitModal = ({ isOpen, onClose, customerId, onSuccess }: Props) => {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<ValidationErrors>({});
 
   const [measurements, setMeasurements] = useState({
     carpetArea: '',
@@ -48,14 +50,36 @@ export const InteriorLogSiteVisitModal = ({ isOpen, onClose, customerId, onSucce
     setPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
+  const validateForm = (): boolean => {
+    const newErrors: ValidationErrors = {};
+    if (measurements.carpetArea && validatePositiveNumber(measurements.carpetArea, 'Carpet Area')) {
+      newErrors.carpetArea = validatePositiveNumber(measurements.carpetArea, 'Carpet Area');
+    }
+    if (measurements.ceilingHeight && validatePositiveNumber(measurements.ceilingHeight, 'Ceiling Height')) {
+      newErrors.ceilingHeight = validatePositiveNumber(measurements.ceilingHeight, 'Ceiling Height');
+    }
+    setErrors(newErrors);
+    return !Object.values(newErrors).some((err) => err !== null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) {
+      toast.error('Please fix the measurement errors');
+      return;
+    }
     setIsSubmitting(true);
 
     try {
       const updatePayload: any = {
         status: 'Measurement Done',
-        siteMeasurements: measurements,
+        siteMeasurements: {
+          ...measurements,
+          carpetArea: measurements.carpetArea.trim(),
+          ceilingHeight: measurements.ceilingHeight.trim(),
+          rooms: measurements.rooms.trim(),
+          notes: measurements.notes.trim(),
+        },
         sitePhotos: photos,
       };
 
@@ -115,20 +139,32 @@ export const InteriorLogSiteVisitModal = ({ isOpen, onClose, customerId, onSucce
                 <input
                   type="text"
                   value={measurements.carpetArea}
-                  onChange={(e) => setMeasurements({...measurements, carpetArea: e.target.value})}
-                  className="w-full bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all"
+                  onChange={(e) => {
+                    setMeasurements({...measurements, carpetArea: e.target.value});
+                    if (errors.carpetArea) setErrors({...errors, carpetArea: null});
+                  }}
+                  className={`w-full bg-[hsl(var(--muted))] border rounded-xl px-4 py-3 text-sm outline-none transition-all ${
+                    errors.carpetArea ? 'border-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-[hsl(var(--border))] focus:ring-2 focus:ring-[hsl(var(--ring))]'
+                  }`}
                   placeholder="e.g. 1200"
                 />
+                {errors.carpetArea && <p className="text-xs text-red-500 mt-1">{errors.carpetArea}</p>}
               </div>
               <div>
                 <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1">Ceiling Height (Ft)</label>
                 <input
                   type="text"
                   value={measurements.ceilingHeight}
-                  onChange={(e) => setMeasurements({...measurements, ceilingHeight: e.target.value})}
-                  className="w-full bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all"
+                  onChange={(e) => {
+                    setMeasurements({...measurements, ceilingHeight: e.target.value});
+                    if (errors.ceilingHeight) setErrors({...errors, ceilingHeight: null});
+                  }}
+                  className={`w-full bg-[hsl(var(--muted))] border rounded-xl px-4 py-3 text-sm outline-none transition-all ${
+                    errors.ceilingHeight ? 'border-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-[hsl(var(--border))] focus:ring-2 focus:ring-[hsl(var(--ring))]'
+                  }`}
                   placeholder="e.g. 10.5"
                 />
+                {errors.ceilingHeight && <p className="text-xs text-red-500 mt-1">{errors.ceilingHeight}</p>}
               </div>
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1">Rooms to design (e.g. 3BHK)</label>

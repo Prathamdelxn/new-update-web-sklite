@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shell } from '@/components/layouts/Shell';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { useConfirm } from '@/providers/ConfirmContext';
+import { useToast } from '@/providers/ToastContext';
 import {
   ArrowLeft,
   Save,
@@ -12,6 +14,8 @@ import {
 
 export default function NewRolePage() {
   const router = useRouter();
+  const toast = useToast();
+  const { alert: customAlert } = useConfirm();
 
   const [roleName, setRoleName] = useState('');
   const [description, setDescription] = useState('');
@@ -19,42 +23,23 @@ export default function NewRolePage() {
 
   const handleCreateRole = async () => {
     if (!roleName.trim()) {
-      alert('Role Identity Name is required');
+      await customAlert('Role Identity Name is required', 'Validation Error');
       return;
     }
 
     setLoading(true);
 
     try {
-      // =====================================================
-      // TODO:
-      //
-      // Call your API here
-      //
-      // POST /api/roles
-      //
-      // Body:
-      // {
-      //   name: roleName,
-      //   description: description
-      // }
-      //
-      // After success:
-      // router.push('/settings/user-management/roles');
-      //
-      // =====================================================
-
       console.log({
         name: roleName,
         description,
       });
 
-      alert('Role Created Successfully (Static Demo)');
-
+      toast.success('Role Created Successfully');
       router.push('/settings/user-management/roles');
     } catch (error) {
       console.error(error);
-      alert('Unable to create role');
+      toast.error('Unable to create role');
     } finally {
       setLoading(false);
     }

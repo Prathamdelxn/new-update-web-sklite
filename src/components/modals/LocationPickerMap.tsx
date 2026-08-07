@@ -7,6 +7,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import { X, Navigation, Loader2, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useConfirm } from '@/providers/ConfirmContext';
 
 interface LocationPickerMapProps {
   isOpen: boolean;
@@ -132,6 +133,8 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
     }
     onClose();
   };
+
+  const { alert: customAlert } = useConfirm();
 
   const handleLocate = (e: React.MouseEvent) => {
     e.stopPropagation();

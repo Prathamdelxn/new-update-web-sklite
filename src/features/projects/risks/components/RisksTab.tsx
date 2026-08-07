@@ -23,6 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 import api from '@/services/api.client';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { useAuth } from '@/providers/AuthContext';
 import { hasProjectPermission, hasAnyProjectPermissionPrefix, isProjectLocked } from '@/lib/permissions';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
@@ -99,6 +100,7 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const toast = useToast();
+  const { confirm } = useConfirm();
   const { user } = useAuth();
 
   const isLocked = isProjectLocked(project);
@@ -110,10 +112,10 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
 
   const fetchRisks = async () => {
     try {
-      const response = await api.get(`/projects/${projectId}/risks`);
-      setRisks(response.data || []);
-    } catch (error) {
-      toast.error('Failed to load risks');
+      const res = await api.get(`/projects/${projectId}/risks`);
+      setRisks(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      setRisks([]);
     } finally {
       setLoading(false);
     }
@@ -124,7 +126,13 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
   }, [projectId]);
 
   const handleDeleteRisk = async (riskId: string) => {
-    if (!window.confirm('Delete this risk? This cannot be undone.')) return;
+    const ok = await confirm({
+      title: 'Delete Risk',
+      message: 'Delete this risk? This cannot be undone.',
+      confirmText: 'Delete Risk',
+      type: 'danger',
+    });
+    if (!ok) return;
     setDeletingId(riskId);
     try {
       await api.delete(`/risks/${riskId}`);
