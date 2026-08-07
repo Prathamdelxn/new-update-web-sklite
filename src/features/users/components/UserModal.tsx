@@ -203,7 +203,7 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
                     <input
                       type="text" required value={formData.name}
                       onChange={e => setFormData(f => ({ ...f, name: e.target.value }))}
-                      className="w-full h-[56px] bg-white/50 border border-blue-50/50 backdrop-blur-sm rounded-2xl px-4 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]" 
+                      className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl px-4 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
                       placeholder="e.g. Robert Fox"
                     />
                   </div>
@@ -214,7 +214,7 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
                     <input
                       type="email" required value={formData.email}
                       onChange={e => setFormData(f => ({ ...f, email: e.target.value }))}
-                      className="w-full h-[56px] bg-white/50 border border-blue-50/50 backdrop-blur-sm rounded-2xl px-4 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]" 
+                      className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl px-4 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
                       placeholder="name@example.com"
                     />
                   </div>
@@ -225,7 +225,7 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
                     <input
                       type="tel" required value={formData.mobile}
                       onChange={e => setFormData(f => ({ ...f, mobile: e.target.value }))}
-                      className="w-full h-[56px] bg-white/50 border border-blue-50/50 backdrop-blur-sm rounded-2xl px-4 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]" 
+                      className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl px-4 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
                       placeholder="Enter mobile number"
                     />
                   </div>
@@ -238,7 +238,7 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
                         <input
                           type={showCredsPassword ? "text" : "password"} required={!isEditing} value={formData.password}
                           onChange={e => setFormData(f => ({ ...f, password: e.target.value }))}
-                          className="w-full h-[56px] bg-white/50 border border-blue-50/50 backdrop-blur-sm rounded-2xl pl-4 pr-12 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]" 
+                          className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl pl-4 pr-12 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
                           placeholder="Leave blank for default"
                         />
                         <button type="button" onClick={() => setShowCredsPassword(v => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600">

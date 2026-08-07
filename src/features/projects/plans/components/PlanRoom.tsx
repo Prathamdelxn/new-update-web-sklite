@@ -130,7 +130,7 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
           </p>
         </div>
 
-        {!isLocked && (
+        {!isLocked && canCreatePlans && (
           <label className={cn(
             'flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer shrink-0',
             isUploading

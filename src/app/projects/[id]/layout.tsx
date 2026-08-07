@@ -21,7 +21,7 @@ import {
 const ALL_TABS = [
   { id: 'details',      name: 'Details',        icon: Info },
   { id: 'site-survey',  name: 'Survey',         icon: ClipboardList },
-  { id: 'plans',        name: 'Drawings',       icon: Map },
+  { id: 'plans',        name: 'Design',         icon: Map },
   { id: 'documents',    name: 'Documents',      icon: Files },
   { id: 'boq',          name: 'BOQ',            icon: FileText },
   { id: 'rooms',        name: 'Rooms',          icon: LayoutGrid },

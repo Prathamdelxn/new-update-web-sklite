@@ -114,7 +114,7 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
         <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
           <Lock className="w-6 h-6 text-gray-400" />
         </div>
-        <p className="text-sm font-bold text-slate-500">You don't have permission to view Technical Plans & Drawings.</p>
+        <p className="text-sm font-bold text-slate-500">You don't have permission to view Design.</p>
       </div>
     );
   }
@@ -152,7 +152,7 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-semibold text-slate-900 tracking-tight">Technical Plans & Drawings</h3>
+                  <h3 className="text-lg font-semibold text-slate-900 tracking-tight">Design</h3>
                   <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-medium">
                     {folders.length} {folders.length === 1 ? 'folder' : 'folders'}
                   </span>
@@ -373,7 +373,7 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
             >
               <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-lg">
                 <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-base font-semibold text-slate-900">New Plans Folder</h3>
+                  <h3 className="text-base font-semibold text-slate-900">New Design Folder</h3>
                   <button onClick={() => setIsCreateModalOpen(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors cursor-pointer">
                     <X className="w-4 h-4" />
                   </button>
