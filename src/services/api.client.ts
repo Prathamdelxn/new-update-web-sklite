@@ -2,7 +2,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 
 const baseURL = typeof window === 'undefined'
-  ? process.env.NEXT_PUBLIC_API_URL || '/api'
+  ? process.env.NEXT_PUBLIC_API_BASE_URL || '/api'
   : '/api';
 
 const api = axios.create({

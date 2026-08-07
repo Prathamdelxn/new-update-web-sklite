@@ -1,19 +1,22 @@
+import CryptoJS from 'crypto-js';
+
 const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!;
 const API_KEY    = process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY!;
 const API_SECRET = process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET!;
 const UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 const FOLDER     = 'skylite';
 
-async function sha1(str: string): Promise<string> {
-  const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+// `crypto.subtle` (Web Crypto API) only exists in secure contexts (HTTPS or
+// localhost) — this dev setup is tested over plain-HTTP LAN IPs
+// (see allowedDevOrigins in next.config.ts), where it's undefined and throws.
+// crypto-js hashes in pure JS, so it works regardless of the page's origin.
+function sha1(str: string): string {
+  return CryptoJS.SHA1(str).toString();
 }
 
 export async function uploadToCloudinary(file: File): Promise<string> {
   const timestamp = Math.round(Date.now() / 1000);
-  const signature = await sha1(`folder=${FOLDER}&timestamp=${timestamp}${API_SECRET}`);
+  const signature = sha1(`folder=${FOLDER}&timestamp=${timestamp}${API_SECRET}`);
 
   const form = new FormData();
   form.append('file', file);

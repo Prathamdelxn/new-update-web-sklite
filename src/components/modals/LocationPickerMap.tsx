@@ -1,7 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, Autocomplete } from '@react-google-maps/api';
+import React, { useState, useEffect, useRef } from 'react';
+import mapboxgl from 'mapbox-gl';
+import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import { X, Navigation, Loader2, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useConfirm } from '@/providers/ConfirmContext';
@@ -14,70 +17,115 @@ interface LocationPickerMapProps {
   initialLng?: number;
 }
 
-const mapContainerStyle = {
-  width: '100%',
-  height: '100%'
-};
-
-// Define libraries outside component to avoid re-renders
-const libraries: ("places")[] = ["places"];
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
 
 export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
   isOpen, onClose, onSelectLocation, initialLat, initialLng
 }) => {
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-    libraries
-  });
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const markerRef = useRef<mapboxgl.Marker | null>(null);
+  const geocoderContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [position, setPosition] = useState<{lat: number, lng: number} | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [position, setPosition] = useState<{ lat: number, lng: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-  
-  const defaultCenter = initialLat && initialLng 
-    ? { lat: initialLat, lng: initialLng } 
+
+  const defaultCenter = initialLat && initialLng
+    ? { lat: initialLat, lng: initialLng }
     : { lat: 25.2048, lng: 55.2708 }; // Default to Dubai
 
-  useEffect(() => {
-    if (initialLat && initialLng) {
-      setPosition({ lat: initialLat, lng: initialLng });
-    } else if (isOpen) {
-      // Auto locate on first open if no initial pos
-      if (navigator.geolocation) {
-         setIsLocating(true);
-         navigator.geolocation.getCurrentPosition(
-           (pos) => {
-             const newPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-             setPosition(newPos);
-             if (map) {
-               map.panTo(newPos);
-               map.setZoom(16);
-             }
-             setIsLocating(false);
-           },
-           () => {
-             setIsLocating(false); // Silent fail for auto-locate
-           }
-         );
-      }
-    }
-  }, [initialLat, initialLng, isOpen, map]);
-
-  const onLoad = useCallback((map: google.maps.Map) => {
-    setMap(map);
-  }, []);
-
-  const onUnmount = useCallback(() => {
-    setMap(null);
-  }, []);
-
-  const handleMapClick = (e: google.maps.MapMouseEvent) => {
-    if (e.latLng) {
-      setPosition({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+  const placeMarker = (lat: number, lng: number, map: mapboxgl.Map) => {
+    if (markerRef.current) {
+      markerRef.current.setLngLat([lng, lat]);
+    } else {
+      markerRef.current = new mapboxgl.Marker({ color: '#2563eb' }).setLngLat([lng, lat]).addTo(map);
     }
   };
+
+  // Initialize map when the modal opens
+  useEffect(() => {
+    if (!isOpen || mapRef.current) return;
+
+    if (!MAPBOX_TOKEN) {
+      setLoadError('Missing Mapbox access token.');
+      return;
+    }
+    if (!mapContainerRef.current) return;
+
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+
+    const map = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [defaultCenter.lng, defaultCenter.lat],
+      zoom: 13,
+    });
+
+    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
+
+    map.on('click', (e) => {
+      const { lat, lng } = e.lngLat;
+      setPosition({ lat, lng });
+      placeMarker(lat, lng, map);
+    });
+
+    map.on('load', () => setIsLoaded(true));
+    map.on('error', () => setLoadError('Please check that your Mapbox token is valid.'));
+
+    if (geocoderContainerRef.current) {
+      const geocoder = new MapboxGeocoder({
+        accessToken: MAPBOX_TOKEN,
+        // @ts-expect-error - mapboxgl instance type mismatch between packages, functionally compatible
+        mapboxgl,
+        marker: false,
+        placeholder: 'Search for places...',
+      });
+      geocoder.on('result', (e: any) => {
+        const [lng, lat] = e.result.center;
+        setPosition({ lat, lng });
+        placeMarker(lat, lng, map);
+        map.flyTo({ center: [lng, lat], zoom: 16 });
+      });
+      geocoderContainerRef.current.innerHTML = '';
+      geocoderContainerRef.current.appendChild(geocoder.onAdd(map));
+    }
+
+    if (initialLat && initialLng) {
+      setPosition({ lat: initialLat, lng: initialLng });
+      placeMarker(initialLat, initialLng, map);
+    }
+
+    mapRef.current = map;
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+      markerRef.current = null;
+      setIsLoaded(false);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  // Auto-locate on first open if no initial position was passed in
+  useEffect(() => {
+    if (!isOpen || initialLat || initialLng || !isLoaded || !navigator.geolocation) return;
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const newPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setPosition(newPos);
+        if (mapRef.current) {
+          placeMarker(newPos.lat, newPos.lng, mapRef.current);
+          mapRef.current.flyTo({ center: [newPos.lng, newPos.lat], zoom: 16 });
+        }
+        setIsLocating(false);
+      },
+      () => setIsLocating(false) // Silent fail for auto-locate
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, isLoaded]);
 
   const handleConfirm = () => {
     if (position) {
@@ -91,39 +139,26 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
   const handleLocate = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!navigator.geolocation) {
-      customAlert("Geolocation is not supported by your browser");
+      alert('Geolocation is not supported by your browser');
       return;
     }
-    
+
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const newPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setPosition(newPos);
-        map?.panTo(newPos);
-        map?.setZoom(16);
+        if (mapRef.current) {
+          placeMarker(newPos.lat, newPos.lng, mapRef.current);
+          mapRef.current.flyTo({ center: [newPos.lng, newPos.lat], zoom: 16 });
+        }
         setIsLocating(false);
       },
       (err) => {
-        customAlert("Unable to fetch location: " + err.message);
+        alert('Unable to fetch location: ' + err.message);
         setIsLocating(false);
       }
     );
-  };
-
-  const onPlaceChanged = () => {
-    if (autocompleteRef.current !== null) {
-      const place = autocompleteRef.current.getPlace();
-      if (place.geometry && place.geometry.location) {
-        const newPos = {
-          lat: place.geometry.location.lat(),
-          lng: place.geometry.location.lng()
-        };
-        setPosition(newPos);
-        map?.panTo(newPos);
-        map?.setZoom(16);
-      }
-    }
   };
 
   return (
@@ -147,54 +182,32 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="flex-1 relative">
               {loadError && (
                 <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gray-100/90 text-red-600 p-6 text-center">
-                  <p className="font-bold text-lg mb-2">Error Loading Maps</p>
-                  <p className="text-sm">Please check if your API key has billing enabled and the Maps JavaScript API activated.</p>
+                  <p className="font-bold text-lg mb-2">Error Loading Map</p>
+                  <p className="text-sm">{loadError}</p>
                 </div>
               )}
-              {isLoaded ? (
-                <>
-                  <div className="absolute top-4 left-4 right-20 z-[400]">
-                    <Autocomplete
-                      onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
-                      onPlaceChanged={onPlaceChanged}
-                    >
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Search className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <input
-                          type="text"
-                          placeholder="Search for places..."
-                          className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm shadow-md transition-shadow"
-                        />
-                      </div>
-                    </Autocomplete>
-                  </div>
-                  <GoogleMap
-                    mapContainerStyle={mapContainerStyle}
-                    center={defaultCenter}
-                    zoom={13}
-                    onClick={handleMapClick}
-                    onLoad={onLoad}
-                    onUnmount={onUnmount}
-                    options={{
-                      streetViewControl: false,
-                      mapTypeControl: false,
-                    }}
-                  >
-                    {position && <Marker position={position} />}
-                  </GoogleMap>
-                </>
-              ) : (
-                <div className="flex items-center justify-center h-full w-full bg-gray-100">
+
+              {!isLoaded && !loadError && (
+                <div className="absolute inset-0 flex items-center justify-center h-full w-full bg-gray-100 z-[5]">
                   <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
                 </div>
               )}
-              
+
+              <div ref={mapContainerRef} className="absolute inset-0" />
+
+              {isLoaded && (
+                <div className="absolute top-4 left-4 right-20 z-[400]">
+                  <div className="relative [&_.mapboxgl-ctrl-geocoder]:w-full [&_.mapboxgl-ctrl-geocoder]:max-w-none [&_.mapboxgl-ctrl-geocoder]:rounded-xl [&_.mapboxgl-ctrl-geocoder]:shadow-md [&_.mapboxgl-ctrl-geocoder]:border [&_.mapboxgl-ctrl-geocoder]:border-gray-200">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 z-10 pointer-events-none" />
+                    <div ref={geocoderContainerRef} className="[&_input]:!pl-10" />
+                  </div>
+                </div>
+              )}
+
               <div className="absolute top-4 right-4 z-[400]">
                 <button
                   type="button"

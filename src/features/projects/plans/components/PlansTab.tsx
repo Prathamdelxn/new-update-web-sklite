@@ -6,13 +6,15 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Folder, FolderPlus, MoreVertical, FileText, ChevronRight,
-  CheckCircle2, XCircle, Clock, X, Loader2,
+  CheckCircle2, XCircle, Clock, X, Loader2, Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import api from '@/services/api.client';
 import { useToast } from '@/providers/ToastContext';
-import { useConfirm } from '@/providers/ConfirmContext';
+import { useAuth } from '@/providers/AuthContext';
 import { PlanRoom } from '@/features/projects/plans/components/PlanRoom';
+import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
+import { hasProjectPermission, isProjectLocked } from '@/lib/permissions';
 
 interface PlansTabProps {
   projectId: string;
@@ -29,7 +31,14 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
   const [renamingFolder, setRenamingFolder]       = useState<{ _id: string; name: string } | null>(null);
 
   const toast = useToast();
-  const { confirm } = useConfirm();
+  const { user } = useAuth();
+  const { project } = useProjectContext();
+  const isAdmin = user?.role?.name === 'Admin' || (user?.role?.permissions?.includes('*') ?? false);
+  const isLocked = isProjectLocked(project);
+  const canView = isAdmin || hasProjectPermission(user, project, 'plans:view');
+  const canCreate = !isLocked && (isAdmin || hasProjectPermission(user, project, 'plans:create'));
+  const canUpdate = !isLocked && (isAdmin || hasProjectPermission(user, project, 'plans:update') || hasProjectPermission(user, project, 'plans:edit'));
+  const canDelete = !isLocked && (isAdmin || hasProjectPermission(user, project, 'plans:delete'));
 
   const fetchFolders = async () => {
     try {
@@ -54,13 +63,8 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
 
   const handleDeleteFolder = async (id: string) => {
     setFolderMenuId(null);
-    const ok = await confirm({
-      title: 'Delete Folder',
-      message: 'Delete this folder and all its documents?',
-      confirmText: 'Delete Folder',
-      type: 'danger',
-    });
-    if (!ok) return;
+    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (!window.confirm('Delete this folder and all its documents?')) return;
     try {
       await api.delete(`/projects/${projectId}/folders/${id}`);
       toast.success('Folder deleted');
@@ -74,6 +78,7 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
   const handleRenameFolder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!renamingFolder) return;
+    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
     try {
       await api.patch(`/projects/${projectId}/folders/${renamingFolder._id}`, { name: renamingFolder.name });
       toast.success('Folder renamed');
@@ -87,6 +92,7 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
   const handleCreateFolder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFolderName.trim()) return;
+    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
     setIsCreating(true);
     try {
       await api.post(`/projects/${projectId}/folders`, { name: newFolderName });
@@ -102,6 +108,17 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
   };
 
   const selectedFolder = folders.find(f => f._id === selectedFolderId);
+
+  if (!canView) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+          <Lock className="w-6 h-6 text-gray-400" />
+        </div>
+        <p className="text-sm font-bold text-slate-500">You don't have permission to view Technical Plans & Drawings.</p>
+      </div>
+    );
+  }
 
   return (
     <SkeletonLoader loading={loading} preset="list">
@@ -147,13 +164,15 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
                     : 'Create folders to organise your drawings and plans.'}
                 </p>
               </div>
-              <button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer shrink-0"
-              >
-                <FolderPlus className="w-3.5 h-3.5" />
-                <span>New Folder</span>
-              </button>
+              {canCreate && (
+                <button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer shrink-0"
+                >
+                  <FolderPlus className="w-3.5 h-3.5" />
+                  <span>New Folder</span>
+                </button>
+              )}
             </div>
 
             {/* Folder grid */}
@@ -177,26 +196,32 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
                           <Folder className="w-4 h-4" />
                         </div>
                         <div className="relative" onClick={e => e.stopPropagation()}>
+                          {(canUpdate || canDelete) && (
                           <button
                             onClick={() => setFolderMenuId(folderMenuId === folder._id ? null : folder._id)}
                             className="p-1.5 text-slate-400 hover:text-slate-700 transition-colors rounded-lg hover:bg-slate-100 cursor-pointer"
                           >
                             <MoreVertical className="w-4 h-4" />
                           </button>
+                          )}
                           {folderMenuId === folder._id && (
                             <div className="absolute right-0 top-8 w-36 bg-white border border-slate-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                              {canUpdate && (
                               <button
                                 onClick={() => { setRenamingFolder({ _id: folder._id, name: folder.name }); setFolderMenuId(null); }}
                                 className="w-full px-3.5 py-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
                               >
                                 Rename
                               </button>
+                              )}
+                              {canDelete && (
                               <button
                                 onClick={() => handleDeleteFolder(folder._id)}
                                 className="w-full px-3.5 py-2 text-left text-xs font-medium text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                               >
                                 Delete
                               </button>
+                              )}
                             </div>
                           )}
                         </div>
@@ -264,13 +289,15 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
                   <p className="text-xs text-slate-500 mt-1 max-w-xs">
                     Create a folder to start organising technical drawings and plans.
                   </p>
-                  <button
-                    onClick={() => setIsCreateModalOpen(true)}
-                    className="mt-5 flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 text-white text-xs font-medium hover:bg-slate-800 transition-colors cursor-pointer"
-                  >
-                    <FolderPlus className="w-4 h-4" />
-                    New Folder
-                  </button>
+                  {canCreate && (
+                    <button
+                      onClick={() => setIsCreateModalOpen(true)}
+                      className="mt-5 flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 text-white text-xs font-medium hover:bg-slate-800 transition-colors cursor-pointer"
+                    >
+                      <FolderPlus className="w-4 h-4" />
+                      New Folder
+                    </button>
+                  )}
                 </div>
               )}
             </div>

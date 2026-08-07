@@ -73,6 +73,7 @@ export const interiorProjectService = {
   // Vendors / Inventory
   getInventory: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/inventory`).then((res) => res.data),
   logInventoryInstall: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/inventory`, data).then((res) => res.data),
+  createInventoryMaterial: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/inventory`, { ...data, action: 'create_material' }).then((res) => res.data),
 
   // Drawings
   getDrawings: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/drawings`).then((res) => res.data),
@@ -166,4 +167,20 @@ export const interiorProjectService = {
   // Users & Roles — org-wide user list with full project assignment details
   getUsersWithProjects: () =>
     interiorApiClient.get('/users/with-projects').then((res) => res.data),
+
+  // All users in the organisation (for member picker)
+  getOrgUsers: () =>
+    interiorApiClient.get('/users').then((res) => res.data),
+
+  // Create a new user (org admin only)
+  createUser: (data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password?: string;
+    phone?: string;
+    designation?: string;
+    department?: string;
+    systemRole?: string;
+  }) => interiorApiClient.post('/users', data).then((res) => res.data),
 };

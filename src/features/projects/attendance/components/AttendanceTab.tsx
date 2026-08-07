@@ -5,12 +5,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Clock, MapPin, User, Calendar, Camera, AlertTriangle, CheckCircle2,
   RefreshCw, Play, Square, X, Eye, Settings, Map, ChevronLeft, ChevronRight,
-  TrendingUp, Download, Info
+  TrendingUp, Download, Info, UserPlus
 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthContext';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
 import { cn } from '@/lib/utils';
+import { isProjectLocked } from '@/lib/permissions';
+import { LabourManagementTab } from './LabourManagementTab';
 
 interface AttendanceTabProps {
   projectId: string;
@@ -21,6 +23,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
   const toast = useToast();
   const userRoleName = typeof user?.role === 'object' ? user?.role?.name : user?.role;
   const isManagerOrAdmin = userRoleName === 'Admin' || userRoleName === 'Project Manager';
+  const isAdmin = userRoleName === 'Admin';
 
   // ── States ──
   const [project, setProject] = useState<any>(null);
@@ -37,6 +40,12 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
   const [isCheckInOpen, setIsCheckInOpen] = useState(false);
   const [isCheckOutOpen, setIsCheckOutOpen] = useState(false);
   const [checkNote, setCheckNote] = useState('');
+
+  // Manual Attendance Override (Admin only)
+  const [isManualOpen, setIsManualOpen] = useState(false);
+  const [manualUserId, setManualUserId] = useState('');
+  const [manualDate, setManualDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [submittingManual, setSubmittingManual] = useState(false);
 
   // Geolocation Simulation & Details
   const [simulateLocation, setSimulateLocation] = useState(true); // Default to true in dev for easier testing
@@ -83,6 +92,9 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
   });
   const [exportUser, setExportUser] = useState('all');
   const [exporting, setExporting] = useState(false);
+
+  const isLocked = isProjectLocked(project);
+  const [activeSection, setActiveSection] = useState<'Attendance' | 'Labour'>('Attendance');
 
   // Fetch Project details
   const fetchProjectDetails = async () => {
@@ -311,6 +323,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
   // ── Actions ──
   const handleCheckIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
     if (!capturedPhoto) {
       toast.error('Selfie photo is required for attendance validation.');
       return;
@@ -352,6 +365,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
   };
 
   const handleCheckOut = async () => {
+    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
     setSubmittingCheck(true);
     try {
       const location = await getCoordinates();
@@ -379,8 +393,33 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
     }
   };
 
+  const handleManualMark = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (!manualUserId || !manualDate) {
+      toast.error('Please select a member and a date');
+      return;
+    }
+
+    setSubmittingManual(true);
+    try {
+      await api.post('/attendance/manual', { projectId, userId: manualUserId, date: manualDate });
+      toast.success('Attendance marked successfully');
+      setIsManualOpen(false);
+      setManualUserId('');
+      fetchTodayStatus();
+      fetchLogs();
+      fetchMonthlyHistory();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to mark attendance');
+    } finally {
+      setSubmittingManual(false);
+    }
+  };
+
   const saveGeofenceSettings = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
     if (!geoLat || !geoLng) {
       toast.error('Geofence coordinates are required');
       return;
@@ -450,6 +489,11 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
     }
   };
 
+  // Project members eligible for a manual attendance override
+  const memberOptions = (project?.members || [])
+    .filter((m: any) => m.user)
+    .map((m: any) => ({ id: m.user._id || m.user, name: m.user.name || m.user.email || 'Member' }));
+
   // Helper to format Date
   const formatTime = (dateStr: string | null) => {
     if (!dateStr) return '—';
@@ -471,12 +515,35 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
 
         {/* Sub-tab selection */}
-        <div className="flex border-b border-gray-100 bg-gray-50/50">
+        <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/50">
           <div className="px-6 py-4">
-            <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider">Attendance Logs & Reports</h3>
+            <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider">
+              {activeSection === 'Labour' ? 'Labour Management' : 'Attendance Logs & Reports'}
+            </h3>
           </div>
+          {isManagerOrAdmin && (
+            <div className="flex p-1 mr-4 bg-gray-100 border border-gray-200 rounded-xl">
+              {(['Attendance', 'Labour'] as const).map(s => (
+                <button
+                  key={s}
+                  onClick={() => setActiveSection(s)}
+                  className={cn(
+                    'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all',
+                    activeSection === s ? 'bg-white shadow text-gray-900' : 'text-slate-500'
+                  )}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
+        {isManagerOrAdmin && activeSection === 'Labour' ? (
+          <div className="p-6">
+            <LabourManagementTab projectId={projectId} />
+          </div>
+        ) : (
         <div className="p-6 space-y-6">
           {/* Today's log for the project */}
           <div>
@@ -485,6 +552,16 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
                 <h4 className="text-xs font-black uppercase text-slate-400 tracking-wider">On-Site Log (Today)</h4>
               </div>
+              {isAdmin && !isLocked && (
+                <button
+                  type="button"
+                  onClick={() => { setManualUserId(''); setManualDate(new Date().toISOString().slice(0, 10)); setIsManualOpen(true); }}
+                  className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-xl py-1.5 px-3 text-xs font-bold transition-all shadow-sm"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Mark Attendance</span>
+                </button>
+              )}
             </div>
 
             {loadingLogs ? (
@@ -672,6 +749,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
             )}
           </div>
         </div>
+        )}
 
       </div>
 
@@ -1034,6 +1112,92 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                   >
                     {exporting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                     <span>{exporting ? 'Exporting...' : 'Export File'}</span>
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Manual Attendance Override Modal (Admin only) ── */}
+      <AnimatePresence>
+        {isManualOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setIsManualOpen(false)}
+              className="absolute inset-0 bg-black/35 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="w-full max-w-sm relative z-10 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden flex flex-col"
+            >
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-slate-50/50">
+                <div>
+                  <h3 className="font-black text-gray-900 text-base">Mark Attendance Manually</h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Admin Override</p>
+                </div>
+                <button
+                  onClick={() => setIsManualOpen(false)}
+                  className="p-1.5 text-slate-400 hover:text-gray-900 bg-white border border-gray-100 rounded-lg transition-colors shadow-sm"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleManualMark} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Member</label>
+                  <select
+                    value={manualUserId}
+                    onChange={e => setManualUserId(e.target.value)}
+                    required
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-3 text-xs font-semibold focus:outline-none focus:border-blue-500 transition-all"
+                  >
+                    <option value="">Select a member</option>
+                    {memberOptions.map((m: any) => (
+                      <option key={m.id} value={m.id}>{m.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Date</label>
+                  <input
+                    type="date"
+                    value={manualDate}
+                    onChange={e => setManualDate(e.target.value)}
+                    max={new Date().toISOString().slice(0, 10)}
+                    required
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-3 text-xs font-semibold focus:outline-none focus:border-blue-500 transition-all"
+                  />
+                </div>
+
+                <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5 flex items-start gap-2.5">
+                  <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-slate-500 leading-normal font-medium">
+                    Marks the selected member as Present for this date. Only works if they don&apos;t already have an attendance record for it.
+                  </p>
+                </div>
+
+                <div className="flex gap-3 pt-3 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsManualOpen(false)}
+                    className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-bold transition-all text-xs"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingManual}
+                    className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all text-xs disabled:opacity-50 shadow-lg shadow-blue-600/10 flex items-center justify-center gap-1.5"
+                  >
+                    {submittingManual ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                    <span>{submittingManual ? 'Marking...' : 'Mark Present'}</span>
                   </button>
                 </div>
               </form>

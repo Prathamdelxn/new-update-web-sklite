@@ -17,6 +17,7 @@ interface IssueDetailModalProps {
   issue: any;
   projectId: string;
   type: 'Issue' | 'Snag';
+  isLocked?: boolean;
 }
 
 const STATUSES = ['Open', 'In Progress', 'Escalated', 'Resolved', 'Closed'];
@@ -41,7 +42,7 @@ const getStatusColor = (status: string) => {
 };
 
 export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
-  isOpen, onClose, onSuccess, issue, projectId, type,
+  isOpen, onClose, onSuccess, issue, projectId, type, isLocked,
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [currentStatus, setCurrentStatus] = useState(issue?.status || 'Open');
@@ -77,6 +78,7 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
 
   const handleStatusUpdate = async (newStatus: string) => {
     if (newStatus === currentStatus) return;
+    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
 
     if (type === 'Issue' && newStatus === 'Escalated') {
       if (!escalationMatrix || !escalationMatrix.levels || escalationMatrix.levels.length === 0) {
@@ -140,6 +142,7 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
 
   const handleSaveNote = async () => {
     if (!resolutionDetails.trim()) return;
+    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
     setSavingNote(true);
     try {
       const endpoint = type === 'Snag' ? `/snags/${issue._id}` : `/issues/${issue._id}`;
@@ -223,13 +226,13 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
                       <button
                         key={s}
                         onClick={() => handleStatusUpdate(s)}
-                        disabled={isUpdating}
+                        disabled={isUpdating || isLocked}
                         className={cn(
                           'px-3 py-1.5 rounded-xl text-xs font-bold border transition-all',
                           currentStatus === s
                             ? getStatusColor(s)
                             : 'bg-gray-50 border-gray-200 text-slate-500 hover:border-gray-300 hover:text-gray-900',
-                          isUpdating && 'opacity-50 cursor-not-allowed'
+                          (isUpdating || isLocked) && 'opacity-50 cursor-not-allowed'
                         )}
                       >
                         {s}
@@ -325,11 +328,12 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
                       onChange={e => setResolutionDetails(e.target.value)}
                       placeholder="Describe how this issue was resolved or add follow-up notes..."
                       rows={3}
+                      disabled={isLocked}
                       className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none pr-12"
                     />
                     <button
                       onClick={handleSaveNote}
-                      disabled={savingNote || !resolutionDetails.trim()}
+                      disabled={savingNote || !resolutionDetails.trim() || isLocked}
                       className="absolute right-3 bottom-3 p-1.5 text-blue-600 hover:text-blue-500 disabled:text-slate-300 transition-colors"
                       title="Save note"
                     >

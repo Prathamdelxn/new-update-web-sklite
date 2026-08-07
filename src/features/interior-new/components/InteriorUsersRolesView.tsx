@@ -25,6 +25,10 @@ import {
   Shield,
   CheckCircle2,
   MinusCircle,
+  UserPlus,
+  Mail,
+  Phone,
+  Briefcase,
 } from 'lucide-react';
 import { interiorProjectService } from '@/services/interiorProject.service';
 
@@ -143,14 +147,14 @@ const ROLE_MATRIX: Record<ProjectRoleKey, Record<string, string[]>> = {
   },
 };
 
-const ROLE_DEFS: { key: ProjectRoleKey; label: string; desc: string; color: string; bg: string }[] = [
-  { key: 'project_manager',       label: 'Project Manager',     desc: 'Full access to all modules',            color: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-950/30 border-violet-200 dark:border-violet-800' },
-  { key: 'site_engineer',         label: 'Site Engineer',       desc: 'Field-focused CRUD + own tasks',        color: 'text-blue-600 dark:text-blue-400',   bg: 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800' },
-  { key: 'quantity_surveyor',     label: 'Quantity Surveyor',   desc: 'Procurement & financials focused',      color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800' },
-  { key: 'designer',              label: 'Designer',            desc: 'Drawings, RFIs & photos access',        color: 'text-pink-600 dark:text-pink-400',   bg: 'bg-pink-50 dark:bg-pink-950/30 border-pink-200 dark:border-pink-800' },
-  { key: 'sub_contractor',        label: 'Sub Contractor',      desc: 'Own tasks + limited read',              color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800' },
-  { key: 'client_representative', label: 'Client Rep.',         desc: 'Read-heavy + project config read',      color: 'text-teal-600 dark:text-teal-400',   bg: 'bg-teal-50 dark:bg-teal-950/30 border-teal-200 dark:border-teal-800' },
-  { key: 'viewer',                label: 'Viewer',              desc: 'Read-only across all modules',          color: 'text-slate-500 dark:text-slate-400',  bg: 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700' },
+const ROLE_DEFS: { key: ProjectRoleKey; label: string; desc: string }[] = [
+  { key: 'project_manager',       label: 'Project Manager',     desc: 'Full access to all modules' },
+  { key: 'site_engineer',         label: 'Site Engineer',       desc: 'Field-focused CRUD + own tasks' },
+  { key: 'quantity_surveyor',     label: 'Quantity Surveyor',   desc: 'Procurement & financials focused' },
+  { key: 'designer',              label: 'Designer',            desc: 'Drawings, RFIs & photos access' },
+  { key: 'sub_contractor',        label: 'Sub Contractor',      desc: 'Own tasks + limited read' },
+  { key: 'client_representative', label: 'Client Rep.',         desc: 'Read-heavy + project config read' },
+  { key: 'viewer',                label: 'Viewer',              desc: 'Read-only across all modules' },
 ];
 
 // Action badge styling
@@ -196,6 +200,170 @@ function getAvatarColor(name: string) {
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
   return colors[Math.abs(hash) % colors.length];
+}
+
+// ---------------------------------------------------------------------------
+// Add User Modal
+// ---------------------------------------------------------------------------
+interface AddUserForm {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  phone: string;
+  designation: string;
+  department: string;
+  systemRole: string;
+}
+
+const INITIAL_FORM: AddUserForm = {
+  firstName: '', lastName: '', email: '', password: '',
+  phone: '', designation: '', department: '', systemRole: 'member',
+};
+
+function AddUserModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+  const toast = useToast();
+  const [form, setForm] = useState<AddUserForm>(INITIAL_FORM);
+  const [saving, setSaving] = useState(false);
+
+  const set = (field: keyof AddUserForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim()) {
+      toast.error('First name, last name and email are required.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload: any = {
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        email: form.email.trim(),
+        systemRole: form.systemRole,
+      };
+      if (form.password.trim())  payload.password    = form.password.trim();
+      if (form.phone.trim())      payload.phone       = form.phone.trim();
+      if (form.designation.trim()) payload.designation = form.designation.trim();
+      if (form.department.trim())  payload.department  = form.department.trim();
+
+      await interiorProjectService.createUser(payload);
+      toast.success(`User ${form.firstName} ${form.lastName} created successfully`);
+      onSuccess();
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? 'Failed to create user');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const fieldCls = 'w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] transition-all';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={onClose} className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 16 }}
+        className="relative w-full max-w-md bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl z-10 overflow-hidden"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--border))]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[hsl(var(--muted)/0.5)] flex items-center justify-center">
+              <UserPlus className="w-4 h-4 text-[hsl(var(--primary))]" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-[hsl(var(--foreground))]">Add New User</h2>
+              <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Invite a team member to your organisation</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1.5 hover:bg-[hsl(var(--muted))] rounded-lg text-[hsl(var(--muted-foreground))] transition-colors cursor-pointer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Name row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">First Name *</label>
+              <input value={form.firstName} onChange={set('firstName')} placeholder="John" className={fieldCls} required />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Last Name *</label>
+              <input value={form.lastName} onChange={set('lastName')} placeholder="Doe" className={fieldCls} required />
+            </div>
+          </div>
+
+          {/* Email */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Email *</label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+              <input type="email" value={form.email} onChange={set('email')} placeholder="john@company.com" className={`${fieldCls} pl-9`} required />
+            </div>
+          </div>
+
+          {/* Password */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Password</label>
+            <input type="password" value={form.password} onChange={set('password')} placeholder="Leave blank for Welcome@123" className={fieldCls} />
+            <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Default password is <span className="font-mono font-semibold">Welcome@123</span> if left blank</p>
+          </div>
+
+          {/* Phone */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Phone</label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+              <input value={form.phone} onChange={set('phone')} placeholder="+971 50 000 0000" className={`${fieldCls} pl-9`} />
+            </div>
+          </div>
+
+          {/* Designation & Department */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Designation</label>
+              <input value={form.designation} onChange={set('designation')} placeholder="e.g. Site Engineer" className={fieldCls} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Department</label>
+              <input value={form.department} onChange={set('department')} placeholder="e.g. Operations" className={fieldCls} />
+            </div>
+          </div>
+
+          {/* System Role */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">System Role</label>
+            <select value={form.systemRole} onChange={set('systemRole')} className={fieldCls}>
+              <option value="member">Member</option>
+              <option value="manager">Manager</option>
+              <option value="org_admin">Org Admin</option>
+              <option value="viewer">Viewer</option>
+            </select>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm font-semibold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] transition-colors cursor-pointer">
+              Cancel
+            </button>
+            <button type="submit" disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60 cursor-pointer">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+              {saving ? 'Creating...' : 'Create User'}
+            </button>
+          </div>
+        </form>
+      </motion.div>
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -363,21 +531,21 @@ function RoleCard({ roleDef }: { roleDef: typeof ROLE_DEFS[number] }) {
   const fullAccessCount = ALL_MODULES.filter((m) => (matrix[m.key] ?? []).join(',') === full.join(',')).length;
 
   return (
-    <motion.div layout className={`border rounded-xl overflow-hidden ${roleDef.bg}`}>
+    <motion.div layout className="border border-[hsl(var(--border))] rounded-xl overflow-hidden bg-[hsl(var(--card))]">
       {/* Header */}
       <div
         onClick={() => setExpanded((v) => !v)}
-        className="flex items-center gap-4 p-4 cursor-pointer hover:opacity-80 transition-opacity"
+        className="flex items-center gap-4 p-4 cursor-pointer hover:bg-[hsl(var(--muted)/0.4)] transition-colors"
       >
-        <div className="w-10 h-10 rounded-xl bg-white/50 dark:bg-black/20 flex items-center justify-center shrink-0">
-          <Shield className={`w-5 h-5 ${roleDef.color}`} />
+        <div className="w-10 h-10 rounded-xl bg-[hsl(var(--muted)/0.5)] border border-[hsl(var(--border))] flex items-center justify-center shrink-0">
+          <Shield className="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-[hsl(var(--foreground))]">{roleDef.label}</span>
             {roleDef.key === 'project_manager' && (
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-violet-200 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300">FULL ACCESS</span>
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]">FULL ACCESS</span>
             )}
           </div>
           <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-0.5">{roleDef.desc}</p>
@@ -390,7 +558,7 @@ function RoleCard({ roleDef }: { roleDef: typeof ROLE_DEFS[number] }) {
           </div>
           {fullAccessCount > 0 && (
             <div className="hidden sm:flex flex-col items-end gap-0.5">
-              <span className="text-xs font-bold text-violet-600 dark:text-violet-400">{fullAccessCount}</span>
+              <span className="text-xs font-bold text-[hsl(var(--foreground))]">{fullAccessCount}</span>
               <span className="text-[10px] text-[hsl(var(--muted-foreground))]">full</span>
             </div>
           )}
@@ -467,6 +635,7 @@ export default function InteriorUsersRolesView() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('All');
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
 
   const loadUsers = useCallback(async () => {
     try {
@@ -511,11 +680,27 @@ export default function InteriorUsersRolesView() {
           </p>
         </div>
         {activeTab === 'users' && (
-          <Button variant="outline" size="sm" onClick={loadUsers} className="text-xs font-semibold shrink-0" isLoading={isLoading}>
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button variant="outline" size="sm" onClick={loadUsers} className="text-xs font-semibold" isLoading={isLoading}>
+              Refresh
+            </Button>
+            <button
+              onClick={() => setIsAddUserOpen(true)}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              Add User
+            </button>
+          </div>
         )}
       </div>
+
+      {/* Add User Modal */}
+      <AnimatePresence>
+        {isAddUserOpen && (
+          <AddUserModal onClose={() => setIsAddUserOpen(false)} onSuccess={loadUsers} />
+        )}
+      </AnimatePresence>
 
       {/* ── Tab toggle ── */}
       <div className="flex items-center gap-1 p-1 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.4)] w-fit">
@@ -629,8 +814,8 @@ export default function InteriorUsersRolesView() {
             {/* Summary row */}
             <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
               {ROLE_DEFS.map((r) => (
-                <div key={r.key} className={`rounded-lg border p-2.5 text-center ${r.bg}`}>
-                  <p className={`text-xs font-bold ${r.color}`}>{r.label}</p>
+                <div key={r.key} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-2.5 text-center">
+                  <p className="text-xs font-bold text-[hsl(var(--foreground))]">{r.label}</p>
                   <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-0.5">
                     {ALL_MODULES.filter((m) => (ROLE_MATRIX[r.key][m.key] ?? []).length > 0).length} modules
                   </p>

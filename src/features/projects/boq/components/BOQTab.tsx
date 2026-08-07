@@ -7,7 +7,7 @@ import {
   Plus, Search, Edit2, Trash2, History, Download, Upload,
   CheckCircle2, Loader2, GitBranch, FileText,
   DollarSign, ChevronLeft, Clock, Send, XCircle, RefreshCw,
-  TrendingUp, BarChart3, ChevronRight,
+  TrendingUp, BarChart3, ChevronRight, Lock,
 } from 'lucide-react';
 import { BOQItem } from '@/types';
 import api from '@/services/api.client';
@@ -16,7 +16,7 @@ import { useConfirm } from '@/providers/ConfirmContext';
 import { useAuth } from '@/providers/AuthContext';
 import { useSocket } from '@/providers/SocketContext';
 import { cn, formatCurrency } from '@/lib/utils';
-import { hasProjectPermission } from '@/lib/permissions';
+import { hasProjectPermission, hasAnyProjectPermissionPrefix, isProjectLocked } from '@/lib/permissions';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
 import { BOQModal } from '@/features/projects/boq/components/BOQModal';
 import { BOQImportModal } from '@/features/projects/boq/components/BOQImportModal';
@@ -114,10 +114,12 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
 
   // ── Permissions (mirror mobile's isAdmin / canApprove) ──────────────────
   const isAdmin = user?.role?.name === 'Admin' || (user?.role?.permissions?.includes('*') ?? false);
-  const canApprove = hasProjectPermission(user, project, 'boq:approve');
-  const canUpdate = hasProjectPermission(user, project, 'boq:update');
-  const canDelete = hasProjectPermission(user, project, 'boq:delete');
-  const canCreate = hasProjectPermission(user, project, 'boq:create');
+  const canView = isAdmin || hasAnyProjectPermissionPrefix(user, project, 'boq:');
+  const isLocked = isProjectLocked(project);
+  const canApprove = !isLocked && hasProjectPermission(user, project, 'boq:approve');
+  const canUpdate = !isLocked && hasProjectPermission(user, project, 'boq:update');
+  const canDelete = !isLocked && hasProjectPermission(user, project, 'boq:delete');
+  const canCreate = !isLocked && hasProjectPermission(user, project, 'boq:create');
 
   // ── Fetch BOQ ────────────────────────────────────────────────────────────
   const fetchBOQ = useCallback(async () => {
@@ -282,6 +284,17 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
   };
 
   // ──────────────────────────────────────────────────────────────────────────
+  if (!canView) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+          <Lock className="w-6 h-6 text-gray-400" />
+        </div>
+        <p className="text-sm font-bold text-slate-500">You don't have permission to view the BOQ Management module.</p>
+      </div>
+    );
+  }
+
   // ──────────────────────────────────────────────────────────────────────────
   // UNIFIED VIEW — All Groups and Items
   // ──────────────────────────────────────────────────────────────────────────
@@ -469,7 +482,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
                           {groupItems.map((item, idx) => {
                             const isUpdating = updatingItemId === item._id;
                             const isTargetApprover = String(user?.id || user?._id) === String((item as any).requestedApprover);
-                            const canApproveThis = canApprove || isTargetApprover;
+                            const canApproveThis = canApprove || (!isProjectLocked(project) && isTargetApprover);
                             const rowStyle = STATUS_STYLES[item.status as StatusKey]?.row ?? '';
   
                             return (

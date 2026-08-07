@@ -36,7 +36,8 @@ import { cn, formatCurrency } from '@/lib/utils';
 import api from '@/services/api.client';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
 import { useToast } from '@/providers/ToastContext';
-import { useConfirm } from '@/providers/ConfirmContext';
+import { useAuth } from '@/providers/AuthContext';
+import { hasProjectPermission, hasAnyProjectPermissionPrefix, isProjectLocked } from '@/lib/permissions';
 import { MaterialModal } from '@/features/projects/materials/components/MaterialModal';
 import { MaterialRequestModal } from '@/features/projects/materials/components/MaterialRequestModal';
 import { MaterialReceiptModal } from '@/features/projects/materials/components/MaterialReceiptModal';
@@ -68,7 +69,14 @@ const PO_STATUS_COLORS: Record<string, string> = {
 
 export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
   const { project } = useProjectContext();
-  const { confirm } = useConfirm();
+  const { user } = useAuth();
+  const isAdmin = user?.role?.name === 'Admin' || (user?.role?.permissions?.includes('*') ?? false);
+  const isLocked = isProjectLocked(project);
+  const canView = isAdmin || hasAnyProjectPermissionPrefix(user, project, 'inventory:');
+  const canCreate = !isLocked && (isAdmin || hasProjectPermission(user, project, 'inventory:create'));
+  const canUpdate = !isLocked && (isAdmin || hasProjectPermission(user, project, 'inventory:update'));
+  const canDelete = !isLocked && (isAdmin || hasProjectPermission(user, project, 'inventory:delete'));
+  const canApprove = !isLocked && (isAdmin || hasProjectPermission(user, project, 'inventory:approve'));
   const [activeSubTab, setActiveSubTab] = useState('all');
   const [materials, setMaterials] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
@@ -205,6 +213,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
   };
 
   const handleUpdateRequestStatus = async (requestId: string, status: 'Approved' | 'Rejected' | 'Fulfilled') => {
+    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
     setUpdatingRequestId(requestId);
     try {
       await api.patch(`/material-requests/${requestId}`, { status });
@@ -221,6 +230,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
   };
 
   const handleVerifyReceipt = async (receiptId: string) => {
+    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
     try {
       await api.patch(`/projects/${projectId}/material-receipts/${receiptId}`, { status: 'Verified' });
       toast.success('Receipt marked as verified');
@@ -231,6 +241,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
   };
 
   const bulkUpdateRequests = async (status: 'Approved' | 'Rejected') => {
+    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
     setIsBulkUpdating(true);
     try {
       const ids = Array.from(checkedRequestIds);
@@ -256,13 +267,8 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
   };
 
   const handleDeleteMaterial = async (materialId: string) => {
-    const ok = await confirm({
-      title: 'Delete Material',
-      message: 'Delete this material? This cannot be undone.',
-      confirmText: 'Delete',
-      type: 'danger',
-    });
-    if (!ok) return;
+    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (!window.confirm('Delete this material? This cannot be undone.')) return;
     setDeletingId(materialId);
     try {
       await api.delete(`/materials/${materialId}`);
@@ -273,13 +279,8 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
   };
 
   const handleDeleteRequest = async (requestId: string) => {
-    const ok = await confirm({
-      title: 'Delete Request',
-      message: 'Delete this request?',
-      confirmText: 'Delete',
-      type: 'danger',
-    });
-    if (!ok) return;
+    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (!window.confirm('Delete this request?')) return;
     setDeletingId(requestId);
     try {
       await api.delete(`/material-requests/${requestId}`);
@@ -291,16 +292,11 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
   };
 
   const handleDeleteUsageLog = async (logId: string) => {
-    const ok = await confirm({
-      title: 'Delete Usage Log',
-      message: 'Delete this usage log? Consumed quantities will be restored to stock.',
-      confirmText: 'Delete Log',
-      type: 'danger',
-    });
-    if (!ok) return;
+    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (!window.confirm('Delete this usage log? Consumed quantities will be restored to stock.')) return;
     setDeletingId(logId);
     try {
-      await api.delete(`/material-usage/${logId}`);
+      await api.delete(`/projects/${projectId}/material-usage/${logId}`);
       toast.success('Usage log deleted and stock restored');
       await Promise.all([fetchUsage(), fetchMaterials()]);
     } catch { toast.error('Failed to delete usage log'); }
@@ -308,16 +304,11 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
   };
 
   const handleDeletePO = async (purchaseId: string) => {
-    const ok = await confirm({
-      title: 'Delete Material Purchase',
-      message: 'Delete this material purchase?',
-      confirmText: 'Delete Purchase',
-      type: 'danger',
-    });
-    if (!ok) return;
+    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (!window.confirm('Delete this material purchase?')) return;
     setDeletingId(purchaseId);
     try {
-      await api.delete(`/material-purchase/${purchaseId}`);
+      await api.delete(`/projects/${projectId}/material-purchase/${purchaseId}`);
       toast.success('Material purchase deleted');
       setSelectedPO(null);
       fetchPurchases();
@@ -326,13 +317,16 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
   };
 
   const handleUpdatePOStatus = async (purchaseId: string, status: 'Approved' | 'Rejected') => {
+    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
     setUpdatingPOId(purchaseId);
     try {
-      await api.patch(`/material-purchase/${purchaseId}`, { status });
+      await api.patch(`/projects/${projectId}/material-purchase/${purchaseId}`, { status });
       toast.success(`Material purchase ${status.toLowerCase()}`);
       setSelectedPO((po: any) => po ? { ...po, status } : po);
       fetchPurchases();
-    } catch { toast.error(`Failed to ${status.toLowerCase()} material purchase`); }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || `Failed to ${status.toLowerCase()} material purchase`);
+    }
     finally { setUpdatingPOId(null); }
   };
 
@@ -376,6 +370,17 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
     };
     loadData();
   }, [projectId, activeSubTab]);
+
+  if (!canView) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+          <Lock className="w-6 h-6 text-gray-400" />
+        </div>
+        <p className="text-sm font-bold text-slate-500">You don't have permission to view the Materials & Inventory module.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -445,6 +450,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
               </div>
 
               <div className="flex items-center space-x-3">
+                {canCreate && (
                 <button
                   onClick={() => {
                     setModalMode('create');
@@ -456,6 +462,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                   <Plus className="w-4 h-4" />
                   <span>New Material</span>
                 </button>
+                )}
               </div>
             </div>
           </GlassCard>
@@ -521,6 +528,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                           Updated: {new Date(material.updatedAt).toLocaleDateString()}
                         </span>
                         <div className="flex items-center space-x-2">
+                          {canUpdate && (
                           <button
                             onClick={() => {
                               setModalMode('stock-in');
@@ -532,6 +540,8 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                           >
                             <PlusCircle className="w-4 h-4" />
                           </button>
+                          )}
+                          {canUpdate && (
                           <button
                             onClick={() => {
                               setModalMode('stock-out');
@@ -543,6 +553,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                           >
                             <MinusCircle className="w-4 h-4" />
                           </button>
+                          )}
                           <button
                             onClick={() => openHistory(material)}
                             title="Usage History"
@@ -550,6 +561,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                           >
                             <History className="w-4 h-4" />
                           </button>
+                          {canUpdate && (
                           <button
                             onClick={() => {
                               setModalMode('edit');
@@ -561,6 +573,8 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                           >
                             <Pencil className="w-4 h-4" />
                           </button>
+                          )}
+                          {canDelete && (
                           <button
                             onClick={() => handleDeleteMaterial(material._id)}
                             disabled={deletingId === material._id}
@@ -569,6 +583,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                           >
                             {deletingId === material._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                           </button>
+                          )}
                         </div>
                       </div>
                     </GlassCard>
@@ -678,6 +693,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                             >
                               <History className="w-4 h-4" />
                             </button> */}
+                            {canUpdate && (
                             <button
                               onClick={() => {
                                 setModalMode('edit');
@@ -689,6 +705,8 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                             >
                               <Pencil className="w-4 h-4" />
                             </button>
+                            )}
+                            {canDelete && (
                             <button
                               onClick={() => handleDeleteMaterial(material._id)}
                               disabled={deletingId === material._id}
@@ -697,6 +715,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                             >
                               {deletingId === material._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                             </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -725,6 +744,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                 <p className="text-xs text-slate-500">Track and manage project material requisitions.</p>
               </div>
               <div className="flex items-center space-x-3">
+                {canCreate && (
                 <button
                   onClick={() => setIsRequestModalOpen(true)}
                   className="flex items-center space-x-2 px-4 py-2 bg-blue-600 border border-blue-500 rounded-xl text-sm font-bold text-white hover:bg-blue-500 transition-all"
@@ -732,6 +752,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                   <Plus className="w-4 h-4" />
                   <span>New Request</span>
                 </button>
+                )}
               </div>
             </div>
           </GlassCard>
@@ -822,7 +843,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                       <span className="text-[10px] font-bold text-slate-500">{request.requestedByName}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      {request.status === 'Pending' && (
+                      {request.status === 'Pending' && canApprove && (
                         <>
                           <button
                             onClick={() => handleUpdateRequestStatus(request._id, 'Rejected')}
@@ -842,7 +863,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                           </button>
                         </>
                       )}
-                      {request.status === 'Approved' && (
+                      {request.status === 'Approved' && canUpdate && (
                         <button
                           onClick={() => handleUpdateRequestStatus(request._id, 'Fulfilled')}
                           disabled={updatingRequestId === request._id}
@@ -853,6 +874,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                           Fulfill
                         </button>
                       )}
+                      {canDelete && (
                       <button
                         onClick={() => handleDeleteRequest(request._id)}
                         disabled={deletingId === request._id}
@@ -861,6 +883,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                       >
                         {deletingId === request._id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                       </button>
+                      )}
                       <button
                         onClick={() => setSelectedRequest(request)}
                         className="text-xs font-bold text-blue-600 hover:text-blue-500 transition-colors"
@@ -889,6 +912,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                 <p className="text-xs text-slate-500">Log and verify incoming material deliveries.</p>
               </div>
               <div className="flex items-center space-x-3">
+                {canCreate && (
                 <button
                   onClick={() => setIsReceiptModalOpen(true)}
                   className="flex items-center space-x-2 px-4 py-2 bg-emerald-600 border border-emerald-500 rounded-xl text-sm font-bold text-white hover:bg-emerald-500 transition-all"
@@ -896,6 +920,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                   <FileCheck className="w-4 h-4" />
                   <span>Log Receipt</span>
                 </button>
+                )}
               </div>
             </div>
           </GlassCard>
@@ -1084,6 +1109,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                 <h3 className="text-lg font-bold text-gray-900">Purchase Orders</h3>
                 <p className="text-xs text-slate-500">Formal procurement requests to vendors.</p>
               </div>
+              {canCreate && (
               <button
                 onClick={() => setIsPurchaseModalOpen(true)}
                 className="flex items-center space-x-2 px-4 py-2 bg-blue-600 border border-blue-500 rounded-xl text-sm font-bold text-white hover:bg-blue-500 transition-all"
@@ -1091,6 +1117,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                 <Plus className="w-4 h-4" />
                 <span>Create PO</span>
               </button>
+              )}
             </div>
           </GlassCard>
 
@@ -1127,6 +1154,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     </div>
                     <div className="flex items-center space-x-2">
                       {po.status !== 'Approved' ? (
+                        canDelete && (
                         <button
                           onClick={() => handleDeletePO(po._id)}
                           disabled={deletingId === po._id}
@@ -1135,6 +1163,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                         >
                           {deletingId === po._id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                         </button>
+                        )
                       ) : (
                         <span title="Approved POs cannot be deleted" className="p-1.5 text-slate-300 cursor-not-allowed">
                           <Lock className="w-3.5 h-3.5" />
@@ -1166,13 +1195,15 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                 <h3 className="text-lg font-bold text-gray-900">Usage Log</h3>
                 <p className="text-xs text-slate-500">Track on-site material consumption.</p>
               </div>
+              {canCreate && (
               <button
                 onClick={() => setIsUsageModalOpen(true)}
-                className="flex items-center space-x-2 px-4 py-2 bg-purple-600 border border-purple-500 rounded-xl text-sm font-bold text-white hover:bg-purple-500 transition-all"
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 border border-blue-500 rounded-xl text-sm font-bold text-white hover:bg-blue-500 shadow-lg shadow-blue-600/20 transition-all"
               >
                 <Zap className="w-4 h-4" />
                 <span>Log Consumption</span>
               </button>
+              )}
             </div>
           </GlassCard>
 
@@ -1210,6 +1241,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
+                        {canDelete && (
                         <button
                           onClick={() => handleDeleteUsageLog(log._id)}
                           disabled={deletingId === log._id}
@@ -1218,6 +1250,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                         >
                           {deletingId === log._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                         </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -1367,7 +1400,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     </div>
                   </div>
                 )}
-                {selectedRequest.status === 'Pending' && (
+                {selectedRequest.status === 'Pending' && canApprove && (
                   <div className="flex space-x-3 pt-2">
                     <button
                       onClick={() => handleUpdateRequestStatus(selectedRequest._id, 'Rejected')}
@@ -1386,7 +1419,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     </button>
                   </div>
                 )}
-                {selectedRequest.status === 'Approved' && (
+                {selectedRequest.status === 'Approved' && canUpdate && (
                   <button
                     onClick={() => handleUpdateRequestStatus(selectedRequest._id, 'Fulfilled')}
                     disabled={updatingRequestId === selectedRequest._id}
@@ -1471,7 +1504,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     </div>
                   </div>
                 )}
-                {(selectedPO.status === 'Pending Approval' || selectedPO.status === 'Pending') && (
+                {(selectedPO.status === 'Pending Approval' || selectedPO.status === 'Pending') && canApprove && (
                   <div className="flex space-x-3 pt-2">
                     <button
                       onClick={() => handleUpdatePOStatus(selectedPO._id, 'Rejected')}
