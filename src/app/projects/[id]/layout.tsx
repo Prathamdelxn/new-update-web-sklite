@@ -31,6 +31,7 @@ const ALL_TABS = [
   { id: 'issues',       name: 'Snags',          icon: AlertCircle },
   { id: 'risks',        name: 'Risk',           icon: ShieldAlert },
   { id: 'transactions', name: 'Transactions',   icon: CreditCard },
+  { id: 'payments',     name: 'Payments',       icon: CreditCard },
   { id: 'reports',      name: 'Reports',        icon: TrendingUp },
   { id: 'audit',        name: 'Audit',          icon: History },
   { id: 'handover',     name: 'Handover',       icon: ClipboardCheck },
@@ -50,7 +51,7 @@ type TabGroup = {
 const TAB_GROUPS: TabGroup[] = [
   { id: 'overview',  label: 'Overview',  icon: LayoutDashboard, tabIds: [ 'details'] },
   { id: 'work',      label: 'Work',      icon: Calendar,        tabIds: ['boq', 'milestones', 'reports'] },
-  { id: 'finance',   label: 'Finance',   icon: DollarSign,      tabIds: ['transactions'] },
+  { id: 'finance',   label: 'Finance',   icon: DollarSign,      tabIds: ['transactions', 'payments'] },
   { id: 'site',      label: 'Site',      icon: Map,             tabIds: ['plans', 'documents', 'materials', 'site-survey', 'attendance'] },
   { id: 'quality',   label: 'Quality',   icon: ShieldAlert,     tabIds: ['issues', 'risks', 'handover', 'audit'] },
   { id: 'chat',      label: 'Chat',      icon: MessageSquare,   tabIds: ['chat'] },

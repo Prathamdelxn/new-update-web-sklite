@@ -30,7 +30,7 @@ interface InteriorLeadsTableProps {
   leads: InteriorLead[];
   isLoading: boolean;
   onEdit: (lead: InteriorLead) => void;
-  onDelete?: (leadId: string) => void;
+  onDelete?: (lead: InteriorLead) => void;
   onPassToFollowUp: (leadId: string) => void;
   onPassToSiteVisit?: (leadId: string) => void;
   onPassToRequirements?: (leadId: string) => void;
@@ -195,11 +195,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
 
                     {onDelete && (
                       <button
-                        onClick={() => {
-                          if (window.confirm(`Are you sure you want to delete lead "${lead.name}"?`)) {
-                            onDelete(lead._id);
-                          }
-                        }}
+                        onClick={() => onDelete(lead)}
                         className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded-xl transition-all border border-rose-500/20"
                         title="Delete Lead"
                       >

@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { cn } from '@/lib/utils';
 
 interface Permission {
@@ -44,9 +45,12 @@ interface ProjectMember {
   permissions: Permission[];
   userId: {
     _id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
+    firstName?: string;
+    lastName?: string;
+    fullName?: string;
+    name?: string;
+    email?: string;
+    role?: any;
     avatar?: string;
     designation?: string;
     department?: string;
@@ -120,6 +124,7 @@ interface InteriorMembersViewProps {
 
 export default function InteriorMembersView({ projectId }: InteriorMembersViewProps) {
   const toast = useToast();
+  const { confirm } = useConfirm();
 
   const [members, setMembers] = useState<ProjectMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -177,7 +182,13 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
   };
 
   const handleDeleteMember = async (memberId: string) => {
-    if (!window.confirm('Are you sure you want to remove this member from the project? They will lose access to all tasks and documents.')) return;
+    const ok = await confirm({
+      title: 'Remove Member',
+      message: 'Are you sure you want to remove this member from the project? They will lose access to all tasks and documents.',
+      confirmText: 'Remove Member',
+      type: 'danger',
+    });
+    if (!ok) return;
     try {
       const res = await interiorProjectService.deleteProjectMember(projectId, memberId);
       if (res?.success) {

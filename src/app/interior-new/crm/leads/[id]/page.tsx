@@ -15,6 +15,7 @@ import { InteriorLogRequirementsModal } from '@/features/interior-new/components
 import { InteriorUploadDesignModal } from '@/features/interior-new/components/crm/modals/InteriorUploadDesignModal';
 import { InteriorQuotationBuilderModal } from '@/features/interior-new/components/crm/modals/InteriorQuotationBuilderModal';
 import { InteriorEditLeadModal } from '@/features/interior-new/components/crm/modals/InteriorEditLeadModal';
+import { InteriorDeleteLeadModal } from '@/features/interior-new/components/crm/modals/InteriorDeleteLeadModal';
 import { QuotationPreview } from '@/components/crm/QuotationPreview';
 
 export default function Lead360View() {
@@ -32,6 +33,8 @@ export default function Lead360View() {
   const [isDesignModalOpen, setIsDesignModalOpen] = useState(false);
   const [isQuotationModalOpen, setIsQuotationModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeletingLead, setIsDeletingLead] = useState(false);
   const [activeQuotationIndex, setActiveQuotationIndex] = useState(0);
   
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
@@ -79,12 +82,14 @@ export default function Lead360View() {
 
   const handleActivitySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activityForm.remarks) return toast.error('Remarks are required');
+    const trimmedRemarks = activityForm.remarks.trim();
+    if (!trimmedRemarks) return toast.error('Please enter remarks/notes for the activity');
 
     setIsSubmitting(true);
     try {
       await interiorCrmService.createActivity({
         ...activityForm,
+        remarks: trimmedRemarks,
         customer: params.id
       });
       toast.success('Activity logged successfully!');
@@ -100,13 +105,15 @@ export default function Lead360View() {
 
   const handleFollowUpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!followUpForm.scheduledDate) return toast.error('Date is required');
-    if (!followUpForm.remarks) return toast.error('Remarks are required');
+    if (!followUpForm.scheduledDate) return toast.error('Follow-up date & time is required');
+    const trimmedRemarks = followUpForm.remarks.trim();
+    if (!trimmedRemarks) return toast.error('Follow-up goal / notes are required');
 
     setIsSubmitting(true);
     try {
       await interiorCrmService.createActivity({
         ...followUpForm,
+        remarks: trimmedRemarks,
         customer: params.id
       });
       toast.success('Follow-up scheduled successfully!');
@@ -136,16 +143,17 @@ export default function Lead360View() {
   if (isLoading) return <InteriorShell><div className="p-8 flex items-center justify-center text-slate-500 min-h-[60vh] font-medium animate-pulse">Loading Lead Profile...</div></InteriorShell>;
   if (!lead) return <InteriorShell><div className="p-8 text-rose-500 font-bold text-center">Lead not found.</div></InteriorShell>;
 
-  const handleDeleteLead = async () => {
+  const handleConfirmDeleteLead = async () => {
     if (!lead) return;
-    if (window.confirm(`Are you sure you want to delete lead "${lead.name}"?`)) {
-      try {
-        await interiorCrmService.deleteCustomer(lead._id);
-        toast.success('Lead deleted successfully');
-        router.push('/interior-new/crm');
-      } catch (error: any) {
-        toast.error('Failed to delete lead');
-      }
+    setIsDeletingLead(true);
+    try {
+      await interiorCrmService.deleteCustomer(lead._id);
+      toast.success('Lead deleted successfully');
+      router.push('/interior-new/crm');
+    } catch (error: any) {
+      toast.error('Failed to delete lead');
+    } finally {
+      setIsDeletingLead(false);
     }
   };
 
@@ -219,7 +227,7 @@ export default function Lead360View() {
             </button>
 
             <button 
-              onClick={handleDeleteLead}
+              onClick={() => setIsDeleteModalOpen(true)}
               className="p-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-xl transition-all active:scale-95"
               title="Delete Lead"
             >
@@ -730,8 +738,16 @@ export default function Lead360View() {
         isOpen={isQuotationModalOpen}
         onClose={() => setIsQuotationModalOpen(false)}
         customerId={params.id as string}
+        customerEmail={lead?.email || ''}
         existingQuotations={lead?.quotations || []}
         onSuccess={fetchData}
+      />
+      <InteriorDeleteLeadModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDeleteLead}
+        leadName={lead?.name}
+        isLoading={isDeletingLead}
       />
     </InteriorShell>
   );

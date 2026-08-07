@@ -25,6 +25,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { cn } from '@/lib/utils';
 import api from '@/services/api.client';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { useAuth } from '@/providers/AuthContext';
 import { hasProjectPermission } from '@/lib/permissions';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
@@ -62,6 +63,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
   const [finalizing, setFinalizing] = useState(false);
 
   const toast = useToast();
+  const { confirm } = useConfirm();
   const { user } = useAuth();
   const { project, fetchProject } = useProjectContext();
 
@@ -106,7 +108,13 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
 
   const handleDeleteIssue = async (e: React.MouseEvent, issueId: string) => {
     e.stopPropagation();
-    if (!window.confirm(`Delete this ${activeType.toLowerCase()}? This cannot be undone.`)) return;
+    const ok = await confirm({
+      title: `Delete ${activeType}`,
+      message: `Delete this ${activeType.toLowerCase()}? This cannot be undone.`,
+      confirmText: 'Delete',
+      type: 'danger',
+    });
+    if (!ok) return;
     setDeletingId(issueId);
     try {
       const endpoint = activeType === 'Snag' ? `/snags/${issueId}` : `/issues/${issueId}`;
@@ -173,7 +181,13 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
     const draftSnags = issues.filter(i => i.status === 'Draft');
     if (draftSnags.length === 0) return;
 
-    if (!window.confirm(`Send all ${draftSnags.length} draft snags for fixing?`)) return;
+    const ok = await confirm({
+      title: 'Bulk Send Draft Snags',
+      message: `Send all ${draftSnags.length} draft snags for fixing?`,
+      confirmText: 'Send Snags',
+      type: 'warning',
+    });
+    if (!ok) return;
 
     setBulkSubmitting(true);
     try {
@@ -202,7 +216,13 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
   };
 
   const handleFinalizeSnagging = async () => {
-    if (!window.confirm('Are you sure you want to finalize the snagging phase? This will set the project status to Snagging Completed.')) return;
+    const ok = await confirm({
+      title: 'Finalize Snagging Phase',
+      message: 'Are you sure you want to finalize the snagging phase? This will set the project status to Snagging Completed.',
+      confirmText: 'Finalize Phase',
+      type: 'warning',
+    });
+    if (!ok) return;
 
     setFinalizing(true);
     try {

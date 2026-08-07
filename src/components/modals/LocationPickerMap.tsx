@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, Autocomplete } from '@react-google-maps/api';
 import { X, Navigation, Loader2, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useConfirm } from '@/providers/ConfirmContext';
 
 interface LocationPickerMapProps {
   isOpen: boolean;
@@ -85,10 +86,12 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
     onClose();
   };
 
+  const { alert: customAlert } = useConfirm();
+
   const handleLocate = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser");
+      customAlert("Geolocation is not supported by your browser");
       return;
     }
     
@@ -102,7 +105,7 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
         setIsLocating(false);
       },
       (err) => {
-        alert("Unable to fetch location: " + err.message);
+        customAlert("Unable to fetch location: " + err.message);
         setIsLocating(false);
       }
     );

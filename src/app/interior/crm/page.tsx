@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Shell } from '@/components/layouts/Shell';
-import { CrmFlowTabs, CrmStage } from '@/components/crm/CrmFlowTabs';
-import { LeadsTable, Lead } from '@/components/crm/LeadsTable';
-import { FollowUpsView } from '@/components/crm/FollowUpsView';
-import { SiteVisitsView } from '@/components/crm/SiteVisitsView';
-import { RequirementDesignView } from '@/components/crm/RequirementDesignView';
-import { QuotationsView } from '@/components/crm/QuotationsView';
-import { WonProjectsView } from '@/components/crm/WonProjectsView';
+import { InteriorCrmFlowTabs as CrmFlowTabs, InteriorCrmStage as CrmStage } from '@/features/interior-new/components/crm/InteriorCrmFlowTabs';
+import { InteriorLeadsTable as LeadsTable, InteriorLead as Lead } from '@/features/interior-new/components/crm/InteriorLeadsTable';
+import { InteriorFollowUpsView as FollowUpsView } from '@/features/interior-new/components/crm/InteriorFollowUpsView';
+import { InteriorSiteVisitsView as SiteVisitsView } from '@/features/interior-new/components/crm/InteriorSiteVisitsView';
+import { InteriorRequirementDesignView as RequirementDesignView } from '@/features/interior-new/components/crm/InteriorRequirementDesignView';
+import { InteriorQuotationsView as QuotationsView } from '@/features/interior-new/components/crm/InteriorQuotationsView';
+import { InteriorWonProjectsView as WonProjectsView } from '@/features/interior-new/components/crm/InteriorWonProjectsView';
 import { CreateLeadModal } from '@/components/modals/CreateLeadModal';
 import { ScheduleFollowUpModal } from '@/components/modals/ScheduleFollowUpModal';
 import { LogSiteVisitModal } from '@/components/modals/LogSiteVisitModal';
@@ -222,7 +222,7 @@ export default function CRMDashboardPage() {
                 <Lightbulb size={32} />
               </div>
               <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">
-                {activeTab.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} Pipeline
+                {activeTab.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())} Pipeline
               </h2>
               <p className="text-sm text-slate-500 mt-2 max-w-sm">
                 This dedicated stage view is currently being implemented. You'll soon be able to manage all data specific to this flow phase right here in a tabular format!

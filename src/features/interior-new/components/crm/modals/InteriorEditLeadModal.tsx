@@ -15,11 +15,14 @@ interface EditLeadModalProps {
   onSuccess: () => void;
 }
 
+import { validateName, validateMobileNumber, validateEmail, ValidationErrors } from '@/lib/crmValidation';
+
 export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
   isOpen, onClose, lead, users = [], onSuccess
 }) => {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<ValidationErrors>({});
 
   const [formData, setFormData] = useState({
     name: '',
@@ -44,24 +47,47 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
         budgetRange: (lead as any).budgetRange || '',
         assignedSalesExecutive: lead.assignedSalesExecutive?._id || (lead as any).assignedSalesExecutive || '',
       });
+      setErrors({});
     }
   }, [lead]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: null });
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: ValidationErrors = {
+      name: validateName(formData.name),
+      mobileNumber: validateMobileNumber(formData.mobileNumber),
+      email: validateEmail(formData.email),
+    };
+    setErrors(newErrors);
+    return !Object.values(newErrors).some((err) => err !== null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!lead) return;
-    if (!formData.name || !formData.mobileNumber) {
-      toast.error('Name and Mobile Number are required');
+    if (!validateForm()) {
+      toast.error('Please fix the errors in the form');
       return;
     }
 
     try {
       setIsSubmitting(true);
-      await interiorCrmService.updateCustomer(lead._id, formData);
+      const payload = {
+        ...formData,
+        name: formData.name.trim(),
+        mobileNumber: formData.mobileNumber.trim(),
+        email: formData.email.trim(),
+        projectLocation: formData.projectLocation.trim(),
+        budgetRange: formData.budgetRange.trim(),
+      };
+      await interiorCrmService.updateCustomer(lead._id, payload);
       toast.success('Lead updated successfully!');
       onSuccess();
       onClose();
@@ -120,12 +146,14 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                   <input
                     type="text"
                     name="name"
-                    required
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] transition-all"
+                    className={`w-full px-4 py-2.5 rounded-xl border bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 transition-all ${
+                      errors.name ? 'border-red-500 focus:ring-red-500/20' : 'border-[hsl(var(--border))] focus:ring-[hsl(var(--ring))]'
+                    }`}
                     placeholder="e.g., John Doe"
                   />
+                  {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
                 </div>
 
                 {/* Mobile */}
@@ -136,12 +164,14 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                   <input
                     type="tel"
                     name="mobileNumber"
-                    required
                     value={formData.mobileNumber}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] transition-all"
+                    className={`w-full px-4 py-2.5 rounded-xl border bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 transition-all ${
+                      errors.mobileNumber ? 'border-red-500 focus:ring-red-500/20' : 'border-[hsl(var(--border))] focus:ring-[hsl(var(--ring))]'
+                    }`}
                     placeholder="e.g., +91 9876543210"
                   />
+                  {errors.mobileNumber && <p className="text-xs text-red-500 mt-1">{errors.mobileNumber}</p>}
                 </div>
 
                 {/* Email */}
@@ -154,9 +184,12 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] transition-all"
+                    className={`w-full px-4 py-2.5 rounded-xl border bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 transition-all ${
+                      errors.email ? 'border-red-500 focus:ring-red-500/20' : 'border-[hsl(var(--border))] focus:ring-[hsl(var(--ring))]'
+                    }`}
                     placeholder="e.g., john@example.com"
                   />
+                  {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
                 </div>
 
                 {/* Lead Source */}

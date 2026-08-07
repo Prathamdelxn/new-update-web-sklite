@@ -11,6 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import api from '@/services/api.client';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { PlanRoom } from '@/features/projects/plans/components/PlanRoom';
 
 interface PlansTabProps {
@@ -28,12 +29,14 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
   const [renamingFolder, setRenamingFolder]       = useState<{ _id: string; name: string } | null>(null);
 
   const toast = useToast();
+  const { confirm } = useConfirm();
 
   const fetchFolders = async () => {
     try {
       const res = await api.get(`/projects/${projectId}/folders`);
-      setFolders(res.data);
+      setFolders(res.data?.data || res.data || []);
     } catch {
+      setFolders([]);
       toast.error('Failed to load plan folders');
     } finally {
       setLoading(false);
@@ -51,7 +54,13 @@ export const PlansTab: React.FC<PlansTabProps> = ({ projectId }) => {
 
   const handleDeleteFolder = async (id: string) => {
     setFolderMenuId(null);
-    if (!window.confirm('Delete this folder and all its documents?')) return;
+    const ok = await confirm({
+      title: 'Delete Folder',
+      message: 'Delete this folder and all its documents?',
+      confirmText: 'Delete Folder',
+      type: 'danger',
+    });
+    if (!ok) return;
     try {
       await api.delete(`/projects/${projectId}/folders/${id}`);
       toast.success('Folder deleted');

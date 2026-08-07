@@ -152,4 +152,18 @@ export const interiorProjectService = {
   // MOM
   getMoms: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/mom`).then((res) => res.data),
   createMom: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/mom`, data).then((res) => res.data),
+
+  // Payments (Incoming / Outgoing / Debit Notes)
+  getPayments: (projectId: string, type?: 'incoming' | 'outgoing' | 'debit_note') =>
+    interiorApiClient
+      .get(`/projects/${projectId}/payments`, { params: type ? { type } : {} })
+      .then((res) => res.data),
+  createPayment: (projectId: string, data: any) =>
+    interiorApiClient.post(`/projects/${projectId}/payments`, data).then((res) => res.data),
+  deletePayment: (projectId: string, paymentId: string) =>
+    interiorApiClient.delete(`/projects/${projectId}/payments/${paymentId}`).then((res) => res.data),
+
+  // Users & Roles — org-wide user list with full project assignment details
+  getUsersWithProjects: () =>
+    interiorApiClient.get('/users/with-projects').then((res) => res.data),
 };

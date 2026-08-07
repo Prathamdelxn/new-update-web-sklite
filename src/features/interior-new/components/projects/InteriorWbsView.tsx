@@ -25,6 +25,7 @@ import { Button, Input, Card } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 
 interface InteriorWbsViewProps {
   projectId: string;
@@ -34,6 +35,7 @@ type NodeType = 'building' | 'floor' | 'zone' | 'area' | 'package';
 
 export default function InteriorWbsView({ projectId }: InteriorWbsViewProps) {
   const toast = useToast();
+  const { confirm } = useConfirm();
 
   const [wbsData, setWbsData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,7 +119,13 @@ export default function InteriorWbsView({ projectId }: InteriorWbsViewProps) {
   };
 
   const handleDeleteNode = async (type: string, id: string) => {
-    if (!window.confirm(`Delete this ${type}? Doing so will remove it and any associated associations.`)) return;
+    const ok = await confirm({
+      title: `Delete ${type.toUpperCase()}`,
+      message: `Delete this ${type}? Doing so will remove it and any associated packages or tasks.`,
+      confirmText: 'Delete',
+      type: 'danger',
+    });
+    if (!ok) return;
     try {
       await interiorProjectService.deleteWbsNode(projectId, type, id);
       toast.success(`${type.toUpperCase()} deleted successfully`);

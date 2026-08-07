@@ -46,12 +46,28 @@ export const InteriorLogRequirementsModal = ({ isOpen, onClose, customerId, onSu
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (requirements.length === 0) {
+      toast.error('Please add at least one room requirement.');
+      return;
+    }
+    if (requirements.some(r => !r.roomName || !r.roomName.trim())) {
+      toast.error('Please specify a room name for all rooms.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
+      const sanitizedRequirements = requirements.map(r => ({
+        roomName: r.roomName.trim(),
+        description: r.description.trim(),
+        theme: r.theme.trim(),
+      }));
+
       const updatePayload: any = {
         status: 'Requirement Completed',
-        requirements,
+        requirements: sanitizedRequirements,
       };
 
       if (assignedSalesExecutive) {
@@ -64,7 +80,7 @@ export const InteriorLogRequirementsModal = ({ isOpen, onClose, customerId, onSu
         customer: customerId,
         type: 'Requirement Gathering',
         status: 'Completed',
-        remarks: `Logged requirements for ${requirements.length} rooms.`,
+        remarks: `Logged requirements for ${sanitizedRequirements.length} rooms.`,
         completedDate: new Date()
       });
 

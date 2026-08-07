@@ -24,6 +24,7 @@ import { Button, Input, Card } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 
 interface InteriorTasksViewProps {
   projectId: string;
@@ -46,6 +47,7 @@ const priorityConfig: Record<string, { label: string; color: string }> = {
 
 export default function InteriorTasksView({ projectId }: InteriorTasksViewProps) {
   const toast = useToast();
+  const { confirm } = useConfirm();
 
   const [tasks, setTasks] = useState<any[]>([]);
   const [wbsPackages, setWbsPackages] = useState<any[]>([]);
@@ -210,7 +212,13 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
   };
 
   const handleDeleteTask = async () => {
-    if (!window.confirm('Are you sure you want to delete this task? This will remove all associated logs and comments.')) return;
+    const ok = await confirm({
+      title: 'Delete Task',
+      message: 'Are you sure you want to delete this task? This will remove all associated logs and comments.',
+      confirmText: 'Delete',
+      type: 'danger',
+    });
+    if (!ok) return;
     try {
       await interiorProjectService.deleteTask(projectId, selectedTask._id);
       toast.success('Task deleted successfully!');

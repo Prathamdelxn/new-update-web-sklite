@@ -23,6 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/compo
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 
 interface POItemInput {
   name: string;
@@ -37,6 +38,7 @@ interface InteriorProcurementViewProps {
 
 export default function InteriorProcurementView({ projectId }: InteriorProcurementViewProps) {
   const toast = useToast();
+  const { confirm } = useConfirm();
 
   const [activeTab, setActiveTab] = useState<'procurement' | 'inventory'>('procurement');
   const [pos, setPos] = useState<any[]>([]);
@@ -155,7 +157,12 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
   const handleDeletePO = async () => {
     if (!selectedPo) return;
-    const ok = typeof window !== 'undefined' ? window.confirm('Are you sure you want to delete this Purchase Order? This will permanently delete the PO and its material history.') : true;
+    const ok = await confirm({
+      title: 'Delete Purchase Order',
+      message: 'Are you sure you want to delete this Purchase Order? This will permanently delete the PO and its material history.',
+      confirmText: 'Delete PO',
+      type: 'danger',
+    });
     if (!ok) return;
     try {
       setUpdatingPo(true);

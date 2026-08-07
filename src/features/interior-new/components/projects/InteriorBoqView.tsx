@@ -26,6 +26,7 @@ import {
 import { Button, Input, Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { cn } from '@/lib/utils';
 
 interface InteriorBoqViewProps {
@@ -34,6 +35,7 @@ interface InteriorBoqViewProps {
 
 export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
   const toast = useToast();
+  const { confirm } = useConfirm();
 
   // Core state
   const [activeTab, setActiveTab] = useState<'items' | 'actual'>('items');
@@ -159,7 +161,13 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
 
   const handleDeleteBoq = async () => {
     if (!selectedBoq) return;
-    if (!window.confirm('Are you sure you want to delete this BOQ draft?')) return;
+    const ok = await confirm({
+      title: 'Delete BOQ Draft',
+      message: 'Are you sure you want to delete this BOQ draft?',
+      confirmText: 'Delete Draft',
+      type: 'danger',
+    });
+    if (!ok) return;
     try {
       setLoading(true);
       const res = await interiorProjectService.deleteBoq(projectId, selectedBoq._id);

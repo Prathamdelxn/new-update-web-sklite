@@ -62,7 +62,6 @@
 //   const handleDelete = async (e: React.MouseEvent, templateId: string, name: string) => {
 //     e.stopPropagation();
 //     setTemplateMenuId(null);
-//     if (!window.confirm(`Delete template "${name}"? This cannot be undone.`)) return;
 //     try {
 //       await api.delete(`/templates/${templateId}`);
 //       toast.success('Template deleted');
@@ -327,6 +326,7 @@ import {
 import { cn, formatCurrency } from '@/lib/utils';
 import api from '@/services/api.client';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { TemplateModal } from '@/features/templates/components/TemplateModal';
 import { TemplateDetailModal } from '@/features/templates/components/TemplateDetailModal';
 import { Pagination, usePagination } from '@/components/shared/Pagination';
@@ -342,6 +342,7 @@ export const TemplateList = () => {
   const templateMenuRef = useRef<HTMLDivElement>(null);
 
   const toast = useToast();
+  const { confirm } = useConfirm();
 
   const fetchTemplates = async () => {
     try {
@@ -376,7 +377,13 @@ export const TemplateList = () => {
   const handleDelete = async (e: React.MouseEvent, templateId: string, name: string) => {
     e.stopPropagation();
     setTemplateMenuId(null);
-    if (!window.confirm(`Delete template "${name}"? This cannot be undone.`)) return;
+    const ok = await confirm({
+      title: 'Delete Template',
+      message: `Delete template "${name}"? This cannot be undone.`,
+      confirmText: 'Delete Template',
+      type: 'danger',
+    });
+    if (!ok) return;
     try {
       await api.delete(`/templates/${templateId}`);
       toast.success('Template deleted');

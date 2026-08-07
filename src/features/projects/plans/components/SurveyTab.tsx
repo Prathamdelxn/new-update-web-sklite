@@ -14,6 +14,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { hasProjectPermission } from '@/lib/permissions';
 import api from '@/services/api.client';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { useAuth } from '@/providers/AuthContext';
 import { useSocket } from '@/providers/SocketContext';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
@@ -35,6 +36,7 @@ interface SurveyTabProps {
 
 export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
   const { project, fetchProject } = useProjectContext();
+  const { confirm } = useConfirm();
   const [survey, setSurvey] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -545,8 +547,14 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
               </button>
               <button
                 disabled={isProcessing}
-                onClick={() => {
-                  if (window.confirm(`Are you sure you want to approve this survey report? This will advance the project status to "Planning".`)) {
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: 'Approve Survey Report',
+                    message: 'Are you sure you want to approve this survey report? This will advance the project status to "Planning".',
+                    confirmText: 'Approve & Advance',
+                    type: 'success',
+                  });
+                  if (ok) {
                     handleAction('Approve');
                   }
                 }}

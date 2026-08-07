@@ -12,6 +12,7 @@ import { Button, Input, Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 
 interface InteriorMilestonesViewProps {
   projectId: string;
@@ -25,6 +26,7 @@ const statusConfig: Record<string, { label: string; color: string; Icon: any }> 
 
 export default function InteriorMilestonesView({ projectId }: InteriorMilestonesViewProps) {
   const toast = useToast();
+  const { confirm } = useConfirm();
 
   const [milestones, setMilestones] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,7 +148,13 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
   };
 
   const handleDeleteMilestone = async (milestoneId: string) => {
-    if (!window.confirm('Are you sure you want to delete this milestone? Any delay logs associated with it will be permanently deleted.')) return;
+    const ok = await confirm({
+      title: 'Delete Milestone',
+      message: 'Are you sure you want to delete this milestone? Any delay logs associated with it will be permanently deleted.',
+      confirmText: 'Delete',
+      type: 'danger',
+    });
+    if (!ok) return;
     try {
       await interiorProjectService.deleteMilestone(projectId, milestoneId);
       toast.success('Milestone deleted successfully');

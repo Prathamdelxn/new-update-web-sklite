@@ -12,6 +12,7 @@ import {
 import { BOQItem } from '@/types';
 import api from '@/services/api.client';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { useAuth } from '@/providers/AuthContext';
 import { useSocket } from '@/providers/SocketContext';
 import { cn, formatCurrency } from '@/lib/utils';
@@ -90,6 +91,7 @@ const getGroupStatus = (groupItems: BOQItem[]): StatusKey => {
 // ─────────────────────────────────────────────────────────────────────────────
 export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
   const { project } = useProjectContext();
+  const { confirm } = useConfirm();
   const [items, setItems] = useState<BOQItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -164,7 +166,13 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleDeleteGroup = async (groupItems: BOQItem[], e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!window.confirm(`Delete all ${groupItems.length} items in "${groupItems[0]?.groupName}"?`)) return;
+    const ok = await confirm({
+      title: 'Delete BOQ Group',
+      message: `Delete all ${groupItems.length} items in "${groupItems[0]?.groupName}"?`,
+      confirmText: 'Delete Group',
+      type: 'danger',
+    });
+    if (!ok) return;
     try {
       await Promise.all(groupItems.map(i => api.delete(`/projects/${projectId}/boq/${i._id}`)));
       toast.success('Group deleted');
@@ -174,7 +182,13 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
   };
 
   const handleDeleteItem = async (item: BOQItem) => {
-    if (!window.confirm(`Delete "${item.itemDescription}"?`)) return;
+    const ok = await confirm({
+      title: 'Delete BOQ Item',
+      message: `Delete "${item.itemDescription}"?`,
+      confirmText: 'Delete Item',
+      type: 'danger',
+    });
+    if (!ok) return;
     try {
       await api.delete(`/projects/${projectId}/boq/${item._id}`);
       toast.success('Item deleted');

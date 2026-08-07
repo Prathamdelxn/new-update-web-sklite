@@ -26,6 +26,7 @@ import { InteriorConvertToProjectModal } from './modals/InteriorConvertToProject
 import { InteriorUploadDesignModal } from './modals/InteriorUploadDesignModal';
 import { InteriorSendToQuotationsModal } from './modals/InteriorSendToQuotationsModal';
 import { InteriorQuotationBuilderModal } from './modals/InteriorQuotationBuilderModal';
+import { InteriorDeleteLeadModal } from './modals/InteriorDeleteLeadModal';
 import { Calendar, Lightbulb } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { interiorCrmService } from '@/services/interiorCrm.service';
@@ -53,6 +54,10 @@ export default function InteriorCrmView() {
   const [isSendToQuotationsOpen, setIsSendToQuotationsOpen] = useState(false);
   const [isQuotationBuilderOpen, setIsQuotationBuilderOpen] = useState(false);
   const [isConvertToProjectOpen, setIsConvertToProjectOpen] = useState(false);
+
+  // Delete Lead Modal State
+  const [deletingLead, setDeletingLead] = useState<{ id: string; name: string } | null>(null);
+  const [isDeletingLead, setIsDeletingLead] = useState(false);
 
   const fetchLeads = useCallback(async () => {
     setIsLoading(true);
@@ -100,13 +105,22 @@ export default function InteriorCrmView() {
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteLead = async (leadId: string) => {
+  const handleOpenDeleteModal = (lead: any) => {
+    setDeletingLead({ id: lead._id, name: lead.name });
+  };
+
+  const handleConfirmDeleteLead = async () => {
+    if (!deletingLead) return;
+    setIsDeletingLead(true);
     try {
-      await interiorCrmService.deleteCustomer(leadId);
+      await interiorCrmService.deleteCustomer(deletingLead.id);
       toast.success('Lead deleted successfully');
+      setDeletingLead(null);
       fetchLeads();
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to delete lead');
+    } finally {
+      setIsDeletingLead(false);
     }
   };
 
@@ -232,8 +246,10 @@ export default function InteriorCrmView() {
               leads={getFilteredLeads()}
               isLoading={isLoading}
               onEdit={openEditModal}
-              onDelete={handleDeleteLead}
+              onDelete={handleOpenDeleteModal}
               onPassToFollowUp={openFollowUpModal}
+              onPassToSiteVisit={openSendToSiteVisitModal}
+              onPassToRequirements={openSendToRequirementsModal}
             />
           </motion.div>
         ) : (
@@ -332,6 +348,7 @@ export default function InteriorCrmView() {
         isOpen={isQuotationBuilderOpen}
         onClose={() => setIsQuotationBuilderOpen(false)}
         customerId={actionLeadId || ''}
+        customerEmail={leads.find(l => l._id === actionLeadId)?.email || ''}
         existingQuotations={leads.find(l => l._id === actionLeadId)?.quotations || []}
         onSuccess={fetchLeads}
       />
@@ -341,6 +358,14 @@ export default function InteriorCrmView() {
         onClose={() => setIsConvertToProjectOpen(false)}
         customerId={actionLeadId || ''}
         onSuccess={fetchLeads}
+      />
+
+      <InteriorDeleteLeadModal
+        isOpen={!!deletingLead}
+        onClose={() => setDeletingLead(null)}
+        onConfirm={handleConfirmDeleteLead}
+        leadName={deletingLead?.name}
+        isLoading={isDeletingLead}
       />
     </div>
   );

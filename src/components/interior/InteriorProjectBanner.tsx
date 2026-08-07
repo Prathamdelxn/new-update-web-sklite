@@ -49,6 +49,7 @@ const CATEGORIES = (projectId: string) => [
       { label: 'Procurement', href: `/interior-new/projects/${projectId}/procurement` },
       { label: 'Purchase Orders', href: `/interior-new/projects/${projectId}/purchase-orders` },
       { label: 'Vendors', href: `/interior-new/projects/${projectId}/vendors` },
+      { label: 'Payments', href: `/interior-new/projects/${projectId}/payments` },
     ],
   },
   {

@@ -24,9 +24,12 @@ function userLabel(u: any) {
   return `${name} (${u.role?.name || u.role || 'User'})`;
 }
 
+import { validateRequiredDate, validateNonEmpty, ValidationErrors } from '@/lib/crmValidation';
+
 export function InteriorScheduleFollowUpModal({ isOpen, onClose, customerId, customerName, onSuccess, users = [] }: ScheduleFollowUpModalProps) {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<ValidationErrors>({});
   const [form, setForm] = useState({
     type: 'Phone Call',
     status: 'Pending',
@@ -37,15 +40,27 @@ export function InteriorScheduleFollowUpModal({ isOpen, onClose, customerId, cus
 
   if (!isOpen) return null;
 
+  const validateForm = (): boolean => {
+    const newErrors: ValidationErrors = {
+      scheduledDate: validateRequiredDate(form.scheduledDate, 'Follow-up date & time'),
+      remarks: validateNonEmpty(form.remarks, 'Follow-up goal / notes'),
+    };
+    setErrors(newErrors);
+    return !Object.values(newErrors).some((err) => err !== null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.scheduledDate) return toast.error('Date is required');
-    if (!form.remarks) return toast.error('Remarks are required');
+    if (!validateForm()) {
+      toast.error('Please fix the errors in the form');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       await interiorCrmService.createActivity({
         ...form,
+        remarks: form.remarks.trim(),
         customer: customerId
       });
 
@@ -62,6 +77,7 @@ export function InteriorScheduleFollowUpModal({ isOpen, onClose, customerId, cus
       onSuccess();
       onClose();
       setForm({ type: 'Phone Call', status: 'Pending', scheduledDate: '', remarks: '', assignedSalesExecutive: '' });
+      setErrors({});
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to schedule follow-up');
     } finally {
@@ -95,14 +111,19 @@ export function InteriorScheduleFollowUpModal({ isOpen, onClose, customerId, cus
               </select>
             </div>
             <div>
-              <label className="text-xs font-bold text-[hsl(var(--foreground))]">Date & Time</label>
+              <label className="text-xs font-bold text-[hsl(var(--foreground))]">Date & Time *</label>
               <input
                 type="datetime-local"
-                required
                 value={form.scheduledDate}
-                onChange={e => setForm({...form, scheduledDate: e.target.value})}
-                className="w-full mt-1.5 px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:border-[hsl(var(--ring))] outline-none"
+                onChange={e => {
+                  setForm({...form, scheduledDate: e.target.value});
+                  if (errors.scheduledDate) setErrors({...errors, scheduledDate: null});
+                }}
+                className={`w-full mt-1.5 px-4 py-2.5 rounded-xl border bg-[hsl(var(--background))] text-sm outline-none transition-all ${
+                  errors.scheduledDate ? 'border-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-[hsl(var(--border))] focus:border-[hsl(var(--ring))]'
+                }`}
               />
+              {errors.scheduledDate && <p className="text-xs text-red-500 mt-1">{errors.scheduledDate}</p>}
             </div>
           </div>
 
@@ -121,15 +142,20 @@ export function InteriorScheduleFollowUpModal({ isOpen, onClose, customerId, cus
           </div>
 
           <div>
-            <label className="text-xs font-bold text-[hsl(var(--foreground))]">Follow-up Goal / Notes</label>
+            <label className="text-xs font-bold text-[hsl(var(--foreground))]">Follow-up Goal / Notes *</label>
             <textarea
-              required
               rows={4}
               value={form.remarks}
-              onChange={e => setForm({...form, remarks: e.target.value})}
+              onChange={e => {
+                setForm({...form, remarks: e.target.value});
+                if (errors.remarks) setErrors({...errors, remarks: null});
+              }}
               placeholder="E.g., Call to discuss revised quotation..."
-              className="w-full mt-1.5 px-4 py-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:border-[hsl(var(--ring))] outline-none resize-none"
+              className={`w-full mt-1.5 px-4 py-3 rounded-xl border bg-[hsl(var(--background))] text-sm outline-none resize-none transition-all ${
+                errors.remarks ? 'border-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-[hsl(var(--border))] focus:border-[hsl(var(--ring))]'
+              }`}
             />
+            {errors.remarks && <p className="text-xs text-red-500 mt-1">{errors.remarks}</p>}
           </div>
 
           <div className="pt-4 flex justify-end gap-3">

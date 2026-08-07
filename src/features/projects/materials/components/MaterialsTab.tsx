@@ -36,6 +36,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 import api from '@/services/api.client';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { MaterialModal } from '@/features/projects/materials/components/MaterialModal';
 import { MaterialRequestModal } from '@/features/projects/materials/components/MaterialRequestModal';
 import { MaterialReceiptModal } from '@/features/projects/materials/components/MaterialReceiptModal';
@@ -67,6 +68,7 @@ const PO_STATUS_COLORS: Record<string, string> = {
 
 export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
   const { project } = useProjectContext();
+  const { confirm } = useConfirm();
   const [activeSubTab, setActiveSubTab] = useState('all');
   const [materials, setMaterials] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
@@ -254,7 +256,13 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
   };
 
   const handleDeleteMaterial = async (materialId: string) => {
-    if (!window.confirm('Delete this material? This cannot be undone.')) return;
+    const ok = await confirm({
+      title: 'Delete Material',
+      message: 'Delete this material? This cannot be undone.',
+      confirmText: 'Delete',
+      type: 'danger',
+    });
+    if (!ok) return;
     setDeletingId(materialId);
     try {
       await api.delete(`/materials/${materialId}`);
@@ -265,7 +273,13 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
   };
 
   const handleDeleteRequest = async (requestId: string) => {
-    if (!window.confirm('Delete this request?')) return;
+    const ok = await confirm({
+      title: 'Delete Request',
+      message: 'Delete this request?',
+      confirmText: 'Delete',
+      type: 'danger',
+    });
+    if (!ok) return;
     setDeletingId(requestId);
     try {
       await api.delete(`/material-requests/${requestId}`);
@@ -277,7 +291,13 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
   };
 
   const handleDeleteUsageLog = async (logId: string) => {
-    if (!window.confirm('Delete this usage log? Consumed quantities will be restored to stock.')) return;
+    const ok = await confirm({
+      title: 'Delete Usage Log',
+      message: 'Delete this usage log? Consumed quantities will be restored to stock.',
+      confirmText: 'Delete Log',
+      type: 'danger',
+    });
+    if (!ok) return;
     setDeletingId(logId);
     try {
       await api.delete(`/material-usage/${logId}`);
@@ -288,7 +308,13 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
   };
 
   const handleDeletePO = async (purchaseId: string) => {
-    if (!window.confirm('Delete this material purchase?')) return;
+    const ok = await confirm({
+      title: 'Delete Material Purchase',
+      message: 'Delete this material purchase?',
+      confirmText: 'Delete Purchase',
+      type: 'danger',
+    });
+    if (!ok) return;
     setDeletingId(purchaseId);
     try {
       await api.delete(`/material-purchase/${purchaseId}`);

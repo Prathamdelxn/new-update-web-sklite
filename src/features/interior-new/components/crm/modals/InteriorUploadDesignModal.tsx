@@ -47,7 +47,10 @@ export const InteriorUploadDesignModal = ({ isOpen, onClose, customerId, onSucce
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newFiles.length === 0) return;
+    if (newFiles.length === 0) {
+      toast.error('Please select at least one design file or image to upload.');
+      return;
+    }
     setIsSubmitting(true);
 
     try {

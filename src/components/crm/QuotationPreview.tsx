@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Printer, Download, CheckCircle2, XCircle, Rocket } from 'lucide-react';
+import { Printer, Download, CheckCircle2, XCircle, Rocket, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
+
+import { useConfirm } from '@/providers/ConfirmContext';
 
 interface QuotationPreviewProps {
   lead: any;
@@ -14,9 +16,38 @@ interface QuotationPreviewProps {
 
 export function QuotationPreview({ lead, quotationIndex, onSuccess }: QuotationPreviewProps) {
   const toast = useToast();
+  const { confirm, prompt } = useConfirm();
   const router = useRouter();
   const [isConverting, setIsConverting] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const quote = lead.quotations[quotationIndex];
+
+  const handleSendEmail = async () => {
+    let emailToUse = lead.email;
+    if (!emailToUse) {
+      const custom = await prompt({
+        title: 'Recipient Email Required',
+        message: 'No email address saved for this lead. Please enter target email address:',
+        placeholder: 'client@example.com',
+      });
+      if (!custom) return;
+      emailToUse = custom.trim();
+    }
+    
+    setIsSendingEmail(true);
+    try {
+      await interiorCrmService.sendQuotationEmail(lead._id, {
+        quotation: quote,
+        recipientEmail: emailToUse,
+      });
+      toast.success(`Proforma Invoice & Quotation emailed to ${emailToUse}!`);
+      onSuccess();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to send email');
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
 
   const handleStatusUpdate = async (status: string) => {
     try {
@@ -47,7 +78,13 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess }: QuotationP
   };
 
   const handleConvertToProject = async () => {
-    if (!confirm('Are you sure you want to convert this Lead into an active Project? This will hand it over to the Execution team.')) return;
+    const ok = await confirm({
+      title: 'Convert Lead to Project',
+      message: 'Are you sure you want to convert this Lead into an active Project? This will hand it over to the Execution team.',
+      confirmText: 'Convert',
+      type: 'warning',
+    });
+    if (!ok) return;
     
     setIsConverting(true);
     try {
@@ -116,6 +153,15 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess }: QuotationP
             </>
           )}
           
+          <button 
+            onClick={handleSendEmail}
+            disabled={isSendingEmail}
+            className="text-xs font-bold bg-indigo-50 text-indigo-700 px-4 py-2 rounded-xl hover:bg-indigo-100 transition flex items-center gap-1.5 disabled:opacity-50"
+            title="Email Proforma Invoice & Quotation to lead"
+          >
+            <Mail size={16} /> {isSendingEmail ? 'Sending...' : 'Send Email'}
+          </button>
+
           <button 
             onClick={handlePrint}
             className="text-xs font-bold bg-slate-900 text-white px-4 py-2 rounded-xl hover:bg-slate-800 transition flex items-center gap-1.5 shadow-md"
