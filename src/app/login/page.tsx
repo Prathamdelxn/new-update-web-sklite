@@ -7,6 +7,7 @@ import { Building, Eye, EyeOff, Lock, Mail, Loader2, ArrowLeft, CheckCircle2, Ha
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthContext';
 import { useToast } from '@/providers/ToastContext';
+import api from '@/services/api.client';
 import interiorApiClient from '@/services/interiorApi.client';
 import { loginInterior } from '@/lib/interiorAuth';
 function LoginForm() {
