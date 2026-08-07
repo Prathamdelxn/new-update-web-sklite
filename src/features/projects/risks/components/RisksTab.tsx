@@ -104,10 +104,10 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
   const { user } = useAuth();
 
   const isLocked = isProjectLocked(project);
-  const canView = hasAnyProjectPermissionPrefix(user, project, 'escalation:');
-  const canCreate = !isLocked && hasProjectPermission(user, project, 'escalation:create');
-  const canUpdate = !isLocked && hasProjectPermission(user, project, 'escalation:update');
-  const canDelete = !isLocked && hasProjectPermission(user, project, 'escalation:delete');
+  const canView = hasAnyProjectPermissionPrefix(user, project, 'risks:');
+  const canCreate = !isLocked && hasProjectPermission(user, project, 'risks:create');
+  const canUpdate = !isLocked && hasProjectPermission(user, project, 'risks:update');
+  const canDelete = !isLocked && hasProjectPermission(user, project, 'risks:delete');
   const isAdmin = user?.role?.name === 'Admin' || (user?.role?.permissions?.includes('*') ?? false);
 
   const fetchRisks = async () => {

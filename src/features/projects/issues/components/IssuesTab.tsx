@@ -748,7 +748,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
         isOpen={isEscalationOpen}
         onClose={() => { setIsEscalationOpen(false); fetchEscalationMatrix(); }}
         projectId={projectId}
-        isLocked={isLocked}
+        isLocked={isLocked || !canUpdate}
       />
 
       {/* ASSIGN MEMBER FOR SNAG MODAL */}
