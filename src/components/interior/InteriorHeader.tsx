@@ -82,7 +82,6 @@ export function InteriorHeader({ user, onMobileMenuClick }: InteriorHeaderProps)
               </div>
               <div className="py-1">
                 <DropdownItem icon={User} label="Profile" onClick={() => { setShowUserMenu(false); router.push('/interior-new/profile'); }} />
-                <DropdownItem icon={Settings} label="Settings" onClick={() => setShowUserMenu(false)} />
               </div>
               <div className="border-t border-[hsl(var(--border))] py-1">
                 <DropdownItem icon={LogOut} label="Sign out" onClick={handleLogout} destructive />
