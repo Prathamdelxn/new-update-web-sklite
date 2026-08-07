@@ -95,7 +95,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [taskForm, setTaskForm]     = useState(emptyTaskForm());
 
-  const toast = useToast();
+ 
   const { user } = useAuth();
   const { project } = useProjectContext();
 
