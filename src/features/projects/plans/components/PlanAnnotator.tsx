@@ -32,6 +32,16 @@ function uuidv4() {
   });
 }
 
+// <img> can't render PDFs — the browser just shows a broken-image icon next
+// to the alt text (the filename), which is exactly what looked like a
+// missing preview after uploading/updating a PDF plan. PDFs need an
+// <iframe>/<object> instead.
+function isPdfDoc(doc: any): boolean {
+  const mime = doc?.mimeType || '';
+  const name = doc?.name || doc?.url || '';
+  return mime.toLowerCase().includes('pdf') || /\.pdf(\?|#|$)/i.test(name);
+}
+
 const ZOOM_STEPS = [0.5, 0.75, 1, 1.5, 2, 3, 4];
 
 export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
@@ -383,14 +393,24 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
         >
           {document?.url && (
             <div className="relative" style={{ display: 'inline-block' }}>
-              <img
-                ref={imageRef}
-                src={document.url}
-                alt={document.name}
-                className="max-w-none pointer-events-none select-none"
-                style={{ maxHeight: '80vh' }}
-              />
-              
+              {isPdfDoc(document) ? (
+                <iframe
+                  ref={imageRef as any}
+                  src={document.url}
+                  title={document.name}
+                  className="pointer-events-none select-none bg-white border-0"
+                  style={{ width: 'min(80vw, 900px)', height: '80vh' }}
+                />
+              ) : (
+                <img
+                  ref={imageRef}
+                  src={document.url}
+                  alt={document.name}
+                  className="max-w-none pointer-events-none select-none"
+                  style={{ maxHeight: '80vh' }}
+                />
+              )}
+
               {/* Pins layer */}
               {annotations.map((ann: any, idx: number) => {
                 const isSelected = selectedId === ann.clientId;

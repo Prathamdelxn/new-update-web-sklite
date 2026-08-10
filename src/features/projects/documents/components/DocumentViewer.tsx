@@ -21,6 +21,32 @@ interface DocumentViewerProps {
   onClose: () => void;
   document: any;
   projectId?: string;
+  // When set, this viewer is showing a Drawing Management plan document —
+  // annotations are read/written through the same folder-nested store the
+  // "Annotate" button (PlanAnnotator) uses, instead of the standalone
+  // top-level Annotation collection, so pins placed via either entry point
+  // are always the same set. Without a folderId (e.g. Handover documents,
+  // which aren't inside a plan folder), falls back to the original
+  // project-level annotations API.
+  folderId?: string;
+}
+
+// <img> can't render PDFs — the browser just shows a broken-image icon next
+// to the alt text (the filename), which is exactly what looked like a
+// missing preview. PDFs need an <iframe>/<object> instead.
+function isPdfDoc(doc: any): boolean {
+  const mime = doc?.mimeType || '';
+  const name = doc?.name || doc?.url || '';
+  return mime.toLowerCase().includes('pdf') || /\.pdf(\?|#|$)/i.test(name);
+}
+
+// Generate a stable client-side id for new annotations placed in the
+// folder-nested store, matching PlanAnnotator's id scheme.
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === 'x' ? r : ((r & 0x3) | 0x8)).toString(16);
+  });
 }
 
 interface Annotation {
@@ -38,7 +64,7 @@ interface Annotation {
 }
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({
-  isOpen, onClose, document, projectId,
+  isOpen, onClose, document, projectId, folderId,
 }) => {
   const [zoom, setZoom]                     = useState(100);
   const [pinMode, setPinMode]               = useState(false);
@@ -69,14 +95,22 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const loadAnnotations = useCallback(async () => {
     if (!projectId || !document?._id) return;
     try {
-      const res = await api.get(`/projects/${projectId}/annotations?document=${document._id}`);
-      setAnnotations((res.data || []).map((a: any) => ({
-        ...a,
-        x: a.position?.x ?? a.x ?? 0,
-        y: a.position?.y ?? a.y ?? 0,
-      })));
+      if (folderId) {
+        const res = await api.get(`/projects/${projectId}/folders/${folderId}/annotations?documentId=${document._id}`);
+        setAnnotations((res.data || []).map((a: any) => ({
+          ...a,
+          voiceNoteUri: a.audioUri || a.voiceNoteUri || '',
+        })));
+      } else {
+        const res = await api.get(`/projects/${projectId}/annotations?document=${document._id}`);
+        setAnnotations((res.data || []).map((a: any) => ({
+          ...a,
+          x: a.position?.x ?? a.x ?? 0,
+          y: a.position?.y ?? a.y ?? 0,
+        })));
+      }
     } catch { /* silent — annotations are optional */ }
-  }, [projectId, document?._id]);
+  }, [projectId, document?._id, folderId]);
 
   useEffect(() => {
     if (isOpen) {
@@ -103,20 +137,49 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     setTimeout(() => textInputRef.current?.focus(), 80);
   };
 
+  // Folder-nested annotations are stored as a bulk replace-all-for-document
+  // array (matching PlanAnnotator), so both save and delete below build the
+  // full updated array and PATCH it in one call.
+  const toFolderPayload = (list: Annotation[]) => list.map(a => ({
+    clientId: (a as any).clientId,
+    documentId: document._id,
+    x: a.x,
+    y: a.y,
+    text: a.text || '',
+    imageUri: a.imageUri || '',
+    audioUri: a.voiceNoteUri || (a as any).audioUri || '',
+  }));
+
   const handleSave = async () => {
     if (!pendingPos || !projectId) return;
     setIsSaving(true);
     try {
-      const res = await api.post(`/projects/${projectId}/annotations`, {
-        document: document._id,
-        documentName: document.name,
-        text: newText.trim() || '(No note)',
-        position: pendingPos,
-        imageUri: newImageUri || undefined,
-        voiceNoteUri: newVoiceUri || undefined,
-      });
-      const saved = res.data;
-      setAnnotations(prev => [{ ...saved, x: saved.position?.x ?? 0, y: saved.position?.y ?? 0 }, ...prev]);
+      if (folderId) {
+        const newAnn = {
+          clientId: uuidv4(),
+          x: pendingPos.x,
+          y: pendingPos.y,
+          text: newText.trim() || '(No note)',
+          imageUri: newImageUri || '',
+          voiceNoteUri: newVoiceUri || '',
+        } as unknown as Annotation;
+        const res = await api.patch(`/projects/${projectId}/folders/${folderId}/annotations`, {
+          documentId: document._id,
+          annotations: toFolderPayload([...annotations, newAnn]),
+        });
+        setAnnotations((res.data || []).map((a: any) => ({ ...a, voiceNoteUri: a.audioUri || '' })));
+      } else {
+        const res = await api.post(`/projects/${projectId}/annotations`, {
+          document: document._id,
+          documentName: document.name,
+          text: newText.trim() || '(No note)',
+          position: pendingPos,
+          imageUri: newImageUri || undefined,
+          voiceNoteUri: newVoiceUri || undefined,
+        });
+        const saved = res.data;
+        setAnnotations(prev => [{ ...saved, x: saved.position?.x ?? 0, y: saved.position?.y ?? 0 }, ...prev]);
+      }
       toast.success('Annotation saved');
       setNewText(''); setNewImageUri(''); setNewVoiceUri(''); setPendingPos(null);
     } catch (err: any) {
@@ -130,8 +193,17 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     e?.stopPropagation();
     if (!projectId) return;
     try {
-      await api.delete(`/projects/${projectId}/annotations/${id}`);
-      setAnnotations(prev => prev.filter(a => a._id !== id));
+      if (folderId) {
+        const remaining = annotations.filter(a => a._id !== id);
+        const res = await api.patch(`/projects/${projectId}/folders/${folderId}/annotations`, {
+          documentId: document._id,
+          annotations: toFolderPayload(remaining),
+        });
+        setAnnotations((res.data || []).map((a: any) => ({ ...a, voiceNoteUri: a.audioUri || '' })));
+      } else {
+        await api.delete(`/projects/${projectId}/annotations/${id}`);
+        setAnnotations(prev => prev.filter(a => a._id !== id));
+      }
       if (activePin === id) setActivePin(null);
     } catch {
       toast.error('Failed to delete annotation');
@@ -300,14 +372,24 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                   }}
                 >
                   {document?.url ? (
-                    <img
-                      ref={imageRef}
-                      src={document.url}
-                      alt={document.name}
-                      className="max-w-full object-contain rounded-xl block shadow-md"
-                      style={{ maxHeight: '84vh' }}
-                      draggable={false}
-                    />
+                    isPdfDoc(document) ? (
+                      <iframe
+                        ref={imageRef as any}
+                        src={document.url}
+                        title={document.name}
+                        className="rounded-xl block shadow-md bg-white border-0"
+                        style={{ width: 'min(80vw, 900px)', height: '72vh' }}
+                      />
+                    ) : (
+                      <img
+                        ref={imageRef}
+                        src={document.url}
+                        alt={document.name}
+                        className="max-w-full object-contain rounded-xl block shadow-md"
+                        style={{ maxHeight: '84vh' }}
+                        draggable={false}
+                      />
+                    )
                   ) : (
                     <div ref={imageRef as any} className="w-80 h-64 flex items-center justify-center text-slate-300 bg-white rounded-xl border border-gray-200">
                       <DocFileSvg className="w-20 h-20" />

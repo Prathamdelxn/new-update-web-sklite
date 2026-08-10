@@ -324,6 +324,7 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
         onClose={() => setViewingDoc(null)}
         document={viewingDoc}
         projectId={projectId}
+        folderId={folder._id}
       />
 
       <PlanAnnotator
