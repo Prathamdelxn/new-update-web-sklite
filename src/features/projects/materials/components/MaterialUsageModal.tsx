@@ -6,6 +6,7 @@ import { X, Loader2, History, Plus, Trash2, MapPin, Clipboard } from 'lucide-rea
 import { GlassCard } from '@/components/ui/GlassCard';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
+import { MAX_INPUT_VALUE } from '@/lib/utils';
 
 interface MaterialUsageModalProps {
   isOpen: boolean;
@@ -58,6 +59,10 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.items.some(it => it.quantity > MAX_INPUT_VALUE)) {
+      toast.error('Quantity is too large');
+      return;
+    }
     setIsLoading(true);
 
     try {
@@ -184,6 +189,8 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
                               <input
                                 type="number"
                                 required
+                                min={0}
+                                max={MAX_INPUT_VALUE}
                                 placeholder="0"
                                 value={item.quantity === 0 ? '' : item.quantity}
                                 onChange={(e) => updateItem(index, 'quantity', e.target.value === '' ? 0 : Number(e.target.value))}

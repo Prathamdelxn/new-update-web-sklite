@@ -8,7 +8,7 @@ import {
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
 import { BOQItem } from '@/types';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, MAX_INPUT_VALUE } from '@/lib/utils';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
 
 const UNIT_OPTIONS = ['Sq Ft', 'Cum', 'Kg', 'Ton', 'Nos', 'Rm', 'Ltr', 'Bags', 'Sqm', 'm', 'Rft', 'No'];
@@ -114,8 +114,10 @@ export const BOQModal: React.FC<BOQModalProps> = ({
     rows.forEach(row => {
       if (!row.itemDescription.trim()) newErrors[`${row.id}_itemDescription`] = 'Description required';
       if (!row.quantity || Number(row.quantity) <= 0) newErrors[`${row.id}_quantity`] = 'Quantity > 0 required';
+      else if (Number(row.quantity) > MAX_INPUT_VALUE) newErrors[`${row.id}_quantity`] = 'Quantity is too large';
       if (!row.unit) newErrors[`${row.id}_unit`] = 'Unit required';
       if (!row.unitCost || Number(row.unitCost) <= 0) newErrors[`${row.id}_unitCost`] = 'Unit cost > 0 required';
+      else if (Number(row.unitCost) > MAX_INPUT_VALUE) newErrors[`${row.id}_unitCost`] = 'Unit cost is too large';
     });
 
     setErrors(newErrors);
@@ -126,7 +128,9 @@ export const BOQModal: React.FC<BOQModalProps> = ({
     const newErrors: Record<string, string> = {};
     if (!editForm.itemDescription.trim()) newErrors.itemDescription = 'Description required';
     if (!editForm.quantity || Number(editForm.quantity) <= 0) newErrors.quantity = 'Quantity > 0 required';
+    else if (Number(editForm.quantity) > MAX_INPUT_VALUE) newErrors.quantity = 'Quantity is too large';
     if (!editForm.unitCost || Number(editForm.unitCost) <= 0) newErrors.unitCost = 'Unit cost > 0 required';
+    else if (Number(editForm.unitCost) > MAX_INPUT_VALUE) newErrors.unitCost = 'Unit cost is too large';
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return false;
 
@@ -311,6 +315,7 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                               <input
                                 type="number"
                                 min={0}
+                                max={MAX_INPUT_VALUE}
                                 step="any"
                                 required
                                 value={editForm.quantity}
@@ -340,6 +345,7 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                             <input
                               type="number"
                               min={0}
+                              max={MAX_INPUT_VALUE}
                               step="any"
                               required
                               value={editForm.unitCost}
@@ -361,9 +367,9 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                           </div>
 
                           {/* Total */}
-                          <div className="flex items-center justify-between p-4 rounded-2xl bg-blue-50 border border-blue-200">
-                            <span className="text-sm font-bold text-blue-600 uppercase tracking-wider">Total</span>
-                            <span className="text-xl font-black text-gray-900">{formatCurrency(editTotal, project?.currency || '$')}</span>
+                          <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-blue-50 border border-blue-200">
+                            <span className="text-sm font-bold text-blue-600 uppercase tracking-wider shrink-0">Total</span>
+                            <span className="text-xl font-black text-gray-900 text-right break-all min-w-0">{formatCurrency(editTotal, project?.currency || '$')}</span>
                           </div>
                         </div>
                       </div>
@@ -457,6 +463,7 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                                     <input
                                       type="number"
                                       min={0}
+                                      max={MAX_INPUT_VALUE}
                                       step="any"
                                       required
                                       value={row.quantity}
@@ -488,6 +495,7 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                                   <input
                                     type="number"
                                     min={0}
+                                    max={MAX_INPUT_VALUE}
                                     step="any"
                                     required
                                     value={row.unitCost}

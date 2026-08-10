@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { cn, formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency, formatCompact, MAX_INPUT_VALUE } from '@/lib/utils';
 import api from '@/services/api.client';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
 import { useToast } from '@/providers/ToastContext';
@@ -423,14 +423,14 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
             </GlassCard>
             <GlassCard className="p-4 border-gray-200 shadow-none">
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Total Received</p>
-              <p className="text-2xl font-black text-emerald-600 mt-1">
-                {materials.reduce((sum, m) => sum + (m.totalReceived || 0), 0)}
+              <p className="text-2xl font-black text-emerald-600 mt-1 break-all">
+                {formatCompact(materials.reduce((sum, m) => sum + (m.totalReceived || 0), 0))}
               </p>
             </GlassCard>
             <GlassCard className="p-4 border-gray-200 shadow-none">
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Total Consumed</p>
-              <p className="text-2xl font-black text-blue-600 mt-1">
-                {materials.reduce((sum, m) => sum + (m.totalConsumed || 0), 0)}
+              <p className="text-2xl font-black text-blue-600 mt-1 break-all">
+                {formatCompact(materials.reduce((sum, m) => sum + (m.totalConsumed || 0), 0))}
               </p>
             </GlassCard>
           </div>
@@ -484,24 +484,24 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                   return (
                     <GlassCard key={material._id} className="p-4 border-gray-200 shadow-none" gradient>
                       <div className="flex items-start justify-between">
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-3 min-w-0">
                           <div className="w-10 h-10 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center shrink-0 animate-pulse-subtle">
                             <Package className="w-5 h-5 text-blue-600" />
                           </div>
-                          <div>
-                            <p className="text-sm font-bold text-gray-900 leading-tight">{material.name}</p>
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-gray-900 leading-tight truncate" title={material.name}>{material.name}</p>
                             <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mt-1">
                               Unit: <span className="px-1.5 py-0.5 rounded bg-gray-100 text-[9px] font-black text-slate-500 ml-1">{material.unit}</span>
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex flex-col items-end shrink-0">
+                        <div className="flex flex-col items-end shrink-0 min-w-0 max-w-[45%]">
                           {overConsumed ? (
                             <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-red-100 border border-red-200 text-red-600 uppercase tracking-wide">Over-consumed</span>
                           ) : (
                             <>
-                              <span className={cn('text-sm font-black', isLow ? 'text-red-600' : 'text-gray-900')}>{stock} In Stock</span>
+                              <span className={cn('text-sm font-black break-all text-right', isLow ? 'text-red-600' : 'text-gray-900')}>{formatCompact(stock)} In Stock</span>
                               <div className="h-1.5 w-16 bg-gray-200 rounded-full overflow-hidden mt-1.5">
                                 <div className={cn('h-full rounded-full', isLow ? 'bg-red-400' : 'bg-blue-500')} style={{ width: `${pct}%` }} />
                               </div>
@@ -511,15 +511,15 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                       </div>
 
                       <div className="grid grid-cols-2 gap-4 mt-4 pt-3 border-t border-gray-100 bg-gray-50/50 -mx-4 px-4 py-2">
-                        <div className="flex items-center space-x-1.5">
-                          <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-500" />
-                          <span className="text-[10px] text-slate-400 font-bold uppercase">Received:</span>
-                          <span className="text-xs font-black text-emerald-600">{received}</span>
+                        <div className="flex items-center space-x-1.5 min-w-0">
+                          <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                          <span className="text-[10px] text-slate-400 font-bold uppercase shrink-0">Received:</span>
+                          <span className="text-xs font-black text-emerald-600 break-all">{formatCompact(received)}</span>
                         </div>
-                        <div className="flex items-center space-x-1.5 justify-end">
-                          <ArrowUpRight className="w-3.5 h-3.5 text-red-500" />
-                          <span className="text-[10px] text-slate-400 font-bold uppercase">Consumed:</span>
-                          <span className="text-xs font-black text-red-600">{consumed}</span>
+                        <div className="flex items-center space-x-1.5 justify-end min-w-0">
+                          <ArrowUpRight className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                          <span className="text-[10px] text-slate-400 font-bold uppercase shrink-0">Consumed:</span>
+                          <span className="text-xs font-black text-red-600 break-all">{formatCompact(consumed)}</span>
                         </div>
                       </div>
 
@@ -612,8 +612,8 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                             <div className="w-10 h-10 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center">
                               <Package className="w-5 h-5 text-blue-600" />
                             </div>
-                            <div>
-                              <p className="text-sm font-bold text-gray-900">{material.name}</p>
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-gray-900 truncate max-w-[220px]" title={material.name}>{material.name}</p>
                               <p className="text-[10px] text-slate-500 uppercase tracking-wider">Last updated: {new Date(material.updatedAt).toLocaleDateString()}</p>
                             </div>
                           </div>
@@ -623,20 +623,20 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                             {material.unit}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end space-x-1">
-                            <ArrowDownLeft className="w-3 h-3 text-emerald-500" />
-                            <span className="text-sm font-bold text-emerald-600">{material.totalReceived || 0}</span>
+                        <td className="px-6 py-4 text-right max-w-[140px]">
+                          <div className="flex items-center justify-end space-x-1 min-w-0">
+                            <ArrowDownLeft className="w-3 h-3 text-emerald-500 shrink-0" />
+                            <span className="text-sm font-bold text-emerald-600 break-all">{formatCompact(material.totalReceived || 0)}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end space-x-1">
-                            <ArrowUpRight className="w-3 h-3 text-red-500" />
-                            <span className="text-sm font-bold text-red-600">{material.totalConsumed || 0}</span>
+                        <td className="px-6 py-4 text-right max-w-[140px]">
+                          <div className="flex items-center justify-end space-x-1 min-w-0">
+                            <ArrowUpRight className="w-3 h-3 text-red-500 shrink-0" />
+                            <span className="text-sm font-bold text-red-600 break-all">{formatCompact(material.totalConsumed || 0)}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex flex-col items-end">
+                        <td className="px-6 py-4 text-right max-w-[140px]">
+                          <div className="flex flex-col items-end min-w-0">
                             {(() => {
                               const received = material.totalReceived || 0;
                               const consumed = material.totalConsumed || 0;
@@ -651,7 +651,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                                     <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-red-100 border border-red-200 text-red-600 uppercase tracking-wide">Over-consumed</span>
                                   ) : (
                                     <>
-                                      <span className={cn('text-lg font-black', isLow ? 'text-red-600' : 'text-gray-900')}>{stock}</span>
+                                      <span className={cn('text-lg font-black break-all text-right', isLow ? 'text-red-600' : 'text-gray-900')}>{formatCompact(stock)}</span>
                                       <div className="h-1 w-16 bg-gray-200 rounded-full overflow-hidden mt-1">
                                         <div className={cn('h-full rounded-full', isLow ? 'bg-red-400' : 'bg-blue-500')} style={{ width: `${pct}%` }} />
                                       </div>

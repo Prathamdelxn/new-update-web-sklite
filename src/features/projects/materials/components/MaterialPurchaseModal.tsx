@@ -6,7 +6,7 @@ import { X, Loader2, ShoppingCart, Plus, Trash2, Calendar, User, DollarSign, Fil
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, MAX_INPUT_VALUE } from '@/lib/utils';
 
 interface MaterialPurchaseModalProps {
   isOpen: boolean;
@@ -74,6 +74,10 @@ export const MaterialPurchaseModal: React.FC<MaterialPurchaseModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.items.some(it => it.quantity > MAX_INPUT_VALUE || it.unitPrice > MAX_INPUT_VALUE) || formData.advancePaid > MAX_INPUT_VALUE) {
+      toast.error('Quantity, price, or advance amount is too large');
+      return;
+    }
     setIsLoading(true);
 
     try {
@@ -214,6 +218,8 @@ export const MaterialPurchaseModal: React.FC<MaterialPurchaseModalProps> = ({
                                   <input
                                     type="number"
                                     required
+                                    min={0}
+                                    max={MAX_INPUT_VALUE}
                                     placeholder="0"
                                     value={item.quantity === 0 ? '' : item.quantity}
                                     onChange={(e) => updateItem(index, 'quantity', e.target.value === '' ? 0 : Number(e.target.value))}
@@ -228,6 +234,7 @@ export const MaterialPurchaseModal: React.FC<MaterialPurchaseModalProps> = ({
                                   type="number"
                                   required
                                   min={0}
+                                  max={MAX_INPUT_VALUE}
                                   placeholder="0"
                                   value={item.unitPrice === 0 ? '' : item.unitPrice}
                                   onChange={(e) => updateItem(index, 'unitPrice', e.target.value === '' ? 0 : Number(e.target.value))}
@@ -245,9 +252,9 @@ export const MaterialPurchaseModal: React.FC<MaterialPurchaseModalProps> = ({
                               </div>
                             </div>
                             {/* Subtotal row */}
-                            <div className="flex items-center justify-between px-1 pt-1 border-t border-gray-200">
-                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Subtotal</span>
-                              <span className="text-xs font-black text-emerald-600">
+                            <div className="flex items-center justify-between gap-2 px-1 pt-1 border-t border-gray-200">
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest shrink-0">Subtotal</span>
+                              <span className="text-xs font-black text-emerald-600 break-all text-right min-w-0">
                                {subtotal > 0 ? formatCurrency(subtotal, project?.currency || '$') : '—'}
                               </span>
                             </div>
@@ -258,9 +265,9 @@ export const MaterialPurchaseModal: React.FC<MaterialPurchaseModalProps> = ({
 
                     {/* Grand total */}
                     {formData.items.length > 0 && (
-                      <div className="flex items-center justify-between px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl mt-2">
-                        <span className="text-sm font-black text-slate-600 uppercase tracking-wider">Grand Total</span>
-                        <span className="text-lg font-black text-emerald-600">
+                      <div className="flex items-center justify-between gap-3 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl mt-2">
+                        <span className="text-sm font-black text-slate-600 uppercase tracking-wider shrink-0">Grand Total</span>
+                        <span className="text-lg font-black text-emerald-600 break-all text-right min-w-0">
                           {formatCurrency(formData.items.reduce((sum, it) => sum + it.quantity * it.unitPrice, 0), project?.currency || '$')}
                         </span>
                       </div>
@@ -282,6 +289,8 @@ export const MaterialPurchaseModal: React.FC<MaterialPurchaseModalProps> = ({
                       <label className="text-sm font-medium text-slate-600 ml-1">Advance Amount ($)</label>
                       <input
                         type="number"
+                        min={0}
+                        max={MAX_INPUT_VALUE}
                         value={formData.advancePaid === 0 ? '' : formData.advancePaid}
                         onChange={(e) => setFormData({ ...formData, advancePaid: e.target.value === '' ? 0 : Number(e.target.value) })}
                         className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 px-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Loader2, Plus, Trash2, ClipboardList, Info, MessageSquare } from 'lucide-react';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
+import { MAX_INPUT_VALUE } from '@/lib/utils';
 
 interface MaterialRequestModalProps {
   isOpen: boolean;
@@ -54,6 +55,10 @@ export const MaterialRequestModal: React.FC<MaterialRequestModalProps> = ({
 
     if (items.some(item => !item.materialId || item.quantity <= 0)) {
       toast.error('Please fill in all items correctly');
+      return;
+    }
+    if (items.some(item => item.quantity > MAX_INPUT_VALUE)) {
+      toast.error('Quantity is too large');
       return;
     }
 
@@ -131,6 +136,7 @@ export const MaterialRequestModal: React.FC<MaterialRequestModalProps> = ({
                         <input
                           type="number"
                           min="1"
+                          max={MAX_INPUT_VALUE}
                           placeholder="0"
                           value={item.quantity === 0 ? '' : item.quantity}
                           onChange={(e) => handleItemChange(index, 'quantity', e.target.value === '' ? 0 : Number(e.target.value))}
