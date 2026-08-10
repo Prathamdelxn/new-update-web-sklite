@@ -186,6 +186,14 @@ export const Topnav: React.FC<TopnavProps> = ({ onMenuClick, isSidebarCollapsed,
  
             {showMenu && (
               <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden p-1 z-50">
+                <div className="px-3 py-2 border-b border-gray-100 mb-1">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user?.name || 'User'}
+                  </p>
+                  <p className="text-xs text-slate-500 truncate">
+                    {user?.email || 'user@example.com'}
+                  </p>
+                </div>
                 <Link
                   href="/profile"
                   onClick={() => setShowMenu(false)}

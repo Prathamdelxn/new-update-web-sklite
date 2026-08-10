@@ -26,10 +26,7 @@ const navigation: NavItem[] = [
   { label: 'Users & Roles', href: '/interior-new/users-roles', icon: UsersRound, wired: true },
 ];
 
-const bottomNavigation: NavItem[] = [
-  { label: 'Notifications', href: '/interior-new/notifications', icon: Bell },
-  { label: 'Settings', href: '/interior-new/settings', icon: Settings },
-];
+const bottomNavigation: NavItem[] = [];
 
 interface InteriorSidebarProps {
   organizationName?: string;

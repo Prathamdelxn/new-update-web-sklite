@@ -6,11 +6,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Lock, Mail, Loader2, ArrowLeft, KeyRound } from 'lucide-react';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
+import interiorApiClient from '@/services/interiorApi.client';
 
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailParam = searchParams.get('email') || '';
+  const typeParam = searchParams.get('type') || 'construction';
 
   const [email, setEmail] = useState(emailParam);
   const [otp, setOtp] = useState('');
@@ -42,11 +44,19 @@ function ResetPasswordForm() {
 
     setIsLoading(true);
     try {
-      await api.post('/auth/reset-password', {
-        email,
-        otp,
-        newPassword,
-      });
+      if (typeParam === 'interior') {
+        await interiorApiClient.post('/auth/reset-password', {
+          email,
+          otp,
+          newPassword,
+        });
+      } else {
+        await api.post('/auth/reset-password', {
+          email,
+          otp,
+          newPassword,
+        });
+      }
       toast.success('Password has been successfully reset!');
       router.push('/login');
     } catch (error: any) {

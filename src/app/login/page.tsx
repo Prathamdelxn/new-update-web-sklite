@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthContext';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
+import interiorApiClient from '@/services/interiorApi.client';
 import { loginInterior } from '@/lib/interiorAuth';
 function LoginForm() {
   const [email, setEmail] = useState('');
@@ -30,7 +31,11 @@ function LoginForm() {
     e.preventDefault();
     setFpLoading(true);
     try {
-      await api.post('/auth/forgot-password', { email: fpEmail });
+      if (industryType === 'interior') {
+        await interiorApiClient.post('/auth/forgot-password', { email: fpEmail });
+      } else {
+        await api.post('/auth/forgot-password', { email: fpEmail });
+      }
       setFpSent(true);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to send reset email. Please try again.');
@@ -130,6 +135,36 @@ function LoginForm() {
             )}
 
             <div className="bg-white rounded-2xl border border-slate-200 p-5 xl:p-6 shadow-sm">
+                  <div className="mb-6">
+                    <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Select Workspace Mode</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIndustryType('construction')}
+                        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-semibold transition ${
+                          industryType === 'construction'
+                            ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
+                            : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        <HardHat className="w-4 h-4" />
+                        Construction
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIndustryType('interior')}
+                        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-semibold transition ${
+                          industryType === 'interior'
+                            ? 'border-purple-600 bg-purple-50 text-purple-700 shadow-sm'
+                            : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        <Palette className="w-4 h-4" />
+                        Interior
+                      </button>
+                    </div>
+                  </div>
+
             {showForgotPw ? (
               <div>
                 <button
@@ -148,7 +183,7 @@ function LoginForm() {
                     <h3 className="text-xl font-semibold text-slate-900">OTP Sent</h3>
                     <p className="mt-2 text-sm text-slate-500">A reset email has been sent to <span className="font-medium text-slate-900">{fpEmail}</span>.</p>
                     <Link
-                      href={`/reset-password?email=${encodeURIComponent(fpEmail)}`}
+                      href={`/reset-password?email=${encodeURIComponent(fpEmail)}&type=${industryType}`}
                       className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
                     >
                       Enter OTP & Reset Password
@@ -193,36 +228,6 @@ function LoginForm() {
             ) : (
               <>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Select Workspace Mode</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setIndustryType('construction')}
-                        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-semibold transition ${
-                          industryType === 'construction'
-                            ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
-                            : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
-                        }`}
-                      >
-                        <HardHat className="w-4 h-4" />
-                        Construction
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setIndustryType('interior')}
-                        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-semibold transition ${
-                          industryType === 'interior'
-                            ? 'border-purple-600 bg-purple-50 text-purple-700 shadow-sm'
-                            : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
-                        }`}
-                      >
-                        <Palette className="w-4 h-4" />
-                        Interior
-                      </button>
-                    </div>
-                  </div>
-
                   <div>
                     <label className="text-xs font-semibold text-slate-700">Email Address</label>
                     <div className="relative mt-1">
