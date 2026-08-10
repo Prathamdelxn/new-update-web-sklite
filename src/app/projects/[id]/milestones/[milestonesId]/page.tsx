@@ -15,6 +15,9 @@ import { cn } from '@/lib/utils';
 import api from '@/services/api.client';
 import { uploadToCloudinary } from '@/lib/upload';
 import { useToast } from '@/providers/ToastContext';
+import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
+import { useAuth } from '@/providers/AuthContext';
+import { isProjectLocked, hasProjectPermission } from '@/lib/permissions';
 
 type MilestoneStatus = 'Pending' | 'In Progress' | 'Completed' | 'On Hold';
 const STATUS_OPTIONS: MilestoneStatus[] = ['Pending', 'In Progress', 'Completed', 'On Hold'];
@@ -47,6 +50,14 @@ export default function MilestoneDetailPage() {
   const { id: projectId, milestonesId: milestoneId } = useParams<{ id: string; milestonesId: string }>();
   const router = useRouter();
   const toast = useToast();
+  const { project } = useProjectContext();
+  const { user } = useAuth();
+  const isLocked = isProjectLocked(project);
+  const isAdmin = user?.role?.name === 'Admin' || (user?.role?.permissions?.includes('*') ?? false);
+  const canCreate   = !isLocked && (isAdmin || hasProjectPermission(user, project, 'tasks:create'));
+  const canUpdate   = !isLocked && (isAdmin || hasProjectPermission(user, project, 'tasks:update'));
+  const canAssign   = !isLocked && (isAdmin || hasProjectPermission(user, project, 'tasks:assign'));
+  const canComplete = !isLocked && (isAdmin || hasProjectPermission(user, project, 'tasks:complete'));
 
   const [milestone, setMilestone]   = useState<any>(null);
   const [members, setMembers]       = useState<Member[]>([]);
@@ -135,6 +146,7 @@ export default function MilestoneDetailPage() {
 
   // ── Submit task ──────────────────────────────────────────────────────────────
   const handleSubmitTask = async (taskIndex: number) => {
+    if (!canComplete) { toast.error("You don't have permission to complete tasks."); return; }
     const form = submitForms[taskIndex] ?? emptySubmitForm();
     setSubmitting(taskIndex);
     const tasks: any[] = milestone.tasks || [];
@@ -196,6 +208,7 @@ export default function MilestoneDetailPage() {
 
   // ── Uncheck task ─────────────────────────────────────────────────────────────
   const handleUncheck = async (taskIndex: number) => {
+    if (!canComplete) { toast.error("You don't have permission to complete tasks."); return; }
     setSubmitting(taskIndex);
     const tasks: any[] = milestone.tasks || [];
     const updatedTasks = tasks.map((t: any, i: number) =>
@@ -212,6 +225,7 @@ export default function MilestoneDetailPage() {
 
   // ── Edit task ────────────────────────────────────────────────────────────────
   const openEdit = (taskIndex: number) => {
+    if (!canUpdate && !canAssign) { toast.error("You don't have permission to edit tasks."); return; }
     const t = milestone.tasks[taskIndex];
     setEditingTask({
       taskIndex,
@@ -226,6 +240,7 @@ export default function MilestoneDetailPage() {
 
   const handleSaveEdit = async () => {
     if (!editingTask) return;
+    if (!canUpdate && !canAssign) { toast.error("You don't have permission to edit tasks."); return; }
     const { startDate, endDate } = editingTask.form;
     if (startDate && endDate && endDate < startDate) {
       toast.error('End date cannot be before start date');
@@ -256,6 +271,8 @@ export default function MilestoneDetailPage() {
   // ── Add task ─────────────────────────────────────────────────────────────────
   const handleAddTask = async () => {
     if (!addTaskForm.title.trim()) return;
+    if (!canCreate) { toast.error("You don't have permission to create tasks."); return; }
+    if (addTaskForm.assignedTo && !canAssign) { toast.error("You don't have permission to assign tasks."); return; }
     if (addTaskForm.startDate && addTaskForm.endDate && addTaskForm.endDate < addTaskForm.startDate) {
       toast.error('End date cannot be before start date');
       return;
@@ -369,6 +386,7 @@ export default function MilestoneDetailPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-gray-900">Tasks</h2>
+            {canCreate && (
             <button
               onClick={() => setShowAddTask(v => !v)}
               className="flex items-center gap-1.5 px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-all shadow-sm"
@@ -376,6 +394,7 @@ export default function MilestoneDetailPage() {
               <Plus className="w-4 h-4" />
               Add Task
             </button>
+            )}
           </div>
 
           {/* ── Add task inline form ── */}
@@ -457,12 +476,14 @@ export default function MilestoneDetailPage() {
             <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed border-gray-200 rounded-xl">
               <AlertCircle className="w-12 h-12 text-gray-300 mb-4" />
               <p className="text-slate-500 font-medium">No tasks yet.</p>
-              <button
-                onClick={() => setShowAddTask(true)}
-                className="mt-3 text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors"
-              >
-                + Add the first task
-              </button>
+              {canCreate && (
+                <button
+                  onClick={() => setShowAddTask(true)}
+                  className="mt-3 text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors"
+                >
+                  + Add the first task
+                </button>
+              )}
             </div>
           )}
 
@@ -481,7 +502,7 @@ export default function MilestoneDetailPage() {
                   onClick={() => {
                     if (task.isCompleted) {
                       setExpandedTask(isExpanded ? null : i);
-                    } else {
+                    } else if (canComplete) {
                       const opening = !form.open;
                       setForm(i, {
                         open: opening,
@@ -496,11 +517,12 @@ export default function MilestoneDetailPage() {
                   <button
                     onClick={e => {
                       e.stopPropagation();
+                      if (!canComplete) return;
                       task.isCompleted
                         ? handleUncheck(i)
                         : setForm(i, { open: !form.open, ...((!form.open && form.materials.length === 0 && materials.length > 0) ? { materials: [{ materialId: '', quantity: '' }] } : {}) });
                     }}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !canComplete}
                     className="shrink-0 mt-0.5 focus:outline-none"
                   >
                     {isSubmitting
@@ -519,7 +541,7 @@ export default function MilestoneDetailPage() {
                       </p>
                       <div className="flex items-center gap-1 shrink-0">
                         {/* Edit — only if not completed */}
-                        {!task.isCompleted && (
+                        {!task.isCompleted && (canUpdate || canAssign) && (
                           <button
                             onClick={e => { e.stopPropagation(); openEdit(i); }}
                             className="p-1.5 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"

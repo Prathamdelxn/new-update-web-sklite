@@ -117,6 +117,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
   const canView = isAdmin || hasAnyProjectPermissionPrefix(user, project, 'boq:');
   const isLocked = isProjectLocked(project);
   const canApprove = !isLocked && hasProjectPermission(user, project, 'boq:approve');
+  const canAssign = !isLocked && hasProjectPermission(user, project, 'boq:assign');
   const canUpdate = !isLocked && hasProjectPermission(user, project, 'boq:update');
   const canDelete = !isLocked && hasProjectPermission(user, project, 'boq:delete');
   const canCreate = !isLocked && hasProjectPermission(user, project, 'boq:create');
@@ -566,7 +567,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
                                             </button>
                                           </>
                                         )}
-                                        {item.status === 'Draft' && (
+                                        {item.status === 'Draft' && canAssign && (
                                           <button onClick={() => setApproversItem(item)}
                                             title="Send for Approval" className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors">
                                             <Send className="w-4 h-4" />
