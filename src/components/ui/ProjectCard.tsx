@@ -57,8 +57,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   const { user } = useAuth();
   const isAdmin = user?.role?.name === 'admin' || (user as any)?.role === 'admin' || (user as any)?.isAdmin;
 
+  // A string `category` here is an unpopulated ref (raw ObjectId) rather than
+  // a resolved category — only a populated object has a human-readable name.
   const categoryName = typeof project.category === 'string'
-    ? project.category
+    ? ''
     : (project.category as any)?.name || '';
 
   const surveyorId = typeof project.siteSurveyor === 'object'
