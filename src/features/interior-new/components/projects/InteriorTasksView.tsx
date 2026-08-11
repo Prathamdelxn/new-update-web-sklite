@@ -52,6 +52,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
   const [tasks, setTasks] = useState<any[]>([]);
   const [wbsPackages, setWbsPackages] = useState<any[]>([]);
   const [projectMembers, setProjectMembers] = useState<any[]>([]);
+  const [milestones, setMilestones] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [selectedTask, setSelectedTask] = useState<any>(null);
@@ -78,16 +79,18 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
     startDate: '',
     endDate: '',
     assigneeId: '',
+    milestoneId: '',
     description: '',
   });
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [taskRes, wbsRes, memberRes] = await Promise.allSettled([
+      const [taskRes, wbsRes, memberRes, milestoneRes] = await Promise.allSettled([
         interiorProjectService.getTasks(projectId),
         interiorProjectService.getWbs(projectId),
         interiorProjectService.getProjectMembers(projectId),
+        interiorProjectService.getMilestones(projectId),
       ]);
 
       if (taskRes.status === 'fulfilled' && taskRes.value?.success && taskRes.value.data) {
@@ -114,6 +117,12 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
       } else {
         setProjectMembers([]);
       }
+
+      if (milestoneRes.status === 'fulfilled' && milestoneRes.value?.success) {
+        setMilestones(milestoneRes.value.data || []);
+      } else {
+        setMilestones([]);
+      }
     } catch (err) {
       console.warn('Error fetching tasks data', err);
     } finally {
@@ -139,9 +148,21 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
         description: formData.description,
       };
 
-      await interiorProjectService.createTask(projectId, payload);
+      const res = await interiorProjectService.createTask(projectId, payload);
+      
+      // If a milestone was selected, link this new task to it
+      if (formData.milestoneId && res?.success && res?.data?._id) {
+        const selectedMilestone = milestones.find(m => m._id === formData.milestoneId);
+        if (selectedMilestone) {
+          const currentLinks = (selectedMilestone.linkedTasks || []).map((t: any) => typeof t === 'string' ? t : t._id);
+          await interiorProjectService.updateMilestone(projectId, selectedMilestone._id, {
+            linkedTasks: [...currentLinks, res.data._id]
+          });
+        }
+      }
+
       setIsTaskDialogOpen(false);
-      setFormData({ name: '', packageId: '', priority: 'medium', startDate: '', endDate: '', assigneeId: '', description: '' });
+      setFormData({ name: '', packageId: '', priority: 'medium', startDate: '', endDate: '', assigneeId: '', milestoneId: '', description: '' });
       fetchData();
     } catch (err) {
       console.error('Create task failed', err);
@@ -348,6 +369,22 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                       {wbsPackages.map((pkg) => (
                         <option key={pkg.id || pkg._id} value={pkg.id || pkg._id}>
                           {pkg.name} ({pkg.trade})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold">Assign to Milestone (Optional)</label>
+                    <select
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none"
+                      value={formData.milestoneId}
+                      onChange={(e) => setFormData({ ...formData, milestoneId: e.target.value })}
+                    >
+                      <option value="">No Milestone (Unscheduled)</option>
+                      {milestones.map((m) => (
+                        <option key={m._id} value={m._id}>
+                          {m.name}
                         </option>
                       ))}
                     </select>
