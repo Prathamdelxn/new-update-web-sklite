@@ -15,7 +15,7 @@ interface RoleModalProps {
   initialData?: any;
 }
 
-const MODULES = [
+const MODULES: { id: string; title: string; icon: string; excludeActions?: string[] }[] = [
   { id: 'projects',     title: 'Project Management',         icon: '🏗️' },
   { id: 'financials',   title: 'Financials & Payments',      icon: '💰' },
   { id: 'inventory',    title: 'Material Management',        icon: '📦' },
@@ -24,9 +24,9 @@ const MODULES = [
   { id: 'annotations',  title: 'Plan Annotations',           icon: '✏️' },
   { id: 'sitesurvey',   title: 'Site Survey Management',     icon: '📋' },
   { id: 'budget',       title: 'Budget Management',          icon: '📊' },
-  { id: 'land',         title: 'Land Documents Mgmt',        icon: '📄' },
-  { id: 'boq',          title: 'BOQ Management',             icon: '🗂️' },
-  { id: 'tasks',        title: 'Task Management',            icon: '✅' },
+  { id: 'land',         title: 'Land Documents Mgmt',        icon: '📄', excludeActions: ['complete', 'assign'] },
+  { id: 'boq',          title: 'BOQ Management',             icon: '🗂️', excludeActions: ['complete'] },
+  { id: 'tasks',        title: 'Task Management',            icon: '✅', excludeActions: ['approve'] },
   { id: 'workprogress', title: 'Work Progress',              icon: '📈' },
   { id: 'reports',      title: 'Reports Management',         icon: '📊' },
   { id: 'risks',        title: 'Risk & Escalation Matrix',   icon: '🚨' },
@@ -85,8 +85,9 @@ function fromBackend(flat: string[]): PermMap {
 function toBackend(nested: PermMap): string[] {
   const flat: string[] = [];
   Object.entries(nested).forEach(([mod, actions]) => {
+    const excluded = MODULES.find(m => m.id === mod)?.excludeActions || [];
     Object.entries(actions).forEach(([action, enabled]) => {
-      if (enabled) flat.push(`${mod}:${action}`);
+      if (enabled && !excluded.includes(action)) flat.push(`${mod}:${action}`);
     });
   });
   return flat;
@@ -112,10 +113,31 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
 
   const toggle = (moduleId: string, actionId: string) => {
     if (isAdmin) return;
-    setPermissions(prev => ({
-      ...prev,
-      [moduleId]: { ...prev[moduleId], [actionId]: !prev[moduleId][actionId] },
-    }));
+    setPermissions(prev => {
+      const current = prev[moduleId] || { ...DEFAULT_ACTIONS };
+      const newValue = !current[actionId];
+      const newModulePerms = { ...current, [actionId]: newValue };
+
+      // Granting any other action implicitly requires View — a role that
+      // can Create/Update/etc. but not View a module is a confusing, broken
+      // permission set. Matches the mobile Role editor's behavior.
+      if (newValue && actionId !== 'view') {
+        newModulePerms.view = true;
+      }
+
+      // Revoking View has nothing left to act on, so cascade-clear the rest
+      // of the module too.
+      if (!newValue && actionId === 'view') {
+        Object.keys(newModulePerms).forEach(key => {
+          newModulePerms[key] = false;
+        });
+      }
+
+      return {
+        ...prev,
+        [moduleId]: newModulePerms,
+      };
+    });
   };
 
   const applyPreset = (preset: 'full' | 'readonly') => {
@@ -261,8 +283,9 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
                     {/* Module cards */}
                     <div className="space-y-2">
                       {MODULES.map(module => {
+                        const modActions = ACTIONS.filter(a => !module.excludeActions?.includes(a.id));
                         const modPerms = permissions[module.id] || { ...DEFAULT_ACTIONS };
-                        const activeCount = Object.values(modPerms).filter(Boolean).length;
+                        const activeCount = modActions.filter(a => modPerms[a.id]).length;
                         const isExpanded = expandedIds.has(module.id);
 
                         return (
@@ -278,7 +301,7 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
                                 <div>
                                   <p className="text-sm font-medium text-gray-900">{module.title}</p>
                                   <p className="text-[10px] text-slate-400 mt-0.5">
-                                    {activeCount === 0 ? 'No access defined' : `${activeCount} of ${ACTIONS.length} permissions enabled`}
+                                    {activeCount === 0 ? 'No access defined' : `${activeCount} of ${modActions.length} permissions enabled`}
                                   </p>
                                 </div>
                               </div>
@@ -286,7 +309,7 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
                                 {/* Active count badge */}
                                 {activeCount > 0 && (
                                     <span className="px-2 py-0.5 rounded-sm text-[9px] font-semibold bg-gray-100 text-gray-700 border border-gray-200">
-                                    {activeCount}/{ACTIONS.length}
+                                    {activeCount}/{modActions.length}
                                   </span>
                                 )}
                                 {isExpanded
@@ -299,7 +322,7 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
                             {/* Action chips — expanded */}
                             {isExpanded && (
                               <div className="px-4 pb-4 pt-1 border-t border-gray-100 grid grid-cols-3 gap-2">
-                                {ACTIONS.map(action => {
+                                {modActions.map(action => {
                                   const isActive = modPerms[action.id];
                                   const styles = ACTION_STYLES[action.id];
                                   return (

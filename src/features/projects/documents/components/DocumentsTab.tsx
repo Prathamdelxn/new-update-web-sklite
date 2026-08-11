@@ -30,6 +30,7 @@ import {
   User,
   Filter,
   Lock,
+  Eye,
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { cn } from '@/lib/utils';
@@ -39,6 +40,7 @@ import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { useAuth } from '@/providers/AuthContext';
 import { hasProjectPermission, isProjectLocked } from '@/lib/permissions';
+import { DocumentViewer } from './DocumentViewer';
 import { useProjectContext } from '../../contexts/ProjectContext';
 
 interface Doc {
@@ -90,6 +92,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [viewingDoc, setViewingDoc] = useState<Doc | null>(null);
 
   const toast = useToast();
   const { confirm } = useConfirm();
@@ -682,12 +685,19 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                               </button>
                             </>
                           )}
+                          <button
+                            onClick={() => setViewingDoc(doc)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
+                            title="Preview"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
                           <a
                             href={doc.url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
-                            title="Download / View"
+                            title="Download"
                           >
                             <Download className="w-4 h-4" />
                           </a>
@@ -781,6 +791,13 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
           </div>
         )}
       </AnimatePresence>
+
+      <DocumentViewer
+        isOpen={!!viewingDoc}
+        onClose={() => setViewingDoc(null)}
+        document={viewingDoc}
+        projectId={projectId}
+      />
     </SkeletonLoader>
   );
 };

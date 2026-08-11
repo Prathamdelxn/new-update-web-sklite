@@ -95,7 +95,6 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [taskForm, setTaskForm]     = useState(emptyTaskForm());
 
- 
   const { user } = useAuth();
   const { project } = useProjectContext();
 
@@ -106,6 +105,8 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
   const canCreate = !isLocked && (isAdmin || hasProjectPermission(user, project, 'tasks:create'));
   const canUpdate = !isLocked && (isAdmin || hasProjectPermission(user, project, 'tasks:update'));
   const canDelete = !isLocked && (isAdmin || hasProjectPermission(user, project, 'tasks:delete'));
+  const canAssign = !isLocked && (isAdmin || hasProjectPermission(user, project, 'tasks:assign'));
+  const canComplete = !isLocked && (isAdmin || hasProjectPermission(user, project, 'tasks:complete'));
 
   // ── Data fetching ──────────────────────────────────────────────────────────
   const fetchData = async () => {
@@ -635,14 +636,14 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                         return (
                           <div key={i} className={cn('rounded-xl border p-2.5 text-xs', task.isCompleted ? 'bg-emerald-50/50 border-emerald-100' : 'bg-white border-gray-100')}>
                             <div className="flex items-start gap-2">
-                              <button onClick={() => initiateToggle(milestone, i)} disabled={isToggling || !canUpdate} className="mt-0.5 shrink-0 disabled:opacity-50">
+                              <button onClick={() => initiateToggle(milestone, i)} disabled={isToggling || !canComplete} className="mt-0.5 shrink-0 disabled:opacity-50">
                                 {isToggling ? <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin" /> : task.isCompleted ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> : <Circle className="w-3.5 h-3.5 text-gray-300" />}
                               </button>
                               <div className="flex-1 min-w-0">
                                 <p className={cn('font-semibold', task.isCompleted ? 'line-through text-slate-400' : 'text-gray-800')}>{task.title}</p>
                                 {assignee && <p className="text-[10px] text-slate-400 mt-0.5">Assignee: {assignee}</p>}
                               </div>
-                              {!task.isCompleted && canUpdate && (
+                              {!task.isCompleted && (canUpdate || canAssign) && (
                                 <button onClick={() => openEditTask(milestone, i)} className="text-slate-300 hover:text-blue-500 shrink-0">
                                   <Pencil className="w-3 h-3" />
                                 </button>
@@ -771,7 +772,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                                     return (
                                       <div key={i} className={cn('rounded-xl border bg-white p-3 shadow-sm transition-all hover:border-blue-200', task.isCompleted ? 'bg-emerald-50/20 border-emerald-100' : 'border-gray-100')}>
                                         <div className="flex items-start gap-3">
-                                          <button onClick={() => initiateToggle(milestone, i)} disabled={isToggling || !canUpdate} className="mt-0.5 shrink-0 disabled:opacity-50">
+                                          <button onClick={() => initiateToggle(milestone, i)} disabled={isToggling || !canComplete} className="mt-0.5 shrink-0 disabled:opacity-50">
                                             {isToggling ? <Loader2 className="w-4 h-4 text-blue-500 animate-spin" /> : task.isCompleted ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Circle className="w-4 h-4 text-gray-300 hover:text-blue-400" />}
                                           </button>
                                           <div className="flex-1 min-w-0">
@@ -792,7 +793,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                                               )}
                                             </div>
                                           </div>
-                                          {!task.isCompleted && canUpdate && (
+                                          {!task.isCompleted && (canUpdate || canAssign) && (
                                             <button onClick={() => openEditTask(milestone, i)} className="p-1.5 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all shrink-0">
                                               <Pencil className="w-3.5 h-3.5" />
                                             </button>
@@ -920,7 +921,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                               <div key={i} className={cn('flex items-start gap-3 p-2.5 rounded-lg transition-colors group', task.isCompleted ? 'bg-emerald-50/30' : 'hover:bg-gray-50')}>
                                 <button
                                   onClick={() => initiateToggle(milestone, i)}
-                                  disabled={isToggling || !canUpdate}
+                                  disabled={isToggling || !canComplete}
                                   className="mt-0.5 shrink-0 focus:outline-none disabled:opacity-50"
                                 >
                                   {isToggling
@@ -952,7 +953,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                                     )}
                                   </div>
                                 </div>
-                                {!task.isCompleted && canUpdate && (
+                                {!task.isCompleted && (canUpdate || canAssign) && (
                                   <button
                                     onClick={() => openEditTask(milestone, i)}
                                     className="p-1.5 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-all shrink-0 opacity-0 group-hover:opacity-100"

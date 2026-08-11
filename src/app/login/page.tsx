@@ -79,7 +79,7 @@ function LoginForm() {
   return (
     <div className="min-h-screen xl:h-screen xl:overflow-hidden bg-[#E6F0FF] flex items-center justify-center px-6 py-6 xl:py-0">
       <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-6 xl:gap-8 w-full max-w-5xl">
-        <div className="rounded-3xl bg-[#0E3B7B] p-6 xl:p-8 text-white shadow-xl overflow-hidden relative flex flex-col justify-between">
+        <div className="order-2 xl:order-1 rounded-3xl bg-[#0E3B7B] p-6 xl:p-8 text-white shadow-xl overflow-hidden relative flex flex-col justify-between">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.18),_transparent_35%)] pointer-events-none" />
           <div className="relative z-10 flex h-full flex-col justify-between space-y-6">
             <div>
@@ -118,7 +118,7 @@ function LoginForm() {
           </div>
         </div>
 
-        <div className="rounded-3xl bg-white p-5 xl:p-6 shadow-xl shadow-slate-200/60 border border-slate-200/80 flex flex-col justify-between">
+        <div className="order-1 xl:order-2 rounded-3xl bg-white p-5 xl:p-6 shadow-xl shadow-slate-200/60 border border-slate-200/80 flex flex-col justify-between">
           <div>
             <div className="mb-4 xl:mb-5 flex items-center justify-between gap-4">
               <div>

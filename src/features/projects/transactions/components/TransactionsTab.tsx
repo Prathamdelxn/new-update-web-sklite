@@ -27,7 +27,7 @@ import { useSocket } from '@/providers/SocketContext';
 import { useAuth } from '@/providers/AuthContext';
 import { hasProjectPermission, isProjectLocked } from '@/lib/permissions';
 import { Transaction, MaterialPurchase } from '@/types';
-import { formatCurrency, formatExactCurrency } from '@/lib/utils';
+import { formatCurrency, formatExactCurrency, MAX_INPUT_VALUE } from '@/lib/utils';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
 
 interface TransactionsTabProps {
@@ -190,6 +190,10 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
   const handleSave = async () => {
     if (!amount || isNaN(parseFloat(amount)) || !partyName.trim()) {
       toast.error('Amount and party name are required');
+      return;
+    }
+    if (parseFloat(amount) > MAX_INPUT_VALUE) {
+      toast.error('Amount is too large');
       return;
     }
     setSubmitting(true);
@@ -380,7 +384,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
             <Wallet className="w-4 h-4 text-slate-500" />
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Net Balance</span>
           </div>
-          <p className={`text-3xl font-black mt-1 ${netBalance >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
+          <p className={`text-3xl font-black mt-1 text-center break-all ${netBalance >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
             {formatExactCurrency(netBalance, (project as any)?.currency || '$')}
           </p>
         </div>
@@ -389,9 +393,9 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
           <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
             <TrendingUp className="w-6 h-6 text-emerald-600" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Inflow</p>
-            <p className="text-2xl font-black text-gray-900 mt-1">{formatExactCurrency(totals.incoming, (project as any)?.currency || '$')}</p>
+            <p className="text-2xl font-black text-gray-900 mt-1 break-all">{formatExactCurrency(totals.incoming, (project as any)?.currency || '$')}</p>
           </div>
         </div>
 
@@ -399,9 +403,9 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
           <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
             <TrendingDown className="w-6 h-6 text-red-600" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Outflow</p>
-            <p className="text-2xl font-black text-gray-900 mt-1">{formatExactCurrency(totals.outgoing, (project as any)?.currency || '$')}</p>
+            <p className="text-2xl font-black text-gray-900 mt-1 break-all">{formatExactCurrency(totals.outgoing, (project as any)?.currency || '$')}</p>
           </div>
         </div>
       </div>
@@ -486,8 +490,8 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
                     )}
                   </div>
 
-                  <div className="flex items-center space-x-2 sm:space-x-4 ml-3 sm:ml-4">
-                    <p className={`text-sm sm:text-base font-black ${color} tabular-nums whitespace-nowrap`}>
+                  <div className="flex items-center space-x-2 sm:space-x-4 ml-3 sm:ml-4 min-w-0 max-w-[45%] sm:max-w-[55%]">
+                    <p className={`text-sm sm:text-base font-black ${color} tabular-nums break-all text-right`}>
                       {prefix}{formatExactCurrency(item.amount, (project as any)?.currency || '$')}
                     </p>
                     <button
@@ -580,6 +584,8 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Amount ($) *</label>
                 <input
                   type="number"
+                  min={0}
+                  max={MAX_INPUT_VALUE}
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"

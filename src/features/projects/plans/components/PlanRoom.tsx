@@ -46,6 +46,8 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
   const canDeleteDocument = !isLocked && hasProjectPermission(user, project, 'plans:delete');
   const canCreatePlans = !isLocked && hasProjectPermission(user, project, 'plans:create');
   const canEditPlans = !isLocked && (hasProjectPermission(user, project, 'plans:update') || hasProjectPermission(user, project, 'plans:edit'));
+  const canApprovePlans = !isLocked && hasProjectPermission(user, project, 'plans:approve');
+  const canAssignPlans = !isLocked && hasProjectPermission(user, project, 'plans:assign');
   const isAdmin = user?.role?.name === 'Admin' || (user?.role?.permissions?.includes('*') ?? false);
 
   const fetchAnnotationCounts = useCallback(async () => {
@@ -204,7 +206,7 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
                 {/* Actions */}
                 <div className="flex items-center gap-1 shrink-0">
                   {/* Approval workflow */}
-                  {doc.approvalStatus === 'Draft' && isAdmin && !isLocked && (
+                  {doc.approvalStatus === 'Draft' && canAssignPlans && (
                     <button
                       onClick={() => setApproverDocId(doc._id)}
                       className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
@@ -213,7 +215,7 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
                       <Send className="w-3.5 h-3.5" />
                     </button>
                   )}
-                  {doc.approvalStatus === 'Pending' && !isLocked && (
+                  {doc.approvalStatus === 'Pending' && canApprovePlans && (
                     <>
                       <button
                         onClick={() => handleAction(doc._id, 'respond', { response: 'Approved', versionId: doc.versionId })}
@@ -262,7 +264,7 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
                     </button>
                   )}
 
-                  {isAdmin && !isLocked && (
+                  {canDeleteDocument && (
                     <>
                       <div className="w-px h-5 bg-slate-200 mx-1" />
                       <button
@@ -322,6 +324,7 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
         onClose={() => setViewingDoc(null)}
         document={viewingDoc}
         projectId={projectId}
+        folderId={folder._id}
       />
 
       <PlanAnnotator

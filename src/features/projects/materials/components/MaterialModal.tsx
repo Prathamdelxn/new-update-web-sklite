@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Loader2, Package, Scale, ArrowDownLeft, ArrowUpRight, MessageSquare, Info, Pencil } from 'lucide-react';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
-import { cn } from '@/lib/utils';
+import { cn, formatCompact, MAX_INPUT_VALUE } from '@/lib/utils';
 
 interface MaterialModalProps {
   isOpen: boolean;
@@ -57,6 +57,10 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.quantity > MAX_INPUT_VALUE) {
+      toast.error('Quantity is too large');
+      return;
+    }
     setIsLoading(true);
 
     try {
@@ -152,6 +156,7 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                         <input
                           type="text"
                           required
+                          maxLength={80}
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           className="w-full bg-white border border-gray-200 rounded-xl py-2.5 pl-10 pr-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
@@ -182,6 +187,8 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                           <label className="text-sm font-medium text-slate-600 ml-1">Initial Stock</label>
                           <input
                             type="number"
+                            min={0}
+                            max={MAX_INPUT_VALUE}
                             placeholder="0"
                             value={formData.quantity === 0 ? '' : formData.quantity}
                             onChange={(e) => setFormData({ ...formData, quantity: e.target.value === '' ? 0 : Number(e.target.value) })}
@@ -200,7 +207,7 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                       </div>
                       <div className="flex justify-between items-center mt-2">
                         <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Current Balance</span>
-                        <span className="text-sm font-black text-blue-600">{(initialData.totalReceived || 0) - (initialData.totalConsumed || 0)} {initialData.unit}</span>
+                        <span className="text-sm font-black text-blue-600 break-all text-right">{formatCompact((initialData.totalReceived || 0) - (initialData.totalConsumed || 0))} {initialData.unit}</span>
                       </div>
                     </div>
 
@@ -212,6 +219,7 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                           type="number"
                           required
                           min="1"
+                          max={MAX_INPUT_VALUE}
                           placeholder="0"
                           value={formData.quantity === 0 ? '' : formData.quantity}
                           onChange={(e) => setFormData({ ...formData, quantity: e.target.value === '' ? 0 : Number(e.target.value) })}
