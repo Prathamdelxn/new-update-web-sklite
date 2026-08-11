@@ -72,12 +72,13 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
       
       const pRoles: Record<string, string> = {};
       const projArr: any[] = [];
+      // Entries with no linked project (project: null) are orphaned
+      // assignments left over from elsewhere — they don't reference a real
+      // project, so there's nothing to display or resubmit for them.
       (initialData.projects || []).forEach((p: any) => {
         if (p.project) {
           projArr.push(p.project);
           if (p.role) pRoles[p.project._id || p.project] = p.role._id || p.role;
-        } else if (p._id) {
-          projArr.push(p);
         }
       });
       setSelectedProjects(projArr);
@@ -248,7 +249,62 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
                     </div>
                   )}
 
+                  {/* Global Role — org-wide default role, required for actions that
+                      aren't scoped to any single project (e.g. creating a new
+                      project in the first place). Project-specific roles below
+                      are additive on top of this, not a substitute for it. */}
+                  <div>
+                    <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px] mb-3">Global Role</label>
+                    <select
+                      value={selectedRole?._id || ''}
+                      onChange={e => setSelectedRole(roles.find(r => r._id === e.target.value) || null)}
+                      className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl px-4 text-[15px] font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
+                    >
+                      <option value="">No global role (project-scoped access only)</option>
+                      {roles.map(role => (
+                        <option key={role._id} value={role._id}>{role.name}</option>
+                      ))}
+                    </select>
+                  </div>
 
+                  {/* Project Assignments */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px]">Project Assignments</label>
+                      <button
+                        type="button"
+                        onClick={() => setIsProjectPickerOpen(true)}
+                        className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700"
+                      >
+                        <FolderOpen className="w-3.5 h-3.5" />
+                        {selectedProjects.length > 0 ? 'Edit Projects' : 'Assign Projects'}
+                      </button>
+                    </div>
+
+                    {selectedProjects.length === 0 ? (
+                      <p className="text-xs text-slate-400 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+                        No projects assigned yet.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {selectedProjects.map(project => (
+                          <div key={project._id} className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl">
+                            <span className="text-sm font-semibold text-gray-900 truncate flex-1">{project.name}</span>
+                            <select
+                              value={projectRoles[project._id] || ''}
+                              onChange={e => setProjectRoles(prev => ({ ...prev, [project._id]: e.target.value }))}
+                              className="text-xs font-semibold bg-white border border-gray-200 rounded-lg py-1.5 px-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                            >
+                              <option value="">Use global role</option>
+                              {roles.map(role => (
+                                <option key={role._id} value={role._id}>{role.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Footer */}
                   <div className="pt-2">

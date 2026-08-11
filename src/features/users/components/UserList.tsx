@@ -25,8 +25,10 @@ import { useToast } from '@/providers/ToastContext';
 import { UserModal } from '@/features/users/components/UserModal';
 import { Pagination, usePagination } from '@/components/shared/Pagination';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/providers/AuthContext';
 
 export const UserList = () => {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -212,6 +214,12 @@ export const UserList = () => {
           const rStyle = getRoleStyle(roleName);
           const initials = user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2);
 
+          // An Admin's own account can only be edited/removed by that Admin —
+          // never by another member, even one with user-management access.
+          const isTargetAdmin = roleName === 'Admin';
+          const isSelf = !!currentUser && (currentUser._id === user._id || (currentUser as any).id === user._id);
+          const canManageThisUser = !isTargetAdmin || isSelf;
+
           return (
             <GlassCard key={user._id || `user-${idx}`} className="p-4 border-gray-200 transition-all flex items-center justify-between" gradient>
               <div className="flex items-center space-x-4 flex-1 min-w-0 pr-2">
@@ -238,20 +246,22 @@ export const UserList = () => {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2 shrink-0">
-                <button
-                  onClick={() => openEdit(user)}
-                  className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-colors"
-                >
-                  <Pencil className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => openDelete(user)}
-                  className="w-9 h-9 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-100 hover:border-red-200 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
+              {canManageThisUser && (
+                <div className="flex items-center space-x-2 shrink-0">
+                  <button
+                    onClick={() => openEdit(user)}
+                    className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-colors"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => openDelete(user)}
+                    className="w-9 h-9 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-100 hover:border-red-200 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </GlassCard>
           );
         })}
