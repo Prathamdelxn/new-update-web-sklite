@@ -37,6 +37,7 @@ const CATEGORIES = (projectId: string) => [
       { label: 'DPR Log', href: `/interior-new/projects/${projectId}/dpr` },
       { label: 'Weekly Reports', href: `/interior-new/projects/${projectId}/weekly-reports` },
       { label: 'MOM', href: `/interior-new/projects/${projectId}/mom` },
+      { label: 'Timeline (Gantt)', href: `/interior-new/projects/${projectId}/timeline` },
     ],
   },
   {
