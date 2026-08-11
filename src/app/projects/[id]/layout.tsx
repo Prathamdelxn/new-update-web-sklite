@@ -120,7 +120,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
           {project.name}
         </h1>
         <span className={cn(
-          'shrink-0 px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase tracking-widest border',
+          'hidden sm:inline-block shrink-0 px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase tracking-widest border',
           statusBadgeColor[project.status] || 'bg-blue-50/80 text-blue-700 border-blue-200/60'
         )}>
           {project.status}
@@ -135,7 +135,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
         <button
           onClick={() => setIsEditModalOpen(true)}
           title="Edit project"
-          className="shrink-0 p-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-500 hover:text-slate-900 hover:bg-slate-100 hover:border-slate-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] active:scale-95 transition-all duration-200 cursor-pointer"
+          className="hidden sm:inline-flex shrink-0 p-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-500 hover:text-slate-900 hover:bg-slate-100 hover:border-slate-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] active:scale-95 transition-all duration-200 cursor-pointer"
         >
           <Pencil className="w-4 h-4" />
         </button>

@@ -25,6 +25,8 @@ import {
   AlertTriangle,
   X,
   Loader2,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { Button, Input, Card, CardContent } from '@/components/interior/ui';
 import { cn } from '@/lib/utils';
@@ -60,8 +62,17 @@ export default function InteriorNewProjectsView() {
   const [search, setSearch] = useState('');
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [projectToDelete, setProjectToDelete] = useState<any>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [formData, setFormData] = useState(emptyFormData);
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setEditingProjectId(null);
+    setFormData(emptyFormData);
+  };
 
   const loadProjects = useCallback(async () => {
     try {
@@ -84,6 +95,44 @@ export default function InteriorNewProjectsView() {
     ]).finally(() => setLoading(false));
   }, [loadProjects]);
 
+  const handleEditProject = (project: any) => {
+    setEditingProjectId(project.id || project._id);
+    setFormData({
+      name: project.name || '',
+      client: project.client || '',
+      type: project.type || 'Commercial Office',
+      startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
+      endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : '',
+      budgetAmount: project.budget?.amount?.toString() || '',
+      city: project.location?.city || '',
+      address: project.location?.address || '',
+      description: project.description || '',
+      templateId: project.templateId || '',
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDeleteProject = (project: any) => {
+    setProjectToDelete(project);
+  };
+
+  const confirmDelete = async () => {
+    if (!projectToDelete) return;
+    try {
+      setDeleteLoading(true);
+      const id = projectToDelete.id || projectToDelete._id;
+      await interiorApiClient.delete(`/projects/${id}`);
+      toast.success('Project deleted successfully');
+      setProjectToDelete(null);
+      await loadProjects();
+    } catch (err) {
+      console.error('Failed to delete project', err);
+      toast.error('Failed to delete project');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -100,14 +149,18 @@ export default function InteriorNewProjectsView() {
         templateId: formData.templateId || undefined,
       };
 
-      await interiorApiClient.post('/projects', payload);
-      toast.success('Project created successfully!');
-      setIsDialogOpen(false);
-      setFormData(emptyFormData);
+      if (editingProjectId) {
+        await interiorApiClient.put(`/projects/${editingProjectId}`, payload);
+        toast.success('Project updated successfully!');
+      } else {
+        await interiorApiClient.post('/projects', payload);
+        toast.success('Project created successfully!');
+      }
+      handleCloseDialog();
       await loadProjects();
     } catch (err) {
-      console.error('Failed to create project', err);
-      toast.error('Failed to create project');
+      console.error('Failed to save project', err);
+      toast.error('Failed to save project');
     } finally {
       setCreateLoading(false);
     }
@@ -186,7 +239,7 @@ export default function InteriorNewProjectsView() {
         <div className="flex flex-col items-center justify-center p-12 border border-dashed border-[hsl(var(--border))] rounded-2xl bg-[hsl(var(--card))] max-w-xl mx-auto mt-6 text-center space-y-4">
           <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">No Projects Found</h3>
           <p className="text-sm text-[hsl(var(--muted-foreground))]">Create your first fit-out project to get started.</p>
-          <Button onClick={() => setIsDialogOpen(true)}>
+          <Button onClick={() => { handleCloseDialog(); setIsDialogOpen(true); }}>
             <Plus className="w-4 h-4" />
             New Project
           </Button>
@@ -207,7 +260,7 @@ export default function InteriorNewProjectsView() {
                           <span className={cn('px-2 py-0.5 text-[10px] font-medium rounded-full', health.bgColor, health.textColor)}>{health.label}</span>
                         </div>
                         <h3 className="text-base font-semibold text-[hsl(var(--foreground))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">{project.name}</h3>
-                        <p className="text-sm text-[hsl(var(--muted-foreground))] mt-0.5">{project.client}</p>
+                        <p className="text-sm text-[hsl(var(--muted-foreground))] mt-0.5 truncate">{project.client}</p>
                       </div>
                       <button className="p-1 rounded-md hover:bg-[hsl(var(--muted))] transition-colors opacity-0 group-hover:opacity-100">
                         <MoreHorizontal className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
@@ -230,9 +283,9 @@ export default function InteriorNewProjectsView() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 mb-4 text-xs text-[hsl(var(--muted-foreground))]">
-                      <span className="flex items-center gap-1.5">
-                        <MapPin className="w-3 h-3" />
-                        {project.location?.city || project.location?.address || 'Unknown Location'}
+                      <span className="flex items-center gap-1.5 min-w-0">
+                        <MapPin className="w-3 h-3 shrink-0" />
+                        <span className="truncate">{project.location?.city || project.location?.address || 'Unknown Location'}</span>
                       </span>
                       <span className="flex items-center gap-1.5">
                         <Calendar className="w-3 h-3" />
@@ -256,7 +309,15 @@ export default function InteriorNewProjectsView() {
                           <span className="text-[hsl(var(--muted-foreground))]">{project.openRFIs || 0} RFIs</span>
                         </span>
                       </div>
-                      <ArrowUpRight className="w-4 h-4 text-[hsl(var(--muted-foreground))] opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button className="p-1.5 rounded-md hover:bg-blue-50 text-[hsl(var(--muted-foreground))] hover:text-blue-600 transition-colors" onClick={(e) => { e.stopPropagation(); handleEditProject(project); }}>
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button className="p-1.5 rounded-md hover:bg-red-50 text-[hsl(var(--muted-foreground))] hover:text-red-600 transition-colors" onClick={(e) => { e.stopPropagation(); handleDeleteProject(project); }}>
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                        <ArrowUpRight className="w-4 h-4 ml-1 text-[hsl(var(--muted-foreground))]" />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -311,9 +372,14 @@ export default function InteriorNewProjectsView() {
                         </div>
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <button className="p-1 rounded-md hover:bg-[hsl(var(--muted))]">
-                          <MoreHorizontal className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                        </button>
+                        <div className="flex justify-end gap-1">
+                          <button className="p-1.5 rounded-md hover:bg-blue-50 text-[hsl(var(--muted-foreground))] hover:text-blue-600 transition-colors" onClick={(e) => { e.stopPropagation(); handleEditProject(project); }}>
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button className="p-1.5 rounded-md hover:bg-red-50 text-[hsl(var(--muted-foreground))] hover:text-red-600 transition-colors" onClick={(e) => { e.stopPropagation(); handleDeleteProject(project); }}>
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -350,10 +416,10 @@ export default function InteriorNewProjectsView() {
             >
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <div>
-                  <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">Create New Project</h3>
-                  <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">Define your project parameters</p>
+                  <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">{editingProjectId ? 'Edit Project' : 'Create New Project'}</h3>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{editingProjectId ? 'Update project details' : 'Define your project parameters'}</p>
                 </div>
-                <button onClick={() => setIsDialogOpen(false)} className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] transition-all">
+                <button onClick={handleCloseDialog} className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] transition-all">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -363,11 +429,11 @@ export default function InteriorNewProjectsView() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5 col-span-2">
                       <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Project Name</label>
-                      <Input required placeholder="e.g. DLF Cyber Park Tower C" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                      <Input required maxLength={50} placeholder="e.g. DLF Cyber Park Tower C" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Client Name</label>
-                      <Input required placeholder="e.g. DLF Limited" value={formData.client} onChange={(e) => setFormData({ ...formData, client: e.target.value })} />
+                      <Input required maxLength={50} placeholder="e.g. DLF Limited" value={formData.client} onChange={(e) => setFormData({ ...formData, client: e.target.value })} />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Project Type</label>
@@ -418,19 +484,20 @@ export default function InteriorNewProjectsView() {
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-[hsl(var(--foreground))]">City</label>
-                      <Input placeholder="e.g. Gurugram" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} />
+                      <Input maxLength={50} placeholder="e.g. Gurugram" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Site Address</label>
-                    <Input placeholder="e.g. Phase 3, Sector 24" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
+                    <Input maxLength={100} placeholder="e.g. Phase 3, Sector 24" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Project Description</label>
                     <textarea
                       rows={3}
+                      maxLength={500}
                       className="w-full px-3 py-2 text-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                       placeholder="Specify fit-out details..."
                       value={formData.description}
@@ -440,15 +507,47 @@ export default function InteriorNewProjectsView() {
                 </div>
 
                 <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
-                  <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)}>
+                  <Button variant="outline" type="button" onClick={handleCloseDialog}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={createLoading}>
                     {createLoading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    Create Project
+                    {editingProjectId ? 'Save Changes' : 'Create Project'}
                   </Button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {projectToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-md overflow-hidden border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] shadow-2xl"
+            >
+              <div className="p-5">
+                <div className="flex items-center gap-3 text-red-500 mb-2">
+                  <AlertTriangle className="w-6 h-6" />
+                  <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">Delete Project</h3>
+                </div>
+                <p className="text-sm text-[hsl(var(--muted-foreground))] mt-2">
+                  Are you sure you want to delete <span className="font-semibold text-[hsl(var(--foreground))]">{projectToDelete.name}</span>? This action cannot be undone.
+                </p>
+              </div>
+              <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
+                <Button variant="outline" onClick={() => setProjectToDelete(null)} disabled={deleteLoading}>
+                  Cancel
+                </Button>
+                <Button onClick={confirmDelete} disabled={deleteLoading} className="bg-red-500 hover:bg-red-600 text-white border-transparent">
+                  {deleteLoading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                  Delete Project
+                </Button>
+              </div>
             </motion.div>
           </div>
         )}

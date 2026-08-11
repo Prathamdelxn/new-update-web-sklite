@@ -127,6 +127,7 @@ export const Topnav: React.FC<TopnavProps> = ({ onMenuClick, isSidebarCollapsed,
   const showSearch = !pathname.startsWith('/projects');
 
   const isProjectsListPage = pathname === '/projects';
+  const isProjectDetailPage = pathname.startsWith('/projects/') && pathname !== '/projects';
 
   return (
     <header className={cn(
@@ -140,13 +141,15 @@ export const Topnav: React.FC<TopnavProps> = ({ onMenuClick, isSidebarCollapsed,
     )}>
       <div className="h-full px-4 lg:px-8 flex items-center justify-between">
         <div className="flex items-center space-x-4 flex-1 min-w-0">
-          <button
-            onClick={onMenuClick}
-            className="lg:hidden p-2 text-slate-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors shrink-0"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
- 
+          {!isProjectDetailPage && (
+            <button
+              onClick={onMenuClick}
+              className="lg:hidden p-2 text-slate-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors shrink-0"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+          )}
+
           {headerContent ? (
             <div className="flex-1 min-w-0">
               {headerContent}
@@ -157,8 +160,10 @@ export const Topnav: React.FC<TopnavProps> = ({ onMenuClick, isSidebarCollapsed,
         </div>
  
         <div className="flex items-center space-x-2 md:space-x-3">
-          <NotificationCenter />
- 
+          <div className="hidden sm:block">
+            <NotificationCenter />
+          </div>
+
           <div className="h-8 w-px bg-gray-200 mx-1 hidden sm:block"></div>
  
           <div className="relative" ref={menuRef}>

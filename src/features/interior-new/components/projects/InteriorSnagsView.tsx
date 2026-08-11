@@ -4,11 +4,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bug, Plus, X, Loader2, Calendar, MapPin } from 'lucide-react';
+import { Bug, Plus, X, Loader2, Calendar, MapPin, Edit2, Trash2, Image as ImageIcon } from 'lucide-react';
 import { Button, Input, Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { cn } from '@/lib/utils';
+import { uploadToCloudinary } from '@/lib/upload';
 
 interface InteriorSnagsViewProps {
   projectId: string;
@@ -16,6 +18,7 @@ interface InteriorSnagsViewProps {
 
 export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps) {
   const toast = useToast();
+  const { confirm } = useConfirm();
   const [snags, setSnags] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,6 +28,10 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
   const [location, setLocation] = useState('');
   const [priority, setPriority] = useState('medium');
   const [dueDate, setDueDate] = useState('');
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [editingSnagId, setEditingSnagId] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
 
   const fetchSnags = async () => {
     try {
@@ -46,7 +53,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
-  const handleCreateSnag = async (e: React.FormEvent) => {
+  const handleCreateOrUpdateSnag = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!description || !location) {
       toast.error('Please fill in description and location');
@@ -55,28 +62,95 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
 
     try {
       setSubmitting(true);
-      const payload = {
+      const payload: any = {
         description,
         location,
         priority,
+        photos,
         dueDate: dueDate ? new Date(dueDate) : undefined,
       };
 
-      const res = await interiorProjectService.createSnag(projectId, payload);
+      let res;
+      if (editingSnagId) {
+        payload.snagId = editingSnagId;
+        res = await interiorProjectService.updateSnag(projectId, payload);
+      } else {
+        res = await interiorProjectService.createSnag(projectId, payload);
+      }
+      
       if (res?.success) {
-        toast.success('Snag logged successfully!');
-        setIsModalOpen(false);
-        setDescription('');
-        setLocation('');
-        setPriority('medium');
-        setDueDate('');
+        toast.success(`Snag ${editingSnagId ? 'updated' : 'logged'} successfully!`);
+        closeModal();
         fetchSnags();
       }
     } catch (err) {
       console.error('Snag submit fail', err);
-      toast.error('Failed to log snag');
+      toast.error(`Failed to ${editingSnagId ? 'update' : 'log'} snag`);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const openEditModal = (snag: any) => {
+    setEditingSnagId(snag._id);
+    setDescription(snag.description || '');
+    setLocation(snag.location || '');
+    setPriority(snag.priority || 'medium');
+    setDueDate(snag.dueDate ? new Date(snag.dueDate).toISOString().split('T')[0] : '');
+    setPhotos(snag.photos || []);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingSnagId(null);
+    setDescription('');
+    setLocation('');
+    setPriority('medium');
+    setDueDate('');
+    setPhotos([]);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploadingImage(true);
+      toast.info('Uploading image...');
+      const url = await uploadToCloudinary(file);
+      setPhotos((prev) => [...prev, url]);
+      toast.success('Image uploaded successfully');
+    } catch (error) {
+      console.error('Failed to upload image', error);
+      toast.error('Failed to upload image');
+    } finally {
+      setIsUploadingImage(false);
+      // Reset input
+      e.target.value = '';
+    }
+  };
+
+  const handleDeleteSnag = async (snagId: string) => {
+    const isConfirmed = await confirm({
+      title: 'Delete Snag',
+      message: 'Are you sure you want to delete this snag? This action cannot be undone.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger',
+    });
+    
+    if (!isConfirmed) return;
+    
+    try {
+      const res = await interiorProjectService.deleteSnag(projectId, snagId);
+      if (res?.success) {
+        toast.success('Snag deleted successfully');
+        fetchSnags();
+      }
+    } catch (err) {
+      console.error('Failed to delete snag', err);
+      toast.error('Failed to delete snag');
     }
   };
 
@@ -148,30 +222,52 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {snags.map((snag) => (
             <Card key={snag._id} className="hover:shadow-md hover:border-[hsl(var(--primary)/0.3)] transition-all">
-              <CardContent className="p-5 space-y-3.5">
-                <div className="flex items-center justify-between flex-wrap gap-2 text-xs">
-                  <div className="flex items-center gap-1 text-[hsl(var(--muted-foreground))]">
-                    <MapPin className="w-3.5 h-3.5 text-blue-500" /> {snag.location}
+              <CardContent className="p-5 space-y-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1.5">
+                    <h3 className="text-base font-bold text-[hsl(var(--foreground))] leading-tight">
+                      {snag.description}
+                    </h3>
+                    <div className="flex items-center flex-wrap gap-2 text-xs">
+                      <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase border tracking-wider', getPriorityBadge(snag.priority))}>
+                        {snag.priority}
+                      </span>
+                      <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase border tracking-wider', getStatusBadge(snag.status))}>
+                        {snag.status}
+                      </span>
+                      <span className="flex items-center gap-1 text-[hsl(var(--muted-foreground))] ml-1 font-medium">
+                        <MapPin className="w-3 h-3 text-blue-500" /> {snag.location}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase border', getPriorityBadge(snag.priority))}>
-                      {snag.priority}
-                    </span>
-                    <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase border', getStatusBadge(snag.status))}>
-                      {snag.status}
-                    </span>
+                  
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button onClick={() => openEditModal(snag)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => handleDeleteSnag(snag._id)} className="p-1.5 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-md text-slate-400 transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
 
-                <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">{snag.description}</h3>
+                {snag.photos && snag.photos.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {snag.photos.map((photo: string, index: number) => (
+                      <div key={index} className="relative w-14 h-14 rounded-lg overflow-hidden border border-[hsl(var(--border))] group cursor-pointer shadow-sm" onClick={() => setViewingImage(photo)}>
+                        <img src={photo} alt={`Snag photo ${index + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-                <div className="flex items-center justify-between text-[10px] text-[hsl(var(--muted-foreground))] border-t border-[hsl(var(--border))] pt-3 mt-1.5">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                <div className="flex items-center justify-between text-[11px] text-[hsl(var(--muted-foreground))] border-t border-[hsl(var(--border))] pt-4">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
                     Due: {snag.dueDate ? new Date(snag.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
                   </span>
 
-                  <Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={() => handleToggleStatus(snag._id, snag.status)}>
+                  <Button variant="outline" size="sm" className="h-8 text-[11px] font-semibold px-3" onClick={() => handleToggleStatus(snag._id, snag.status)}>
                     {snag.status === 'open' || snag.status === 'assigned' || snag.status === 'in_progress'
                       ? 'Mark Resolved'
                       : snag.status === 'resolved'
@@ -197,14 +293,14 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
                   <Bug className="w-4 h-4 text-[hsl(var(--primary))]" />
-                  Log Punch List Snag
+                  {editingSnagId ? 'Edit Punch List Snag' : 'Log Punch List Snag'}
                 </h3>
-                <button onClick={() => setIsModalOpen(false)} className="p-1 rounded hover:bg-[hsl(var(--muted))]">
+                <button type="button" onClick={closeModal} className="p-1 rounded hover:bg-[hsl(var(--muted))]">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleCreateSnag}>
+              <form onSubmit={handleCreateOrUpdateSnag}>
                 <div className="p-5 space-y-4">
                   <div className="space-y-1">
                     <label className="text-xs font-semibold">Defect Description</label>
@@ -233,18 +329,82 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                       <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
                     </div>
                   </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold">Attachments (Images)</label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {photos.map((photo, i) => (
+                        <div key={i} className="relative w-16 h-16 rounded border overflow-hidden cursor-pointer group" onClick={() => setViewingImage(photo)}>
+                          <img src={photo} alt="Snag" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPhotos((prev) => prev.filter((_, index) => index !== i));
+                            }}
+                            className="absolute top-1 right-1 p-0.5 bg-black/50 text-white rounded-full hover:bg-red-500 transition-colors z-10"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                      <div className="relative w-16 h-16 rounded border border-dashed border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.5)] transition-colors flex items-center justify-center">
+                        {isUploadingImage ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-[hsl(var(--muted-foreground))]" />
+                        ) : (
+                          <>
+                            <ImageIcon className="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleImageUpload}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              disabled={isUploadingImage}
+                            />
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
-                  <Button variant="outline" type="button" onClick={() => setIsModalOpen(false)}>
+                  <Button variant="outline" type="button" onClick={closeModal}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={submitting}>
                     {submitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    Log Snag
+                    {editingSnagId ? 'Save Changes' : 'Log Snag'}
                   </Button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {viewingImage && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm" onClick={() => setViewingImage(null)}>
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative max-w-5xl max-h-[85vh] flex flex-col overflow-hidden border border-[hsl(var(--border))] rounded-xl shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="absolute top-2 right-2 z-10 flex gap-2">
+                <Button size="sm" variant="outline" className="h-8 shadow-md" onClick={() => window.open(viewingImage, '_blank')}>
+                  Open in New Tab
+                </Button>
+                <button
+                  onClick={() => setViewingImage(null)}
+                  className="p-1.5 bg-black/50 text-white rounded-md hover:bg-red-500 transition-colors shadow-md"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <img src={viewingImage} alt="Snag Attachment" className="max-w-full max-h-[85vh] object-contain bg-black/40" />
             </motion.div>
           </div>
         )}

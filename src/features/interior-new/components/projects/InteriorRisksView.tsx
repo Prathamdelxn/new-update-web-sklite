@@ -4,10 +4,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Plus, X, Loader2, Grid } from 'lucide-react';
+import { AlertTriangle, Plus, X, Loader2, Grid, Edit, Trash2 } from 'lucide-react';
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { cn } from '@/lib/utils';
 
 interface InteriorRisksViewProps {
@@ -16,10 +17,12 @@ interface InteriorRisksViewProps {
 
 export default function InteriorRisksView({ projectId }: InteriorRisksViewProps) {
   const toast = useToast();
+  const { confirm } = useConfirm();
   const [risks, setRisks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [editRiskId, setEditRiskId] = useState<string | null>(null);
 
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('site_execution');
@@ -47,7 +50,7 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
-  const handleCreateRisk = async (e: React.FormEvent) => {
+  const handleSubmitRisk = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!description || !probability || !impact) {
       toast.error('Please fill in description, probability, and impact');
@@ -57,6 +60,7 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
     try {
       setSubmitting(true);
       const payload = {
+        riskId: editRiskId || undefined,
         description,
         category,
         probability,
@@ -64,23 +68,73 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
         mitigationPlan,
       };
 
-      const res = await interiorProjectService.createRisk(projectId, payload);
+      let res;
+      if (editRiskId) {
+        res = await interiorProjectService.updateRisk(projectId, payload);
+      } else {
+        res = await interiorProjectService.createRisk(projectId, payload);
+      }
+
       if (res?.success) {
-        toast.success('Risk logged successfully!');
-        setIsModalOpen(false);
-        setDescription('');
-        setCategory('site_execution');
-        setProbability('medium');
-        setImpact('medium');
-        setMitigationPlan('');
+        toast.success(editRiskId ? 'Risk updated successfully!' : 'Risk logged successfully!');
+        closeModal();
         fetchRisks();
       }
     } catch (err) {
       console.error('Risk submit fail', err);
-      toast.error('Failed to log risk');
+      toast.error(editRiskId ? 'Failed to update risk' : 'Failed to log risk');
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleDeleteRisk = async (riskId: string) => {
+    const ok = await confirm({
+      title: 'Delete Risk',
+      message: 'Are you sure you want to delete this risk? This action cannot be undone.',
+      confirmText: 'Delete',
+      type: 'danger',
+    });
+    if (!ok) return;
+
+    try {
+      setLoading(true);
+      const res = await interiorProjectService.deleteRisk(projectId, riskId);
+      if (res?.success) {
+        toast.success('Risk deleted successfully!');
+        fetchRisks();
+      }
+    } catch (err) {
+      console.error('Delete risk fail', err);
+      toast.error('Failed to delete risk');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openNewModal = () => {
+    setEditRiskId(null);
+    setDescription('');
+    setCategory('site_execution');
+    setProbability('medium');
+    setImpact('medium');
+    setMitigationPlan('');
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (risk: any) => {
+    setEditRiskId(risk._id);
+    setDescription(risk.description || '');
+    setCategory(risk.category || 'site_execution');
+    setProbability(risk.probability || 'medium');
+    setImpact(risk.impact || 'medium');
+    setMitigationPlan(risk.mitigationPlan || '');
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditRiskId(null);
   };
 
   const getScoreColor = (score: number) => {
@@ -102,7 +156,7 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
             Log execution, procurement, design, and vendor threats with probability-impact heatmap mitigation plans.
           </p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>
+        <Button onClick={openNewModal}>
           <Plus className="w-4 h-4 mr-2" />
           Log Risk
         </Button>
@@ -162,6 +216,22 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
                     <span className={cn('px-2.5 py-0.5 rounded-full text-[10px] font-bold border uppercase', getScoreColor(risk.score))}>
                       Severity Score: {risk.score} ({risk.probability} × {risk.impact})
                     </span>
+                    <div className="flex items-center gap-2 ml-auto">
+                      <button
+                        onClick={() => openEditModal(risk)}
+                        className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-blue-500 hover:bg-blue-50 rounded transition-colors"
+                        title="Edit Risk"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteRisk(risk._id)}
+                        className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                        title="Delete Risk"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                   <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">{risk.description}</h3>
                   {risk.mitigationPlan && (
@@ -189,14 +259,14 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-[hsl(var(--primary))]" />
-                  Log Project Risk
+                  {editRiskId ? 'Edit Project Risk' : 'Log Project Risk'}
                 </h3>
-                <button onClick={() => setIsModalOpen(false)} className="p-1 rounded hover:bg-[hsl(var(--muted))]">
+                <button onClick={closeModal} className="p-1 rounded hover:bg-[hsl(var(--muted))]">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleCreateRisk}>
+              <form onSubmit={handleSubmitRisk}>
                 <div className="p-5 space-y-4">
                   <div className="space-y-1">
                     <label className="text-xs font-semibold">Risk Description</label>
@@ -255,12 +325,12 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
                 </div>
 
                 <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
-                  <Button variant="outline" type="button" onClick={() => setIsModalOpen(false)}>
+                  <Button variant="outline" type="button" onClick={closeModal}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={submitting}>
                     {submitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    Log Risk
+                    {editRiskId ? 'Update Risk' : 'Log Risk'}
                   </Button>
                 </div>
               </form>

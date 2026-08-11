@@ -5,6 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Upper bound for quantity/cost/amount number inputs across the app.
+// Comfortably covers any real project's scale while blocking values large
+// enough to break number formatting and layout (e.g. 1e21+).
+export const MAX_INPUT_VALUE = 999_999_999_999;
+
 export function formatCompact(num: number): string {
   if (num == null || isNaN(num)) return '0';
   return Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short' }).format(num);

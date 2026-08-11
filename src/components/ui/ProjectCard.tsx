@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/providers/AuthContext';
 
 interface ProjectCardProps {
-  project: Project & { 
+  project: Project & {
     hasPendingPlans?: boolean;
     siteLocation?: {
       address?: string;
@@ -29,18 +29,18 @@ interface ProjectCardProps {
 }
 
 const statusColors: Record<string, string> = {
-  'Initialized':         'bg-blue-50 text-blue-755 border-blue-200/60',
-  'Planning':            'bg-purple-50 text-purple-755 border-purple-200/60',
-  'Site Survey':         'bg-cyan-50 text-cyan-755 border-cyan-200/60',
-  'Ongoing':             'bg-emerald-50 text-emerald-755 border-emerald-200/60',
-  'Under Snagging':      'bg-amber-50 text-amber-755 border-amber-200/60',
-  'Snagging Completed':  'bg-orange-50 text-orange-755 border-orange-200/60',
-  'Completed':           'bg-green-50 text-green-755 border-green-200/60',
-  'Pending Handover':    'bg-violet-50 text-violet-755 border-violet-200/60',
-  'Handover Rejected':   'bg-rose-50 text-rose-755 border-rose-200/60',
-  'Handover Completed':  'bg-teal-50 text-teal-755 border-teal-200/60',
-  'On Hold':             'bg-slate-100 text-slate-700 border-slate-200/60',
-  'Cancelled':           'bg-red-50 text-red-755 border-red-200/60',
+  'Initialized': 'bg-blue-50 text-blue-755 border-blue-200/60',
+  'Planning': 'bg-purple-50 text-purple-755 border-purple-200/60',
+  'Site Survey': 'bg-cyan-50 text-cyan-755 border-cyan-200/60',
+  'Ongoing': 'bg-emerald-50 text-emerald-755 border-emerald-200/60',
+  'Under Snagging': 'bg-amber-50 text-amber-755 border-amber-200/60',
+  'Snagging Completed': 'bg-orange-50 text-orange-755 border-orange-200/60',
+  'Completed': 'bg-green-50 text-green-755 border-green-200/60',
+  'Pending Handover': 'bg-violet-50 text-violet-755 border-violet-200/60',
+  'Handover Rejected': 'bg-rose-50 text-rose-755 border-rose-200/60',
+  'Handover Completed': 'bg-teal-50 text-teal-755 border-teal-200/60',
+  'On Hold': 'bg-slate-100 text-slate-700 border-slate-200/60',
+  'Cancelled': 'bg-red-50 text-red-755 border-red-200/60',
 };
 
 const STATUS_PROGRESS: Record<string, number> = {
@@ -57,8 +57,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   const { user } = useAuth();
   const isAdmin = user?.role?.name === 'admin' || (user as any)?.role === 'admin' || (user as any)?.isAdmin;
 
+  // A string `category` here is an unpopulated ref (raw ObjectId) rather than
+  // a resolved category — only a populated object has a human-readable name.
   const categoryName = typeof project.category === 'string'
-    ? project.category
+    ? ''
     : (project.category as any)?.name || '';
 
   const surveyorId = typeof project.siteSurveyor === 'object'
@@ -79,7 +81,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       className="group hover:border-blue-200 hover:shadow-md transition-all duration-300 flex flex-col h-full shadow-sm relative p-0 overflow-hidden rounded-xl bg-white border border-gray-200"
     >
       <Link href={`${basePath}/${project._id}`} className="flex flex-col flex-1 outline-none">
-        
+
         {/* ── Header ── */}
         <div className="flex items-start justify-between p-4 border-b border-slate-50/50">
           <div className="flex items-center gap-3 min-w-0">
@@ -106,26 +108,26 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         {/* ── White Body ── */}
         <div className="p-4 flex-1 flex flex-col justify-between">
           <div className="space-y-4">
-            
+
             {/* Location + Badges */}
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center gap-1 text-xs text-slate-500 truncate max-w-[50%]">
                 <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                 <span className="truncate">{project.description || 'Global Site'}</span>
               </div>
-              
+
               {(project as any).projectCode && (
                 <div className="bg-slate-100 px-1.5 py-0.5 rounded text-[9px] font-bold text-slate-500">
                   {(project as any).projectCode}
                 </div>
               )}
-              
+
               {!isAdmin && project.hasPendingPlans && (
                 <div className="bg-red-50 border border-red-100 px-1.5 py-0.5 rounded text-[9px] font-bold text-red-600">
                   ACTION REQUIRED
                 </div>
               )}
-              
+
               {(project as any).projectType === 'Interior' && (
                 <div className="bg-purple-50 border border-purple-100 px-1.5 py-0.5 rounded text-[9px] font-bold text-purple-600">
                   INTERIOR
@@ -170,7 +172,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
       {/* ── Footer Actions ── */}
       <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 bg-slate-50/30">
-        
+
         {/* Date */}
         <div className="flex items-center gap-1.5 text-blue-500">
           <Calendar className="w-3.5 h-3.5" />

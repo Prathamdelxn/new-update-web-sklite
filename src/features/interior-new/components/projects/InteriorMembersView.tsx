@@ -109,6 +109,31 @@ const PROJECT_MODULES: { module: string; label: string }[] = [
 
 const PERMISSION_ACTIONS = ['create', 'read', 'update', 'delete', 'approve', 'export', 'manage'];
 
+const DEFAULT_ROLE_PERMISSIONS: Record<string, Permission[]> = {
+  project_manager: PROJECT_MODULES.map(m => ({ module: m.module, actions: [...PERMISSION_ACTIONS] })),
+  viewer: PROJECT_MODULES.map(m => ({ module: m.module, actions: ['read'] })),
+  site_engineer: PROJECT_MODULES.map(m => ({ 
+    module: m.module, 
+    actions: ['projects', 'users', 'filemgt'].includes(m.module) ? ['read'] : ['create', 'read', 'update'] 
+  })),
+  quantity_surveyor: PROJECT_MODULES.map(m => ({ 
+    module: m.module, 
+    actions: ['boq', 'procurement', 'purchase_orders', 'payments', 'variation_orders'].includes(m.module) ? ['create', 'read', 'update', 'approve', 'export'] : ['read'] 
+  })),
+  designer: PROJECT_MODULES.map(m => ({
+    module: m.module,
+    actions: ['drawings', 'rfis', 'filemgt', 'photos', 'model'].includes(m.module) ? ['create', 'read', 'update', 'delete'] : ['read']
+  })),
+  sub_contractor: PROJECT_MODULES.map(m => ({
+    module: m.module,
+    actions: ['tasks', 'dpr', 'rfis', 'filemgt', 'photos'].includes(m.module) ? ['create', 'read', 'update'] : ['read']
+  })),
+  client_representative: PROJECT_MODULES.map(m => ({
+    module: m.module,
+    actions: ['projects', 'milestones', 'drawings', 'photos', 'snags', 'weekly_reports'].includes(m.module) ? ['read', 'approve'] : ['read']
+  }))
+};
+
 const ACTION_COLORS: Record<string, string> = {
   create: 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/30',
   read: 'bg-sky-100 text-sky-700 border-sky-300 dark:bg-sky-500/15 dark:text-sky-400 dark:border-sky-500/30',
@@ -286,9 +311,10 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
 
   const handleRoleChange = (role: string) => {
     setEditedRole(role);
-    // No role-default permission presets endpoint ported yet — keep current
-    // permission selections instead of loading server-side defaults.
-    toast.info('Role default permission presets are coming soon — adjust permissions manually below.');
+    // Automatically apply defaults when role is changed
+    const defaults = DEFAULT_ROLE_PERMISSIONS[role] || [];
+    setEditedPermissions(defaults);
+    toast.success(`Applied default permissions for ${ROLE_LABELS[role] || role}`);
   };
 
   const handleSavePermissions = async () => {
@@ -313,7 +339,9 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
   };
 
   const handleResetToDefaults = () => {
-    toast.info('Coming soon');
+    const defaults = DEFAULT_ROLE_PERMISSIONS[editedRole] || [];
+    setEditedPermissions(defaults);
+    toast.success(`Reset to ${ROLE_LABELS[editedRole] || editedRole} defaults`);
   };
 
   const filteredMembers = members.filter(
@@ -343,7 +371,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
           </button>
           <button
             onClick={() => setIsInviteModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))/0.9] rounded-xl transition-all shadow-sm active:scale-95"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[hsl(var(--primary))] rounded-xl transition-all shadow-sm active:scale-95"
           >
             <Plus className="w-4 h-4" />
             Create Member

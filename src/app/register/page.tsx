@@ -133,7 +133,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen xl:h-screen xl:overflow-hidden bg-[#E6F0FF] flex items-center justify-center px-6 py-6 xl:py-0">
       <div className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-6 xl:gap-8 xl:grid-cols-[1.2fr_1fr]">
-        <aside className="relative overflow-hidden rounded-3xl bg-[#0E3B7B] p-6 xl:p-8 text-white shadow-xl flex flex-col justify-between">
+        <aside className="order-2 xl:order-1 relative overflow-hidden rounded-3xl bg-[#0E3B7B] p-6 xl:p-8 text-white shadow-xl flex flex-col justify-between">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.18),_transparent_35%)]" />
           <div className="relative z-10 flex h-full flex-col justify-between space-y-6">
             <div>
@@ -152,7 +152,7 @@ export default function RegisterPage() {
           </div>
         </aside>
 
-        <section className="self-center rounded-3xl border border-slate-200/80 bg-white p-5 xl:p-6 shadow-xl shadow-slate-200/60 flex flex-col justify-between">
+        <section className="order-1 xl:order-2 self-center rounded-3xl border border-slate-200/80 bg-white p-5 xl:p-6 shadow-xl shadow-slate-200/60 flex flex-col justify-between">
           {showOtp ? <div>
             <button onClick={() => setShowOtp(false)} className="mb-4 inline-flex items-center gap-2 text-xs font-semibold text-slate-600 transition hover:text-slate-900"><ArrowLeft className="size-4" /> Back to registration</button>
             <div className="text-center"><div className="mx-auto grid size-12 place-items-center rounded-2xl bg-blue-50 text-blue-600"><KeyRound className="size-5" /></div><h2 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900">Verify your workspace</h2><p className="mx-auto mt-2 max-w-sm text-xs leading-normal text-slate-500">We sent a 6-digit code to <span className="font-semibold text-slate-900">{email}</span>. Enter it below to complete setup.</p></div>

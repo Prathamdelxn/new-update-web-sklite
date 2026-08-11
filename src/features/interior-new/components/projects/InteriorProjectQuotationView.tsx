@@ -80,10 +80,7 @@ export default function InteriorProjectQuotationView() {
         <p className="text-sm text-[hsl(var(--muted-foreground))]">
           There are no approved quotations associated with this project.
         </p>
-        <div className="mt-4 p-4 bg-red-50 text-red-800 text-xs text-left w-full overflow-auto rounded-lg font-mono">
-          <strong>Debug Info:</strong>
-          <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
-        </div>
+       
       </div>
     );
   }

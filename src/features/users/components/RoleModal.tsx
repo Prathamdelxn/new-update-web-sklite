@@ -113,10 +113,31 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
 
   const toggle = (moduleId: string, actionId: string) => {
     if (isAdmin) return;
-    setPermissions(prev => ({
-      ...prev,
-      [moduleId]: { ...prev[moduleId], [actionId]: !prev[moduleId][actionId] },
-    }));
+    setPermissions(prev => {
+      const current = prev[moduleId] || { ...DEFAULT_ACTIONS };
+      const newValue = !current[actionId];
+      const newModulePerms = { ...current, [actionId]: newValue };
+
+      // Granting any other action implicitly requires View — a role that
+      // can Create/Update/etc. but not View a module is a confusing, broken
+      // permission set. Matches the mobile Role editor's behavior.
+      if (newValue && actionId !== 'view') {
+        newModulePerms.view = true;
+      }
+
+      // Revoking View has nothing left to act on, so cascade-clear the rest
+      // of the module too.
+      if (!newValue && actionId === 'view') {
+        Object.keys(newModulePerms).forEach(key => {
+          newModulePerms[key] = false;
+        });
+      }
+
+      return {
+        ...prev,
+        [moduleId]: newModulePerms,
+      };
+    });
   };
 
   const applyPreset = (preset: 'full' | 'readonly') => {
