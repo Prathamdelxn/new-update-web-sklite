@@ -9,6 +9,9 @@
       "Bash(timeout 40 bash -c 'until curl -sf http://localhost:3001 >/dev/null; do sleep 1; done')",
       "Bash(node shot-bignum.js)",
       "Bash(taskkill //F //PID 11112)"
+    ],
+    "additionalDirectories": [
+      "C:\\2026\\sky-interior\\new-update-sk-mobile\\app\\user-management"
     ]
   }
 }

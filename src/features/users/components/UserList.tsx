@@ -214,9 +214,18 @@ export const UserList = () => {
           const rStyle = getRoleStyle(roleName);
           const initials = user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2);
 
-          // An Admin's own account can only be edited/removed by that Admin —
-          // never by another member, even one with user-management access.
-          const isTargetAdmin = roleName === 'Admin';
+          // An Admin-equivalent account can only be edited/removed by that
+          // account itself — never by another member, even one with
+          // user-management access. Checked against name, wildcard
+          // permission, and isSystemRole (not just an exact "Admin" string
+          // match) so a differently-named or custom-flagged admin role is
+          // still protected.
+          const targetRole = typeof user.role === 'object' ? user.role : null;
+          const isTargetAdmin = !!targetRole && (
+            targetRole.name?.toLowerCase() === 'admin' ||
+            targetRole.permissions?.includes('*') ||
+            targetRole.isSystemRole === true
+          );
           const isSelf = !!currentUser && (currentUser._id === user._id || (currentUser as any).id === user._id);
           const canManageThisUser = !isTargetAdmin || isSelf;
 
