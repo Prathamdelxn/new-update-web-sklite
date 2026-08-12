@@ -704,21 +704,38 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                             <tr key={idx} className="border-b">
                               <td className="p-2 text-center font-mono text-[hsl(var(--muted-foreground))]">{item.serialNumber}</td>
                               <td className="p-2">
-                                <select
-                                  className="w-full p-1.5 border rounded bg-[hsl(var(--background))] focus:outline-none"
+                                <Input
+                                  list="boq-categories"
+                                  className="h-8 py-1"
+                                  placeholder="Type or select category..."
                                   value={item.category}
                                   onChange={(e) => updateNewItemField(idx, 'category', e.target.value)}
-                                >
-                                  <option value="Flooring">Flooring</option>
-                                  <option value="Woodwork">Woodwork</option>
-                                  <option value="False Ceiling">False Ceiling</option>
-                                  <option value="Painting">Painting</option>
-                                  <option value="Electrical">Electrical</option>
-                                  <option value="Plumbing">Plumbing</option>
-                                  <option value="HVAC">HVAC</option>
-                                  <option value="Masonry">Masonry</option>
-                                  <option value="Other">Other</option>
-                                </select>
+                                />
+                                <datalist id="boq-categories">
+                                  {/* WBS & Default Categories */}
+                                  <option value="Flooring" />
+                                  <option value="Woodwork" />
+                                  <option value="False Ceiling" />
+                                  <option value="Painting" />
+                                  <option value="Electrical Works" />
+                                  <option value="Plumbing" />
+                                  <option value="HVAC" />
+                                  <option value="Masonry" />
+                                  <option value="Design & Planning" />
+                                  <option value="Architectural Design" />
+                                  <option value="Space Planning" />
+                                  <option value="3D Visualization" />
+                                  <option value="Material Selection" />
+                                  <option value="Civil Works" />
+                                  <option value="Demolition" />
+                                  <option value="Waterproofing" />
+                                  <option value="Carpentry" />
+                                  <option value="Kitchen" />
+                                  <option value="Wardrobe" />
+                                  <option value="TV Unit" />
+                                  <option value="Handover" />
+                                  <option value="Other" />
+                                </datalist>
                               </td>
                               <td className="p-2">
                                 <Input required placeholder="Item / material specifications" value={item.itemName} onChange={(e) => updateNewItemField(idx, 'itemName', e.target.value)} className="h-8 py-1" />
