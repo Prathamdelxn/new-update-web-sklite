@@ -13,6 +13,7 @@ import { PackageCheck, CheckCircle, Loader2, FileText, Plus, X, FileDown, Trash2
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { cn } from '@/lib/utils';
 
 interface InteriorHandoverViewProps {
@@ -21,6 +22,7 @@ interface InteriorHandoverViewProps {
 
 export default function InteriorHandoverView({ projectId }: InteriorHandoverViewProps) {
   const toast = useToast();
+  const { confirm } = useConfirm();
 
   const [handover, setHandover] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -42,16 +44,16 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
     setSelectedFile(null);
   };
 
-  const fetchHandover = async () => {
+  const fetchHandover = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const res = await interiorProjectService.getHandover(projectId);
       if (res.success && res.data) setHandover(res.data);
     } catch (err) {
       console.error('Failed to load handover', err);
-      toast.error('Failed to fetch Handover status');
+      if (showLoading) toast.error('Failed to fetch Handover status');
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -97,7 +99,7 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
       if (res.success) {
         toast.success('Handover checklist updated successfully!');
         setIsEditingChecklist(false);
-        fetchHandover();
+        fetchHandover(false);
       }
     } catch (err) {
       console.error('Failed to save checklist', err);
@@ -108,19 +110,30 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
   };
 
   const handleToggleCheckitem = async (task: string, currentStatus: string) => {
+    const nextStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+    const prevHandover = { ...handover };
+    
+    // Optimistic update for instant UI reaction
+    setHandover((prev: any) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        checklist: prev.checklist.map((c: any) =>
+          c.task === task ? { ...c, status: nextStatus, completedAt: nextStatus === 'completed' ? new Date().toISOString() : null } : c
+        )
+      };
+    });
+
     try {
-      setUpdating(true);
-      const nextStatus = currentStatus === 'completed' ? 'pending' : 'completed';
       const res = await interiorProjectService.updateHandover(projectId, { taskName: task, status: nextStatus });
-      if (res.success) {
-        toast.success('Checklist task updated!');
-        fetchHandover();
+      if (!res.success) {
+        setHandover(prevHandover); // Revert on failure
+        toast.error('Failed to update checklist status');
       }
     } catch (err) {
       console.error('Checkitem update failed', err);
+      setHandover(prevHandover); // Revert on failure
       toast.error('Failed to update checklist status');
-    } finally {
-      setUpdating(false);
     }
   };
 
@@ -160,13 +173,34 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
       if (res.success) {
         toast.success('Closeout document registered successfully!');
         closeModal();
-        fetchHandover();
+        fetchHandover(false);
       }
     } catch (err: any) {
       console.error('Document upload failed', err);
       toast.error(err.response?.data?.error || err.message || 'Failed to register document');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleDeleteDocument = async (docId: string) => {
+    const ok = await confirm({
+      title: 'Delete Document',
+      message: 'Are you sure you want to delete this closeout document?',
+      confirmText: 'Delete',
+      type: 'danger',
+    });
+    if (!ok) return;
+
+    try {
+      const res = await interiorProjectService.updateHandover(projectId, { deleteDocumentId: docId });
+      if (res.success) {
+        toast.success('Document deleted successfully');
+        fetchHandover(false);
+      }
+    } catch (err) {
+      console.error('Failed to delete document', err);
+      toast.error('Failed to delete document');
     }
   };
 
@@ -195,22 +229,36 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="flex flex-col justify-center items-center p-6 text-center">
-          <div className="relative w-36 h-36 flex items-center justify-center">
-            <div className="absolute inset-0 rounded-full border-8 border-[hsl(var(--muted))]" />
-            <div
-              className="absolute inset-0 rounded-full border-8 border-[hsl(var(--primary))]"
-              style={{
-                transform: `rotate(${((handover?.completionPercentage || 0) / 100) * 360}deg)`,
-                clipPath: 'polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%)',
-              }}
-            />
-            <div className="absolute inset-2 bg-[hsl(var(--card))] rounded-full flex flex-col items-center justify-center">
-              <span className="text-3xl font-extrabold tracking-tight text-[hsl(var(--foreground))]">
-                {handover?.completionPercentage || 0}%
-              </span>
-              <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wider mt-0.5">Handover Ready</span>
-            </div>
-          </div>
+          {(() => {
+            const checklist = handover?.checklist || [];
+            const completed = checklist.filter((t: any) => t.status === 'completed').length;
+            const percentage = checklist.length > 0 ? Math.round((completed / checklist.length) * 100) : 0;
+            const circumference = 2 * Math.PI * 60;
+            const strokeDashoffset = circumference - (percentage / 100) * circumference;
+            return (
+              <div className="relative w-36 h-36 flex items-center justify-center">
+                <svg className="w-full h-full transform -rotate-90">
+                  <circle cx="72" cy="72" r="60" stroke="hsl(var(--muted))" strokeWidth="12" fill="transparent" />
+                  <circle 
+                    cx="72" cy="72" r="60" 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth="12" 
+                    fill="transparent" 
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                    className="transition-all duration-1000 ease-out"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-3xl font-extrabold tracking-tight text-[hsl(var(--foreground))]">
+                    {percentage}%
+                  </span>
+                  <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wider mt-0.5">Handover Ready</span>
+                </div>
+              </div>
+            );
+          })()}
         </Card>
 
         <Card className="md:col-span-2">
@@ -343,9 +391,14 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
                       <p className="text-[10px] text-[hsl(var(--muted-foreground))] uppercase font-bold tracking-wider">{doc.type}</p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => window.open(doc.url, '_blank')}>
-                    <FileDown className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => window.open(doc.url, '_blank')}>
+                      <FileDown className="w-4 h-4" />
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-rose-500 hover:bg-rose-50 hover:text-rose-600 border-rose-100" onClick={() => handleDeleteDocument(doc._id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

@@ -156,155 +156,129 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
         <Card className="flex-1 flex flex-col overflow-hidden border border-[hsl(var(--border))] rounded-xl shadow-sm bg-[hsl(var(--card))] isolate">
           
           {/* Main vertical scroll container */}
-          <div className="flex-1 overflow-auto flex scrollbar-thin relative bg-[hsl(var(--background))]">
-            
-            {/* Left Panel: Data Table (Sticky horizontally) */}
-            <div className="w-[400px] shrink-0 border-r border-[hsl(var(--border))] bg-[hsl(var(--card))] sticky left-0 z-20 flex flex-col shadow-[2px_0_10px_rgba(0,0,0,0.05)]">
-              {/* Header (Sticky vertically) */}
-              <div className="h-[57px] min-h-[57px] max-h-[57px] shrink-0 box-border border-b border-[hsl(var(--border))] flex items-center bg-[hsl(var(--muted)/0.9)] backdrop-blur sticky top-0 z-30 px-4 text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                <div className="flex-1">Milestone / Task Name</div>
-                <div className="w-[70px] text-center">Start</div>
-                <div className="w-[70px] text-center">End</div>
-              </div>
-
-              {/* Rows */}
-              <div className="flex flex-col relative z-10">
-                {timelineData.map((m: any) => {
-                  const isExpanded = expandedMilestones.has(m._id);
-                  return (
-                    <div key={m._id} className="border-b border-[hsl(var(--border))] shrink-0">
-                      {/* Milestone Row */}
-                      <div 
-                        className="flex items-center px-4 h-[40px] min-h-[40px] max-h-[40px] shrink-0 box-border bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted)/0.5)] cursor-pointer transition-colors"
-                        onClick={() => toggleMilestone(m._id)}
-                      >
-                        <div className="flex-1 flex items-center gap-2 overflow-hidden">
-                          <button className="p-0.5 text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] rounded">
-                            {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                          </button>
-                          <Flag className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                          <span className="text-xs font-bold text-[hsl(var(--foreground))] truncate">{m.name}</span>
-                        </div>
-                        <div className="w-[140px] text-right text-[10px] text-[hsl(var(--muted-foreground))] font-semibold">
-                          {m.dueDate ? `Due: ${format(new Date(m.dueDate), 'MMM dd, yyyy')}` : ''}
-                        </div>
-                      </div>
-
-                      {/* Task Rows */}
-                      {isExpanded && m.tasks.map((t: any) => (
-                        <div key={t._id} className="flex items-center px-4 pl-10 h-[40px] min-h-[40px] max-h-[40px] shrink-0 box-border border-t border-[hsl(var(--border))/0.5] hover:bg-[hsl(var(--muted)/0.3)] transition-colors">
-                          <div className="flex-1 flex items-center gap-2 overflow-hidden">
-                            <AlignLeft className="w-3 h-3 text-[hsl(var(--muted-foreground))] shrink-0" />
-                            <span className="text-xs text-[hsl(var(--foreground))] truncate" title={t.name}>{t.name}</span>
-                          </div>
-                          <div className="w-[70px] text-center text-[10px] text-[hsl(var(--muted-foreground))]">
-                            {t.startDate ? format(new Date(t.startDate), 'MMM dd') : '-'}
-                          </div>
-                          <div className="w-[70px] text-center text-[10px] text-[hsl(var(--muted-foreground))]">
-                            {t.endDate ? format(new Date(t.endDate), 'MMM dd') : '-'}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Right Panel: Gantt Chart (Scrolls horizontally) */}
-            <div className="flex flex-col relative z-10" style={{ width: `${totalDays * DAY_WIDTH}px`, minWidth: `${totalDays * DAY_WIDTH}px` }}>
+          <div className="flex-1 overflow-auto relative bg-[hsl(var(--background))] scrollbar-thin">
+            <div className="min-w-max flex flex-col relative">
               
-              {/* Timeline Header (Months + Days) (Sticky vertically) */}
-              <div className="sticky top-0 z-20 bg-[hsl(var(--card))] border-b border-[hsl(var(--border))] h-[57px] min-h-[57px] max-h-[57px] shrink-0 box-border flex flex-col">
-                {/* Months Row */}
-                <div className="flex h-7 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
-                  {(() => {
-                    const months: { label: string; days: number }[] = [];
-                    let currentMonth = '';
-                    let currentCount = 0;
-                    dates.forEach(d => {
-                      const m = format(d, 'MMMM yyyy');
-                      if (m !== currentMonth) {
-                        if (currentMonth) months.push({ label: currentMonth, days: currentCount });
-                        currentMonth = m;
-                        currentCount = 1;
-                      } else {
-                        currentCount++;
-                      }
-                    });
-                    if (currentMonth) months.push({ label: currentMonth, days: currentCount });
-                    
-                    return months.map((m, i) => (
-                      <div 
-                        key={i} 
-                        className="border-r border-[hsl(var(--border))] flex items-center overflow-hidden"
-                        style={{ width: `${m.days * DAY_WIDTH}px` }}
-                      >
-                        <span className="sticky left-0 px-3 text-[10px] font-bold text-[hsl(var(--primary))] uppercase tracking-wider whitespace-nowrap">
-                          {m.label}
-                        </span>
-                      </div>
-                    ));
-                  })()}
+              {/* Vertical Grid Lines (Background) */}
+              <div className="absolute top-[57px] bottom-0 z-0 pointer-events-none flex" style={{ left: '400px', width: `${totalDays * DAY_WIDTH}px` }}>
+                {dates.map((date, i) => (
+                  <div 
+                    key={i} 
+                    className={cn(
+                      "border-r border-[hsl(var(--border))] shrink-0 h-full",
+                      isToday(date) ? "bg-[hsl(var(--primary))] opacity-10" : ""
+                    )} 
+                    style={{ width: `${DAY_WIDTH}px` }} 
+                  />
+                ))}
+              </div>
+
+              {/* Header Row */}
+              <div className="flex h-[57px] sticky top-0 z-30">
+                {/* Left Header */}
+                <div className="w-[400px] shrink-0 sticky left-0 z-40 bg-[hsl(var(--card))] border-r border-b border-[hsl(var(--border))] flex items-center px-4 text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider shadow-[2px_0_10px_rgba(0,0,0,0.05)]">
+                  <div className="flex-1">Milestone / Task Name</div>
+                  <div className="w-[70px] text-center">Start</div>
+                  <div className="w-[70px] text-center">End</div>
                 </div>
-                {/* Days Row */}
-                <div className="flex h-7">
-                  {dates.map((date, i) => {
-                    const today = isToday(date);
-                    return (
-                      <div 
-                        key={i} 
-                        className={cn(
-                          "border-r border-[hsl(var(--border))] shrink-0 flex items-center justify-center text-[10px]",
-                          today ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold" :
-                          date.getDay() === 0 || date.getDay() === 6 ? "bg-[hsl(var(--muted)/0.3)] font-semibold text-[hsl(var(--foreground))]" : "text-[hsl(var(--muted-foreground))]"
-                        )}
-                        style={{ width: `${DAY_WIDTH}px` }}
-                      >
-                        {format(date, 'dd')}
-                      </div>
-                    );
-                  })}
+                {/* Right Header */}
+                <div className="flex flex-col bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]" style={{ width: `${totalDays * DAY_WIDTH}px` }}>
+                  {/* Months Row */}
+                  <div className="flex h-7 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
+                    {(() => {
+                      const months: { label: string; days: number }[] = [];
+                      let currentMonth = '';
+                      let currentCount = 0;
+                      dates.forEach(d => {
+                        const m = format(d, 'MMMM yyyy');
+                        if (m !== currentMonth) {
+                          if (currentMonth) months.push({ label: currentMonth, days: currentCount });
+                          currentMonth = m;
+                          currentCount = 1;
+                        } else {
+                          currentCount++;
+                        }
+                      });
+                      if (currentMonth) months.push({ label: currentMonth, days: currentCount });
+                      
+                      return months.map((m, i) => (
+                        <div 
+                          key={i} 
+                          className="border-r border-[hsl(var(--border))] flex items-center overflow-hidden"
+                          style={{ width: `${m.days * DAY_WIDTH}px` }}
+                        >
+                          <span className="sticky left-0 px-3 text-[10px] font-bold text-[hsl(var(--primary))] uppercase tracking-wider whitespace-nowrap">
+                            {m.label}
+                          </span>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                  {/* Days Row */}
+                  <div className="flex h-7">
+                    {dates.map((date, i) => {
+                      const today = isToday(date);
+                      return (
+                        <div 
+                          key={i} 
+                          className={cn(
+                            "border-r border-[hsl(var(--border))] shrink-0 flex items-center justify-center text-[10px]",
+                            today ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold" :
+                            date.getDay() === 0 || date.getDay() === 6 ? "bg-[hsl(var(--muted)/0.3)] font-semibold text-[hsl(var(--foreground))]" : "text-[hsl(var(--muted-foreground))]"
+                          )}
+                          style={{ width: `${DAY_WIDTH}px` }}
+                        >
+                          {format(date, 'dd')}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
-              {/* Timeline Body (Grid + Bars) */}
-              <div className="relative flex-1">
-                {/* Vertical Grid Lines */}
-                <div className="absolute inset-0 flex pointer-events-none opacity-20">
-                  {dates.map((date, i) => (
-                    <div 
-                      key={i} 
-                      className={cn(
-                        "border-r border-[hsl(var(--border))] shrink-0 h-full",
-                        isToday(date) ? "bg-[hsl(var(--primary))] opacity-20" : ""
-                      )} 
-                      style={{ width: `${DAY_WIDTH}px` }} 
-                    />
-                  ))}
-                </div>
-
-                {/* Rows Content */}
+              {/* Body Rows */}
+              <div className="flex flex-col z-10 pb-12">
                 {timelineData.map((m: any) => {
                   const isExpanded = expandedMilestones.has(m._id);
                   return (
-                    <div key={m._id} className="relative z-10 border-b border-[hsl(var(--border))] shrink-0">
+                    <div key={m._id} className="flex flex-col">
                       {/* Milestone Row */}
-                      <div className="h-[40px] min-h-[40px] max-h-[40px] shrink-0 box-border relative bg-[hsl(var(--muted)/0.1)]">
-                        {m.dueDate && (
-                          <div 
-                            className="absolute top-1/2 -translate-y-1/2 flex items-center justify-center group"
-                            style={{ left: `${differenceInDays(new Date(m.dueDate), minDate) * DAY_WIDTH}px` }}
-                          >
-                            <div className="w-4 h-4 bg-amber-500 rounded-sm rotate-45 flex items-center justify-center shadow-sm z-10">
-                              <div className="w-2 h-2 bg-amber-100 rounded-sm" />
+                      <div className="flex h-[40px] border-b border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.1)] transition-colors group/row">
+                        {/* Left Cell */}
+                        <div 
+                          className="w-[400px] shrink-0 sticky left-0 z-20 bg-[hsl(var(--card))] border-r border-[hsl(var(--border))] shadow-[2px_0_10px_rgba(0,0,0,0.05)] cursor-pointer"
+                          onClick={() => toggleMilestone(m._id)}
+                        >
+                          <div className="flex items-center px-4 w-full h-full group-hover/row:bg-[hsl(var(--muted)/0.3)] transition-colors">
+                            <div className="flex-1 flex items-center gap-2 overflow-hidden">
+                              <button className="p-0.5 text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] rounded">
+                                {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                              </button>
+                              <Flag className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                              <span className="text-xs font-bold text-[hsl(var(--foreground))] truncate">{m.name}</span>
                             </div>
-                            {/* Milestone Tooltip */}
-                            <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                              {m.name}
+                            <div className="w-[140px] text-right text-[10px] text-[hsl(var(--muted-foreground))] font-semibold">
+                              {m.dueDate ? `Due: ${format(new Date(m.dueDate), 'MMM dd, yyyy')}` : ''}
                             </div>
                           </div>
-                        )}
+                        </div>
+                        {/* Right Cell */}
+                        <div className="relative bg-[hsl(var(--muted)/0.05)]" style={{ width: `${totalDays * DAY_WIDTH}px` }}>
+                          {m.dueDate && (
+                            <div 
+                              className="absolute top-1/2 -translate-y-1/2 flex items-center justify-center group"
+                              style={{ left: `${differenceInDays(new Date(m.dueDate), minDate) * DAY_WIDTH}px` }}
+                            >
+                              <div className="w-4 h-4 bg-amber-500 rounded-sm rotate-45 flex items-center justify-center shadow-sm z-10">
+                                <div className="w-2 h-2 bg-amber-100 rounded-sm" />
+                              </div>
+                              {/* Milestone Tooltip */}
+                              <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                                {m.name}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       {/* Task Rows */}
@@ -317,26 +291,43 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                           width = (differenceInDays(new Date(t.endDate), new Date(t.startDate)) + 1) * DAY_WIDTH;
                         }
 
-                        // Determine bar color based on status
                         let bgClass = "bg-blue-500";
                         if (t.status === 'completed') bgClass = "bg-emerald-500";
                         if (t.status === 'in_progress') bgClass = "bg-amber-500";
 
                         return (
-                          <div key={t._id} className="h-[40px] min-h-[40px] max-h-[40px] shrink-0 box-border border-t border-[hsl(var(--border))/0.5] relative hover:bg-[hsl(var(--muted)/0.2)] transition-colors">
-                            {hasDates && (
-                              <div 
-                                className={cn("absolute top-1/2 -translate-y-1/2 h-6 rounded-md shadow-sm opacity-90 hover:opacity-100 transition-opacity cursor-pointer border border-white/20", bgClass)}
-                                style={{ left: `${left}px`, width: `${Math.max(width, DAY_WIDTH)}px` }}
-                                title={`${t.name} (${t.progress}%)`}
-                              >
-                                {width > 50 && (
-                                  <span className="text-[10px] font-semibold text-white truncate px-2 leading-6 block">
-                                    {t.name}
-                                  </span>
-                                )}
+                          <div key={t._id} className="flex h-[40px] border-b border-[hsl(var(--border))/0.5] group/taskrow">
+                            {/* Left Cell */}
+                            <div className="w-[400px] shrink-0 sticky left-0 z-20 bg-[hsl(var(--card))] border-r border-[hsl(var(--border))] shadow-[2px_0_10px_rgba(0,0,0,0.05)]">
+                              <div className="flex items-center px-4 pl-10 w-full h-full group-hover/taskrow:bg-[hsl(var(--muted)/0.3)] transition-colors">
+                                <div className="flex-1 flex items-center gap-2 overflow-hidden">
+                                  <AlignLeft className="w-3 h-3 text-[hsl(var(--muted-foreground))] shrink-0" />
+                                  <span className="text-xs text-[hsl(var(--foreground))] truncate" title={t.name}>{t.name}</span>
+                                </div>
+                                <div className="w-[70px] text-center text-[10px] text-[hsl(var(--muted-foreground))]">
+                                  {t.startDate ? format(new Date(t.startDate), 'MMM dd') : '-'}
+                                </div>
+                                <div className="w-[70px] text-center text-[10px] text-[hsl(var(--muted-foreground))]">
+                                  {t.endDate ? format(new Date(t.endDate), 'MMM dd') : '-'}
+                                </div>
                               </div>
-                            )}
+                            </div>
+                            {/* Right Cell */}
+                            <div className="relative group-hover/taskrow:bg-[hsl(var(--muted)/0.1)] transition-colors" style={{ width: `${totalDays * DAY_WIDTH}px` }}>
+                              {hasDates && (
+                                <div 
+                                  className={cn("absolute top-1/2 -translate-y-1/2 h-6 rounded-md shadow-sm opacity-90 hover:opacity-100 transition-opacity cursor-pointer border border-white/20", bgClass)}
+                                  style={{ left: `${left}px`, width: `${Math.max(width, DAY_WIDTH)}px` }}
+                                  title={`${t.name} (${t.progress || 0}%)`}
+                                >
+                                  {width > 50 && (
+                                    <span className="text-[10px] font-semibold text-white truncate px-2 leading-6 block">
+                                      {t.name}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         );
                       })}
@@ -344,6 +335,7 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                   );
                 })}
               </div>
+
             </div>
           </div>
         </Card>

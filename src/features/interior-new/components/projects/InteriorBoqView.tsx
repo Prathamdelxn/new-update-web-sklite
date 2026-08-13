@@ -406,15 +406,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
             >
               <List className="w-3.5 h-3.5" /> BOQ Line Items
             </button>
-            <button
-              onClick={() => setActiveTab('actual')}
-              className={cn(
-                'px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5',
-                activeTab === 'actual' ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-sm' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
-              )}
-            >
-              <Activity className="w-3.5 h-3.5" /> BOQ vs Actual
-            </button>
+           
             {/* "Compare Revisions" tab dropped — no compareBoqVersions endpoint in interiorProject.service.ts */}
           </div>
 
