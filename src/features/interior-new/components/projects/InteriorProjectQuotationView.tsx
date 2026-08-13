@@ -125,7 +125,7 @@ export default function InteriorProjectQuotationView() {
               <div className="pt-4 border-t border-[hsl(var(--border))]">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm text-[hsl(var(--muted-foreground))]">Subtotal</p>
-                  <p className="text-sm font-medium text-[hsl(var(--foreground))]">₹{quote.subTotal?.toLocaleString('en-IN') || 0}</p>
+                  <p className="text-sm font-medium text-[hsl(var(--foreground))]">₹{(quote.subtotal || quote.subTotal || 0).toLocaleString('en-IN')}</p>
                 </div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm text-[hsl(var(--muted-foreground))]">Tax/Discount</p>
