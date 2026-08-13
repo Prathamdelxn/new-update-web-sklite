@@ -32,8 +32,8 @@ const CATEGORIES = (projectId: string) => [
     icon: '📐',
     items: [
       { label: 'WBS Hierarchy', href: `/interior-new/projects/${projectId}/wbs` },
-      { label: 'Tasks (Kanban)', href: `/interior-new/projects/${projectId}/tasks` },
       { label: 'Milestones', href: `/interior-new/projects/${projectId}/milestones` },
+      { label: 'Tasks', href: `/interior-new/projects/${projectId}/tasks` },
       { label: 'DPR Log', href: `/interior-new/projects/${projectId}/dpr` },
       { label: 'Weekly Reports', href: `/interior-new/projects/${projectId}/weekly-reports` },
       { label: 'MOM', href: `/interior-new/projects/${projectId}/mom` },
@@ -58,7 +58,6 @@ const CATEGORIES = (projectId: string) => [
     icon: '🔍',
     items: [
       { label: 'Snags Logger', href: `/interior-new/projects/${projectId}/snags` },
-      { label: 'NCR Register', href: `/interior-new/projects/${projectId}/ncrs` },
       { label: 'Risks Matrix', href: `/interior-new/projects/${projectId}/risks` },
     ],
   },

@@ -42,6 +42,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   const { confirm } = useConfirm();
 
   const [activeTab, setActiveTab] = useState<'procurement' | 'inventory'>('procurement');
+  const [activePipeline, setActivePipeline] = useState('pending');
   const [pos, setPos] = useState<any[]>([]);
   const [inventory, setInventory] = useState<any[]>([]);
   const [vendors, setVendors] = useState<any[]>([]);
@@ -296,13 +297,41 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   return (
     <div className="p-6 lg:p-8 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Procurement & Inventory</h2>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-            Manage trade orders, track deliveries, and log materials installed on-site.
-          </p>
-        </div>
+      <div>
+        <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Procurement & Inventory</h2>
+        <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+          Manage trade orders, track deliveries, and log materials installed on-site.
+        </p>
+      </div>
+
+      {/* Aggregate Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <Card className="p-4 flex items-center justify-between border-l-4 border-l-blue-500">
+          <div>
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">Total Procurement Budget</p>
+            <p className="text-xl font-bold mt-1">{formatCost(pos.reduce((acc, c) => acc + (c.amount || 0), 0))}</p>
+          </div>
+          <ShoppingCart className="w-8 h-8 text-blue-500/20" />
+        </Card>
+        <Card className="p-4 flex items-center justify-between border-l-4 border-l-amber-500">
+          <div>
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">Active Purchase Orders</p>
+            <p className="text-xl font-bold mt-1">
+              {pos.filter((po) => ['approved', 'ordered', 'dispatched'].includes(po.status)).length} POs
+            </p>
+          </div>
+          <Truck className="w-8 h-8 text-amber-500/20" />
+        </Card>
+        <Card className="p-4 flex items-center justify-between border-l-4 border-l-emerald-500">
+          <div>
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">POs Received / Delivered</p>
+            <p className="text-xl font-bold mt-1">{pos.filter((po) => po.status === 'delivered').length} POs</p>
+          </div>
+          <Package className="w-8 h-8 text-emerald-500/20" />
+        </Card>
+      </div>
+
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[hsl(var(--border))] pb-4">
         <div className="flex items-center gap-3">
           <div className="border border-[hsl(var(--border))] rounded-lg p-0.5 flex bg-[hsl(var(--muted)/0.3)] shrink-0">
             <button
@@ -328,6 +357,8 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
               Inventory Management
             </button>
           </div>
+        </div>
+        <div className="flex items-center gap-3">
           {activeTab === 'procurement' ? (
             <Button onClick={() => setIsAddPoOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
@@ -345,84 +376,72 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       {activeTab === 'procurement' ? (
         <>
           {/* Pipeline Board */}
-          <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
-            {pipelines.map((pipe) => {
-              const items = pos.filter((po) => po.status === pipe.key);
-              return (
-                <Card key={pipe.key} className="bg-[hsl(var(--card)/0.4)] backdrop-blur-md flex flex-col h-[480px]">
-                  <CardHeader className="p-4 border-b border-[hsl(var(--border))] flex flex-row items-center justify-between pb-3 shrink-0 space-y-0">
-                    <div className="flex items-center gap-2">
-                      <pipe.icon className={cn('w-4 h-4', pipe.color)} />
-                      <CardTitle className="text-xs font-bold">{pipe.label}</CardTitle>
-                    </div>
-                    <span className="text-[10px] font-mono font-bold bg-[hsl(var(--muted))] px-2 py-0.5 rounded-full">{items.length}</span>
-                  </CardHeader>
-                  <CardContent className="p-3 flex-1 overflow-y-auto space-y-3 scrollbar-none">
-                    {items.length === 0 ? (
-                      <div className="text-center py-12 text-[10px] text-[hsl(var(--muted-foreground))] italic border border-dashed border-[hsl(var(--border))] rounded-lg">
-                        Empty stage
-                      </div>
-                    ) : (
-                      items.map((item) => (
-                        <motion.div
-                          key={item._id}
-                          initial={{ opacity: 0, y: 5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          onClick={() => {
-                            setSelectedPo(item);
-                            setIsDetailOpen(true);
-                          }}
-                          className="p-3 border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--card))] shadow-sm space-y-2 hover:border-[hsl(var(--primary)/0.3)] hover:shadow-md transition-all cursor-pointer"
-                        >
-                          <div className="flex items-center justify-between text-[10px]">
-                            <span className="font-mono text-[hsl(var(--muted-foreground))]">{item.poNumber}</span>
-                            <span className="font-semibold text-[hsl(var(--foreground))]">{formatCost(item.amount)}</span>
-                          </div>
-                          <h4 className="text-xs font-bold text-[hsl(var(--foreground))] line-clamp-1">{item.materialName}</h4>
-                          <p className="text-[10px] text-[hsl(var(--muted-foreground))] truncate">Vendor: {item.vendorName}</p>
-                          <div className="flex items-center justify-between border-t border-[hsl(var(--border))] pt-1.5 mt-1 text-[9px] text-[hsl(var(--muted-foreground))]">
-                            <span>{item.items?.length || 1} product(s)</span>
-                            {item.deliveryDate && (
-                              <span className="flex items-center gap-1">
-                                <Clock className="w-2.5 h-2.5 text-blue-500" />
-                                {new Date(item.deliveryDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                              </span>
-                            )}
-                          </div>
-                        </motion.div>
-                      ))
+          <div className="flex flex-col space-y-6">
+            <div className="flex items-center gap-2 border-b border-[hsl(var(--border))] pb-4 overflow-x-auto">
+              {pipelines.map((pipe) => {
+                const items = pos.filter((po) => po.status === pipe.key);
+                return (
+                  <button
+                    key={pipe.key}
+                    onClick={() => setActivePipeline(pipe.key)}
+                    className={cn(
+                      'px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-2',
+                      activePipeline === pipe.key ? 'bg-[hsl(var(--primary))] text-white' : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
                     )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                  >
+                    <pipe.icon className={cn('w-4 h-4', activePipeline === pipe.key ? 'text-white' : pipe.color)} />
+                    {pipe.label}
+                    <span className={cn(
+                      'px-2 py-0.5 rounded-full text-[10px]',
+                      activePipeline === pipe.key ? 'bg-white/20 text-white' : 'bg-[hsl(var(--card))] text-[hsl(var(--muted-foreground))]'
+                    )}>
+                      {items.length}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
 
-          {/* Aggregate Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <Card className="p-4 flex items-center justify-between border-l-4 border-l-blue-500">
-              <div>
-                <p className="text-xs text-[hsl(var(--muted-foreground))]">Total Procurement Budget</p>
-                <p className="text-xl font-bold mt-1">{formatCost(pos.reduce((acc, c) => acc + (c.amount || 0), 0))}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {pos.filter((po) => po.status === activePipeline).map((item) => (
+                <motion.div
+                  key={item._id}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  onClick={() => {
+                    setSelectedPo(item);
+                    setIsDetailOpen(true);
+                  }}
+                  className="p-5 border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] shadow-sm space-y-4 hover:border-[hsl(var(--primary)/0.3)] hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between text-[11px] mb-2">
+                      <span className="font-mono font-medium text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded-md">{item.poNumber}</span>
+                      <span className="font-bold text-[hsl(var(--foreground))] text-sm">{formatCost(item.amount)}</span>
+                    </div>
+                    <h4 className="text-base font-bold text-[hsl(var(--foreground))] line-clamp-1">{item.materialName}</h4>
+                    <p className="text-xs text-[hsl(var(--muted-foreground))] truncate mt-1">Vendor: {item.vendorName}</p>
+                  </div>
+                  <div className="flex items-center justify-between border-t border-[hsl(var(--border))] pt-3 text-xs text-[hsl(var(--muted-foreground))]">
+                    <span className="font-medium">{item.items?.length || 1} product(s)</span>
+                    {item.deliveryDate && (
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <Clock className="w-4 h-4 text-blue-500" />
+                        {new Date(item.deliveryDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                      </span>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {pos.filter((po) => po.status === activePipeline).length === 0 && (
+              <div className="text-center py-16">
+                <Package className="w-12 h-12 text-[hsl(var(--muted-foreground))] opacity-20 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">No Purchase Orders</h3>
+                <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">There are no orders in this stage currently.</p>
               </div>
-              <ShoppingCart className="w-8 h-8 text-blue-500/20" />
-            </Card>
-            <Card className="p-4 flex items-center justify-between border-l-4 border-l-amber-500">
-              <div>
-                <p className="text-xs text-[hsl(var(--muted-foreground))]">Active Purchase Orders</p>
-                <p className="text-xl font-bold mt-1">
-                  {pos.filter((po) => ['approved', 'ordered', 'dispatched'].includes(po.status)).length} POs
-                </p>
-              </div>
-              <Truck className="w-8 h-8 text-amber-500/20" />
-            </Card>
-            <Card className="p-4 flex items-center justify-between border-l-4 border-l-emerald-500">
-              <div>
-                <p className="text-xs text-[hsl(var(--muted-foreground))]">POs Received / Delivered</p>
-                <p className="text-xl font-bold mt-1">{pos.filter((po) => po.status === 'delivered').length} POs</p>
-              </div>
-              <Package className="w-8 h-8 text-emerald-500/20" />
-            </Card>
+            )}
           </div>
         </>
       ) : (

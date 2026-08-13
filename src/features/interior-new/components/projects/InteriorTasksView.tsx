@@ -54,6 +54,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
   const [projectMembers, setProjectMembers] = useState<any[]>([]);
   const [milestones, setMilestones] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('todo');
 
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [comments, setComments] = useState<any[]>([]);
@@ -272,7 +273,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
     <div className="p-6 lg:p-8 space-y-6 relative overflow-hidden min-h-[85vh]">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Task Kanban Board</h2>
+          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Tasks</h2>
           <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">Track installation progress by WBS packages</p>
         </div>
         <Button onClick={() => setIsTaskDialogOpen(true)}>
@@ -286,56 +287,78 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
           <Loader2 className="w-6 h-6 animate-spin text-[hsl(var(--primary))]" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4 overflow-x-auto pb-4">
-          {COLUMNS.map((col) => {
-            const colTasks = tasks.filter((t) => t.status === col.id);
-            return (
-              <div key={col.id} className={cn('p-3 rounded-xl border border-[hsl(var(--border))] border-t-4 flex flex-col space-y-3 min-h-[550px] w-full', col.color)}>
-                <div className="flex items-center justify-between border-b border-[hsl(var(--border))] pb-2">
-                  <span className="text-xs font-bold text-[hsl(var(--foreground))] uppercase tracking-wider">{col.title}</span>
-                  <span className="text-xs font-bold text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded-full">{colTasks.length}</span>
-                </div>
+        <div className="flex flex-col space-y-6">
+          <div className="flex items-center gap-2 border-b border-[hsl(var(--border))] pb-4 overflow-x-auto">
+            {COLUMNS.map((col) => {
+              const colTasks = tasks.filter((t) => t.status === col.id);
+              return (
+                <button
+                  key={col.id}
+                  onClick={() => setActiveTab(col.id)}
+                  className={cn(
+                    'px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-2',
+                    activeTab === col.id ? 'bg-[hsl(var(--primary))] text-white' : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
+                  )}
+                >
+                  {col.title}
+                  <span className={cn(
+                    'px-2 py-0.5 rounded-full text-[10px]',
+                    activeTab === col.id ? 'bg-white/20 text-white' : 'bg-[hsl(var(--card))] text-[hsl(var(--muted-foreground))]'
+                  )}>
+                    {colTasks.length}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-                <div className="flex-1 space-y-2 overflow-y-auto max-h-[70vh] pr-1">
-                  {colTasks.map((task) => {
-                    const priority = priorityConfig[task.priority] || priorityConfig.medium;
-                    const assignee = task.assignees?.[0];
-                    return (
-                      <motion.div
-                        key={task._id}
-                        layoutId={task._id}
-                        className="p-4 border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--card))] shadow-sm cursor-pointer hover:border-[hsl(var(--primary)/0.3)] transition-colors space-y-3 group"
-                        onClick={() => handleSelectTask(task)}
-                      >
-                        <div className="flex items-start justify-between">
-                          <span className={cn('px-1.5 py-0.5 text-[9px] font-bold rounded uppercase', priority.color)}>{priority.label}</span>
-                          <span className="text-[10px] font-mono text-[hsl(var(--muted-foreground))]">{task.packageId?.trade ? `#${task.packageId.trade}` : ''}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {tasks.filter(t => t.status === activeTab).map((task) => {
+              const priority = priorityConfig[task.priority] || priorityConfig.medium;
+              const assignee = task.assignees?.[0];
+              return (
+                <motion.div
+                  key={task._id}
+                  layoutId={task._id}
+                  className="p-5 border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] shadow-sm cursor-pointer hover:border-[hsl(var(--primary)/0.3)] hover:shadow-md transition-all space-y-4 group"
+                  onClick={() => handleSelectTask(task)}
+                >
+                  <div className="flex items-start justify-between">
+                    <span className={cn('px-2 py-1 text-[10px] font-bold rounded-md uppercase', priority.color)}>{priority.label}</span>
+                    <span className="text-[11px] font-mono font-medium text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded-md">{task.packageId?.trade ? `#${task.packageId.trade}` : ''}</span>
+                  </div>
+                  <h4 className="text-base font-semibold text-[hsl(var(--foreground))] line-clamp-2 leading-snug group-hover:text-[hsl(var(--primary))] transition-colors">
+                    {task.name}
+                  </h4>
+                  <div className="flex items-center justify-between pt-3 border-t border-[hsl(var(--border))] text-xs text-[hsl(var(--muted-foreground))]">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <Calendar className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                      {task.endDate ? new Date(task.endDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) : 'Dates unset'}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {assignee ? (
+                        <div className="w-6 h-6 rounded-full bg-[hsl(var(--primary)/0.1)] flex items-center justify-center font-bold text-[10px] text-[hsl(var(--primary))] ring-2 ring-[hsl(var(--background))]">
+                          {assignee.firstName?.[0]}
                         </div>
-                        <h4 className="text-sm font-semibold text-[hsl(var(--foreground))] line-clamp-2 leading-snug group-hover:text-[hsl(var(--primary))] transition-colors">
-                          {task.name}
-                        </h4>
-                        <div className="flex items-center justify-between pt-1 border-t border-[hsl(var(--border))/0.4] text-xs text-[hsl(var(--muted-foreground))]">
-                          <span className="flex items-center gap-1 text-[10px]">
-                            <Calendar className="w-3.5 h-3.5" />
-                            {task.endDate ? new Date(task.endDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) : 'Dates unset'}
-                          </span>
-                          <div className="flex items-center gap-1.5">
-                            {assignee ? (
-                              <div className="w-5 h-5 rounded-full bg-[hsl(var(--primary)/0.15)] flex items-center justify-center font-bold text-[9px] text-[hsl(var(--primary))]">
-                                {assignee.firstName?.[0]}
-                              </div>
-                            ) : (
-                              <User className="w-4 h-4" />
-                            )}
-                          </div>
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] flex items-center justify-center text-[hsl(var(--muted-foreground))] ring-2 ring-[hsl(var(--background))]">
+                          <User className="w-3.5 h-3.5" />
                         </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+          
+          {tasks.filter(t => t.status === activeTab).length === 0 && (
+            <div className="text-center py-16">
+              <Layers className="w-12 h-12 text-[hsl(var(--muted-foreground))] opacity-20 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">No tasks found</h3>
+              <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">There are no tasks in this status currently.</p>
+            </div>
+          )}
         </div>
       )}
 
