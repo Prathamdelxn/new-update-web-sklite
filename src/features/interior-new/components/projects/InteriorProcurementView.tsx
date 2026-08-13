@@ -18,6 +18,7 @@ import {
   X,
   AlertCircle,
   History,
+  Pencil,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
@@ -72,6 +73,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   const [newMaterialName, setNewMaterialName] = useState('');
   const [newMaterialUnit, setNewMaterialUnit] = useState('');
   const [newMaterialStock, setNewMaterialStock] = useState<number | ''>('');
+  const [editingMaterialId, setEditingMaterialId] = useState<string | null>(null);
 
   const fetchPOs = async () => {
     try {
@@ -148,22 +150,49 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
     if (!newMaterialName.trim() || !newMaterialUnit.trim()) return;
     try {
       setCreatingMaterial(true);
-      await interiorProjectService.createInventoryMaterial(projectId, {
-        productName: newMaterialName,
-        unit: newMaterialUnit,
-        initialStock: newMaterialStock,
-      });
-      toast.success('Material added to inventory successfully');
+      if (editingMaterialId) {
+        await interiorProjectService.updateInventoryMaterial(projectId, editingMaterialId, {
+          productName: newMaterialName,
+          unit: newMaterialUnit,
+        });
+        toast.success('Material updated successfully');
+      } else {
+        await interiorProjectService.createInventoryMaterial(projectId, {
+          productName: newMaterialName,
+          unit: newMaterialUnit,
+          initialStock: newMaterialStock,
+        });
+        toast.success('Material added to inventory successfully');
+      }
       setNewMaterialName('');
       setNewMaterialUnit('');
       setNewMaterialStock('');
+      setEditingMaterialId(null);
       setIsCreateMaterialOpen(false);
       fetchInventory();
     } catch (err: any) {
-      console.error('Failed to create material', err);
-      toast.error(err.response?.data?.error || err.response?.data?.message || 'Failed to create material');
+      console.error('Failed to create/update material', err);
+      toast.error(err.response?.data?.error || err.response?.data?.message || 'Failed to save material');
     } finally {
       setCreatingMaterial(false);
+    }
+  };
+
+  const handleDeleteMaterial = async (item: any) => {
+    const ok = await confirm({
+      title: 'Delete Material',
+      message: 'Are you sure you want to delete this material? This will permanently remove it from inventory.',
+      confirmText: 'Delete',
+      type: 'danger',
+    });
+    if (!ok) return;
+    try {
+      await interiorProjectService.deleteInventoryMaterial(projectId, item._id);
+      toast.success('Material deleted successfully');
+      fetchInventory();
+    } catch (err: any) {
+      toast.error('Failed to delete material');
+      console.error(err);
     }
   };
 
@@ -365,7 +394,13 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
               Add PO
             </Button>
           ) : (
-            <Button onClick={() => setIsCreateMaterialOpen(true)}>
+            <Button onClick={() => {
+              setEditingMaterialId(null);
+              setNewMaterialName('');
+              setNewMaterialUnit('');
+              setNewMaterialStock('');
+              setIsCreateMaterialOpen(true);
+            }}>
               <Plus className="w-4 h-4 mr-2" />
               Add Material
             </Button>
@@ -465,14 +500,30 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                   <Card key={item._id} className="overflow-hidden flex flex-col h-[400px]">
                     <div className="p-4 bg-[hsl(var(--muted)/0.15)] border-b border-[hsl(var(--border))] space-y-4 shrink-0">
                       <div className="flex items-start justify-between gap-3">
-                        <div className="space-y-1">
+                        <div className="space-y-1 min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <Package className="w-4 h-4 text-[hsl(var(--primary))]" />
-                            <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">{item.productName}</h3>
+                            <Package className="w-4 h-4 shrink-0 text-[hsl(var(--primary))]" />
+                            <h3 className="text-sm font-bold text-[hsl(var(--foreground))] truncate">{item.productName}</h3>
                           </div>
-                          <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                            Unit: <span className="font-semibold text-[hsl(var(--foreground))]">{item.unit}</span>
-                          </p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                              Unit: <span className="font-semibold text-[hsl(var(--foreground))]">{item.unit}</span>
+                            </p>
+                            <div className="flex items-center gap-1">
+                              <button onClick={() => {
+                                setEditingMaterialId(item._id);
+                                setNewMaterialName(item.productName);
+                                setNewMaterialUnit(item.unit);
+                                setNewMaterialStock(''); // Not updated on edit
+                                setIsCreateMaterialOpen(true);
+                              }} className="p-1 text-[hsl(var(--muted-foreground))] hover:text-blue-500 rounded hover:bg-blue-50 transition-colors" title="Edit Material">
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button onClick={() => handleDeleteMaterial(item)} className="p-1 text-[hsl(var(--muted-foreground))] hover:text-red-500 rounded hover:bg-red-50 transition-colors" title="Delete Material">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
                         </div>
                         <Button
                           disabled={available <= 0}
@@ -481,7 +532,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                             setIsInstallOpen(true);
                           }}
                           size="sm"
-                          className="text-xs h-8 px-3"
+                          className="text-xs h-8 px-3 shrink-0"
                         >
                           <Wrench className="w-3 h-3 mr-1.5" /> Install
                         </Button>

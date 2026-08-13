@@ -13,6 +13,7 @@ import { PackageCheck, CheckCircle, Loader2, FileText, Plus, X, FileDown, Trash2
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { cn } from '@/lib/utils';
 
 interface InteriorHandoverViewProps {
@@ -21,6 +22,7 @@ interface InteriorHandoverViewProps {
 
 export default function InteriorHandoverView({ projectId }: InteriorHandoverViewProps) {
   const toast = useToast();
+  const { confirm } = useConfirm();
 
   const [handover, setHandover] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -178,6 +180,27 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
       toast.error(err.response?.data?.error || err.message || 'Failed to register document');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleDeleteDocument = async (docId: string) => {
+    const ok = await confirm({
+      title: 'Delete Document',
+      message: 'Are you sure you want to delete this closeout document?',
+      confirmText: 'Delete',
+      type: 'danger',
+    });
+    if (!ok) return;
+
+    try {
+      const res = await interiorProjectService.updateHandover(projectId, { deleteDocumentId: docId });
+      if (res.success) {
+        toast.success('Document deleted successfully');
+        fetchHandover(false);
+      }
+    } catch (err) {
+      console.error('Failed to delete document', err);
+      toast.error('Failed to delete document');
     }
   };
 
@@ -368,9 +391,14 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
                       <p className="text-[10px] text-[hsl(var(--muted-foreground))] uppercase font-bold tracking-wider">{doc.type}</p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => window.open(doc.url, '_blank')}>
-                    <FileDown className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => window.open(doc.url, '_blank')}>
+                      <FileDown className="w-4 h-4" />
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-rose-500 hover:bg-rose-50 hover:text-rose-600 border-rose-100" onClick={() => handleDeleteDocument(doc._id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
