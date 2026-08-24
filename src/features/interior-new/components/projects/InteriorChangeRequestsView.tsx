@@ -442,7 +442,7 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
             <form onSubmit={handleCreateCr} className="flex-1 overflow-y-auto p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Category</label>
+                  <label className="text-xs font-semibold">Category</label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -458,7 +458,7 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Priority</label>
+                  <label className="text-xs font-semibold">Priority</label>
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
@@ -473,7 +473,7 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Area Affected</label>
+                <label className="text-xs font-semibold">Area Affected</label>
                 <input
                   type="text"
                   placeholder="e.g. Master Bedroom, Kitchen Counter"
@@ -484,7 +484,7 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Description of Change</label>
+                <label className="text-xs font-semibold">Description of Change</label>
                 <textarea
                   required
                   rows={2}
@@ -497,7 +497,7 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Current Design / Material</label>
+                  <label className="text-xs font-semibold">Current Design / Material</label>
                   <textarea
                     rows={2}
                     placeholder="Standard design specifications currently approved..."
@@ -508,7 +508,7 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Proposed Design / Material</label>
+                  <label className="text-xs font-semibold">Proposed Design / Material</label>
                   <textarea
                     rows={2}
                     placeholder="Proposed change or alternative specifications..."
@@ -520,7 +520,7 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Reason for Change</label>
+                <label className="text-xs font-semibold">Reason for Change</label>
                 <textarea
                   rows={2}
                   placeholder="Why is this change necessary?"

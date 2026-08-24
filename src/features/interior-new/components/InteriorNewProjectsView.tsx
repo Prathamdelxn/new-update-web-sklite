@@ -262,9 +262,6 @@ export default function InteriorNewProjectsView() {
                         <h3 className="text-base font-semibold text-[hsl(var(--foreground))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">{project.name}</h3>
                         <p className="text-sm text-[hsl(var(--muted-foreground))] mt-0.5 truncate">{project.client}</p>
                       </div>
-                      <button className="p-1 rounded-md hover:bg-[hsl(var(--muted))] transition-colors opacity-0 group-hover:opacity-100">
-                        <MoreHorizontal className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                      </button>
                     </div>
 
                     <div className="mb-4">
@@ -469,11 +466,33 @@ export default function InteriorNewProjectsView() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Start Date</label>
-                      <Input required type="date" value={formData.startDate} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })} />
+                      <Input 
+                        required 
+                        type="date" 
+                        value={formData.startDate} 
+                        onChange={(e) => setFormData({ ...formData, startDate: e.target.value })} 
+                        onKeyDown={(e) => e.preventDefault()}
+                        onClick={(e) => {
+                          try {
+                            (e.target as HTMLInputElement).showPicker?.();
+                          } catch (err) {}
+                        }}
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-[hsl(var(--foreground))]">End Date</label>
-                      <Input required type="date" value={formData.endDate} onChange={(e) => setFormData({ ...formData, endDate: e.target.value })} />
+                      <Input 
+                        required 
+                        type="date" 
+                        value={formData.endDate} 
+                        onChange={(e) => setFormData({ ...formData, endDate: e.target.value })} 
+                        onKeyDown={(e) => e.preventDefault()}
+                        onClick={(e) => {
+                          try {
+                            (e.target as HTMLInputElement).showPicker?.();
+                          } catch (err) {}
+                        }}
+                      />
                     </div>
                   </div>
 

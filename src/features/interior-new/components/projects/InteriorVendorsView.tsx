@@ -1,8 +1,9 @@
 'use client';
 
 // Port of interior-os-frontend's projects/[projectId]/vendors/page.tsx.
-// Vendors are derived client-side from the Purchase Orders list (no
-// dedicated vendors endpoint exists), same approach as the source page.
+// Vendors are fetched dynamically from the vendors API.
+// Purchase Orders are also fetched to calculate project-specific stats 
+// (Contracts Held and Total Contract Value) for each vendor.
 
 import React, { useEffect, useState } from 'react';
 import { Truck, Star, ShieldCheck, Clock, Loader2 } from 'lucide-react';
@@ -15,30 +16,37 @@ interface InteriorVendorsViewProps {
 }
 
 export default function InteriorVendorsView({ projectId }: InteriorVendorsViewProps) {
+  const [dbVendors, setDbVendors] = useState<any[]>([]);
   const [pos, setPos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddVendorOpen, setIsAddVendorOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchPOs = async () => {
-      try {
-        setLoading(true);
-        const res = await interiorProjectService.getPurchaseOrders(projectId);
-        if (res.success && res.data) {
-          setPos(res.data);
-        }
+  const fetchVendorsAndPOs = async () => {
+    try {
+      setLoading(true);
+      const [vendorRes, poRes] = await Promise.all([
+        interiorProjectService.getVendors(),
+        interiorProjectService.getPurchaseOrders(projectId)
+      ]);
+      
+      if (vendorRes?.success && vendorRes.data) {
+        setDbVendors(vendorRes.data);
+      }
+      if (poRes?.success && poRes.data) {
+        setPos(poRes.data);
+      }
       } catch (err) {
         console.error('Failed to load POs', err);
       } finally {
         setLoading(false);
       }
     };
-    if (projectId) fetchPOs();
+  useEffect(() => {
+    if (projectId) fetchVendorsAndPOs();
   }, [projectId]);
 
   const handleVendorAdded = () => {
-    // Optionally re-fetch vendors or pos here if needed
-    // fetchPOs();
+    fetchVendorsAndPOs();
   };
 
   const vendorsMap = new Map<string, { count: number; totalValue: number }>();
@@ -51,11 +59,14 @@ export default function InteriorVendorsView({ projectId }: InteriorVendorsViewPr
     });
   });
 
-  const vendors = Array.from(vendorsMap.entries()).map(([name, stats], index) => {
+  const vendors = dbVendors.map((vendor, index) => {
+    const name = vendor.name;
+    const stats = vendorsMap.get(name) || { count: 0, totalValue: 0 };
+    
     const rating = [4.8, 4.2, 4.6, 3.9][index % 4] || 4.5;
     const compliance = [95, 88, 92, 75][index % 4] || 90;
     const onTime = [98, 80, 94, 70][index % 4] || 92;
-    const trade = ['Acoustic & Glazing', 'MEP Pipes', 'Interior Slabs', 'Finishes & Drywalls'][index % 4] || 'Fit-out Trades';
+    const trade = vendor.vendorCategory || ['Acoustic & Glazing', 'MEP Pipes', 'Interior Slabs', 'Finishes & Drywalls'][index % 4] || 'Fit-out Trades';
 
     return {
       name,
@@ -100,7 +111,7 @@ export default function InteriorVendorsView({ projectId }: InteriorVendorsViewPr
 
       {vendors.length === 0 ? (
         <Card className="p-8 text-center text-sm text-[hsl(var(--muted-foreground))]">
-          No active vendors found. Vendors are dynamically registered here once a Purchase Order is issued.
+          No vendors found in the database. Click "Add Vendor" to register a new vendor.
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

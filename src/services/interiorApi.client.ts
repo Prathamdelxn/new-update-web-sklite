@@ -15,7 +15,7 @@ export const interiorApiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true,
+  timeout: 15000,
 });
 
 interiorApiClient.interceptors.request.use(

@@ -68,9 +68,9 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ duration: 0.3 }}>
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-5">
+        <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ duration: 0.3 }} className="h-full">
+          <Card className="hover:shadow-md transition-shadow h-full flex flex-col">
+            <CardContent className="p-5 flex-1 flex flex-col">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Overall Progress</span>
                 <TrendingUp className="w-4 h-4 text-emerald-500" />
@@ -78,16 +78,16 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
               <div className="mt-3 flex items-baseline gap-2">
                 <span className="text-3xl font-extrabold tracking-tight text-[hsl(var(--foreground))]">{project?.progress}%</span>
               </div>
-              <div className="w-full h-1.5 bg-[hsl(var(--muted))] rounded-full mt-4 overflow-hidden">
+              <div className="w-full h-1.5 bg-[hsl(var(--muted))] rounded-full mt-auto overflow-hidden">
                 <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${project?.progress}%` }} />
               </div>
             </CardContent>
           </Card>
         </motion.div>
 
-        <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ duration: 0.3, delay: 0.05 }}>
-          <Card onClick={() => router.push(`/interior-new/projects/${projectId}/tasks`)} className="hover:shadow-md transition-shadow cursor-pointer hover:border-[hsl(var(--primary)/0.3)]">
-            <CardContent className="p-5">
+        <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ duration: 0.3, delay: 0.05 }} className="h-full">
+          <Card onClick={() => router.push(`/interior-new/projects/${projectId}/tasks`)} className="hover:shadow-md transition-shadow cursor-pointer hover:border-[hsl(var(--primary)/0.3)] h-full flex flex-col">
+            <CardContent className="p-5 flex-1 flex flex-col">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Tasks Status</span>
                 <CheckSquare className="w-4 h-4 text-blue-500" />
@@ -98,14 +98,14 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
                 </span>
                 <span className="text-xs text-[hsl(var(--muted-foreground))]">({taskStats?.remaining} remaining)</span>
               </div>
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-4">Completed Tasks out of total scope</p>
+              <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-auto pt-4">Completed Tasks out of total scope</p>
             </CardContent>
           </Card>
         </motion.div>
 
-        <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ duration: 0.3, delay: 0.1 }}>
-          <Card onClick={() => router.push(`/interior-new/projects/${projectId}/milestones`)} className="hover:shadow-md transition-shadow cursor-pointer hover:border-[hsl(var(--primary)/0.3)]">
-            <CardContent className="p-5">
+        <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ duration: 0.3, delay: 0.1 }} className="h-full">
+          <Card onClick={() => router.push(`/interior-new/projects/${projectId}/milestones`)} className="hover:shadow-md transition-shadow cursor-pointer hover:border-[hsl(var(--primary)/0.3)] h-full flex flex-col">
+            <CardContent className="p-5 flex-1 flex flex-col">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Milestones</span>
                 <Clock className="w-4 h-4 text-amber-500" />
@@ -116,22 +116,21 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
                 </span>
                 {milestones?.delayed > 0 && <span className="text-xs font-medium text-red-500">({milestones?.delayed} delayed)</span>}
               </div>
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-4">Key project checkpoints achieved</p>
+              <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-auto pt-4">Key project checkpoints achieved</p>
             </CardContent>
           </Card>
         </motion.div>
 
-        <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ duration: 0.3, delay: 0.15 }}>
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-5">
+        <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ duration: 0.3, delay: 0.15 }} className="h-full">
+          <Card className="hover:shadow-md transition-shadow h-full flex flex-col">
+            <CardContent className="p-5 flex-1 flex flex-col">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Contract Budget</span>
-                <DollarSign className="w-4 h-4 text-indigo-500" />
               </div>
               <div className="mt-3 flex items-baseline gap-2">
                 <span className="text-2xl font-extrabold tracking-tight text-[hsl(var(--foreground))]">{formatBudget(project?.budget?.amount)}</span>
               </div>
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-5">Total allocated contract value</p>
+              <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-auto pt-4">Total allocated contract value</p>
             </CardContent>
           </Card>
         </motion.div>

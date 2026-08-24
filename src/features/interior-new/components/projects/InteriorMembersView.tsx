@@ -610,7 +610,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                     type="button"
                     onClick={handleAddExistingMember}
                     disabled={!addMemberUserId || isAddingMember}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-2 text-sm font-medium text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))/0.9] rounded-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {isAddingMember ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
                     {isAddingMember ? 'Adding...' : 'Add to Project'}
@@ -714,7 +714,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                     Cancel
                   </button>
                   <button type="submit" disabled={isInviting}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-2 text-sm font-medium text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))/0.9] rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed">
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed">
                     {isInviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                     {isInviting ? 'Creating...' : 'Create User'}
                   </button>
@@ -848,7 +848,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                     Cancel
                   </button>
                   <button onClick={handleSavePermissions} disabled={isSavingPerms}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-2 text-sm font-medium text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))/0.9] rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed">
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed">
                     {isSavingPerms ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                     {isSavingPerms ? 'Saving...' : 'Save Permissions'}
                   </button>
