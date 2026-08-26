@@ -29,6 +29,13 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen
     projectLocation: '',
   });
 
+  React.useEffect(() => {
+    if (!isOpen) {
+      setErrors({});
+    }
+  }, [isOpen]);
+
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });

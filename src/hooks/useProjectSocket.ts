@@ -7,7 +7,10 @@ export const useProjectSocket = (projectId: string, onEvent?: (event: string, da
   const { socket } = useSocket();
   // Use a ref so the event handler always sees the latest callback without recreating listeners
   const onEventRef = useRef(onEvent);
-  onEventRef.current = onEvent;
+  
+  useEffect(() => {
+    onEventRef.current = onEvent;
+  }, [onEvent]);
 
   useEffect(() => {
     if (!socket || !projectId) return;

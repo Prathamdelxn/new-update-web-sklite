@@ -28,6 +28,15 @@ export function InteriorSendToSiteVisitModal({ isOpen, onClose, customerId, onSu
   const [scheduledDate, setScheduledDate] = useState('');
   const [remarks, setRemarks] = useState('');
 
+  React.useEffect(() => {
+    if (!isOpen) {
+      setAssignedSalesExecutive('');
+      setScheduledDate('');
+      setRemarks('');
+    }
+  }, [isOpen]);
+
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,7 +45,7 @@ export function InteriorSendToSiteVisitModal({ isOpen, onClose, customerId, onSu
 
     try {
       const updatePayload: any = {
-        status: 'Meeting Scheduled',
+        status: 'Under Site Visit',
         siteVisitScheduledDate: scheduledDate || new Date(),
       };
 

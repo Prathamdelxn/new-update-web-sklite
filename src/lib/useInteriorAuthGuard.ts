@@ -13,7 +13,7 @@ export function useInteriorAuthGuard() {
       router.replace('/login');
       return;
     }
-    setChecked(true);
+    Promise.resolve().then(() => setChecked(true));
   }, [router]);
 
   return checked;

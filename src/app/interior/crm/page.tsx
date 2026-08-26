@@ -262,6 +262,7 @@ export default function CRMDashboardPage() {
         customerId={actionLeadId || ''}
         onSuccess={fetchLeads}
         users={users}
+        initialBudget={leads.find(l => l._id === actionLeadId)?.budgetRange || ''}
       />
 
       <UploadDesignModal

@@ -12,7 +12,6 @@ const api = axios.create({
   },
 });
 
-let preloadingPromise: Promise<any> | null = null;
 
 const publicAuthPaths = [
   '/auth/login',

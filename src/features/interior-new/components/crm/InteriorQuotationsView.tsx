@@ -111,7 +111,7 @@ export function InteriorQuotationsView({ leads, onConvertToProject, onCreateQuot
                   </td>
 
                   {/* Actions */}
-                  <td className="px-6 py-4 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
+                  <td className="px-6 py-4 text-right space-x-2 flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
                     {!latestQuote ? (
                       <button
                         onClick={() => onCreateQuotation(lead._id)}
@@ -120,12 +120,21 @@ export function InteriorQuotationsView({ leads, onConvertToProject, onCreateQuot
                         Create <FileText size={14} />
                       </button>
                     ) : (
-                      <button
-                        onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=quotation`)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--card))] text-blue-600 border border-blue-200 hover:bg-blue-50 rounded-lg text-xs font-bold transition-all"
-                      >
-                        Open <ArrowRight size={14} />
-                      </button>
+                      <>
+                        <button
+                          onClick={() => onCreateQuotation(lead._id)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--card))] text-teal-600 border border-teal-200 hover:bg-teal-50 rounded-lg text-xs font-bold transition-all"
+                          title="Edit Quotation"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=quotation`)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--card))] text-blue-600 border border-blue-200 hover:bg-blue-50 rounded-lg text-xs font-bold transition-all"
+                        >
+                          Open <ArrowRight size={14} />
+                        </button>
+                      </>
                     )}
 
                     {onConvertToProject && latestQuote?.status === 'Accepted' && lead.status !== 'Won' && lead.status !== 'Converted' && (

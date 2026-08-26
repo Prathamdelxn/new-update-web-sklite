@@ -1,10 +1,8 @@
 'use client';
 
-// Port of src/components/modals/SendToRequirementsModal.tsx, rewired to interiorCrmService.
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, PenTool } from 'lucide-react';
+import { X, Ruler } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
 
@@ -21,15 +19,15 @@ function userLabel(u: any) {
   return `${name} (${u.role?.name || u.role || 'User'})`;
 }
 
-export function InteriorSendToRequirementsModal({ isOpen, onClose, customerId, onSuccess, users = [] }: Props) {
+export function InteriorSendToDrawingModal({ isOpen, onClose, customerId, onSuccess, users = [] }: Props) {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [designerAssigned, setDesignerAssigned] = useState('');
+  const [assignedDesigner, setAssignedDesigner] = useState('');
   const [remarks, setRemarks] = useState('');
 
   React.useEffect(() => {
     if (!isOpen) {
-      setDesignerAssigned('');
+      setAssignedDesigner('');
       setRemarks('');
     }
   }, [isOpen]);
@@ -43,12 +41,11 @@ export function InteriorSendToRequirementsModal({ isOpen, onClose, customerId, o
 
     try {
       const updatePayload: any = {
-        status: 'Under Requirement',
+        status: 'Under Drawing',
       };
 
-      if (designerAssigned) {
-        updatePayload.designerAssigned = designerAssigned;
-        updatePayload.assignedSalesExecutive = designerAssigned;
+      if (assignedDesigner) {
+        updatePayload.designerAssigned = assignedDesigner;
       }
 
       await interiorCrmService.updateCustomer(customerId, updatePayload);
@@ -57,15 +54,15 @@ export function InteriorSendToRequirementsModal({ isOpen, onClose, customerId, o
         customer: customerId,
         type: 'Status Change',
         status: 'Completed',
-        remarks: remarks || 'Lead passed to Requirements & Design phase.',
+        remarks: remarks || 'Lead passed to Drawing phase.',
         completedDate: new Date()
       });
 
-      toast.success('Successfully sent to Requirements & Design!');
+      toast.success('Successfully sent to Drawing!');
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error('Failed to send to requirements');
+      toast.error('Failed to send to drawing');
     } finally {
       setIsSubmitting(false);
     }
@@ -79,9 +76,9 @@ export function InteriorSendToRequirementsModal({ isOpen, onClose, customerId, o
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))] flex items-center gap-2">
-              <PenTool className="text-emerald-600" /> Pass to Requirements
+              <Ruler className="text-cyan-600" /> Pass to Drawing
             </h2>
-            <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">Assign a designer to capture requirements.</p>
+            <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">Assign a designer to create drawings.</p>
           </div>
           <button type="button" onClick={onClose} className="p-2 hover:bg-[hsl(var(--muted))] rounded-xl"><X size={20} className="text-[hsl(var(--muted-foreground))]" /></button>
         </div>
@@ -90,12 +87,12 @@ export function InteriorSendToRequirementsModal({ isOpen, onClose, customerId, o
           <div>
             <label className="text-xs font-bold text-[hsl(var(--foreground))]">Assign Designer</label>
             <select
-              value={designerAssigned}
-              onChange={e => setDesignerAssigned(e.target.value)}
-              className="w-full mt-1.5 px-4 py-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
+              value={assignedDesigner}
+              onChange={e => setAssignedDesigner(e.target.value)}
+              className="w-full mt-1.5 px-4 py-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none"
               required
             >
-              <option value="">-- Select Designer --</option>
+              <option value="">-- Select Member --</option>
               {users.map(u => (
                 <option key={u._id || u.id} value={u._id || u.id}>{userLabel(u)}</option>
               ))}
@@ -108,15 +105,15 @@ export function InteriorSendToRequirementsModal({ isOpen, onClose, customerId, o
               rows={4}
               value={remarks}
               onChange={e => setRemarks(e.target.value)}
-              placeholder="Any details the designer should know before meeting the client..."
-              className="w-full mt-1.5 px-4 py-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none resize-none"
+              placeholder="Any details the team should know before creating the drawing..."
+              className="w-full mt-1.5 px-4 py-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none resize-none"
             />
           </div>
 
           <div className="pt-4 flex justify-end gap-3">
             <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-bold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">Cancel</button>
-            <button type="submit" disabled={isSubmitting} className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50">
-              {isSubmitting ? 'Passing...' : 'Pass to Requirements ➔'}
+            <button type="submit" disabled={isSubmitting} className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50">
+              {isSubmitting ? 'Passing...' : 'Pass to Drawing ➔'}
             </button>
           </div>
         </form>

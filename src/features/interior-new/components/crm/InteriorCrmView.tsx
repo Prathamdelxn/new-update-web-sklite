@@ -24,6 +24,9 @@ import { InteriorSendToSiteVisitModal } from './modals/InteriorSendToSiteVisitMo
 import { InteriorSendToRequirementsModal } from './modals/InteriorSendToRequirementsModal';
 import { InteriorConvertToProjectModal } from './modals/InteriorConvertToProjectModal';
 import { InteriorUploadDesignModal } from './modals/InteriorUploadDesignModal';
+import { InteriorSendToDrawingModal } from './modals/InteriorSendToDrawingModal';
+import { InteriorSendToBoqModal } from './modals/InteriorSendToBoqModal';
+import { InteriorBoqBuilderModal } from './modals/InteriorBoqBuilderModal';
 import { InteriorSendToQuotationsModal } from './modals/InteriorSendToQuotationsModal';
 import { InteriorQuotationBuilderModal } from './modals/InteriorQuotationBuilderModal';
 import { InteriorDeleteLeadModal } from './modals/InteriorDeleteLeadModal';
@@ -51,6 +54,9 @@ export default function InteriorCrmView() {
   const [isUploadDesignOpen, setIsUploadDesignOpen] = useState(false);
   const [isSendToSiteVisitOpen, setIsSendToSiteVisitOpen] = useState(false);
   const [isSendToRequirementsOpen, setIsSendToRequirementsOpen] = useState(false);
+  const [isSendToDrawingOpen, setIsSendToDrawingOpen] = useState(false);
+  const [isSendToBoqOpen, setIsSendToBoqOpen] = useState(false);
+  const [isAddBoqOpen, setIsAddBoqOpen] = useState(false);
   const [isSendToQuotationsOpen, setIsSendToQuotationsOpen] = useState(false);
   const [isQuotationBuilderOpen, setIsQuotationBuilderOpen] = useState(false);
   const [isConvertToProjectOpen, setIsConvertToProjectOpen] = useState(false);
@@ -87,13 +93,19 @@ export default function InteriorCrmView() {
       return leads.filter(l => l.status === 'Contacted');
     }
     if (activeTab === 'site_visits') {
-      return leads.filter(l => ['Meeting Scheduled', 'Measurement Done'].includes(l.status));
+      return leads.filter(l => ['Under Site Visit', 'Measurement Done'].includes(l.status));
     }
     if (activeTab === 'requirement_design') {
-      return leads.filter(l => ['Requirement Completed', 'Design Approved'].includes(l.status));
+      return leads.filter(l => ['Under Requirement', 'Design Approved'].includes(l.status));
+    }
+    if (activeTab === 'drawing') {
+      return leads.filter(l => ['Under Drawing'].includes(l.status));
+    }
+    if (activeTab === 'boq') {
+      return leads.filter(l => ['Under BOQ Creation'].includes(l.status));
     }
     if (activeTab === 'quotations') {
-      return leads.filter(l => ['Quotation Sent'].includes(l.status));
+      return leads.filter(l => ['Under Quotation'].includes(l.status));
     }
     // Default fallback
     return leads;
@@ -157,6 +169,21 @@ export default function InteriorCrmView() {
     setIsSendToRequirementsOpen(true);
   };
 
+  const openSendToDrawingModal = (leadId: string) => {
+    setActionLeadId(leadId);
+    setIsSendToDrawingOpen(true);
+  };
+
+  const openSendToBoqModal = (leadId: string) => {
+    setActionLeadId(leadId);
+    setIsSendToBoqOpen(true);
+  };
+
+  const openAddBoqModal = (leadId: string) => {
+    setActionLeadId(leadId);
+    setIsAddBoqOpen(true);
+  };
+
   const openSendToQuotationsModal = (leadId: string) => {
     setActionLeadId(leadId);
     setIsSendToQuotationsOpen(true);
@@ -203,7 +230,7 @@ export default function InteriorCrmView() {
       <AnimatePresence mode="wait">
         {activeTab === 'follow_ups' ? (
           <motion.div key="followups-view" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
-            <InteriorFollowUpsView onPassToSiteVisit={openSendToSiteVisitModal} />
+            <InteriorFollowUpsView onPassToSiteVisit={openSendToSiteVisitModal} refreshTrigger={leads} />
           </motion.div>
         ) : activeTab === 'site_visits' ? (
           <motion.div key="sitevisits-view" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
@@ -218,7 +245,34 @@ export default function InteriorCrmView() {
             <InteriorRequirementDesignView
               leads={getFilteredLeads()}
               onLogRequirements={openRequirementsModal}
+              onUploadDesign={() => {}} // Not used anymore
+              onPassToQuotations={openSendToDrawingModal} // Flow changes to pass to drawing
+            />
+          </motion.div>
+        ) : activeTab === 'drawing' ? (
+          <motion.div key="drawing-view" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+            <InteriorLeadsTable
+              leads={getFilteredLeads()}
+              isLoading={isLoading}
+              activeTab={activeTab}
+              onEdit={openEditModal}
+              onDelete={handleOpenDeleteModal}
+              onPassToFollowUp={openFollowUpModal}
+              onPassToBoq={openSendToBoqModal}
               onUploadDesign={openUploadDesignModal}
+              onLogRequirements={openRequirementsModal}
+            />
+          </motion.div>
+        ) : activeTab === 'boq' ? (
+          <motion.div key="boq-view" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+            <InteriorLeadsTable
+              leads={getFilteredLeads()}
+              isLoading={isLoading}
+              activeTab={activeTab}
+              onEdit={openEditModal}
+              onDelete={handleOpenDeleteModal}
+              onPassToFollowUp={openFollowUpModal}
+              onAddBoq={openAddBoqModal}
               onPassToQuotations={openSendToQuotationsModal}
             />
           </motion.div>
@@ -245,11 +299,16 @@ export default function InteriorCrmView() {
             <InteriorLeadsTable
               leads={getFilteredLeads()}
               isLoading={isLoading}
+              activeTab={activeTab}
               onEdit={openEditModal}
               onDelete={handleOpenDeleteModal}
               onPassToFollowUp={openFollowUpModal}
               onPassToSiteVisit={openSendToSiteVisitModal}
               onPassToRequirements={openSendToRequirementsModal}
+              onPassToDrawing={openSendToDrawingModal}
+              onPassToBoq={openSendToBoqModal}
+              onAddBoq={openAddBoqModal}
+              onPassToQuotations={openSendToQuotationsModal}
             />
           </motion.div>
         ) : (
@@ -303,6 +362,8 @@ export default function InteriorCrmView() {
         customerId={actionLeadId || ''}
         onSuccess={fetchLeads}
         users={users}
+        initialMeasurements={leads.find(l => l._id === actionLeadId)?.siteMeasurements}
+        initialPhotos={leads.find(l => l._id === actionLeadId)?.sitePhotos}
       />
 
       <InteriorLogRequirementsModal
@@ -311,6 +372,9 @@ export default function InteriorCrmView() {
         customerId={actionLeadId || ''}
         onSuccess={fetchLeads}
         users={users}
+        initialRequirements={leads.find(l => l._id === actionLeadId)?.requirements || []}
+        initialBudget={leads.find(l => l._id === actionLeadId)?.budgetRange || ''}
+        isReadOnly={['Under Drawing', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Converted'].includes(leads.find(l => l._id === actionLeadId)?.status || '')}
       />
 
       <InteriorUploadDesignModal
@@ -318,6 +382,7 @@ export default function InteriorCrmView() {
         onClose={() => setIsUploadDesignOpen(false)}
         customerId={actionLeadId || ''}
         onSuccess={fetchLeads}
+        existingFiles={leads.find(l => l._id === actionLeadId)?.designFiles || []}
       />
 
       <InteriorSendToSiteVisitModal
@@ -334,6 +399,30 @@ export default function InteriorCrmView() {
         customerId={actionLeadId || ''}
         onSuccess={fetchLeads}
         users={users}
+      />
+
+      <InteriorSendToDrawingModal
+        isOpen={isSendToDrawingOpen}
+        onClose={() => setIsSendToDrawingOpen(false)}
+        customerId={actionLeadId || ''}
+        onSuccess={fetchLeads}
+        users={users}
+      />
+
+      <InteriorSendToBoqModal
+        isOpen={isSendToBoqOpen}
+        onClose={() => setIsSendToBoqOpen(false)}
+        customerId={actionLeadId || ''}
+        onSuccess={fetchLeads}
+        users={users}
+      />
+
+      <InteriorBoqBuilderModal
+        isOpen={isAddBoqOpen}
+        onClose={() => setIsAddBoqOpen(false)}
+        customerId={actionLeadId || ''}
+        existingBoqs={leads.find(l => l._id === actionLeadId)?.boqs || []}
+        onSuccess={fetchLeads}
       />
 
       <InteriorSendToQuotationsModal

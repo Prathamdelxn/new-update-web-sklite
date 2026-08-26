@@ -22,6 +22,14 @@ export function InteriorConvertToProjectModal({ isOpen, onClose, customerId, onS
   const [startDate, setStartDate] = useState('');
   const [remarks, setRemarks] = useState('');
 
+  React.useEffect(() => {
+    if (!isOpen) {
+      setStartDate('');
+      setRemarks('');
+    }
+  }, [isOpen]);
+
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {

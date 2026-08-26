@@ -43,10 +43,34 @@ export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, cus
   const [recipientEmail, setRecipientEmail] = useState(customerEmail);
 
   React.useEffect(() => {
+    if (!isOpen) {
+      setTaxPercentage(18);
+      setDiscount(0);
+      setNotes('');
+      setShouldSendEmail(true);
+      setRecipientEmail(customerEmail);
+    }
+  }, [isOpen]);
+
+
+  React.useEffect(() => {
+    if (isOpen && existingQuotations && existingQuotations.length > 0) {
+      const latestQuote = existingQuotations[existingQuotations.length - 1];
+      setItems(latestQuote.items && latestQuote.items.length > 0 ? latestQuote.items : [{ description: '', quantity: 1, unitPrice: 0, total: 0 }]);
+      setTaxPercentage(latestQuote.taxPercentage !== undefined ? latestQuote.taxPercentage : 18);
+      setDiscount(latestQuote.discount || 0);
+      setNotes(latestQuote.notes || '');
+    } else if (isOpen) {
+      setItems([{ description: '', quantity: 1, unitPrice: 0, total: 0 }]);
+      setTaxPercentage(18);
+      setDiscount(0);
+      setNotes('');
+    }
+    
     if (customerEmail) {
       setRecipientEmail(customerEmail);
     }
-  }, [customerEmail]);
+  }, [isOpen, existingQuotations, customerEmail]);
 
   const subtotal = items.reduce((acc, item) => acc + item.total, 0);
   const tax = (subtotal * taxPercentage) / 100;
@@ -101,26 +125,40 @@ export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, cus
 
     setIsSubmitting(true);
 
-    const newVersion = (existingQuotations?.length || 0) + 1;
-
-    const newQuotation = {
-      version: newVersion,
-      items,
-      subtotal,
-      taxPercentage,
-      tax,
-      discount,
-      grandTotal,
-      notes,
-      status: 'Sent'
-    };
-
     try {
-      const updatedQuotations = [...(existingQuotations || []), newQuotation];
+      const updatedQuotations = [...(existingQuotations || [])];
+      const latestQuote = updatedQuotations.length > 0 ? updatedQuotations[updatedQuotations.length - 1] : null;
+
+      const quotationPayload = {
+        items,
+        subtotal,
+        taxPercentage,
+        tax,
+        discount,
+        grandTotal,
+        notes,
+        status: 'Sent'
+      };
+
+      let newQuotation;
+      if (latestQuote && (latestQuote.status === 'Sent' || latestQuote.status === 'Draft')) {
+        updatedQuotations[updatedQuotations.length - 1] = {
+          ...latestQuote,
+          ...quotationPayload
+        };
+        newQuotation = updatedQuotations[updatedQuotations.length - 1];
+      } else {
+        const newVersion = (existingQuotations?.length || 0) + 1;
+        newQuotation = {
+          version: newVersion,
+          ...quotationPayload
+        };
+        updatedQuotations.push(newQuotation);
+      }
 
       await interiorCrmService.updateCustomer(customerId, {
         quotations: updatedQuotations,
-        status: 'Quotation Sent'
+        status: 'Under Quotation'
       });
 
       let emailSentMessage = '';

@@ -10,6 +10,8 @@ import {
   PhoneCall,
   MapPin,
   PenTool,
+  Ruler,
+  Calculator,
   FileText,
   XCircle,
 } from 'lucide-react';
@@ -19,6 +21,8 @@ export type InteriorCrmStage =
   | 'follow_ups'
   | 'site_visits'
   | 'requirement_design'
+  | 'drawing'
+  | 'boq'
   | 'quotations'
   | 'won_projects'
   | 'lost_leads'
@@ -33,7 +37,9 @@ const FLOW_STAGES: { id: InteriorCrmStage; label: string; icon: React.ElementTyp
   { id: 'leads', label: 'Leads', icon: Users },
   { id: 'follow_ups', label: 'Follow-ups', icon: PhoneCall },
   { id: 'site_visits', label: 'Site Visits', icon: MapPin },
-  { id: 'requirement_design', label: 'Requirement & Design', icon: PenTool },
+  { id: 'requirement_design', label: 'Requirements', icon: PenTool },
+  { id: 'drawing', label: 'Drawing', icon: Ruler },
+  { id: 'boq', label: 'BOQ', icon: Calculator },
   { id: 'quotations', label: 'Quotations', icon: FileText },
   { id: 'lost_leads', label: 'Lost Leads', icon: XCircle },
 ];

@@ -3,7 +3,7 @@
 // Port of src/components/crm/LeadsTable.tsx — rewired to the interior-new route.
 
 import React from 'react';
-import { Phone, Mail, User, Building, ArrowRight, UserCircle, Pencil, Trash2, Calendar, MapPin, PenTool } from 'lucide-react';
+import { Phone, Mail, User, Building,BadgeInfo, ArrowRight, UserCircle, Pencil, Trash2, Calendar, MapPin, PenTool, Ruler, Calculator, FileText, Image as ImageIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -24,6 +24,8 @@ export interface InteriorLead {
   siteMeasurements?: any;
   sitePhotos?: string[];
   siteVisitScheduledDate?: string;
+  designFiles?: any[];
+  boqs?: any[];
 }
 
 interface InteriorLeadsTableProps {
@@ -34,6 +36,15 @@ interface InteriorLeadsTableProps {
   onPassToFollowUp: (leadId: string) => void;
   onPassToSiteVisit?: (leadId: string) => void;
   onPassToRequirements?: (leadId: string) => void;
+  onPassToDrawing?: (leadId: string) => void;
+  onPassToBoq?: (leadId: string) => void;
+  onAddBoq?: (leadId: string) => void;
+  onPassToQuotations?: (leadId: string) => void;
+  onCreateQuotation?: (leadId: string) => void;
+  onUploadDesign?: (leadId: string) => void;
+  onLogRequirements?: (leadId: string) => void;
+  onConvertToProject?: (leadId: string) => void;
+  activeTab?: string;
 }
 
 function displayUserName(u?: { name?: string; firstName?: string; lastName?: string; fullName?: string }) {
@@ -45,7 +56,8 @@ function displayUserName(u?: { name?: string; firstName?: string; lastName?: str
 
 export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
   leads, isLoading, onEdit, onDelete,
-  onPassToFollowUp, onPassToSiteVisit, onPassToRequirements
+  onPassToFollowUp, onPassToSiteVisit, onPassToRequirements,
+  onPassToDrawing, onPassToBoq, onAddBoq, onPassToQuotations, onCreateQuotation, onUploadDesign, onLogRequirements, onConvertToProject, activeTab
 }) => {
   const router = useRouter();
 
@@ -168,13 +180,14 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                 {/* Status */}
                 <td className="px-6 py-4">
                   <span className={cn(
-                    'inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium border',
+                    'inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border',
                     (lead.quotations?.length && lead.quotations[lead.quotations.length - 1].status === 'Accepted' && lead.status !== 'Converted') ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                     lead.status === 'New Lead' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                    lead.status === 'Contacted' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                    lead.status === 'Meeting Scheduled' || lead.status === 'Measurement Done' ? 'bg-purple-50 text-purple-600 border-purple-100' :
-                    lead.status === 'Requirement Completed' || lead.status === 'Design Approved' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
-                    lead.status === 'Quotation Sent' || lead.status === 'Negotiation' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                    lead.status === 'Contacted' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
+                    lead.status === 'Under Site Visit' || lead.status === 'Measurement Done' ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                    lead.status === 'Under Requirement' || lead.status === 'Design Approved' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
+                    lead.status === 'Under Drawing' ? 'bg-cyan-50 text-cyan-600 border-cyan-100' :
+                    lead.status === 'Under BOQ Creation' ? 'bg-teal-50 text-teal-600 border-teal-100' :
                     lead.status === 'Converted' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
                     'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))]'
                   )}>
@@ -182,53 +195,85 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                   </span>
                 </td>
 
-                {/* Actions (Edit, Delete, Pass to Next Stage) */}
+                {/* Actions (Edit, Delete in leads tab, respective actions in drawing/boq tabs) */}
                 <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-1.5">
-                    <button
-                      onClick={() => onEdit(lead)}
-                      className="p-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-xl transition-all border border-[hsl(var(--border))]"
-                      title="Edit Lead"
-                    >
-                      <Pencil size={14} />
-                    </button>
+                    {activeTab === 'leads' && (
+                      <>
+                        {lead.status === 'New Lead' && onPassToFollowUp && (
+                          <button
+                            onClick={() => onPassToFollowUp(lead._id)}
+                            className="p-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 rounded-xl transition-all border border-blue-500/20"
+                            title="Schedule Follow-up"
+                          >
+                            <Calendar size={14} />
+                          </button>
+                        )}
 
-                    {onDelete && (
-                      <button
-                        onClick={() => onDelete(lead)}
-                        className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded-xl transition-all border border-rose-500/20"
-                        title="Delete Lead"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                        <button
+                          onClick={() => onEdit(lead)}
+                          className="p-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-xl transition-all border border-[hsl(var(--border))]"
+                          title="Edit Lead"
+                        >
+                          <Pencil size={14} />
+                        </button>
+
+                        {onDelete && (
+                          <button
+                            onClick={() => onDelete(lead)}
+                            className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded-xl transition-all border border-rose-500/20"
+                            title="Delete Lead"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </>
                     )}
 
-                    {(lead.status === 'New Lead') && (
-                      <button
-                        onClick={() => onPassToFollowUp(lead._id)}
-                        className="p-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 rounded-xl transition-all border border-blue-500/20"
-                        title="Pass to Follow-up"
-                      >
-                        <Calendar size={14} />
-                      </button>
+                    {activeTab === 'drawing' && (
+                      <>
+                        {onUploadDesign && (
+                          <button
+                            onClick={() => onUploadDesign(lead._id)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-xs font-bold transition-all"
+                            title="Upload Design / Drawing Files"
+                          >
+                            {(!lead.designFiles || lead.designFiles.length === 0) ? 'Upload Drawing' : 'Add More Drawings'}
+                          </button>
+                        )}
+                        {onPassToBoq && lead.designFiles && lead.designFiles.length > 0 && (
+                          <button
+                            onClick={() => onPassToBoq(lead._id)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 text-white hover:bg-cyan-700 rounded-lg text-xs font-bold transition-all"
+                            title="Pass to BOQ"
+                          >
+                            Pass <ArrowRight size={14} />
+                          </button>
+                        )}
+                      </>
                     )}
-                    {lead.status === 'Contacted' && onPassToSiteVisit && (
-                      <button
-                        onClick={() => onPassToSiteVisit(lead._id)}
-                        className="p-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 rounded-xl transition-all border border-purple-500/20"
-                        title="Send to Site Visit"
-                      >
-                        <MapPin size={14} />
-                      </button>
-                    )}
-                    {(lead.status === 'Meeting Scheduled' || lead.status === 'Measurement Done') && onPassToRequirements && lead.siteMeasurements && (
-                      <button
-                        onClick={() => onPassToRequirements(lead._id)}
-                        className="p-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 rounded-xl transition-all border border-emerald-500/20"
-                        title="Pass to Requirements"
-                      >
-                        <PenTool size={14} />
-                      </button>
+
+                    {activeTab === 'boq' && (
+                      <>
+                        {onAddBoq && (
+                          <button
+                            onClick={() => onAddBoq(lead._id)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 text-white hover:bg-teal-700 rounded-lg text-xs font-bold transition-all"
+                            title={(!lead.boqs || lead.boqs.length === 0) ? "Add BOQ" : "View/Edit BOQ"}
+                          >
+                            {(!lead.boqs || lead.boqs.length === 0) ? "Add BOQ" : "View/Edit"}
+                          </button>
+                        )}
+                        {onPassToQuotations && lead.boqs && lead.boqs.length > 0 && (
+                          <button
+                            onClick={() => onPassToQuotations(lead._id)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-600 hover:text-white rounded-lg text-xs font-bold transition-all"
+                            title="Pass to Quotations"
+                          >
+                            Pass <ArrowRight size={14} />
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </td>

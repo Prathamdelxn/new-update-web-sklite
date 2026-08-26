@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 
 interface Props {
   onPassToSiteVisit: (leadId: string) => void;
+  refreshTrigger?: any;
 }
 
 function displayUserName(u?: any) {
@@ -20,7 +21,7 @@ function displayUserName(u?: any) {
   return u.name || 'Assigned';
 }
 
-export const InteriorFollowUpsView = ({ onPassToSiteVisit }: Props) => {
+export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger }: Props) => {
   const router = useRouter();
   const [pendingFollowUps, setPendingFollowUps] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,7 +43,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit }: Props) => {
       }
     };
     fetchFollowUps();
-  }, []);
+  }, [refreshTrigger]);
 
   return (
     <div className="w-full bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">
@@ -149,10 +150,10 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit }: Props) => {
                   <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => onPassToSiteVisit(act.customer?._id)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-600 hover:text-white rounded-lg text-xs font-bold transition-all"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5  text-white bg-blue-600 hover:bg-purple-600 hover:text-white rounded-lg text-xs font-bold transition-all"
                       title="Send to Site Visit"
                     >
-                      Pass <MapPin size={14} />
+                      <MapPin size={14} />Send to Site Visit 
                     </button>
                   </td>
                 </motion.tr>

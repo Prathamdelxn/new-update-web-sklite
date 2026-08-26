@@ -32,15 +32,15 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
 
   if (leads.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center bg-[hsl(var(--card))] border-2 border-dashed border-[hsl(var(--border))] rounded-3xl">
-        <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-blue-400 mb-4">
-          <MapPin size={32} />
+        <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+          <div className="w-16 h-16 bg-[hsl(var(--muted))] rounded-full flex items-center justify-center mb-4">
+            <MapPin size={24} className="text-[hsl(var(--muted-foreground))]" />
+          </div>
+          <h3 className="text-lg font-bold text-[hsl(var(--foreground))] mb-2">No Site Visits Found</h3>
+          <p className="text-[hsl(var(--muted-foreground))] max-w-md mx-auto">
+            When you change a Lead's status to "Under Site Visit" or "Measurement Done", they will appear here.
+          </p>
         </div>
-        <h3 className="text-xl font-bold text-[hsl(var(--foreground))]">No Active Site Visits</h3>
-        <p className="text-sm text-[hsl(var(--muted-foreground))] max-w-sm mt-2">
-          When you change a Lead's status to "Meeting Scheduled" or "Measurement Done", they will appear here.
-        </p>
-      </div>
     );
   }
 
@@ -131,7 +131,7 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                       onClick={() => onLogSiteVisit(lead._id)}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white hover:bg-purple-700 rounded-lg text-xs font-bold transition-all"
                     >
-                      Log Visit
+                      Log Measurement
                     </button>
                   )}
                   {lead.siteMeasurements && (

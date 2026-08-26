@@ -27,6 +27,14 @@ export function InteriorSendToQuotationsModal({ isOpen, onClose, customerId, onS
   const [assignedSalesExecutive, setAssignedSalesExecutive] = useState('');
   const [remarks, setRemarks] = useState('');
 
+  React.useEffect(() => {
+    if (!isOpen) {
+      setAssignedSalesExecutive('');
+      setRemarks('');
+    }
+  }, [isOpen]);
+
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,7 +43,7 @@ export function InteriorSendToQuotationsModal({ isOpen, onClose, customerId, onS
 
     try {
       const updatePayload: any = {
-        status: 'Quotation Sent',
+        status: 'Under Quotation',
       };
 
       if (assignedSalesExecutive) {

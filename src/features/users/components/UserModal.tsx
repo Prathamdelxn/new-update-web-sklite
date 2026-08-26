@@ -60,34 +60,38 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
     load();
 
     if (initialData) {
-      setFormData({
-        name: initialData.name || '',
-        email: initialData.email || '',
-        mobile: initialData.phoneNumber || initialData.mobile || '',
-        password: '',
+      Promise.resolve().then(() => {
+        setFormData({
+          name: initialData.name || '',
+          email: initialData.email || '',
+          mobile: initialData.phoneNumber || initialData.mobile || '',
+          password: '',
+        });
+        setSelectedRole(
+          typeof initialData.role === 'object' ? initialData.role : null
+        );
+        
+        const pRoles: Record<string, string> = {};
+        const projArr: any[] = [];
+        // Entries with no linked project (project: null) are orphaned
+        // assignments left over from elsewhere — they don't reference a real
+        // project, so there's nothing to display or resubmit for them.
+        (initialData.projects || []).forEach((p: any) => {
+          if (p.project) {
+            projArr.push(p.project);
+            if (p.role) pRoles[p.project._id || p.project] = p.role._id || p.role;
+          }
+        });
+        setSelectedProjects(projArr);
+        setProjectRoles(pRoles);
       });
-      setSelectedRole(
-        typeof initialData.role === 'object' ? initialData.role : null
-      );
-      
-      const pRoles: Record<string, string> = {};
-      const projArr: any[] = [];
-      // Entries with no linked project (project: null) are orphaned
-      // assignments left over from elsewhere — they don't reference a real
-      // project, so there's nothing to display or resubmit for them.
-      (initialData.projects || []).forEach((p: any) => {
-        if (p.project) {
-          projArr.push(p.project);
-          if (p.role) pRoles[p.project._id || p.project] = p.role._id || p.role;
-        }
-      });
-      setSelectedProjects(projArr);
-      setProjectRoles(pRoles);
     } else {
-      setFormData({ name: '', email: '', mobile: '', password: '' });
-      setSelectedRole(null);
-      setSelectedProjects([]);
-      setProjectRoles({});
+      Promise.resolve().then(() => {
+        setFormData({ name: '', email: '', mobile: '', password: '' });
+        setSelectedRole(null);
+        setSelectedProjects([]);
+        setProjectRoles({});
+      });
     }
     setProjectSearch('');
   }, [isOpen, initialData]);

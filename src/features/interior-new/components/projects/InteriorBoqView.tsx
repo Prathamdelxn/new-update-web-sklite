@@ -665,11 +665,6 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
 
               <form onSubmit={handleManualCreate} className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto p-5 space-y-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))]">Revision Notes</label>
-                    <Input placeholder="e.g. Initial draft layout base price calculations" value={newBoqNotes} onChange={(e) => setNewBoqNotes(e.target.value)} />
-                  </div>
-
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))]">BOQ Line Items ({newItems.length})</span>

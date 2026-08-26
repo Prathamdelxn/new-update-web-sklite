@@ -23,9 +23,9 @@ export const InteriorRequirementDesignView = ({ leads, onLogRequirements, onUplo
         <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-500 mb-4">
           <PenTool size={32} />
         </div>
-        <h3 className="text-xl font-bold text-[hsl(var(--foreground))]">No Design Projects Active</h3>
+        <h3 className="text-xl font-bold text-[hsl(var(--foreground))]">No Requirements Active</h3>
         <p className="text-sm text-[hsl(var(--muted-foreground))] max-w-sm mt-2">
-          Leads moved to "Requirement Completed" or "Design Approved" will appear here for tracking layouts and 3D renders.
+          Leads moved to "Under Requirement" will appear here for tracking.
         </p>
       </div>
     );
@@ -39,16 +39,13 @@ export const InteriorRequirementDesignView = ({ leads, onLogRequirements, onUplo
             <tr>
               <th className="px-6 py-4 rounded-tl-2xl">Lead Info</th>
               <th className="px-6 py-4">Property Info</th>
-              <th className="px-6 py-4">Design Status</th>
+              <th className="px-6 py-4">Requirement Status</th>
               <th className="px-6 py-4">Status</th>
               <th className="px-6 py-4 text-right rounded-tr-2xl">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[hsl(var(--border))]">
             {leads.map((lead) => {
-              const isRequirementDisabled = (lead.requirements && lead.requirements.length > 0) || lead.status === 'Design Approved';
-              const isDesignDisabled = !(lead.requirements && lead.requirements.length > 0) || lead.status === 'Design Approved';
-
               return (
                 <tr
                   key={lead._id}
@@ -80,16 +77,12 @@ export const InteriorRequirementDesignView = ({ leads, onLogRequirements, onUplo
                     </div>
                   </td>
 
-                  {/* Design Status */}
+                  {/* Requirement Status */}
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-1 text-[11px] text-[hsl(var(--muted-foreground))]">
                       <div className="flex items-center gap-1.5">
                         <FileText size={12} className="text-[hsl(var(--muted-foreground))]" />
                         <span className="font-bold text-[hsl(var(--foreground))]">{lead.requirements?.length || 0}</span> Rooms to Design
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <ImageIcon size={12} className="text-[hsl(var(--muted-foreground))]" />
-                        <span className="font-bold text-[hsl(var(--foreground))]">{lead.designFiles?.length || 0}</span> Design Files
                       </div>
                     </div>
                   </td>
@@ -98,7 +91,7 @@ export const InteriorRequirementDesignView = ({ leads, onLogRequirements, onUplo
                   <td className="px-6 py-4">
                     <span className={cn(
                       'inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border',
-                      lead.status === 'Design Approved'
+                      lead.status === 'Under Requirement'
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
                         : 'bg-amber-50 text-amber-700 border-amber-100'
                     )}>
@@ -110,25 +103,19 @@ export const InteriorRequirementDesignView = ({ leads, onLogRequirements, onUplo
                   <td className="px-6 py-4 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => onLogRequirements(lead._id)}
-                      disabled={isRequirementDisabled}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary)/0.9)] disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-xs font-bold transition-all"
                     >
-                      Requirement
+                      {lead.requirements && lead.requirements.length > 0 ? 'Edit Requirements' : 'Add Requirements'}
                     </button>
-                    <button
-                      onClick={() => onUploadDesign(lead._id)}
-                      disabled={isDesignDisabled}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary)/0.9)] disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-xs font-bold transition-all"
-                    >
-                      Design
-                    </button>
-                    <button
-                      onClick={() => onPassToQuotations(lead._id)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-600 hover:text-white rounded-lg text-xs font-bold transition-all"
-                      title="Pass to Quotations"
-                    >
-                      Pass <ArrowRight size={14} />
-                    </button>
+                    {lead.requirements && lead.requirements.length > 0 && (
+                      <button
+                        onClick={() => onPassToQuotations(lead._id)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-600 hover:text-white rounded-lg text-xs font-bold transition-all"
+                        title="Pass to Quotations"
+                      >
+                        Pass <ArrowRight size={14} />
+                      </button>
+                    )}
                   </td>
                 </tr>
               );

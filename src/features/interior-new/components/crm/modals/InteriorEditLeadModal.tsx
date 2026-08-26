@@ -35,6 +35,13 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
     assignedSalesExecutive: '',
   });
 
+  React.useEffect(() => {
+    if (!isOpen) {
+      setErrors({});
+    }
+  }, [isOpen]);
+
+
   useEffect(() => {
     if (lead) {
       setFormData({

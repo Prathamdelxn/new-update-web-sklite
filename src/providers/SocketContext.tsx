@@ -23,7 +23,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         auth: { token },
       });
 
-      setSocket(newSocket);
+      Promise.resolve().then(() => setSocket(newSocket));
 
       return () => {
         newSocket.close();

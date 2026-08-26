@@ -52,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('superAdmin');
       Cookies.remove('token');
       Cookies.remove('saToken');
-      setUser(null);
+      Promise.resolve().then(() => setUser(null));
       router.push('/login');
     } else if (token && savedUser && savedUser !== 'undefined' && savedUser !== 'null') {
       try {
@@ -72,7 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
     }
     setLoading(false);
-  }, []);
+  }, [router]);
 
   // const login = async (credentials: any) => {
   //   try {

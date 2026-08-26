@@ -38,6 +38,13 @@ export function InteriorScheduleFollowUpModal({ isOpen, onClose, customerId, cus
     assignedSalesExecutive: ''
   });
 
+  React.useEffect(() => {
+    if (!isOpen) {
+      setErrors({});
+    }
+  }, [isOpen]);
+
+
   if (!isOpen) return null;
 
   const validateForm = (): boolean => {
