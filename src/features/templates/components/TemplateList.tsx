@@ -430,7 +430,7 @@ export const TemplateList = () => {
         </div>
 
         {/* Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {pagedTemplates.map((template) => {
             const coverImage = template.images?.[0];
             
@@ -441,155 +441,152 @@ export const TemplateList = () => {
               ? `${minBudget} - ${maxBudget}`
               : minBudget || maxBudget || null;
             
+            const hasDescription = !!template.description && template.description.trim().length > 2;
+
             return (
-              <div 
-                key={template._id} 
-                className="group relative bg-white rounded-2xl border border-gray-200 hover:border-blue-300 hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden"
+              <div
+                key={template._id}
+                className="group relative bg-white rounded-2xl border border-gray-200 hover:border-blue-300 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col"
                 onClick={() => setViewTemplateId(template._id)}
               >
-                {/* Menu Button */}
-                <div
-                  className="absolute top-3 right-3 z-10"
-                  ref={templateMenuId === template._id ? templateMenuRef : null}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setTemplateMenuId(templateMenuId === template._id ? null : template._id);
-                    }}
-                    className="p-1.5 bg-white/90 backdrop-blur-sm hover:bg-white rounded-xl border border-gray-200 shadow-sm transition-all hover:shadow-md"
-                  >
-                    <MoreVertical className="w-4 h-4 text-gray-600" />
-                  </button>
-
-                  {templateMenuId === template._id && (
-                    <div className="absolute right-0 top-full mt-1.5 w-40 bg-white rounded-xl border border-gray-200 shadow-xl z-50 py-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setTemplateMenuId(null); setViewTemplateId(template._id); }}
-                        className="w-full px-3.5 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 transition-colors"
-                      >
-                        <Eye className="w-4 h-4 text-gray-400" />
-                        View Details
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); openEdit(template); }}
-                        className="w-full px-3.5 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 transition-colors"
-                      >
-                        <Pencil className="w-4 h-4 text-gray-400" />
-                        Edit Template
-                      </button>
-                      <div className="border-t border-gray-100 my-1 mx-3" />
-                      <button
-                        onClick={(e) => handleDelete(e, template._id, template.name)}
-                        className="w-full px-3.5 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2.5 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Delete
-                      </button>
+                {/* Cover */}
+                <div className="relative h-36 w-full overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-50 shrink-0">
+                  {coverImage ? (
+                    <img
+                      src={coverImage}
+                      alt={template.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Layers className="w-10 h-10 text-blue-300" />
                     </div>
                   )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/0 to-black/0" />
+
+                  {/* Category badge */}
+                  <span className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/95 backdrop-blur-sm text-blue-700 text-[11px] font-bold rounded-lg shadow-sm">
+                    <FolderOpen className="w-3 h-3" />
+                    {template.category?.name || 'General'}
+                  </span>
+
+                  {/* Menu Button */}
+                  <div
+                    className="absolute top-3 right-3 z-10"
+                    ref={templateMenuId === template._id ? templateMenuRef : null}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTemplateMenuId(templateMenuId === template._id ? null : template._id);
+                      }}
+                      className="p-1.5 bg-white/95 backdrop-blur-sm hover:bg-white rounded-xl shadow-sm transition-all hover:shadow-md"
+                    >
+                      <MoreVertical className="w-4 h-4 text-gray-600" />
+                    </button>
+
+                    {templateMenuId === template._id && (
+                      <div className="absolute right-0 top-full mt-1.5 w-40 bg-white rounded-xl border border-gray-200 shadow-xl z-50 py-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setTemplateMenuId(null); setViewTemplateId(template._id); }}
+                          className="w-full px-3.5 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 transition-colors"
+                        >
+                          <Eye className="w-4 h-4 text-gray-400" />
+                          View Details
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openEdit(template); }}
+                          className="w-full px-3.5 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 transition-colors"
+                        >
+                          <Pencil className="w-4 h-4 text-gray-400" />
+                          Edit Template
+                        </button>
+                        <div className="border-t border-gray-100 my-1 mx-3" />
+                        <button
+                          onClick={(e) => handleDelete(e, template._id, template.name)}
+                          className="w-full px-3.5 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2.5 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Title, over the image for a tighter card */}
+                  <h4 className="absolute bottom-2.5 left-3.5 right-3.5 text-[15px] capitalize font-bold text-white line-clamp-1 tracking-tight drop-shadow-sm">
+                    {template.name}
+                  </h4>
                 </div>
 
                 {/* Content */}
-                <div className="p-4">
-                  {/* Tags */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 text-[11px] font-semibold rounded-lg border border-blue-100">
-                      <FolderOpen className="w-3 h-3" />
-                      {template.category?.name || 'General'}
-                    </span>
-                  </div>
-
-                  {/* Title */}
-                  <h4 className="text-base capitalize font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1 tracking-tight">
-                    {template.name}
-                  </h4>
-
-                
-
-                  {/* Thumbnail + Metrics */}
-                  <div className="mt-4 flex items-start gap-3.5">
-                    {coverImage ? (
-                      <div className="w-16 h-16 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0 shadow-sm">
-                        <img
-                          src={coverImage}
-                          alt={template.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center border border-blue-100 flex-shrink-0">
-                        <Layers className="w-6 h-6 text-blue-400" />
-                      </div>
+                <div className="p-4 flex flex-col flex-1">
+                  {/* Stat pills */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {budgetDisplay && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 text-[11px] font-semibold rounded-md border border-emerald-100">
+                        <DollarSign className="w-3 h-3" />
+                        {budgetDisplay}
+                      </span>
                     )}
-
-                    <div className="flex-1 min-w-0 grid grid-cols-2 gap-y-1.5 gap-x-2 self-center">
-                      {/* Budget - Full width row */}
-                      {budgetDisplay && (
-                        <div className="col-span-2 flex items-center gap-1.5 text-xs font-medium text-gray-700">
-                          <DollarSign className="w-3.5 h-3.5 text-gray-400" />
-                          <span>{budgetDisplay}</span>
-                        </div>
-                      )}
-                      
-                      {/* Area */}
-                      {template.area && (
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-gray-700">
-                          <Ruler className="w-3.5 h-3.5 text-gray-400" />
-                          <span>{template.area.toLocaleString()} ft²</span>
-                        </div>
-                      )}
-                      
-                      {/* Days */}
-                      {template.estimatedDays && (
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-gray-700">
-                          <Clock className="w-3.5 h-3.5 text-gray-400" />
-                          <span>{template.estimatedDays} days</span>
-                        </div>
-                      )}
-                      
-                      {/* Project Type - Only if no area or days to fill the grid */}
-                      {template.projectType && !template.area && !template.estimatedDays && (
-                        <div className="col-span-2 flex items-center gap-1.5 text-xs font-medium text-gray-700">
-                          <Tag className="w-3.5 h-3.5 text-gray-400" />
-                          <span className="capitalize truncate">{template.projectType}</span>
-                        </div>
-                      )}
-                    </div>
+                    {template.area && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-700 text-[11px] font-semibold rounded-md border border-amber-100">
+                        <Ruler className="w-3 h-3" />
+                        {template.area.toLocaleString()} ft²
+                      </span>
+                    )}
+                    {template.estimatedDays && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-violet-50 text-violet-700 text-[11px] font-semibold rounded-md border border-violet-100">
+                        <Clock className="w-3 h-3" />
+                        {template.estimatedDays}d
+                      </span>
+                    )}
+                    {template.projectType && !template.area && !template.estimatedDays && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-slate-50 text-slate-600 text-[11px] font-semibold rounded-md border border-slate-200 capitalize">
+                        <Tag className="w-3 h-3" />
+                        {template.projectType}
+                      </span>
+                    )}
                   </div>
+
                   {/* Description */}
-                  <p className="text-sm text-gray-500 leading-relaxed line-clamp-2 mt-2.5">
-                    {template.description || 'No description provided for this template.'}
-                  </p>
+                  {hasDescription && (
+                    <p className="text-xs text-gray-500 leading-relaxed line-clamp-2 mt-2.5">
+                      {template.description}
+                    </p>
+                  )}
+
+                  <div className="flex-1" />
+
                   {/* Divider */}
-                  <div className="my-3 border-t border-gray-100" />
+                  <div className="mt-3 mb-3 border-t border-gray-100" />
 
                   {/* Footer */}
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                    <div className="flex items-center gap-3 text-xs text-gray-400">
                       {template.images?.length > 0 && (
                         <span className="flex items-center gap-1 font-medium">
-                          <ImageIcon className="w-3.5 h-3.5 text-gray-400" />
+                          <ImageIcon className="w-3.5 h-3.5" />
                           {template.images.length}
                         </span>
                       )}
                       {template.files?.length > 0 && (
                         <span className="flex items-center gap-1 font-medium">
-                          <FileText className="w-3.5 h-3.5 text-gray-400" />
+                          <FileText className="w-3.5 h-3.5" />
                           {template.files.length}
                         </span>
                       )}
                       {template.views && (
                         <span className="flex items-center gap-1 font-medium">
-                          <Eye className="w-3.5 h-3.5 text-gray-400" />
+                          <Eye className="w-3.5 h-3.5" />
                           {template.views}
                         </span>
                       )}
                     </div>
                     <button
                       onClick={(e) => { e.stopPropagation(); setViewTemplateId(template._id); }}
-                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors group/btn"
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-xs font-bold text-blue-700 transition-colors group/btn"
                     >
                       View Details
                       <ChevronRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" />
