@@ -19,7 +19,13 @@ import {
   AlertCircle,
   History,
   Pencil,
+  Mail,
+  CheckCircle2,
+  FileText,
+  Camera,
 } from 'lucide-react';
+import { SendRFQModal } from './SendRFQModal';
+import { InteriorGRNModal } from './InteriorGRNModal';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import interiorApiClient from '@/services/interiorApi.client';
@@ -42,8 +48,8 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   const toast = useToast();
   const { confirm } = useConfirm();
 
-  const [activeTab, setActiveTab] = useState<'procurement' | 'inventory'>('procurement');
-  const [activePipeline, setActivePipeline] = useState('pending');
+  const [activeTab, setActiveTab] = useState<'procurement' | 'inventory' | 'request_quotation'>('procurement');
+  const [activePipeline, setActivePipeline] = useState('requested');
   const [pos, setPos] = useState<any[]>([]);
   const [inventory, setInventory] = useState<any[]>([]);
   const [vendors, setVendors] = useState<any[]>([]);
@@ -59,6 +65,8 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   const [selectedPo, setSelectedPo] = useState<any>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [updatingPo, setUpdatingPo] = useState(false);
+  const [isSendRFQOpen, setIsSendRFQOpen] = useState(false);
+  const [isGRNOpen, setIsGRNOpen] = useState(false);
 
   const [selectedStock, setSelectedStock] = useState<any>(null);
   const [isInstallOpen, setIsInstallOpen] = useState(false);
@@ -212,7 +220,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
         vendorName,
         items: poItems,
         deliveryDate: deliveryDate || undefined,
-        status: 'pending',
+        status: activePipeline === 'requested' ? 'requested' : 'pending',
       });
       toast.success('Purchase Order created successfully');
       setIsAddPoOpen(false);
@@ -242,6 +250,97 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       console.error('Failed to update status', err);
       toast.error('Failed to update PO status');
       loadAllData();
+    } finally {
+      setUpdatingPo(false);
+    }
+  };
+
+  const handleUpdateVendor = async (vendorName: string) => {
+    if (!selectedPo) return;
+    try {
+      setUpdatingPo(true);
+      setPos((prev) => prev.map((po) => (po._id === selectedPo._id ? { ...po, vendorName, status: 'approved' } : po)));
+      setSelectedPo({ ...selectedPo, vendorName, status: 'approved' });
+      await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { vendorName, status: 'approved' });
+      toast.success('Vendor selected and PO approved!');
+      setIsDetailOpen(false);
+      loadAllData();
+    } catch (err) {
+      console.error('Failed to update vendor', err);
+      toast.error('Failed to update vendor');
+      loadAllData();
+    } finally {
+      setUpdatingPo(false);
+    }
+  };
+
+  const handleLocalRateChange = (index: number, newRate: number) => {
+    if (!selectedPo) return;
+    const updatedItems = [...selectedPo.items];
+    updatedItems[index] = { ...updatedItems[index], unitPrice: newRate, amount: updatedItems[index].quantity * newRate };
+    const newTotal = updatedItems.reduce((acc, it) => acc + (it.quantity * (it.unitPrice || 0)), 0);
+    setSelectedPo({ ...selectedPo, items: updatedItems, amount: newTotal });
+  };
+
+  const handleSubmitGRN = async (receivedItems: any[], challanNumber: string, proofUrl: string) => {
+    if (!selectedPo) return;
+    try {
+      setUpdatingPo(true);
+      const newGrn = {
+        receivedItems,
+        challanNumber,
+        proofUrl,
+        receivedAt: new Date().toISOString()
+      };
+      
+      const currentGrns = selectedPo.grns || (selectedPo.grnData ? [selectedPo.grnData] : []);
+      const updatedGrns = [...currentGrns, newGrn];
+
+      // Calculate if fully delivered
+      let fullyDelivered = true;
+      selectedPo.items.forEach((item: any) => {
+        const totalReceived = updatedGrns.reduce((acc, grn) => {
+          const r = grn.receivedItems?.find((i: any) => i.name === item.name);
+          return acc + (r?.receivedQuantity || 0);
+        }, 0);
+        if (totalReceived < item.quantity) {
+          fullyDelivered = false;
+        }
+      });
+
+      const newStatus = fullyDelivered ? 'delivered' : 'partially_delivered';
+      
+      const updatedPo = { ...selectedPo, status: newStatus, grns: updatedGrns };
+      setPos(prev => prev.map(p => p._id === updatedPo._id ? updatedPo : p));
+      
+      await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { 
+        status: newStatus,
+        grns: updatedGrns 
+      });
+      
+      setSelectedPo(updatedPo);
+      loadAllData();
+    } catch (err) {
+      console.error('Failed to submit GRN', err);
+      throw err;
+    } finally {
+      setUpdatingPo(false);
+    }
+  };
+
+  const handleSaveRates = async () => {
+    if (!selectedPo) return;
+    try {
+      setUpdatingPo(true);
+      await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { 
+        items: selectedPo.items, 
+        amount: selectedPo.amount 
+      });
+      setPos(prev => prev.map(p => p._id === selectedPo._id ? selectedPo : p));
+      toast.success('Rates saved successfully');
+    } catch (err) {
+      console.error('Failed to save rates', err);
+      toast.error('Failed to save rates');
     } finally {
       setUpdatingPo(false);
     }
@@ -304,10 +403,11 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   };
 
   const pipelines = [
-    { key: 'pending', label: 'Planned', icon: Clock, color: 'text-slate-500' },
+    { key: 'requested', label: 'Material Request', icon: FileText, color: 'text-purple-500' },
+    { key: 'pending', label: 'Purchase Order', icon: Clock, color: 'text-slate-500' },
     { key: 'approved', label: 'Approved PO', icon: ShoppingCart, color: 'text-blue-500' },
-    { key: 'ordered', label: 'Manufacturing', icon: Package, color: 'text-amber-500' },
     { key: 'dispatched', label: 'In Transit', icon: Truck, color: 'text-indigo-500' },
+    { key: 'partially_delivered', label: 'Partial Delivery', icon: AlertCircle, color: 'text-yellow-500' },
     { key: 'delivered', label: 'Delivered', icon: Wrench, color: 'text-emerald-500' },
   ];
 
@@ -346,7 +446,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
           <div>
             <p className="text-xs text-[hsl(var(--muted-foreground))]">Active Purchase Orders</p>
             <p className="text-xl font-bold mt-1">
-              {pos.filter((po) => ['approved', 'ordered', 'dispatched'].includes(po.status)).length} POs
+              {pos.filter((po) => ['approved', 'dispatched'].includes(po.status)).length} POs
             </p>
           </div>
           <Truck className="w-8 h-8 text-amber-500/20" />
@@ -385,14 +485,35 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
             >
               Inventory Management
             </button>
+            <button
+              onClick={() => setActiveTab('request_quotation')}
+              className={cn(
+                'px-3 py-1 text-xs font-semibold rounded-md transition-all',
+                activeTab === 'request_quotation'
+                  ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-sm'
+                  : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
+              )}
+            >
+              Request Quotation
+            </button>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {activeTab === 'procurement' ? (
-            <Button onClick={() => setIsAddPoOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add PO
-            </Button>
+            <>
+              {activePipeline === 'requested' && (
+                <Button onClick={() => setIsAddPoOpen(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Request Material
+                </Button>
+              )}
+              {activePipeline === 'pending' && (
+                <Button onClick={() => setIsAddPoOpen(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create PO
+                </Button>
+              )}
+            </>
           ) : (
             <Button onClick={() => {
               setEditingMaterialId(null);
@@ -408,33 +529,106 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
         </div>
       </div>
 
-      {activeTab === 'procurement' ? (
+      {activeTab === 'request_quotation' ? (
+        <div className="space-y-6">
+          <div className="text-center py-6 border border-dashed border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))]">
+            <Mail className="w-12 h-12 text-[hsl(var(--muted-foreground))] mx-auto mb-3 opacity-40" />
+            <h3 className="text-base font-bold text-[hsl(var(--foreground))]">Send Quotation Requests</h3>
+            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1 max-w-sm mx-auto">
+              Select a draft Purchase Order below to send a Request for Quotation (RFQ) to multiple vendors.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {pos.map((item) => (
+              <motion.div
+                key={item._id}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                onClick={() => {
+                  setSelectedPo(item);
+                  setIsSendRFQOpen(true);
+                }}
+                className="p-5 border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] shadow-sm space-y-4 hover:border-[hsl(var(--primary)/0.3)] hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between text-[11px] mb-2">
+                    <span className="font-mono font-medium text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded-md">{item.poNumber || 'Draft'}</span>
+                    {item.rfqSent ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1 uppercase">
+                        <CheckCircle2 className="w-3 h-3" /> Quotation Sent
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 uppercase">RFQ Ready</span>
+                    )}
+                  </div>
+                  <h4 className="text-base font-bold text-[hsl(var(--foreground))] line-clamp-1">{item.materialName || 'Multiple Items'}</h4>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))] truncate mt-1">Vendor: {item.vendorName || 'Not selected'}</p>
+                </div>
+                <div className="flex items-center justify-between border-t border-[hsl(var(--border))] pt-3 text-xs text-[hsl(var(--muted-foreground))]">
+                  <span className="font-medium">{item.items?.length || 1} product(s)</span>
+                  {item.rfqSent ? (
+                    <span className="flex items-center gap-1 text-green-600 dark:text-green-500 font-semibold">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Sent
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-blue-500 font-semibold">
+                      <Mail className="w-3.5 h-3.5" /> Click to send
+                    </span>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+          {pos.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-sm text-[hsl(var(--muted-foreground))]">No Purchase Orders found. Create a PO first.</p>
+            </div>
+          )}
+        </div>
+      ) : activeTab === 'procurement' ? (
         <>
           {/* Pipeline Board */}
           <div className="flex flex-col space-y-6">
-            <div className="flex items-center gap-2 border-b border-[hsl(var(--border))] pb-4 overflow-x-auto">
-              {pipelines.map((pipe) => {
-                const items = pos.filter((po) => po.status === pipe.key);
-                return (
-                  <button
-                    key={pipe.key}
-                    onClick={() => setActivePipeline(pipe.key)}
-                    className={cn(
-                      'px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-2',
-                      activePipeline === pipe.key ? 'bg-[hsl(var(--primary))] text-white' : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
-                    )}
-                  >
-                    <pipe.icon className={cn('w-4 h-4', activePipeline === pipe.key ? 'text-white' : pipe.color)} />
-                    {pipe.label}
-                    <span className={cn(
-                      'px-2 py-0.5 rounded-full text-[10px]',
-                      activePipeline === pipe.key ? 'bg-white/20 text-white' : 'bg-[hsl(var(--card))] text-[hsl(var(--muted-foreground))]'
-                    )}>
-                      {items.length}
-                    </span>
-                  </button>
-                );
-              })}
+            <div className="w-full relative bg-[hsl(var(--card))] border-b border-[hsl(var(--border))] overflow-x-auto scrollbar-hide rounded-t-2xl">
+              <div className="flex items-center w-full min-w-max">
+                {pipelines.map((pipe) => {
+                  const items = pos.filter((po) => po.status === pipe.key);
+                  const isActive = activePipeline === pipe.key;
+                  return (
+                    <button
+                      key={pipe.key}
+                      onClick={() => setActivePipeline(pipe.key)}
+                      className={cn(
+                        'relative flex items-center justify-center flex-1 gap-1.5 px-4 py-3 text-xs font-medium transition-colors outline-none',
+                        isActive ? 'text-[hsl(var(--primary))] font-semibold' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))]'
+                      )}
+                    >
+                      <pipe.icon
+                        className={cn(
+                          'w-4 h-4 stroke-[1.75px] transition-colors',
+                          isActive ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--muted-foreground))]'
+                        )}
+                      />
+                      <span className="whitespace-nowrap">{pipe.label}</span>
+                      <span className={cn(
+                        'px-1.5 py-0.5 rounded-full text-[10px] ml-1 flex items-center justify-center min-w-[20px]',
+                        isActive ? 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]' : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
+                      )}>
+                        {items.length}
+                      </span>
+                      {isActive && (
+                        <motion.div
+                          layoutId="interiorProcurementFlowTabUnderline"
+                          className="absolute left-0 right-0 bottom-0 h-[3px] bg-[hsl(var(--primary))] rounded-t-full"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -466,6 +660,33 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                       </span>
                     )}
                   </div>
+                  
+                  {activePipeline === 'requested' && (
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedPo(item);
+                        setIsSendRFQOpen(true);
+                      }}
+                      className="w-full mt-2"
+                      size="sm"
+                    >
+                      Create PO
+                    </Button>
+                  )}
+                  {activePipeline === 'dispatched' && (
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedPo(item);
+                        setIsGRNOpen(true);
+                      }}
+                      className="w-full mt-2 bg-emerald-500 hover:bg-emerald-600 text-white"
+                      size="sm"
+                    >
+                      Receive Material
+                    </Button>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -618,7 +839,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
             >
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5 text-[hsl(var(--primary))]" /> Raise Purchase Order
+                  <ShoppingCart className="w-5 h-5 text-[hsl(var(--primary))]" /> Request Material
                 </h3>
                 <button onClick={() => setIsAddPoOpen(false)} className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">
                   <X className="w-4 h-4" />
@@ -627,25 +848,9 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
               <form onSubmit={handleCreatePO}>
                 <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Vendor Name</label>
-                      <select
-                        required
-                        value={vendorName}
-                        onChange={(e) => setVendorName(e.target.value)}
-                        className="w-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-xs font-semibold text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))] appearance-none"
-                      >
-                        <option value="" disabled>Select Vendor...</option>
-                        {vendors.map((v: any) => (
-                          <option key={v._id} value={v.name}>{v.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Est. Delivery Date</label>
-                      <Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
-                    </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Target Delivery Date</label>
+                    <Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
                   </div>
 
                   <div className="border border-[hsl(var(--border))] rounded-lg p-3.5 space-y-3 bg-[hsl(var(--muted)/0.1)]">
@@ -653,7 +858,6 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
                     <div className="space-y-2">
                       <select
-                        required
                         value={newItem.name}
                         onChange={(e) => handleMaterialChange(e.target.value)}
                         className="w-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))] appearance-none"
@@ -744,7 +948,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                   </Button>
                   <Button type="submit" disabled={creatingPo || poItems.length === 0}>
                     {creatingPo && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    Submit PO
+                    Submit Request
                   </Button>
                 </div>
               </form>
@@ -775,9 +979,19 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
               <div className="p-5 space-y-6 flex-1 overflow-y-auto">
                 <div className="grid grid-cols-2 gap-4 text-xs">
-                  <div className="space-y-0.5 border border-[hsl(var(--border))] rounded-lg p-2.5 bg-[hsl(var(--muted)/0.1)]">
-                    <span className="font-semibold text-[hsl(var(--muted-foreground))] block uppercase text-[10px]">Vendor</span>
-                    <span className="font-bold text-[hsl(var(--foreground))]">{selectedPo.vendorName}</span>
+                  <div className="space-y-1 border border-[hsl(var(--border))] rounded-lg p-2.5 bg-[hsl(var(--muted)/0.1)]">
+                    <span className="font-semibold text-[hsl(var(--muted-foreground))] block uppercase text-[10px]">Approved Vendor</span>
+                    <select
+                      value={selectedPo.vendorName || ''}
+                      disabled={updatingPo}
+                      onChange={(e) => handleUpdateVendor(e.target.value)}
+                      className="w-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-md px-2 py-1.5 text-xs font-semibold text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                    >
+                      <option value="" disabled>Select Approved Vendor...</option>
+                      {vendors.map((v: any) => (
+                        <option key={v._id} value={v.name}>{v.name}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="space-y-0.5 border border-[hsl(var(--border))] rounded-lg p-2.5 bg-[hsl(var(--muted)/0.1)]">
                     <span className="font-semibold text-[hsl(var(--muted-foreground))] block uppercase text-[10px]">Target Date</span>
@@ -793,13 +1007,19 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                     <select
                       value={selectedPo.status}
                       disabled={updatingPo}
-                      onChange={(e) => handleUpdateStatus(e.target.value)}
+                      onChange={(e) => {
+                        if (e.target.value === 'delivered' || e.target.value === 'partially_delivered') {
+                          setIsGRNOpen(true);
+                        } else {
+                          handleUpdateStatus(e.target.value);
+                        }
+                      }}
                       className="w-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-xs font-semibold text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                     >
                       <option value="pending">Planned (Pending)</option>
                       <option value="approved">Approved PO</option>
-                      <option value="ordered">Manufacturing (Ordered)</option>
                       <option value="dispatched">In Transit (Dispatched)</option>
+                      <option value="partially_delivered">Partially Delivered</option>
                       <option value="delivered">Delivered (Loads to Inventory)</option>
                       <option value="rejected">Rejected</option>
                     </select>
@@ -810,26 +1030,105 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                   </p>
                 </div>
 
+                {selectedPo.grns && selectedPo.grns.length > 0 ? (
+                  <div className="space-y-3">
+                    <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Delivery Proofs (GRM)
+                    </span>
+                    {selectedPo.grns.map((grn: any, idx: number) => (
+                      <div key={idx} className="border border-emerald-200 bg-emerald-50/50 rounded-lg p-3">
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <p className="text-[10px] font-semibold text-emerald-600/70">Challan No.</p>
+                            <p className="font-bold text-emerald-900">{grn.challanNumber}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-semibold text-emerald-600/70">Received On</p>
+                            <p className="font-bold text-emerald-900">{new Date(grn.receivedAt).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                        {grn.proofUrl && (
+                          <div className="mt-2">
+                            <a href={grn.proofUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:underline font-semibold bg-emerald-100/50 px-2 py-1 rounded">
+                              <Camera className="w-3 h-3" /> View Photo Proof
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : selectedPo.grnData && (
+                  <div className="space-y-2 border border-emerald-200 bg-emerald-50/50 rounded-lg p-4">
+                    <span className="text-[10px] uppercase font-bold text-emerald-700 tracking-wider flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Delivery Proof (GRM)
+                    </span>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <p className="text-[10px] font-semibold text-emerald-600/70">Challan No.</p>
+                        <p className="font-bold text-emerald-900">{selectedPo.grnData.challanNumber}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-semibold text-emerald-600/70">Received On</p>
+                        <p className="font-bold text-emerald-900">{new Date(selectedPo.grnData.receivedAt).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    {selectedPo.grnData.proofUrl && (
+                      <div className="mt-2">
+                        <p className="text-[10px] font-semibold text-emerald-600/70 mb-1">Attached Photo</p>
+                        <a href={selectedPo.grnData.proofUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:underline font-semibold bg-emerald-100/50 px-2 py-1 rounded">
+                          <Camera className="w-3 h-3" /> View Photo Proof
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="space-y-2">
-                  <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider">Ordered Products List</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider">Ordered Products List</span>
+                    <button onClick={handleSaveRates} disabled={updatingPo} className="text-[10px] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] px-2 py-1 rounded font-bold hover:bg-[hsl(var(--primary)/0.2)] flex items-center gap-1 transition-colors">
+                      {updatingPo ? <Loader2 className="w-3 h-3 animate-spin" /> : null} Save Rates
+                    </button>
+                  </div>
                   <div className="border border-[hsl(var(--border))] rounded-lg divide-y divide-[hsl(var(--border))]">
                     {selectedPo.items && selectedPo.items.length > 0 ? (
                       selectedPo.items.map((item: any, idx: number) => (
                         <div key={idx} className="p-3 flex items-center justify-between text-xs bg-[hsl(var(--card))]">
                           <div>
                             <p className="font-bold text-[hsl(var(--foreground))]">{item.name}</p>
-                            <p className="text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
-                              {item.quantity} {item.unit} @ {formatCost(item.unitPrice)} each
-                            </p>
+                            <div className="flex items-center gap-1 mt-1 text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
+                              <span>{item.quantity} {item.unit} @ ₹</span>
+                              <input 
+                                type="number" 
+                                min="0" 
+                                value={item.unitPrice || 0} 
+                                onChange={(e) => handleLocalRateChange(idx, parseFloat(e.target.value) || 0)}
+                                className="w-16 px-1 py-0.5 border border-[hsl(var(--border))] rounded bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:border-[hsl(var(--primary))] text-right"
+                              />
+                              <span>each</span>
+                            </div>
                           </div>
-                          <span className="font-bold font-mono text-[hsl(var(--foreground))]">{formatCost(item.amount || item.quantity * item.unitPrice)}</span>
+                          <span className="font-bold font-mono text-[hsl(var(--foreground))]">{formatCost(item.quantity * (item.unitPrice || 0))}</span>
                         </div>
                       ))
                     ) : (
                       <div className="p-3 flex items-center justify-between text-xs bg-[hsl(var(--card))]">
                         <div>
                           <p className="font-bold text-[hsl(var(--foreground))]">{selectedPo.materialName}</p>
-                          <p className="text-[10px] text-[hsl(var(--muted-foreground))]">1 unit</p>
+                          <div className="flex items-center gap-1 mt-1 text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
+                            <span>1 unit @ ₹</span>
+                            <input 
+                              type="number" 
+                              min="0" 
+                              value={selectedPo.amount || 0} 
+                              onChange={(e) => {
+                                const newAmount = parseFloat(e.target.value) || 0;
+                                setSelectedPo({ ...selectedPo, amount: newAmount });
+                              }}
+                              className="w-16 px-1 py-0.5 border border-[hsl(var(--border))] rounded bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:border-[hsl(var(--primary))] text-right"
+                            />
+                            <span>each</span>
+                          </div>
                         </div>
                         <span className="font-bold font-mono text-[hsl(var(--foreground))]">{formatCost(selectedPo.amount)}</span>
                       </div>
@@ -847,8 +1146,15 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                 <Button onClick={handleDeletePO} variant="outline" className="w-full text-red-500 hover:bg-red-50 hover:text-red-700 border-red-200">
                   <Trash2 className="w-4 h-4 mr-2" /> Delete PO
                 </Button>
-                <Button onClick={() => setIsDetailOpen(false)} className="w-full">
-                  Close Detail
+                <Button 
+                  onClick={async () => {
+                    await handleSaveRates();
+                    setIsDetailOpen(false);
+                  }} 
+                  className="w-full"
+                  disabled={updatingPo}
+                >
+                  {updatingPo ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} Submit Details
                 </Button>
               </div>
             </motion.div>
@@ -972,6 +1278,20 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
           </div>
         )}
       </AnimatePresence>
+
+      <SendRFQModal 
+        isOpen={isSendRFQOpen} 
+        onClose={() => setIsSendRFQOpen(false)} 
+        po={selectedPo} 
+        vendors={vendors} 
+        onSuccess={() => handleUpdateStatus('pending')}
+      />
+      <InteriorGRNModal
+        isOpen={isGRNOpen}
+        onClose={() => setIsGRNOpen(false)}
+        po={selectedPo}
+        onSubmit={handleSubmitGRN}
+      />
     </div>
   );
 }
