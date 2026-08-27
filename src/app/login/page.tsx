@@ -85,7 +85,7 @@ function LoginForm() {
             <div>
               <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white shadow-sm">
                 <Building className="w-5 h-5 text-white" />
-                Sky-Lite Construction
+                SkyStruct Lite
               </div>
 
               <h1 className="mt-4 xl:mt-6 text-2xl xl:text-3xl font-extrabold leading-tight tracking-tight">
@@ -296,7 +296,7 @@ function LoginForm() {
           </div>
 
           <div className="mt-4 xl:mt-6 text-center text-xs text-slate-400">
-            © 2026 Sky-Lite Construction. All rights reserved.
+            © 2026 SkyStruct Lite. All rights reserved.
           </div>
         </div>
       </div>

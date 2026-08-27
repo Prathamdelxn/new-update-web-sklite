@@ -42,7 +42,7 @@ export default function AppInfoModal({
 
           {/* Title */}
           <h2 className="text-3xl font-bold text-slate-900">
-            Sky Lite
+            SkyStruct Lite
           </h2>
 
           {/* Version */}
@@ -54,7 +54,7 @@ export default function AppInfoModal({
 
           {/* Description */}
           <p className="mt-6 text-slate-500 text-base leading-7 px-2">
-            Sky Lite is a comprehensive construction and project
+            SkyStruct Lite is a comprehensive construction and project
             management platform designed for precision,
             collaboration and scalability.
           </p>

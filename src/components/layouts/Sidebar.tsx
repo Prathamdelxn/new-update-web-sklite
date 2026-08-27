@@ -85,7 +85,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-md shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-all duration-300">
                <img 
                 src="/SS-Logo-2025-Colour.svg" 
-                alt="Sky-Lite" 
+                alt="SkyStruct Lite" 
                 className="w-5 h-5 object-contain brightness-0 invert"
               />
             </div>
@@ -93,7 +93,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && (
               <div className="flex flex-col">
                 <span className="font-extrabold text-slate-900 text-[15px] tracking-tight leading-tight">
-                  SKYSTRUCT
+                  SKYSTRUCT LITE
                 </span>
                 <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">
                   {isInterior ? 'Interior' : 'Platform'}

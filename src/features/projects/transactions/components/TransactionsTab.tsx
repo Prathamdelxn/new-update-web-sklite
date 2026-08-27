@@ -285,7 +285,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
         <body>
           <div class="header">
             <div>
-              <div class="company-name">Sky-Lite</div>
+              <div class="company-name">SkyStruct Lite</div>
               <div style="font-size: 13px; color: #64748B;">Construction Management Solutions</div>
             </div>
             <div class="title-box">
@@ -323,8 +323,8 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
             </div>
           </div>
           <div class="footer">
-            This document is a digitally generated ${title.toLowerCase()} from the Sky-Lite Web Platform.<br/>
-            &copy; ${new Date().getFullYear()} Sky-Lite Systems. All rights reserved.
+            This document is a digitally generated ${title.toLowerCase()} from the SkyStruct Lite Web Platform.<br/>
+            &copy; ${new Date().getFullYear()} SkyStruct Lite Systems. All rights reserved.
           </div>
         </body>
       </html>

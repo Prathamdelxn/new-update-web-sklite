@@ -131,7 +131,7 @@ export default function SettingsPage() {
     api
       .get('/organization/subscription')
       .then((res) => {
-        setSubscription(res.data);
+        setSubscription(res.data?.subscription || null);
       })
       .catch(() => { })
       .finally(() => {
@@ -274,9 +274,9 @@ export default function SettingsPage() {
             subtitle={
               loadingPlan
                 ? "Loading subscription..."
-                : subscription?.planName ||
-                subscription?.plan ||
-                "Free Plan"
+                : subscription?.plan
+                ? `${subscription.plan} Plan`
+                : undefined
             }
             right={<ChevronRight className="w-5 h-5 text-slate-400" />}
             onClick={() => router.push("/settings/plan-billing")}

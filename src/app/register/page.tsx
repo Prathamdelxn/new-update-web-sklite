@@ -137,7 +137,7 @@ export default function RegisterPage() {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.18),_transparent_35%)]" />
           <div className="relative z-10 flex h-full flex-col justify-between space-y-6">
             <div>
-              <Link href="/" className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold shadow-sm"><Building2 className="size-4" /> Sky-Lite Construction</Link>
+              <Link href="/" className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold shadow-sm"><Building2 className="size-4" /> SkyStruct Lite</Link>
               <h1 className="mt-4 lg:mt-6 text-3xl font-extrabold leading-tight tracking-tight">Set up your team&apos;s<br /><span className="text-[#8AC7FF]">project command centre.</span></h1>
               <p className="mt-3 lg:mt-4 max-w-xl text-sm leading-normal text-blue-100/90">Create a workspace where every project, approval, and decision stays connected from day one.</p>
             </div>
@@ -159,7 +159,7 @@ export default function RegisterPage() {
             <form onSubmit={handleVerify} className="mt-6 space-y-4"><div><label className="text-xs font-semibold text-slate-700">Verification code</label><div className="relative mt-1"><KeyRound className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" /><input type="text" maxLength={6} required value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, ''))} className={`${inputClass} pr-10 text-center font-mono text-base tracking-[0.45em]`} placeholder="000000" /></div></div><button type="submit" disabled={isVerifying || otp.length !== 6} className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60">{isVerifying && <Loader2 className="size-4 animate-spin" />}{isVerifying ? 'Verifying...' : 'Verify workspace'}</button></form>
             <p className="mt-4 text-center text-xs text-slate-500">Didn&apos;t receive a code? <button type="button" onClick={handleResend} disabled={resendLoading} className="font-bold text-blue-600 hover:text-blue-700 disabled:opacity-50">{resendLoading ? 'Resending...' : 'Resend code'}</button></p>
           </div> : <>
-            <div className="mb-4"><p className="text-[10px] lg:text-xs font-bold tracking-wider text-blue-600">CREATE YOUR WORKSPACE</p><h2 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900">Get started with SKYLITE</h2><p className="mt-1 text-xs leading-normal text-slate-500">Set up your account now. Invite teammates and create your first project straight after.</p></div>
+            <div className="mb-4"><p className="text-[10px] lg:text-xs font-bold tracking-wider text-blue-600">CREATE YOUR WORKSPACE</p><h2 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900">Get started with SkyStruct Lite</h2><p className="mt-1 text-xs leading-normal text-slate-500">Set up your account now. Invite teammates and create your first project straight after.</p></div>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
                 <label className="text-xs font-semibold text-slate-700">Select Industry Type</label>

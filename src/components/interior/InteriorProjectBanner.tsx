@@ -14,6 +14,11 @@ import { cn } from '@/lib/utils';
 interface InteriorProjectBannerProps {
   projectId: string;
   project: any;
+  loading?: boolean;
+}
+
+function SkeletonBar({ className }: { className?: string }) {
+  return <span className={cn('inline-block bg-[hsl(var(--muted))] rounded animate-pulse', className)} />;
 }
 
 const CATEGORIES = (projectId: string) => [
@@ -81,7 +86,7 @@ const CATEGORIES = (projectId: string) => [
   },
 ];
 
-export function InteriorProjectBanner({ projectId, project }: InteriorProjectBannerProps) {
+export function InteriorProjectBanner({ projectId, project, loading }: InteriorProjectBannerProps) {
   const pathname = usePathname();
   const [openCategory, setOpenCategory] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -105,7 +110,7 @@ export function InteriorProjectBanner({ projectId, project }: InteriorProjectBan
           Projects
         </Link>
         <ChevronRight className="w-3.5 h-3.5" />
-        <span className="font-medium text-[hsl(var(--foreground))]">{project?.code}</span>
+        {loading ? <SkeletonBar className="h-3.5 w-14" /> : <span className="font-medium text-[hsl(var(--foreground))]">{project?.code}</span>}
       </div>
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -114,52 +119,68 @@ export function InteriorProjectBanner({ projectId, project }: InteriorProjectBan
             <Folder className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-[hsl(var(--foreground))] tracking-tight">{project?.name}</h1>
-            <p className="text-xs text-[hsl(var(--muted-foreground))] font-medium">
-              Client: <span className="text-[hsl(var(--foreground))]">{project?.client}</span>
+            {loading ? (
+              <SkeletonBar className="h-6 w-48" />
+            ) : (
+              <h1 className="text-xl md:text-2xl font-bold text-[hsl(var(--foreground))] tracking-tight">{project?.name}</h1>
+            )}
+            <p className="text-xs text-[hsl(var(--muted-foreground))] font-medium mt-1.5">
+              {loading ? (
+                <SkeletonBar className="h-3 w-28" />
+              ) : (
+                <>Client: <span className="text-[hsl(var(--foreground))]">{project?.client}</span></>
+              )}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 self-start md:self-center">
-          {project?.health && (
+        {!loading && (
+          <div className="flex items-center gap-3 self-start md:self-center">
+            {project?.health && (
+              <span
+                className={cn(
+                  'px-3 py-1 text-xs font-semibold rounded-full border capitalize',
+                  project.health === 'on-track' && 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                  project.health === 'at-risk' && 'bg-amber-50 text-amber-700 border-amber-200',
+                  project.health === 'delayed' && 'bg-red-50 text-red-700 border-red-200'
+                )}
+              >
+                {project.healthLabel || project.health.replace('-', ' ')}
+              </span>
+            )}
             <span
               className={cn(
-                'px-3 py-1 text-xs font-semibold rounded-full border capitalize',
-                project.health === 'on-track' && 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                project.health === 'at-risk' && 'bg-amber-50 text-amber-700 border-amber-200',
-                project.health === 'delayed' && 'bg-red-50 text-red-700 border-red-200'
+                'px-3 py-1 text-xs font-semibold rounded-full border',
+                project?.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
               )}
             >
-              {project.healthLabel || project.health.replace('-', ' ')}
+              {project?.status === 'active' ? 'Active' : 'On Hold'}
             </span>
-          )}
-          <span
-            className={cn(
-              'px-3 py-1 text-xs font-semibold rounded-full border',
-              project?.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
-            )}
-          >
-            {project?.status === 'active' ? 'Active' : 'On Hold'}
-          </span>
-        </div>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-6 pt-2 text-xs text-[hsl(var(--muted-foreground))]">
-        <div className="flex items-center gap-1.5">
-          <MapPin className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
-          {project?.location?.city || project?.location?.address ? `${project.location.city || project.location.address}, ${project.location.country || 'India'}` : 'Location not set'}
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Calendar className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
-          {project?.startDate && project?.endDate
-            ? `${new Date(project.startDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })} - ${new Date(project.endDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}`
-            : 'Dates not set'}
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Building className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
-          {project?.type || 'General Fit-out'}
-        </div>
+        {loading ? (
+          <SkeletonBar className="h-3.5 w-64" />
+        ) : (
+          <>
+            <div className="flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
+              {project?.location?.city || project?.location?.address ? `${project.location.city || project.location.address}, ${project.location.country || 'India'}` : 'Location not set'}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
+              {project?.startDate && project?.endDate
+                ? `${new Date(project.startDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })} - ${new Date(project.endDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                : 'Dates not set'}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Building className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
+              {project?.type || 'General Fit-out'}
+            </div>
+          </>
+        )}
       </div>
 
       <div ref={containerRef} className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-4 border-b border-[hsl(var(--border))] pb-2 overflow-visible">

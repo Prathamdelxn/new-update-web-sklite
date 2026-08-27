@@ -6,12 +6,20 @@
 
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-const rawBaseUrl =
-  process.env.NEXT_PUBLIC_INTERIOR_API_URL || 'https://interior-os-backend-two.vercel.app';
-const INTERIOR_API_BASE_URL = rawBaseUrl.replace(/\/+$/, '');
+const getBaseUrl = (): string => {
+  if (typeof window !== 'undefined') {
+    const envUrl = process.env.NEXT_PUBLIC_INTERIOR_API_URL;
+    if (envUrl && !envUrl.includes('10.56.63.159')) {
+      return envUrl.replace(/\/+$/, '');
+    }
+    const host = window.location.hostname || 'localhost';
+    return `http://${host}:3002`;
+  }
+  return (process.env.NEXT_PUBLIC_INTERIOR_API_URL || 'http://localhost:3002').replace(/\/+$/, '');
+};
 
 export const interiorApiClient = axios.create({
-  baseURL: `${INTERIOR_API_BASE_URL}/api/v1`,
+  baseURL: `${getBaseUrl()}/api/v1`,
   headers: {
     'Content-Type': 'application/json',
   },

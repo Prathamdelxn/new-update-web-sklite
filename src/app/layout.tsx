@@ -14,7 +14,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Sky-Lite | Construction Management",
+  title: "SkyStruct Lite | Construction Management",
   description: "Next-gen construction management platform",
 };
 

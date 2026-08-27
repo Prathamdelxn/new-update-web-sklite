@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 import { InteriorShell } from '@/components/interior/InteriorShell';
 import { InteriorProjectBanner } from '@/components/interior/InteriorProjectBanner';
 import { useInteriorAuthGuard } from '@/lib/useInteriorAuthGuard';
@@ -34,13 +33,7 @@ export default function InteriorProjectDetailLayout({ children }: { children: Re
   return (
     <InteriorShell>
       <div className="interior-os-theme flex flex-col min-h-screen">
-        {loading ? (
-          <div className="flex items-center justify-center min-h-[40vh]">
-            <Loader2 className="w-6 h-6 animate-spin text-[hsl(var(--primary))]" />
-          </div>
-        ) : (
-          <InteriorProjectBanner projectId={projectId} project={project} />
-        )}
+        <InteriorProjectBanner projectId={projectId} project={project} loading={loading} />
         <div className="flex-1 bg-[hsl(var(--background))]">{children}</div>
       </div>
     </InteriorShell>
