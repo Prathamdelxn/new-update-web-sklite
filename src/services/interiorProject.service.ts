@@ -70,8 +70,15 @@ export const interiorProjectService = {
   deletePurchaseOrder: (projectId: string, poId: string) =>
     interiorApiClient.delete(`/projects/${projectId}/procurement/${poId}`).then((res) => res.data),
 
-  // Vendors / Inventory
+  // Vendors
   getVendors: () => interiorApiClient.get(`/vendors`).then((res) => res.data),
+  createVendor: (data: any) => interiorApiClient.post('/vendors', data).then((res) => res.data),
+  updateVendor: (vendorId: string, data: any) =>
+    interiorApiClient.patch(`/vendors/${vendorId}`, data).then((res) => res.data),
+  deleteVendor: (vendorId: string) =>
+    interiorApiClient.delete(`/vendors/${vendorId}`).then((res) => res.data),
+
+  // Inventory
   getInventory: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/inventory`).then((res) => res.data),
   updateInventoryMaterial: (projectId: string, materialId: string, data: any) => interiorApiClient.put(`/projects/${projectId}/inventory/${materialId}`, data).then((res) => res.data),
   deleteInventoryMaterial: (projectId: string, materialId: string) => interiorApiClient.delete(`/projects/${projectId}/inventory/${materialId}`).then((res) => res.data),
@@ -190,4 +197,24 @@ export const interiorProjectService = {
     department?: string;
     systemRole?: string;
   }) => interiorApiClient.post('/users', data).then((res) => res.data),
+
+  // Update a user (org admin only)
+  updateUser: (
+    userId: string,
+    data: {
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      password?: string;
+      phone?: string;
+      designation?: string;
+      department?: string;
+      systemRole?: string;
+      status?: string;
+    }
+  ) => interiorApiClient.patch(`/users/${userId}`, data).then((res) => res.data),
+
+  // Delete a user (org admin only)
+  deleteUser: (userId: string) =>
+    interiorApiClient.delete(`/users/${userId}`).then((res) => res.data),
 };

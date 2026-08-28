@@ -44,17 +44,17 @@ export function InteriorSendToBoqModal({ isOpen, onClose, customerId, onSuccess,
         status: 'Under BOQ Creation',
       };
 
-      // Since we don't have a specific field for estimator in the schema, 
-      // we can optionally just save it in remarks or if there's a field we can use it.
-      // But keeping it simple for now.
-
       await interiorCrmService.updateCustomer(customerId, updatePayload);
+
+      const assignedUserObj = users.find(u => (u._id || u.id) === assignedEstimator);
+      const estimatorInfo = assignedUserObj ? `Assigned Estimator: ${userLabel(assignedUserObj)}.` : '';
+      const finalRemarks = [remarks, estimatorInfo].filter(Boolean).join(' | ') || 'Lead passed to BOQ phase.';
 
       await interiorCrmService.createActivity({
         customer: customerId,
         type: 'Status Change',
         status: 'Completed',
-        remarks: remarks || 'Lead passed to BOQ phase.',
+        remarks: finalRemarks,
         completedDate: new Date()
       });
 

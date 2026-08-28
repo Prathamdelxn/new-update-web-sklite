@@ -23,9 +23,13 @@ export const interiorCrmService = {
     interiorApiClient.post(`/crm/customers/${customerId}/send-quotation-email`, data).then((res) => res.data),
 
   // Activities
-  getActivities: (customerId: string) =>
-    interiorApiClient.get('/crm/activities', { params: { customerId } }).then((res) => res.data),
+  getActivities: (params?: string | Record<string, any>) => {
+    const query = typeof params === 'string' ? { customerId: params } : params;
+    return interiorApiClient.get('/crm/activities', { params: query }).then((res) => res.data);
+  },
   createActivity: (data: any) => interiorApiClient.post('/crm/activities', data).then((res) => res.data),
+  updateActivity: (activityId: string, data: any) =>
+    interiorApiClient.patch(`/crm/activities/${activityId}`, data).then((res) => res.data),
   getPendingActivities: () => interiorApiClient.get('/crm/activities/pending').then((res) => res.data),
 
   // Org Users (for assignment dropdowns)

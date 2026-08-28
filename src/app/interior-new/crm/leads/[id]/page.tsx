@@ -272,31 +272,74 @@ export default function Lead360View() {
               </div>
             </div>
           </div>
-          
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className={cn(
-              "text-xs font-bold px-3 py-1.5 rounded-xl border",
-              lead.status === 'New Lead' ? "bg-blue-500/10 text-blue-600 border-blue-500/30" :
-              lead.status === 'Contacted' ? "bg-amber-500/10 text-amber-600 border-amber-500/30" :
-              lead.status === 'Meeting Scheduled' || lead.status === 'Measurement Done' ? "bg-purple-500/10 text-purple-600 border-purple-500/30" :
-              lead.status === 'Under Requirement' ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30" :
-              lead.status === 'Under Quotation' ? "bg-indigo-500/10 text-indigo-600 border-indigo-500/30" :
-              lead.status === 'Converted' ? "bg-emerald-600 text-white border-emerald-700" :
-              lead.status === 'Lost' ? "bg-rose-500/10 text-rose-600 border-rose-500/30" :
-              "bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
-            )}>
-              {lead.status}
-            </span>
 
-            {['New Lead', 'Contacted'].includes(lead.status) && (
-              <button
-                onClick={() => setIsSendToSiteVisitOpen(true)}
-                className="inline-flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-purple-600/20"
-                title="Send to Site Visit"
-              >
-                <MapPin size={13} /> Send to Site Visit
-              </button>
-            )}
+          <div className="flex items-center gap-2 flex-wrap">
+            {(() => {
+              const latestQuote = lead.quotations?.[lead.quotations.length - 1];
+              let displayStatus = lead.status;
+              let badgeColor = "bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]";
+
+              if (lead.status === 'Converted' || lead.status === 'Won') {
+                displayStatus = 'Converted ✓';
+                badgeColor = 'bg-emerald-600 text-white border-emerald-700';
+              } else if (latestQuote?.status === 'Accepted') {
+                displayStatus = 'Quotation Approved ✓';
+                badgeColor = 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30';
+              } else if (latestQuote?.status === 'Rejected') {
+                displayStatus = 'Quotation Rejected';
+                badgeColor = 'bg-rose-500/10 text-rose-600 border-rose-500/30';
+              } else if (lead.status === 'Lost') {
+                displayStatus = 'Lost';
+                badgeColor = 'bg-rose-500/10 text-rose-600 border-rose-500/30';
+              } else if (lead.status === 'New Lead') {
+                displayStatus = 'New Lead';
+                badgeColor = 'bg-blue-500/10 text-blue-600 border-blue-500/30';
+              } else if (lead.status === 'Contacted') {
+                displayStatus = 'Contacted';
+                badgeColor = 'bg-amber-500/10 text-amber-600 border-amber-500/30';
+              } else if (['Meeting Scheduled', 'Under Site Visit', 'Measurement Done'].includes(lead.status)) {
+                displayStatus = lead.status;
+                badgeColor = 'bg-purple-500/10 text-purple-600 border-purple-500/30';
+              } else if (['Under Requirement', 'Requirement Completed'].includes(lead.status)) {
+                displayStatus = lead.status;
+                badgeColor = 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30';
+              } else if (['Under Drawing', 'Design Approved'].includes(lead.status)) {
+                displayStatus = lead.status;
+                badgeColor = 'bg-cyan-500/10 text-cyan-600 border-cyan-500/30';
+              } else if (lead.status === 'Under BOQ Creation') {
+                displayStatus = 'Under BOQ Creation';
+                badgeColor = 'bg-teal-500/10 text-teal-600 border-teal-500/30';
+              } else if (['Under Quotation', 'Quotation Pending', 'Quotation Sent', 'Negotiation', 'Booking Pending'].includes(lead.status)) {
+                if (latestQuote?.status === 'Accepted' || lead.status === 'Booking Pending') {
+                  displayStatus = 'Quotation Approved ✓';
+                  badgeColor = 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30';
+                } else if (latestQuote?.status === 'Rejected') {
+                  displayStatus = 'Quotation Rejected';
+                  badgeColor = 'bg-rose-500/10 text-rose-600 border-rose-500/30';
+                } else {
+                  displayStatus = 'Under Quotation';
+                  badgeColor = 'bg-indigo-500/10 text-indigo-600 border-indigo-500/30';
+                }
+              }
+
+              return (
+                <span className={cn("text-xs font-bold px-3 py-1.5 rounded-xl border", badgeColor)}>
+                  {displayStatus}
+                </span>
+              );
+            })()}
+
+            {['New Lead', 'Contacted'].includes(lead.status) &&
+              !lead.siteMeasurements &&
+              (!lead.quotations || lead.quotations.length === 0) && (
+                <button
+                  onClick={() => setIsSendToSiteVisitOpen(true)}
+                  className="inline-flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-purple-600/20"
+                  title="Send to Site Visit"
+                >
+                  <MapPin size={13} /> Send to Site Visit
+                </button>
+              )}
 
             {['Under Site Visit', 'Measurement Done'].includes(lead.status) && (
               (lead.siteMeasurements || (lead.sitePhotos && lead.sitePhotos.length > 0)) ? (
@@ -398,15 +441,17 @@ export default function Lead360View() {
               )
             )}
 
-            {['New Lead', 'Contacted', 'Meeting Scheduled'].includes(lead.status) && (
-              <button
-                onClick={() => setIsFollowUpModalOpen(true)}
-                className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-blue-600/20"
-                title="Schedule Follow-up"
-              >
-                <Calendar size={13} /> Schedule Follow-up
-              </button>
-            )}
+            {['New Lead', 'Contacted'].includes(lead.status) &&
+              !lead.siteMeasurements &&
+              (!lead.quotations || lead.quotations.length === 0) && (
+                <button
+                  onClick={() => setIsFollowUpModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-blue-600/20"
+                  title="Schedule Follow-up"
+                >
+                  <Calendar size={13} /> Schedule Follow-up
+                </button>
+              )}
 
             <button 
               onClick={() => setIsEditModalOpen(true)}
@@ -503,12 +548,23 @@ export default function Lead360View() {
                   <h3 className="text-sm font-black uppercase tracking-widest text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                     <Activity className="w-4 h-4 text-blue-500" /> Activity Timeline
                   </h3>
-                  <button
-                    onClick={() => setIsFollowUpModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 border border-blue-500/20 rounded-xl text-xs font-bold transition-all active:scale-95"
-                  >
-                    <Plus size={13} /> Schedule Follow-up
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setIsActivityModalOpen(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all active:scale-95"
+                    >
+                      <Plus size={13} /> Log Note
+                    </button>
+                    {!['Under Quotation', 'Quotation Pending', 'Quotation Sent', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) &&
+                      (!lead.quotations || lead.quotations.length === 0) && (
+                        <button
+                          onClick={() => setIsFollowUpModalOpen(true)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 border border-blue-500/20 rounded-xl text-xs font-bold transition-all active:scale-95"
+                        >
+                          <Plus size={13} /> Schedule Follow-up
+                        </button>
+                      )}
+                  </div>
                 </div>
                 
                 <div className="relative border-l-2 border-[hsl(var(--border))] ml-4 pl-8 space-y-8">

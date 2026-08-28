@@ -13,6 +13,8 @@ import { InteriorLeadsTable } from './InteriorLeadsTable';
 import { InteriorFollowUpsView } from './InteriorFollowUpsView';
 import { InteriorSiteVisitsView } from './InteriorSiteVisitsView';
 import { InteriorRequirementDesignView } from './InteriorRequirementDesignView';
+import { InteriorDrawingsView } from './InteriorDrawingsView';
+import { InteriorBoqStageView } from './InteriorBoqStageView';
 import { InteriorQuotationsView } from './InteriorQuotationsView';
 import { InteriorWonProjectsView } from './InteriorWonProjectsView';
 import { InteriorCreateLeadModal } from './modals/InteriorCreateLeadModal';
@@ -90,22 +92,52 @@ export default function InteriorCrmView() {
       return leads; // Show ALL leads in the master Leads tab
     }
     if (activeTab === 'follow_ups') {
-      return leads.filter(l => l.status === 'Contacted');
+      return leads.filter(l => ['New Lead', 'Contacted', 'Meeting Scheduled'].includes(l.status));
     }
     if (activeTab === 'site_visits') {
-      return leads.filter(l => ['Under Site Visit', 'Measurement Done'].includes(l.status));
+      return leads.filter(
+        (l) =>
+          ['Under Site Visit', 'Measurement Done', 'Meeting Scheduled'].includes(l.status) ||
+          !!l.siteMeasurements
+      );
     }
     if (activeTab === 'requirement_design') {
-      return leads.filter(l => ['Under Requirement', 'Design Approved'].includes(l.status));
+      return leads.filter(
+        (l) =>
+          ['Under Requirement', 'Requirement Completed'].includes(l.status) ||
+          (l.requirements && l.requirements.length > 0)
+      );
     }
     if (activeTab === 'drawing') {
-      return leads.filter(l => ['Under Drawing'].includes(l.status));
+      return leads.filter(
+        (l) =>
+          ['Under Drawing', 'Design Approved'].includes(l.status) ||
+          (l.designFiles && l.designFiles.length > 0)
+      );
     }
     if (activeTab === 'boq') {
-      return leads.filter(l => ['Under BOQ Creation'].includes(l.status));
+      return leads.filter(
+        (l) =>
+          ['Under BOQ Creation'].includes(l.status) ||
+          (l.boqs && l.boqs.length > 0)
+      );
     }
     if (activeTab === 'quotations') {
-      return leads.filter(l => ['Under Quotation'].includes(l.status));
+      return leads.filter(
+        (l) =>
+          [
+            'Under Quotation',
+            'Quotation Pending',
+            'Quotation Sent',
+            'Negotiation',
+            'Booking Pending',
+            'Won',
+            'Converted',
+          ].includes(l.status) || (l.quotations && l.quotations.length > 0)
+      );
+    }
+    if (activeTab === 'lost_leads') {
+      return leads.filter(l => l.status === 'Lost');
     }
     // Default fallback
     return leads;
@@ -251,27 +283,16 @@ export default function InteriorCrmView() {
           </motion.div>
         ) : activeTab === 'drawing' ? (
           <motion.div key="drawing-view" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
-            <InteriorLeadsTable
+            <InteriorDrawingsView
               leads={getFilteredLeads()}
-              isLoading={isLoading}
-              activeTab={activeTab}
-              onEdit={openEditModal}
-              onDelete={handleOpenDeleteModal}
-              onPassToFollowUp={openFollowUpModal}
-              onPassToBoq={openSendToBoqModal}
               onUploadDesign={openUploadDesignModal}
-              onLogRequirements={openRequirementsModal}
+              onPassToBoq={openSendToBoqModal}
             />
           </motion.div>
         ) : activeTab === 'boq' ? (
           <motion.div key="boq-view" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
-            <InteriorLeadsTable
+            <InteriorBoqStageView
               leads={getFilteredLeads()}
-              isLoading={isLoading}
-              activeTab={activeTab}
-              onEdit={openEditModal}
-              onDelete={handleOpenDeleteModal}
-              onPassToFollowUp={openFollowUpModal}
               onAddBoq={openAddBoqModal}
               onPassToQuotations={openSendToQuotationsModal}
             />
@@ -337,6 +358,7 @@ export default function InteriorCrmView() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={fetchLeads}
+        users={users}
       />
 
       <InteriorEditLeadModal

@@ -1,11 +1,23 @@
 'use client';
 
-// Port of src/components/crm/SiteVisitsView.tsx, rewired to interiorCrmService.
+// Enhanced Site Visits View with Search, Pagination, and Stage Handlers
 
-import React, { useState, useEffect } from 'react';
-import { MapPin, Calendar as CalendarIcon, ArrowRight, Home } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  MapPin,
+  Calendar as CalendarIcon,
+  ArrowRight,
+  Home,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Phone,
+  Ruler,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { interiorCrmService } from '@/services/interiorCrm.service';
+import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 interface Props {
   leads: any[];
@@ -16,6 +28,10 @@ interface Props {
 export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirements }: Props) => {
   const router = useRouter();
   const [pendingActivities, setPendingActivities] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     const fetchActivities = async () => {
@@ -30,126 +46,344 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
     fetchActivities();
   }, []);
 
-  if (leads.length === 0) {
-    return (
-        <div className="flex flex-col items-center justify-center py-16 text-center px-4">
-          <div className="w-16 h-16 bg-[hsl(var(--muted))] rounded-full flex items-center justify-center mb-4">
-            <MapPin size={24} className="text-[hsl(var(--muted-foreground))]" />
-          </div>
-          <h3 className="text-lg font-bold text-[hsl(var(--foreground))] mb-2">No Site Visits Found</h3>
-          <p className="text-[hsl(var(--muted-foreground))] max-w-md mx-auto">
-            When you change a Lead's status to "Under Site Visit" or "Measurement Done", they will appear here.
-          </p>
-        </div>
-    );
-  }
+  const pendingCount = useMemo(() => leads.filter((l) => !l.siteMeasurements).length, [leads]);
+  const completedCount = useMemo(() => leads.filter((l) => !!l.siteMeasurements).length, [leads]);
+
+  const filteredLeads = useMemo(() => {
+    let result = [...leads];
+
+    if (statusFilter === 'completed') {
+      result = result.filter((l) => !!l.siteMeasurements);
+    } else if (statusFilter === 'pending') {
+      result = result.filter((l) => !l.siteMeasurements);
+    }
+
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase().trim();
+      result = result.filter(
+        (l) =>
+          l.name.toLowerCase().includes(q) ||
+          l.mobileNumber?.toLowerCase().includes(q) ||
+          l.leadNumber?.toLowerCase().includes(q) ||
+          l.projectLocation?.toLowerCase().includes(q)
+      );
+    }
+
+    return result;
+  }, [leads, searchTerm, statusFilter]);
+
+  const totalPages = Math.ceil(filteredLeads.length / pageSize) || 1;
+  const paginatedLeads = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredLeads.slice(start, start + pageSize);
+  }, [filteredLeads, currentPage, pageSize]);
 
   return (
-    <div className="w-full bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-[hsl(var(--muted))] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] uppercase text-[10px] font-black tracking-widest">
-            <tr>
-              <th className="px-6 py-4 rounded-tl-2xl">Lead Info</th>
-              <th className="px-6 py-4">Location</th>
-              <th className="px-6 py-4">Scheduled Date</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4 text-right rounded-tr-2xl">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[hsl(var(--border))]">
-            {leads.map((lead) => {
-              const pendingSiteVisit = pendingActivities.find(act =>
-                act.customer?._id === lead._id && act.type === 'Site Visit'
-              );
-              const resolvedScheduledDate = lead.siteVisitScheduledDate || pendingSiteVisit?.scheduledDate;
+    <div className="w-full space-y-4">
+      {/* Search & Filter Toolbar with Tab Pills (Matching Follow-ups page) */}
+      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* Left: Tab Pills */}
+        <div className="flex items-center gap-1.5 bg-[hsl(var(--muted))] p-1 rounded-xl w-max">
+          <button
+            onClick={() => {
+              setStatusFilter('all');
+              setCurrentPage(1);
+            }}
+            className={cn(
+              'px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all',
+              statusFilter === 'all'
+                ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-sm'
+                : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
+            )}
+          >
+            All Site Visits ({leads.length})
+          </button>
+          <button
+            onClick={() => {
+              setStatusFilter('pending');
+              setCurrentPage(1);
+            }}
+            className={cn(
+              'px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center gap-1.5',
+              statusFilter === 'pending'
+                ? 'bg-amber-500 text-white shadow-sm'
+                : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
+            )}
+          >
+            Pending ({pendingCount})
+          </button>
+          <button
+            onClick={() => {
+              setStatusFilter('completed');
+              setCurrentPage(1);
+            }}
+            className={cn(
+              'px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center gap-1.5',
+              statusFilter === 'completed'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
+            )}
+          >
+            Completed ({completedCount})
+          </button>
+        </div>
 
-              return (
-              <tr
-                key={lead._id}
-                onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=site`)}
-                className="hover:bg-[hsl(var(--accent))] transition-colors group cursor-pointer"
-              >
-                {/* Lead Info */}
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-xs shrink-0">
-                      {lead.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="font-bold text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))] transition-colors">
-                        {lead.name}
-                      </div>
-                      <div className="text-[11px] text-[hsl(var(--muted-foreground))] font-mono">
-                        {lead.leadNumber || 'LD-XXXX'}
-                      </div>
-                    </div>
-                  </div>
-                </td>
+        {/* Right: Search Box */}
+        <div className="relative min-w-[260px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+          <input
+            type="text"
+            placeholder="Search by client, location, lead ID..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full pl-9 pr-4 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-medium text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
 
-                {/* Location */}
-                <td className="px-6 py-4 space-y-1 text-xs">
-                  <div className="flex items-center gap-1.5 text-[hsl(var(--foreground))] font-medium">
-                    <Home size={14} className="text-[hsl(var(--muted-foreground))]" />
-                    <span className="truncate max-w-[200px]">{lead.projectLocation || 'Location Pending'}</span>
-                  </div>
-                </td>
+      {/* Table Container */}
+      <div className="w-full bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] shadow-sm overflow-hidden">
+        {filteredLeads.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+            <div className="w-14 h-14 bg-purple-500/10 border border-purple-500/20 text-purple-600 rounded-2xl flex items-center justify-center mb-3">
+              <MapPin size={24} />
+            </div>
+            <h3 className="text-base font-extrabold text-[hsl(var(--foreground))] mb-1">No Site Visits Found</h3>
+            <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-md mx-auto">
+              {searchTerm || statusFilter !== 'all'
+                ? 'No site visits matched your current filter criteria.'
+                : 'Leads moved to "Under Site Visit" or "Measurement Done" will appear here for tracking.'}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] uppercase text-[10px] font-black tracking-widest">
+                <tr>
+                  <th className="px-6 py-3.5 rounded-tl-2xl">Lead Info</th>
+                  <th className="px-6 py-3.5">Location & Property</th>
+                  <th className="px-6 py-3.5">Scheduled Date</th>
+                  <th className="px-6 py-3.5">Measurement Status</th>
+                  <th className="px-6 py-3.5 text-right rounded-tr-2xl">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[hsl(var(--border))]">
+                {paginatedLeads.map((lead, idx) => {
+                  const pendingSiteVisit = pendingActivities.find(
+                    (act) => act.customer?._id === lead._id && act.type === 'Site Visit'
+                  );
+                  const resolvedScheduledDate = lead.siteVisitScheduledDate || pendingSiteVisit?.scheduledDate;
 
-                {/* Scheduled Date */}
-                <td className="px-6 py-4">
-                  {resolvedScheduledDate ? (
-                    <div className="flex items-center gap-1.5 text-[hsl(var(--muted-foreground))] text-xs font-medium">
-                      <CalendarIcon size={14} className="text-[hsl(var(--muted-foreground))]" />
-                      {new Date(resolvedScheduledDate).toLocaleString('en-US', {
-                        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
-                      })}
-                    </div>
-                  ) : (
-                    <span className="text-xs text-[hsl(var(--muted-foreground))] italic">Not scheduled</span>
-                  )}
-                </td>
-
-                {/* Status */}
-                <td className="px-6 py-4">
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border bg-purple-50 text-purple-700 border-purple-100">
-                    {lead.status}
-                  </span>
-                </td>
-
-                {/* Actions */}
-                <td className="px-6 py-4 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
-                  {lead.siteMeasurements ? (
-                    <button
-                      onClick={() => onLogSiteVisit(lead._id)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 rounded-lg text-xs font-bold transition-all"
-                      title="Edit Site Visit Measurements & Photos"
+                  return (
+                    <motion.tr
+                      key={lead._id}
+                      onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=site`)}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.15, delay: idx * 0.02 }}
+                      className="hover:bg-[hsl(var(--accent))] transition-colors group cursor-pointer"
                     >
-                      Visited ✓ (Edit)
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => onLogSiteVisit(lead._id)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white hover:bg-purple-700 rounded-lg text-xs font-bold transition-all"
-                    >
-                      Log Measurement
-                    </button>
-                  )}
-                  {lead.siteMeasurements && (
-                    <button
-                      onClick={() => onPassToRequirements(lead._id)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white rounded-lg text-xs font-medium transition-all"
-                      title="Pass to Requirements"
-                    >
-                      Pass <ArrowRight size={14} />
-                    </button>
-                  )}
-                </td>
-              </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                      {/* Lead Info */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 font-extrabold text-xs shrink-0">
+                            {lead.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-purple-600 transition-colors">
+                              {lead.name}
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-[10px] font-mono font-bold text-purple-600 bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20">
+                                {lead.leadNumber || 'LD-XXXX'}
+                              </span>
+                              <span className="text-[11px] text-[hsl(var(--muted-foreground))]">
+                                {lead.mobileNumber}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Location */}
+                      <td className="px-6 py-4 space-y-0.5 text-xs">
+                        <div className="flex items-center gap-1.5 text-[hsl(var(--foreground))] font-semibold">
+                          <Home size={13} className="text-[hsl(var(--muted-foreground))]" />
+                          <span className="truncate max-w-[200px]">{lead.propertyType || 'Residential'}</span>
+                        </div>
+                        <div className="text-[11px] text-[hsl(var(--muted-foreground))] flex items-center gap-1 truncate max-w-[200px]">
+                          <MapPin size={11} className="shrink-0" />
+                          <span>{lead.projectLocation || 'Location Pending'}</span>
+                        </div>
+                      </td>
+
+                      {/* Scheduled Date */}
+                      <td className="px-6 py-4">
+                        {resolvedScheduledDate ? (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-500/10 border border-purple-500/20 text-purple-700 text-xs font-bold">
+                            <CalendarIcon size={12} />
+                            {new Date(resolvedScheduledDate).toLocaleString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit',
+                            })}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-[hsl(var(--muted-foreground))] italic">Not scheduled</span>
+                        )}
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-6 py-4">
+                        <span
+                          className={cn(
+                            'inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border',
+                            lead.siteMeasurements
+                              ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                              : 'bg-purple-500/10 text-purple-600 border-purple-500/20'
+                          )}
+                        >
+                          {lead.siteMeasurements ? 'Measurement Done ✓' : lead.status}
+                        </span>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-6 py-4 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
+                        {lead.siteMeasurements ? (
+                          <button
+                            onClick={() => onLogSiteVisit(lead._id)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all"
+                            title="Edit Site Visit Measurements & Photos"
+                          >
+                            <Ruler size={13} /> Edit Measurements
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => onLogSiteVisit(lead._id)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white hover:bg-purple-700 rounded-lg text-xs font-bold transition-all shadow-sm"
+                          >
+                            <Ruler size={13} /> Log Measurements
+                          </button>
+                        )}
+                        {lead.siteMeasurements &&
+                          ([
+                            'Under Requirement',
+                            'Requirement Completed',
+                            'Under Drawing',
+                            'Under BOQ Creation',
+                            'Under Quotation',
+                            'Negotiation',
+                            'Won',
+                            'Converted',
+                          ].includes(lead.status) ? (
+                            <span
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-xs font-bold"
+                              title="Lead has already been passed to Requirements & Design"
+                            >
+                              Passed to Req ✓
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => onPassToRequirements(lead._id)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-xs font-bold transition-all shadow-sm"
+                              title="Pass to Requirements & Design"
+                            >
+                              Pass to Req <ArrowRight size={13} />
+                            </button>
+                          ))}
+                      </td>
+                    </motion.tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Pagination Footer */}
+        {filteredLeads.length > 0 && (
+          <div className="px-6 py-4 bg-[hsl(var(--card))] border-t border-[hsl(var(--border))] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-3 text-[hsl(var(--muted-foreground))] font-medium">
+              <span>
+                Showing <strong>{(currentPage - 1) * pageSize + 1}</strong> to{' '}
+                <strong>{Math.min(currentPage * pageSize, filteredLeads.length)}</strong> of{' '}
+                <strong>{filteredLeads.length}</strong> site visits
+              </span>
+
+              <div className="flex items-center gap-1.5 ml-2">
+                <span>Per page:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="px-2 py-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-semibold text-[hsl(var(--foreground))] outline-none"
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="p-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  title="Previous Page"
+                >
+                  <ChevronLeft size={15} />
+                </button>
+
+                <div className="flex items-center gap-1 px-1">
+                  {[...Array(totalPages)].map((_, i) => {
+                    const pageNum = i + 1;
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={cn(
+                          'w-7 h-7 rounded-lg font-bold text-xs transition-all',
+                          currentPage === pageNum
+                            ? 'bg-purple-600 text-white shadow-sm'
+                            : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]'
+                        )}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="p-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  title="Next Page"
+                >
+                  <ChevronRight size={15} />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 };
+

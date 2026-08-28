@@ -29,6 +29,10 @@ import {
   Mail,
   Phone,
   Briefcase,
+  Edit3,
+  Trash2,
+  Lock,
+  AlertTriangle,
 } from 'lucide-react';
 import { interiorProjectService } from '@/services/interiorProject.service';
 
@@ -367,6 +371,276 @@ function AddUserModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
 }
 
 // ---------------------------------------------------------------------------
+// Edit User Modal
+// ---------------------------------------------------------------------------
+interface EditUserForm {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password?: string;
+  phone?: string;
+  designation?: string;
+  department?: string;
+  systemRole: string;
+  status: string;
+}
+
+function EditUserModal({
+  user,
+  onClose,
+  onSuccess,
+}: {
+  user: UserWithProjects;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const toast = useToast();
+  const [form, setForm] = useState<EditUserForm>({
+    firstName: user.firstName || '',
+    lastName: user.lastName || '',
+    email: user.email || '',
+    password: '',
+    phone: user.phone || '',
+    designation: user.designation || '',
+    department: user.department || '',
+    systemRole: user.systemRole || 'member',
+    status: user.status || 'active',
+  });
+  const [saving, setSaving] = useState(false);
+
+  const set = (field: keyof EditUserForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim()) {
+      toast.error('First name, last name and email are required.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload: any = {
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        email: form.email.trim(),
+        systemRole: form.systemRole,
+        status: form.status,
+      };
+      if (form.password && form.password.trim()) payload.password = form.password.trim();
+      payload.phone = form.phone ? form.phone.trim() : '';
+      payload.designation = form.designation ? form.designation.trim() : '';
+      payload.department = form.department ? form.department.trim() : '';
+
+      await interiorProjectService.updateUser(user._id, payload);
+      toast.success(`User ${form.firstName} ${form.lastName} updated successfully`);
+      onSuccess();
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? 'Failed to update user');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const fieldCls = 'w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] transition-all';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={onClose} className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 16 }}
+        className="relative w-full max-w-md bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl z-10 overflow-hidden max-h-[90vh] flex flex-col"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--border))]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[hsl(var(--muted)/0.5)] flex items-center justify-center">
+              <Edit3 className="w-4 h-4 text-[hsl(var(--primary))]" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-[hsl(var(--foreground))]">Edit User</h2>
+              <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Update profile details and system access</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1.5 hover:bg-[hsl(var(--muted))] rounded-lg text-[hsl(var(--muted-foreground))] transition-colors cursor-pointer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
+          {/* Name row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">First Name *</label>
+              <input value={form.firstName} onChange={set('firstName')} placeholder="John" className={fieldCls} required />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Last Name *</label>
+              <input value={form.lastName} onChange={set('lastName')} placeholder="Doe" className={fieldCls} required />
+            </div>
+          </div>
+
+          {/* Email */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Email Address *</label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+              <input type="email" value={form.email} onChange={set('email')} placeholder="john@example.com" className={`${fieldCls} pl-9`} required />
+            </div>
+          </div>
+
+          {/* Reset Password */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">New Password (leave blank to keep current)</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+              <input type="password" value={form.password} onChange={set('password')} placeholder="••••••••" className={`${fieldCls} pl-9`} />
+            </div>
+          </div>
+
+          {/* Phone */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Phone</label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+              <input value={form.phone} onChange={set('phone')} placeholder="+91 98765 43210" className={`${fieldCls} pl-9`} />
+            </div>
+          </div>
+
+          {/* Designation & Department */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Designation</label>
+              <input value={form.designation} onChange={set('designation')} placeholder="e.g. Project Manager" className={fieldCls} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Department</label>
+              <input value={form.department} onChange={set('department')} placeholder="e.g. Operations" className={fieldCls} />
+            </div>
+          </div>
+
+          {/* System Role & Status */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">System Role</label>
+              <select value={form.systemRole} onChange={set('systemRole')} className={fieldCls}>
+                <option value="member">Member</option>
+                <option value="manager">Manager</option>
+                <option value="org_admin">Org Admin</option>
+                <option value="super_admin">Super Admin</option>
+                <option value="viewer">Viewer</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Account Status</label>
+              <select value={form.status} onChange={set('status')} className={fieldCls}>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="suspended">Suspended</option>
+                <option value="pending">Pending</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm font-semibold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] transition-colors cursor-pointer">
+              Cancel
+            </button>
+            <button type="submit" disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60 cursor-pointer">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Edit3 className="w-4 h-4" />}
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </motion.div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Delete User Confirm Modal
+// ---------------------------------------------------------------------------
+function DeleteUserModal({
+  user,
+  onClose,
+  onSuccess,
+}: {
+  user: UserWithProjects;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const toast = useToast();
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await interiorProjectService.deleteUser(user._id);
+      toast.success(`User ${user.firstName} ${user.lastName} deleted successfully`);
+      onSuccess();
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? 'Failed to delete user');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={onClose} className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 16 }}
+        className="relative w-full max-w-sm bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6 z-10 space-y-4 shadow-xl"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+            <AlertTriangle className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-[hsl(var(--foreground))]">Delete User</h2>
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">This action cannot be undone.</p>
+          </div>
+        </div>
+
+        <p className="text-xs text-[hsl(var(--muted-foreground))] leading-relaxed">
+          Are you sure you want to remove <strong className="text-[hsl(var(--foreground))]">{user.firstName} {user.lastName}</strong> ({user.email})?
+          {user.projectAssignments.length > 0 && (
+            <span className="block mt-1 text-amber-600 dark:text-amber-400 font-semibold">
+              Warning: User has {user.projectAssignments.length} project assignment{user.projectAssignments.length > 1 ? 's' : ''} that will also be removed.
+            </span>
+          )}
+        </p>
+
+        <div className="flex items-center justify-end gap-3 pt-2">
+          <button type="button" onClick={onClose}
+            className="px-3.5 py-1.5 rounded-lg border border-[hsl(var(--border))] text-xs font-semibold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] transition-colors cursor-pointer">
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition-colors disabled:opacity-60 cursor-pointer shadow-sm"
+          >
+            {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+            {deleting ? 'Deleting...' : 'Delete User'}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Permission Detail Modal (for Users tab)
 // ---------------------------------------------------------------------------
 function PermissionsModal({ assignment, onClose }: { assignment: ProjectAssignment; onClose: () => void }) {
@@ -418,9 +692,11 @@ function PermissionsModal({ assignment, onClose }: { assignment: ProjectAssignme
 // ---------------------------------------------------------------------------
 // User Row (expandable)
 // ---------------------------------------------------------------------------
-function UserRow({ user }: { user: UserWithProjects }) {
+function UserRow({ user, onUserUpdated }: { user: UserWithProjects; onUserUpdated: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<ProjectAssignment | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const initials = getInitials(user.firstName, user.lastName);
   const avatarBg = getAvatarColor(user.firstName + user.lastName);
   const sysRole = SYSTEM_ROLE_LABELS[user.systemRole] ?? { label: user.systemRole, color: 'bg-slate-100 text-slate-600' };
@@ -430,6 +706,16 @@ function UserRow({ user }: { user: UserWithProjects }) {
       {selectedAssignment && (
         <AnimatePresence>
           <PermissionsModal assignment={selectedAssignment} onClose={() => setSelectedAssignment(null)} />
+        </AnimatePresence>
+      )}
+      {isEditOpen && (
+        <AnimatePresence>
+          <EditUserModal user={user} onClose={() => setIsEditOpen(false)} onSuccess={onUserUpdated} />
+        </AnimatePresence>
+      )}
+      {isDeleteOpen && (
+        <AnimatePresence>
+          <DeleteUserModal user={user} onClose={() => setIsDeleteOpen(false)} onSuccess={onUserUpdated} />
         </AnimatePresence>
       )}
       <motion.div layout className="border border-[hsl(var(--border))] rounded-xl overflow-hidden bg-[hsl(var(--card))]">
@@ -449,7 +735,7 @@ function UserRow({ user }: { user: UserWithProjects }) {
               <p className="text-[11px] text-[hsl(var(--muted-foreground))] truncate">{[user.designation, user.department].filter(Boolean).join(' · ')}</p>
             )}
           </div>
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {user.role && (
               <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[hsl(var(--muted)/0.5)] border border-[hsl(var(--border))]">
                 <Crown className="w-3 h-3 text-[hsl(var(--primary))]" />
@@ -460,6 +746,33 @@ function UserRow({ user }: { user: UserWithProjects }) {
               <FolderKanban className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
               <span className="text-[11px] font-semibold text-[hsl(var(--foreground))]">{user.projectAssignments.length}</span>
             </div>
+
+            {/* Edit & Delete Action Buttons */}
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditOpen(true);
+                }}
+                className="p-1.5 rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] transition-colors cursor-pointer"
+                title="Edit User Details"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDeleteOpen(true);
+                }}
+                className="p-1.5 rounded-lg border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
+                title="Delete User"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
             {expanded ? <ChevronUp className="w-4 h-4 text-[hsl(var(--muted-foreground))]" /> : <ChevronDown className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />}
           </div>
         </div>
@@ -790,7 +1103,9 @@ export default function InteriorUsersRolesView() {
                     <p className="text-sm font-medium">No users match your search.</p>
                   </div>
                 ) : (
-                  filteredUsers.map((user) => <UserRow key={user._id} user={user} />)
+                  filteredUsers.map((user) => (
+                    <UserRow key={user._id} user={user} onUserUpdated={loadUsers} />
+                  ))
                 )}
               </div>
             )}

@@ -55,7 +55,11 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess }: QuotationP
       updatedQuotations[quotationIndex] = { ...quote, status };
       
       let nextLeadStatus = lead.status;
-      if (status === 'Accepted') nextLeadStatus = 'Negotiation'; // Or Converted, depending on flow
+      if (status === 'Accepted') {
+        nextLeadStatus = 'Booking Pending';
+      } else if (status === 'Rejected') {
+        nextLeadStatus = 'Negotiation';
+      }
       
       await interiorCrmService.updateCustomer(lead._id, { 
         quotations: updatedQuotations,

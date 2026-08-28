@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Truck, User, Phone, Mail, Building, FileText, CreditCard, Landmark, AlignLeft } from 'lucide-react';
-import interiorApiClient from '@/services/interiorApi.client';
+import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  initialVendor?: any;
 }
 
-export const CreateVendorModal = ({ isOpen, onClose, onSuccess }: Props) => {
+export const CreateVendorModal = ({ isOpen, onClose, onSuccess, initialVendor }: Props) => {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -27,6 +28,40 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess }: Props) => {
     ifscCode: '',
     bankName: '',
   });
+
+  React.useEffect(() => {
+    if (initialVendor) {
+      setFormData({
+        name: initialVendor.name || '',
+        vendorCategory: initialVendor.vendorCategory || 'Raw Materials',
+        contactPerson: initialVendor.contactPerson || '',
+        phoneNumber: initialVendor.phoneNumber || '',
+        email: initialVendor.email || '',
+        gstNumber: initialVendor.gstNumber || '',
+        address: initialVendor.address || '',
+        paymentTerms: initialVendor.paymentTerms || 'Standard',
+        accountName: initialVendor.bankDetails?.accountName || '',
+        accountNumber: initialVendor.bankDetails?.accountNumber || '',
+        ifscCode: initialVendor.bankDetails?.ifscCode || '',
+        bankName: initialVendor.bankDetails?.bankName || '',
+      });
+    } else {
+      setFormData({
+        name: '',
+        vendorCategory: 'Raw Materials',
+        contactPerson: '',
+        phoneNumber: '',
+        email: '',
+        gstNumber: '',
+        address: '',
+        paymentTerms: 'Standard',
+        accountName: '',
+        accountNumber: '',
+        ifscCode: '',
+        bankName: '',
+      });
+    }
+  }, [initialVendor, isOpen]);
 
   if (!isOpen) return null;
 
@@ -53,13 +88,18 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess }: Props) => {
         }
       };
 
-      // Calls the interior-os backend /vendors API
-      await interiorApiClient.post('/vendors', payload);
-      toast.success('Vendor added successfully!');
+      if (initialVendor?._id) {
+        await interiorProjectService.updateVendor(initialVendor._id, payload);
+        toast.success('Vendor updated successfully!');
+      } else {
+        await interiorProjectService.createVendor(payload);
+        toast.success('Vendor added successfully!');
+      }
+
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to add vendor');
+      toast.error(error.response?.data?.message || 'Failed to save vendor');
     } finally {
       setIsSubmitting(false);
     }
@@ -81,8 +121,12 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess }: Props) => {
                 <Truck size={20} />
               </div>
               <div>
-                <h2 className="text-xl font-extrabold text-slate-900">Add New Vendor</h2>
-                <p className="text-xs text-slate-500 font-medium">Register a supplier or subcontractor</p>
+                <h2 className="text-xl font-extrabold text-slate-900">
+                  {initialVendor ? 'Edit Vendor' : 'Add New Vendor'}
+                </h2>
+                <p className="text-xs text-slate-500 font-medium">
+                  {initialVendor ? 'Update supplier or subcontractor details' : 'Register a supplier or subcontractor'}
+                </p>
               </div>
             </div>
             <button
@@ -130,7 +174,20 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess }: Props) => {
                       ))}
                     </select>
                   </div>
-                  <div className="space-y-1.5 md:col-span-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                      <FileText size={14} className="text-slate-400" /> GST No.
+                    </label>
+                    <input
+                      type="text"
+                      name="gstNumber"
+                      value={formData.gstNumber}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all uppercase"
+                      placeholder="e.g., 27AAAAA0000A1Z5"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                       <AlignLeft size={14} className="text-slate-400" /> Billing Address
                     </label>
@@ -213,7 +270,7 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess }: Props) => {
               className="px-6 py-2.5 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 transition-colors shadow-sm disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isSubmitting && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-              {isSubmitting ? 'Saving...' : 'Add Vendor'}
+              {isSubmitting ? 'Saving...' : initialVendor ? 'Save Changes' : 'Add Vendor'}
             </button>
           </div>
         </motion.div>

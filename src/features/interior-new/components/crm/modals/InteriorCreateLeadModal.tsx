@@ -13,9 +13,20 @@ interface CreateLeadModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  users?: any[];
 }
 
-export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClose, onSuccess }) => {
+function userLabel(u: any) {
+  const name = u.fullName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.name || 'User';
+  return `${name} (${u.role?.name || u.role || 'Member'})`;
+}
+
+export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({
+  isOpen,
+  onClose,
+  onSuccess,
+  users = [],
+}) => {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -32,9 +43,16 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen
   React.useEffect(() => {
     if (!isOpen) {
       setErrors({});
+      setFormData({
+        name: '',
+        mobileNumber: '',
+        email: '',
+        leadSource: 'Phone Call',
+        propertyType: 'Flat',
+        projectLocation: '',
+      });
     }
   }, [isOpen]);
-
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -63,26 +81,19 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen
 
     try {
       setIsSubmitting(true);
-      const payload = {
-        ...formData,
+      const payload: any = {
         name: formData.name.trim(),
         mobileNumber: formData.mobileNumber.trim(),
-        email: formData.email.trim(),
-        projectLocation: formData.projectLocation.trim(),
+        email: formData.email.trim() || undefined,
+        leadSource: formData.leadSource,
+        propertyType: formData.propertyType,
+        projectLocation: formData.projectLocation.trim() || undefined,
       };
+
       await interiorCrmService.createCustomer(payload);
       toast.success('Lead created successfully!');
       onSuccess();
       onClose();
-      setFormData({
-        name: '',
-        mobileNumber: '',
-        email: '',
-        leadSource: 'Phone Call',
-        propertyType: 'Flat',
-        projectLocation: '',
-      });
-      setErrors({});
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to create lead');
     } finally {
@@ -94,7 +105,7 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -109,13 +120,15 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl overflow-hidden flex flex-col max-h-[90vh]"
+          className="relative w-full max-w-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl overflow-hidden flex flex-col max-h-[90vh] shadow-2xl"
         >
           {/* Header */}
           <div className="px-6 py-5 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--muted)/0.5)]">
             <div>
               <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))]">Add New Lead</h2>
-              <p className="text-sm text-[hsl(var(--muted-foreground))] mt-0.5">Enter the basic details of the new prospect.</p>
+              <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                Enter prospect details to start tracking in the CRM pipeline.
+              </p>
             </div>
             <button
               onClick={onClose}
@@ -127,8 +140,7 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen
 
           {/* Body */}
           <div className="p-6 overflow-y-auto">
-            <form id="interior-lead-form" onSubmit={handleSubmit} className="space-y-6">
-
+            <form id="interior-lead-form" onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {/* Name */}
                 <div className="space-y-1.5">
@@ -143,11 +155,12 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen
                     className={`w-full px-4 py-2.5 rounded-xl border bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 transition-all ${
                       errors.name
                         ? 'border-red-500 focus:ring-red-500/20'
-                        : 'border-[hsl(var(--border))] focus:ring-[hsl(var(--ring))]'
+                        : 'border-[hsl(var(--border))] focus:ring-indigo-500/20 focus:border-indigo-500'
                     }`}
-                    placeholder="e.g., John Doe"
+                    placeholder="e.g., Rajesh Sharma"
+                    required
                   />
-                  {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
+                  {errors.name && <p className="text-xs text-red-500 font-medium mt-1">{errors.name}</p>}
                 </div>
 
                 {/* Mobile */}
@@ -163,11 +176,14 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen
                     className={`w-full px-4 py-2.5 rounded-xl border bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 transition-all ${
                       errors.mobileNumber
                         ? 'border-red-500 focus:ring-red-500/20'
-                        : 'border-[hsl(var(--border))] focus:ring-[hsl(var(--ring))]'
+                        : 'border-[hsl(var(--border))] focus:ring-indigo-500/20 focus:border-indigo-500'
                     }`}
-                    placeholder="e.g., +91 9876543210"
+                    placeholder="e.g., 9876543210"
+                    required
                   />
-                  {errors.mobileNumber && <p className="text-xs text-red-500 mt-1">{errors.mobileNumber}</p>}
+                  {errors.mobileNumber && (
+                    <p className="text-xs text-red-500 font-medium mt-1">{errors.mobileNumber}</p>
+                  )}
                 </div>
 
                 {/* Email */}
@@ -183,11 +199,11 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen
                     className={`w-full px-4 py-2.5 rounded-xl border bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 transition-all ${
                       errors.email
                         ? 'border-red-500 focus:ring-red-500/20'
-                        : 'border-[hsl(var(--border))] focus:ring-[hsl(var(--ring))]'
+                        : 'border-[hsl(var(--border))] focus:ring-indigo-500/20 focus:border-indigo-500'
                     }`}
-                    placeholder="e.g., john@example.com"
+                    placeholder="e.g., client@example.com"
                   />
-                  {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+                  {errors.email && <p className="text-xs text-red-500 font-medium mt-1">{errors.email}</p>}
                 </div>
 
                 {/* Lead Source */}
@@ -199,10 +215,22 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen
                     name="leadSource"
                     value={formData.leadSource}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] transition-all appearance-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                   >
-                    {["Phone Call", "Walk-in", "Referral", "Existing Customer", "Builder Reference", "Architect Reference", "Society Reference", "Social Media", "Other"].map(source => (
-                      <option key={source} value={source}>{source}</option>
+                    {[
+                      'Phone Call',
+                      'Walk-in',
+                      'Referral',
+                      'Existing Customer',
+                      'Builder Reference',
+                      'Architect Reference',
+                      'Society Reference',
+                      'Social Media',
+                      'Other',
+                    ].map((source) => (
+                      <option key={source} value={source}>
+                        {source}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -216,10 +244,12 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen
                     name="propertyType"
                     value={formData.propertyType}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] transition-all appearance-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                   >
-                    {["Flat", "Villa", "Office", "Shop", "Other"].map(type => (
-                      <option key={type} value={type}>{type}</option>
+                    {['Flat', 'Villa', 'Office', 'Shop', 'Other'].map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -234,7 +264,7 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen
                     name="projectLocation"
                     value={formData.projectLocation}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] transition-all"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                     placeholder="e.g., Hiranandani Estate, Thane"
                   />
                 </div>
@@ -256,7 +286,7 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen
               type="submit"
               form="interior-lead-form"
               disabled={isSubmitting}
-              className="px-5 py-2.5 rounded-xl text-sm font-bold text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
+              className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all shadow-md shadow-indigo-600/20 disabled:opacity-50 disabled:pointer-events-none"
             >
               {isSubmitting ? 'Creating...' : 'Create Lead'}
             </button>

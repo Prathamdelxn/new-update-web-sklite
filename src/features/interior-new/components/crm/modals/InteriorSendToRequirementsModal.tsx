@@ -48,7 +48,6 @@ export function InteriorSendToRequirementsModal({ isOpen, onClose, customerId, o
 
       if (designerAssigned) {
         updatePayload.designerAssigned = designerAssigned;
-        updatePayload.assignedSalesExecutive = designerAssigned;
       }
 
       await interiorCrmService.updateCustomer(customerId, updatePayload);

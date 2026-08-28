@@ -58,9 +58,9 @@ export function InteriorSendToSiteVisitModal({ isOpen, onClose, customerId, onSu
       await interiorCrmService.createActivity({
         customer: customerId,
         type: 'Site Visit',
-        status: 'Pending',
+        status: 'Completed',
         scheduledDate: scheduledDate || new Date(),
-        remarks: remarks || 'Site visit scheduled.',
+        remarks: remarks || 'Lead passed to Site Visit and assigned to site team.',
       });
 
       toast.success('Successfully sent to Site Visits!');

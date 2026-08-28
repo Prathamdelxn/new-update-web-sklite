@@ -141,7 +141,7 @@ export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, cus
       };
 
       let newQuotation;
-      if (latestQuote && (latestQuote.status === 'Sent' || latestQuote.status === 'Draft')) {
+      if (latestQuote && latestQuote.status === 'Draft') {
         updatedQuotations[updatedQuotations.length - 1] = {
           ...latestQuote,
           ...quotationPayload

@@ -23,7 +23,7 @@ export const interiorApiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000,
+  timeout: 60000,
 });
 
 interiorApiClient.interceptors.request.use(
@@ -84,7 +84,7 @@ interiorApiClient.interceptors.response.use(
           throw new Error('No refresh token');
         }
 
-        const response = await axios.post(`${INTERIOR_API_BASE_URL}/api/v1/auth/refresh`, {
+        const response = await axios.post(`${getBaseUrl()}/api/v1/auth/refresh`, {
           refreshToken,
         });
 
