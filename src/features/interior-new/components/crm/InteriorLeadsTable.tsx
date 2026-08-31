@@ -23,6 +23,7 @@ import {
   MessageCircle,
   MapPin,
   CheckCircle2,
+  Lock,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -632,22 +633,30 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                                 </button>
                               )}
 
-                              <button
-                                onClick={() => onEdit(lead)}
-                                className="p-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-xl transition-all border border-[hsl(var(--border))]"
-                                title="Edit Lead"
-                              >
-                                <Pencil size={14} />
-                              </button>
+                              {lead.status !== 'Won' && lead.status !== 'Converted' ? (
+                                <>
+                                  <button
+                                    onClick={() => onEdit(lead)}
+                                    className="p-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-xl transition-all border border-[hsl(var(--border))]"
+                                    title="Edit Lead"
+                                  >
+                                    <Pencil size={14} />
+                                  </button>
 
-                              {onDelete && (
-                                <button
-                                  onClick={() => onDelete(lead)}
-                                  className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded-xl transition-all border border-rose-500/20"
-                                  title="Delete Lead"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
+                                  {onDelete && (
+                                    <button
+                                      onClick={() => onDelete(lead)}
+                                      className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded-xl transition-all border border-rose-500/20"
+                                      title="Delete Lead"
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  )}
+                                </>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-xl" title="Converted to Project (Locked)">
+                                  <Lock size={11} /> Locked
+                                </span>
                               )}
                             </>
                           )}

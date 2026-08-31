@@ -40,10 +40,12 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
       .finally(() => setLoading(false));
   }, [projectId]);
 
-  const formatBudget = (amount: number) => {
-    if (!amount) return '₹0';
-    if (amount >= 10000000) return `₹ ${(amount / 10000000).toFixed(2)} Cr`;
-    return `₹ ${(amount / 100000).toFixed(2)} Lakh`;
+  const formatBudget = (amount: any) => {
+    const num = typeof amount === 'number' ? amount : Number(amount) || 0;
+    if (!num || num <= 0) return '₹ 0';
+    if (num >= 10000000) return `₹ ${(num / 10000000).toFixed(2)} Cr`;
+    if (num >= 100000) return `₹ ${(num / 100000).toFixed(2)} Lakh`;
+    return `₹ ${num.toLocaleString('en-IN')}`;
   };
 
   if (loading) {
@@ -128,7 +130,7 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
                 <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Contract Budget</span>
               </div>
               <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-2xl font-extrabold tracking-tight text-[hsl(var(--foreground))]">{formatBudget(project?.budget?.amount)}</span>
+                <span className="text-2xl font-extrabold tracking-tight text-[hsl(var(--foreground))]">{formatBudget(project?.budget?.amount ?? project?.budget ?? project?.totalBudget)}</span>
               </div>
               <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-auto pt-4">Total allocated contract value</p>
             </CardContent>

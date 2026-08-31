@@ -69,7 +69,15 @@ export function InteriorWonProjectsView() {
           <div className="bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-2xl p-4 mt-auto space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Final Budget</span>
-              <span className="text-sm font-black text-[hsl(var(--foreground))]">₹{(project.budget?.amount ?? project.totalBudget)?.toLocaleString('en-IN') || 0}</span>
+              <span className="text-sm font-black text-[hsl(var(--foreground))]">
+                ₹{(Number(project.budget?.amount ?? project.budget ?? project.totalBudget) || 0).toLocaleString('en-IN')}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Start Date</span>
+              <span className="text-xs font-semibold text-[hsl(var(--foreground))]">
+                {project.startDate ? new Date(project.startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : (project.createdAt ? new Date(project.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—')}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Status</span>

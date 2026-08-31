@@ -177,7 +177,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         <div className="flex items-center gap-1.5 text-blue-500">
           <Calendar className="w-3.5 h-3.5" />
           <span className="text-[10px] font-medium">
-            {project.startDate ? new Date(project.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'No date'}
+            Start: {project.startDate ? new Date(project.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : (project.createdAt ? new Date(project.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'No date')}
           </span>
         </div>
 

@@ -12,6 +12,7 @@ interface BoqPreviewProps {
 
 export function BoqPreview({ lead, boqIndex, onEdit }: BoqPreviewProps) {
   const boq = lead?.boqs?.[boqIndex];
+  const isConverted = lead?.status === 'Won' || lead?.status === 'Converted' || !!lead?.linkedProject;
 
   const handlePrint = () => {
     window.print();
@@ -31,7 +32,7 @@ export function BoqPreview({ lead, boqIndex, onEdit }: BoqPreviewProps) {
         </div>
         
         <div className="flex items-center gap-2">
-          {onEdit && (
+          {!isConverted && onEdit && (
             <button
               onClick={onEdit}
               className="text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm active:scale-95"

@@ -54,7 +54,13 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
   const currentModelRef = useRef<THREE.Object3D | null>(null);
   const animationFrameId = useRef<number | null>(null);
 
-  const fileExt = (file?.name?.split('.').pop() || '').toLowerCase();
+  const getExt = (str?: string) => {
+    if (!str) return '';
+    const clean = str.split('?')[0];
+    const parts = clean.split('.');
+    return parts.length > 1 ? parts.pop()!.toLowerCase() : '';
+  };
+  const fileExt = getExt(file?.url) || getExt(file?.name) || '';
   const isDirect3DFormat = ['fbx', 'obj', 'gltf', 'glb'].includes(fileExt);
   const isImageFormat = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'bmp'].includes(fileExt);
   const isPdfFormat = fileExt === 'pdf';
@@ -448,20 +454,12 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                 />
               </div>
             ) : isPdfFormat ? (
-              <div className="w-full h-full flex flex-col items-center justify-center p-12 text-center text-white">
-                <FileText size={64} className="text-red-500 mb-4 animate-bounce" />
-                <h3 className="text-lg font-black mb-2">{file.name}</h3>
-                <p className="text-xs text-slate-400 max-w-sm mb-6">
-                  PDF documents are best viewed in the dedicated full-page document viewer.
-                </p>
-                <a
-                  href={file.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-red-600/30"
-                >
-                  <ExternalLink size={15} /> Open PDF in Full Window
-                </a>
+              <div className="w-full h-full flex flex-col p-2 bg-slate-950">
+                <iframe
+                  src={`${file.url}#toolbar=1&navpanes=0`}
+                  title={file.name}
+                  className="w-full h-full rounded-2xl bg-white border-0"
+                />
               </div>
             ) : (
               /* CAD DWG / SKP / RVT / Archive Format Card */

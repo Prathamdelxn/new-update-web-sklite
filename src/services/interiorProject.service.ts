@@ -89,6 +89,7 @@ export const interiorProjectService = {
   getDrawings: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/drawings`).then((res) => res.data),
   createDrawing: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/drawings`, data).then((res) => res.data),
   updateDrawing: (projectId: string, data: any) => interiorApiClient.put(`/projects/${projectId}/drawings`, data).then((res) => res.data),
+  deleteDrawing: (projectId: string, drawingId: string) => interiorApiClient.delete(`/projects/${projectId}/drawings?drawingId=${drawingId}`).then((res) => res.data),
   uploadDrawingFile: (projectId: string, formData: FormData) =>
     interiorApiClient.post(`/projects/${projectId}/drawings/upload`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then((res) => res.data),
 

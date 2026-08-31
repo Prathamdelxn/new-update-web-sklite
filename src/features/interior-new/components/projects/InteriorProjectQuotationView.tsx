@@ -42,11 +42,16 @@ export default function InteriorProjectQuotationView() {
           setDebugInfo({ error: 'No customer found matching projectId: ' + projectId, customersCount: customers.length, allLinked: customers.map((c: any) => c.linkedProject) });
         }
 
-        if (customer && customer.quotations) {
-          // Filter to only show approved/accepted quotations
-          const approvedQuotes = customer.quotations.filter(
-            (q: any) => q.status === 'Approved' || q.status === 'Accepted'
+        if (customer && customer.quotations && customer.quotations.length > 0) {
+          // Filter to show approved/accepted quotations, or fallback to the customer quotations
+          let approvedQuotes = customer.quotations.filter(
+            (q: any) =>
+              q.status?.toLowerCase() === 'approved' ||
+              q.status?.toLowerCase() === 'accepted'
           );
+          if (approvedQuotes.length === 0) {
+            approvedQuotes = customer.quotations;
+          }
           setQuotations(approvedQuotes);
         } else {
           setQuotations([]);

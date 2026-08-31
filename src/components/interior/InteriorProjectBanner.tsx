@@ -34,6 +34,15 @@ const CATEGORIES = (projectId: string) => [
       { label: 'Quotation', href: `/interior-new/projects/${projectId}/quotation` },
     ],
   },
+   {
+    name: 'Site Assets',
+    icon: '📂',
+    items: [
+      { label: 'Drawings', href: `/interior-new/projects/${projectId}/drawings` },
+      { label: 'RFIs Tracker', href: `/interior-new/projects/${projectId}/rfis` },
+      // { label: 'Utility Checks', href: `/interior-new/projects/${projectId}/utilities` },
+    ],
+  },
   {
     name: 'Execution',
     icon: '📐',
@@ -68,15 +77,7 @@ const CATEGORIES = (projectId: string) => [
       { label: 'Risks Matrix', href: `/interior-new/projects/${projectId}/risks` },
     ],
   },
-  {
-    name: 'Site Assets',
-    icon: '📂',
-    items: [
-      { label: 'CAD Drawings', href: `/interior-new/projects/${projectId}/drawings` },
-      { label: 'RFIs Tracker', href: `/interior-new/projects/${projectId}/rfis` },
-      // { label: 'Utility Checks', href: `/interior-new/projects/${projectId}/utilities` },
-    ],
-  },
+ 
   {
     name: 'Handover',
     icon: '🔑',

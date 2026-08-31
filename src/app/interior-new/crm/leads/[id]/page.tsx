@@ -195,7 +195,12 @@ export default function Lead360View() {
     'Lost': 6,
   };
 
+  const isConverted = lead?.status === 'Won' || lead?.status === 'Converted' || !!lead?.linkedProject;
+
   const getTabLockState = (tabId: string) => {
+    if (isConverted) {
+      return { isLocked: false, requiredStage: '', stageTitle: '' };
+    }
     const currentStage = STAGE_ORDER[lead?.status || 'New Lead'] ?? 0;
 
     switch (tabId) {
@@ -279,7 +284,7 @@ export default function Lead360View() {
               let displayStatus = lead.status;
               let badgeColor = "bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]";
 
-              if (lead.status === 'Converted' || lead.status === 'Won') {
+              if (lead.status === 'Converted' || lead.status === 'Won' || isConverted) {
                 displayStatus = 'Converted ✓';
                 badgeColor = 'bg-emerald-600 text-white border-emerald-700';
               } else if (latestQuote?.status === 'Accepted') {
@@ -329,147 +334,194 @@ export default function Lead360View() {
               );
             })()}
 
-            {['New Lead', 'Contacted'].includes(lead.status) &&
-              !lead.siteMeasurements &&
-              (!lead.quotations || lead.quotations.length === 0) && (
+            {isConverted ? (
+              lead.linkedProject && (
                 <button
-                  onClick={() => setIsSendToSiteVisitOpen(true)}
-                  className="inline-flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-purple-600/20"
-                  title="Send to Site Visit"
-                >
-                  <MapPin size={13} /> Send to Site Visit
-                </button>
-              )}
-
-            {['Under Site Visit', 'Measurement Done'].includes(lead.status) && (
-              (lead.siteMeasurements || (lead.sitePhotos && lead.sitePhotos.length > 0)) ? (
-                <button
-                  onClick={() => setIsSendToReqOpen(true)}
+                  onClick={() => {
+                    const prjId = typeof lead.linkedProject === 'object' && lead.linkedProject !== null && lead.linkedProject._id
+                      ? lead.linkedProject._id
+                      : lead.linkedProject;
+                    router.push(`/interior-new/projects/${prjId}`);
+                  }}
                   className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-emerald-600/20"
-                  title="Send to Requirements"
+                  title="Open Live Project Workspace"
                 >
-                  <PenTool size={13} /> Send to Requirements
-                </button>
-              ) : (
-                <button
-                  onClick={() => setIsSiteVisitModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-purple-600/20"
-                  title="Log Measurements"
-                >
-                  <Plus size={13} /> Log Measurements
+                  <ExternalLink size={13} /> View Live Project
                 </button>
               )
+            ) : (
+              <>
+                {['New Lead', 'Contacted'].includes(lead.status) &&
+                  !lead.siteMeasurements &&
+                  (!lead.quotations || lead.quotations.length === 0) && (
+                    <button
+                      onClick={() => setIsSendToSiteVisitOpen(true)}
+                      className="inline-flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-purple-600/20"
+                      title="Send to Site Visit"
+                    >
+                      <MapPin size={13} /> Send to Site Visit
+                    </button>
+                  )}
+
+                {['Under Site Visit', 'Measurement Done'].includes(lead.status) && (
+                  (lead.siteMeasurements || (lead.sitePhotos && lead.sitePhotos.length > 0)) ? (
+                    <button
+                      onClick={() => setIsSendToReqOpen(true)}
+                      className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-emerald-600/20"
+                      title="Send to Requirements"
+                    >
+                      <PenTool size={13} /> Send to Requirements
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setIsSiteVisitModalOpen(true)}
+                      className="inline-flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-purple-600/20"
+                      title="Log Measurements"
+                    >
+                      <Plus size={13} /> Log Measurements
+                    </button>
+                  )
+                )}
+
+                {['Under Requirement', 'Requirement Completed'].includes(lead.status) && (
+                  (lead.requirements && lead.requirements.length > 0) ? (
+                    <button
+                      onClick={() => setIsSendToDrawingOpen(true)}
+                      className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-blue-600/20"
+                      title="Send to 2D/3D Drawing"
+                    >
+                      <UploadCloud size={13} /> Send to Drawings
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setIsReqModalOpen(true)}
+                      className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-emerald-600/20"
+                      title="Add Requirements"
+                    >
+                      <Plus size={13} /> Add Requirements
+                    </button>
+                  )
+                )}
+
+                {['Under Drawing', 'Design Approved'].includes(lead.status) && (
+                  (lead.designFiles && lead.designFiles.length > 0) ? (
+                    <button
+                      onClick={() => setIsSendToBoqOpen(true)}
+                      className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-indigo-600/20"
+                      title="Send to BOQ Creation"
+                    >
+                      <Calculator size={13} /> Send to BOQ
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setIsDesignModalOpen(true)}
+                      className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-blue-600/20"
+                      title="Upload Drawings"
+                    >
+                      <Plus size={13} /> Upload Drawings
+                    </button>
+                  )
+                )}
+
+                {['Under BOQ Creation'].includes(lead.status) && (
+                  (lead.boqs && lead.boqs.length > 0) ? (
+                    <button
+                      onClick={() => setIsSendToQuotationsOpen(true)}
+                      className="inline-flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-rose-600/20"
+                      title="Send to Quotation Phase"
+                    >
+                      <FileText size={13} /> Send to Quotation
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setIsBoqModalOpen(true)}
+                      className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-indigo-600/20"
+                      title="Create BOQ"
+                    >
+                      <Plus size={13} /> Create BOQ
+                    </button>
+                  )
+                )}
+
+                {['Under Quotation', 'Quotation Pending', 'Quotation Sent', 'Negotiation', 'Booking Pending'].includes(lead.status) && (
+                  (lead.quotations && lead.quotations.length > 0) ? (
+                    <button
+                      onClick={() => setIsConvertToProjectOpen(true)}
+                      className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-emerald-600/20"
+                      title="Convert to Won Project"
+                    >
+                      <CheckCircle2 size={13} /> Convert to Project
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setIsQuotationModalOpen(true)}
+                      className="inline-flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-rose-600/20"
+                      title="Create Quotation"
+                    >
+                      <Plus size={13} /> Create Quotation
+                    </button>
+                  )
+                )}
+
+                {['New Lead', 'Contacted'].includes(lead.status) &&
+                  !lead.siteMeasurements &&
+                  (!lead.quotations || lead.quotations.length === 0) && (
+                    <button
+                      onClick={() => setIsFollowUpModalOpen(true)}
+                      className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-blue-600/20"
+                      title="Schedule Follow-up"
+                    >
+                      <Calendar size={13} /> Schedule Follow-up
+                    </button>
+                  )}
+
+                <button 
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="p-2.5 bg-[hsl(var(--muted))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-xl transition-all active:scale-95"
+                  title="Edit Lead Details"
+                >
+                  <Pencil size={15} />
+                </button>
+
+                <button 
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  className="p-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-xl transition-all active:scale-95"
+                  title="Delete Lead"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </>
             )}
-
-            {['Under Requirement', 'Requirement Completed'].includes(lead.status) && (
-              (lead.requirements && lead.requirements.length > 0) ? (
-                <button
-                  onClick={() => setIsSendToDrawingOpen(true)}
-                  className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-blue-600/20"
-                  title="Send to 2D/3D Drawing"
-                >
-                  <UploadCloud size={13} /> Send to Drawings
-                </button>
-              ) : (
-                <button
-                  onClick={() => setIsReqModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-emerald-600/20"
-                  title="Add Requirements"
-                >
-                  <Plus size={13} /> Add Requirements
-                </button>
-              )
-            )}
-
-            {['Under Drawing', 'Design Approved'].includes(lead.status) && (
-              (lead.designFiles && lead.designFiles.length > 0) ? (
-                <button
-                  onClick={() => setIsSendToBoqOpen(true)}
-                  className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-indigo-600/20"
-                  title="Send to BOQ Creation"
-                >
-                  <Calculator size={13} /> Send to BOQ
-                </button>
-              ) : (
-                <button
-                  onClick={() => setIsDesignModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-blue-600/20"
-                  title="Upload Drawings"
-                >
-                  <Plus size={13} /> Upload Drawings
-                </button>
-              )
-            )}
-
-            {['Under BOQ Creation'].includes(lead.status) && (
-              (lead.boqs && lead.boqs.length > 0) ? (
-                <button
-                  onClick={() => setIsSendToQuotationsOpen(true)}
-                  className="inline-flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-rose-600/20"
-                  title="Send to Quotation Phase"
-                >
-                  <FileText size={13} /> Send to Quotation
-                </button>
-              ) : (
-                <button
-                  onClick={() => setIsBoqModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-indigo-600/20"
-                  title="Create BOQ"
-                >
-                  <Plus size={13} /> Create BOQ
-                </button>
-              )
-            )}
-
-            {['Under Quotation', 'Quotation Pending', 'Quotation Sent', 'Negotiation', 'Booking Pending'].includes(lead.status) && (
-              (lead.quotations && lead.quotations.length > 0) ? (
-                <button
-                  onClick={() => setIsConvertToProjectOpen(true)}
-                  className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-emerald-600/20"
-                  title="Convert to Won Project"
-                >
-                  <CheckCircle2 size={13} /> Convert to Project
-                </button>
-              ) : (
-                <button
-                  onClick={() => setIsQuotationModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-rose-600/20"
-                  title="Create Quotation"
-                >
-                  <Plus size={13} /> Create Quotation
-                </button>
-              )
-            )}
-
-            {['New Lead', 'Contacted'].includes(lead.status) &&
-              !lead.siteMeasurements &&
-              (!lead.quotations || lead.quotations.length === 0) && (
-                <button
-                  onClick={() => setIsFollowUpModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-blue-600/20"
-                  title="Schedule Follow-up"
-                >
-                  <Calendar size={13} /> Schedule Follow-up
-                </button>
-              )}
-
-            <button 
-              onClick={() => setIsEditModalOpen(true)}
-              className="p-2.5 bg-[hsl(var(--muted))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-xl transition-all active:scale-95"
-              title="Edit Lead Details"
-            >
-              <Pencil size={15} />
-            </button>
-
-            <button 
-              onClick={() => setIsDeleteModalOpen(true)}
-              className="p-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-xl transition-all active:scale-95"
-              title="Delete Lead"
-            >
-              <Trash2 size={15} />
-            </button>
           </div>
         </div>
+
+        {/* --- 2. CONVERTED READ-ONLY NOTICE BANNER --- */}
+        {isConverted && (
+          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-emerald-800">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0 text-emerald-600">
+                <Lock size={18} />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-[hsl(var(--foreground))]">Lead Converted to Live Project (Locked)</h3>
+                <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">This lead is linked to an active execution project and is preserved in read-only mode.</p>
+              </div>
+            </div>
+            {lead.linkedProject && (
+              <button
+                onClick={() => {
+                  const prjId = typeof lead.linkedProject === 'object' && lead.linkedProject !== null && lead.linkedProject._id
+                    ? lead.linkedProject._id
+                    : lead.linkedProject;
+                  router.push(`/interior-new/projects/${prjId}`);
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all shrink-0 active:scale-95"
+              >
+                Open Project Workspace <ExternalLink size={13} />
+              </button>
+            )}
+          </div>
+        )}
 
         {/* --- 3. TAB NAVIGATION --- */}
         <div className="flex items-center gap-8 border-b border-[hsl(var(--border))] overflow-x-auto scrollbar-hide px-2">
@@ -548,23 +600,25 @@ export default function Lead360View() {
                   <h3 className="text-sm font-black uppercase tracking-widest text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                     <Activity className="w-4 h-4 text-blue-500" /> Activity Timeline
                   </h3>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setIsActivityModalOpen(true)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all active:scale-95"
-                    >
-                      <Plus size={13} /> Log Note
-                    </button>
-                    {!['Under Quotation', 'Quotation Pending', 'Quotation Sent', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) &&
-                      (!lead.quotations || lead.quotations.length === 0) && (
-                        <button
-                          onClick={() => setIsFollowUpModalOpen(true)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 border border-blue-500/20 rounded-xl text-xs font-bold transition-all active:scale-95"
-                        >
-                          <Plus size={13} /> Schedule Follow-up
-                        </button>
-                      )}
-                  </div>
+                  {!isConverted && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setIsActivityModalOpen(true)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all active:scale-95"
+                      >
+                        <Plus size={13} /> Log Note
+                      </button>
+                      {!['Under Quotation', 'Quotation Pending', 'Quotation Sent', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) &&
+                        (!lead.quotations || lead.quotations.length === 0) && (
+                          <button
+                            onClick={() => setIsFollowUpModalOpen(true)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 border border-blue-500/20 rounded-xl text-xs font-bold transition-all active:scale-95"
+                          >
+                            <Plus size={13} /> Schedule Follow-up
+                          </button>
+                        )}
+                    </div>
+                  )}
                 </div>
                 
                 <div className="relative border-l-2 border-[hsl(var(--border))] ml-4 pl-8 space-y-8">
@@ -651,9 +705,11 @@ export default function Lead360View() {
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1.5 mb-6 max-w-md">
                     Capture comprehensive room dimensions, ceiling heights, MEP points, structural constraints, and site photos.
                   </p>
-                  <button onClick={() => setIsSiteVisitModalOpen(true)} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-purple-600/20">
-                    <Plus size={16} /> Log Site Visit & Measurements
-                  </button>
+                  {!isConverted && (
+                    <button onClick={() => setIsSiteVisitModalOpen(true)} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-purple-600/20">
+                      <Plus size={16} /> Log Site Visit & Measurements
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -668,12 +724,14 @@ export default function Lead360View() {
                         <p className="text-xs text-[hsl(var(--muted-foreground))]">Detailed measurements, MEP points, and on-site observations.</p>
                       </div>
                     </div>
-                    <button 
-                      onClick={() => setIsSiteVisitModalOpen(true)} 
-                      className="inline-flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-purple-600/20 shrink-0"
-                    >
-                      <Pencil size={13} /> Edit Measurements & Photos
-                    </button>
+                    {!isConverted && (
+                      <button 
+                        onClick={() => setIsSiteVisitModalOpen(true)} 
+                        className="inline-flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-purple-600/20 shrink-0"
+                      >
+                        <Pencil size={13} /> Edit Measurements & Photos
+                      </button>
+                    )}
                   </div>
 
                   {/* 4-Card Structured Grid */}
@@ -937,9 +995,11 @@ export default function Lead360View() {
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1.5 mb-6 max-w-md">
                     Capture room-by-room functional needs, aesthetic styles, materials, lighting, and client preferences.
                   </p>
-                  <button onClick={() => setIsReqModalOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-emerald-600/20">
-                    <Plus size={16} /> Add Design Requirements
-                  </button>
+                  {!isConverted && (
+                    <button onClick={() => setIsReqModalOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-emerald-600/20">
+                      <Plus size={16} /> Add Design Requirements
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -960,12 +1020,14 @@ export default function Lead360View() {
                       </div>
                     </div>
 
-                    <button 
-                      onClick={() => setIsReqModalOpen(true)} 
-                      className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-emerald-600/20 shrink-0"
-                    >
-                      <Pencil size={13} /> Edit Requirements & Budget
-                    </button>
+                    {!isConverted && (
+                      <button 
+                        onClick={() => setIsReqModalOpen(true)} 
+                        className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-emerald-600/20 shrink-0"
+                      >
+                        <Pencil size={13} /> Edit Requirements & Budget
+                      </button>
+                    )}
                   </div>
 
                   {/* Estimated Budget & Project Overview Bar */}
@@ -1225,9 +1287,11 @@ export default function Lead360View() {
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1.5 mb-6 max-w-md">
                     Upload 2D layouts (Floor plan, RCP, Electrical) and 3D models/renders (.dwg, .skp, .fbx, .obj, renders).
                   </p>
-                  <button onClick={() => setIsDesignModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-blue-600/20">
-                    <Plus size={16} /> Upload 2D & 3D Drawings
-                  </button>
+                  {!isConverted && (
+                    <button onClick={() => setIsDesignModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-blue-600/20">
+                      <Plus size={16} /> Upload 2D & 3D Drawings
+                    </button>
+                  )}
                 </div>
               ) : (() => {
                 const twoDFiles = (lead.designFiles || []).filter((f: any) => {
@@ -1291,12 +1355,14 @@ export default function Lead360View() {
                           </button>
                         </div>
 
-                        <button
-                          onClick={() => setIsDesignModalOpen(true)}
-                          className="inline-flex items-center justify-center gap-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-[hsl(var(--primary-foreground))] px-4 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-[hsl(var(--primary)/0.2)] shrink-0"
-                        >
-                          <Plus size={14} /> Upload Drawings
-                        </button>
+                        {!isConverted && (
+                          <button
+                            onClick={() => setIsDesignModalOpen(true)}
+                            className="inline-flex items-center justify-center gap-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-[hsl(var(--primary-foreground))] px-4 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-[hsl(var(--primary)/0.2)] shrink-0"
+                          >
+                            <Plus size={14} /> Upload Drawings
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -1555,9 +1621,11 @@ export default function Lead360View() {
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 mb-6 max-w-sm">
                     Create a detailed Bill of Quantities based on requirements and designs.
                   </p>
-                  <button onClick={() => setIsBoqModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5">
-                    <Plus size={15} /> Create BOQ
-                  </button>
+                  {!isConverted && (
+                    <button onClick={() => setIsBoqModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5">
+                      <Plus size={15} /> Create BOQ
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -1580,27 +1648,28 @@ export default function Lead360View() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <button
-                        onClick={() => {
-                          setEditingBoqIndex(activeBoqIndex);
-                          setIsBoqModalOpen(true);
-                        }}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5 shadow-md shadow-indigo-600/20"
-                      >
-                        <Pencil size={13} /> Edit Current BOQ
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEditingBoqIndex(null);
-                          setIsBoqModalOpen(true);
-                        }}
-                        className="bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] px-3.5 py-2 rounded-xl text-xs font-bold transition-all border border-[hsl(var(--border))] active:scale-95 flex items-center gap-1.5"
-                      >
-                        <Plus size={14} /> New BOQ Version
-                      </button>
-                     
-                    </div>
+                    {!isConverted && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          onClick={() => {
+                            setEditingBoqIndex(activeBoqIndex);
+                            setIsBoqModalOpen(true);
+                          }}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5 shadow-md shadow-indigo-600/20"
+                        >
+                          <Pencil size={13} /> Edit Current BOQ
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingBoqIndex(null);
+                            setIsBoqModalOpen(true);
+                          }}
+                          className="bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] px-3.5 py-2 rounded-xl text-xs font-bold transition-all border border-[hsl(var(--border))] active:scale-95 flex items-center gap-1.5"
+                        >
+                          <Plus size={14} /> New BOQ Version
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {lead.boqs.length > 1 && (
@@ -1627,7 +1696,7 @@ export default function Lead360View() {
                       lead={lead} 
                       boqIndex={activeBoqIndex} 
                       onSuccess={fetchData} 
-                      onEdit={() => {
+                      onEdit={isConverted ? undefined : () => {
                         setEditingBoqIndex(activeBoqIndex);
                         setIsBoqModalOpen(true);
                       }}
@@ -1663,9 +1732,11 @@ export default function Lead360View() {
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 mb-6 max-w-sm">
                     Create professional itemized quotes to secure this project.
                   </p>
-                  <button onClick={() => setIsQuotationModalOpen(true)} className="bg-rose-600 hover:bg-rose-700 text-white px-6 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5">
-                    <Plus size={15} /> Create Quotation
-                  </button>
+                  {!isConverted && (
+                    <button onClick={() => setIsQuotationModalOpen(true)} className="bg-rose-600 hover:bg-rose-700 text-white px-6 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5">
+                      <Plus size={15} /> Create Quotation
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">

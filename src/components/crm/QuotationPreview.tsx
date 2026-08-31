@@ -107,6 +107,8 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess }: QuotationP
     window.print();
   };
 
+  const isConverted = lead?.status === 'Won' || lead?.status === 'Converted' || !!lead?.linkedProject;
+
   if (!quote) return null;
 
   return (
@@ -125,7 +127,7 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess }: QuotationP
         </div>
         
         <div className="flex items-center gap-2">
-          {quote.status === 'Sent' && (
+          {!isConverted && quote.status === 'Sent' && (
             <>
               <button 
                 onClick={() => handleStatusUpdate('Accepted')}
@@ -143,7 +145,7 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess }: QuotationP
             </>
           )}
 
-          {quote.status === 'Accepted' && (
+          {!isConverted && quote.status === 'Accepted' && (
             <>
               <button 
                 onClick={handleConvertToProject}
