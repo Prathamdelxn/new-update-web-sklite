@@ -115,6 +115,8 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
     remarks: '',
   });
   const [outgoingErrors, setOutgoingErrors] = useState<ValidationErrors>({});
+  const [purchaseOrders, setPurchaseOrders] = useState<any[]>([]);
+  const [selectedPoId, setSelectedPoId] = useState<string>('');
 
   // Form 3: Debit Note
   const [debitNoteForm, setDebitNoteForm] = useState({
@@ -144,9 +146,51 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
     }
   }, [projectId]);
 
+  const loadPurchaseOrders = useCallback(async () => {
+    try {
+      const res = await interiorProjectService.getPurchaseOrders(projectId);
+      if (res?.success && res?.data) {
+        setPurchaseOrders(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to load purchase orders for payments', err);
+    }
+  }, [projectId]);
+
   useEffect(() => {
     loadPayments();
-  }, [loadPayments]);
+    loadPurchaseOrders();
+  }, [loadPayments, loadPurchaseOrders]);
+
+  const handlePoSelect = (poId: string) => {
+    setSelectedPoId(poId);
+    if (!poId) {
+      setOutgoingForm({
+        ...outgoingForm,
+        poNo: genRef('PO'),
+        vendorName: '',
+        category: 'Wood & Plywood',
+        amount: '',
+      });
+      return;
+    }
+    const po = purchaseOrders.find((p) => p._id === poId || p.poNumber === poId);
+    if (po) {
+      const alreadyPaid = payments
+        .filter((p) => p.type === 'outgoing' && p.poNo === po.poNumber)
+        .reduce((sum, p) => sum + (p.amount || 0), 0);
+      const remaining = Math.max(0, (po.amount || 0) - alreadyPaid);
+
+      setOutgoingForm({
+        ...outgoingForm,
+        poNo: po.poNumber || po._id,
+        vendorName: po.vendorName || po.vendorId?.name || '',
+        category: po.materialName || 'Wood & Plywood',
+        amount: remaining > 0 ? remaining.toString() : (po.amount || 0).toString(),
+        remarks: `Payment against PO ${po.poNumber} (${po.materialName || 'Materials'})`,
+      });
+    }
+  };
 
   // Derived lists per category
   const incomingPayments = payments.filter((p) => p.type === 'incoming');
@@ -938,6 +982,32 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
               </div>
 
               <form onSubmit={handleOutgoingSubmit} className="space-y-4">
+                {purchaseOrders && purchaseOrders.length > 0 && (
+                  <div>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">
+                      Link Purchase Order (PO)
+                    </label>
+                    <select
+                      value={selectedPoId}
+                      onChange={(e) => handlePoSelect(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-blue-200 bg-blue-50/30 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                    >
+                      <option value="">-- Direct Payment (No PO) --</option>
+                      {purchaseOrders.map((po) => {
+                        const paidForPo = payments
+                          .filter((p) => p.type === 'outgoing' && p.poNo === po.poNumber)
+                          .reduce((sum, p) => sum + (p.amount || 0), 0);
+                        const remaining = Math.max(0, (po.amount || 0) - paidForPo);
+                        return (
+                          <option key={po._id} value={po._id}>
+                            {po.poNumber} - {po.materialName} ({po.vendorName || 'Vendor'}) • Total: ₹{(po.amount || 0).toLocaleString('en-IN')}{remaining < (po.amount || 0) ? ` (Bal: ₹${remaining.toLocaleString('en-IN')})` : ''}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                )}
+
                 <div>
                   <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Vendor / Contractor Name *</label>
                   <input

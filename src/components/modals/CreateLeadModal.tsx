@@ -3,7 +3,7 @@ import { X, User, Phone, Mail, MapPin, Building, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import interiorApiClient from '@/services/interiorApi.client';
 import { useToast } from '@/providers/ToastContext';
-import { validateName, validateMobileNumber, validateEmail, ValidationErrors } from '@/lib/crmValidation';
+import { validateName, validateMobileNumber, validateEmail, validateNonEmpty, ValidationErrors } from '@/lib/crmValidation';
 
 interface CreateLeadModalProps {
   isOpen: boolean;
@@ -38,6 +38,9 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClos
       name: validateName(formData.name),
       mobileNumber: validateMobileNumber(formData.mobileNumber),
       email: validateEmail(formData.email),
+      leadSource: validateNonEmpty(formData.leadSource, 'Lead Source'),
+      propertyType: validateNonEmpty(formData.propertyType, 'Property Type'),
+      projectLocation: validateNonEmpty(formData.projectLocation, 'Project Location'),
     };
     setErrors(newErrors);
     return !Object.values(newErrors).some((err) => err !== null);
@@ -179,50 +182,59 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClos
                 {/* Lead Source */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                    <Activity size={14} className="text-slate-400" /> Lead Source
+                    <Activity size={14} className="text-slate-400" /> Lead Source *
                   </label>
                   <select
                     name="leadSource"
                     value={formData.leadSource}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none"
+                    className={`w-full px-4 py-2.5 rounded-xl border bg-white text-sm focus:outline-none focus:ring-2 appearance-none transition-all ${
+                      errors.leadSource ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-blue-500/20 focus:border-blue-500'
+                    }`}
                   >
                     {["Phone Call", "Walk-in", "Referral", "Existing Customer", "Builder Reference", "Architect Reference", "Society Reference", "Social Media", "Other"].map(source => (
                       <option key={source} value={source}>{source}</option>
                     ))}
                   </select>
+                  {errors.leadSource && <p className="text-xs text-red-500 mt-1">{errors.leadSource}</p>}
                 </div>
 
                 {/* Property Type */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                    <Building size={14} className="text-slate-400" /> Property Type
+                    <Building size={14} className="text-slate-400" /> Property Type *
                   </label>
                   <select
                     name="propertyType"
                     value={formData.propertyType}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none"
+                    className={`w-full px-4 py-2.5 rounded-xl border bg-white text-sm focus:outline-none focus:ring-2 appearance-none transition-all ${
+                      errors.propertyType ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-blue-500/20 focus:border-blue-500'
+                    }`}
                   >
                     {["Flat", "Villa", "Office", "Shop", "Other"].map(type => (
                       <option key={type} value={type}>{type}</option>
                     ))}
                   </select>
+                  {errors.propertyType && <p className="text-xs text-red-500 mt-1">{errors.propertyType}</p>}
                 </div>
 
                 {/* Project Location */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                    <MapPin size={14} className="text-slate-400" /> Project Location
+                    <MapPin size={14} className="text-slate-400" /> Project Location *
                   </label>
                   <input
                     type="text"
                     name="projectLocation"
                     value={formData.projectLocation}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    className={`w-full px-4 py-2.5 rounded-xl border bg-white text-sm focus:outline-none focus:ring-2 transition-all ${
+                      errors.projectLocation ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-blue-500/20 focus:border-blue-500'
+                    }`}
                     placeholder="e.g., Hiranandani Estate, Thane"
                   />
+                  {errors.projectLocation && <p className="text-xs text-red-500 mt-1">{errors.projectLocation}</p>}
                 </div>
               </div>
             </form>

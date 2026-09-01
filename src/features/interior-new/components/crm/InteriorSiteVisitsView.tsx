@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Phone,
   Ruler,
+  XCircle,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { interiorCrmService } from '@/services/interiorCrm.service';
@@ -23,9 +24,10 @@ interface Props {
   leads: any[];
   onLogSiteVisit: (leadId: string) => void;
   onPassToRequirements: (leadId: string) => void;
+  onMarkAsLost?: (leadId: string) => void;
 }
 
-export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirements }: Props) => {
+export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirements, onMarkAsLost }: Props) => {
   const router = useRouter();
   const [pendingActivities, setPendingActivities] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -303,6 +305,15 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                               Pass to Req <ArrowRight size={13} />
                             </button>
                           ))}
+                        {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20"
+                            title="Mark as Lost"
+                          >
+                            <XCircle size={14} />
+                          </button>
+                        )}
                       </td>
                     </motion.tr>
                   );

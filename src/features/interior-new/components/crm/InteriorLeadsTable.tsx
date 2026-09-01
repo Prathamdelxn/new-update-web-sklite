@@ -24,6 +24,7 @@ import {
   MapPin,
   CheckCircle2,
   Lock,
+  XCircle,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -66,6 +67,7 @@ interface InteriorLeadsTableProps {
   onUploadDesign?: (leadId: string) => void;
   onLogRequirements?: (leadId: string) => void;
   onConvertToProject?: (leadId: string) => void;
+  onMarkAsLost?: (leadId: string) => void;
   activeTab?: string;
 }
 
@@ -129,6 +131,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
   onAddBoq,
   onPassToQuotations,
   onUploadDesign,
+  onMarkAsLost,
   activeTab = 'leads',
 }) => {
   const router = useRouter();
@@ -650,6 +653,16 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                                       title="Delete Lead"
                                     >
                                       <Trash2 size={14} />
+                                    </button>
+                                  )}
+
+                                  {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
+                                    <button
+                                      onClick={() => onMarkAsLost(lead._id)}
+                                      className="p-2 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-xl transition-all border border-orange-500/20"
+                                      title="Mark as Lost"
+                                    >
+                                      <XCircle size={14} />
                                     </button>
                                   )}
                                 </>

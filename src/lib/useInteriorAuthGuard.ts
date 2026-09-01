@@ -2,15 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { isInteriorSession } from '@/lib/interiorAuth';
 
 export function useInteriorAuthGuard() {
   const router = useRouter();
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('interiorAccessToken');
-    if (!token) {
-      router.replace('/login');
+    const hasInterior = isInteriorSession();
+    const token = localStorage.getItem('token') || localStorage.getItem('interiorAccessToken');
+
+    if (!hasInterior) {
+      if (token) {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/login');
+      }
       return;
     }
     Promise.resolve().then(() => setChecked(true));

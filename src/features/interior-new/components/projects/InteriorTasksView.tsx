@@ -1,8 +1,12 @@
 'use client';
 
 // =============================================================================
-// InteriorOS — Tasks & Execution View (Global Standard Suite)
+// InteriorOS — Tasks & Execution View (Global Standard 3-Stage Suite)
+// Stages:
+// - To Do (todo) -> In Progress (in_progress) -> Completed (completed)
 // Features:
+// - Proof of Work Modal upon task completion (Photo uploads + Handover Notes)
+// - Proof of Work Verification Badge & Photo Lightbox in Task Drawer
 // - Multi-View: Kanban Board, Tabular List, and Grouped by WBS Package
 // - KPI Summary Metrics Bar (Total, In Progress, Blocked, Completed, Overdue)
 // - Rich Filters (Live Search, Trade/Package, Priority, Assignee, Sort)
@@ -14,7 +18,6 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
 import {
   User,
   Plus,
@@ -32,19 +35,18 @@ import {
   AlertCircle,
   CheckCircle2,
   Sparkles,
-  ExternalLink,
-  Kanban,
-  List,
-  FolderTree,
   Search,
-  Filter,
   ArrowUpDown,
-  Clock,
   CheckCircle,
   AlertTriangle,
   ChevronDown,
   ChevronRight,
-  MoreVertical,
+  Camera,
+  UploadCloud,
+  Image as ImageIcon,
+  ZoomIn,
+  FolderTree,
+  Eye,
 } from 'lucide-react';
 import { Button, Input, Card } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
@@ -56,19 +58,25 @@ interface InteriorTasksViewProps {
   projectId: string;
 }
 
+// 3-Stage Global Industry Standard Pipeline
 const COLUMNS = [
-  { id: 'backlog', title: 'Backlog', color: 'border-t-slate-400 bg-slate-500/5', badge: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
-  { id: 'todo', title: 'To Do', color: 'border-t-blue-500 bg-blue-500/5', badge: 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400' },
-  { id: 'in_progress', title: 'In Progress', color: 'border-t-amber-500 bg-amber-500/5', badge: 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400' },
-  { id: 'in_review', title: 'In Review', color: 'border-t-indigo-500 bg-indigo-500/5', badge: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-400' },
-  { id: 'completed', title: 'Completed', color: 'border-t-emerald-500 bg-emerald-500/5', badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400' },
+  { id: 'todo', title: 'To Do', color: 'border-t-blue-500 bg-blue-50/50', badge: 'bg-blue-50 text-blue-700 border border-blue-200' },
+  { id: 'in_progress', title: 'In Progress', color: 'border-t-amber-500 bg-amber-50/50', badge: 'bg-amber-50 text-amber-700 border border-amber-200' },
+  { id: 'completed', title: 'Completed', color: 'border-t-emerald-500 bg-emerald-50/50', badge: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
 ];
 
 const priorityConfig: Record<string, { label: string; color: string; dot: string }> = {
-  low: { label: 'Low', color: 'text-slate-600 bg-slate-100 dark:bg-slate-800 dark:text-slate-300', dot: 'bg-slate-400' },
-  medium: { label: 'Medium', color: 'text-blue-600 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400', dot: 'bg-blue-500' },
-  high: { label: 'High', color: 'text-amber-600 bg-amber-50 dark:bg-amber-500/10 dark:text-amber-400', dot: 'bg-amber-500' },
-  critical: { label: 'Critical', color: 'text-red-600 bg-red-50 dark:bg-red-500/10 dark:text-red-400 animate-pulse', dot: 'bg-red-500' },
+  low: { label: 'Low', color: 'text-slate-700 bg-slate-100 border border-slate-200', dot: 'bg-slate-400' },
+  medium: { label: 'Medium', color: 'text-blue-700 bg-blue-50 border border-blue-200', dot: 'bg-blue-500' },
+  high: { label: 'High', color: 'text-amber-700 bg-amber-50 border border-amber-200', dot: 'bg-amber-500' },
+  critical: { label: 'Critical', color: 'text-red-700 bg-red-50 border border-red-200 animate-pulse', dot: 'bg-red-500' },
+};
+
+// Legacy status mapping (maps any old backlog/in_review tasks to current standard)
+const normalizeTaskStatus = (st: string): string => {
+  if (st === 'backlog') return 'todo';
+  if (st === 'in_review') return 'in_progress';
+  return st || 'todo';
 };
 
 export default function InteriorTasksView({ projectId }: InteriorTasksViewProps) {
@@ -83,8 +91,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
   const [loading, setLoading] = useState(true);
 
   // View & Filter states
-  const [viewMode, setViewMode] = useState<'kanban' | 'list' | 'wbs_grouped'>('kanban');
-  const [activeTab, setActiveTab] = useState('todo');
+  const [viewMode, setViewMode] = useState<'list' | 'wbs_grouped'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterPriority, setFilterPriority] = useState('all');
   const [filterPackage, setFilterPackage] = useState('all');
@@ -100,7 +107,15 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
   const [postingComment, setPostingComment] = useState(false);
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+  const [editNewSubtaskTitle, setEditNewSubtaskTitle] = useState('');
   const [creatingWbsPackage, setCreatingWbsPackage] = useState(false);
+
+  // Proof of Work Modal State
+  const [isProofModalOpen, setIsProofModalOpen] = useState(false);
+  const [proofTask, setProofTask] = useState<any>(null);
+  const [proofImages, setProofImages] = useState<Array<{ url: string; name: string; size?: number }>>([]);
+  const [submittingProof, setSubmittingProof] = useState(false);
+  const [imageLightboxUrl, setImageLightboxUrl] = useState<string | null>(null);
 
   // Task Dialog Form
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
@@ -139,6 +154,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
     name: string;
     description: string;
     priority: string;
+    status: string;
     assigneeId: string;
     startDate: string;
     endDate: string;
@@ -150,6 +166,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
     name: '',
     description: '',
     priority: 'medium',
+    status: 'todo',
     assigneeId: '',
     startDate: '',
     endDate: '',
@@ -169,7 +186,11 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
       ]);
 
       if (taskRes.status === 'fulfilled' && taskRes.value?.success && taskRes.value.data) {
-        setTasks(taskRes.value.data);
+        const normalized = (taskRes.value.data || []).map((t: any) => ({
+          ...t,
+          status: normalizeTaskStatus(t.status),
+        }));
+        setTasks(normalized);
       } else {
         setTasks([]);
       }
@@ -290,6 +311,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
         name: formData.name,
         packageId: formData.packageId,
         priority: formData.priority,
+        status: 'todo',
         startDate: formData.startDate || undefined,
         endDate: formData.endDate || undefined,
         assignees: formData.assigneeId ? [formData.assigneeId] : [],
@@ -324,7 +346,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
         initialSubtasks: [],
       });
       fetchData();
-      toast.success('Task created successfully');
+      toast.success('Task created successfully in "To Do"');
     } catch (err: any) {
       console.error('Create task failed', err);
       toast.error(err?.response?.data?.error || 'Failed to create task');
@@ -333,20 +355,112 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
     }
   };
 
+  // Initiate Proof of Work Modal for Task Completion
+  const initiateCompleteTask = (task: any) => {
+    setProofTask(task);
+    setProofImages(task.completionProof?.images || []);
+    setIsProofModalOpen(true);
+  };
+
+  // Submit Proof of Work and Mark Completed
+  const handleSubmitProof = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!proofTask) return;
+    try {
+      setSubmittingProof(true);
+      const subtasksChecked = (proofTask.subtasks || []).map((s: any) => ({ ...s, completed: true }));
+      const payload = {
+        status: 'completed',
+        progress: 100,
+        subtasks: subtasksChecked,
+        completionProof: {
+          images: proofImages,
+          completedAt: new Date().toISOString(),
+        },
+      };
+
+      const res = await interiorProjectService.updateTask(projectId, proofTask._id, payload);
+      if (res?.success && res?.data) {
+        const updated = { ...res.data, status: 'completed', progress: 100 };
+        setTasks((prev) => prev.map((t) => (t._id === proofTask._id ? updated : t)));
+        if (selectedTask && selectedTask._id === proofTask._id) {
+          setSelectedTask(updated);
+        }
+        setIsProofModalOpen(false);
+        setProofTask(null);
+        setProofImages([]);
+        toast.success('Task marked as Completed with Proof of Work verified!');
+        fetchData();
+      }
+    } catch (err: any) {
+      console.error('Failed to complete task', err);
+      toast.error(err?.response?.data?.error || 'Failed to complete task');
+    } finally {
+      setSubmittingProof(false);
+    }
+  };
+
+  // Upload proof image handler (FileReader base64 data url)
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    Array.from(files).forEach((file) => {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please upload an image file (PNG, JPG, WebP)');
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('Image size exceeds 10MB limit');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event: ProgressEvent<FileReader>) => {
+        const result = event.target?.result;
+        if (result && typeof result === 'string') {
+          setProofImages((prev) => [
+            ...prev,
+            {
+              url: result,
+              name: file.name,
+              size: file.size,
+            },
+          ]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
+  };
+
+  const handleRemoveProofImage = (index: number) => {
+    setProofImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
   // Update Task Status
   const handleUpdateTaskStatus = async (taskId: string, newStatus: string) => {
+    const normalized = normalizeTaskStatus(newStatus);
+    const targetTask = tasks.find((t) => t._id === taskId) || (selectedTask?._id === taskId ? selectedTask : null);
+
+    // If moving to completed, open Proof of Work modal!
+    if (normalized === 'completed') {
+      if (targetTask) {
+        initiateCompleteTask(targetTask);
+        return;
+      }
+    }
+
     try {
       setTasks((prev) =>
-        prev.map((t) => (t._id === taskId ? { ...t, status: newStatus, progress: newStatus === 'completed' ? 100 : t.progress } : t))
+        prev.map((t) => (t._id === taskId ? { ...t, status: normalized } : t))
       );
       if (selectedTask && selectedTask._id === taskId) {
         setSelectedTask((prev: any) => ({
           ...prev,
-          status: newStatus,
-          progress: newStatus === 'completed' ? 100 : prev.progress,
+          status: normalized,
         }));
       }
-      await interiorProjectService.updateTask(projectId, taskId, { status: newStatus });
+      await interiorProjectService.updateTask(projectId, taskId, { status: normalized });
+      toast.success(`Task moved to "${COLUMNS.find((c) => c.id === normalized)?.title || normalized}"`);
     } catch (err: any) {
       console.error('Failed to update status', err);
       toast.error(err?.response?.data?.error || 'Failed to update task status');
@@ -365,6 +479,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
       name: task.name || '',
       description: task.description || '',
       priority: task.priority || 'medium',
+      status: normalizeTaskStatus(task.status),
       assigneeId: task.assignees?.[0]?._id || (typeof task.assignees?.[0] === 'string' ? task.assignees[0] : '') || '',
       startDate: task.startDate ? new Date(task.startDate).toISOString().split('T')[0] : '',
       endDate: task.endDate ? new Date(task.endDate).toISOString().split('T')[0] : '',
@@ -381,21 +496,61 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
     }
   };
 
+  // Add/Remove Subtasks in Edit Form
+  const handleAddEditSubtask = () => {
+    if (!editNewSubtaskTitle.trim()) return;
+    const newSubtask = {
+      title: editNewSubtaskTitle.trim(),
+      completed: false,
+    };
+    setEditTaskData((prev) => ({
+      ...prev,
+      subtasks: [...(prev.subtasks || []), newSubtask],
+    }));
+    setEditNewSubtaskTitle('');
+  };
+
+  const handleRemoveEditSubtask = (index: number) => {
+    setEditTaskData((prev) => {
+      const updated = [...(prev.subtasks || [])];
+      updated.splice(index, 1);
+      return {
+        ...prev,
+        subtasks: updated,
+      };
+    });
+  };
+
   // Save Edited Task
   const handleSaveEditedTask = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const subtasks = editTaskData.subtasks || [];
+      let calculatedProgress = Number(editTaskData.progress) || 0;
+      let newStatus = editTaskData.status;
+
+      if (subtasks.length > 0) {
+        const completedCount = subtasks.filter((s: any) => s.completed).length;
+        calculatedProgress = Math.round((completedCount / subtasks.length) * 100);
+        if (calculatedProgress > 0 && calculatedProgress < 100) {
+          newStatus = 'in_progress';
+        } else if (calculatedProgress === 0 && newStatus === 'in_progress') {
+          newStatus = 'todo';
+        }
+      }
+
       const payload: any = {
         name: editTaskData.name,
         description: editTaskData.description,
         priority: editTaskData.priority,
+        status: newStatus,
         packageId: editTaskData.packageId || undefined,
         assignees: editTaskData.assigneeId ? [editTaskData.assigneeId] : [],
         startDate: editTaskData.startDate || undefined,
         endDate: editTaskData.endDate || undefined,
-        progress: Number(editTaskData.progress) || 0,
+        progress: calculatedProgress,
         dependencies: editTaskData.dependencies || [],
-        subtasks: editTaskData.subtasks || [],
+        subtasks: subtasks,
       };
 
       const res = await interiorProjectService.updateTask(projectId, selectedTask._id, payload);
@@ -411,14 +566,20 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
     }
   };
 
-  // Subtask Handlers
+  // Subtask Handlers with Auto-Progress Calculation
   const handleAddSubtask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSubtaskTitle.trim() || !selectedTask) return;
     const currentSubtasks = selectedTask.subtasks || [];
     const updated = [...currentSubtasks, { title: newSubtaskTitle.trim(), completed: false }];
+    const completedCount = updated.filter((s: any) => s.completed).length;
+    const calculatedProgress = Math.round((completedCount / updated.length) * 100);
+
     try {
-      const res = await interiorProjectService.updateTask(projectId, selectedTask._id, { subtasks: updated });
+      const res = await interiorProjectService.updateTask(projectId, selectedTask._id, {
+        subtasks: updated,
+        progress: calculatedProgress,
+      });
       if (res?.success && res?.data) {
         setSelectedTask(res.data);
         setNewSubtaskTitle('');
@@ -433,12 +594,38 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
     if (!selectedTask) return;
     const currentSubtasks = [...(selectedTask.subtasks || [])];
     if (!currentSubtasks[subtaskIndex]) return;
+
+    const willBeCompleted = !currentSubtasks[subtaskIndex].completed;
     currentSubtasks[subtaskIndex] = {
       ...currentSubtasks[subtaskIndex],
-      completed: !currentSubtasks[subtaskIndex].completed,
+      completed: willBeCompleted,
     };
+
+    const completedCount = currentSubtasks.filter((s: any) => s.completed).length;
+    const calculatedProgress = Math.round((completedCount / currentSubtasks.length) * 100);
+
+    // If all subtasks are now completed, prompt for proof of work
+    if (calculatedProgress === 100 && selectedTask.status !== 'completed') {
+      initiateCompleteTask({ ...selectedTask, subtasks: currentSubtasks });
+      return;
+    }
+
+    // Auto status transition:
+    // > 0% and < 100% -> 'in_progress'
+    // 0% -> 'todo' (if it was in_progress)
+    let newStatus = selectedTask.status;
+    if (calculatedProgress > 0 && calculatedProgress < 100) {
+      newStatus = 'in_progress';
+    } else if (calculatedProgress === 0 && selectedTask.status === 'in_progress') {
+      newStatus = 'todo';
+    }
+
     try {
-      const res = await interiorProjectService.updateTask(projectId, selectedTask._id, { subtasks: currentSubtasks });
+      const res = await interiorProjectService.updateTask(projectId, selectedTask._id, {
+        subtasks: currentSubtasks,
+        progress: calculatedProgress,
+        status: newStatus,
+      });
       if (res?.success && res?.data) {
         setSelectedTask(res.data);
         setTasks((prev) => prev.map((t) => (t._id === selectedTask._id ? res.data : t)));
@@ -452,8 +639,22 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
     if (!selectedTask) return;
     const currentSubtasks = [...(selectedTask.subtasks || [])];
     currentSubtasks.splice(subtaskIndex, 1);
+    const completedCount = currentSubtasks.filter((s: any) => s.completed).length;
+    const calculatedProgress = currentSubtasks.length > 0 ? Math.round((completedCount / currentSubtasks.length) * 100) : selectedTask.progress;
+
+    let newStatus = selectedTask.status;
+    if (calculatedProgress > 0 && calculatedProgress < 100) {
+      newStatus = 'in_progress';
+    } else if (calculatedProgress === 0 && selectedTask.status === 'in_progress') {
+      newStatus = 'todo';
+    }
+
     try {
-      const res = await interiorProjectService.updateTask(projectId, selectedTask._id, { subtasks: currentSubtasks });
+      const res = await interiorProjectService.updateTask(projectId, selectedTask._id, {
+        subtasks: currentSubtasks,
+        progress: calculatedProgress,
+        status: newStatus,
+      });
       if (res?.success && res?.data) {
         setSelectedTask(res.data);
         setTasks((prev) => prev.map((t) => (t._id === selectedTask._id ? res.data : t)));
@@ -463,27 +664,41 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
     }
   };
 
-  // Delete Task
-  const handleDeleteTask = async () => {
+  // Open Edit Mode for Task
+  const handleOpenEditTask = (task: any, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    handleSelectTask(task);
+    setIsEditingTask(true);
+  };
+
+  // Delete Task directly from card or table
+  const handleDeleteTaskDirect = async (task: any, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     const ok = await confirm({
       title: 'Delete Task',
-      message: 'Are you sure you want to delete this task? This will remove all associated logs and comments.',
-      confirmText: 'Delete',
+      message: `Are you sure you want to delete "${task.name}"? This action cannot be undone.`,
+      confirmText: 'Delete Task',
       type: 'danger',
     });
     if (!ok) return;
     try {
-      await interiorProjectService.deleteTask(projectId, selectedTask._id);
-      toast.success('Task deleted successfully!');
-      setSelectedTask(null);
+      await interiorProjectService.deleteTask(projectId, task._id);
+      toast.success('Task deleted successfully');
+      if (selectedTask?._id === task._id) setSelectedTask(null);
       fetchData();
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to delete task', err);
-      toast.error(err?.response?.data?.error || 'Failed to delete task');
+      toast.error('Failed to delete task');
     }
   };
 
-  // Post Comment
+  // Delete Task from modal
+  const handleDeleteTask = async () => {
+    if (!selectedTask) return;
+    await handleDeleteTaskDirect(selectedTask);
+  };
+
+  // Task Comments
   const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
@@ -501,50 +716,47 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
     }
   };
 
-  // Filtered & Sorted Tasks computation
+  // Filter & Sort Logic
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
-      // Search
+      // Search query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
-        const matchName = task.name?.toLowerCase().includes(q);
-        const matchDesc = task.description?.toLowerCase().includes(q);
-        const matchPkg = task.packageId?.name?.toLowerCase().includes(q) || task.packageId?.trade?.toLowerCase().includes(q);
-        const matchAssignee = task.assignees?.some((a: any) =>
-          `${a.firstName || ''} ${a.lastName || ''}`.toLowerCase().includes(q)
-        );
-        if (!matchName && !matchDesc && !matchPkg && !matchAssignee) return false;
+        const matchesName = task.name?.toLowerCase().includes(q);
+        const matchesDesc = task.description?.toLowerCase().includes(q);
+        const matchesPkg = task.packageId?.name?.toLowerCase().includes(q) || task.packageId?.trade?.toLowerCase().includes(q);
+        const matchesAssignee = task.assignees?.some((a: any) => `${a.firstName || ''} ${a.lastName || ''}`.toLowerCase().includes(q));
+        if (!matchesName && !matchesDesc && !matchesPkg && !matchesAssignee) return false;
       }
 
-      // Priority
+      // Priority filter
       if (filterPriority !== 'all' && task.priority !== filterPriority) return false;
 
-      // Status
+      // Status filter
       if (filterStatus !== 'all' && task.status !== filterStatus) return false;
 
-      // Package / Trade
+      // Package filter
       if (filterPackage !== 'all') {
         const pkgId = task.packageId?._id || task.packageId;
-        const pkgTrade = task.packageId?.trade;
-        if (pkgId !== filterPackage && pkgTrade !== filterPackage) return false;
+        if (String(pkgId) !== filterPackage) return false;
       }
 
-      // Assignee
+      // Assignee filter
       if (filterAssignee !== 'all') {
-        const hasAssignee = task.assignees?.some((a: any) => (a._id || a) === filterAssignee);
+        const hasAssignee = task.assignees?.some((a: any) => String(a._id || a) === filterAssignee);
         if (!hasAssignee) return false;
       }
 
       return true;
     }).sort((a, b) => {
       if (sortBy === 'dueDate') {
-        const dateA = a.endDate ? new Date(a.endDate).getTime() : Infinity;
-        const dateB = b.endDate ? new Date(b.endDate).getTime() : Infinity;
-        return dateA - dateB;
+        if (!a.endDate) return 1;
+        if (!b.endDate) return -1;
+        return new Date(a.endDate).getTime() - new Date(b.endDate).getTime();
       }
       if (sortBy === 'priority') {
-        const weights: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
-        return (weights[b.priority] || 0) - (weights[a.priority] || 0);
+        const weight: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
+        return (weight[b.priority] || 0) - (weight[a.priority] || 0);
       }
       if (sortBy === 'progress') {
         return (b.progress || 0) - (a.progress || 0);
@@ -561,6 +773,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
     const total = tasks.length;
     const completed = tasks.filter((t) => t.status === 'completed').length;
     const inProgress = tasks.filter((t) => t.status === 'in_progress').length;
+    const todo = tasks.filter((t) => t.status === 'todo').length;
     const now = new Date();
     now.setHours(0, 0, 0, 0);
 
@@ -578,14 +791,13 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
 
     const overallProgress = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-    return { total, completed, inProgress, overdue, blocked, overallProgress };
+    return { total, completed, inProgress, todo, overdue, blocked, overallProgress };
   }, [tasks]);
 
   // Tasks grouped by WBS Package for WBS Grouped View
   const tasksByPackage = useMemo(() => {
     const groups = new Map<string, { package: any; tasks: any[] }>();
 
-    // Put defined packages first
     for (const pkg of wbsPackages) {
       groups.set(String(pkg.id || pkg._id), { package: pkg, tasks: [] });
     }
@@ -625,13 +837,13 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Tasks & Execution Suite</h2>
+            <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Tasks Management</h2>
             <span className="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)]">
               {tasks.length} Total
             </span>
           </div>
           <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-            Enterprise WBS execution, subtask tracking, dependency blocking, and team coordination.
+            Actionable site execution, subtask tracking and verified proof-of-work completion.
           </p>
         </div>
 
@@ -643,117 +855,77 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
         </div>
       </div>
 
-      {/* KPI Metric Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-        <Card className="p-4 border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))]">Total Tasks</span>
-            <div className="w-6 h-6 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center">
-              <Layers className="w-3.5 h-3.5" />
-            </div>
+      {/* Minimalistic KPI Summary Strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+        <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white shadow-2xs">
+          <div className="space-y-0.5">
+            <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Total</span>
+            <div className="text-base font-bold text-slate-900 leading-none">{metrics.total}</div>
           </div>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-[hsl(var(--foreground))]">{metrics.total}</span>
-            <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))]">{metrics.overallProgress}% Done</span>
-          </div>
-          <div className="mt-2 w-full h-1 bg-[hsl(var(--muted))] rounded-full overflow-hidden">
-            <div className="h-full bg-blue-600 transition-all" style={{ width: `${metrics.overallProgress}%` }} />
-          </div>
-        </Card>
+          <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60">
+            {metrics.overallProgress}%
+          </span>
+        </div>
 
-        <Card className="p-4 border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))]">In Progress</span>
-            <div className="w-6 h-6 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center">
-              <Clock className="w-3.5 h-3.5" />
-            </div>
+        <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white shadow-2xs">
+          <div className="space-y-0.5">
+            <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">To Do</span>
+            <div className="text-base font-bold text-blue-600 leading-none">{metrics.todo}</div>
           </div>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-amber-600">{metrics.inProgress}</span>
-            <span className="text-[10px] text-[hsl(var(--muted-foreground))]">Active on site</span>
-          </div>
-        </Card>
+          <div className="w-2 h-2 rounded-full bg-blue-500" />
+        </div>
 
-        <Card className="p-4 border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))]">Completed</span>
-            <div className="w-6 h-6 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-            </div>
+        <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white shadow-2xs">
+          <div className="space-y-0.5">
+            <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">In Progress</span>
+            <div className="text-base font-bold text-amber-600 leading-none">{metrics.inProgress}</div>
           </div>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-emerald-600">{metrics.completed}</span>
-            <span className="text-[10px] text-emerald-600 font-semibold">{metrics.overallProgress}% achieved</span>
-          </div>
-        </Card>
+          <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+        </div>
 
-        <Card className="p-4 border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))]">Blocked Tasks</span>
-            <div className="w-6 h-6 rounded-md bg-amber-100 dark:bg-amber-950 text-amber-700 flex items-center justify-center">
-              <AlertTriangle className="w-3.5 h-3.5" />
-            </div>
+        <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white shadow-2xs">
+          <div className="space-y-0.5">
+            <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Completed</span>
+            <div className="text-base font-bold text-emerald-600 leading-none">{metrics.completed}</div>
           </div>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-amber-700 dark:text-amber-400">{metrics.blocked}</span>
-            <span className="text-[10px] text-[hsl(var(--muted-foreground))]">Needs predecessor</span>
-          </div>
-        </Card>
+          <CheckCircle className="w-4 h-4 text-emerald-500" />
+        </div>
 
-        <Card className="p-4 border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))]">Overdue Slip</span>
-            <div className="w-6 h-6 rounded-md bg-rose-50 dark:bg-rose-950 text-rose-600 flex items-center justify-center">
-              <AlertCircle className="w-3.5 h-3.5" />
-            </div>
+        <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white shadow-2xs col-span-2 sm:col-span-1">
+          <div className="space-y-0.5">
+            <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Overdue</span>
+            <div className="text-base font-bold text-rose-600 leading-none">{metrics.overdue + metrics.blocked}</div>
           </div>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-rose-600">{metrics.overdue}</span>
-            <span className="text-[10px] text-rose-600 font-medium">Past target date</span>
-          </div>
-        </Card>
+          <AlertTriangle className="w-4 h-4 text-rose-500" />
+        </div>
       </div>
 
-      {/* View Switcher & Filter Toolbar */}
-      <div className="p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-sm space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          {/* View Modes */}
-          <div className="flex items-center bg-[hsl(var(--muted))] p-1 rounded-lg">
+      {/* Control Bar: View Switcher, Search, and Multi-Level Filters */}
+      <div className="border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] p-3.5 shadow-sm space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* View Mode Switcher */}
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
             <button
-              type="button"
-              onClick={() => setViewMode('kanban')}
-              className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all',
-                viewMode === 'kanban'
-                  ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-xs'
-                  : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
-              )}
-            >
-              <Kanban className="w-3.5 h-3.5" /> Kanban Board
-            </button>
-            <button
-              type="button"
               onClick={() => setViewMode('list')}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all',
+                'flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer',
                 viewMode === 'list'
-                  ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-xs'
-                  : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
+                  ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
+                  : 'text-slate-500 hover:text-slate-900'
               )}
             >
-              <List className="w-3.5 h-3.5" /> Table List
+              <CheckSquare className="w-3.5 h-3.5 text-blue-600" /> Table List
             </button>
             <button
-              type="button"
               onClick={() => setViewMode('wbs_grouped')}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all',
+                'flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer',
                 viewMode === 'wbs_grouped'
-                  ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-xs'
-                  : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
+                  ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
+                  : 'text-slate-500 hover:text-slate-900'
               )}
             >
-              <FolderTree className="w-3.5 h-3.5" /> Group by WBS
+              <FolderTree className="w-3.5 h-3.5 text-amber-600" /> Group by WBS
             </button>
           </div>
 
@@ -762,7 +934,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]" />
             <input
               type="text"
-              placeholder="Search tasks, trades, assignees..."
+              placeholder="Search tasks, assignees..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-8.5 pr-3 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
@@ -776,14 +948,29 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
         </div>
 
         {/* Second Row of Filters */}
-        <div className="flex flex-wrap items-center gap-2.5 pt-2 border-t border-[hsl(var(--border))/0.6] text-xs">
+        <div className="flex flex-wrap items-center gap-2.5 pt-2 border-t border-slate-100 text-xs">
+          {/* Status filter */}
+          <div className="flex items-center gap-1">
+            <span className="text-[11px] font-medium text-slate-500">Status:</span>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="px-2 py-1 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none"
+            >
+              <option value="all">All Statuses</option>
+              <option value="todo">To Do</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+
           {/* Priority filter */}
           <div className="flex items-center gap-1">
-            <span className="text-[11px] font-medium text-[hsl(var(--muted-foreground))]">Priority:</span>
+            <span className="text-[11px] font-medium text-slate-500">Priority:</span>
             <select
               value={filterPriority}
               onChange={(e) => setFilterPriority(e.target.value)}
-              className="px-2 py-1 text-xs rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none"
+              className="px-2 py-1 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none"
             >
               <option value="all">All Priorities</option>
               <option value="critical">Critical</option>
@@ -884,151 +1071,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
       ) : (
         <>
           {/* =========================================================================
-              VIEW 1: KANBAN BOARD VIEW
-             ========================================================================= */}
-          {viewMode === 'kanban' && (
-            <div className="space-y-4">
-              {/* Tab column selector on mobile/tablet */}
-              <div className="flex items-center gap-2 border-b border-[hsl(var(--border))] pb-3 overflow-x-auto">
-                {COLUMNS.map((col) => {
-                  const colTasks = filteredTasks.filter((t) => t.status === col.id);
-                  return (
-                    <button
-                      key={col.id}
-                      onClick={() => setActiveTab(col.id)}
-                      className={cn(
-                        'px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap flex items-center gap-2',
-                        activeTab === col.id
-                          ? 'bg-[hsl(var(--primary))] text-white'
-                          : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
-                      )}
-                    >
-                      {col.title}
-                      <span
-                        className={cn(
-                          'px-2 py-0.5 rounded-full text-[10px] font-bold',
-                          activeTab === col.id ? 'bg-white/20 text-white' : 'bg-[hsl(var(--card))] text-[hsl(var(--muted-foreground))]'
-                        )}
-                      >
-                        {colTasks.length}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Kanban Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredTasks
-                  .filter((t) => t.status === activeTab)
-                  .map((task) => {
-                    const priority = priorityConfig[task.priority] || priorityConfig.medium;
-                    const assignee = task.assignees?.[0];
-                    const unmetDeps = (task.dependencies || []).filter((d: any) => typeof d === 'object' && d.status !== 'completed');
-                    const isBlocked = unmetDeps.length > 0 && task.status !== 'completed';
-                    const totalSubtasks = task.subtasks?.length || 0;
-                    const completedSubtasks = task.subtasks?.filter((s: any) => s.completed).length || 0;
-                    const now = new Date();
-                    now.setHours(0, 0, 0, 0);
-                    const isOverdue = task.endDate && new Date(task.endDate) < now && task.status !== 'completed';
-
-                    return (
-                      <motion.div
-                        key={task._id}
-                        layoutId={task._id}
-                        className={cn(
-                          'p-4.5 border rounded-xl bg-[hsl(var(--card))] shadow-xs cursor-pointer hover:border-[hsl(var(--primary)/0.4)] hover:shadow-md transition-all space-y-3 group relative',
-                          isBlocked ? 'border-amber-300 dark:border-amber-900/60' : 'border-[hsl(var(--border))]'
-                        )}
-                        onClick={() => handleSelectTask(task)}
-                      >
-                        {/* Top Meta: Priority & Trade Tag */}
-                        <div className="flex items-start justify-between gap-2">
-                          <span className={cn('px-2 py-0.5 text-[10px] font-bold rounded-md uppercase', priority.color)}>
-                            {priority.label}
-                          </span>
-                          <span className="text-[10px] font-mono font-medium text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded-md truncate max-w-[130px]">
-                            {task.packageId?.name ? `${task.packageId.name} (${task.packageId.trade})` : 'Unassigned WBS'}
-                          </span>
-                        </div>
-
-                        {/* Title */}
-                        <h4 className="text-sm font-semibold text-[hsl(var(--foreground))] line-clamp-2 leading-snug group-hover:text-[hsl(var(--primary))] transition-colors">
-                          {task.name}
-                        </h4>
-
-                        {/* Badges: Blocked & Subtasks */}
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {isBlocked && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
-                              <AlertTriangle className="w-3 h-3 text-amber-600" />
-                              Blocked ({unmetDeps.length})
-                            </span>
-                          )}
-                          {totalSubtasks > 0 && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
-                              <CheckSquare className="w-3 h-3" />
-                              {completedSubtasks}/{totalSubtasks} Subtasks
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Progress Bar */}
-                        <div className="space-y-1 pt-0.5">
-                          <div className="flex justify-between text-[10px] text-[hsl(var(--muted-foreground))] font-medium">
-                            <span>Progress</span>
-                            <span className="font-bold text-[hsl(var(--foreground))]">{task.progress || 0}%</span>
-                          </div>
-                          <div className="w-full h-1.5 bg-[hsl(var(--muted))] rounded-full overflow-hidden">
-                            <div
-                              className={cn(
-                                'h-full transition-all duration-300',
-                                task.progress === 100 ? 'bg-emerald-500' : 'bg-[hsl(var(--primary))]'
-                              )}
-                              style={{ width: `${task.progress || 0}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Card Footer: Dates & Assignee */}
-                        <div className="flex items-center justify-between pt-2 border-t border-[hsl(var(--border))] text-xs text-[hsl(var(--muted-foreground))]">
-                          <span className={cn('flex items-center gap-1 text-[11px] font-medium', isOverdue && 'text-rose-600 font-semibold')}>
-                            <Calendar className="w-3.5 h-3.5" />
-                            {task.endDate
-                              ? new Date(task.endDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })
-                              : 'No date'}
-                            {isOverdue && ' (Overdue)'}
-                          </span>
-                          <div className="flex items-center gap-1.5">
-                            {assignee ? (
-                              <div
-                                title={`${assignee.firstName || ''} ${assignee.lastName || ''}`}
-                                className="w-6 h-6 rounded-full bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] flex items-center justify-center font-bold text-[10px] ring-2 ring-[hsl(var(--background))]"
-                              >
-                                {assignee.firstName?.[0] || 'U'}
-                              </div>
-                            ) : (
-                              <div className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] flex items-center justify-center text-[hsl(var(--muted-foreground))] ring-2 ring-[hsl(var(--background))]">
-                                <User className="w-3 h-3" />
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-              </div>
-
-              {filteredTasks.filter((t) => t.status === activeTab).length === 0 && (
-                <div className="text-center py-14">
-                  <p className="text-xs text-[hsl(var(--muted-foreground))]">No tasks in "{COLUMNS.find((c) => c.id === activeTab)?.title}"</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* =========================================================================
-              VIEW 2: SPREADSHEET TABLE LIST VIEW
+              VIEW 1: SPREADSHEET TABLE LIST VIEW
              ========================================================================= */}
           {viewMode === 'list' && (
             <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] overflow-hidden shadow-sm">
@@ -1041,6 +1084,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                       <th className="py-3 px-4">Status</th>
                       <th className="py-3 px-4">Priority</th>
                       <th className="py-3 px-4">Progress</th>
+                      <th className="py-3 px-4">Proof of Work</th>
                       <th className="py-3 px-4">Subtasks</th>
                       <th className="py-3 px-4">Assignee</th>
                       <th className="py-3 px-4">Due Date</th>
@@ -1058,6 +1102,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                       const now = new Date();
                       now.setHours(0, 0, 0, 0);
                       const isOverdue = task.endDate && new Date(task.endDate) < now && task.status !== 'completed';
+                      const hasProof = task.status === 'completed' && task.completionProof?.images?.length > 0;
 
                       return (
                         <tr
@@ -1066,14 +1111,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                           onClick={() => handleSelectTask(task)}
                         >
                           <td className="py-3 px-4 font-semibold text-[hsl(var(--foreground))] max-w-xs">
-                            <div className="flex items-center gap-2">
-                              <span className="truncate">{task.name}</span>
-                              {isBlocked && (
-                                <span title="Blocked by uncompleted predecessor" className="shrink-0 text-amber-600">
-                                  <AlertTriangle className="w-3.5 h-3.5" />
-                                </span>
-                              )}
-                            </div>
+                            <span className="truncate">{task.name}</span>
                           </td>
 
                           <td className="py-3 px-4 font-mono text-[11px] text-[hsl(var(--muted-foreground))]">
@@ -1082,18 +1120,25 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                             </span>
                           </td>
 
-                          <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
-                            <select
-                              value={task.status}
-                              onChange={(e) => handleUpdateTaskStatus(task._id, e.target.value)}
-                              className="px-2 py-1 text-[11px] font-semibold rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--foreground))] focus:outline-none capitalize cursor-pointer"
+                          <td className="py-3 px-4">
+                            <span
+                              className={cn(
+                                'px-2.5 py-1 text-[11px] font-bold rounded-md inline-flex items-center gap-1.5 border',
+                                task.status === 'completed'
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                  : task.status === 'in_progress'
+                                  ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                  : 'bg-blue-50 text-blue-700 border-blue-200'
+                              )}
                             >
-                              <option value="backlog">Backlog</option>
-                              <option value="todo">To Do</option>
-                              <option value="in_progress">In Progress</option>
-                              <option value="in_review">In Review</option>
-                              <option value="completed">Completed</option>
-                            </select>
+                              <span
+                                className={cn(
+                                  'w-1.5 h-1.5 rounded-full',
+                                  task.status === 'completed' ? 'bg-emerald-500' : task.status === 'in_progress' ? 'bg-amber-500 animate-pulse' : 'bg-blue-500'
+                                )}
+                              />
+                              {task.status === 'completed' ? 'Completed' : task.status === 'in_progress' ? 'In Progress' : 'To Do'}
+                            </span>
                           </td>
 
                           <td className="py-3 px-4">
@@ -1102,7 +1147,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                             </span>
                           </td>
 
-                          <td className="py-3 px-4 min-w-[120px]">
+                          <td className="py-3 px-4 min-w-[110px]">
                             <div className="flex items-center gap-2">
                               <div className="flex-1 h-1.5 bg-[hsl(var(--muted))] rounded-full overflow-hidden">
                                 <div
@@ -1112,6 +1157,18 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                               </div>
                               <span className="text-[10px] font-bold">{task.progress || 0}%</span>
                             </div>
+                          </td>
+
+                          <td className="py-3 px-4">
+                            {hasProof ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <Camera className="w-3 h-3" /> {task.completionProof.images.length} Photos
+                              </span>
+                            ) : task.status === 'completed' ? (
+                              <span className="text-[10px] text-emerald-600 font-semibold">Done</span>
+                            ) : (
+                              <span className="text-[11px] text-[hsl(var(--muted-foreground))]">—</span>
+                            )}
                           </td>
 
                           <td className="py-3 px-4 text-[11px] text-[hsl(var(--muted-foreground))]">
@@ -1135,14 +1192,32 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                           </td>
 
                           <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 text-xs px-2"
-                              onClick={() => handleSelectTask(task)}
-                            >
-                              Details
-                            </Button>
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                type="button"
+                                title="View Task Details"
+                                className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 transition-colors cursor-pointer shadow-2xs"
+                                onClick={() => handleSelectTask(task)}
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                title="Edit Task"
+                                className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-amber-600 hover:bg-amber-50 border border-slate-200 hover:border-amber-200 transition-colors cursor-pointer shadow-2xs"
+                                onClick={(e) => handleOpenEditTask(task, e)}
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                title="Delete Task"
+                                className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-colors cursor-pointer shadow-2xs"
+                                onClick={(e) => handleDeleteTaskDirect(task, e)}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -1224,9 +1299,36 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                                 </span>
                               </div>
                               <h5 className="text-xs font-bold text-[hsl(var(--foreground))] truncate">{task.name}</h5>
-                              <div className="flex items-center justify-between text-[10px] text-[hsl(var(--muted-foreground))] pt-1 border-t border-[hsl(var(--border))/0.6]">
+                              <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-100">
                                 <span>{task.progress || 0}% progress</span>
                                 <span>{task.endDate ? new Date(task.endDate).toLocaleDateString('en-IN') : 'No date'}</span>
+                              </div>
+
+                              <div className="flex items-center justify-end gap-1 pt-2 border-t border-slate-100" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  type="button"
+                                  title="View Task Details"
+                                  onClick={() => handleSelectTask(task)}
+                                  className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 transition-colors cursor-pointer shadow-2xs"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  title="Edit Task"
+                                  onClick={(e) => handleOpenEditTask(task, e)}
+                                  className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-amber-600 hover:bg-amber-50 border border-slate-200 hover:border-amber-200 transition-colors cursor-pointer shadow-2xs"
+                                >
+                                  <Edit className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  title="Delete Task"
+                                  onClick={(e) => handleDeleteTaskDirect(task, e)}
+                                  className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-colors cursor-pointer shadow-2xs"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
                               </div>
                             </div>
                           ))
@@ -1256,7 +1358,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <div>
                   <h3 className="text-base font-bold text-[hsl(var(--foreground))]">Add Task to WBS Package</h3>
-                  <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Schedule actionable site work and link dependencies</p>
+                  <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Schedule actionable site work in "To Do" pipeline</p>
                 </div>
                 <button onClick={() => setIsTaskDialogOpen(false)} className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">
                   <X className="w-4 h-4" />
@@ -1319,25 +1421,26 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                         </Button>
                       </div>
                     ) : wbsPackages.length === 0 ? (
-                      <div className="p-3.5 rounded-lg border border-amber-200 bg-amber-50/70 dark:bg-amber-950/20 dark:border-amber-900/50 space-y-2">
+                      <div className="p-3.5 rounded-lg border border-blue-200 bg-blue-50/70 space-y-2.5">
                         <div className="flex items-start gap-2">
-                          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                          <AlertCircle className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                           <div className="space-y-0.5">
-                            <p className="text-xs font-bold text-amber-900 dark:text-amber-300">No WBS Packages found</p>
-                            <p className="text-[11px] text-amber-800 dark:text-amber-400">
-                              Tasks must belong to a WBS Trade Package. Use the quick starter button below.
+                            <p className="text-xs font-bold text-blue-950">No WBS Packages found</p>
+                            <p className="text-[11px] text-blue-900">
+                              Tasks must belong to a WBS Trade Package. Click below to initialize.
                             </p>
                           </div>
                         </div>
                         <Button
                           type="button"
                           size="sm"
-                          className="text-xs h-7.5 bg-amber-600 hover:bg-amber-700 text-white"
                           disabled={creatingWbsPackage}
                           onClick={handleQuickCreateDefaultWbs}
+                          className="w-full text-xs h-7.5"
                         >
-                          {creatingWbsPackage ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Sparkles className="w-3 h-3 mr-1" />}
-                          Quick-Create Starter Package
+                          {creatingWbsPackage && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
+                          <Sparkles className="w-3.5 h-3.5 mr-1" />
+                          Initialize Starter Package
                         </Button>
                       </div>
                     ) : (
@@ -1368,6 +1471,25 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                     />
                   </div>
 
+                  {/* Milestone Linkage */}
+                  {milestones.length > 0 && (
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold">Link to Project Milestone (Optional)</label>
+                      <select
+                        className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                        value={formData.milestoneId}
+                        onChange={(e) => setFormData({ ...formData, milestoneId: e.target.value })}
+                      >
+                        <option value="">No Milestone (General Track)</option>
+                        {milestones.map((m) => (
+                          <option key={m._id} value={m._id}>
+                            {m.name} ({m.status})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
                   {/* Priority & Assignee */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
@@ -1391,7 +1513,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                         value={formData.assigneeId}
                         onChange={(e) => setFormData({ ...formData, assigneeId: e.target.value })}
                       >
-                        <option value="">Unassigned</option>
+                        <option value="">Select Assignee...</option>
                         {projectMembers.map((m) => (
                           <option key={m.userId?._id || m._id} value={m.userId?._id || m._id}>
                             {m.userId?.firstName || m.firstName} {m.userId?.lastName || m.lastName}
@@ -1401,61 +1523,41 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                     </div>
                   </div>
 
-                  {/* Dates */}
+                  {/* Start & End Dates */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold">Start Date</label>
-                      <Input type="date" value={formData.startDate} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })} />
+                      <Input
+                        type="date"
+                        className="h-9 text-xs"
+                        value={formData.startDate}
+                        onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                      />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold">Target End Date</label>
-                      <Input type="date" value={formData.endDate} onChange={(e) => setFormData({ ...formData, endDate: e.target.value })} />
+                      <label className="text-xs font-semibold">End Date</label>
+                      <Input
+                        type="date"
+                        className="h-9 text-xs"
+                        value={formData.endDate}
+                        onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                      />
                     </div>
                   </div>
 
-                  {/* Milestone linking */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold">Assign to Milestone (Optional)</label>
-                    <select
-                      className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none"
-                      value={formData.milestoneId}
-                      onChange={(e) => setFormData({ ...formData, milestoneId: e.target.value })}
-                    >
-                      <option value="">No Milestone (Unscheduled)</option>
-                      {milestones.map((m) => (
-                        <option key={m._id} value={m._id}>
-                          {m.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Initial Subtasks list */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold flex items-center gap-1.5">
-                      <CheckSquare className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
-                      Subtasks Checklist (Optional)
+                  {/* Initial Subtasks Builder */}
+                  <div className="space-y-2 pt-1 border-t border-[hsl(var(--border))]">
+                    <label className="text-xs font-semibold flex items-center justify-between">
+                      <span>Execution Subtasks Checklist</span>
+                      <span className="text-[11px] font-normal text-[hsl(var(--muted-foreground))]">
+                        {formData.initialSubtasks.length} added
+                      </span>
                     </label>
-                    {formData.initialSubtasks.length > 0 && (
-                      <div className="space-y-1">
-                        {formData.initialSubtasks.map((st, idx) => (
-                          <div key={idx} className="flex items-center justify-between px-2.5 py-1.5 bg-[hsl(var(--muted)/0.4)] rounded-md text-xs">
-                            <span>{st}</span>
-                            <button
-                              type="button"
-                              onClick={() => setFormData({ ...formData, initialSubtasks: formData.initialSubtasks.filter((_, i) => i !== idx) })}
-                              className="text-[hsl(var(--muted-foreground))] hover:text-red-500"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+
                     <div className="flex gap-2">
                       <Input
-                        placeholder="Add subtask (e.g. Channel Alignment, Board Fixing)..."
-                        className="text-xs h-8"
+                        placeholder="Add subtask (e.g. Surface alignment)..."
+                        className="h-8 text-xs"
                         value={newInitialSubtask}
                         onChange={(e) => setNewInitialSubtask(e.target.value)}
                         onKeyDown={(e) => {
@@ -1479,40 +1581,27 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                           }
                         }}
                       >
-                        Add
+                        <Plus className="w-3.5 h-3.5 mr-1" /> Add
                       </Button>
                     </div>
-                  </div>
 
-                  {/* Dependencies Selection */}
-                  {tasks.length > 0 && (
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold flex items-center gap-1">
-                        <Link2 className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
-                        Predecessor Dependencies (Must finish first)
-                      </label>
-                      <div className="border border-[hsl(var(--border))] rounded-lg max-h-28 overflow-y-auto divide-y divide-[hsl(var(--border))] bg-[hsl(var(--background))]">
-                        {tasks.map((t) => (
-                          <label key={t._id} className="flex items-center gap-2.5 px-3 py-1.5 text-xs cursor-pointer hover:bg-[hsl(var(--muted)/0.5)]">
-                            <input
-                              type="checkbox"
-                              className="rounded text-[hsl(var(--primary))]"
-                              checked={formData.dependencies.includes(t._id)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setFormData({ ...formData, dependencies: [...formData.dependencies, t._id] });
-                                } else {
-                                  setFormData({ ...formData, dependencies: formData.dependencies.filter((id) => id !== t._id) });
-                                }
-                              }}
-                            />
-                            <span className="truncate flex-1 font-medium">{t.name}</span>
-                            <span className="text-[9px] text-[hsl(var(--muted-foreground))] uppercase font-mono">{t.status}</span>
-                          </label>
+                    {formData.initialSubtasks.length > 0 && (
+                      <div className="space-y-1 max-h-28 overflow-y-auto pr-1">
+                        {formData.initialSubtasks.map((st, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-2 rounded-md bg-[hsl(var(--muted)/0.4)] text-xs">
+                            <span className="truncate flex-1">{st}</span>
+                            <button
+                              type="button"
+                              onClick={() => setFormData({ ...formData, initialSubtasks: formData.initialSubtasks.filter((_, i) => i !== idx) })}
+                              className="text-[hsl(var(--muted-foreground))] hover:text-red-500 p-0.5"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         ))}
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   {/* Description */}
                   <div className="space-y-1.5">
@@ -1543,19 +1632,173 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
       </AnimatePresence>
 
       {/* =========================================================================
-          TASK DETAIL & EXECUTION DRAWER
+          COMPLETE TASK & PROOF OF WORK MODAL DIALOG
+         ========================================================================= */}
+      <AnimatePresence>
+        {isProofModalOpen && proofTask && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-lg border border-[hsl(var(--border))] rounded-2xl bg-[hsl(var(--card))] shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between p-5 border-b border-slate-200 bg-emerald-50/70">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                    <CheckCircle2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">Complete Task & Proof of Work</h3>
+                    <p className="text-[11px] text-slate-600">Upload site completion and inspection photos</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsProofModalOpen(false);
+                    setProofTask(null);
+                  }}
+                  className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmitProof}>
+                <div className="p-5 space-y-4 max-h-[65vh] overflow-y-auto">
+                  {/* Task summary header */}
+                  <div className="p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.25)] flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">{proofTask.name}</h4>
+                      <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-0.5">
+                        {proofTask.packageId?.name ? `${proofTask.packageId.name} (${proofTask.packageId.trade})` : 'WBS Package'}
+                      </p>
+                    </div>
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-100 text-emerald-800 border border-emerald-300 uppercase">
+                      Will Set 100% Progress
+                    </span>
+                  </div>
+
+                  {/* Photo Upload Dropzone */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Camera className="w-4 h-4 text-emerald-600" />
+                        Site Completion Photos ({proofImages.length})
+                      </span>
+                      <span className="text-[11px] font-normal text-[hsl(var(--muted-foreground))]">JPG, PNG, WebP</span>
+                    </label>
+
+                    <label className="border-2 border-dashed border-[hsl(var(--border))] hover:border-emerald-500 rounded-xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer bg-[hsl(var(--background))] hover:bg-emerald-50/20 transition-all text-center">
+                      <UploadCloud className="w-6 h-6 text-emerald-600" />
+                      <div className="space-y-0.5">
+                        <p className="text-xs font-semibold text-[hsl(var(--foreground))]">Click or Drag & Drop Site Photos</p>
+                        <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Upload clear before/after proof of installation</p>
+                      </div>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </label>
+
+                    {/* Image Previews Grid */}
+                    {proofImages.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2.5 pt-2">
+                        {proofImages.map((img, idx) => (
+                          <div
+                            key={idx}
+                            className="group relative aspect-video rounded-lg overflow-hidden border border-[hsl(var(--border))] bg-slate-100"
+                          >
+                            <img src={img.url} alt={img.name || `Proof ${idx + 1}`} className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveProofImage(idx)}
+                              className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-xs"
+                              title="Remove photo"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                            <span className="absolute bottom-1 left-1 px-1.5 py-0.2 bg-black/60 text-white rounded text-[9px] truncate max-w-[90%]">
+                              {img.name || `Photo ${idx + 1}`}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Auto-check subtasks notice */}
+                  {proofTask.subtasks?.length > 0 && (
+                    <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>All {proofTask.subtasks.length} subtasks will be marked as completed.</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={() => {
+                      setIsProofModalOpen(false);
+                      setProofTask(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={submittingProof} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                    {submittingProof && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}
+                    Confirm & Complete Task
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* =========================================================================
+          FULL-SCREEN PHOTO LIGHTBOX MODAL
+         ========================================================================= */}
+      <AnimatePresence>
+        {imageLightboxUrl && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+            onClick={() => setImageLightboxUrl(null)}
+          >
+            <div className="relative max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl bg-black flex flex-col items-center justify-center shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={() => setImageLightboxUrl(null)}
+                className="absolute top-3 right-3 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors z-10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <img src={imageLightboxUrl} alt="Proof of Work Full Resolution" className="max-w-full max-h-[85vh] object-contain rounded-lg" />
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* =========================================================================
+          TASK DETAIL & EXECUTION CENTER MODAL
          ========================================================================= */}
       <AnimatePresence>
         {selectedTask && (
-          <div className="fixed inset-0 z-40 flex justify-end bg-black/40 backdrop-blur-[2px]">
-            <div className="flex-1" onClick={() => setSelectedTask(null)} />
-
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm"
+            onClick={() => setSelectedTask(null)}
+          >
             <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="w-full max-w-xl bg-[hsl(var(--card))] border-l border-[hsl(var(--border))] shadow-2xl h-full flex flex-col"
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 280 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden"
             >
               {isEditingTask ? (
                 /* Edit Mode */
@@ -1618,15 +1861,16 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))]">Progress (%)</label>
-                        <Input
-                          type="number"
-                          min={0}
-                          max={100}
-                          className="h-9 text-xs"
-                          value={editTaskData.progress}
-                          onChange={(e) => setEditTaskData({ ...editTaskData, progress: parseInt(e.target.value) || 0 })}
-                        />
+                        <label className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))]">Status (Auto-Managed)</label>
+                        <div className="h-9 px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)] text-[hsl(var(--foreground))] font-semibold capitalize flex items-center gap-2">
+                          <span
+                            className={cn(
+                              'w-2 h-2 rounded-full',
+                              editTaskData.status === 'completed' ? 'bg-emerald-500' : editTaskData.status === 'in_progress' ? 'bg-amber-500' : 'bg-blue-500'
+                            )}
+                          />
+                          {editTaskData.status.replace('_', ' ')}
+                        </div>
                       </div>
                     </div>
 
@@ -1666,37 +1910,65 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                         />
                       </div>
                     </div>
+                    {/* Subtasks Section in Edit Form */}
+                    <div className="space-y-2 pt-1 border-t border-slate-100">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
+                          <CheckSquare className="w-3 h-3 text-blue-600" />
+                          Subtasks Checklist ({editTaskData.subtasks?.length || 0})
+                        </label>
+                      </div>
 
-                    {/* Predecessors checkboxes */}
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] flex items-center gap-1">
-                        <Link2 className="w-3 h-3 text-[hsl(var(--primary))]" />
-                        Predecessor Dependencies
-                      </label>
-                      <div className="border border-[hsl(var(--border))] rounded-lg max-h-32 overflow-y-auto divide-y divide-[hsl(var(--border))] bg-[hsl(var(--background))]">
-                        {tasks
-                          .filter((t) => t._id !== selectedTask._id)
-                          .map((t) => (
-                            <label key={t._id} className="flex items-center gap-2.5 px-3 py-1.5 text-xs cursor-pointer hover:bg-[hsl(var(--muted)/0.5)]">
-                              <input
-                                type="checkbox"
-                                className="rounded text-[hsl(var(--primary))]"
-                                checked={editTaskData.dependencies.includes(t._id)}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setEditTaskData({ ...editTaskData, dependencies: [...editTaskData.dependencies, t._id] });
-                                  } else {
-                                    setEditTaskData({
-                                      ...editTaskData,
-                                      dependencies: editTaskData.dependencies.filter((id) => id !== t._id),
-                                    });
-                                  }
-                                }}
-                              />
-                              <span className="truncate flex-1 font-medium">{t.name}</span>
-                              <span className="text-[9px] text-[hsl(var(--muted-foreground))] uppercase font-mono">{t.status}</span>
-                            </label>
-                          ))}
+                      {/* Add Subtask input */}
+                      <div className="flex items-center gap-2">
+                        <Input
+                          placeholder="Add a new subtask..."
+                          className="h-8.5 text-xs flex-1"
+                          value={editNewSubtaskTitle}
+                          onChange={(e) => setEditNewSubtaskTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddEditSubtask();
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8.5 text-xs px-3 text-blue-600 border-blue-200 hover:bg-blue-50 cursor-pointer"
+                          onClick={handleAddEditSubtask}
+                          disabled={!editNewSubtaskTitle.trim()}
+                        >
+                          <Plus className="w-3.5 h-3.5 mr-1" />
+                          Add Subtask
+                        </Button>
+                      </div>
+
+                      {/* Existing Subtasks List */}
+                      <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                        {(editTaskData.subtasks || []).map((subtask: any, idx: number) => (
+                          <div
+                            key={subtask._id || idx}
+                            className="flex items-center justify-between p-2 rounded-lg border border-slate-200 bg-slate-50 text-xs"
+                          >
+                            <span className={cn('truncate font-medium flex-1 pr-2', subtask.completed && 'line-through text-slate-400')}>
+                              {subtask.title}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveEditSubtask(idx)}
+                              className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                              title="Remove subtask"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                        {(!editTaskData.subtasks || editTaskData.subtasks.length === 0) && (
+                          <p className="text-[11px] text-slate-400 italic py-1">No subtasks yet. Add subtasks above.</p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1727,46 +1999,112 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" className="h-8 py-1 px-2.5 text-xs" onClick={() => setIsEditingTask(true)}>
-                        <Edit className="w-3.5 h-3.5 mr-1" />
-                        Edit
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 py-1 px-2.5 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200"
-                        onClick={handleDeleteTask}
+                      <button
+                        onClick={() => setSelectedTask(null)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                        title="Close"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                      <button onClick={() => setSelectedTask(null)} className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] ml-2">
-                        <X className="w-4 h-4" />
+                        <X className="w-5 h-5" />
                       </button>
                     </div>
                   </div>
 
                   <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                    {/* Status switcher */}
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Task Status</label>
-                      <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
-                        {COLUMNS.map((col) => (
-                          <button
-                            key={col.id}
-                            type="button"
-                            onClick={() => handleUpdateTaskStatus(selectedTask._id, col.id)}
+                    {/* Status Display & Execution Banner */}
+                    <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between gap-4">
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] uppercase font-bold text-slate-500">Current Stage</span>
+                        <div className="flex items-center gap-2">
+                          <span
                             className={cn(
-                              'px-2 py-1.5 text-[11px] font-bold border rounded-lg transition-colors',
-                              selectedTask.status === col.id
-                                ? 'bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]'
-                                : 'border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]'
+                              'px-2.5 py-1 text-xs font-bold rounded-lg inline-flex items-center gap-1.5 border',
+                              selectedTask.status === 'completed'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                : selectedTask.status === 'in_progress'
+                                ? 'bg-amber-50 text-amber-800 border-amber-300'
+                                : 'bg-blue-50 text-blue-800 border-blue-300'
                             )}
                           >
-                            {col.title}
-                          </button>
-                        ))}
+                            <span
+                              className={cn(
+                                'w-2 h-2 rounded-full',
+                                selectedTask.status === 'completed'
+                                  ? 'bg-emerald-600'
+                                  : selectedTask.status === 'in_progress'
+                                  ? 'bg-amber-600 animate-pulse'
+                                  : 'bg-blue-600'
+                              )}
+                            />
+                            {selectedTask.status === 'completed'
+                              ? 'Completed'
+                              : selectedTask.status === 'in_progress'
+                              ? 'In Progress (Active)'
+                              : 'To Do (Scheduled)'}
+                          </span>
+                          <span className="text-[11px] text-slate-500">
+                            {selectedTask.status === 'completed'
+                              ? '• Work finished & verified'
+                              : selectedTask.status === 'in_progress'
+                              ? '• Subtasks in progress'
+                              : '• Awaiting site start'}
+                          </span>
+                        </div>
                       </div>
                     </div>
+
+                    {/* PROOF OF WORK VERIFIED SECTION (When Completed) */}
+                    {selectedTask.status === 'completed' && (
+                      <div className="border border-emerald-200 bg-emerald-50/60 rounded-xl p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                            <div>
+                              <h4 className="text-xs font-bold text-emerald-950 uppercase tracking-wide">
+                                Proof of Work Verified
+                              </h4>
+                              {selectedTask.completionProof?.completedAt && (
+                                <p className="text-[10px] text-emerald-700">
+                                  Completed on {new Date(selectedTask.completionProof.completedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-[11px] px-2 text-emerald-800 hover:bg-emerald-100 border-emerald-300 bg-white"
+                            onClick={() => initiateCompleteTask(selectedTask)}
+                          >
+                            <Camera className="w-3 h-3 mr-1" />
+                            Update Proof
+                          </Button>
+                        </div>
+
+                        {selectedTask.completionProof?.images?.length > 0 ? (
+                          <div className="space-y-1.5 pt-1">
+                            <span className="text-[10px] uppercase font-bold text-emerald-800 block">
+                              Site Completion Photos ({selectedTask.completionProof.images.length})
+                            </span>
+                            <div className="grid grid-cols-3 gap-2">
+                              {selectedTask.completionProof.images.map((img: any, idx: number) => (
+                                <div
+                                  key={idx}
+                                  className="group relative aspect-video rounded-lg overflow-hidden border border-emerald-200 bg-slate-100 cursor-pointer hover:shadow-md transition-all"
+                                  onClick={() => setImageLightboxUrl(img.url)}
+                                >
+                                  <img src={img.url} alt={img.name || `Proof ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold gap-1">
+                                    <ZoomIn className="w-3.5 h-3.5" /> View Photo
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-[11px] text-emerald-800/80 italic">No site photos attached to this proof.</p>
+                        )}
+                      </div>
+                    )}
 
                     {/* Metadata Card */}
                     <div className="grid grid-cols-2 gap-3.5 border border-[hsl(var(--border))] p-4 rounded-xl bg-[hsl(var(--card))]">
@@ -1787,16 +2125,16 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                       </div>
                     </div>
 
-                    {/* Subtasks Checklist */}
+                    {/* Subtasks Checklist with Auto Progress Calculation */}
                     <div className="space-y-3 pt-2 border-t border-[hsl(var(--border))]">
                       <div className="flex items-center justify-between">
                         <h4 className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
                           <CheckSquare className="w-4 h-4 text-[hsl(var(--primary))]" />
-                          Subtasks ({(selectedTask.subtasks || []).filter((s: any) => s.completed).length}/{(selectedTask.subtasks || []).length})
+                          Subtasks Checklist ({(selectedTask.subtasks || []).filter((s: any) => s.completed).length}/{(selectedTask.subtasks || []).length})
                         </h4>
                         <span className="text-[11px] font-bold text-[hsl(var(--primary))]">
                           {selectedTask.subtasks?.length
-                            ? `${Math.round(((selectedTask.subtasks.filter((s: any) => s.completed).length) / selectedTask.subtasks.length) * 100)}% Done`
+                            ? `${Math.round(((selectedTask.subtasks.filter((s: any) => s.completed).length) / selectedTask.subtasks.length) * 100)}% Complete`
                             : ''}
                         </span>
                       </div>
@@ -1808,8 +2146,8 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                             className={cn(
                               'flex items-center justify-between p-2.5 rounded-lg border text-xs transition-colors',
                               subtask.completed
-                                ? 'bg-emerald-50/40 border-emerald-200/60 dark:bg-emerald-950/10 dark:border-emerald-900/30'
-                                : 'bg-[hsl(var(--card))] border-[hsl(var(--border))]'
+                                ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
+                                : 'bg-white border-slate-200 text-slate-800'
                             )}
                           >
                             <button
@@ -1837,58 +2175,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                           </div>
                         ))}
                       </div>
-
-                      <form onSubmit={handleAddSubtask} className="flex gap-2 pt-1">
-                        <Input
-                          placeholder="Add subtask (e.g. Grouting, Surface Prep)..."
-                          className="text-xs h-8"
-                          value={newSubtaskTitle}
-                          onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                        />
-                        <Button type="submit" size="sm" className="h-8 text-xs shrink-0">
-                          <Plus className="w-3.5 h-3.5 mr-1" /> Add
-                        </Button>
-                      </form>
                     </div>
-
-                    {/* Predecessors / Dependencies */}
-                    {selectedTask.dependencies && selectedTask.dependencies.length > 0 && (
-                      <div className="space-y-2 pt-2 border-t border-[hsl(var(--border))]">
-                        <h4 className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                          <Link2 className="w-4 h-4 text-[hsl(var(--primary))]" />
-                          Predecessor Task Dependencies
-                        </h4>
-                        <div className="space-y-1.5">
-                          {selectedTask.dependencies.map((dep: any) => {
-                            const isDepDone = typeof dep === 'object' && dep.status === 'completed';
-                            return (
-                              <div
-                                key={dep._id || dep}
-                                className={cn(
-                                  'flex items-center justify-between px-3 py-2 rounded-lg border text-xs',
-                                  isDepDone
-                                    ? 'bg-emerald-50/50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400'
-                                    : 'bg-amber-50/50 border-amber-200 text-amber-800 dark:bg-amber-950/20 dark:text-amber-400'
-                                )}
-                              >
-                                <span className="font-medium truncate">{dep.name || 'Dependency Task'}</span>
-                                <span className="text-[10px] uppercase font-bold flex items-center gap-1">
-                                  {isDepDone ? (
-                                    <>
-                                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Finished
-                                    </>
-                                  ) : (
-                                    <>
-                                      <AlertTriangle className="w-3 h-3 text-amber-600" /> Pending ({dep.status || 'todo'})
-                                    </>
-                                  )}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
 
                     {/* Description */}
                     <div className="space-y-1.5 pt-2 border-t border-[hsl(var(--border))]">

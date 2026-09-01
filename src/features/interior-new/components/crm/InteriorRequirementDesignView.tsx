@@ -3,7 +3,7 @@
 // Enhanced Requirement & Design View with Search, Pagination, and Flow Handlers
 
 import React, { useState, useMemo } from 'react';
-import { ArrowRight, User, FileText, PenTool, Search, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { ArrowRight, User, FileText, PenTool, Search, ChevronLeft, ChevronRight, Sparkles, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -14,6 +14,7 @@ interface Props {
   onUploadDesign?: (leadId: string) => void;
   onPassToDrawing?: (leadId: string) => void;
   onPassToQuotations?: (leadId: string) => void;
+  onMarkAsLost?: (leadId: string) => void;
 }
 
 export const InteriorRequirementDesignView = ({
@@ -21,6 +22,7 @@ export const InteriorRequirementDesignView = ({
   onLogRequirements,
   onPassToDrawing,
   onPassToQuotations,
+  onMarkAsLost,
 }: Props) => {
   const router = useRouter();
   const handlePassToNext = onPassToDrawing || onPassToQuotations;
@@ -281,6 +283,16 @@ export const InteriorRequirementDesignView = ({
                             Pass to Drawing <ArrowRight size={13} />
                           </button>
                         ))}
+                      
+                      {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 ml-2"
+                          title="Mark as Lost"
+                        >
+                          <XCircle size={14} />
+                        </button>
+                      )}
                     </td>
                   </motion.tr>
                 ))}

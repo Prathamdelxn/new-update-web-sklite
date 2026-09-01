@@ -24,6 +24,7 @@ import {
   FileText,
   Camera,
   Lock,
+  CreditCard,
 } from 'lucide-react';
 import { SendRFQModal } from './SendRFQModal';
 import { InteriorGRNModal } from './InteriorGRNModal';
@@ -62,6 +63,19 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   const [deliveryDate, setDeliveryDate] = useState('');
   const [poItems, setPoItems] = useState<POItemInput[]>([]);
   const [newItem, setNewItem] = useState<POItemInput>({ name: '', quantity: 1, unit: 'nos', unitPrice: 0 });
+
+  // Payments Integration State
+  const [payments, setPayments] = useState<any[]>([]);
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [payingPo, setPayingPo] = useState<any>(null);
+  const [paymentForm, setPaymentForm] = useState({
+    amount: '',
+    paymentMethod: 'Bank Transfer' as const,
+    referenceNo: '',
+    remarks: '',
+    paymentDate: new Date().toISOString().split('T')[0],
+  });
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
 
   const [selectedPo, setSelectedPo] = useState<any>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -115,10 +129,75 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
     }
   };
 
+  const fetchPayments = async () => {
+    try {
+      const res = await interiorProjectService.getPayments(projectId);
+      setPayments(res?.data || res || []);
+    } catch (err) {
+      console.error('Failed to load payments', err);
+    }
+  };
+
   const loadAllData = async () => {
     setLoading(true);
-    await Promise.all([fetchPOs(), fetchInventory(), fetchVendors()]);
+    await Promise.all([fetchPOs(), fetchInventory(), fetchVendors(), fetchPayments()]);
     setLoading(false);
+  };
+
+  const handleRecordPaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!payingPo || !paymentForm.amount || parseFloat(paymentForm.amount) <= 0) {
+      toast.error('Please enter a valid payment amount');
+      return;
+    }
+    if (!paymentForm.referenceNo.trim()) {
+      toast.error('Reference / UTR number is required');
+      return;
+    }
+
+    try {
+      setIsSubmittingPayment(true);
+      await interiorProjectService.createPayment(projectId, {
+        type: 'outgoing',
+        poNo: payingPo.poNumber || payingPo._id,
+        vendorName: payingPo.vendorName || payingPo.vendorId?.name || 'Vendor',
+        category: payingPo.materialName || 'Wood & Plywood',
+        amount: parseFloat(paymentForm.amount),
+        paymentDate: paymentForm.paymentDate,
+        paymentMethod: paymentForm.paymentMethod,
+        referenceNo: paymentForm.referenceNo.trim(),
+        remarks: paymentForm.remarks.trim(),
+      });
+      toast.success('Vendor payment recorded successfully in Payments Outflow!');
+      setIsPayModalOpen(false);
+      await Promise.all([fetchPOs(), fetchPayments()]);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to record payment');
+    } finally {
+      setIsSubmittingPayment(false);
+    }
+  };
+
+  const autoCreatePaymentForPo = async (po: any) => {
+    try {
+      const existing = payments.find((p: any) => p.type === 'outgoing' && p.poNo === po.poNumber);
+      if (!existing && (po.amount || 0) > 0) {
+        await interiorProjectService.createPayment(projectId, {
+          type: 'outgoing',
+          poNo: po.poNumber || po._id,
+          vendorName: po.vendorName || po.vendorId?.name || 'Vendor',
+          category: po.materialName || 'Wood & Plywood',
+          amount: po.amount || 0,
+          paymentDate: new Date().toISOString().split('T')[0],
+          paymentMethod: 'Bank Transfer',
+          referenceNo: `PO-AUTO-${po.poNumber || 'DUE'}`,
+          remarks: `Auto-scheduled payout for PO ${po.poNumber} (${po.materialName || 'Materials'})`,
+        });
+        await fetchPayments();
+      }
+    } catch (e) {
+      console.warn('Auto-schedule payment log:', e);
+    }
   };
 
   useEffect(() => {
@@ -265,6 +344,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { vendorName, status: 'approved' });
       toast.success('Vendor selected and PO approved!');
       setIsDetailOpen(false);
+      await autoCreatePaymentForPo({ ...selectedPo, vendorName, status: 'approved' });
       loadAllData();
     } catch (err) {
       console.error('Failed to update vendor', err);
@@ -320,6 +400,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       });
       
       setSelectedPo(updatedPo);
+      await autoCreatePaymentForPo(updatedPo);
       loadAllData();
     } catch (err) {
       console.error('Failed to submit GRN', err);
@@ -566,65 +647,111 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {pos.filter((po) => po.status === activePipeline).map((item) => (
-                <motion.div
-                  key={item._id}
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  onClick={() => {
-                    setSelectedPo(item);
-                    setIsDetailOpen(true);
-                  }}
-                  className="p-5 border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] shadow-sm space-y-4 hover:border-[hsl(var(--primary)/0.3)] hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-center justify-between text-[11px] mb-2">
-                      <span className="font-mono font-medium text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded-md">{item.poNumber}</span>
-                      <span className="font-bold text-[hsl(var(--foreground))] text-sm">{formatCost(item.amount)}</span>
+              {pos.filter((po) => po.status === activePipeline).map((item) => {
+                const poPaidAmount = payments
+                  .filter((p: any) => p.type === 'outgoing' && p.poNo === item.poNumber)
+                  .reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+                const remainingBalance = Math.max(0, (item.amount || 0) - poPaidAmount);
+                const isFullyPaid = (item.amount || 0) > 0 && poPaidAmount >= (item.amount || 0);
+                const isPartiallyPaid = poPaidAmount > 0 && poPaidAmount < (item.amount || 0);
+
+                return (
+                  <motion.div
+                    key={item._id}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    onClick={() => {
+                      setSelectedPo(item);
+                      setIsDetailOpen(true);
+                    }}
+                    className="p-5 border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] shadow-sm space-y-4 hover:border-[hsl(var(--primary)/0.3)] hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between text-[11px] mb-2">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-medium text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded-md">{item.poNumber}</span>
+                          {isFullyPaid ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                              Paid
+                            </span>
+                          ) : isPartiallyPaid ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                              Part Paid (₹{poPaidAmount})
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                              Unpaid
+                            </span>
+                          )}
+                        </div>
+                        <span className="font-bold text-[hsl(var(--foreground))] text-sm">{formatCost(item.amount)}</span>
+                      </div>
+                      <h4 className="text-base font-bold text-[hsl(var(--foreground))] line-clamp-1">{item.materialName}</h4>
+                      {item.status !== 'requested' && item.vendorName && item.vendorName !== 'Unassigned' && (
+                        <p className="text-xs text-[hsl(var(--muted-foreground))] truncate mt-1">Vendor: {item.vendorName}</p>
+                      )}
                     </div>
-                    <h4 className="text-base font-bold text-[hsl(var(--foreground))] line-clamp-1">{item.materialName}</h4>
-                    {item.status !== 'requested' && item.vendorName && item.vendorName !== 'Unassigned' && (
-                      <p className="text-xs text-[hsl(var(--muted-foreground))] truncate mt-1">Vendor: {item.vendorName}</p>
+                    <div className="flex items-center justify-between border-t border-[hsl(var(--border))] pt-3 text-xs text-[hsl(var(--muted-foreground))]">
+                      <span className="font-medium">{item.items?.length || 1} product(s)</span>
+                      {item.deliveryDate && (
+                        <span className="flex items-center gap-1.5 font-medium">
+                          <Clock className="w-4 h-4 text-blue-500" />
+                          {new Date(item.deliveryDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                        </span>
+                      )}
+                    </div>
+                    
+                    {activePipeline === 'requested' && (
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedPo(item);
+                          setIsSendRFQOpen(true);
+                        }}
+                        className="w-full mt-2"
+                        size="sm"
+                      >
+                        Create PO
+                      </Button>
                     )}
-                  </div>
-                  <div className="flex items-center justify-between border-t border-[hsl(var(--border))] pt-3 text-xs text-[hsl(var(--muted-foreground))]">
-                    <span className="font-medium">{item.items?.length || 1} product(s)</span>
-                    {item.deliveryDate && (
-                      <span className="flex items-center gap-1.5 font-medium">
-                        <Clock className="w-4 h-4 text-blue-500" />
-                        {new Date(item.deliveryDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                      </span>
+                    {activePipeline === 'dispatched' && (
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedPo(item);
+                          setIsGRNOpen(true);
+                        }}
+                        className="w-full mt-2 bg-emerald-500 hover:bg-emerald-600 text-white"
+                        size="sm"
+                      >
+                        Receive Material
+                      </Button>
                     )}
-                  </div>
-                  
-                  {activePipeline === 'requested' && (
-                    <Button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedPo(item);
-                        setIsSendRFQOpen(true);
-                      }}
-                      className="w-full mt-2"
-                      size="sm"
-                    >
-                      Create PO
-                    </Button>
-                  )}
-                  {activePipeline === 'dispatched' && (
-                    <Button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedPo(item);
-                        setIsGRNOpen(true);
-                      }}
-                      className="w-full mt-2 bg-emerald-500 hover:bg-emerald-600 text-white"
-                      size="sm"
-                    >
-                      Receive Material
-                    </Button>
-                  )}
-                </motion.div>
-              ))}
+                    {!isFullyPaid && ['approved', 'dispatched', 'delivered'].includes(item.status) && (
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPayingPo(item);
+                          setPaymentForm({
+                            amount: remainingBalance.toString(),
+                            paymentMethod: 'Bank Transfer',
+                            referenceNo: '',
+                            remarks: `Payment for PO ${item.poNumber} (${item.materialName})`,
+                            paymentDate: new Date().toISOString().split('T')[0],
+                          });
+                          setIsPayModalOpen(true);
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="w-full mt-2 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        <CreditCard className="w-3.5 h-3.5" />
+                        Pay Vendor (₹{remainingBalance.toLocaleString('en-IN')})
+                      </Button>
+                    )}
+                  </motion.div>
+                );
+              })}
             </div>
 
             {pos.filter((po) => po.status === activePipeline).length === 0 && (
@@ -1250,6 +1377,113 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                   <Button type="submit" disabled={creatingMaterial || !newMaterialName || !newMaterialUnit}>
                     {creatingMaterial && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                     Save Material
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Pay Vendor / Record Outgoing Payment Modal */}
+      <AnimatePresence>
+        {isPayModalOpen && payingPo && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-md border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
+                <div>
+                  <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-emerald-500" /> Record Vendor Payment
+                  </h3>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                    PO {payingPo.poNumber} • {payingPo.vendorName || 'Vendor'}
+                  </p>
+                </div>
+                <button onClick={() => setIsPayModalOpen(false)} className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleRecordPaymentSubmit}>
+                <div className="p-5 space-y-4">
+                  <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-lg text-xs space-y-1">
+                    <p className="font-bold text-emerald-800 dark:text-emerald-400">Material: {payingPo.materialName}</p>
+                    <p className="text-emerald-700 dark:text-emerald-500">
+                      Total PO Amount: <span className="font-bold">₹{(payingPo.amount || 0).toLocaleString('en-IN')}</span>
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Payment Amount (₹) *</label>
+                    <Input
+                      required
+                      type="number"
+                      min="1"
+                      placeholder="e.g. 50000"
+                      value={paymentForm.amount}
+                      onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Payment Method *</label>
+                      <select
+                        value={paymentForm.paymentMethod}
+                        onChange={(e: any) => setPaymentForm({ ...paymentForm, paymentMethod: e.target.value })}
+                        className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                      >
+                        <option value="Bank Transfer">Bank Transfer / NEFT</option>
+                        <option value="UPI">UPI</option>
+                        <option value="Cheque">Cheque</option>
+                        <option value="RTGS/NEFT">RTGS</option>
+                        <option value="Cash">Cash</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Payment Date *</label>
+                      <Input
+                        required
+                        type="date"
+                        value={paymentForm.paymentDate}
+                        onChange={(e) => setPaymentForm({ ...paymentForm, paymentDate: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Ref / UTR / Cheque No. *</label>
+                    <Input
+                      required
+                      placeholder="e.g. UTR-982109283"
+                      value={paymentForm.referenceNo}
+                      onChange={(e) => setPaymentForm({ ...paymentForm, referenceNo: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Remarks / Notes</label>
+                    <Input
+                      placeholder="e.g. 50% advance for plywood delivery"
+                      value={paymentForm.remarks}
+                      onChange={(e) => setPaymentForm({ ...paymentForm, remarks: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
+                  <Button variant="outline" type="button" onClick={() => setIsPayModalOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmittingPayment || !paymentForm.amount || !paymentForm.referenceNo}>
+                    {isSubmittingPayment && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                    Confirm &amp; Record Payment
                   </Button>
                 </div>
               </form>

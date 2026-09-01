@@ -4,7 +4,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { FileText, ArrowRight, Phone, Trophy, Search, ChevronLeft, ChevronRight, Edit3 } from 'lucide-react';
+import { FileText, ArrowRight, Phone, Trophy, Search, ChevronLeft, ChevronRight, Edit3, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { InteriorLead } from './InteriorLeadsTable';
 import { motion } from 'framer-motion';
@@ -13,10 +13,12 @@ export function InteriorQuotationsView({
   leads,
   onConvertToProject,
   onCreateQuotation,
+  onMarkAsLost,
 }: {
   leads: InteriorLead[];
   onConvertToProject?: (leadId: string) => void;
   onCreateQuotation: (leadId: string) => void;
+  onMarkAsLost?: (leadId: string) => void;
 }) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
@@ -308,6 +310,16 @@ export function InteriorQuotationsView({
                               <Trophy size={13} /> Convert Project
                             </button>
                           ))}
+                        
+                        {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 ml-1.5"
+                            title="Mark as Lost"
+                          >
+                            <XCircle size={14} />
+                          </button>
+                        )}
                       </td>
                     </motion.tr>
                   );

@@ -14,6 +14,7 @@ import {
   MapPin,
   Home,
   FileSpreadsheet,
+  XCircle,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -23,9 +24,10 @@ interface Props {
   leads: any[];
   onAddBoq: (leadId: string) => void;
   onPassToQuotations?: (leadId: string) => void;
+  onMarkAsLost?: (leadId: string) => void;
 }
 
-export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations }: Props) => {
+export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMarkAsLost }: Props) => {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterState, setFilterState] = useState<'all' | 'pending' | 'completed'>('all');
@@ -287,6 +289,16 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations }: Pr
                               Pass to Quotation <ArrowRight size={13} />
                             </button>
                           ))}
+                        
+                        {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 ml-2"
+                            title="Mark as Lost"
+                          >
+                            <XCircle size={14} />
+                          </button>
+                        )}
                       </td>
                     </motion.tr>
                   );

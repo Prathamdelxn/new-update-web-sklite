@@ -32,6 +32,7 @@ import { InteriorBoqBuilderModal } from './modals/InteriorBoqBuilderModal';
 import { InteriorSendToQuotationsModal } from './modals/InteriorSendToQuotationsModal';
 import { InteriorQuotationBuilderModal } from './modals/InteriorQuotationBuilderModal';
 import { InteriorDeleteLeadModal } from './modals/InteriorDeleteLeadModal';
+import { InteriorMarkAsLostModal } from './modals/InteriorMarkAsLostModal';
 import { Calendar, Lightbulb } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { interiorCrmService } from '@/services/interiorCrm.service';
@@ -62,6 +63,7 @@ export default function InteriorCrmView() {
   const [isSendToQuotationsOpen, setIsSendToQuotationsOpen] = useState(false);
   const [isQuotationBuilderOpen, setIsQuotationBuilderOpen] = useState(false);
   const [isConvertToProjectOpen, setIsConvertToProjectOpen] = useState(false);
+  const [isMarkAsLostOpen, setIsMarkAsLostOpen] = useState(false);
 
   // Delete Lead Modal State
   const [deletingLead, setDeletingLead] = useState<{ id: string; name: string } | null>(null);
@@ -231,6 +233,13 @@ export default function InteriorCrmView() {
     setIsConvertToProjectOpen(true);
   };
 
+  const openMarkAsLostModal = (leadId: string) => {
+    const lead = leads.find(l => l._id === leadId);
+    setActionLeadId(leadId);
+    setActionLeadName(lead?.name || '');
+    setIsMarkAsLostOpen(true);
+  };
+
   return (
     <div className="interior-os-theme p-6 lg:p-8 space-y-6 pb-12">
 
@@ -262,7 +271,7 @@ export default function InteriorCrmView() {
       <AnimatePresence mode="wait">
         {activeTab === 'follow_ups' ? (
           <motion.div key="followups-view" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
-            <InteriorFollowUpsView onPassToSiteVisit={openSendToSiteVisitModal} refreshTrigger={leads} />
+            <InteriorFollowUpsView onPassToSiteVisit={openSendToSiteVisitModal} refreshTrigger={leads} onMarkAsLost={openMarkAsLostModal} />
           </motion.div>
         ) : activeTab === 'site_visits' ? (
           <motion.div key="sitevisits-view" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
@@ -270,6 +279,7 @@ export default function InteriorCrmView() {
               leads={getFilteredLeads()}
               onLogSiteVisit={openSiteVisitModal}
               onPassToRequirements={openSendToRequirementsModal}
+              onMarkAsLost={openMarkAsLostModal}
             />
           </motion.div>
         ) : activeTab === 'requirement_design' ? (
@@ -279,6 +289,7 @@ export default function InteriorCrmView() {
               onLogRequirements={openRequirementsModal}
               onUploadDesign={() => {}} // Not used anymore
               onPassToQuotations={openSendToDrawingModal} // Flow changes to pass to drawing
+              onMarkAsLost={openMarkAsLostModal}
             />
           </motion.div>
         ) : activeTab === 'drawing' ? (
@@ -287,6 +298,7 @@ export default function InteriorCrmView() {
               leads={getFilteredLeads()}
               onUploadDesign={openUploadDesignModal}
               onPassToBoq={openSendToBoqModal}
+              onMarkAsLost={openMarkAsLostModal}
             />
           </motion.div>
         ) : activeTab === 'boq' ? (
@@ -295,6 +307,7 @@ export default function InteriorCrmView() {
               leads={getFilteredLeads()}
               onAddBoq={openAddBoqModal}
               onPassToQuotations={openSendToQuotationsModal}
+              onMarkAsLost={openMarkAsLostModal}
             />
           </motion.div>
         ) : activeTab === 'quotations' ? (
@@ -303,6 +316,7 @@ export default function InteriorCrmView() {
               leads={getFilteredLeads()}
               onConvertToProject={openConvertToProjectModal}
               onCreateQuotation={openQuotationBuilderModal}
+              onMarkAsLost={openMarkAsLostModal}
             />
           </motion.div>
         ) : activeTab === 'won_projects' ? (
@@ -330,6 +344,7 @@ export default function InteriorCrmView() {
               onPassToBoq={openSendToBoqModal}
               onAddBoq={openAddBoqModal}
               onPassToQuotations={openSendToQuotationsModal}
+              onMarkAsLost={openMarkAsLostModal}
             />
           </motion.div>
         ) : (
@@ -477,6 +492,14 @@ export default function InteriorCrmView() {
         onConfirm={handleConfirmDeleteLead}
         leadName={deletingLead?.name}
         isLoading={isDeletingLead}
+      />
+
+      <InteriorMarkAsLostModal
+        isOpen={isMarkAsLostOpen}
+        onClose={() => setIsMarkAsLostOpen(false)}
+        customerId={actionLeadId || ''}
+        leadName={actionLeadName}
+        onSuccess={fetchLeads}
       />
     </div>
   );
