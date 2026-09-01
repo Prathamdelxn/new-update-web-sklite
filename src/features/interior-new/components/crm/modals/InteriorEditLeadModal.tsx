@@ -1,24 +1,30 @@
 'use client';
 
+// =============================================================================
+// Sky-Lite Web — Interior Edit Lead Modal
+// Matches the exact 6-field layout & styling of InteriorCreateLeadModal.
+// =============================================================================
+
 import React, { useState, useEffect } from 'react';
-import { X, User, Phone, Mail, MapPin, Building, Activity, UserCircle, DollarSign } from 'lucide-react';
+import { X, User, Phone, Mail, MapPin, Building, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
-import { InteriorLead } from '../InteriorLeadsTable';
+import { validateName, validateMobileNumber, validateEmail, ValidationErrors } from '@/lib/crmValidation';
 
 interface EditLeadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  lead: InteriorLead | null;
+  lead: any;
   users?: any[];
   onSuccess: () => void;
 }
 
-import { validateName, validateMobileNumber, validateEmail, ValidationErrors } from '@/lib/crmValidation';
-
 export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
-  isOpen, onClose, lead, users = [], onSuccess
+  isOpen,
+  onClose,
+  lead,
+  onSuccess,
 }) => {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,16 +37,13 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
     leadSource: 'Phone Call',
     propertyType: 'Flat',
     projectLocation: '',
-    budgetRange: '',
-    assignedSalesExecutive: '',
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isOpen) {
       setErrors({});
     }
   }, [isOpen]);
-
 
   useEffect(() => {
     if (lead) {
@@ -51,18 +54,16 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
         leadSource: lead.leadSource || 'Phone Call',
         propertyType: lead.propertyType || 'Flat',
         projectLocation: lead.projectLocation || '',
-        budgetRange: (lead as any).budgetRange || '',
-        assignedSalesExecutive: lead.assignedSalesExecutive?._id || (lead as any).assignedSalesExecutive || '',
       });
       setErrors({});
     }
-  }, [lead]);
+  }, [lead, isOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
-      setErrors({ ...errors, [name]: null });
+      setErrors((prev) => ({ ...prev, [name]: null }));
     }
   };
 
@@ -86,14 +87,15 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
 
     try {
       setIsSubmitting(true);
-      const payload = {
-        ...formData,
+      const payload: any = {
         name: formData.name.trim(),
         mobileNumber: formData.mobileNumber.trim(),
-        email: formData.email.trim(),
-        projectLocation: formData.projectLocation.trim(),
-        budgetRange: formData.budgetRange.trim(),
+        email: formData.email.trim() || undefined,
+        leadSource: formData.leadSource,
+        propertyType: formData.propertyType,
+        projectLocation: formData.projectLocation.trim() || undefined,
       };
+
       await interiorCrmService.updateCustomer(lead._id, payload);
       toast.success('Lead updated successfully!');
       onSuccess();
@@ -124,13 +126,15 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl overflow-hidden flex flex-col max-h-[90vh] z-10"
+          className="relative w-full max-w-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl overflow-hidden flex flex-col max-h-[90vh] shadow-2xl z-10"
         >
           {/* Header */}
           <div className="px-6 py-5 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--muted)/0.5)]">
             <div>
               <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))]">Edit Lead Details</h2>
-              <p className="text-sm text-[hsl(var(--muted-foreground))] mt-0.5">Update contact, property info, or assignees for {lead.name}</p>
+              <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                Update prospect information for {lead.name}
+              </p>
             </div>
             <button
               onClick={onClose}
@@ -142,8 +146,7 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
 
           {/* Body */}
           <div className="p-6 overflow-y-auto">
-            <form id="interior-edit-lead-form" onSubmit={handleSubmit} className="space-y-6">
-
+            <form id="interior-edit-lead-form" onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {/* Name */}
                 <div className="space-y-1.5">
@@ -156,11 +159,14 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                     value={formData.name}
                     onChange={handleChange}
                     className={`w-full px-4 py-2.5 rounded-xl border bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 transition-all ${
-                      errors.name ? 'border-red-500 focus:ring-red-500/20' : 'border-[hsl(var(--border))] focus:ring-[hsl(var(--ring))]'
+                      errors.name
+                        ? 'border-red-500 focus:ring-red-500/20'
+                        : 'border-[hsl(var(--border))] focus:ring-indigo-500/20 focus:border-indigo-500'
                     }`}
-                    placeholder="e.g., John Doe"
+                    placeholder="e.g., Rajesh Sharma"
+                    required
                   />
-                  {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
+                  {errors.name && <p className="text-xs text-red-500 font-medium mt-1">{errors.name}</p>}
                 </div>
 
                 {/* Mobile */}
@@ -174,11 +180,16 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                     value={formData.mobileNumber}
                     onChange={handleChange}
                     className={`w-full px-4 py-2.5 rounded-xl border bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 transition-all ${
-                      errors.mobileNumber ? 'border-red-500 focus:ring-red-500/20' : 'border-[hsl(var(--border))] focus:ring-[hsl(var(--ring))]'
+                      errors.mobileNumber
+                        ? 'border-red-500 focus:ring-red-500/20'
+                        : 'border-[hsl(var(--border))] focus:ring-indigo-500/20 focus:border-indigo-500'
                     }`}
-                    placeholder="e.g., +91 9876543210"
+                    placeholder="e.g., 9876543210"
+                    required
                   />
-                  {errors.mobileNumber && <p className="text-xs text-red-500 mt-1">{errors.mobileNumber}</p>}
+                  {errors.mobileNumber && (
+                    <p className="text-xs text-red-500 font-medium mt-1">{errors.mobileNumber}</p>
+                  )}
                 </div>
 
                 {/* Email */}
@@ -192,11 +203,13 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                     value={formData.email}
                     onChange={handleChange}
                     className={`w-full px-4 py-2.5 rounded-xl border bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 transition-all ${
-                      errors.email ? 'border-red-500 focus:ring-red-500/20' : 'border-[hsl(var(--border))] focus:ring-[hsl(var(--ring))]'
+                      errors.email
+                        ? 'border-red-500 focus:ring-red-500/20'
+                        : 'border-[hsl(var(--border))] focus:ring-indigo-500/20 focus:border-indigo-500'
                     }`}
-                    placeholder="e.g., john@example.com"
+                    placeholder="e.g., client@example.com"
                   />
-                  {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+                  {errors.email && <p className="text-xs text-red-500 font-medium mt-1">{errors.email}</p>}
                 </div>
 
                 {/* Lead Source */}
@@ -208,10 +221,22 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                     name="leadSource"
                     value={formData.leadSource}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] transition-all appearance-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                   >
-                    {["Phone Call", "Walk-in", "Referral", "Existing Customer", "Builder Reference", "Architect Reference", "Society Reference", "Social Media", "Other"].map(source => (
-                      <option key={source} value={source}>{source}</option>
+                    {[
+                      'Phone Call',
+                      'Walk-in',
+                      'Referral',
+                      'Existing Customer',
+                      'Builder Reference',
+                      'Architect Reference',
+                      'Society Reference',
+                      'Social Media',
+                      'Other',
+                    ].map((source) => (
+                      <option key={source} value={source}>
+                        {source}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -225,31 +250,18 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                     name="propertyType"
                     value={formData.propertyType}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] transition-all appearance-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                   >
-                    {["Flat", "Villa", "Office", "Shop", "Other"].map(type => (
-                      <option key={type} value={type}>{type}</option>
+                    {['Flat', 'Villa', 'Office', 'Shop', 'Other'].map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
                     ))}
                   </select>
                 </div>
 
-                {/* Budget Range */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                    <DollarSign size={14} className="text-[hsl(var(--muted-foreground))]" /> Estimated Budget
-                  </label>
-                  <input
-                    type="text"
-                    name="budgetRange"
-                    value={formData.budgetRange}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] transition-all"
-                    placeholder="e.g. ₹5L - ₹10L"
-                  />
-                </div>
-
                 {/* Project Location */}
-                <div className="space-y-1.5 md:col-span-2">
+                <div className="space-y-1.5">
                   <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
                     <MapPin size={14} className="text-[hsl(var(--muted-foreground))]" /> Project Location
                   </label>
@@ -258,32 +270,10 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                     name="projectLocation"
                     value={formData.projectLocation}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] transition-all"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                     placeholder="e.g., Hiranandani Estate, Thane"
                   />
                 </div>
-
-                {/* Assigned Sales Exec */}
-                {users.length > 0 && (
-                  <div className="space-y-1.5 md:col-span-2">
-                    <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                      <UserCircle size={14} className="text-[hsl(var(--primary))]" /> Assign Sales Executive
-                    </label>
-                    <select
-                      name="assignedSalesExecutive"
-                      value={formData.assignedSalesExecutive}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] transition-all appearance-none"
-                    >
-                      <option value="">-- Unassigned --</option>
-                      {users.map(u => (
-                        <option key={u._id} value={u._id}>
-                          {u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
               </div>
             </form>
           </div>
@@ -302,7 +292,7 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
               type="submit"
               form="interior-edit-lead-form"
               disabled={isSubmitting}
-              className="px-5 py-2.5 rounded-xl text-sm font-bold text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
+              className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all shadow-md shadow-indigo-600/20 disabled:opacity-50 disabled:pointer-events-none"
             >
               {isSubmitting ? 'Saving Changes...' : 'Save Changes'}
             </button>

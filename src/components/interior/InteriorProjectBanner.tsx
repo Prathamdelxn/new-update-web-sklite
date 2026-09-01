@@ -28,10 +28,11 @@ const CATEGORIES = (projectId: string) => [
     items: [
       { label: 'Overview', href: `/interior-new/projects/${projectId}`, exact: true },
       { label: 'File Management', href: `/interior-new/projects/${projectId}/filemgt` },
-      { label: 'Team & Members', href: `/interior-new/projects/${projectId}/members` },
             { label: 'Site Details', href: `/interior-new/projects/${projectId}/sitedetails` },
 
       { label: 'Quotation', href: `/interior-new/projects/${projectId}/quotation` },
+            { label: 'Team & Members', href: `/interior-new/projects/${projectId}/members` },
+
     ],
   },
    {

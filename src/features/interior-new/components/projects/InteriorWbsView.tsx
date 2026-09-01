@@ -194,6 +194,21 @@ export default function InteriorWbsView({ projectId }: InteriorWbsViewProps) {
                       {node.trade}
                     </span>
                   )}
+                  {node.type === 'package' && node.taskCount !== undefined && (
+                    <div className="flex items-center gap-2 ml-2">
+                      <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/50">
+                        {node.completedTaskCount ?? 0}/{node.taskCount} Tasks
+                      </span>
+                      {node.taskCount > 0 && (
+                        <span className={cn(
+                          'px-1.5 py-0.5 text-[10px] font-bold rounded',
+                          node.progress === 100 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                        )}>
+                          {node.progress}%
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">

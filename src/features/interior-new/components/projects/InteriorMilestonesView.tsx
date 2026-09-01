@@ -202,18 +202,34 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
                         </span>
 
                         {milestone.linkedTasks && milestone.linkedTasks.length > 0 && (
-                          <div className="mt-3 space-y-1.5 border-t border-[hsl(var(--border))] pt-3">
-                            <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider block">
-                              Linked Tasks ({milestone.linkedTasks.filter((t: any) => t.status === 'completed').length}/{milestone.linkedTasks.length})
-                            </span>
-                            <div className="grid grid-cols-1 gap-1.5 max-w-md mt-1.5">
+                          <div className="mt-3 space-y-2 border-t border-[hsl(var(--border))] pt-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider block">
+                                Linked Tasks ({milestone.linkedTasks.filter((t: any) => t.status === 'completed').length}/{milestone.linkedTasks.length})
+                              </span>
+                              <span className="text-[11px] font-bold text-[hsl(var(--primary))]">
+                                {milestone.progress !== undefined ? `${milestone.progress}%` : `${Math.round((milestone.linkedTasks.filter((t: any) => t.status === 'completed').length / milestone.linkedTasks.length) * 100)}%`}
+                              </span>
+                            </div>
+
+                            <div className="w-full max-w-md h-1.5 bg-[hsl(var(--muted))] rounded-full overflow-hidden">
+                              <div
+                                className={cn(
+                                  'h-full transition-all duration-300',
+                                  milestone.status === 'achieved' || milestone.progress === 100 ? 'bg-emerald-500' : 'bg-[hsl(var(--primary))]'
+                                )}
+                                style={{ width: `${milestone.progress ?? Math.round((milestone.linkedTasks.filter((t: any) => t.status === 'completed').length / milestone.linkedTasks.length) * 100)}%` }}
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-1.5 max-w-md mt-2">
                               {milestone.linkedTasks.map((task: any) => {
                                 const isTaskCompleted = task.status === 'completed';
                                 return (
                                   <div
                                     key={task._id}
                                     className={cn(
-                                      'flex items-center justify-between gap-3 px-2 py-1 rounded-md border text-[11px]',
+                                      'flex items-center justify-between gap-3 px-2.5 py-1.5 rounded-md border text-[11px]',
                                       isTaskCompleted
                                         ? 'bg-emerald-500/5 border-emerald-500/20 dark:bg-emerald-950/10 dark:border-emerald-900/30'
                                         : 'bg-[hsl(var(--muted)/0.2)] border-[hsl(var(--border))]'
@@ -255,11 +271,9 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
                       </span>
                       {milestone.status !== 'achieved' && (
                         <>
-                          {(!milestone.linkedTasks || milestone.linkedTasks.length === 0) && (
-                            <Button variant="outline" size="sm" onClick={() => handleCompleteMilestone(milestone._id)}>
-                              Mark Done
-                            </Button>
-                          )}
+                          <Button variant="outline" size="sm" onClick={() => handleCompleteMilestone(milestone._id)}>
+                            Mark Done
+                          </Button>
                           <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50" onClick={() => handleOpenDelayDialog(milestone)}>
                             Log Delay
                           </Button>
