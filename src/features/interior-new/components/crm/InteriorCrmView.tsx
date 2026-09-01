@@ -91,7 +91,7 @@ export default function InteriorCrmView() {
   // Derive filtered leads based on the current tab
   const getFilteredLeads = () => {
     if (activeTab === 'leads') {
-      return leads; // Show ALL leads in the master Leads tab
+      return leads.filter(l => l.status !== 'Lost'); // Show ALL leads except Lost ones in the master Leads tab
     }
     if (activeTab === 'follow_ups') {
       return leads.filter(l => ['New Lead', 'Contacted', 'Meeting Scheduled'].includes(l.status));
@@ -323,7 +323,7 @@ export default function InteriorCrmView() {
           <motion.div key="won-projects-view" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
             <InteriorWonProjectsView />
           </motion.div>
-        ) : activeTab === 'leads' ? (
+        ) : (activeTab === 'leads' || activeTab === 'lost_leads') ? (
           <motion.div
             key="table-view"
             initial={{ opacity: 0, y: 10 }}

@@ -100,7 +100,7 @@ export function InteriorScheduleFollowUpModal({ isOpen, onClose, customerId, cus
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))]">Schedule Follow-up</h2>
-            <p className="text-sm text-[hsl(var(--muted-foreground))]">Plan a future touchpoint {customerName ? `with ${customerName}` : ''}</p>
+            <p className="text-sm text-[hsl(var(--muted-foreground))] truncate max-w-full" title={customerName ? `with ${customerName}` : ''}>Plan a future touchpoint {customerName ? `with ${customerName}` : ''}</p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-[hsl(var(--muted))] rounded-xl"><X size={20} className="text-[hsl(var(--muted-foreground))]" /></button>
         </div>

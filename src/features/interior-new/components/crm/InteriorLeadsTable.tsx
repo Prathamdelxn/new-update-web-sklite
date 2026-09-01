@@ -479,7 +479,10 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                             {lead.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-indigo-600 transition-colors flex items-center gap-2">
+                            <div 
+                              className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-indigo-600 transition-colors flex items-center gap-2 truncate max-w-[150px] sm:max-w-[250px]"
+                              title={lead.name}
+                            >
                               {lead.name}
                             </div>
                             <div className="flex items-center gap-1.5 mt-0.5">
@@ -558,9 +561,9 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                           {lead.propertyType || 'Interior Project'}
                         </div>
                         {lead.projectLocation ? (
-                          <div className="text-[11px] text-[hsl(var(--muted-foreground))] truncate max-w-[150px] flex items-center gap-1">
+                          <div className="text-[11px] text-[hsl(var(--muted-foreground))] max-w-[150px] flex items-center gap-1">
                             <MapPin size={11} className="shrink-0" />
-                            {lead.projectLocation}
+                            <span className="truncate" title={lead.projectLocation}>{lead.projectLocation}</span>
                           </div>
                         ) : (
                           <span className="text-[11px] text-[hsl(var(--muted-foreground))] italic">Location pending</span>

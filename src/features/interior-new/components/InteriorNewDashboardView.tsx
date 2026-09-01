@@ -428,7 +428,7 @@ export default function InteriorNewDashboardView() {
                             }`}
                           />
                           <div className="min-w-0">
-                            <p className="text-sm text-[hsl(var(--foreground))]">{activity.action}</p>
+                            <p className="text-sm text-[hsl(var(--foreground))] truncate" title={activity.action}>{activity.action}</p>
                             <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">
                               {activity.project} · {activity.time}
                             </p>
