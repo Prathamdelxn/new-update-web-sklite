@@ -68,7 +68,7 @@ export const InteriorDeleteLeadModal: React.FC<InteriorDeleteLeadModalProps> = (
                 Are you sure you want to delete{' '}
                 {leadName ? (
                   <span className="font-bold text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded-md border border-[hsl(var(--border))]">
-                    {leadName}
+                    <span className="font-bold text-[hsl(var(--foreground))] truncate max-w-[200px] inline-block align-bottom" title={leadName}>{leadName}</span>
                   </span>
                 ) : (
                   'this lead'

@@ -34,7 +34,7 @@ export function InteriorMarkAsLostModal({ isOpen, onClose, customerId, leadName,
     try {
       await interiorCrmService.updateCustomer(customerId, {
         status: 'Lost',
-        // Depending on backend support, we could pass reason, e.g., lostReason: reason
+        lostReason: reason,
       });
 
       toast.success('Lead has been marked as Lost.');
@@ -82,7 +82,7 @@ export function InteriorMarkAsLostModal({ isOpen, onClose, customerId, leadName,
             <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex gap-3 text-rose-700">
               <AlertCircle size={18} className="shrink-0 mt-0.5" />
               <div className="text-xs font-medium">
-                You are about to mark <strong>{leadName || 'this lead'}</strong> as Lost. They will be moved to the Lost Leads tab.
+                You are about to mark <strong className="truncate max-w-[150px] inline-block align-bottom" title={leadName}>{leadName || 'this lead'}</strong> as Lost. They will be moved to the Lost Leads tab.
               </div>
             </div>
 
