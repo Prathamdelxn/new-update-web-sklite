@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
-import { Calendar, Clock, Phone, UserCircle, MapPin, CheckCircle2, Search, ArrowRight, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, Phone, UserCircle, MapPin, CheckCircle2, Search, ArrowRight, CheckCircle, XCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/providers/ToastContext';
@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 interface Props {
   onPassToSiteVisit: (leadId: string) => void;
   refreshTrigger?: any;
+  onMarkAsLost?: (leadId: string) => void;
 }
 
 function displayUserName(u?: any) {
@@ -23,7 +24,7 @@ function displayUserName(u?: any) {
   return u.name || 'Assigned';
 }
 
-export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger }: Props) => {
+export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMarkAsLost }: Props) => {
   const router = useRouter();
   const toast = useToast();
   const [allActivities, setAllActivities] = useState<any[]>([]);
@@ -349,6 +350,16 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger }: Pro
                       >
                         View <ArrowRight size={12} />
                       </button>
+
+                      {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(act.customer?.status) && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onMarkAsLost(act.customer?._id); }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20"
+                          title="Mark as Lost"
+                        >
+                          <XCircle size={14} />
+                        </button>
+                      )}
                     </td>
                   </motion.tr>
                 ))}
