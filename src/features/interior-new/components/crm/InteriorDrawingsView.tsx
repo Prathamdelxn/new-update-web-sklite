@@ -209,7 +209,10 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                             {lead.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-indigo-600 transition-colors">
+                            <div 
+                              className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-indigo-600 transition-colors truncate max-w-[120px] sm:max-w-[200px]"
+                              title={lead.name}
+                            >
                               {lead.name}
                             </div>
                             <div className="flex items-center gap-1.5 mt-0.5">

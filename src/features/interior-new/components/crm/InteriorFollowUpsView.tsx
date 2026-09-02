@@ -231,7 +231,10 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
                           {act.customer?.name?.charAt(0).toUpperCase() || '?'}
                         </div>
                         <div>
-                          <div className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-amber-600 transition-colors">
+                          <div 
+                            className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-amber-600 transition-colors truncate max-w-[120px] sm:max-w-[200px]"
+                            title={act.customer?.name || 'Unknown'}
+                          >
                             {act.customer?.name || 'Unknown'}
                           </div>
                           <div className="text-[10px] font-mono text-[hsl(var(--muted-foreground))]">
