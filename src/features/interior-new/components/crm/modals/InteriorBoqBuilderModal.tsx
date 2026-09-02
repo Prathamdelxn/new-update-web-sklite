@@ -166,7 +166,7 @@ export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingB
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
-          className="w-full max-w-5xl border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+          className="w-full max-w-5xl border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] overflow-hidden flex flex-col max-h-[90vh]"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))] shrink-0 bg-[hsl(var(--muted)/0.5)]">

@@ -33,7 +33,7 @@ import { InteriorSendToQuotationsModal } from './modals/InteriorSendToQuotations
 import { InteriorQuotationBuilderModal } from './modals/InteriorQuotationBuilderModal';
 import { InteriorDeleteLeadModal } from './modals/InteriorDeleteLeadModal';
 import { InteriorMarkAsLostModal } from './modals/InteriorMarkAsLostModal';
-import { Calendar, Lightbulb } from 'lucide-react';
+import { Calendar, Lightbulb, Users, MapPin, FileText, Trophy, Plus, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
@@ -87,6 +87,47 @@ export default function InteriorCrmView() {
   useEffect(() => {
     fetchLeads();
   }, [fetchLeads]);
+
+  // Dynamic stage counts for senior-level UX visibility
+  const stageCounts = React.useMemo(() => {
+    return {
+      leads: leads.filter((l) => l.status !== 'Lost').length,
+      follow_ups: leads.filter((l) => ['New Lead', 'Contacted', 'Meeting Scheduled'].includes(l.status)).length,
+      site_visits: leads.filter(
+        (l) =>
+          ['Under Site Visit', 'Measurement Done', 'Meeting Scheduled'].includes(l.status) ||
+          !!l.siteMeasurements
+      ).length,
+      requirement_design: leads.filter(
+        (l) =>
+          ['Under Requirement', 'Requirement Completed'].includes(l.status) ||
+          (l.requirements && l.requirements.length > 0)
+      ).length,
+      drawing: leads.filter(
+        (l) =>
+          ['Under Drawing', 'Design Approved'].includes(l.status) ||
+          (l.designFiles && l.designFiles.length > 0)
+      ).length,
+      boq: leads.filter(
+        (l) =>
+          ['Under BOQ Creation'].includes(l.status) ||
+          (l.boqs && l.boqs.length > 0)
+      ).length,
+      quotations: leads.filter(
+        (l) =>
+          [
+            'Under Quotation',
+            'Quotation Pending',
+            'Quotation Sent',
+            'Negotiation',
+            'Booking Pending',
+            'Won',
+            'Converted',
+          ].includes(l.status) || (l.quotations && l.quotations.length > 0)
+      ).length,
+      lost_leads: leads.filter((l) => l.status === 'Lost').length,
+    };
+  }, [leads]);
 
   // Derive filtered leads based on the current tab
   const getFilteredLeads = () => {
@@ -179,57 +220,79 @@ export default function InteriorCrmView() {
   };
 
   const openSiteVisitModal = (leadId: string) => {
+    const lead = leads.find(l => l._id === leadId);
     setActionLeadId(leadId);
+    setActionLeadName(lead?.name || '');
     setIsSiteVisitOpen(true);
   };
 
   const openRequirementsModal = (leadId: string) => {
+    const lead = leads.find(l => l._id === leadId);
     setActionLeadId(leadId);
+    setActionLeadName(lead?.name || '');
     setIsRequirementsOpen(true);
   };
 
   const openUploadDesignModal = (leadId: string) => {
+    const lead = leads.find(l => l._id === leadId);
     setActionLeadId(leadId);
+    setActionLeadName(lead?.name || '');
     setIsUploadDesignOpen(true);
   };
 
   const openSendToSiteVisitModal = (leadId: string) => {
+    const lead = leads.find(l => l._id === leadId);
     setActionLeadId(leadId);
+    setActionLeadName(lead?.name || '');
     setIsSendToSiteVisitOpen(true);
   };
 
   const openSendToRequirementsModal = (leadId: string) => {
+    const lead = leads.find(l => l._id === leadId);
     setActionLeadId(leadId);
+    setActionLeadName(lead?.name || '');
     setIsSendToRequirementsOpen(true);
   };
 
   const openSendToDrawingModal = (leadId: string) => {
+    const lead = leads.find(l => l._id === leadId);
     setActionLeadId(leadId);
+    setActionLeadName(lead?.name || '');
     setIsSendToDrawingOpen(true);
   };
 
   const openSendToBoqModal = (leadId: string) => {
+    const lead = leads.find(l => l._id === leadId);
     setActionLeadId(leadId);
+    setActionLeadName(lead?.name || '');
     setIsSendToBoqOpen(true);
   };
 
   const openAddBoqModal = (leadId: string) => {
+    const lead = leads.find(l => l._id === leadId);
     setActionLeadId(leadId);
+    setActionLeadName(lead?.name || '');
     setIsAddBoqOpen(true);
   };
 
   const openSendToQuotationsModal = (leadId: string) => {
+    const lead = leads.find(l => l._id === leadId);
     setActionLeadId(leadId);
+    setActionLeadName(lead?.name || '');
     setIsSendToQuotationsOpen(true);
   };
 
   const openQuotationBuilderModal = (leadId: string) => {
+    const lead = leads.find(l => l._id === leadId);
     setActionLeadId(leadId);
+    setActionLeadName(lead?.name || '');
     setIsQuotationBuilderOpen(true);
   };
 
   const openConvertToProjectModal = (leadId: string) => {
+    const lead = leads.find(l => l._id === leadId);
     setActionLeadId(leadId);
+    setActionLeadName(lead?.name || '');
     setIsConvertToProjectOpen(true);
   };
 
@@ -240,31 +303,38 @@ export default function InteriorCrmView() {
     setIsMarkAsLostOpen(true);
   };
 
+  const wonLeadsCount = leads.filter((l) => ['Won', 'Converted'].includes(l.status)).length;
+
   return (
-    <div className="interior-os-theme p-6 lg:p-8 space-y-6 pb-12">
+    <div className="interior-os-theme p-3 sm:p-6 lg:p-8 space-y-3.5 sm:space-y-6 pb-20 max-w-full overflow-x-hidden">
 
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-[hsl(var(--foreground))]">
-            CRM Workspace
-          </h1>
-          <p className="text-[hsl(var(--muted-foreground))] mt-1 flex items-center gap-2 text-xs font-normal">
-            <Calendar size={15} /> Manage your entire sales pipeline
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-[hsl(var(--foreground))]">
+              CRM Workspace
+            </h1>
+            <span className="hidden xs:inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] px-2 py-0.5 rounded-full border border-[hsl(var(--primary)/0.2)]">
+              Pipeline Live
+            </span>
+          </div>
+          <p className="text-[hsl(var(--muted-foreground))] mt-0.5 flex items-center gap-1.5 text-[11px] sm:text-xs font-medium">
+            <Calendar size={13} className="shrink-0" /> Manage customer journeys, site measurements & quotations
           </p>
         </div>
 
         <button
           onClick={() => setIsCreateModalOpen(true)}
-          className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-[hsl(var(--primary-foreground))] px-4 py-2 rounded-xl font-medium text-xs transition-all active:scale-95"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-[hsl(var(--primary-foreground))] px-4 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 cursor-pointer"
         >
-          + New Lead
+          <Plus size={15} /> Add New Lead
         </button>
       </div>
 
       {/* CRM Flow Tabs */}
-      <div className="bg-[hsl(var(--card))] rounded-t-2xl px-2">
-         <InteriorCrmFlowTabs activeTab={activeTab} onChange={setActiveTab} />
+      <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">
+         <InteriorCrmFlowTabs activeTab={activeTab} onChange={setActiveTab} stageCounts={stageCounts} />
       </div>
 
       {/* Tab Content */}

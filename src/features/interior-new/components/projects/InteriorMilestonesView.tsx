@@ -109,7 +109,8 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
 
   const handleOpenDelayDialog = (milestone: any) => {
     setSelectedMilestone(milestone);
-    const currentDueDate = new Date(milestone.dueDate);
+    const parsedDate = milestone.dueDate ? new Date(milestone.dueDate) : new Date();
+    const currentDueDate = isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
     currentDueDate.setDate(currentDueDate.getDate() + 7);
     const suggestedStr = currentDueDate.toISOString().split('T')[0];
 

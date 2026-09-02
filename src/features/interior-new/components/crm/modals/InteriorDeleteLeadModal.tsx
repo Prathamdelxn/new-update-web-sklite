@@ -40,7 +40,7 @@ export const InteriorDeleteLeadModal: React.FC<InteriorDeleteLeadModalProps> = (
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 15 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="relative z-10 w-full max-w-md bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 md:p-7 shadow-2xl overflow-hidden"
+            className="relative z-10 w-full max-w-md bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 md:p-7 overflow-hidden"
           >
             {/* Close button */}
             <button
@@ -54,7 +54,7 @@ export const InteriorDeleteLeadModal: React.FC<InteriorDeleteLeadModalProps> = (
 
             <div className="flex flex-col items-center text-center">
               {/* Animated Trash Icon Header */}
-              <div className="mb-4 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 flex items-center justify-center shadow-lg shadow-rose-500/10">
+              <div className="mb-4 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 flex items-center justify-center">
                 <Trash2 className="w-8 h-8" />
               </div>
 
@@ -97,7 +97,7 @@ export const InteriorDeleteLeadModal: React.FC<InteriorDeleteLeadModalProps> = (
                   type="button"
                   onClick={onConfirm}
                   disabled={isLoading}
-                  className="flex-1 py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow-lg shadow-rose-600/25 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isLoading ? (
                     <>

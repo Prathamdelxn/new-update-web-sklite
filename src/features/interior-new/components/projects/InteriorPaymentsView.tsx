@@ -9,6 +9,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, Button, Input } from '@/components/interior/ui';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -22,6 +23,7 @@ import {
   TrendingUp,
   TrendingDown,
   Wallet,
+  Trash2,
 } from 'lucide-react';
 import { validatePositiveNumber, validateNonEmpty, validateRequiredDate, ValidationErrors } from '@/lib/crmValidation';
 import { interiorProjectService } from '@/services/interiorProject.service';
@@ -77,6 +79,7 @@ function genRef(prefix: string): string {
 // ---------------------------------------------------------------------------
 export default function InteriorPaymentsView({ projectId }: InteriorPaymentsViewProps) {
   const toast = useToast();
+  const { confirm } = useConfirm();
   const [activeCategory, setActiveCategory] = useState<'incoming' | 'outgoing' | 'debitNote'>('incoming');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -138,13 +141,39 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
       const res = await interiorProjectService.getPayments(projectId);
       // Backend returns { success: true, data: [...] }
       const list = res?.data ?? res ?? [];
-      setPayments(list);
+      setPayments(Array.isArray(list) ? list : []);
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? 'Failed to load payment records');
     } finally {
       setIsLoading(false);
     }
   }, [projectId]);
+
+  const handleDeletePayment = async (paymentId: string) => {
+    const ok = await confirm({
+      title: 'Delete Payment Record',
+      message: 'Are you sure you want to delete this payment record? This action cannot be undone.',
+      confirmText: 'Delete',
+      type: 'danger',
+    });
+    if (!ok) return;
+
+    try {
+      setIsLoading(true);
+      const res = await interiorProjectService.deletePayment(projectId, paymentId);
+      if (res?.success) {
+        toast.success('Payment record deleted successfully');
+        loadPayments();
+      } else {
+        toast.error(res?.message || 'Failed to delete payment');
+      }
+    } catch (err: any) {
+      console.error('Delete payment failed', err);
+      toast.error(err?.response?.data?.message || 'Failed to delete payment');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const loadPurchaseOrders = useCallback(async () => {
     try {
@@ -629,12 +658,13 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                   <th className="px-5 py-3.5">Method &amp; UTR</th>
                   <th className="px-5 py-3.5">Amount</th>
                   <th className="px-5 py-3.5 text-center">Status</th>
+                  <th className="px-5 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[hsl(var(--border))]">
                 {filteredIncoming.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-[hsl(var(--muted-foreground))] font-medium">
+                    <td colSpan={6} className="px-6 py-8 text-center text-[hsl(var(--muted-foreground))] font-medium">
                       No incoming client payments match your search.
                     </td>
                   </tr>
@@ -662,6 +692,15 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                           {tx.incomingStatus ?? 'Completed'}
                         </span>
                       </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <button
+                          onClick={() => handleDeletePayment(tx._id)}
+                          title="Delete payment record"
+                          className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -683,12 +722,13 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                   <th className="px-5 py-3.5">Date &amp; Mode</th>
                   <th className="px-5 py-3.5">Amount</th>
                   <th className="px-5 py-3.5 text-center">Status</th>
+                  <th className="px-5 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[hsl(var(--border))]">
                 {filteredOutgoing.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-[hsl(var(--muted-foreground))] font-medium">
+                    <td colSpan={6} className="px-6 py-8 text-center text-[hsl(var(--muted-foreground))] font-medium">
                       No outgoing vendor payouts match your search.
                     </td>
                   </tr>
@@ -724,6 +764,15 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                           {tx.outgoingStatus ?? 'Paid'}
                         </span>
                       </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <button
+                          onClick={() => handleDeletePayment(tx._id)}
+                          title="Delete payment record"
+                          className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -745,12 +794,13 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                   <th className="px-5 py-3.5">Issue Date</th>
                   <th className="px-5 py-3.5">Amount</th>
                   <th className="px-5 py-3.5 text-center">Status</th>
+                  <th className="px-5 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[hsl(var(--border))]">
                 {filteredDebitNotes.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-[hsl(var(--muted-foreground))] font-medium">
+                    <td colSpan={6} className="px-6 py-8 text-center text-[hsl(var(--muted-foreground))] font-medium">
                       No debit notes match your search.
                     </td>
                   </tr>
@@ -784,6 +834,15 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                         >
                           {dn.debitNoteStatus ?? 'Issued'}
                         </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <button
+                          onClick={() => handleDeletePayment(dn._id)}
+                          title="Delete debit note"
+                          className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </td>
                     </tr>
                   ))

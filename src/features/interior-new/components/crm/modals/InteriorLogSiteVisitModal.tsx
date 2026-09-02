@@ -200,7 +200,7 @@ export const InteriorLogSiteVisitModal = ({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[92vh] shadow-2xl"
+        className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[92vh]"
       >
         {/* Modal Header */}
         <div className="flex justify-between items-center px-6 py-5 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
@@ -526,13 +526,13 @@ export const InteriorLogSiteVisitModal = ({
                 {photos.map((photo, index) => (
                   <div
                     key={index}
-                    className="relative aspect-square rounded-xl overflow-hidden border border-[hsl(var(--border))] group shadow-sm bg-[hsl(var(--card))]"
+                    className="relative aspect-square rounded-xl overflow-hidden border border-[hsl(var(--border))] group bg-[hsl(var(--card))]"
                   >
                     <img src={photo} alt={`Site ${index + 1}`} className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={() => removePhoto(index)}
-                      className="absolute top-1.5 right-1.5 bg-red-500 text-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                      className="absolute top-1.5 right-1.5 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                     >
                       <X size={12} />
                     </button>
@@ -554,7 +554,7 @@ export const InteriorLogSiteVisitModal = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-4 py-2.5 rounded-xl font-bold text-xs text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] transition-colors disabled:opacity-50 shadow-md shadow-[hsl(var(--primary)/0.2)]"
+              className="flex-1 px-4 py-2.5 rounded-xl font-bold text-xs text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] transition-colors disabled:opacity-50 .2)]"
             >
               {isSubmitting ? 'Saving Measurements...' : 'Save Site Visit Measurements'}
             </button>

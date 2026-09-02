@@ -32,6 +32,9 @@ import {
   Activity,
   EyeClosed,
   EyeIcon,
+  SlidersHorizontal,
+  ChevronDown,
+  RotateCcw,
 } from 'lucide-react';
 import { Button, Input, Card } from '@/components/interior/ui';
 import { cn } from '@/lib/utils';
@@ -110,6 +113,14 @@ export default function InteriorNewProjectsView() {
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (typeFilter !== 'all') count++;
+    if (sortBy !== 'newest') count++;
+    return count;
+  }, [typeFilter, sortBy]);
 
   // Modals state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -348,18 +359,18 @@ export default function InteriorNewProjectsView() {
   }
 
   return (
-    <div className="interior-os-theme min-h-screen py-3.5 sm:p-4 lg:p-6 space-y-4 max-w-[1600px] mx-auto">
+    <div className="interior-os-theme min-h-screen p-3 sm:p-4 lg:p-6 space-y-4 max-w-[1600px] mx-auto overflow-x-hidden">
       
       {/* ── 1. Page Header & Primary Action ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[hsl(var(--border)/0.6)]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[hsl(var(--border)/0.6)]">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary)/0.7)] flex items-center justify-center text-white shadow-md shadow-[hsl(var(--primary)/0.25)]">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary)/0.7)] flex items-center justify-center text-white shrink-0">
               <Building2 className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl sm:text-2xl font-black tracking-tight text-[hsl(var(--foreground))]">
+                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-[hsl(var(--foreground))]">
                   Projects Portfolio
                 </h1>
                 <span className="px-2 py-0.5 text-xs font-bold font-mono rounded-full bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)]">
@@ -373,13 +384,13 @@ export default function InteriorNewProjectsView() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 self-start md:self-auto">
+        <div className="flex items-center gap-2.5 w-full sm:w-auto">
           <Button
             onClick={() => {
               handleCloseDialog();
               setIsDialogOpen(true);
             }}
-            className="shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:shadow-xl hover:shadow-[hsl(var(--primary)/0.3)] transition-all font-semibold gap-2"
+            className="w-full sm:w-auto font-semibold gap-2 py-2 text-xs sm:text-sm"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             New Project
@@ -388,83 +399,19 @@ export default function InteriorNewProjectsView() {
       </div>
 
       {/* ── 2. Controls & Filter Bar ── */}
-      <div className="p-3.5 sm:p-4 rounded-2xl bg-[hsl(var(--card))] border border-gray-300 shadow-sm space-y-3.5">
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+      <div className="p-3 sm:p-4 rounded-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] space-y-3">
+        {/* Top Control Line: Search Bar + Status Filter Tabs + Filter Toggle Button + View Switcher */}
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5">
           
-          {/* Status Tab Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
-            {[
-              { id: 'all', label: 'All Projects', count: projects.length },
-              { id: 'on-track', label: 'On Track', count: stats.onTrackCount },
-              { id: 'at-risk', label: 'At Risk', count: stats.atRiskCount },
-              { id: 'completed', label: 'Completed', count: stats.completedCount },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setStatusFilter(tab.id as FilterStatus)}
-                className={cn(
-                  'px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 border',
-                  statusFilter === tab.id
-                    ? 'bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))] shadow-sm shadow-[hsl(var(--primary)/0.3)]'
-                    : 'bg-[hsl(var(--background))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] border-gray-300 hover:border-[hsl(var(--border)/0.8)]'
-                )}
-              >
-                <span>{tab.label}</span>
-                <span
-                  className={cn(
-                    'px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold',
-                    statusFilter === tab.id ? 'bg-white/20 text-white' : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
-                  )}
-                >
-                  {tab.count}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          {/* View Switcher & Actions */}
-          <div className="flex items-center gap-2 self-end lg:self-auto">
-            {/* View Mode Toggle */}
-            <div className="flex items-center p-1 rounded-xl border border-gray-300 bg-[hsl(var(--muted)/0.5)]">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={cn(
-                  'p-1.5 rounded-lg transition-all',
-                  viewMode === 'grid'
-                    ? 'bg-[hsl(var(--card))] text-[hsl(var(--primary))] shadow-xs font-bold'
-                    : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
-                )}
-                title="Grid Cards View"
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={cn(
-                  'p-1.5 rounded-lg transition-all',
-                  viewMode === 'list'
-                    ? 'bg-[hsl(var(--card))] text-[hsl(var(--primary))] shadow-xs font-bold'
-                    : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
-                )}
-                title="Table List View"
-              >
-                <List className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Secondary Filter Line: Search + Sort Dropdown + Type Filter */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-2 border-t border-[hsl(var(--border)/0.5)]">
           {/* Search Box */}
-          <div className="relative flex-1">
+          <div className="relative flex-1 min-w-[220px]">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]" />
             <input
               type="text"
-              placeholder="Search by project name, code, client, or city..."
+              placeholder="Search project name, code, client, city..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm rounded-xl border border-gray-300 bg-[hsl(var(--background))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-1.5 focus:ring-[hsl(var(--primary))]"
+              className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-1.5 focus:ring-[hsl(var(--primary))]"
             />
             {search && (
               <button
@@ -476,50 +423,239 @@ export default function InteriorNewProjectsView() {
             )}
           </div>
 
-          {/* Project Type Filter */}
-          {projectTypes.length > 0 && (
-            <div className="relative sm:w-44">
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-gray-300 bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1.5 focus:ring-[hsl(var(--primary))]"
-              >
-                <option value="all">All Types</option>
-                {projectTypes.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+          <div className="flex items-center justify-between sm:justify-start gap-2 overflow-x-auto pb-1 lg:pb-0 scrollbar-none touch-pan-x flex-nowrap">
+            {/* Status Tab Pills */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {[
+                { id: 'all', label: 'All', count: projects.length },
+                { id: 'on-track', label: 'On Track', count: stats.onTrackCount },
+                { id: 'at-risk', label: 'At Risk', count: stats.atRiskCount },
+                { id: 'completed', label: 'Completed', count: stats.completedCount },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setStatusFilter(tab.id as FilterStatus)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 border shrink-0',
+                    statusFilter === tab.id
+                      ? 'bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]'
+                      : 'bg-[hsl(var(--background))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] border-[hsl(var(--border))] hover:border-[hsl(var(--border)/0.8)]'
+                  )}
+                >
+                  <span>{tab.label}</span>
+                  <span
+                    className={cn(
+                      'px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold',
+                      statusFilter === tab.id ? 'bg-white/20 text-white' : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
+                    )}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              ))}
             </div>
-          )}
 
-          {/* Sort By Dropdown */}
-          <div className="relative sm:w-48">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-gray-300 bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1.5 focus:ring-[hsl(var(--primary))]"
-            >
-              <option value="newest">Sort: Recently Added</option>
-              <option value="budget-high">Sort: Budget (High → Low)</option>
-              <option value="budget-low">Sort: Budget (Low → High)</option>
-              <option value="progress-high">Sort: Progress (High → Low)</option>
-              <option value="progress-low">Sort: Progress (Low → High)</option>
-              <option value="name">Sort: Project Name (A-Z)</option>
-            </select>
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Senior UX: Filter Toggle Button */}
+              <button
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className={cn(
+                  'px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 sm:gap-2 border shrink-0',
+                  isFilterOpen || activeFilterCount > 0
+                    ? 'bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))] border-[hsl(var(--primary)/0.4)]'
+                    : 'bg-[hsl(var(--background))] text-[hsl(var(--foreground))] border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))]'
+                )}
+                title="Toggle Advanced Filters"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
+                <span className="hidden sm:inline">Filters</span>
+                {activeFilterCount > 0 && (
+                  <span className="w-4.5 h-4.5 px-1 rounded-full bg-[hsl(var(--primary))] text-white text-[10px] font-mono font-bold flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
+                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', isFilterOpen && 'rotate-180')} />
+              </button>
+
+              {/* View Switcher */}
+              <div className="flex items-center p-1 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)]">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={cn(
+                    'p-1.5 rounded-lg transition-all',
+                    viewMode === 'grid'
+                      ? 'bg-[hsl(var(--card))] text-[hsl(var(--primary))] font-bold'
+                      : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
+                  )}
+                  title="Grid Cards View"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={cn(
+                    'p-1.5 rounded-lg transition-all',
+                    viewMode === 'list'
+                      ? 'bg-[hsl(var(--card))] text-[hsl(var(--primary))] font-bold'
+                      : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
+                  )}
+                  title="Table List View"
+                >
+                  <List className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
+
+        {/* Expandable Advanced Filter Drawer Panel */}
+        <AnimatePresence>
+          {isFilterOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden border-t border-[hsl(var(--border)/0.6)] pt-3 mt-1 space-y-3"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 items-end">
+                {/* Project Category / Type Filter */}
+                <div className="md:col-span-6 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-[hsl(var(--foreground))]">
+                      Project Category / Type
+                    </label>
+                    {typeFilter !== 'all' && (
+                      <button
+                        onClick={() => setTypeFilter('all')}
+                        className="text-[10px] font-semibold text-[hsl(var(--primary))] hover:underline"
+                      >
+                        Reset Type
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none touch-pan-x flex-nowrap">
+                    <button
+                      onClick={() => setTypeFilter('all')}
+                      className={cn(
+                        'px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap border shrink-0',
+                        typeFilter === 'all'
+                          ? 'bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]'
+                          : 'bg-[hsl(var(--background))] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] hover:text-[hsl(var(--foreground))]'
+                      )}
+                    >
+                      All Types
+                    </button>
+                    {projectTypes.map((t) => (
+                      <button
+                        key={t}
+                        onClick={() => setTypeFilter(t)}
+                        className={cn(
+                          'px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap border shrink-0',
+                          typeFilter === t
+                            ? 'bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]'
+                            : 'bg-[hsl(var(--background))] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] hover:text-[hsl(var(--foreground))]'
+                        )}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Sort By Dropdown */}
+                <div className="md:col-span-4 space-y-1.5">
+                  <label className="text-xs font-bold text-[hsl(var(--foreground))]">
+                    Sort Order
+                  </label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as SortOption)}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1.5 focus:ring-[hsl(var(--primary))]"
+                  >
+                    <option value="newest">Recently Added (Default)</option>
+                    <option value="budget-high">Budget: High → Low</option>
+                    <option value="budget-low">Budget: Low → High</option>
+                    <option value="progress-high">Progress: High → Low</option>
+                    <option value="progress-low">Progress: Low → High</option>
+                    <option value="name">Project Name: A → Z</option>
+                  </select>
+                </div>
+
+                {/* Reset Action */}
+                <div className="md:col-span-2 flex items-center justify-end">
+                  {activeFilterCount > 0 ? (
+                    <button
+                      onClick={() => {
+                        setTypeFilter('all');
+                        setSortBy('newest');
+                      }}
+                      className="w-full py-1.5 px-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-xs font-semibold text-[hsl(var(--muted-foreground))] transition-all flex items-center justify-center gap-1.5"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      Reset Filters
+                    </button>
+                  ) : (
+                    <span className="text-[11px] text-[hsl(var(--muted-foreground))] text-right w-full">Default sorting applied</span>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Active Filter Chips Line */}
+        {(activeFilterCount > 0 || search || statusFilter !== 'all') && (
+          <div className="flex items-center gap-1.5 flex-wrap pt-1 text-xs border-t border-[hsl(var(--border)/0.4)]">
+            <span className="text-[11px] font-bold text-[hsl(var(--muted-foreground))]">Active:</span>
+            {search && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] text-[11px] border border-[hsl(var(--border))]">
+                Search: &quot;{search}&quot;
+                <X className="w-3 h-3 cursor-pointer hover:text-rose-500" onClick={() => setSearch('')} />
+              </span>
+            )}
+            {statusFilter !== 'all' && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] text-[11px] border border-[hsl(var(--primary)/0.2)]">
+                Status: {statusFilter.replace('-', ' ')}
+                <X className="w-3 h-3 cursor-pointer hover:text-rose-500" onClick={() => setStatusFilter('all')} />
+              </span>
+            )}
+            {typeFilter !== 'all' && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] text-[11px] border border-[hsl(var(--primary)/0.2)]">
+                Type: {typeFilter}
+                <X className="w-3 h-3 cursor-pointer hover:text-rose-500" onClick={() => setTypeFilter('all')} />
+              </span>
+            )}
+            {sortBy !== 'newest' && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] text-[11px] border border-[hsl(var(--primary)/0.2)]">
+                Sort: {sortBy.replace('-', ' ')}
+                <X className="w-3 h-3 cursor-pointer hover:text-rose-500" onClick={() => setSortBy('newest')} />
+              </span>
+            )}
+            <button
+              onClick={() => {
+                setSearch('');
+                setTypeFilter('all');
+                setSortBy('newest');
+                setStatusFilter('all');
+              }}
+              className="text-[11px] font-bold text-rose-500 hover:underline ml-1"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ── 4. Main Projects Display (Grid vs List) ── */}
       {filteredProjects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-12 sm:p-16 border border-dashed border-[hsl(var(--border))] rounded-3xl bg-[hsl(var(--card))] max-w-xl mx-auto text-center space-y-4 shadow-sm">
-          <div className="w-16 h-16 rounded-2xl bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center">
-            <Building2 className="w-8 h-8" />
+        <div className="flex flex-col items-center justify-center p-8 sm:p-14 border border-dashed border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl bg-[hsl(var(--card))] max-w-xl mx-auto text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center">
+            <Building2 className="w-7 h-7" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">No Projects Found</h3>
+            <h3 className="text-base sm:text-lg font-bold text-[hsl(var(--foreground))]">No Projects Found</h3>
             <p className="text-xs sm:text-sm text-[hsl(var(--muted-foreground))] max-w-sm mt-1">
               {search || statusFilter !== 'all'
                 ? 'No projects match your active search or filter criteria. Try resetting filters.'
@@ -556,7 +692,7 @@ export default function InteriorNewProjectsView() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
-          className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-4"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4"
         >
           {filteredProjects.map((project: any, i: number) => {
             const healthType = project.status === 'completed' || project.progress === 100
@@ -565,8 +701,6 @@ export default function InteriorNewProjectsView() {
             const health = (healthConfig as any)[healthType] || healthConfig['on-track'];
             const budgetVal = getProjectBudget(project);
             const progressVal = Math.round(project.progress || 0);
-            const openSnags = project.openSnags || 0;
-            const openRFIs = project.openRFIs || 0;
             const city = project.location?.city || project.location?.address;
 
             return (
@@ -575,68 +709,62 @@ export default function InteriorNewProjectsView() {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04, duration: 0.3 }}
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                whileHover={{ y: -3, transition: { duration: 0.2 } }}
                 onClick={() => openProject(project)}
                 className="cursor-pointer group h-full"
               >
-                <div className="h-full flex flex-col justify-between rounded-2xl bg-[hsl(var(--card))] border border-gray-300 hover:border-[hsl(var(--primary)/0.45)] shadow-sm hover:shadow-xl hover:shadow-[hsl(var(--primary)/0.08)] transition-all duration-300 overflow-hidden relative">
-                  
-                  {/* Top Ambient Glow Line */}
-        
-
-                  <div className="p-4 sm:p-5.5 flex-1 flex flex-col justify-between space-y-4">
+                <div className="h-full flex flex-col justify-between rounded-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.45)] transition-all duration-200 overflow-hidden relative">
+                  <div className="p-3.5 sm:p-4.5 flex-1 flex flex-col justify-between space-y-3.5">
                     
-                    {/* 1. Header Row: Icon + Code/Type + Health Badge + Actions */}
+                    {/* 1. Header Row: Icon + Code/Type + Health Badge */}
                     <div>
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-3 min-w-0">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--primary)/0.15)] to-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.2)] flex items-center justify-center shrink-0 text-[hsl(var(--primary))] shadow-xs group-hover:scale-105 transition-transform">
-                            <Building2 className="w-5 h-5" />
+                      <div className="flex items-start justify-between gap-2.5">
+                        <div className="flex items-start gap-2.5 min-w-0">
+                          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[hsl(var(--primary)/0.15)] to-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.2)] flex items-center justify-center shrink-0 text-[hsl(var(--primary))] group-hover:scale-105 transition-transform">
+                            <Building2 className="w-4.5 h-4.5" />
                           </div>
 
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                              <span className="px-2 py-0.5 text-[10px] font-mono font-bold uppercase rounded-md bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))]">
+                              <span className="px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase rounded-md bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))]">
                                 {project.code || 'PRJ'}
                               </span>
-                              <span className="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-[hsl(var(--primary)/0.08)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.15)] truncate max-w-[140px]">
+                              <span className="px-1.5 py-0.5 text-[9px] font-semibold rounded-md bg-[hsl(var(--primary)/0.08)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.15)] truncate max-w-[120px]">
                                 {project.type || 'Commercial Office'}
                               </span>
                             </div>
 
-                            <h3 className="text-base sm:text-md font-bold text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))] transition-colors line-clamp-1 leading-snug tracking-tight">
+                            <h3 className="text-sm sm:text-base font-bold text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))] transition-colors line-clamp-1 leading-snug tracking-tight">
                               {project.name}
                             </h3>
                           </div>
                         </div>
-
-                        {/* Health Badge & Quick Action Menu */}
-                       
                       </div>
 
                       {/* Client and City Meta */}
                       <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))] mt-2 flex-wrap">
-                       
+                        {project.client && (
+                          <span className="truncate max-w-[140px] font-medium text-[hsl(var(--foreground)/0.8)]">
+                            {project.client}
+                          </span>
+                        )}
                         {city && (
-                          <>
-                           
-                            <span className="flex items-center gap-1 truncate max-w-[150px]">
-                              <MapPin className="w-3 h-3 text-rose-500/80 shrink-0" />
-                              {city}
-                            </span>
-                          </>
+                          <span className="flex items-center gap-1 truncate max-w-[140px]">
+                            <MapPin className="w-3 h-3 text-rose-500/80 shrink-0" />
+                            {city}
+                          </span>
                         )}
                       </div>
                     </div>
 
                     {/* 2. Structured Middle Showcase Panel: Budget & Execution Progress */}
-                    <div className="rounded-xl bg-[hsl(var(--muted)/0.65)] border border-[hsl(var(--border)/0.9)] p-3.5 space-y-3">
+                    <div className="rounded-xl bg-[hsl(var(--muted)/0.65)] border border-[hsl(var(--border)/0.9)] p-3 space-y-2.5">
                       <div className="flex items-end justify-between gap-2">
                         <div>
                           <span className="text-[9px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block">
                             Contract Budget
                           </span>
-                          <span className="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 leading-tight">
+                          <span className="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 leading-tight">
                             {formatBudget(budgetVal)}
                           </span>
                         </div>
@@ -645,14 +773,14 @@ export default function InteriorNewProjectsView() {
                           <span className="text-[9px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block">
                             Progress
                           </span>
-                          <span className="text-base font-black font-mono text-[hsl(var(--foreground))] leading-tight">
+                          <span className="text-xs sm:text-sm font-black font-mono text-[hsl(var(--foreground))] leading-tight">
                             {progressVal}%
                           </span>
                         </div>
                       </div>
 
                       {/* Smooth Progress Bar */}
-                      <div className="w-full h-2 rounded-full bg-[hsl(var(--muted))] overflow-hidden p-0.5 border border-[hsl(var(--border)/0.5)]">
+                      <div className="w-full h-1.5 rounded-full bg-[hsl(var(--muted))] overflow-hidden p-0.5 border border-[hsl(var(--border)/0.5)]">
                         <motion.div
                           className={cn('h-full rounded-full bg-gradient-to-r', health.barGradient)}
                           initial={{ width: 0 }}
@@ -662,7 +790,7 @@ export default function InteriorNewProjectsView() {
                       </div>
 
                       {/* Timeline Dates */}
-                      <div className="flex items-center justify-between text-[11px] text-[hsl(var(--muted-foreground))] pt-0.5">
+                      <div className="flex items-center justify-between text-[10px] text-[hsl(var(--muted-foreground))] pt-0.5">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3 text-[hsl(var(--primary))]" />
                           <span>Start: {formatDate(project.startDate || project.createdAt)}</span>
@@ -674,38 +802,34 @@ export default function InteriorNewProjectsView() {
                         )}
                       </div>
                     </div>
-
-                 
                   </div>
 
                   {/* 4. Card Bottom Action Bar */}
-                  <div className="flex items-center justify-between px-5 py-3 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.2)] group-hover:bg-[hsl(var(--primary)/0.04)] transition-colors">
-                   
-
+                  <div className="flex items-center justify-between px-3.5 sm:px-4 py-2.5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.2)] group-hover:bg-[hsl(var(--primary)/0.04)] transition-colors">
                     <span className="text-xs font-bold text-[hsl(var(--primary))] flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                    <div className='bg-blue-600 p-2 rounded-lg text-white'>View Project </div> 
+                      <span className="bg-[hsl(var(--primary))] px-2.5 py-1 rounded-lg text-white text-[11px] font-bold">View Project</span> 
                     </span>
-                     <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))] transition-colors flex items-center gap-1.5">
-                       <button
-                              title="Edit Project"
-                              className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--muted))] transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditProject(project);
-                              }}
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              title="Delete Project"
-                              className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteProject(project);
-                              }}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                    <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+                      <button
+                        title="Edit Project"
+                        className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--muted))] transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditProject(project);
+                        }}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        title="Delete Project"
+                        className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteProject(project);
+                        }}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </span>
                   </div>
                 </div>
@@ -715,8 +839,8 @@ export default function InteriorNewProjectsView() {
         </motion.div>
       ) : (
         /* ── TABLE LIST VIEW ── */
-        <Card className="overflow-hidden border border-[hsl(var(--border))] rounded-2xl shadow-sm">
-          <div className="overflow-x-auto">
+        <Card className="overflow-hidden border border-[hsl(var(--border))] rounded-2xl">
+          <div className="overflow-x-auto min-w-full">
             <table className="w-full text-left text-xs sm:text-sm">
               <thead>
                 <tr className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.4)] text-[hsl(var(--muted-foreground))] uppercase font-bold text-[10px] tracking-wider">
@@ -845,18 +969,18 @@ export default function InteriorNewProjectsView() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-xl overflow-hidden border border-[hsl(var(--border))] rounded-2xl bg-[hsl(var(--card))] shadow-2xl"
+              className="w-full max-w-xl overflow-hidden border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl bg-[hsl(var(--card))] max-h-[90vh] flex flex-col"
             >
-              <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.25)]">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center">
-                    <Building2 className="w-5 h-5" />
+              <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.25)]">
+                <div className="flex items-center gap-2.5 sm:gap-3">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center shrink-0">
+                    <Building2 className="w-4.5 h-4.5" />
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))]">
+                    <h3 className="text-sm sm:text-lg font-black text-[hsl(var(--foreground))]">
                       {editingProjectId ? 'Edit Project Parameters' : 'Create New Interior Fit-Out'}
                     </h3>
-                    <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                    <p className="text-[11px] sm:text-xs text-[hsl(var(--muted-foreground))]">
                       {editingProjectId ? 'Update budget, timeline, and location' : 'Configure project delivery specifications'}
                     </p>
                   </div>
@@ -869,10 +993,10 @@ export default function InteriorNewProjectsView() {
                 </button>
               </div>
 
-              <form onSubmit={handleCreateProject}>
-                <div className="p-5 sm:p-6 space-y-4 max-h-[72vh] overflow-y-auto">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5 col-span-2">
+              <form onSubmit={handleCreateProject} className="flex-1 flex flex-col overflow-hidden">
+                <div className="p-4 sm:p-6 space-y-3.5 sm:space-y-4 overflow-y-auto max-h-[calc(90vh-130px)]">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+                    <div className="space-y-1.5 sm:col-span-2">
                       <label className="text-xs font-bold text-[hsl(var(--foreground))]">
                         Project Name <span className="text-rose-500">*</span>
                       </label>
@@ -915,7 +1039,7 @@ export default function InteriorNewProjectsView() {
                       </select>
                     </div>
 
-                    <div className="space-y-1.5 col-span-2">
+                    <div className="space-y-1.5 sm:col-span-2">
                       <label className="text-xs font-bold text-[hsl(var(--foreground))]">
                         WBS / Room Template (Optional)
                       </label>
@@ -935,7 +1059,7 @@ export default function InteriorNewProjectsView() {
                   </div>
 
                   {/* Dates & Timeline */}
-                  <div className="grid grid-cols-2 gap-4 pt-2 border-t border-[hsl(var(--border)/0.5)]">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4 pt-2 border-t border-[hsl(var(--border)/0.5)]">
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5 text-[hsl(var(--primary))]" /> Start Date <span className="text-rose-500">*</span>
@@ -961,7 +1085,7 @@ export default function InteriorNewProjectsView() {
                   </div>
 
                   {/* Budget & City */}
-                  <div className="grid grid-cols-2 gap-4 pt-2 border-t border-[hsl(var(--border)/0.5)]">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4 pt-2 border-t border-[hsl(var(--border)/0.5)]">
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1">
                         <Wallet className="w-3.5 h-3.5 text-emerald-600" /> Contract Budget (INR) <span className="text-rose-500">*</span>
@@ -1014,11 +1138,11 @@ export default function InteriorNewProjectsView() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
-                  <Button variant="outline" type="button" onClick={handleCloseDialog}>
+                <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 p-4 sm:p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)] shrink-0">
+                  <Button variant="outline" type="button" onClick={handleCloseDialog} className="w-full sm:w-auto">
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={createLoading} className="font-semibold shadow-md">
+                  <Button type="submit" disabled={createLoading} className="w-full sm:w-auto font-semibold">
                     {createLoading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                     {editingProjectId ? 'Save Changes' : 'Create Project'}
                   </Button>
@@ -1037,11 +1161,11 @@ export default function InteriorNewProjectsView() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-md overflow-hidden border border-[hsl(var(--border))] rounded-2xl bg-[hsl(var(--card))] shadow-2xl"
+              className="w-full max-w-md overflow-hidden border border-[hsl(var(--border))] rounded-2xl bg-[hsl(var(--card))]"
             >
-              <div className="p-6">
+              <div className="p-5 sm:p-6">
                 <div className="flex items-center gap-3 text-rose-500 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/50 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/50 flex items-center justify-center shrink-0">
                     <AlertTriangle className="w-5 h-5 text-rose-600" />
                   </div>
                   <div>
@@ -1053,14 +1177,14 @@ export default function InteriorNewProjectsView() {
                   Are you sure you want to delete <span className="font-bold text-[hsl(var(--foreground))]">{projectToDelete.name}</span>? All linked tasks, milestones, and reports will be soft-deleted.
                 </p>
               </div>
-              <div className="flex items-center justify-end gap-3 p-4 sm:p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
-                <Button variant="outline" onClick={() => setProjectToDelete(null)} disabled={deleteLoading}>
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 p-4 sm:p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
+                <Button variant="outline" onClick={() => setProjectToDelete(null)} disabled={deleteLoading} className="w-full sm:w-auto">
                   Cancel
                 </Button>
                 <Button
                   onClick={confirmDelete}
                   disabled={deleteLoading}
-                  className="bg-rose-600 hover:bg-rose-700 text-white font-bold border-transparent shadow-md shadow-rose-500/20"
+                  className="w-full sm:w-auto bg-rose-600 hover:bg-rose-700 text-white font-bold border-transparent"
                 >
                   {deleteLoading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                   Confirm Delete

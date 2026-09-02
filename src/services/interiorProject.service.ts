@@ -93,7 +93,7 @@ export const interiorProjectService = {
   updateDrawing: (projectId: string, data: any) => interiorApiClient.put(`/projects/${projectId}/drawings`, data).then((res) => res.data),
   deleteDrawing: (projectId: string, drawingId: string) => interiorApiClient.delete(`/projects/${projectId}/drawings?drawingId=${drawingId}`).then((res) => res.data),
   uploadDrawingFile: (projectId: string, formData: FormData) =>
-    interiorApiClient.post(`/projects/${projectId}/drawings/upload`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then((res) => res.data),
+    interiorApiClient.post(`/projects/${projectId}/drawings/upload`, formData).then((res) => res.data),
 
   // RFIs
   getRfis: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/rfis`).then((res) => res.data),
@@ -126,13 +126,13 @@ export const interiorProjectService = {
   getPhotos: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/photos`).then((res) => res.data),
   createPhoto: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/photos`, data).then((res) => res.data),
   uploadPhotoFile: (projectId: string, formData: FormData) =>
-    interiorApiClient.post(`/projects/${projectId}/photos/upload`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then((res) => res.data),
+    interiorApiClient.post(`/projects/${projectId}/photos/upload`, formData).then((res) => res.data),
 
   // Handover
   getHandover: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/handover`).then((res) => res.data),
   updateHandover: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/handover`, data).then((res) => res.data),
   uploadHandoverDocumentFile: (projectId: string, formData: FormData) =>
-    interiorApiClient.post(`/projects/${projectId}/handover/upload`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then((res) => res.data),
+    interiorApiClient.post(`/projects/${projectId}/handover/upload`, formData).then((res) => res.data),
 
   // BOQ
   getBoqList: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/boq`).then((res) => res.data),
@@ -148,7 +148,7 @@ export const interiorProjectService = {
     interiorApiClient.post(`/projects/${projectId}/boq/${boqId}/approve`, data).then((res) => res.data),
   reviseBoq: (projectId: string, boqId: string) => interiorApiClient.post(`/projects/${projectId}/boq/${boqId}/revise`).then((res) => res.data),
   importBoqExcel: (projectId: string, formData: FormData) =>
-    interiorApiClient.post(`/projects/${projectId}/boq/import`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then((res) => res.data),
+    interiorApiClient.post(`/projects/${projectId}/boq/import`, formData).then((res) => res.data),
   getBoqVsActual: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/boq/actual`).then((res) => res.data),
 
   // Change Requests

@@ -13,7 +13,6 @@ export default function InteriorProjectQuotationView() {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [quotations, setQuotations] = useState<any[]>([]);
-  const [debugInfo, setDebugInfo] = useState<any>({});
 
   useEffect(() => {
     async function loadQuotations() {
@@ -31,16 +30,6 @@ export default function InteriorProjectQuotationView() {
             : String(c.linkedProject);
           return linkedId === String(projectId);
         });
-        
-        console.log('Project ID from URL:', projectId);
-        console.log('Found Customer:', customer ? customer._id : 'None');
-        console.log('Customer Quotations:', customer ? customer.quotations : 'N/A');
-
-        if (customer) {
-          setDebugInfo({ customerId: customer._id, linkedProject: customer.linkedProject, quoteCount: customer.quotations?.length || 0, statuses: customer.quotations?.map((q: any) => q.status) });
-        } else {
-          setDebugInfo({ error: 'No customer found matching projectId: ' + projectId, customersCount: customers.length, allLinked: customers.map((c: any) => c.linkedProject) });
-        }
 
         if (customer && customer.quotations && customer.quotations.length > 0) {
           // Filter to show approved/accepted quotations, or fallback to the customer quotations

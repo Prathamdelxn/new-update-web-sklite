@@ -215,7 +215,7 @@ export const InteriorUploadDesignModal = ({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[92vh] shadow-2xl"
+        className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[92vh]"
       >
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
@@ -258,7 +258,7 @@ export const InteriorUploadDesignModal = ({
                   onChange={(e) => handleFileUpload(e, '2D')}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
-                <div className="bg-[hsl(var(--card))] w-12 h-12 rounded-2xl shadow-sm border border-blue-500/20 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <div className="bg-[hsl(var(--card))] w-12 h-12 rounded-2xl border border-blue-500/20 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                   <UploadCloud className="text-blue-500" size={22} />
                 </div>
                 <p className="text-xs font-bold text-[hsl(var(--foreground))]">Click or Drag 2D Layouts</p>
@@ -279,7 +279,7 @@ export const InteriorUploadDesignModal = ({
                   onChange={(e) => handleFileUpload(e, '3D')}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
-                <div className="bg-[hsl(var(--card))] w-12 h-12 rounded-2xl shadow-sm border border-purple-500/20 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <div className="bg-[hsl(var(--card))] w-12 h-12 rounded-2xl border border-purple-500/20 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                   <Box className="text-purple-500" size={22} />
                 </div>
                 <p className="text-xs font-bold text-[hsl(var(--foreground))]">Click or Drag 3D DWG / Models</p>
@@ -455,7 +455,7 @@ export const InteriorUploadDesignModal = ({
                           href={file.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-blue-600 hover:text-white text-[hsl(var(--foreground))] text-xs font-bold rounded-xl transition-all shadow-sm"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-blue-600 hover:text-white text-[hsl(var(--foreground))] text-xs font-bold rounded-xl transition-all"
                           title="Open or download file"
                         >
                           <ExternalLink size={13} /> Open
@@ -490,7 +490,7 @@ export const InteriorUploadDesignModal = ({
             <button
               type="submit"
               disabled={isSubmitting || newFiles.length === 0}
-              className="flex-1 px-4 py-2.5 rounded-xl font-bold text-xs text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] transition-colors disabled:opacity-50 shadow-md shadow-[hsl(var(--primary)/0.2)]"
+              className="flex-1 px-4 py-2.5 rounded-xl font-bold text-xs text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] transition-colors disabled:opacity-50 .2)]"
             >
               {isSubmitting ? 'Uploading...' : `Upload ${newFiles.length} New ${newFiles.length === 1 ? 'Drawing / Model' : 'Drawings / Models'}`}
             </button>

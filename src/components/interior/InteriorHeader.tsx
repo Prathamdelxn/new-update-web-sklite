@@ -44,10 +44,7 @@ export function InteriorHeader({ user, onMobileMenuClick }: InteriorHeaderProps)
       </Button>
 
       <div className="flex-1 max-w-md">
-        <div className="flex items-center gap-2 w-full h-9 px-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)] text-sm text-[hsl(var(--muted-foreground))]">
-          <Search className="w-4 h-4" />
-          <span className="flex-1 text-left">Search projects, tasks, RFIs...</span>
-        </div>
+       
       </div>
 
       <div className="flex items-center gap-2 ml-4">

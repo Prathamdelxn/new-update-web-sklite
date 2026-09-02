@@ -280,7 +280,7 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className={`bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl overflow-hidden flex flex-col shadow-2xl transition-all duration-300 ${
+          className={`bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl overflow-hidden flex flex-col transition-all duration-300 ${
             isFullscreen ? 'w-full h-full max-w-none max-h-none rounded-none' : 'w-full max-w-5xl h-[85vh]'
           }`}
         >
@@ -369,7 +369,7 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                       href={file.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-purple-600/30"
+                      className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-2"
                     >
                       <Download size={15} /> Download {fileExt.toUpperCase()} File
                     </a>
@@ -378,7 +378,7 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
 
                 {/* Floating Interactive 3D Toolbar */}
                 {!loading && !loadError && (
-                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-slate-900/90 border border-slate-700/80 rounded-2xl p-2 px-3 shadow-2xl backdrop-blur-md">
+                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-slate-900/90 border border-slate-700/80 rounded-2xl p-2 px-3 backdrop-blur-md">
                     {/* Auto Rotate */}
                     <button
                       type="button"
@@ -450,7 +450,7 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                 <img
                   src={file.url}
                   alt={file.name}
-                  className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
+                  className="max-w-full max-h-full object-contain rounded-2xl"
                 />
               </div>
             ) : isPdfFormat ? (
@@ -464,7 +464,7 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
             ) : (
               /* CAD DWG / SKP / RVT / Archive Format Card */
               <div className="w-full h-full flex flex-col items-center justify-center p-12 text-center text-white">
-                <div className="w-20 h-20 rounded-3xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center mb-5 shadow-2xl">
+                <div className="w-20 h-20 rounded-3xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center mb-5">
                   <Box size={40} />
                 </div>
                 <h3 className="text-xl font-black mb-2">{file.name}</h3>
@@ -477,7 +477,7 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                     target="_blank"
                     rel="noopener noreferrer"
                     download={file.name}
-                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-purple-600/30 transition-all active:scale-95"
+                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs font-bold flex items-center gap-2 transition-all active:scale-95"
                   >
                     <Download size={16} /> Download {fileExt.toUpperCase()} Model
                   </a>

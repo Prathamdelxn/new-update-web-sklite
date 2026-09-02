@@ -21,37 +21,33 @@ export function BoqPreview({ lead, boqIndex, onEdit }: BoqPreviewProps) {
   if (!boq) return null;
 
   return (
-    <div className="space-y-6">
-      {/* Actions Bar (Hidden on print) */}
-      <div className="flex justify-between items-center bg-[hsl(var(--card))] p-4 rounded-2xl border border-[hsl(var(--border))] shadow-sm print:hidden">
-        <div className="flex items-center gap-3">
-          <h3 className="font-black text-sm text-[hsl(var(--foreground))]">Version {boq.version || 1}</h3>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 border border-indigo-500/20">
-            {boq.items?.length || 0} {boq.items?.length === 1 ? 'Item' : 'Items'}
-          </span>
+    <div className="space-y-4">
+      {/* Controls Bar */}
+      <div className="flex justify-between items-center bg-[hsl(var(--card))] p-4 rounded-2xl border border-[hsl(var(--border))] print:hidden">
+        <div>
+          <h2 className="text-base font-extrabold text-[hsl(var(--foreground))]">BOQ Specification (v{boq.version || 1})</h2>
+          <p className="text-xs text-[hsl(var(--muted-foreground))]">Generated on {boq.createdAt ? new Date(boq.createdAt).toLocaleDateString() : 'N/A'}</p>
         </div>
-        
         <div className="flex items-center gap-2">
           {!isConverted && onEdit && (
             <button
               onClick={onEdit}
-              className="text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm active:scale-95"
+              className="text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95"
             >
-              <Pencil size={13} /> Edit This BOQ
+              <Pencil size={13} /> Edit BOQ
             </button>
           )}
-
-          <button 
+          <button
             onClick={handlePrint}
-            className="text-xs font-bold bg-[hsl(var(--foreground))] text-[hsl(var(--background))] px-4 py-2 rounded-xl hover:opacity-90 transition flex items-center gap-1.5 shadow-sm active:scale-95"
+            className="text-xs font-bold bg-[hsl(var(--foreground))] text-[hsl(var(--background))] px-4 py-2 rounded-xl hover:opacity-90 transition flex items-center gap-1.5 active:scale-95"
           >
-            <Printer size={15} /> Print / PDF
+            <Printer size={14} /> Print
           </button>
         </div>
       </div>
 
-      {/* BOQ Table Area */}
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm rounded-xl relative overflow-hidden">
+      {/* BOQ Render Container */}
+      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl relative overflow-hidden">
         <div className="p-0 overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
             <thead>

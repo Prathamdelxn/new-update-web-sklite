@@ -117,24 +117,24 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
   return (
     <div className="w-full space-y-4">
       {/* Header, Filter Tabs & Search Bar */}
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Left: Tab Pills */}
-        <div className="flex items-center gap-1.5 bg-[hsl(var(--muted))] p-1 rounded-xl w-max">
+        <div className="flex items-center gap-1.5 bg-[hsl(var(--muted))] p-1 rounded-xl w-full sm:w-max overflow-x-auto scrollbar-none">
           <button
             onClick={() => setActiveTab('all')}
             className={cn(
-              'px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all',
+'flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all whitespace-nowrap text-center',
               activeTab === 'all'
                 ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-sm'
                 : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
             )}
           >
-            All Follow-ups ({allActivities.length})
+            All ({allActivities.length})
           </button>
           <button
             onClick={() => setActiveTab('pending')}
             className={cn(
-              'px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center gap-1.5',
+'flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all whitespace-nowrap flex items-center justify-center gap-1.5',
               activeTab === 'pending'
                 ? 'bg-amber-500 text-white shadow-sm'
                 : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
@@ -145,7 +145,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
           <button
             onClick={() => setActiveTab('completed')}
             className={cn(
-              'px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center gap-1.5',
+'flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all whitespace-nowrap flex items-center justify-center gap-1.5',
               activeTab === 'completed'
                 ? 'bg-emerald-600 text-white shadow-sm'
                 : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
@@ -156,14 +156,14 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
         </div>
 
         {/* Right: Search Box */}
-        <div className="relative min-w-[260px]">
+        <div className="relative w-full sm:min-w-[240px] sm:w-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
           <input
             type="text"
-            placeholder="Search by client, phone, remarks..."
+            placeholder="Search follow-ups..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-medium text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none transition-all"
+            className="w-full pl-9 pr-10 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-medium text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none transition-all"
           />
           {searchTerm && (
             <button
@@ -176,8 +176,8 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
         </div>
       </div>
 
-      {/* Table Content */}
-      <div className="w-full bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] shadow-sm overflow-hidden">
+      {/* Content Container */}
+      <div className="w-full bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">
         {isLoading ? (
           <div className="p-6 flex flex-col gap-3">
             {[...Array(3)].map((_, i) => (
@@ -185,11 +185,11 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
             ))}
           </div>
         ) : filteredFollowUps.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center px-4">
-            <div className="w-14 h-14 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center text-amber-500 mb-3">
+          <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-center px-4">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center text-amber-500 mb-3">
               <Clock size={24} />
             </div>
-            <h3 className="text-base font-extrabold text-[hsl(var(--foreground))] mb-1">
+            <h3 className="text-sm sm:text-base font-extrabold text-[hsl(var(--foreground))] mb-1">
               {searchTerm ? 'No Matching Follow-ups' : activeTab === 'completed' ? 'No Completed Follow-ups Yet' : 'All Clear!'}
             </h3>
             <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-md mx-auto">
@@ -201,171 +201,262 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] uppercase text-[10px] font-black tracking-widest">
-                <tr>
-                  <th className="px-6 py-3.5 rounded-tl-2xl">Lead Info</th>
-                  <th className="px-6 py-3.5">Contact</th>
-                  <th className="px-6 py-3.5">Assigned To</th>
-                  <th className="px-6 py-3.5">Date & Time</th>
-                  <th className="px-6 py-3.5">Type & Follow-up Status</th>
-                  <th className="px-6 py-3.5">Goal / Remarks</th>
-                  <th className="px-6 py-3.5 text-right rounded-tr-2xl">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[hsl(var(--border))]">
-                {filteredFollowUps.map((act, idx) => (
-                  <motion.tr
-                    key={act._id}
-                    onClick={() => router.push(`/interior-new/crm/leads/${act.customer?._id}`)}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.15, delay: idx * 0.02 }}
-                    className="hover:bg-[hsl(var(--accent))] transition-colors group cursor-pointer"
-                  >
-                    {/* Lead Info */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 font-extrabold text-xs shrink-0">
-                          {act.customer?.name?.charAt(0).toUpperCase() || '?'}
-                        </div>
-                        <div>
-                          <div className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-amber-600 transition-colors">
-                            {act.customer?.name || 'Unknown'}
-                          </div>
-                          <div className="text-[10px] font-mono text-[hsl(var(--muted-foreground))]">
-                            {act.customer?.leadNumber || 'LD-XXXX'}
-                          </div>
+          <>
+            {/* MOBILE CARD VIEW (< md) */}
+            <div className="block md:hidden divide-y divide-[hsl(var(--border))]">
+              {filteredFollowUps.map((act, idx) => (
+                <div
+                  key={act._id}
+                  onClick={() => router.push(`/interior-new/crm/leads/${act.customer?._id}`)}
+                  className="p-3.5 space-y-2.5 active:bg-[hsl(var(--accent))] transition-colors cursor-pointer"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 font-extrabold text-xs shrink-0">
+                        {act.customer?.name?.charAt(0).toUpperCase() || '?'}
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-bold text-[hsl(var(--foreground))] truncate">{act.customer?.name || 'Unknown'}</h4>
+                        <div className="flex items-center gap-1.5 text-[10px]">
+                          <span className="font-mono text-[hsl(var(--muted-foreground))]">{act.customer?.leadNumber || 'LD-XXXX'}</span>
+                          <span className="text-[hsl(var(--muted-foreground))]">•</span>
+                          <span className="text-[hsl(var(--muted-foreground))]">{act.customer?.mobileNumber}</span>
                         </div>
                       </div>
-                    </td>
+                    </div>
 
-                    {/* Contact */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--foreground))]">
-                        <Phone size={13} className="text-[hsl(var(--muted-foreground))]" />
-                        {act.customer?.mobileNumber || '-'}
-                      </div>
-                    </td>
-
-                    {/* Assigned To */}
-                    <td className="px-6 py-4">
-                      {act.customer?.assignedSalesExecutive ? (
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] w-max">
-                          <UserCircle size={13} className="text-amber-600" />
-                          {displayUserName(act.customer.assignedSalesExecutive)}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-[hsl(var(--muted-foreground))] italic">Unassigned</span>
+                    <span
+                      className={cn(
+'shrink-0 inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border',
+                        act.status === 'Completed'
+                          ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                          : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
                       )}
-                    </td>
+                    >
+                      {act.status === 'Completed' ? 'Completed ✓' : 'Pending'}
+                    </span>
+                  </div>
 
-                    {/* Scheduled / Completed For */}
-                    <td className="px-6 py-4">
-                      {act.status === 'Completed' ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 text-xs font-bold">
-                          <CheckCircle size={12} />
-                          {new Date(act.completedDate || act.updatedAt || act.createdAt).toLocaleString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: 'numeric',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-700 text-xs font-bold">
-                          <Clock size={12} />
-                          {new Date(act.scheduledDate || act.createdAt).toLocaleString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: 'numeric',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                      )}
-                    </td>
+                  <div className="flex items-center justify-between gap-2 text-[11px] bg-[hsl(var(--muted)/0.4)] p-2 rounded-xl border border-[hsl(var(--border)/0.5)]">
+                    <div className="flex items-center gap-1.5">
+                      <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 font-bold text-[9px] uppercase border border-blue-500/20">{act.type}</span>
+                      <span className="text-[hsl(var(--foreground))] font-medium truncate max-w-[140px]">{act.remarks || 'No notes'}</span>
+                    </div>
+                    <div className="text-[10px] text-[hsl(var(--muted-foreground))] shrink-0 font-medium">
+                      {new Date(act.scheduledDate || act.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
 
-                    {/* Type & Follow-up Status */}
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black tracking-wider uppercase bg-blue-500/10 text-blue-600 border border-blue-500/20">
-                            {act.type}
-                          </span>
-                          <span
-                            className={cn(
-                              'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black tracking-wider uppercase border',
-                              act.status === 'Completed'
-                                ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
-                                : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
-                            )}
-                          >
-                            {act.status === 'Completed' ? 'Completed ✓' : 'Pending'}
-                          </span>
-                        </div>
-                        {act.customer?.status && (
-                          <div className="text-[10px] font-bold text-[hsl(var(--muted-foreground))]">
-                            Stage: <span className="text-[hsl(var(--foreground))]">{act.customer.status}</span>
-                          </div>
-                        )}
-                      </div>
-                    </td>
+                  {/* Actions Ribbon */}
+                  <div className="flex items-center justify-between gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
+                    <a
+                      href={`tel:${act.customer?.mobileNumber}`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-700 text-xs font-bold border border-emerald-500/20 active:scale-95"
+                    >
+                      <Phone size={11} /> Call
+                    </a>
 
-                    {/* Remarks */}
-                    <td className="px-6 py-4 text-xs text-[hsl(var(--muted-foreground))] max-w-[220px] truncate" title={act.remarks}>
-                      {act.remarks || '-'}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-6 py-4 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-1.5">
                       {act.status === 'Pending' && (
-                        /* Pending follow-up: Show Done button to complete the call/meeting */
                         <button
                           onClick={(e) => handleCompleteActivity(act._id, e)}
                           disabled={completingId === act._id}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm disabled:opacity-50"
-                          title="Mark Follow-up as Completed"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
                         >
-                          <CheckCircle2 size={13} /> {completingId === act._id ? 'Saving...' : 'Done'}
+                          <CheckCircle2 size={12} /> Done
                         </button>
                       )}
 
-                      {/* Site Visit Button: ONLY shown if follow-up is completed AND lead has not yet been passed to site visit */}
                       {act.status === 'Completed' &&
                         ['New Lead', 'Contacted', 'Meeting Scheduled'].includes(act.customer?.status || '') && (
                           <button
                             onClick={() => onPassToSiteVisit(act.customer?._id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-white bg-purple-600 hover:bg-purple-700 rounded-lg text-xs font-bold transition-all shadow-sm"
-                            title="Send this Lead to Site Visit"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-white bg-purple-600 text-xs font-bold rounded-lg active:scale-95 cursor-pointer"
                           >
-                            <MapPin size={12} /> Site Visit
+                            <MapPin size={11} /> Site Visit
                           </button>
                         )}
-
-                      <button
-                        onClick={() => router.push(`/interior-new/crm/leads/${act.customer?._id}`)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] rounded-lg text-xs font-bold transition-all border border-[hsl(var(--border))]"
-                        title="View Lead Profile"
-                      >
-                        View <ArrowRight size={12} />
-                      </button>
 
                       {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(act.customer?.status) && (
                         <button
                           onClick={(e) => { e.stopPropagation(); onMarkAsLost(act.customer?._id); }}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20"
+                          className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold border border-orange-500/20 cursor-pointer"
                           title="Mark as Lost"
                         >
-                          <XCircle size={14} />
+                          <XCircle size={13} />
                         </button>
                       )}
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* DESKTOP TABLE VIEW (>= md) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-sm whitespace-nowrap">
+                <thead className="bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] uppercase text-[10px] font-black tracking-widest">
+                  <tr>
+                    <th className="px-6 py-3.5 rounded-tl-2xl">Lead Info</th>
+                    <th className="px-6 py-3.5">Contact</th>
+                    <th className="px-6 py-3.5">Assigned To</th>
+                    <th className="px-6 py-3.5">Date & Time</th>
+                    <th className="px-6 py-3.5">Type & Follow-up Status</th>
+                    <th className="px-6 py-3.5">Goal / Remarks</th>
+                    <th className="px-6 py-3.5 text-right rounded-tr-2xl">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[hsl(var(--border))]">
+                  {filteredFollowUps.map((act, idx) => (
+                    <motion.tr
+                      key={act._id}
+                      onClick={() => router.push(`/interior-new/crm/leads/${act.customer?._id}`)}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.15, delay: idx * 0.02 }}
+                      className="hover:bg-[hsl(var(--accent))] transition-colors group cursor-pointer"
+                    >
+                      {/* Lead Info */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 font-extrabold text-xs shrink-0">
+                            {act.customer?.name?.charAt(0).toUpperCase() || '?'}
+                          </div>
+                          <div>
+                            <div className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-amber-600 transition-colors">
+                              {act.customer?.name || 'Unknown'}
+                            </div>
+                            <div className="text-[10px] font-mono text-[hsl(var(--muted-foreground))]">
+                              {act.customer?.leadNumber || 'LD-XXXX'}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Contact */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--foreground))]">
+                          <Phone size={13} className="text-[hsl(var(--muted-foreground))]" />
+                          {act.customer?.mobileNumber || '-'}
+                        </div>
+                      </td>
+
+                      {/* Assigned To */}
+                      <td className="px-6 py-4">
+                        {act.customer?.assignedSalesExecutive ? (
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] w-max">
+                            <UserCircle size={13} className="text-amber-600" />
+                            {displayUserName(act.customer.assignedSalesExecutive)}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-[hsl(var(--muted-foreground))] italic">Unassigned</span>
+                        )}
+                      </td>
+
+                      {/* Scheduled / Completed For */}
+                      <td className="px-6 py-4">
+                        {act.status === 'Completed' ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 text-xs font-bold">
+                            <CheckCircle size={12} />
+                            {new Date(act.completedDate || act.updatedAt || act.createdAt).toLocaleString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-700 text-xs font-bold">
+                            <Clock size={12} />
+                            {new Date(act.scheduledDate || act.createdAt).toLocaleString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Type & Follow-up Status */}
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black tracking-wider uppercase bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                              {act.type}
+                            </span>
+                            <span
+                              className={cn(
+'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black tracking-wider uppercase border',
+                                act.status === 'Completed'
+                                  ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                                  : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                              )}
+                            >
+                              {act.status === 'Completed' ? 'Completed ✓' : 'Pending'}
+                            </span>
+                          </div>
+                          {act.customer?.status && (
+                            <div className="text-[10px] font-bold text-[hsl(var(--muted-foreground))]">
+                              Stage: <span className="text-[hsl(var(--foreground))]">{act.customer.status}</span>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Remarks */}
+                      <td className="px-6 py-4 text-xs text-[hsl(var(--muted-foreground))] max-w-[220px] truncate" title={act.remarks}>
+                        {act.remarks || '-'}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-6 py-4 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
+                        {act.status === 'Pending' && (
+                          <button
+                            onClick={(e) => handleCompleteActivity(act._id, e)}
+                            disabled={completingId === act._id}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
+                            title="Mark Follow-up as Completed"
+                          >
+                            <CheckCircle2 size={13} /> {completingId === act._id ? 'Saving...' : 'Done'}
+                          </button>
+                        )}
+
+                        {act.status === 'Completed' &&
+                          ['New Lead', 'Contacted', 'Meeting Scheduled'].includes(act.customer?.status || '') && (
+                            <button
+                              onClick={() => onPassToSiteVisit(act.customer?._id)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-white bg-purple-600 hover:bg-purple-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                              title="Send this Lead to Site Visit"
+                            >
+                              <MapPin size={12} /> Site Visit
+                            </button>
+                          )}
+
+                        <button
+                          onClick={() => router.push(`/interior-new/crm/leads/${act.customer?._id}`)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] rounded-lg text-xs font-bold transition-all border border-[hsl(var(--border))] cursor-pointer"
+                          title="View Lead Profile"
+                        >
+                          <ArrowRight size={13} />
+                        </button>
+
+                        {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(act.customer?.status) && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onMarkAsLost(act.customer?._id); }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
+                            title="Mark as Lost"
+                          >
+                            <XCircle size={14} />
+                          </button>
+                        )}
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

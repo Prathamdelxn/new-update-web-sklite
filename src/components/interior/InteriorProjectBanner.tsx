@@ -104,7 +104,7 @@ export function InteriorProjectBanner({ projectId, project, loading }: InteriorP
   const categories = CATEGORIES(projectId);
 
   return (
-    <div className="px-6 pt-6 pb-0 lg:px-8 lg:pt-8 bg-[hsl(var(--card))] border-b border-[hsl(var(--border))] space-y-4">
+    <div className="px-3.5 sm:px-6 pt-3.5 sm:pt-6 pb-0 lg:px-8 lg:pt-8 bg-[hsl(var(--card))] border-b border-[hsl(var(--border))] space-y-3 sm:space-y-4">
       <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--muted-foreground))]">
         <Link href="/interior-new/projects" className="hover:text-[hsl(var(--primary))] transition-colors">
           Projects
@@ -113,18 +113,18 @@ export function InteriorProjectBanner({ projectId, project, loading }: InteriorP
         {loading ? <SkeletonBar className="h-3.5 w-14" /> : <span className="font-medium text-[hsl(var(--foreground))]">{project?.code}</span>}
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-lg bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center shadow-inner">
-            <Folder className="w-5 h-5" />
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center shrink-0">
+            <Folder className="w-4.5 h-4.5" />
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             {loading ? (
               <SkeletonBar className="h-6 w-48" />
             ) : (
-              <h1 className="text-xl md:text-2xl font-bold text-[hsl(var(--foreground))] tracking-tight">{project?.name}</h1>
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-[hsl(var(--foreground))] tracking-tight truncate">{project?.name}</h1>
             )}
-            <p className="text-xs text-[hsl(var(--muted-foreground))] font-medium mt-1.5">
+            <p className="text-xs text-[hsl(var(--muted-foreground))] font-medium mt-0.5">
               {loading ? (
                 <SkeletonBar className="h-3 w-28" />
               ) : (
@@ -135,11 +135,11 @@ export function InteriorProjectBanner({ projectId, project, loading }: InteriorP
         </div>
 
         {!loading && (
-          <div className="flex items-center gap-3 self-start md:self-center">
+          <div className="flex items-center gap-2 sm:gap-3 self-start sm:self-center flex-wrap">
             {project?.health && (
               <span
                 className={cn(
-                  'px-3 py-1 text-xs font-semibold rounded-full border capitalize',
+                  'px-2.5 py-0.5 text-[11px] sm:text-xs font-semibold rounded-full border capitalize',
                   project.health === 'on-track' && 'bg-emerald-50 text-emerald-700 border-emerald-200',
                   project.health === 'at-risk' && 'bg-amber-50 text-amber-700 border-amber-200',
                   project.health === 'delayed' && 'bg-red-50 text-red-700 border-red-200'
@@ -150,7 +150,7 @@ export function InteriorProjectBanner({ projectId, project, loading }: InteriorP
             )}
             <span
               className={cn(
-                'px-3 py-1 text-xs font-semibold rounded-full border',
+                'px-2.5 py-0.5 text-[11px] sm:text-xs font-semibold rounded-full border',
                 project?.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
               )}
             >
@@ -160,7 +160,7 @@ export function InteriorProjectBanner({ projectId, project, loading }: InteriorP
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-6 pt-2 text-xs text-[hsl(var(--muted-foreground))]">
+      <div className="flex flex-wrap items-center gap-x-4 sm:gap-x-6 gap-y-1.5 pt-1 text-xs text-[hsl(var(--muted-foreground))]">
         {loading ? (
           <SkeletonBar className="h-3.5 w-64" />
         ) : (
@@ -183,33 +183,33 @@ export function InteriorProjectBanner({ projectId, project, loading }: InteriorP
         )}
       </div>
 
-      <div ref={containerRef} className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-4 border-b border-[hsl(var(--border))] pb-2 overflow-visible">
+      <div ref={containerRef} className="flex items-center gap-x-4 sm:gap-x-6 gap-y-2 pt-2.5 sm:pt-4 border-b border-[hsl(var(--border))] pb-2 overflow-x-auto scrollbar-none touch-pan-x flex-nowrap">
         {categories.map((cat) => {
           const isActive = cat.items.some((item) => ('exact' in item && item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + '/')));
 
           return (
-            <div key={cat.name} className="relative">
+            <div key={cat.name} className="relative shrink-0">
               <button
                 onClick={() => setOpenCategory(openCategory === cat.name ? null : cat.name)}
                 className={cn(
-                  'relative pb-3 flex items-center gap-1.5 text-sm font-medium transition-colors whitespace-nowrap focus:outline-none',
+                  'relative pb-2.5 flex items-center gap-1.5 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap focus:outline-none',
                   isActive ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
                 )}
               >
                 <span>{cat.icon}</span>
                 <span>{cat.name}</span>
-                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', openCategory === cat.name && 'rotate-180')} />
+                <ChevronDown className={cn('w-3 h-3 transition-transform duration-200', openCategory === cat.name && 'rotate-180')} />
                 {isActive && <motion.div layoutId="activeProjectTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[hsl(var(--primary))]" />}
               </button>
 
               <AnimatePresence>
                 {openCategory === cat.name && (
                   <motion.div
-                    initial={{ opacity: 0, y: 8 }}
+                    initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 8 }}
+                    exit={{ opacity: 0, y: 6 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 mt-1 z-50 min-w-[220px] py-1 border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--card))] shadow-xl"
+                    className="absolute top-full left-0 mt-1 z-50 min-w-[200px] max-w-[calc(100vw-32px)] py-1 border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))]"
                   >
                     {cat.items.map((item) => {
                       const itemActive = 'exact' in item && item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + '/');
@@ -219,7 +219,7 @@ export function InteriorProjectBanner({ projectId, project, loading }: InteriorP
                           href={item.href}
                           onClick={() => setOpenCategory(null)}
                           className={cn(
-                            'flex items-center w-full px-4 py-2 text-sm transition-colors hover:bg-[hsl(var(--muted)/0.5)]',
+                            'flex items-center w-full px-3.5 py-2 text-xs sm:text-sm transition-colors hover:bg-[hsl(var(--muted)/0.5)]',
                             itemActive ? 'text-[hsl(var(--primary))] font-semibold bg-[hsl(var(--muted)/0.25)]' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
                           )}
                         >

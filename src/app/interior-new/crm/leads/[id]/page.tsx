@@ -242,43 +242,44 @@ export default function Lead360View() {
 
   return (
     <InteriorShell>
-      <div className="max-w-7xl mx-auto space-y-6 pb-24 p-4 md:p-8 animate-in fade-in duration-500">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 pb-24 p-3 sm:p-4 md:p-8 animate-in fade-in duration-500 max-w-full overflow-x-hidden">
         
         {/* --- 1. SLEEK PROFILE HEADER --- */}
-        <div className="bg-[hsl(var(--card))] rounded-2xl p-5 md:p-6 border border-[hsl(var(--border))] flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="flex items-start md:items-center gap-4">
+        <div className="bg-[hsl(var(--card))] rounded-2xl p-3.5 sm:p-5 md:p-6 border border-[hsl(var(--border))] flex flex-col md:flex-row md:items-center justify-between gap-3.5 sm:gap-5">
+          <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
             <button 
               onClick={() => router.push('/interior-new/crm')}
-              className="p-2.5 bg-[hsl(var(--muted))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] rounded-xl transition-all shrink-0 active:scale-95 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+              className="p-2 sm:p-2.5 bg-[hsl(var(--muted))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] rounded-xl transition-all shrink-0 active:scale-95 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+              title="Back to CRM"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
             
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-2xl font-black text-[hsl(var(--foreground))] tracking-tight">{lead.name}</h1>
-                <span className="font-mono bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-2.5 py-0.5 rounded-lg text-xs font-bold border border-[hsl(var(--border))]">{lead.leadNumber || 'LD-XXXX'}</span>
+            <div className="flex flex-col gap-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-black text-[hsl(var(--foreground))] tracking-tight truncate">{lead.name}</h1>
+                <span className="font-mono bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-2 py-0.5 rounded-lg text-[11px] sm:text-xs font-bold border border-[hsl(var(--border))] shrink-0">{lead.leadNumber || 'LD-XXXX'}</span>
               </div>
               
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                <div className="flex items-center gap-1.5 text-[hsl(var(--muted-foreground))] font-medium bg-[hsl(var(--muted)/0.5)] px-2.5 py-1 rounded-md border border-[hsl(var(--border))]">
-                  <Phone size={13} className="text-blue-500" /> {lead.mobileNumber}
-                </div>
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs">
+                <a href={`tel:${lead.mobileNumber}`} className="flex items-center gap-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] font-medium bg-[hsl(var(--muted)/0.5)] px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md border border-[hsl(var(--border))] transition-colors">
+                  <Phone size={12} className="text-blue-500 shrink-0" /> {lead.mobileNumber}
+                </a>
                 {lead.email && (
-                  <div className="flex items-center gap-1.5 text-[hsl(var(--muted-foreground))] font-medium bg-[hsl(var(--muted)/0.5)] px-2.5 py-1 rounded-md border border-[hsl(var(--border))]">
-                    <Mail size={13} className="text-purple-500" /> {lead.email}
-                  </div>
+                  <a href={`mailto:${lead.email}`} className="flex items-center gap-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] font-medium bg-[hsl(var(--muted)/0.5)] px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md border border-[hsl(var(--border))] transition-colors truncate max-w-[220px]">
+                    <Mail size={12} className="text-purple-500 shrink-0" /> {lead.email}
+                  </a>
                 )}
                 {(lead.projectLocation || lead.city) && (
-                  <div className="flex items-center gap-1.5 text-[hsl(var(--muted-foreground))] font-medium bg-[hsl(var(--muted)/0.5)] px-2.5 py-1 rounded-md border border-[hsl(var(--border))]">
-                    <MapPin size={13} className="text-amber-500" /> {lead.projectLocation || lead.city}
+                  <div className="flex items-center gap-1.5 text-[hsl(var(--muted-foreground))] font-medium bg-[hsl(var(--muted)/0.5)] px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md border border-[hsl(var(--border))] truncate">
+                    <MapPin size={12} className="text-amber-500 shrink-0" /> {lead.projectLocation || lead.city}
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap w-full md:w-auto pt-2 md:pt-0 border-t md:border-t-0 border-[hsl(var(--border)/0.6)]">
             {(() => {
               const latestQuote = lead.quotations?.[lead.quotations.length - 1];
               let displayStatus = lead.status;
@@ -328,7 +329,7 @@ export default function Lead360View() {
               }
 
               return (
-                <span className={cn("text-xs font-bold px-3 py-1.5 rounded-xl border", badgeColor)}>
+                <span className={cn("text-[11px] sm:text-xs font-bold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border shrink-0", badgeColor)}>
                   {displayStatus}
                 </span>
               );
@@ -343,7 +344,7 @@ export default function Lead360View() {
                       : lead.linkedProject;
                     router.push(`/interior-new/projects/${prjId}`);
                   }}
-                  className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-emerald-600/20"
+                  className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
                   title="Open Live Project Workspace"
                 >
                   <ExternalLink size={13} /> View Live Project
@@ -356,7 +357,7 @@ export default function Lead360View() {
                   (!lead.quotations || lead.quotations.length === 0) && (
                     <button
                       onClick={() => setIsSendToSiteVisitOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-purple-600/20"
+                      className="inline-flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
                       title="Send to Site Visit"
                     >
                       <MapPin size={13} /> Send to Site Visit
@@ -367,7 +368,7 @@ export default function Lead360View() {
                   (lead.siteMeasurements || (lead.sitePhotos && lead.sitePhotos.length > 0)) ? (
                     <button
                       onClick={() => setIsSendToReqOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-emerald-600/20"
+                      className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
                       title="Send to Requirements"
                     >
                       <PenTool size={13} /> Send to Requirements
@@ -375,7 +376,7 @@ export default function Lead360View() {
                   ) : (
                     <button
                       onClick={() => setIsSiteVisitModalOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-purple-600/20"
+                      className="inline-flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
                       title="Log Measurements"
                     >
                       <Plus size={13} /> Log Measurements
@@ -387,7 +388,7 @@ export default function Lead360View() {
                   (lead.requirements && lead.requirements.length > 0) ? (
                     <button
                       onClick={() => setIsSendToDrawingOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-blue-600/20"
+                      className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
                       title="Send to 2D/3D Drawing"
                     >
                       <UploadCloud size={13} /> Send to Drawings
@@ -395,7 +396,7 @@ export default function Lead360View() {
                   ) : (
                     <button
                       onClick={() => setIsReqModalOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-emerald-600/20"
+                      className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
                       title="Add Requirements"
                     >
                       <Plus size={13} /> Add Requirements
@@ -407,7 +408,7 @@ export default function Lead360View() {
                   (lead.designFiles && lead.designFiles.length > 0) ? (
                     <button
                       onClick={() => setIsSendToBoqOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-indigo-600/20"
+                      className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
                       title="Send to BOQ Creation"
                     >
                       <Calculator size={13} /> Send to BOQ
@@ -415,7 +416,7 @@ export default function Lead360View() {
                   ) : (
                     <button
                       onClick={() => setIsDesignModalOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-blue-600/20"
+                      className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
                       title="Upload Drawings"
                     >
                       <Plus size={13} /> Upload Drawings
@@ -427,7 +428,7 @@ export default function Lead360View() {
                   (lead.boqs && lead.boqs.length > 0) ? (
                     <button
                       onClick={() => setIsSendToQuotationsOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-rose-600/20"
+                      className="inline-flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
                       title="Send to Quotation Phase"
                     >
                       <FileText size={13} /> Send to Quotation
@@ -435,7 +436,7 @@ export default function Lead360View() {
                   ) : (
                     <button
                       onClick={() => setIsBoqModalOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-indigo-600/20"
+                      className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
                       title="Create BOQ"
                     >
                       <Plus size={13} /> Create BOQ
@@ -447,7 +448,7 @@ export default function Lead360View() {
                   (lead.quotations && lead.quotations.length > 0) ? (
                     <button
                       onClick={() => setIsConvertToProjectOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-emerald-600/20"
+                      className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
                       title="Convert to Won Project"
                     >
                       <CheckCircle2 size={13} /> Convert to Project
@@ -455,7 +456,7 @@ export default function Lead360View() {
                   ) : (
                     <button
                       onClick={() => setIsQuotationModalOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-rose-600/20"
+                      className="inline-flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
                       title="Create Quotation"
                     >
                       <Plus size={13} /> Create Quotation
@@ -468,7 +469,7 @@ export default function Lead360View() {
                   (!lead.quotations || lead.quotations.length === 0) && (
                     <button
                       onClick={() => setIsFollowUpModalOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-blue-600/20"
+                      className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
                       title="Schedule Follow-up"
                     >
                       <Calendar size={13} /> Schedule Follow-up
@@ -515,7 +516,7 @@ export default function Lead360View() {
                     : lead.linkedProject;
                   router.push(`/interior-new/projects/${prjId}`);
                 }}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all shrink-0 active:scale-95"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shrink-0 active:scale-95"
               >
                 Open Project Workspace <ExternalLink size={13} />
               </button>
@@ -524,7 +525,7 @@ export default function Lead360View() {
         )}
 
         {/* --- 3. TAB NAVIGATION --- */}
-        <div className="flex items-center gap-8 border-b border-[hsl(var(--border))] overflow-x-auto scrollbar-hide px-2">
+        <div className="flex items-center gap-4 sm:gap-8 border-b border-[hsl(var(--border))] overflow-x-auto scrollbar-none touch-pan-x px-2">
           {TABS.map((tab) => {
             const { isLocked } = getTabLockState(tab.id);
             return (
@@ -532,7 +533,7 @@ export default function Lead360View() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
                 className={cn(
-                  "relative pb-4 text-sm font-bold transition-colors whitespace-nowrap outline-none flex items-center gap-1.5",
+"relative pb-4 text-sm font-bold transition-colors whitespace-nowrap outline-none flex items-center gap-1.5",
                   activeTab === tab.id
                     ? "text-[hsl(var(--primary))]"
                     : isLocked
@@ -563,45 +564,49 @@ export default function Lead360View() {
             <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="space-y-6">
               
               {/* Metric Summary Bar */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="bg-[hsl(var(--card))] p-3.5 rounded-xl border border-[hsl(var(--border))] flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0"><User size={14} /></span>
-                  <div className="overflow-hidden">
-                    <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Client Source</p>
-                    <p className="font-bold text-[hsl(var(--foreground))] text-xs truncate mt-0.5">{lead.leadSource || 'Manual Entry'}</p>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+                <div className="bg-[hsl(var(--card))] p-2.5 sm:p-3.5 rounded-xl border border-[hsl(var(--border))] flex items-center gap-2.5 sm:gap-3">
+                  <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0"><User size={14} /></span>
+                  <div className="overflow-hidden min-w-0">
+                    <p className="text-[9px] sm:text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider truncate">Client Source</p>
+                    <p className="font-bold text-[hsl(var(--foreground))] text-[11px] sm:text-xs truncate mt-0.5">{lead.leadSource || 'Manual Entry'}</p>
                   </div>
                 </div>
-                <div className="bg-[hsl(var(--card))] p-3.5 rounded-xl border border-[hsl(var(--border))] flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0"><Building size={14} /></span>
-                  <div className="overflow-hidden">
-                    <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Property Scope</p>
-                    <p className="font-bold text-[hsl(var(--foreground))] text-xs truncate mt-0.5">{lead.propertyType || 'Not specified'}</p>
+                <div className="bg-[hsl(var(--card))] p-2.5 sm:p-3.5 rounded-xl border border-[hsl(var(--border))] flex items-center gap-2.5 sm:gap-3">
+                  <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0"><Building size={14} /></span>
+                  <div className="overflow-hidden min-w-0">
+                    <p className="text-[9px] sm:text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider truncate">Property Scope</p>
+                    <p className="font-bold text-[hsl(var(--foreground))] text-[11px] sm:text-xs truncate mt-0.5">{lead.propertyType || 'Not specified'}</p>
                   </div>
                 </div>
-                <div className="bg-[hsl(var(--card))] p-3.5 rounded-xl border border-[hsl(var(--border))] flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 shrink-0"><DollarSign size={14} /></span>
-                  <div className="overflow-hidden">
-                    <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Est. Budget</p>
-                    <p className="font-bold text-[hsl(var(--foreground))] text-xs truncate mt-0.5">{lead.budgetRange || 'Not specified'}</p>
+                <div className="bg-[hsl(var(--card))] p-2.5 sm:p-3.5 rounded-xl border border-[hsl(var(--border))] flex items-center gap-2.5 sm:gap-3">
+                  <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 shrink-0"><DollarSign size={14} /></span>
+                  <div className="overflow-hidden min-w-0">
+                    <p className="text-[9px] sm:text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider truncate">Est. Budget</p>
+                    <p className="font-bold text-[hsl(var(--foreground))] text-[11px] sm:text-xs truncate mt-0.5 text-emerald-600 dark:text-emerald-400">
+                      {lead.quotations?.[lead.quotations.length - 1]?.grandTotal
+                        ? `₹${lead.quotations[lead.quotations.length - 1].grandTotal.toLocaleString('en-IN')}`
+                        : lead.budgetRange || 'Not specified'}
+                    </p>
                   </div>
                 </div>
-                <div className="bg-[hsl(var(--card))] p-3.5 rounded-xl border border-[hsl(var(--border))] flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-600 shrink-0"><MapPin size={14} /></span>
-                  <div className="overflow-hidden">
-                    <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Location</p>
-                    <p className="font-bold text-[hsl(var(--foreground))] text-xs truncate mt-0.5">{lead.projectLocation || lead.city || 'Not specified'}</p>
+                <div className="bg-[hsl(var(--card))] p-2.5 sm:p-3.5 rounded-xl border border-[hsl(var(--border))] flex items-center gap-2.5 sm:gap-3">
+                  <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-600 shrink-0"><MapPin size={14} /></span>
+                  <div className="overflow-hidden min-w-0">
+                    <p className="text-[9px] sm:text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider truncate">Location</p>
+                    <p className="font-bold text-[hsl(var(--foreground))] text-[11px] sm:text-xs truncate mt-0.5">{lead.projectLocation || lead.city || 'Not specified'}</p>
                   </div>
                 </div>
               </div>
 
               {/* Activity Timeline */}
-              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-8">
-                  <h3 className="text-sm font-black uppercase tracking-widest text-[hsl(var(--muted-foreground))] flex items-center gap-2">
+              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
+                  <h3 className="text-xs sm:text-sm font-black uppercase tracking-widest text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                     <Activity className="w-4 h-4 text-blue-500" /> Activity Timeline
                   </h3>
                   {!isConverted && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <button
                         onClick={() => setIsActivityModalOpen(true)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all active:scale-95"
@@ -621,14 +626,14 @@ export default function Lead360View() {
                   )}
                 </div>
                 
-                <div className="relative border-l-2 border-[hsl(var(--border))] ml-4 pl-8 space-y-8">
+                <div className="relative border-l-2 border-[hsl(var(--border))] ml-2.5 sm:ml-4 pl-4 sm:pl-8 space-y-5 sm:space-y-8">
                   {activities.length === 0 ? (
-                    <div className="py-12 flex flex-col items-center text-center">
-                      <div className="w-16 h-16 bg-[hsl(var(--muted))] rounded-full flex items-center justify-center text-[hsl(var(--muted-foreground))] mb-3">
-                        <MessageSquare size={24} />
+                    <div className="py-10 sm:py-12 flex flex-col items-center text-center">
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[hsl(var(--muted))] rounded-full flex items-center justify-center text-[hsl(var(--muted-foreground))] mb-3">
+                        <MessageSquare size={20} className="sm:w-6 sm:h-6" />
                       </div>
-                      <p className="text-sm font-bold text-[hsl(var(--foreground))]">No activities logged</p>
-                      <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">Keep track of calls, meetings, and notes here.</p>
+                      <p className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">No activities logged</p>
+                      <p className="text-[11px] sm:text-xs text-[hsl(var(--muted-foreground))] mt-0.5">Keep track of calls, meetings, and notes here.</p>
                     </div>
                   ) : (
                     activities.map((act) => {
@@ -639,31 +644,31 @@ export default function Lead360View() {
                       return (
                       <div key={act._id} className="relative group">
                         <div className={cn(
-                          "absolute -left-[2.6rem] top-1 w-5 h-5 rounded-full border-4 border-[hsl(var(--card))] flex items-center justify-center",
+                          "absolute -left-[1.35rem] sm:-left-[2.6rem] top-1.5 w-3.5 h-3.5 sm:w-5 sm:h-5 rounded-full border-2 sm:border-4 border-[hsl(var(--card))] flex items-center justify-center",
                           act.status === 'Pending' ? "bg-amber-400" : "bg-blue-500"
                         )}></div>
                         
-                        <div className="bg-[hsl(var(--muted)/0.5)] hover:bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-2xl p-5 transition-colors">
-                          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <div className="bg-[hsl(var(--muted)/0.5)] hover:bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-2xl p-3.5 sm:p-5 transition-colors">
+                          <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 mb-2 sm:mb-3">
                             <span className={cn(
-                              "text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg border",
+                              "text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg border",
                               act.status === 'Pending' ? "bg-amber-500/10 text-amber-600 border-amber-500/20" : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                             )}>
                               {act.type} {act.status === 'Pending' && '• Scheduled'}
                             </span>
-                            <span className="text-xs font-bold text-[hsl(var(--muted-foreground))]">
+                            <span className="text-[11px] sm:text-xs font-bold text-[hsl(var(--muted-foreground))]">
                               {act.status === 'Pending' 
                                 ? `Due: ${new Date(act.scheduledDate).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` 
                                 : new Date(act.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
                               }
                             </span>
                           </div>
-                          <p className="text-sm text-[hsl(var(--foreground))] font-medium leading-relaxed">{act.remarks}</p>
-                          <div className="flex items-center gap-2 mt-4 pt-4 border-t border-[hsl(var(--border))]">
-                            <div className="w-5 h-5 rounded-full bg-[hsl(var(--muted))] flex items-center justify-center text-[8px] font-bold text-[hsl(var(--muted-foreground))]">
+                          <p className="text-xs sm:text-sm text-[hsl(var(--foreground))] font-medium leading-relaxed">{act.remarks}</p>
+                          <div className="flex items-center gap-2 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-[hsl(var(--border))]">
+                            <div className="w-5 h-5 rounded-full bg-[hsl(var(--muted))] flex items-center justify-center text-[8px] font-bold text-[hsl(var(--muted-foreground))] shrink-0">
                               {initial}
                             </div>
-                            <p className="text-xs font-semibold text-[hsl(var(--muted-foreground))]">
+                            <p className="text-[11px] sm:text-xs font-semibold text-[hsl(var(--muted-foreground))] truncate">
                               {act.status === 'Pending' ? 'Scheduled by' : 'Logged by'} <span className="text-[hsl(var(--foreground))]">{userName}</span>
                             </p>
                           </div>
@@ -677,57 +682,53 @@ export default function Lead360View() {
           )}
 
           {activeTab === 'site' && (
-            <motion.div key="site" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="space-y-6">
+            <motion.div key="site" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="space-y-4 sm:space-y-6">
               {getTabLockState('site').isLocked ? (
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-12 text-center flex flex-col items-center shadow-sm">
-                  <div className="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 mb-4 border border-amber-500/20">
-                    <Lock size={30} />
+                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-6 sm:p-12 text-center flex flex-col items-center">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 mb-3 sm:mb-4 border border-amber-500/20">
+                    <Lock size={24} className="sm:w-7 sm:h-7" />
                   </div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-xs font-black uppercase tracking-wider mb-2">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[10px] sm:text-xs font-black uppercase tracking-wider mb-2">
                     Phase Locked
                   </div>
-                  <h3 className="text-xl font-black text-[hsl(var(--foreground))]">Site Visit Stage is Locked</h3>
+                  <h3 className="text-base sm:text-xl font-black text-[hsl(var(--foreground))]">Site Visit Stage is Locked</h3>
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1.5 mb-6 max-w-md">
                     This lead is currently in the <strong className="text-[hsl(var(--foreground))]">"{lead.status}"</strong> stage.
                     Complete initial follow-up and schedule a Site Visit to unlock measurement logging.
                   </p>
-                  <div className="flex items-center gap-3 flex-wrap justify-center">
-                    
-                   
-                  </div>
                 </div>
               ) : !lead.siteMeasurements ? (
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-12 text-center flex flex-col items-center shadow-sm">
-                  <div className="w-16 h-16 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-600 mb-4">
-                    <Ruler size={32} />
+                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-6 sm:p-12 text-center flex flex-col items-center">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-600 mb-3 sm:mb-4">
+                    <Ruler size={26} className="sm:w-8 sm:h-8" />
                   </div>
-                  <h3 className="text-xl font-black text-[hsl(var(--foreground))]">No Site Measurements Recorded</h3>
+                  <h3 className="text-base sm:text-xl font-black text-[hsl(var(--foreground))]">No Site Measurements Recorded</h3>
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1.5 mb-6 max-w-md">
                     Capture comprehensive room dimensions, ceiling heights, MEP points, structural constraints, and site photos.
                   </p>
                   {!isConverted && (
-                    <button onClick={() => setIsSiteVisitModalOpen(true)} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-purple-600/20">
-                      <Plus size={16} /> Log Site Visit & Measurements
+                    <button onClick={() => setIsSiteVisitModalOpen(true)} className="bg-purple-600 hover:bg-purple-700 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2">
+                      <Plus size={15} /> Log Site Visit & Measurements
                     </button>
                   )}
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   {/* Top Bar with actions */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 md:px-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-3.5 sm:p-5 md:px-6">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600 shrink-0">
-                        <Ruler size={20} />
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600 shrink-0">
+                        <Ruler size={18} />
                       </div>
                       <div>
-                        <h2 className="text-base font-black text-[hsl(var(--foreground))]">Site Inspection & Technical Specs</h2>
-                        <p className="text-xs text-[hsl(var(--muted-foreground))]">Detailed measurements, MEP points, and on-site observations.</p>
+                        <h2 className="text-sm sm:text-base font-black text-[hsl(var(--foreground))]">Site Inspection & Technical Specs</h2>
+                        <p className="text-[11px] sm:text-xs text-[hsl(var(--muted-foreground))]">Detailed measurements, MEP points, and on-site observations.</p>
                       </div>
                     </div>
                     {!isConverted && (
                       <button 
                         onClick={() => setIsSiteVisitModalOpen(true)} 
-                        className="inline-flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-purple-600/20 shrink-0"
+                        className="inline-flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shrink-0"
                       >
                         <Pencil size={13} /> Edit Measurements & Photos
                       </button>
@@ -735,10 +736,10 @@ export default function Lead360View() {
                   </div>
 
                   {/* 4-Card Structured Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-5">
                     
                     {/* Card 1: Room & Spatial Dimensions */}
-                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4 shadow-sm">
+                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4">
                       <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
                         <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
                           <Maximize2 size={16} className="text-purple-500" />
@@ -792,7 +793,7 @@ export default function Lead360View() {
                     </div>
 
                     {/* Card 2: Openings & Structural Elements */}
-                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4 shadow-sm">
+                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4">
                       <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
                         <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
                           <DoorOpen size={16} className="text-blue-500" />
@@ -843,7 +844,7 @@ export default function Lead360View() {
                     </div>
 
                     {/* Card 3: MEP & Utility Services */}
-                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4 shadow-sm">
+                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4">
                       <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
                         <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
                           <Zap size={16} className="text-amber-500" />
@@ -885,7 +886,7 @@ export default function Lead360View() {
                     </div>
 
                     {/* Card 4: Furniture, Constraints & Notes */}
-                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4 shadow-sm">
+                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4">
                       <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
                         <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
                           <Armchair size={16} className="text-emerald-500" />
@@ -929,7 +930,7 @@ export default function Lead360View() {
                   </div>
 
                   {/* Photos Section */}
-                  <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6 space-y-4 shadow-sm">
+                  <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6 space-y-4">
                     <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
                       <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
                         <ImageIcon size={16} className="text-emerald-500" />
@@ -948,11 +949,11 @@ export default function Lead360View() {
                             href={photo}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="aspect-square rounded-xl overflow-hidden border border-[hsl(var(--border))] hover:border-[hsl(var(--primary))] transition-all relative group bg-[hsl(var(--muted)/0.3)] shadow-sm block"
+                            className="aspect-square rounded-xl overflow-hidden border border-[hsl(var(--border))] hover:border-[hsl(var(--primary))] transition-all relative group bg-[hsl(var(--muted)/0.3)] block"
                           >
                             <img src={photo} alt={`Site photo ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                              <ImageIcon className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" size={20} />
+                              <ImageIcon className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-" size={20} />
                             </div>
                           </a>
                         ))}
@@ -973,7 +974,7 @@ export default function Lead360View() {
           {activeTab === 'requirements' && (
             <motion.div key="requirements" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="space-y-6">
               {getTabLockState('requirements').isLocked ? (
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-12 text-center flex flex-col items-center shadow-sm">
+                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-12 text-center flex flex-col items-center">
                   <div className="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 mb-4 border border-amber-500/20">
                     <Lock size={30} />
                   </div>
@@ -987,7 +988,7 @@ export default function Lead360View() {
                   </p>
                 </div>
               ) : !lead.requirements || lead.requirements.length === 0 ? (
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-12 text-center flex flex-col items-center shadow-sm">
+                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-12 text-center flex flex-col items-center">
                   <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-600 mb-4">
                     <PenTool size={32} />
                   </div>
@@ -996,7 +997,7 @@ export default function Lead360View() {
                     Capture room-by-room functional needs, aesthetic styles, materials, lighting, and client preferences.
                   </p>
                   {!isConverted && (
-                    <button onClick={() => setIsReqModalOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-emerald-600/20">
+                    <button onClick={() => setIsReqModalOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2">
                       <Plus size={16} /> Add Design Requirements
                     </button>
                   )}
@@ -1004,7 +1005,7 @@ export default function Lead360View() {
               ) : (
                 <div className="space-y-6">
                   {/* Top Bar */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 md:px-6 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 md:px-6">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
                         <PenTool size={20} />
@@ -1023,7 +1024,7 @@ export default function Lead360View() {
                     {!isConverted && (
                       <button 
                         onClick={() => setIsReqModalOpen(true)} 
-                        className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-emerald-600/20 shrink-0"
+                        className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shrink-0"
                       >
                         <Pencil size={13} /> Edit Requirements & Budget
                       </button>
@@ -1032,7 +1033,7 @@ export default function Lead360View() {
 
                   {/* Estimated Budget & Project Overview Bar */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 flex items-center gap-3.5 shadow-sm">
+                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 flex items-center gap-3.5">
                       <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-black shrink-0">
                         <DollarSign size={20} />
                       </div>
@@ -1044,7 +1045,7 @@ export default function Lead360View() {
                       </div>
                     </div>
 
-                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 flex items-center gap-3.5 shadow-sm">
+                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 flex items-center gap-3.5">
                       <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
                         <Building size={20} />
                       </div>
@@ -1056,7 +1057,7 @@ export default function Lead360View() {
                       </div>
                     </div>
 
-                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 flex items-center gap-3.5 shadow-sm">
+                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 flex items-center gap-3.5">
                       <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0">
                         <Palette size={20} />
                       </div>
@@ -1068,7 +1069,7 @@ export default function Lead360View() {
                       </div>
                     </div>
 
-                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 flex items-center gap-3.5 shadow-sm">
+                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 flex items-center gap-3.5">
                       <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
                         <Layers size={20} />
                       </div>
@@ -1088,7 +1089,7 @@ export default function Lead360View() {
                       const hasAesthetic = !!(req.designStyle || req.colours || req.materials || req.flooring || req.ceiling || req.wallFinishes || req.furnitureStyle || req.theme);
 
                       return (
-                        <div key={index} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 space-y-5 shadow-sm hover:border-emerald-500/40 transition-colors">
+                        <div key={index} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 space-y-5 hover:border-emerald-500/40 transition-colors">
                           {/* Room Header */}
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[hsl(var(--border))]">
                             <div className="flex items-center gap-3">
@@ -1265,7 +1266,7 @@ export default function Lead360View() {
           {activeTab === 'designs' && (
             <motion.div key="designs" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="space-y-6">
               {getTabLockState('designs').isLocked ? (
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-12 text-center flex flex-col items-center shadow-sm">
+                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-12 text-center flex flex-col items-center">
                   <div className="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 mb-4 border border-amber-500/20">
                     <Lock size={30} />
                   </div>
@@ -1279,7 +1280,7 @@ export default function Lead360View() {
                   </p>
                 </div>
               ) : !lead.designFiles || lead.designFiles.length === 0 ? (
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-12 text-center flex flex-col items-center shadow-sm">
+                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-12 text-center flex flex-col items-center">
                   <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500 mb-4">
                     <UploadCloud size={32} />
                   </div>
@@ -1288,7 +1289,7 @@ export default function Lead360View() {
                     Upload 2D layouts (Floor plan, RCP, Electrical) and 3D models/renders (.dwg, .skp, .fbx, .obj, renders).
                   </p>
                   {!isConverted && (
-                    <button onClick={() => setIsDesignModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-blue-600/20">
+                    <button onClick={() => setIsDesignModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2">
                       <Plus size={16} /> Upload 2D & 3D Drawings
                     </button>
                   )}
@@ -1309,56 +1310,56 @@ export default function Lead360View() {
                 });
 
                 return (
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-6">
                     {/* Top Action Header Bar with Segmented Toggle Button */}
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-5 md:p-6 shadow-sm">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6">
                       <div>
-                        <div className="flex items-center gap-2.5">
-                          <h2 className="text-base font-black text-[hsl(var(--foreground))]">2D & 3D Design Drawings</h2>
-                          <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-md bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                        <div className="flex items-center gap-2 sm:gap-2.5">
+                          <h2 className="text-sm sm:text-base font-black text-[hsl(var(--foreground))]">2D & 3D Design Drawings</h2>
+                          <span className="text-[10px] font-bold px-2 sm:px-2.5 py-0.5 rounded-md bg-blue-500/10 text-blue-600 border border-blue-500/20">
                             {lead.designFiles.length} Total Files
                           </span>
                         </div>
-                        <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                        <p className="text-[11px] sm:text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
                           Switch between 2D architectural layouts and 3D models/renders.
                         </p>
                       </div>
 
                       {/* Header Toggle Buttons */}
-                      <div className="flex flex-wrap items-center gap-3">
-                        <div className="flex bg-[hsl(var(--muted))] p-1 rounded-2xl border border-[hsl(var(--border))]">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto">
+                        <div className="flex bg-[hsl(var(--muted))] p-1 rounded-xl sm:rounded-2xl border border-[hsl(var(--border))] w-full sm:w-auto">
                           <button
                             type="button"
                             onClick={() => setDesignSubTab('2d')}
                             className={cn(
-                              "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all active:scale-95",
+                              "flex-1 sm:flex-initial justify-center flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs font-black transition-all active:scale-95",
                               designSubTab === '2d'
-                                ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+                                ? "bg-blue-600 text-white"
                                 : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
                             )}
                           >
-                            <Layers size={15} />
+                            <Layers size={14} />
                             2D Drawings ({twoDFiles.length})
                           </button>
                           <button
                             type="button"
                             onClick={() => setDesignSubTab('3d')}
                             className={cn(
-                              "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all active:scale-95",
+                              "flex-1 sm:flex-initial justify-center flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs font-black transition-all active:scale-95",
                               designSubTab === '3d'
-                                ? "bg-purple-600 text-white shadow-md shadow-purple-600/20"
+                                ? "bg-purple-600 text-white"
                                 : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
                             )}
                           >
-                            <Box size={15} />
-                            3D Models & Renders ({threeDFiles.length})
+                            <Box size={14} />
+                            3D Models ({threeDFiles.length})
                           </button>
                         </div>
 
                         {!isConverted && (
                           <button
                             onClick={() => setIsDesignModalOpen(true)}
-                            className="inline-flex items-center justify-center gap-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-[hsl(var(--primary-foreground))] px-4 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-[hsl(var(--primary)/0.2)] shrink-0"
+                            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 sm:gap-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-[hsl(var(--primary-foreground))] px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 shrink-0"
                           >
                             <Plus size={14} /> Upload Drawings
                           </button>
@@ -1375,27 +1376,27 @@ export default function Lead360View() {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -8 }}
                           transition={{ duration: 0.2 }}
-                          className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 space-y-4 shadow-sm"
+                          className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4"
                         >
                           <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
                             <div className="flex items-center gap-2.5">
-                              <div className="w-9 h-9 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600">
-                                <Layers size={18} />
+                              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600">
+                                <Layers size={16} />
                               </div>
                               <div>
-                                <h3 className="text-sm font-black uppercase tracking-wider text-[hsl(var(--foreground))]">
+                                <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-[hsl(var(--foreground))]">
                                   2D Working Drawings & Layouts
                                 </h3>
-                                <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Floor plans, False ceiling (RCP), Electrical & Plumbing layouts, PDFs</p>
+                                <p className="text-[10px] sm:text-[11px] text-[hsl(var(--muted-foreground))]">Floor plans, False ceiling (RCP), Electrical & Plumbing layouts</p>
                               </div>
                             </div>
-                            <span className="text-xs font-bold bg-blue-500/10 text-blue-600 border border-blue-500/20 px-2.5 py-1 rounded-lg">
+                            <span className="text-[11px] sm:text-xs font-bold bg-blue-500/10 text-blue-600 border border-blue-500/20 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg">
                               {twoDFiles.length} {twoDFiles.length === 1 ? 'Drawing' : 'Drawings'}
                             </span>
                           </div>
 
                           {twoDFiles.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pt-1">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4 pt-1">
                               {twoDFiles.map((file: any, index: number) => {
                                 const type = file.fileType || detectFileType(file.name);
                                 const badge = getFileBadgeInfo(file.name, file.category || '2D');
@@ -1404,9 +1405,9 @@ export default function Lead360View() {
                                   <div
                                     key={index}
                                     onClick={() => setSelected3DFile(file)}
-                                    className="flex flex-col bg-[hsl(var(--muted)/0.3)] hover:bg-[hsl(var(--muted)/0.6)] border border-[hsl(var(--border))] hover:border-blue-500/50 rounded-2xl overflow-hidden hover:shadow-md transition-all group cursor-pointer"
+                                    className="flex flex-col bg-[hsl(var(--muted)/0.3)] hover:bg-[hsl(var(--muted)/0.6)] border border-[hsl(var(--border))] hover:border-blue-500/50 rounded-2xl overflow-hidden transition-all group cursor-pointer"
                                   >
-                                    <div className={`h-40 flex items-center justify-center relative overflow-hidden ${
+                                    <div className={`h-36 sm:h-40 flex items-center justify-center relative overflow-hidden ${
                                       type === 'pdf' ? 'bg-red-500/10 text-red-500' :
                                       type === 'cad' ? 'bg-amber-500/10 text-amber-500' :
                                       type === 'archive' ? 'bg-cyan-500/10 text-cyan-500' :
@@ -1426,8 +1427,8 @@ export default function Lead360View() {
                                       )}
                                     </div>
 
-                                    <div className="p-3.5 border-t border-[hsl(var(--border))] bg-[hsl(var(--card))] flex items-center justify-between gap-2">
-                                      <div className="overflow-hidden flex-1">
+                                    <div className="p-3 sm:p-3.5 border-t border-[hsl(var(--border))] bg-[hsl(var(--card))] flex items-center justify-between gap-2">
+                                      <div className="overflow-hidden flex-1 min-w-0">
                                         <p className="font-bold text-xs text-[hsl(var(--foreground))] truncate">{file.name}</p>
                                         <div className="flex items-center gap-1.5 mt-1">
                                           <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider ${badge.color}`}>
@@ -1440,7 +1441,7 @@ export default function Lead360View() {
                                           )}
                                         </div>
                                       </div>
-                                      <div className="flex items-center gap-1">
+                                      <div className="flex items-center gap-1 shrink-0">
                                         <button
                                           type="button"
                                           onClick={(e) => {
@@ -1469,10 +1470,10 @@ export default function Lead360View() {
                               })}
                             </div>
                           ) : (
-                            <div className="py-12 flex flex-col items-center justify-center border-2 border-dashed border-[hsl(var(--border))] rounded-2xl bg-[hsl(var(--muted)/0.2)] text-center">
-                              <Layers className="w-10 h-10 text-[hsl(var(--muted-foreground))] mb-2 opacity-50" />
-                              <p className="text-sm font-bold text-[hsl(var(--foreground))]">No 2D Working Drawings Uploaded</p>
-                              <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1 max-w-sm">Click upload drawings to add floor plans, electrical, and plumbing PDFs/drawings.</p>
+                            <div className="py-10 sm:py-12 flex flex-col items-center justify-center border-2 border-dashed border-[hsl(var(--border))] rounded-2xl bg-[hsl(var(--muted)/0.2)] text-center">
+                              <Layers className="w-8 h-8 sm:w-10 sm:h-10 text-[hsl(var(--muted-foreground))] mb-2 opacity-50" />
+                              <p className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">No 2D Working Drawings Uploaded</p>
+                              <p className="text-[11px] sm:text-xs text-[hsl(var(--muted-foreground))] mt-1 max-w-sm">Click upload drawings to add floor plans, electrical, and plumbing PDFs/drawings.</p>
                             </div>
                           )}
                         </motion.div>
@@ -1483,27 +1484,27 @@ export default function Lead360View() {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -8 }}
                           transition={{ duration: 0.2 }}
-                          className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 space-y-4 shadow-sm"
+                          className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4"
                         >
                           <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
                             <div className="flex items-center gap-2.5">
-                              <div className="w-9 h-9 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-600">
-                                <Box size={18} />
+                              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-600">
+                                <Box size={16} />
                               </div>
                               <div>
-                                <h3 className="text-sm font-black uppercase tracking-wider text-[hsl(var(--foreground))]">
+                                <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-[hsl(var(--foreground))]">
                                   3D Models, 3D DWG & Renders
                                 </h3>
-                                <p className="text-[11px] text-[hsl(var(--muted-foreground))]">.DWG, SketchUp .SKP, .FBX, .OBJ, .BLEND, Revit, Realistic 3D Renders</p>
+                                <p className="text-[10px] sm:text-[11px] text-[hsl(var(--muted-foreground))]">.DWG, SketchUp .SKP, .FBX, .OBJ, .BLEND, Revit, Realistic 3D Renders</p>
                               </div>
                             </div>
-                            <span className="text-xs font-bold bg-purple-500/10 text-purple-600 border border-purple-500/20 px-2.5 py-1 rounded-lg">
+                            <span className="text-[11px] sm:text-xs font-bold bg-purple-500/10 text-purple-600 border border-purple-500/20 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg">
                               {threeDFiles.length} {threeDFiles.length === 1 ? 'Model/Render' : 'Models/Renders'}
                             </span>
                           </div>
 
                           {threeDFiles.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pt-1">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4 pt-1">
                               {threeDFiles.map((file: any, index: number) => {
                                 const type = file.fileType || detectFileType(file.name);
                                 const badge = getFileBadgeInfo(file.name, file.category || '3D');
@@ -1512,9 +1513,9 @@ export default function Lead360View() {
                                   <div
                                     key={index}
                                     onClick={() => setSelected3DFile(file)}
-                                    className="flex flex-col bg-[hsl(var(--muted)/0.3)] hover:bg-[hsl(var(--muted)/0.6)] border border-[hsl(var(--border))] hover:border-purple-500/50 rounded-2xl overflow-hidden hover:shadow-md transition-all group cursor-pointer"
+                                    className="flex flex-col bg-[hsl(var(--muted)/0.3)] hover:bg-[hsl(var(--muted)/0.6)] border border-[hsl(var(--border))] hover:border-purple-500/50 rounded-2xl overflow-hidden transition-all group cursor-pointer"
                                   >
-                                    <div className={`h-40 flex items-center justify-center relative overflow-hidden ${
+                                    <div className={`h-36 sm:h-40 flex items-center justify-center relative overflow-hidden ${
                                       type === '3d-model' ? 'bg-purple-500/10 text-purple-500' :
                                       type === 'archive' ? 'bg-cyan-500/10 text-cyan-500' :
                                       'bg-purple-500/5 text-purple-500'
@@ -1536,8 +1537,8 @@ export default function Lead360View() {
                                       )}
                                     </div>
 
-                                    <div className="p-3.5 border-t border-[hsl(var(--border))] bg-[hsl(var(--card))] flex items-center justify-between gap-2">
-                                      <div className="overflow-hidden flex-1">
+                                    <div className="p-3 sm:p-3.5 border-t border-[hsl(var(--border))] bg-[hsl(var(--card))] flex items-center justify-between gap-2">
+                                      <div className="overflow-hidden flex-1 min-w-0">
                                         <p className="font-bold text-xs text-[hsl(var(--foreground))] truncate">{file.name}</p>
                                         <div className="flex items-center gap-1.5 mt-1">
                                           <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider ${badge.color}`}>
@@ -1550,7 +1551,7 @@ export default function Lead360View() {
                                           )}
                                         </div>
                                       </div>
-                                      <div className="flex items-center gap-1">
+                                      <div className="flex items-center gap-1 shrink-0">
                                         <button
                                           type="button"
                                           onClick={(e) => {
@@ -1579,10 +1580,10 @@ export default function Lead360View() {
                               })}
                             </div>
                           ) : (
-                            <div className="py-12 flex flex-col items-center justify-center border-2 border-dashed border-[hsl(var(--border))] rounded-2xl bg-[hsl(var(--muted)/0.2)] text-center">
-                              <Box className="w-10 h-10 text-[hsl(var(--muted-foreground))] mb-2 opacity-50" />
-                              <p className="text-sm font-bold text-[hsl(var(--foreground))]">No 3D Models or Renders Uploaded</p>
-                              <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1 max-w-sm">Click upload drawings to add .DWG, .SKP, .FBX, .OBJ, or 3D realistic renders.</p>
+                            <div className="py-10 sm:py-12 flex flex-col items-center justify-center border-2 border-dashed border-[hsl(var(--border))] rounded-2xl bg-[hsl(var(--muted)/0.2)] text-center">
+                              <Box className="w-8 h-8 sm:w-10 sm:h-10 text-[hsl(var(--muted-foreground))] mb-2 opacity-50" />
+                              <p className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">No 3D Models or Renders Uploaded</p>
+                              <p className="text-[11px] sm:text-xs text-[hsl(var(--muted-foreground))] mt-1 max-w-sm">Click upload drawings to add .DWG, .SKP, .FBX, .OBJ, or 3D realistic renders.</p>
                             </div>
                           )}
                         </motion.div>
@@ -1594,35 +1595,33 @@ export default function Lead360View() {
             </motion.div>
           )}
 
-
-          
           {activeTab === 'boq' && (
             <motion.div key="boq" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
               {getTabLockState('boq').isLocked ? (
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-12 text-center flex flex-col items-center shadow-sm">
-                  <div className="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 mb-4 border border-amber-500/20">
-                    <Lock size={30} />
+                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-6 sm:p-12 text-center flex flex-col items-center">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 mb-3 sm:mb-4 border border-amber-500/20">
+                    <Lock size={24} className="sm:w-7 sm:h-7" />
                   </div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-xs font-black uppercase tracking-wider mb-2">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[10px] sm:text-xs font-black uppercase tracking-wider mb-2">
                     Phase Locked
                   </div>
-                  <h3 className="text-xl font-black text-[hsl(var(--foreground))]">BOQ Stage is Locked</h3>
+                  <h3 className="text-base sm:text-xl font-black text-[hsl(var(--foreground))]">BOQ Stage is Locked</h3>
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1.5 mb-6 max-w-md">
                     This lead is currently in the <strong className="text-[hsl(var(--foreground))]">"{lead.status}"</strong> stage.
                     Complete and approve drawings to unlock BOQ creation and itemized estimations.
                   </p>
                 </div>
               ) : !lead.boqs || lead.boqs.length === 0 ? (
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-10 text-center flex flex-col items-center">
-                  <div className="w-16 h-16 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500 mb-4">
-                    <Calculator size={32} />
+                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-6 sm:p-10 text-center flex flex-col items-center">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500 mb-3 sm:mb-4">
+                    <Calculator size={26} className="sm:w-8 sm:h-8" />
                   </div>
-                  <h3 className="text-lg font-black text-[hsl(var(--foreground))]">No BOQ Generated</h3>
+                  <h3 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))]">No BOQ Generated</h3>
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 mb-6 max-w-sm">
                     Create a detailed Bill of Quantities based on requirements and designs.
                   </p>
                   {!isConverted && (
-                    <button onClick={() => setIsBoqModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5">
+                    <button onClick={() => setIsBoqModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 sm:px-6 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5">
                       <Plus size={15} /> Create BOQ
                     </button>
                   )}
@@ -1630,32 +1629,32 @@ export default function Lead360View() {
               ) : (
                 <div className="space-y-4">
                   {/* Top action bar */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 md:px-6 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-3.5 sm:p-4 md:px-6">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 shrink-0">
-                        <Calculator size={20} />
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 shrink-0">
+                        <Calculator size={18} />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h2 className="text-base font-black text-[hsl(var(--foreground))]">Bill of Quantities (BOQ)</h2>
+                          <h2 className="text-sm sm:text-base font-black text-[hsl(var(--foreground))]">Bill of Quantities (BOQ)</h2>
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 border border-indigo-500/20">
                             {lead.boqs.length} {lead.boqs.length === 1 ? 'Version' : 'Versions'}
                           </span>
                         </div>
-                        <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
+                        <p className="text-[10px] sm:text-[11px] text-[hsl(var(--muted-foreground))]">
                           Itemized quantity specifications and material cost breakdown
                         </p>
                       </div>
                     </div>
 
                     {!isConverted && (
-                      <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
                         <button
                           onClick={() => {
                             setEditingBoqIndex(activeBoqIndex);
                             setIsBoqModalOpen(true);
                           }}
-                          className="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5 shadow-md shadow-indigo-600/20"
+                          className="flex-1 sm:flex-initial justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5"
                         >
                           <Pencil size={13} /> Edit Current BOQ
                         </button>
@@ -1664,7 +1663,7 @@ export default function Lead360View() {
                             setEditingBoqIndex(null);
                             setIsBoqModalOpen(true);
                           }}
-                          className="bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] px-3.5 py-2 rounded-xl text-xs font-bold transition-all border border-[hsl(var(--border))] active:scale-95 flex items-center gap-1.5"
+                          className="flex-1 sm:flex-initial justify-center bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] px-3.5 py-2 rounded-xl text-xs font-bold transition-all border border-[hsl(var(--border))] active:scale-95 flex items-center gap-1.5"
                         >
                           <Plus size={14} /> New BOQ Version
                         </button>
@@ -1673,13 +1672,13 @@ export default function Lead360View() {
                   </div>
 
                   {lead.boqs.length > 1 && (
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none touch-pan-x">
                       {lead.boqs.map((q: any, idx: number) => (
                         <button
                           key={idx}
                           onClick={() => setActiveBoqIndex(idx)}
                           className={cn(
-                            "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap",
+                            "px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0",
                             activeBoqIndex === idx 
                               ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" 
                               : "bg-[hsl(var(--card))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] hover:text-[hsl(var(--foreground))]"
@@ -1691,7 +1690,7 @@ export default function Lead360View() {
                     </div>
                   )}
                   
-                  <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">
+                  <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden overflow-x-auto">
                     <BoqPreview 
                       lead={lead} 
                       boqIndex={activeBoqIndex} 
@@ -1710,30 +1709,30 @@ export default function Lead360View() {
           {activeTab === 'quotations' && (
             <motion.div key="quotations" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
               {getTabLockState('quotations').isLocked ? (
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-12 text-center flex flex-col items-center shadow-sm">
-                  <div className="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 mb-4 border border-amber-500/20">
-                    <Lock size={30} />
+                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-6 sm:p-12 text-center flex flex-col items-center">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 mb-3 sm:mb-4 border border-amber-500/20">
+                    <Lock size={24} className="sm:w-7 sm:h-7" />
                   </div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-xs font-black uppercase tracking-wider mb-2">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[10px] sm:text-xs font-black uppercase tracking-wider mb-2">
                     Phase Locked
                   </div>
-                  <h3 className="text-xl font-black text-[hsl(var(--foreground))]">Quotations Stage is Locked</h3>
+                  <h3 className="text-base sm:text-xl font-black text-[hsl(var(--foreground))]">Quotations Stage is Locked</h3>
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1.5 mb-6 max-w-md">
                     This lead is currently in the <strong className="text-[hsl(var(--foreground))]">"{lead.status}"</strong> stage.
                     Finalize the BOQ estimate first to unlock commercial Quotation proposals.
                   </p>
                 </div>
               ) : !lead.quotations || lead.quotations.length === 0 ? (
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-10 text-center flex flex-col items-center">
-                  <div className="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-500 mb-4">
-                    <FileText size={32} />
+                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-6 sm:p-10 text-center flex flex-col items-center">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-500 mb-3 sm:mb-4">
+                    <FileText size={26} className="sm:w-8 sm:h-8" />
                   </div>
-                  <h3 className="text-lg font-black text-[hsl(var(--foreground))]">No Quotations Generated</h3>
+                  <h3 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))]">No Quotations Generated</h3>
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 mb-6 max-w-sm">
                     Create professional itemized quotes to secure this project.
                   </p>
                   {!isConverted && (
-                    <button onClick={() => setIsQuotationModalOpen(true)} className="bg-rose-600 hover:bg-rose-700 text-white px-6 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5">
+                    <button onClick={() => setIsQuotationModalOpen(true)} className="bg-rose-600 hover:bg-rose-700 text-white px-5 sm:px-6 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5">
                       <Plus size={15} /> Create Quotation
                     </button>
                   )}
@@ -1741,13 +1740,13 @@ export default function Lead360View() {
               ) : (
                 <div className="space-y-4">
                   {lead.quotations.length > 1 && (
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none touch-pan-x">
                       {lead.quotations.map((q: any, idx: number) => (
                         <button
                           key={idx}
                           onClick={() => setActiveQuotationIndex(idx)}
                           className={cn(
-                            "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap",
+                            "px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0",
                             activeQuotationIndex === idx 
                               ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" 
                               : "bg-[hsl(var(--card))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] hover:text-[hsl(var(--foreground))]"
@@ -1766,7 +1765,7 @@ export default function Lead360View() {
                     </div>
                   )}
                   
-                  <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">
+                  <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden overflow-x-auto">
                     <QuotationPreview 
                       lead={lead} 
                       quotationIndex={activeQuotationIndex} 

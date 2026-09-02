@@ -262,7 +262,7 @@ export const InteriorLogRequirementsModal = ({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[92vh] shadow-2xl"
+        className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[92vh]"
       >
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-5 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
@@ -291,7 +291,7 @@ export const InteriorLogRequirementsModal = ({
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex flex-col gap-6 custom-scrollbar">
           {/* Overall Project Scope & Estimated Budget */}
-          <div className="bg-[hsl(var(--muted)/0.35)] border border-[hsl(var(--border))] rounded-3xl p-5 md:p-6 space-y-4 shadow-sm">
+          <div className="bg-[hsl(var(--muted)/0.35)] border border-[hsl(var(--border))] rounded-3xl p-5 md:p-6 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[hsl(var(--border))]">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
@@ -352,7 +352,7 @@ export const InteriorLogRequirementsModal = ({
               return (
                 <div
                   key={index}
-                  className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl overflow-hidden shadow-sm transition-all"
+                  className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl overflow-hidden transition-all"
                 >
                   {/* Card Top Title Bar */}
                   <div className="p-4 md:px-6 bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -766,7 +766,7 @@ export const InteriorLogRequirementsModal = ({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 px-4 py-2.5 rounded-xl font-bold text-xs text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] transition-colors disabled:opacity-50 shadow-md shadow-[hsl(var(--primary)/0.2)]"
+                className="flex-1 px-4 py-2.5 rounded-xl font-bold text-xs text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] transition-colors disabled:opacity-50 .2)]"
               >
                 {isSubmitting ? 'Saving Requirements...' : 'Save Design Requirements'}
               </button>

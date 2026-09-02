@@ -72,23 +72,23 @@ export const InteriorRequirementDesignView = ({
 
   return (
     <div className="w-full space-y-4">
-      {/* Search & Filter Toolbar with Tab Pills (Matching Follow-ups & Site Visits) */}
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+      {/* Search & Filter Toolbar */}
+      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Left: Tab Pills */}
-        <div className="flex items-center gap-1.5 bg-[hsl(var(--muted))] p-1 rounded-xl w-max">
+        <div className="flex items-center gap-1.5 bg-[hsl(var(--muted))] p-1 rounded-xl w-full sm:w-max overflow-x-auto scrollbar-none">
           <button
             onClick={() => {
               setFilterState('all');
               setCurrentPage(1);
             }}
             className={cn(
-              'px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all',
+'flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all whitespace-nowrap text-center',
               filterState === 'all'
                 ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-sm'
                 : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
             )}
           >
-            All Requirements ({leads.length})
+            All ({leads.length})
           </button>
           <button
             onClick={() => {
@@ -96,7 +96,7 @@ export const InteriorRequirementDesignView = ({
               setCurrentPage(1);
             }}
             className={cn(
-              'px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center gap-1.5',
+'flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all whitespace-nowrap flex items-center justify-center gap-1.5',
               filterState === 'pending'
                 ? 'bg-amber-500 text-white shadow-sm'
                 : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
@@ -110,7 +110,7 @@ export const InteriorRequirementDesignView = ({
               setCurrentPage(1);
             }}
             className={cn(
-              'px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center gap-1.5',
+'flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all whitespace-nowrap flex items-center justify-center gap-1.5',
               filterState === 'completed'
                 ? 'bg-emerald-600 text-white shadow-sm'
                 : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
@@ -121,17 +121,17 @@ export const InteriorRequirementDesignView = ({
         </div>
 
         {/* Right: Search Box */}
-        <div className="relative min-w-[260px]">
+        <div className="relative w-full sm:min-w-[240px] sm:w-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
           <input
             type="text"
-            placeholder="Search by client, property, or lead ID..."
+            placeholder="Search requirements..."
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-medium text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
+            className="w-full pl-9 pr-10 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-medium text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
           />
           {searchTerm && (
             <button
@@ -145,13 +145,13 @@ export const InteriorRequirementDesignView = ({
       </div>
 
       {/* Table Container */}
-      <div className="w-full bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] shadow-sm overflow-hidden">
+      <div className="w-full bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">
         {filteredLeads.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center px-4">
-            <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 rounded-2xl flex items-center justify-center mb-3">
+          <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-center px-4">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 rounded-2xl flex items-center justify-center mb-3">
               <PenTool size={24} />
             </div>
-            <h3 className="text-base font-extrabold text-[hsl(var(--foreground))] mb-1">No Requirements Found</h3>
+            <h3 className="text-sm sm:text-base font-extrabold text-[hsl(var(--foreground))] mb-1">No Requirements Found</h3>
             <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-md mx-auto">
               {searchTerm || filterState !== 'all'
                 ? 'No leads match your current requirement filter.'
@@ -159,159 +159,259 @@ export const InteriorRequirementDesignView = ({
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] uppercase text-[10px] font-black tracking-widest">
-                <tr>
-                  <th className="px-6 py-3.5 rounded-tl-2xl">Lead Info</th>
-                  <th className="px-6 py-3.5">Property Info</th>
-                  <th className="px-6 py-3.5">Room Requirements</th>
-                  <th className="px-6 py-3.5">Status</th>
-                  <th className="px-6 py-3.5 text-right rounded-tr-2xl">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[hsl(var(--border))]">
-                {paginatedLeads.map((lead, idx) => (
-                  <motion.tr
-                    key={lead._id}
-                    onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=requirements`)}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.15, delay: idx * 0.02 }}
-                    className="hover:bg-[hsl(var(--accent))] transition-colors group cursor-pointer"
-                  >
-                    {/* Lead Info */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 font-extrabold text-xs shrink-0">
-                          {lead.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-emerald-600 transition-colors">
-                            {lead.name}
-                          </div>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-[10px] font-mono font-bold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-                              {lead.leadNumber || 'LD-XXXX'}
-                            </span>
-                            <span className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                              {lead.mobileNumber}
-                            </span>
-                          </div>
-                        </div>
+          <>
+            {/* MOBILE CARD VIEW (< md) */}
+            <div className="block md:hidden divide-y divide-[hsl(var(--border))]">
+              {paginatedLeads.map((lead, idx) => (
+                <div
+                  key={lead._id}
+                  onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=requirements`)}
+                  className="p-3.5 space-y-2.5 active:bg-[hsl(var(--accent))] transition-colors cursor-pointer"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 font-extrabold text-xs shrink-0">
+                        {lead.name.charAt(0).toUpperCase()}
                       </div>
-                    </td>
-
-                    {/* Property Info */}
-                    <td className="px-6 py-4 space-y-1 text-xs">
-                      <div className="flex items-center gap-1.5 text-[hsl(var(--foreground))] font-semibold">
-                        <User size={13} className="text-[hsl(var(--muted-foreground))]" />
-                        <span className="truncate max-w-[200px]">{lead.propertyType || 'Property pending'}</span>
-                      </div>
-                      {lead.budgetRange && (
-                        <div className="text-[11px] font-bold text-emerald-600">
-                          Budget: {lead.budgetRange}
-                        </div>
-                      )}
-                    </td>
-
-                    {/* Requirement Status */}
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col gap-1 text-[11px] text-[hsl(var(--muted-foreground))]">
-                        <div className="flex items-center gap-1.5">
-                          <FileText size={13} className="text-emerald-600" />
-                          <span className="font-extrabold text-xs text-[hsl(var(--foreground))]">
-                            {lead.requirements?.length || 0}
-                          </span>{' '}
-                          Rooms Specified
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-6 py-4">
-                      <span
-                        className={cn(
-                          'inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border',
-                          lead.requirements && lead.requirements.length > 0
-                            ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
-                            : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
-                        )}
-                      >
-                        {lead.status}
-                      </span>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-6 py-4 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => onLogRequirements(lead._id)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] rounded-lg text-xs font-bold transition-all border border-[hsl(var(--border))]"
-                      >
-                        {lead.requirements && lead.requirements.length > 0 ? (
-                          <>
-                            <Sparkles size={13} className="text-emerald-600" /> Edit Requirements
-                          </>
-                        ) : (
-                          'Add Requirements'
-                        )}
-                      </button>
-                      {lead.requirements &&
-                        lead.requirements.length > 0 &&
-                        handlePassToNext &&
-                        ([
-                          'Under Drawing',
-                          'Design Approved',
-                          'Under BOQ Creation',
-                          'Under Quotation',
-                          'Negotiation',
-                          'Won',
-                          'Converted',
-                        ].includes(lead.status) ? (
-                          <span
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-xs font-bold"
-                            title="Lead has already been passed to Drawings"
-                          >
-                            Passed to Drawing ✓
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-bold text-[hsl(var(--foreground))] truncate">{lead.name}</h4>
+                        <div className="flex items-center gap-1.5 text-[10px]">
+                          <span className="font-mono text-emerald-600 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20 font-bold">
+                            {lead.leadNumber || 'LD-XXXX'}
                           </span>
-                        ) : (
-                          <button
-                            onClick={() => handlePassToNext(lead._id)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
-                            title="Pass to 2D & 3D Drawings"
-                          >
-                            Pass to Drawing <ArrowRight size={13} />
-                          </button>
-                        ))}
-                      
-                      {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 ml-2"
-                          title="Mark as Lost"
-                        >
-                          <XCircle size={14} />
-                        </button>
+                          <span className="text-[hsl(var(--muted-foreground))]">•</span>
+                          <span className="text-[hsl(var(--muted-foreground))]">{lead.mobileNumber}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <span
+                      className={cn(
+'shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border',
+                        lead.requirements && lead.requirements.length > 0
+                          ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                          : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
                       )}
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    >
+                      {lead.requirements && lead.requirements.length > 0
+                        ? `${lead.requirements.length} Rooms Configured ✓`
+                        : 'Pending'}
+                    </span>
+                  </div>
+
+                  <div className="text-[11px] bg-[hsl(var(--muted)/0.4)] p-2 rounded-xl border border-[hsl(var(--border)/0.5)] flex items-center justify-between">
+                    <span className="font-medium text-[hsl(var(--foreground))]">{lead.propertyType || 'Residential'}</span>
+                    <span className="text-[hsl(var(--muted-foreground))]">{lead.projectLocation || 'Location Pending'}</span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-between gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => onLogRequirements(lead._id)}
+                      className={cn(
+'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
+                        lead.requirements && lead.requirements.length > 0
+                          ? 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
+                          : 'bg-emerald-600 text-white'
+                      )}
+                    >
+                      <PenTool size={11} />
+                      {lead.requirements && lead.requirements.length > 0 ? 'Edit Requirements' : 'Add Requirements'}
+                    </button>
+
+                    {lead.requirements &&
+                      lead.requirements.length > 0 &&
+                      handlePassToNext &&
+                      ([
+                        'Under Drawing',
+                        'Design Approved',
+                        'Under BOQ Creation',
+                        'Under Quotation',
+                        'Negotiation',
+                        'Won',
+                        'Converted',
+                      ].includes(lead.status) ? (
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
+                          Passed ✓
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handlePassToNext(lead._id)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                        >
+                          Pass to Drawing <ArrowRight size={11} />
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* DESKTOP TABLE VIEW (>= md) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-sm whitespace-nowrap">
+                <thead className="bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] uppercase text-[10px] font-black tracking-widest">
+                  <tr>
+                    <th className="px-6 py-3.5 rounded-tl-2xl">Lead Info</th>
+                    <th className="px-6 py-3.5">Property Info</th>
+                    <th className="px-6 py-3.5">Room Requirements</th>
+                    <th className="px-6 py-3.5">Status</th>
+                    <th className="px-6 py-3.5 text-right rounded-tr-2xl">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[hsl(var(--border))]">
+                  {paginatedLeads.map((lead, idx) => (
+                    <motion.tr
+                      key={lead._id}
+                      onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=requirements`)}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.15, delay: idx * 0.02 }}
+                      className="hover:bg-[hsl(var(--accent))] transition-colors group cursor-pointer"
+                    >
+                      {/* Lead Info */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 font-extrabold text-xs shrink-0">
+                            {lead.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-emerald-600 transition-colors">
+                              {lead.name}
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-[10px] font-mono font-bold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                                {lead.leadNumber || 'LD-XXXX'}
+                              </span>
+                              <span className="text-[11px] text-[hsl(var(--muted-foreground))]">
+                                {lead.mobileNumber}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Property Info */}
+                      <td className="px-6 py-4 space-y-0.5 text-xs">
+                        <div className="font-semibold text-[hsl(var(--foreground))]">
+                          {lead.propertyType || 'Residential'}
+                        </div>
+                        <div className="text-[11px] text-[hsl(var(--muted-foreground))] truncate max-w-[200px]">
+                          {lead.projectLocation || 'Location Pending'}
+                        </div>
+                      </td>
+
+                      {/* Room Requirements Summary */}
+                      <td className="px-6 py-4">
+                        {lead.requirements && lead.requirements.length > 0 ? (
+                          <div className="flex flex-wrap gap-1 max-w-[280px]">
+                            {lead.requirements.slice(0, 3).map((req: any, i: number) => (
+                              <span
+                                key={i}
+                                className="inline-flex items-center px-2 py-0.5 rounded-md bg-[hsl(var(--muted))] border border-[hsl(var(--border))] text-[10px] font-bold text-[hsl(var(--foreground))]"
+                              >
+                                {req.roomName || `Room ${i + 1}`}
+                              </span>
+                            ))}
+                            {lead.requirements.length > 3 && (
+                              <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-bold self-center">
+                                +{lead.requirements.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-[hsl(var(--muted-foreground))] italic">No rooms added yet</span>
+                        )}
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-6 py-4">
+                        <span
+                          className={cn(
+'inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border',
+                            lead.requirements && lead.requirements.length > 0
+                              ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                              : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                          )}
+                        >
+                          {lead.requirements && lead.requirements.length > 0
+                            ? `${lead.requirements.length} Rooms Configured ✓`
+                            : 'Pending'}
+                        </span>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-6 py-4 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => onLogRequirements(lead._id)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all cursor-pointer"
+                          title="Configure Rooms & Scope"
+                        >
+                          {lead.requirements && lead.requirements.length > 0 ? (
+                            <>
+                              <Sparkles size={13} className="text-emerald-600" /> Edit Requirements
+                            </>
+                          ) : (
+                            'Add Requirements'
+                          )}
+                        </button>
+                        {lead.requirements &&
+                          lead.requirements.length > 0 &&
+                          handlePassToNext &&
+                          ([
+                            'Under Drawing',
+                            'Design Approved',
+                            'Under BOQ Creation',
+                            'Under Quotation',
+                            'Negotiation',
+                            'Won',
+                            'Converted',
+                          ].includes(lead.status) ? (
+                            <span
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-xs font-bold"
+                              title="Lead has already been passed to Drawings"
+                            >
+                              Passed to Drawing ✓
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handlePassToNext(lead._id)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
+                              title="Pass to 2D & 3D Drawings"
+                            >
+                              Pass to Drawing <ArrowRight size={13} />
+                            </button>
+                          ))}
+                        
+                        {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 ml-2 cursor-pointer"
+                            title="Mark as Lost"
+                          >
+                            <XCircle size={14} />
+                          </button>
+                        )}
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         {/* Pagination Footer */}
         {filteredLeads.length > 0 && (
-          <div className="px-6 py-4 bg-[hsl(var(--card))] border-t border-[hsl(var(--border))] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-3 text-[hsl(var(--muted-foreground))] font-medium">
+          <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-[hsl(var(--card))] border-t border-[hsl(var(--border))] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[hsl(var(--muted-foreground))] font-medium">
               <span>
                 Showing <strong>{(currentPage - 1) * pageSize + 1}</strong> to{' '}
                 <strong>{Math.min(currentPage * pageSize, filteredLeads.length)}</strong> of{' '}
                 <strong>{filteredLeads.length}</strong> requirements
               </span>
 
-              <div className="flex items-center gap-1.5 ml-2">
+              <div className="flex items-center gap-1.5 ml-auto sm:ml-2">
                 <span>Per page:</span>
                 <select
                   value={pageSize}
@@ -329,7 +429,7 @@ export const InteriorRequirementDesignView = ({
             </div>
 
             {totalPages > 1 && (
-              <div className="flex items-center gap-1.5 self-end sm:self-auto">
+              <div className="flex items-center justify-center sm:justify-end gap-1.5 self-center sm:self-auto">
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                   disabled={currentPage === 1}
@@ -339,7 +439,7 @@ export const InteriorRequirementDesignView = ({
                   <ChevronLeft size={15} />
                 </button>
 
-                <div className="flex items-center gap-1 px-1">
+                <div className="flex items-center gap-1 px-1 overflow-x-auto max-w-[200px] sm:max-w-none">
                   {[...Array(totalPages)].map((_, i) => {
                     const pageNum = i + 1;
                     return (
@@ -347,7 +447,7 @@ export const InteriorRequirementDesignView = ({
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
                         className={cn(
-                          'w-7 h-7 rounded-lg font-bold text-xs transition-all',
+'w-7 h-7 rounded-lg font-bold text-xs transition-all shrink-0',
                           currentPage === pageNum
                             ? 'bg-emerald-600 text-white shadow-sm'
                             : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]'
@@ -375,4 +475,3 @@ export const InteriorRequirementDesignView = ({
     </div>
   );
 };
-

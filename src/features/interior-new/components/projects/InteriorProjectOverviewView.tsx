@@ -68,17 +68,17 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
   ];
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+    <div className="p-3.5 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 overflow-x-hidden">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ duration: 0.3 }} className="h-full">
-          <Card className="hover:shadow-md transition-shadow h-full flex flex-col">
-            <CardContent className="p-5 flex-1 flex flex-col">
+          <Card className="h-full flex flex-col border border-[hsl(var(--border))]">
+            <CardContent className="p-3.5 sm:p-5 flex-1 flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Overall Progress</span>
-                <TrendingUp className="w-4 h-4 text-emerald-500" />
+                <span className="text-[10px] sm:text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Overall Progress</span>
+                <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500" />
               </div>
-              <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold tracking-tight text-[hsl(var(--foreground))]">{project?.progress}%</span>
+              <div className="my-2 sm:my-3 flex items-baseline gap-2">
+                <span className="text-xl sm:text-3xl font-extrabold tracking-tight text-[hsl(var(--foreground))]">{project?.progress}%</span>
               </div>
               <div className="w-full h-1.5 bg-[hsl(var(--muted))] rounded-full mt-auto overflow-hidden">
                 <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${project?.progress}%` }} />
@@ -88,64 +88,65 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
         </motion.div>
 
         <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ duration: 0.3, delay: 0.05 }} className="h-full">
-          <Card onClick={() => router.push(`/interior-new/projects/${projectId}/tasks`)} className="hover:shadow-md transition-shadow cursor-pointer hover:border-[hsl(var(--primary)/0.3)] h-full flex flex-col">
-            <CardContent className="p-5 flex-1 flex flex-col">
+          <Card onClick={() => router.push(`/interior-new/projects/${projectId}/tasks`)} className="cursor-pointer hover:border-[hsl(var(--primary)/0.3)] h-full flex flex-col border border-[hsl(var(--border))]">
+            <CardContent className="p-3.5 sm:p-5 flex-1 flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Tasks Status</span>
-                <CheckSquare className="w-4 h-4 text-blue-500" />
+                <span className="text-[10px] sm:text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Tasks Status</span>
+                <CheckSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500" />
               </div>
-              <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold tracking-tight text-[hsl(var(--foreground))]">
+              <div className="my-2 sm:my-3 flex items-baseline gap-1.5 flex-wrap">
+                <span className="text-xl sm:text-3xl font-extrabold tracking-tight text-[hsl(var(--foreground))]">
                   {taskStats?.completed}/{taskStats?.total}
                 </span>
-                <span className="text-xs text-[hsl(var(--muted-foreground))]">({taskStats?.remaining} remaining)</span>
+                <span className="text-[10px] sm:text-xs text-[hsl(var(--muted-foreground))]">({taskStats?.remaining} left)</span>
               </div>
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-auto pt-4">Completed Tasks out of total scope</p>
+              <p className="text-[10px] sm:text-[11px] text-[hsl(var(--muted-foreground))] mt-auto">Completed Tasks scope</p>
             </CardContent>
           </Card>
         </motion.div>
 
         <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ duration: 0.3, delay: 0.1 }} className="h-full">
-          <Card onClick={() => router.push(`/interior-new/projects/${projectId}/milestones`)} className="hover:shadow-md transition-shadow cursor-pointer hover:border-[hsl(var(--primary)/0.3)] h-full flex flex-col">
-            <CardContent className="p-5 flex-1 flex flex-col">
+          <Card onClick={() => router.push(`/interior-new/projects/${projectId}/milestones`)} className="cursor-pointer hover:border-[hsl(var(--primary)/0.3)] h-full flex flex-col border border-[hsl(var(--border))]">
+            <CardContent className="p-3.5 sm:p-5 flex-1 flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Milestones</span>
-                <Clock className="w-4 h-4 text-amber-500" />
+                <span className="text-[10px] sm:text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Milestones</span>
+                <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500" />
               </div>
-              <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold tracking-tight text-[hsl(var(--foreground))]">
+              <div className="my-2 sm:my-3 flex items-baseline gap-1.5 flex-wrap">
+                <span className="text-xl sm:text-3xl font-extrabold tracking-tight text-[hsl(var(--foreground))]">
                   {milestones?.achieved}/{milestones?.total}
                 </span>
-                {milestones?.delayed > 0 && <span className="text-xs font-medium text-red-500">({milestones?.delayed} delayed)</span>}
+                {milestones?.delayed > 0 && <span className="text-[10px] sm:text-xs font-medium text-red-500">({milestones?.delayed} delayed)</span>}
               </div>
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-auto pt-4">Key project checkpoints achieved</p>
+              <p className="text-[10px] sm:text-[11px] text-[hsl(var(--muted-foreground))] mt-auto">Checkpoints achieved</p>
             </CardContent>
           </Card>
         </motion.div>
 
         <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ duration: 0.3, delay: 0.15 }} className="h-full">
-          <Card className="hover:shadow-md transition-shadow h-full flex flex-col">
-            <CardContent className="p-5 flex-1 flex flex-col">
+          <Card className="h-full flex flex-col border border-[hsl(var(--border))]">
+            <CardContent className="p-3.5 sm:p-5 flex-1 flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Contract Budget</span>
+                <span className="text-[10px] sm:text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Contract Budget</span>
+                <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600" />
               </div>
-              <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-2xl font-extrabold tracking-tight text-[hsl(var(--foreground))]">{formatBudget(project?.budget?.amount ?? project?.budget ?? project?.totalBudget)}</span>
+              <div className="my-2 sm:my-3 flex items-baseline gap-2">
+                <span className="text-lg sm:text-2xl font-extrabold tracking-tight text-[hsl(var(--foreground))] truncate">{formatBudget(project?.budget?.amount ?? project?.budget ?? project?.totalBudget)}</span>
               </div>
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-auto pt-4">Total allocated contract value</p>
+              <p className="text-[10px] sm:text-[11px] text-[hsl(var(--muted-foreground))] mt-auto">Allocated value</p>
             </CardContent>
           </Card>
         </motion.div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="col-span-2">
-          <CardContent className="p-6 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <Card className="lg:col-span-2 border border-[hsl(var(--border))]">
+          <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
             <div>
-              <h3 className="text-base font-bold text-[hsl(var(--foreground))]">Scope Breakdown</h3>
+              <h3 className="text-sm sm:text-base font-bold text-[hsl(var(--foreground))]">Scope Breakdown</h3>
               <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">Task distribution across workflow columns</p>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {breakdownRows.map((row) => (
                 <div key={row.label} className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
@@ -161,37 +162,37 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
           </CardContent>
         </Card>
 
-        <div className="space-y-5">
-          <Card>
-            <CardContent className="p-5 space-y-4">
+        <div className="space-y-4 sm:space-y-5">
+          <Card className="border border-[hsl(var(--border))]">
+            <CardContent className="p-4 sm:p-5 space-y-3.5 sm:space-y-4">
               <h4 className="text-sm font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
                 <AlertTriangle className="w-4 h-4 text-amber-500" />
                 Quality & Risk Indicators
               </h4>
-              <div className="space-y-3">
-                <div onClick={() => router.push(`/interior-new/projects/${projectId}/snags`)} className="flex items-center justify-between p-2.5 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)] transition-all cursor-pointer">
+              <div className="space-y-2.5 sm:space-y-3">
+                <div onClick={() => router.push(`/interior-new/projects/${projectId}/snags`)} className="flex items-center justify-between p-2.5 rounded-xl border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)] transition-all cursor-pointer">
                   <span className="text-xs text-[hsl(var(--muted-foreground))]">Open Snags</span>
-                  <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{quality?.openSnags} snags</span>
+                  <span className="text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full">{quality?.openSnags} snags</span>
                 </div>
-                <div onClick={() => router.push(`/interior-new/projects/${projectId}/rfis`)} className="flex items-center justify-between p-2.5 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)] transition-all cursor-pointer">
+                <div onClick={() => router.push(`/interior-new/projects/${projectId}/rfis`)} className="flex items-center justify-between p-2.5 rounded-xl border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)] transition-all cursor-pointer">
                   <span className="text-xs text-[hsl(var(--muted-foreground))]">Open RFIs</span>
-                  <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{quality?.openRFIs} RFIs</span>
+                  <span className="text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-full">{quality?.openRFIs} RFIs</span>
                 </div>
-                <div onClick={() => router.push(`/interior-new/projects/${projectId}/risks`)} className="flex items-center justify-between p-2.5 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)] transition-all cursor-pointer">
+                <div onClick={() => router.push(`/interior-new/projects/${projectId}/risks`)} className="flex items-center justify-between p-2.5 rounded-xl border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)] transition-all cursor-pointer">
                   <span className="text-xs text-[hsl(var(--muted-foreground))]">Critical Risks</span>
-                  <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">{quality?.criticalRisks} risks</span>
+                  <span className="text-xs font-bold text-red-600 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded-full">{quality?.criticalRisks} risks</span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-5 space-y-4">
+          <Card className="border border-[hsl(var(--border))]">
+            <CardContent className="p-4 sm:p-5 space-y-3.5 sm:space-y-4">
               <h4 className="text-sm font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
                 <Activity className="w-4 h-4 text-blue-500" />
                 Site Log Feed
               </h4>
-              <div className="space-y-3.5">
+              <div className="space-y-3">
                 <div className="flex items-start gap-2.5 text-xs text-[hsl(var(--muted-foreground))]">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
                   <div>

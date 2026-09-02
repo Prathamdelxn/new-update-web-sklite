@@ -115,6 +115,10 @@ export default function InteriorPurchaseOrdersView({ projectId }: InteriorPurcha
             Log financial contracts, purchase workflows, and vendor closeouts.
           </p>
         </div>
+        <Button onClick={() => setIsModalOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Create PO
+        </Button>
       </div>
 
       {loading ? (
