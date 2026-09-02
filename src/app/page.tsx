@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthContext';
+import { isInteriorSession } from '@/lib/interiorAuth';
 import {
   ArrowRight,
   Check,
@@ -77,9 +78,16 @@ export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const [openFaq, setOpenFaq] = useState(0);
 
+  const isInterior =
+    (user as any)?.industryType === 'interior' ||
+    (user?.organization as any)?.industryType === 'interior' ||
+    isInteriorSession();
+
   useEffect(() => {
-    if (!loading && user) router.push('/dashboard');
-  }, [loading, router, user]);
+    if (!loading && (user || isInteriorSession())) {
+      router.push(isInterior ? '/interior-new' : '/dashboard');
+    }
+  }, [loading, router, user, isInterior]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 12);
@@ -87,7 +95,7 @@ export default function LandingPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  if (loading || user) {
+  if (loading || user || isInterior) {
     return <div className="grid min-h-screen place-items-center bg-[#07172b] text-2xl font-bold tracking-normal text-white">SKYSTRUCT <span className="text-cyan-300">LITE</span></div>;
   }
 

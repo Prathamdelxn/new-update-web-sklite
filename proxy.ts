@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function proxy(request: NextRequest) {
-  const token = request.cookies.get('token')?.value;
+  const token = request.cookies.get('token')?.value || request.cookies.get('interiorAccessToken')?.value;
+  const industryType = request.cookies.get('industryType')?.value;
   const { pathname } = request.nextUrl;
 
   // Define public routes (superadmin routes handle their own auth)
@@ -18,7 +19,12 @@ export function proxy(request: NextRequest) {
   }
 
   if (token && (pathname === '/login' || pathname === '/register') && !pathname.startsWith('/superadmin')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    const target = industryType === 'interior' ? '/interior-new' : '/dashboard';
+    return NextResponse.redirect(new URL(target, request.url));
+  }
+
+  if (token && industryType === 'interior' && pathname === '/dashboard') {
+    return NextResponse.redirect(new URL('/interior-new', request.url));
   }
 
   return NextResponse.next();

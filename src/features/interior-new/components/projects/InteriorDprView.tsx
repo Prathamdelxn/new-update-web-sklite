@@ -2,7 +2,7 @@
 
 // =============================================================================
 // Sky-Lite Web — Daily Progress Reports (DPR) View
-// Complete official DPR creation, management & PDF generation (Veelee Creations layout)
+// Complete official DPR creation, management & PDF generation (Skystruct Creations layout)
 // =============================================================================
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -29,6 +29,7 @@ import {
 import { Button, Input, Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { downloadDprPdf, printDpr, DPRData } from '@/features/interior-new/utils/dprPdfGenerator';
 import { DprPdfPreviewModal } from '@/features/interior-new/components/projects/DprPdfPreviewModal';
 
@@ -38,6 +39,7 @@ interface InteriorDprViewProps {
 
 export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
   const toast = useToast();
+  const { confirm } = useConfirm();
 
   const [project, setProject] = useState<any>(null);
   const [dprs, setDprs] = useState<any[]>([]);
@@ -45,6 +47,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Preview Modal
   const [previewDpr, setPreviewDpr] = useState<DPRData | null>(null);
@@ -57,46 +60,125 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
   const [dprDate, setDprDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [weather, setWeather] = useState('Sunny');
 
+  // Live Data States
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [projectMembers, setProjectMembers] = useState<any[]>([]);
+  const [moms, setMoms] = useState<any[]>([]);
+
   // 1. Labour Report & Ongoing Work Status
   const [labourReports, setLabourReports] = useState<any[]>([
-    { agencyActivity: 'Electrical - Wall Chasing & Conduit Piping', skilled: 2, unskilled: 1, currentWork: '1st Floor Master Bedroom conduit work', statusAsPerBarChart: 'On Track' },
-    { agencyActivity: 'Carpentry - Wardrobe Carcass Assembly', skilled: 3, unskilled: 1, currentWork: 'Living Room TV unit framing', statusAsPerBarChart: '80%' },
+    { agencyActivity: '', skilled: 1, unskilled: 0, currentWork: '', statusAsPerBarChart: 'In Progress' },
   ]);
 
   // 2. Material Receipt Details
   const [materialReceipts, setMaterialReceipts] = useState<any[]>([
-    { supplierName: 'Sri Balaji Plywoods', challanNo: 'DC-9042', receiptNo: 'MR-108', materialDetails: '18mm Century Marine Ply (710 grade)', uom: 'Sheets', qty: 25 },
+    { supplierName: '', challanNo: '', receiptNo: '', materialDetails: '', uom: 'Nos', qty: 1 },
   ]);
 
   // 3. Tomorrow's Planning
   const [tomorrowPlanning, setTomorrowPlanning] = useState<any[]>([
-    { agencyActivity: 'Carpentry - Lamination Work', skilled: 2, unskilled: 1, targetedWorks: 'Start laminate pressing for wardrobe shutters', remarkConcern: 'Require adhesive delivery by 10 AM' },
-    { agencyActivity: 'Electrical - Switch Board Box Fixing', skilled: 2, unskilled: 0, targetedWorks: 'Kitchen & Dining conduit wiring pull', remarkConcern: 'None' },
+    { agencyActivity: '', skilled: 1, unskilled: 0, targetedWorks: '', remarkConcern: '' },
   ]);
 
   // 4. Material Requirement
   const [materialRequirements, setMaterialRequirements] = useState<any[]>([
-    { materialDescription: 'Fevicol Marine Adhesive (50kg)', uom: 'Can', qty: 2 },
-    { materialDescription: '1mm SF Decorative Laminate (L-904)', uom: 'Sheets', qty: 15 },
+    { materialDescription: '', uom: 'Nos', qty: 1 },
   ]);
 
   // 5. Site Instructions / MOMs
   const [siteInstructions, setSiteInstructions] = useState('');
 
-  // Fetch Project details & DPRs
+  // Auto-populate form using live project tasks, MOMs & site status
+  const populateFromLiveProject = (loadedTasks?: any[], loadedMoms?: any[]) => {
+    const liveTasks = loadedTasks || tasks;
+    const liveMoms = loadedMoms || moms;
+
+    // Active/Ongoing tasks for Today's Labour & Works
+    const activeTasks = liveTasks.filter((t: any) => t.status === 'in_progress' || t.status === 'todo');
+    const liveLabour = activeTasks.length > 0
+      ? activeTasks.map((t: any) => {
+          const trade = t.packageId?.trade || t.packageId?.name || 'General Trade';
+          const subtaskCount = t.subtasks?.length || 0;
+          const completedSubtasks = t.subtasks?.filter((s: any) => s.completed).length || 0;
+          const ongoingWork = subtaskCount > 0
+            ? `${completedSubtasks}/${subtaskCount} steps done (${t.subtasks.map((s: any) => s.title).slice(0, 2).join(', ')})`
+            : t.description || t.name;
+
+          return {
+            agencyActivity: `${trade} - ${t.name}`,
+            skilled: Math.max(1, t.assignees?.length || 1),
+            unskilled: 1,
+            currentWork: ongoingWork,
+            statusAsPerBarChart: `${t.progress || 0}% (${t.status === 'in_progress' ? 'In Progress' : 'Scheduled'})`,
+          };
+        })
+      : [
+          { agencyActivity: '', skilled: 1, unskilled: 0, currentWork: '', statusAsPerBarChart: 'In Progress' },
+        ];
+
+    // Upcoming / In-progress tasks for Tomorrow's Planning
+    const upcomingTasks = liveTasks.filter((t: any) => t.status === 'todo' || (t.status === 'in_progress' && (t.progress || 0) < 100));
+    const liveTomorrow = upcomingTasks.length > 0
+      ? upcomingTasks.slice(0, 4).map((t: any) => ({
+          agencyActivity: `${t.packageId?.trade || 'Site Trade'} - ${t.name}`,
+          skilled: Math.max(1, t.assignees?.length || 1),
+          unskilled: 1,
+          targetedWorks: `Continue execution for ${t.name}`,
+          remarkConcern: 'Materials and site clearances verified',
+        }))
+      : [
+          { agencyActivity: '', skilled: 1, unskilled: 0, targetedWorks: '', remarkConcern: '' },
+        ];
+
+    setLabourReports(liveLabour);
+    setTomorrowPlanning(liveTomorrow);
+
+    // Auto-fill MOM data if available
+    if (liveMoms && liveMoms.length > 0) {
+      const latestMom = liveMoms[0];
+      const momText = `Meeting: ${latestMom.title} (${new Date(latestMom.date).toLocaleDateString('en-IN')})\nAgenda: ${latestMom.agenda || 'Site Coordination'}\nDirectives: ${latestMom.notes || 'Execution as per drawings.'}${
+        latestMom.actionItems?.length ? '\nAction Points: ' + latestMom.actionItems.map((a: any) => `• ${a.description} [${a.status || 'open'}]`).join('; ') : ''
+      }`;
+      setSiteInstructions(momText);
+    }
+  };
+
+  // Fetch Project details, Tasks, DPRs & MOMs
   const loadData = async () => {
     try {
       setLoading(true);
-      const [projRes, dprRes] = await Promise.allSettled([
+      const [projRes, dprRes, taskRes, memberRes, momRes] = await Promise.allSettled([
         interiorProjectService.getProjectDetails(projectId),
         interiorProjectService.getDprs(projectId),
+        interiorProjectService.getTasks(projectId),
+        interiorProjectService.getProjectMembers(projectId),
+        interiorProjectService.getMoms(projectId),
       ]);
 
+      let fetchedTasks: any[] = [];
+      let fetchedMoms: any[] = [];
+
+      if (taskRes.status === 'fulfilled' && taskRes.value?.data) {
+        fetchedTasks = taskRes.value.data || [];
+        setTasks(fetchedTasks);
+      }
+      if (momRes.status === 'fulfilled' && momRes.value?.data) {
+        fetchedMoms = momRes.value.data || [];
+        setMoms(fetchedMoms);
+      }
       if (projRes.status === 'fulfilled' && projRes.value?.data) {
         setProject(projRes.value.data);
       }
       if (dprRes.status === 'fulfilled' && dprRes.value?.data) {
         setDprs(dprRes.value.data);
+      }
+      if (memberRes.status === 'fulfilled' && memberRes.value?.data) {
+        setProjectMembers(memberRes.value.data);
+      }
+
+      // Pre-fill DPR state with live tasks & MOMs
+      if (fetchedTasks.length > 0 || fetchedMoms.length > 0) {
+        populateFromLiveProject(fetchedTasks, fetchedMoms);
       }
     } catch (err) {
       console.error('Failed to load DPRs:', err);
@@ -109,6 +191,11 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
   useEffect(() => {
     if (projectId) loadData();
   }, [projectId]);
+
+  const handleOpenCreateForm = () => {
+    populateFromLiveProject();
+    setIsFormOpen(true);
+  };
 
   // ---------------------------------------------------------------------------
   // Labour Row Helpers
@@ -260,6 +347,38 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
     setIsPreviewOpen(true);
   };
 
+  // ---------------------------------------------------------------------------
+  // Delete DPR Handler
+  // ---------------------------------------------------------------------------
+  const handleDeleteDpr = async (dpr: any) => {
+    const formattedDate = new Date(dpr.date).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+
+    const ok = await confirm({
+      title: 'Delete Daily Progress Report',
+      message: `Are you sure you want to delete the DPR recorded for ${formattedDate}? This action cannot be undone.`,
+      confirmText: 'Delete Report',
+      type: 'danger',
+    });
+
+    if (!ok) return;
+
+    try {
+      setDeletingId(dpr._id);
+      await interiorProjectService.deleteDpr(projectId, dpr._id);
+      toast.success('DPR report deleted successfully');
+      setDprs((prev) => prev.filter((item) => item._id !== dpr._id));
+    } catch (err: any) {
+      console.error('Failed to delete DPR:', err);
+      toast.error(err?.response?.data?.error || 'Failed to delete DPR report');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const handlePrintDpr = (dpr: any) => {
     printDpr(dpr, project);
   };
@@ -286,7 +405,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Daily Progress Reports (DPR)</h2>
             <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20">
-              Veelee Creations Standard
+              SkyStruct Lite
             </span>
           </div>
           <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
@@ -300,7 +419,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
             <Download className="w-3.5 h-3.5" />
             <span className="hidden md:inline">Blank Template PDF</span>
           </Button>
-          <Button onClick={() => setIsFormOpen(true)} className="gap-1.5">
+          <Button onClick={handleOpenCreateForm} className="gap-1.5">
             <Plus className="w-4 h-4" />
             Log New DPR
           </Button>
@@ -322,7 +441,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
           <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-md mx-auto mb-6">
             Log site manpower, ongoing work progress, materials received, and tomorrow&apos;s planning. Click below to generate your first official DPR report.
           </p>
-          <Button onClick={() => setIsFormOpen(true)} className="gap-2">
+          <Button onClick={handleOpenCreateForm} className="gap-2">
             <Plus className="w-4 h-4" />
             Create First DPR
           </Button>
@@ -400,6 +519,20 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                           <Download className="w-3.5 h-3.5" />
                         )}
                         <span>Download PDF</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteDpr(dpr)}
+                        disabled={deletingId === dpr._id}
+                        className="text-xs h-8 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
+                        title="Delete DPR"
+                      >
+                        {deletingId === dpr._id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -519,17 +652,32 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                   <div>
                     <h3 className="text-base font-bold text-[hsl(var(--foreground))]">Log Daily Progress Report (DPR)</h3>
                     <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                      Veelee Creations Format • {project?.name || 'Site Project'}
+                     SkyStruct Lite • {project?.name || 'Site Project'}
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsFormOpen(false)}
-                  className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs text-blue-600 border-blue-200 hover:bg-blue-50 cursor-pointer"
+                    onClick={() => {
+                      populateFromLiveProject();
+                      toast.success('Live tasks and progress synchronized!');
+                    }}
+                  >
+                    <Sparkles className="w-3.5 h-3.5 mr-1 text-blue-600" />
+                    Sync Live Data
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => setIsFormOpen(false)}
+                    className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
               {/* Form Navigation Tabs */}
@@ -960,17 +1108,43 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                         </div>
                       </div>
 
-                      {/* Site Instructions / MOMs */}
-                      <div className="space-y-2 pt-3 border-t border-[hsl(var(--border))]">
-                        <label className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))]">
-                          Site Instructions / MOMs (Minutes of Meeting)
-                        </label>
+                      {/* Minutes of Meeting (MOM) Data */}
+                      <div className="space-y-2.5 pt-3 border-t border-[hsl(var(--border))]">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <label className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
+                            <MessageSquareQuote className="w-3.5 h-3.5 text-blue-600" />
+                            5. Minutes of Meeting (MOM) & Directives
+                          </label>
+                          {moms.length > 0 && (
+                            <select
+                              className="text-[11px] px-2.5 py-1 border border-blue-200 rounded-lg bg-blue-50/50 text-blue-900 focus:outline-none cursor-pointer"
+                              onChange={(e) => {
+                                const selectedMom = moms.find((m) => m._id === e.target.value);
+                                if (selectedMom) {
+                                  const text = `Meeting: ${selectedMom.title} (${new Date(selectedMom.date).toLocaleDateString('en-IN')})\nAgenda: ${selectedMom.agenda || 'Site Coordination'}\nDirectives & Notes: ${selectedMom.notes || 'Execution as per drawings.'}${
+                                    selectedMom.actionItems?.length ? '\nAction Items: ' + selectedMom.actionItems.map((a: any) => `• ${a.description} [${a.status || 'open'}]`).join('; ') : ''
+                                  }`;
+                                  setSiteInstructions(text);
+                                  toast.success(`Inserted MOM: ${selectedMom.title}`);
+                                }
+                              }}
+                              defaultValue=""
+                            >
+                              <option value="" disabled>Insert from Project MOMs...</option>
+                              {moms.map((m) => (
+                                <option key={m._id} value={m._id}>
+                                  {m.title} ({new Date(m.date).toLocaleDateString('en-IN')})
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
                         <textarea
                           rows={4}
                           value={siteInstructions}
                           onChange={(e) => setSiteInstructions(e.target.value)}
                           className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none font-sans"
-                          placeholder="Enter architect instructions, client site directives, safety notices, or meeting action items..."
+                          placeholder="Official Minutes of Meeting directives, decisions, and site action points..."
                         />
                       </div>
                     </div>

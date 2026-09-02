@@ -5,6 +5,7 @@
 // construction flow's `token`/`refreshToken`/`user` keys.
 // =============================================================================
 
+import Cookies from 'js-cookie';
 import interiorApiClient from '@/services/interiorApi.client';
 
 function persistInteriorSession(user: any, organization: any, tokens: { accessToken: string; refreshToken: string }) {
@@ -12,6 +13,9 @@ function persistInteriorSession(user: any, organization: any, tokens: { accessTo
   localStorage.setItem('interiorRefreshToken', tokens.refreshToken);
   localStorage.setItem('interiorUser', JSON.stringify(user));
   localStorage.setItem('interiorOrganization', JSON.stringify(organization));
+  Cookies.set('token', tokens.accessToken, { expires: 7 });
+  Cookies.set('interiorAccessToken', tokens.accessToken, { expires: 7 });
+  Cookies.set('industryType', 'interior', { expires: 7 });
 }
 
 export async function loginInterior(email: string, password: string) {
@@ -46,6 +50,12 @@ export function logoutInterior() {
   localStorage.removeItem('interiorRefreshToken');
   localStorage.removeItem('interiorUser');
   localStorage.removeItem('interiorOrganization');
+  Cookies.remove('token');
+  Cookies.remove('token', { path: '/' });
+  Cookies.remove('interiorAccessToken');
+  Cookies.remove('interiorAccessToken', { path: '/' });
+  Cookies.remove('industryType');
+  Cookies.remove('industryType', { path: '/' });
 }
 
 export function getInteriorUser() {
@@ -56,4 +66,22 @@ export function getInteriorUser() {
   } catch {
     return null;
   }
+}
+
+export function isInteriorSession(): boolean {
+  if (typeof window === 'undefined') return false;
+  const interiorToken = localStorage.getItem('interiorAccessToken');
+  const interiorUser = localStorage.getItem('interiorUser');
+  if (interiorToken && interiorUser) return true;
+
+  const savedUser = localStorage.getItem('user');
+  if (savedUser) {
+    try {
+      const parsed = JSON.parse(savedUser);
+      if (parsed?.industryType === 'interior' || parsed?.organization?.industryType === 'interior') {
+        return true;
+      }
+    } catch {}
+  }
+  return false;
 }

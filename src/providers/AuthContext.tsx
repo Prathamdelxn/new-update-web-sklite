@@ -26,7 +26,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     const savedSuperAdmin = localStorage.getItem('superAdmin');
-    const token = Cookies.get('token') || localStorage.getItem('token');
+    const savedInteriorUser = localStorage.getItem('interiorUser');
+    const token = Cookies.get('token') || localStorage.getItem('token') || localStorage.getItem('interiorAccessToken');
     const saToken = Cookies.get('saToken') || localStorage.getItem('saToken');
     
     let isTokenExpired = false;
@@ -50,8 +51,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('user');
       localStorage.removeItem('saToken');
       localStorage.removeItem('superAdmin');
+      localStorage.removeItem('interiorAccessToken');
+      localStorage.removeItem('interiorRefreshToken');
+      localStorage.removeItem('interiorUser');
+      localStorage.removeItem('interiorOrganization');
       Cookies.remove('token');
+      Cookies.remove('token', { path: '/' });
       Cookies.remove('saToken');
+      Cookies.remove('saToken', { path: '/' });
+      Cookies.remove('interiorAccessToken');
+      Cookies.remove('interiorAccessToken', { path: '/' });
+      Cookies.remove('industryType');
+      Cookies.remove('industryType', { path: '/' });
       Promise.resolve().then(() => setUser(null));
       router.push('/login');
     } else if (token && savedUser && savedUser !== 'undefined' && savedUser !== 'null') {
@@ -59,6 +70,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(JSON.parse(savedUser));
       } catch {
         localStorage.removeItem('user');
+      }
+    } else if (savedInteriorUser && savedInteriorUser !== 'undefined' && savedInteriorUser !== 'null') {
+      try {
+        const parsed = JSON.parse(savedInteriorUser);
+        setUser({ ...parsed, industryType: 'interior' });
+      } catch {
+        localStorage.removeItem('interiorUser');
       }
     } else if (saToken && savedSuperAdmin && savedSuperAdmin !== 'undefined' && savedSuperAdmin !== 'null') {
       try {
@@ -73,26 +91,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     setLoading(false);
   }, [router]);
-
-  // const login = async (credentials: any) => {
-  //   try {
-  //     const response = await api.post('/auth/login', credentials);
-  //     const { token, refreshToken, user: userData } = response.data;
-      
-  //     localStorage.setItem('token', token);
-  //     localStorage.setItem('refreshToken', refreshToken);
-  //     localStorage.setItem('user', JSON.stringify(userData));
-      
-  //     // Set cookie for middleware
-  //     Cookies.set('token', token, { expires: 7 }); // 7 days
-      
-  //     setUser(userData);
-  //     router.push('/dashboard');
-  //   } catch (error) {
-  //     throw error;
-  //   }
-  // };
-
 
   const login = async (credentials: any) => {
     const { authType, ...payload } = credentials;
@@ -124,8 +122,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('user', JSON.stringify(userData));
 
       Cookies.set('token', token, { expires: 7 });
-      setUser(userData);
       const isInteriorOrg = userData?.industryType === 'interior' || userData?.organization?.industryType === 'interior';
+      if (isInteriorOrg) {
+        Cookies.set('industryType', 'interior', { expires: 7 });
+        localStorage.setItem('interiorAccessToken', token);
+        localStorage.setItem('interiorUser', JSON.stringify(userData));
+      } else {
+        Cookies.set('industryType', 'construction', { expires: 7 });
+      }
+      setUser(userData);
       const targetPath = isInteriorOrg ? '/interior-new' : '/dashboard';
       router.push(targetPath);
       return;
@@ -143,16 +148,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('user', JSON.stringify(userData));
 
       Cookies.set('token', token, { expires: 7 });
+      const isInterior = userData?.industryType === 'interior' || userData?.organization?.industryType === 'interior';
+      if (isInterior) {
+        Cookies.set('industryType', 'interior', { expires: 7 });
+        localStorage.setItem('interiorAccessToken', token);
+        localStorage.setItem('interiorUser', JSON.stringify(userData));
+      } else {
+        Cookies.set('industryType', 'construction', { expires: 7 });
+      }
       setUser(userData);
       console.log('Login userData:', userData);
-      const isInterior = userData?.industryType === 'interior' || userData?.organization?.industryType === 'interior';
       const targetPath = isInterior ? '/interior-new' : '/dashboard';
       router.push(targetPath);
     }
   };
-
-
-
 
   const register = async (data: any) => {
     try {
@@ -206,6 +215,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     Cookies.remove('superadmin_token', { path: '/' });
     Cookies.remove('sa_token');
     Cookies.remove('sa_token', { path: '/' });
+    Cookies.remove('interiorAccessToken');
+    Cookies.remove('interiorAccessToken', { path: '/' });
+    Cookies.remove('industryType');
+    Cookies.remove('industryType', { path: '/' });
     setUser(null);
     router.push('/login');
   };

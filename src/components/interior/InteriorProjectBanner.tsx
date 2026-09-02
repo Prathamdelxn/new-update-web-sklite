@@ -28,10 +28,11 @@ const CATEGORIES = (projectId: string) => [
     items: [
       { label: 'Overview', href: `/interior-new/projects/${projectId}`, exact: true },
       { label: 'File Management', href: `/interior-new/projects/${projectId}/filemgt` },
-      { label: 'Team & Members', href: `/interior-new/projects/${projectId}/members` },
             { label: 'Site Details', href: `/interior-new/projects/${projectId}/sitedetails` },
 
       { label: 'Quotation', href: `/interior-new/projects/${projectId}/quotation` },
+            { label: 'Team & Members', href: `/interior-new/projects/${projectId}/members` },
+
     ],
   },
    {
@@ -60,11 +61,9 @@ const CATEGORIES = (projectId: string) => [
     name: 'Commercials',
     icon: '💰',
     items: [
-      { label: 'BOQ Estimator', href: `/interior-new/projects/${projectId}/boq` },
-      { label: 'Change Requests', href: `/interior-new/projects/${projectId}/change-requests` },
+      { label: 'Bills of Quantity (BOQ)', href: `/interior-new/projects/${projectId}/boq` },
       { label: 'Variation Orders', href: `/interior-new/projects/${projectId}/variation-orders` },
       { label: 'Procurement', href: `/interior-new/projects/${projectId}/procurement` },
-      { label: 'Purchase Orders', href: `/interior-new/projects/${projectId}/purchase-orders` },
       { label: 'Vendors', href: `/interior-new/projects/${projectId}/vendors` },
       { label: 'Payments', href: `/interior-new/projects/${projectId}/payments` },
     ],

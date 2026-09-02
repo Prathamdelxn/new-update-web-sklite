@@ -57,10 +57,12 @@ export const interiorProjectService = {
   // DPR
   getDprs: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/dpr`).then((res) => res.data),
   createDpr: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/dpr`, data).then((res) => res.data),
+  deleteDpr: (projectId: string, dprId: string) => interiorApiClient.delete(`/projects/${projectId}/dpr/${dprId}`).then((res) => res.data),
 
   // Weekly Reports
   getWeeklyReports: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/weekly-reports`).then((res) => res.data),
   createWeeklyReport: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/weekly-reports`, data).then((res) => res.data),
+  deleteWeeklyReport: (projectId: string, reportId: string) => interiorApiClient.delete(`/projects/${projectId}/weekly-reports/${reportId}`).then((res) => res.data),
 
   // Purchase Orders / Procurement
   getPurchaseOrders: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/procurement`).then((res) => res.data),
