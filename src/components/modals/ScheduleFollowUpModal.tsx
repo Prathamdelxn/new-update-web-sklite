@@ -79,13 +79,13 @@ export function ScheduleFollowUpModal({ isOpen, onClose, customerId, customerNam
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl p-6">
         
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-extrabold text-slate-900">Schedule Follow-up</h2>
-            <p className="text-sm text-slate-500">Plan a future touchpoint {customerName ? `with ${customerName}` : ''}</p>
+            <p className="text-sm text-slate-500 truncate max-w-full" title={customerName ? `Plan a future touchpoint with ${customerName}` : 'Plan a future touchpoint'}>Plan a future touchpoint {customerName ? `with ${customerName}` : ''}</p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl"><X size={20} className="text-slate-400" /></button>
         </div>

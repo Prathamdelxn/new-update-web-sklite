@@ -132,7 +132,7 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
           <div className="px-6 py-5 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--muted)/0.5)]">
             <div>
               <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))]">Edit Lead Details</h2>
-              <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+              <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5 truncate max-w-full" title={`Update prospect information for ${lead.name}`}>
                 Update prospect information for {lead.name}
               </p>
             </div>
