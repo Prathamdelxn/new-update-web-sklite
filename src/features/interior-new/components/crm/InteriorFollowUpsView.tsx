@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
-import { Calendar, Clock, Phone, UserCircle, MapPin, CheckCircle2, Search, ArrowRight, CheckCircle, XCircle } from 'lucide-react';
+import { Calendar, Clock, Phone, UserCircle, MapPin, CheckCircle2, Search, ArrowRight, CheckCircle, XCircle, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/providers/ToastContext';
@@ -215,12 +215,17 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
                       <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 font-extrabold text-xs shrink-0">
                         {act.customer?.name?.charAt(0).toUpperCase() || '?'}
                       </div>
-                      <div className="min-w-0">
-                        <h4 className="text-xs font-bold text-[hsl(var(--foreground))] truncate">{act.customer?.name || 'Unknown'}</h4>
+                      <div className="min-w-0 flex-1">
+                        <h4 
+                          className="text-xs font-bold text-[hsl(var(--foreground))] truncate max-w-[100px] sm:max-w-[220px]"
+                          title={act.customer?.name || 'Unknown'}
+                        >
+                          {act.customer?.name || 'Unknown'}
+                        </h4>
                         <div className="flex items-center gap-1.5 text-[10px]">
-                          <span className="font-mono text-[hsl(var(--muted-foreground))]">{act.customer?.leadNumber || 'LD-XXXX'}</span>
+                          <span className="font-mono text-[hsl(var(--muted-foreground))] shrink-0">{act.customer?.leadNumber || 'LD-XXXX'}</span>
                           <span className="text-[hsl(var(--muted-foreground))]">•</span>
-                          <span className="text-[hsl(var(--muted-foreground))]">{act.customer?.mobileNumber}</span>
+                          <span className="text-[hsl(var(--muted-foreground))] truncate">{act.customer?.mobileNumber}</span>
                         </div>
                       </div>
                     </div>
@@ -233,31 +238,52 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
                           : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
                       )}
                     >
-                      {act.status === 'Completed' ? 'Completed ✓' : 'Pending'}
+                      {act.status}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between gap-2 text-[11px] bg-[hsl(var(--muted)/0.4)] p-2 rounded-xl border border-[hsl(var(--border)/0.5)]">
-                    <div className="flex items-center gap-1.5">
-                      <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 font-bold text-[9px] uppercase border border-blue-500/20">{act.type}</span>
-                      <span className="text-[hsl(var(--foreground))] font-medium truncate max-w-[140px]">{act.remarks || 'No notes'}</span>
+                  {/* Activity Details */}
+                  <div className="bg-[hsl(var(--muted)/0.4)] p-2.5 rounded-xl border border-[hsl(var(--border)/0.5)] space-y-1 text-xs">
+                    <div className="flex items-center justify-between font-bold">
+                      <span className="text-[hsl(var(--foreground))]">{act.type}</span>
+                      <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-normal">
+                        {act.scheduledDate ? new Date(act.scheduledDate).toLocaleDateString() : new Date(act.createdAt).toLocaleDateString()}
+                      </span>
                     </div>
-                    <div className="text-[10px] text-[hsl(var(--muted-foreground))] shrink-0 font-medium">
-                      {new Date(act.scheduledDate || act.createdAt).toLocaleDateString()}
-                    </div>
+                    {act.remarks && (
+                      <p className="text-[11px] text-[hsl(var(--muted-foreground))] line-clamp-2 italic" title={act.remarks}>
+                        &quot;{act.remarks}&quot;
+                      </p>
+                    )}
                   </div>
 
                   {/* Actions Ribbon */}
-                  <div className="flex items-center justify-between gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
-                    <a
-                      href={`tel:${act.customer?.mobileNumber}`}
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-700 text-xs font-bold border border-emerald-500/20 active:scale-95"
-                    >
-                      <Phone size={11} /> Call
-                    </a>
+                  <div className="flex items-center justify-between pt-1 border-t border-[hsl(var(--border)/0.5)] text-xs" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-1.5">
+                      {act.customer?.mobileNumber && (
+                        <a
+                          href={`tel:${act.customer.mobileNumber}`}
+                          className="p-1.5 rounded-lg bg-[hsl(var(--muted))] hover:bg-emerald-500/10 text-emerald-600 transition-colors border border-[hsl(var(--border))]"
+                          title="Call Lead"
+                        >
+                          <Phone size={12} />
+                        </a>
+                      )}
+                      {act.customer?.mobileNumber && (
+                        <a
+                          href={`https://wa.me/${act.customer.mobileNumber.replace(/\D/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-lg bg-[hsl(var(--muted))] hover:bg-emerald-500/10 text-emerald-600 transition-colors border border-[hsl(var(--border))]"
+                          title="WhatsApp Lead"
+                        >
+                          <MessageSquare size={12} />
+                        </a>
+                      )}
+                    </div>
 
                     <div className="flex items-center gap-1.5">
-                      {act.status === 'Pending' && (
+                      {act.status !== 'Completed' ? (
                         <button
                           onClick={(e) => handleCompleteActivity(act._id, e)}
                           disabled={completingId === act._id}
@@ -265,9 +291,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
                         >
                           <CheckCircle2 size={12} /> Done
                         </button>
-                      )}
-
-                      {act.status === 'Completed' &&
+                      ) : (
                         ['New Lead', 'Contacted', 'Meeting Scheduled'].includes(act.customer?.status || '') && (
                           <button
                             onClick={() => onPassToSiteVisit(act.customer?._id)}
@@ -275,16 +299,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
                           >
                             <MapPin size={11} /> Site Visit
                           </button>
-                        )}
-
-                      {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(act.customer?.status) && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onMarkAsLost(act.customer?._id); }}
-                          className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold border border-orange-500/20 cursor-pointer"
-                          title="Mark as Lost"
-                        >
-                          <XCircle size={13} />
-                        </button>
+                        )
                       )}
                     </div>
                   </div>
@@ -292,52 +307,43 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
               ))}
             </div>
 
-            {/* DESKTOP TABLE VIEW (>= md) */}
+            {/* Desktop Table View */}
             <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] uppercase text-[10px] font-black tracking-widest">
-                  <tr>
-                    <th className="px-6 py-3.5 rounded-tl-2xl">Lead Info</th>
-                    <th className="px-6 py-3.5">Contact</th>
-                    <th className="px-6 py-3.5">Assigned To</th>
-                    <th className="px-6 py-3.5">Date & Time</th>
-                    <th className="px-6 py-3.5">Type & Follow-up Status</th>
-                    <th className="px-6 py-3.5">Goal / Remarks</th>
-                    <th className="px-6 py-3.5 text-right rounded-tr-2xl">Actions</th>
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-[hsl(var(--border))] text-[11px] font-black uppercase tracking-wider text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.3)]">
+                    <th className="px-6 py-4">Lead / Customer</th>
+                    <th className="px-6 py-4">Follow-up Type</th>
+                    <th className="px-6 py-4">Scheduled Date</th>
+                    <th className="px-6 py-4">Remarks / Notes</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[hsl(var(--border))]">
-                  {filteredFollowUps.map((act, idx) => (
-                    <motion.tr
+                <tbody className="divide-y divide-[hsl(var(--border))] text-xs">
+                  {filteredFollowUps.map((act) => (
+                    <tr
                       key={act._id}
                       onClick={() => router.push(`/interior-new/crm/leads/${act.customer?._id}`)}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.15, delay: idx * 0.02 }}
                       className="hover:bg-[hsl(var(--accent))] transition-colors group cursor-pointer"
                     >
-                      {/* Lead Info */}
+                      {/* Customer Info */}
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
                           <div className="w-9 h-9 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 font-extrabold text-xs shrink-0">
                             {act.customer?.name?.charAt(0).toUpperCase() || '?'}
                           </div>
-                          <div>
-                            <div className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-amber-600 transition-colors">
+                          <div className="min-w-0 flex-1">
+                            <div 
+                              className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-amber-600 transition-colors truncate max-w-[100px] sm:max-w-[200px] lg:max-w-[280px]"
+                              title={act.customer?.name || 'Unknown'}
+                            >
                               {act.customer?.name || 'Unknown'}
                             </div>
-                            <div className="text-[10px] font-mono text-[hsl(var(--muted-foreground))]">
+                            <div className="text-[10px] font-mono text-[hsl(var(--muted-foreground))] shrink-0">
                               {act.customer?.leadNumber || 'LD-XXXX'}
                             </div>
                           </div>
-                        </div>
-                      </td>
-
-                      {/* Contact */}
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--foreground))]">
-                          <Phone size={13} className="text-[hsl(var(--muted-foreground))]" />
-                          {act.customer?.mobileNumber || '-'}
                         </div>
                       </td>
 
@@ -405,7 +411,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
                       </td>
 
                       {/* Remarks */}
-                      <td className="px-6 py-4 text-xs text-[hsl(var(--muted-foreground))] max-w-[220px] truncate" title={act.remarks}>
+                      <td className="px-6 py-4 text-xs text-[hsl(var(--muted-foreground))] max-w-[170px] truncate" title={act.remarks}>
                         {act.remarks || '-'}
                       </td>
 
@@ -451,7 +457,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
                           </button>
                         )}
                       </td>
-                    </motion.tr>
+                    </tr>
                   ))}
                 </tbody>
               </table>

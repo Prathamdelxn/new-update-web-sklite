@@ -3,7 +3,7 @@
 // Enhanced Requirement & Design View with Search, Pagination, and Flow Handlers
 
 import React, { useState, useMemo } from 'react';
-import { ArrowRight, User, FileText, PenTool, Search, ChevronLeft, ChevronRight, Sparkles, XCircle } from 'lucide-react';
+import { ArrowRight, User, FileText, PenTool, Search, ChevronLeft, ChevronRight, Sparkles, XCircle, Home, Layers } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -173,14 +173,19 @@ export const InteriorRequirementDesignView = ({
                       <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 font-extrabold text-xs shrink-0">
                         {lead.name.charAt(0).toUpperCase()}
                       </div>
-                      <div className="min-w-0">
-                        <h4 className="text-xs font-bold text-[hsl(var(--foreground))] truncate">{lead.name}</h4>
+                      <div className="min-w-0 flex-1">
+                        <h4 
+                          className="text-xs font-bold text-[hsl(var(--foreground))] truncate max-w-[150px] sm:max-w-[220px]"
+                          title={lead.name}
+                        >
+                          {lead.name}
+                        </h4>
                         <div className="flex items-center gap-1.5 text-[10px]">
-                          <span className="font-mono text-emerald-600 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20 font-bold">
+                          <span className="font-mono text-emerald-600 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20 font-bold shrink-0">
                             {lead.leadNumber || 'LD-XXXX'}
                           </span>
                           <span className="text-[hsl(var(--muted-foreground))]">•</span>
-                          <span className="text-[hsl(var(--muted-foreground))]">{lead.mobileNumber}</span>
+                          <span className="text-[hsl(var(--muted-foreground))] truncate">{lead.mobileNumber}</span>
                         </div>
                       </div>
                     </div>
@@ -193,44 +198,37 @@ export const InteriorRequirementDesignView = ({
                           : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
                       )}
                     >
-                      {lead.requirements && lead.requirements.length > 0
-                        ? `${lead.requirements.length} Rooms Configured ✓`
-                        : 'Pending'}
+                      {lead.requirements && lead.requirements.length > 0 ? 'Documented ✓' : 'Pending'}
                     </span>
                   </div>
 
-                  <div className="text-[11px] bg-[hsl(var(--muted)/0.4)] p-2 rounded-xl border border-[hsl(var(--border)/0.5)] flex items-center justify-between">
-                    <span className="font-medium text-[hsl(var(--foreground))]">{lead.propertyType || 'Residential'}</span>
-                    <span className="text-[hsl(var(--muted-foreground))]">{lead.projectLocation || 'Location Pending'}</span>
+                  <div className="grid grid-cols-2 gap-2 text-[11px] bg-[hsl(var(--muted)/0.4)] p-2 rounded-xl border border-[hsl(var(--border)/0.5)]">
+                    <div className="truncate text-[hsl(var(--foreground))] font-medium flex items-center gap-1">
+                      <Home size={11} className="shrink-0 text-emerald-500" />
+                      <span className="truncate">{lead.propertyType || 'Residential'}</span>
+                    </div>
+                    <div className="truncate text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+                      <Layers size={11} className="shrink-0 text-emerald-500" />
+                      <span className="truncate">{lead.requirements?.length ? `${lead.requirements.length} rooms mapped` : 'No rooms'}</span>
+                    </div>
                   </div>
 
-                  {/* Actions */}
+                  {/* Actions Ribbon */}
                   <div className="flex items-center justify-between gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => onLogRequirements(lead._id)}
                       className={cn(
-'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
+                        'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
                         lead.requirements && lead.requirements.length > 0
                           ? 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
                           : 'bg-emerald-600 text-white'
                       )}
                     >
-                      <PenTool size={11} />
-                      {lead.requirements && lead.requirements.length > 0 ? 'Edit Requirements' : 'Add Requirements'}
+                      <Layers size={11} /> {lead.requirements && lead.requirements.length > 0 ? 'Edit Scope' : 'Log Scope'}
                     </button>
 
-                    {lead.requirements &&
-                      lead.requirements.length > 0 &&
-                      handlePassToNext &&
-                      ([
-                        'Under Drawing',
-                        'Design Approved',
-                        'Under BOQ Creation',
-                        'Under Quotation',
-                        'Negotiation',
-                        'Won',
-                        'Converted',
-                      ].includes(lead.status) ? (
+                    {lead.requirements && lead.requirements.length > 0 && handlePassToNext && (
+                      ['Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Won', 'Converted'].includes(lead.status) ? (
                         <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
                           Passed ✓
                         </span>
@@ -241,7 +239,8 @@ export const InteriorRequirementDesignView = ({
                         >
                           Pass to Drawing <ArrowRight size={11} />
                         </button>
-                      ))}
+                      )
+                    )}
                   </div>
                 </div>
               ))}
@@ -253,9 +252,9 @@ export const InteriorRequirementDesignView = ({
                 <thead className="bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] uppercase text-[10px] font-black tracking-widest">
                   <tr>
                     <th className="px-6 py-3.5 rounded-tl-2xl">Lead Info</th>
-                    <th className="px-6 py-3.5">Property Info</th>
-                    <th className="px-6 py-3.5">Room Requirements</th>
-                    <th className="px-6 py-3.5">Status</th>
+                    <th className="px-6 py-3.5">Property & Location</th>
+                    <th className="px-6 py-3.5">Scope & Rooms</th>
+                    <th className="px-6 py-3.5">Requirement Status</th>
                     <th className="px-6 py-3.5 text-right rounded-tr-2xl">Actions</th>
                   </tr>
                 </thead>
@@ -271,19 +270,22 @@ export const InteriorRequirementDesignView = ({
                     >
                       {/* Lead Info */}
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
                           <div className="w-9 h-9 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 font-extrabold text-xs shrink-0">
                             {lead.name.charAt(0).toUpperCase()}
                           </div>
-                          <div>
-                            <div className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-emerald-600 transition-colors">
+                          <div className="min-w-0 flex-1">
+                            <div 
+                              className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-emerald-600 transition-colors truncate max-w-[140px] sm:max-w-[200px] lg:max-w-[280px]"
+                              title={lead.name}
+                            >
                               {lead.name}
                             </div>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-[10px] font-mono font-bold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                              <span className="text-[10px] font-mono font-bold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 shrink-0">
                                 {lead.leadNumber || 'LD-XXXX'}
                               </span>
-                              <span className="text-[11px] text-[hsl(var(--muted-foreground))]">
+                              <span className="text-[11px] text-[hsl(var(--muted-foreground))] truncate">
                                 {lead.mobileNumber}
                               </span>
                             </div>
@@ -293,11 +295,11 @@ export const InteriorRequirementDesignView = ({
 
                       {/* Property Info */}
                       <td className="px-6 py-4 space-y-0.5 text-xs">
-                        <div className="font-semibold text-[hsl(var(--foreground))]">
+                        <div className="font-semibold text-[hsl(var(--foreground))] truncate max-w-[140px] sm:max-w-[180px]" title={lead.propertyType || 'Residential'}>
                           {lead.propertyType || 'Residential'}
                         </div>
-                        <div className="text-[11px] text-[hsl(var(--muted-foreground))] truncate max-w-[200px]">
-                          {lead.projectLocation || 'Location Pending'}
+                        <div className="text-[11px] text-[hsl(var(--muted-foreground))] truncate max-w-[160px] lg:max-w-[220px]" title={lead.projectLocation || lead.city || 'Location Pending'}>
+                          {lead.projectLocation || lead.city || 'Location Pending'}
                         </div>
                       </td>
 

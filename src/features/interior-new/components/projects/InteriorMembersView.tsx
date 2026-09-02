@@ -29,6 +29,8 @@ import {
   Check,
   ChevronDown,
   UserPlus,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
@@ -162,6 +164,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
     projectRole: 'viewer', designation: '', department: '',
   });
   const [isInviting, setIsInviting] = useState(false);
+  const [showInvitePassword, setShowInvitePassword] = useState(false);
 
   // Add existing user state
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -673,9 +676,23 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                   <label className="text-sm font-medium text-[hsl(var(--foreground))]">Temporary Password <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                    <input type="password" required minLength={8} value={inviteForm.password} onChange={(e) => setInviteForm({ ...inviteForm, password: e.target.value })}
-                      className="w-full pl-9 pr-3 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
-                      placeholder="At least 8 characters" />
+                    <input
+                      type={showInvitePassword ? 'text' : 'password'}
+                      required
+                      minLength={8}
+                      value={inviteForm.password}
+                      onChange={(e) => setInviteForm({ ...inviteForm, password: e.target.value })}
+                      className="w-full pl-9 pr-9 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+                      placeholder="At least 8 characters"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowInvitePassword((prev) => !prev)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors p-0.5 rounded focus:outline-none cursor-pointer"
+                      title={showInvitePassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showInvitePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
                 </div>
                 <div className="space-y-1.5">

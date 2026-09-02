@@ -189,14 +189,19 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                         <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 font-extrabold text-xs shrink-0">
                           {lead.name.charAt(0).toUpperCase()}
                         </div>
-                        <div className="min-w-0">
-                          <h4 className="text-xs font-bold text-[hsl(var(--foreground))] truncate">{lead.name}</h4>
+                        <div className="min-w-0 flex-1">
+                          <h4 
+                            className="text-xs font-bold text-[hsl(var(--foreground))] truncate max-w-[150px] sm:max-w-[220px]"
+                            title={lead.name}
+                          >
+                            {lead.name}
+                          </h4>
                           <div className="flex items-center gap-1.5 text-[10px]">
-                            <span className="font-mono text-purple-600 bg-purple-500/10 px-1.5 py-0.2 rounded border border-purple-500/20 font-bold">
+                            <span className="font-mono text-purple-600 bg-purple-500/10 px-1.5 py-0.2 rounded border border-purple-500/20 font-bold shrink-0">
                               {lead.leadNumber || 'LD-XXXX'}
                             </span>
                             <span className="text-[hsl(var(--muted-foreground))]">•</span>
-                            <span className="text-[hsl(var(--muted-foreground))]">{lead.mobileNumber}</span>
+                            <span className="text-[hsl(var(--muted-foreground))] truncate">{lead.mobileNumber}</span>
                           </div>
                         </div>
                       </div>
@@ -209,18 +214,17 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                             : 'bg-purple-500/10 text-purple-600 border-purple-500/20'
                         )}
                       >
-                        {lead.siteMeasurements ? 'Done ✓' : 'Pending'}
+                        {lead.siteMeasurements ? 'Measured ✓' : 'Pending Survey'}
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-[11px] bg-[hsl(var(--muted)/0.4)] p-2 rounded-xl border border-[hsl(var(--border)/0.5)]">
-                      <div className="truncate text-[hsl(var(--foreground))] font-medium flex items-center gap-1">
-                        <Home size={11} className="shrink-0 text-amber-500" />
-                        <span className="truncate">{lead.propertyType || 'Residential'}</span>
+                    <div className="flex items-center justify-between gap-2 text-[11px] bg-[hsl(var(--muted)/0.4)] p-2 rounded-xl border border-[hsl(var(--border)/0.5)]">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <MapPin size={11} className="text-purple-500 shrink-0" />
+                        <span className="truncate text-[hsl(var(--foreground))]">{lead.projectLocation || lead.city || 'Location pending'}</span>
                       </div>
-                      <div className="truncate text-[hsl(var(--muted-foreground))] flex items-center gap-1">
-                        <MapPin size={11} className="shrink-0 text-purple-500" />
-                        <span className="truncate">{lead.projectLocation || 'Location Pending'}</span>
+                      <div className="text-[10px] text-[hsl(var(--muted-foreground))] shrink-0">
+                        {lead.siteMeasurements ? `${lead.siteMeasurements.carpetArea || 0} sq.ft` : 'No specs'}
                       </div>
                     </div>
 
@@ -229,37 +233,30 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                       <button
                         onClick={() => onLogSiteVisit(lead._id)}
                         className={cn(
-'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
+                          'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
                           lead.siteMeasurements
                             ? 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
                             : 'bg-purple-600 text-white'
                         )}
                       >
-                        <Ruler size={11} /> {lead.siteMeasurements ? 'Edit Measurements' : 'Log Measurements'}
+                        <Ruler size={11} /> {lead.siteMeasurements ? 'Edit Specs' : 'Log Survey'}
                       </button>
 
-                      {lead.siteMeasurements &&
-                        ([
-                          'Under Requirement',
-                          'Requirement Completed',
-                          'Under Drawing',
-                          'Under BOQ Creation',
-                          'Under Quotation',
-                          'Negotiation',
-                          'Won',
-                          'Converted',
-                        ].includes(lead.status) ? (
-                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
-                            Passed ✓
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => onPassToRequirements(lead._id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
-                          >
-                            Pass <ArrowRight size={11} />
-                          </button>
-                        ))}
+                      {lead.siteMeasurements ? (
+                        <button
+                          onClick={() => onPassToRequirements(lead._id)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                        >
+                          Pass <ArrowRight size={11} />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => onPassToRequirements(lead._id)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                        >
+                          Pass <ArrowRight size={11} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -272,43 +269,44 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                 <thead className="bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] uppercase text-[10px] font-black tracking-widest">
                   <tr>
                     <th className="px-6 py-3.5 rounded-tl-2xl">Lead Info</th>
-                    <th className="px-6 py-3.5">Location & Property</th>
-                    <th className="px-6 py-3.5">Scheduled Date</th>
-                    <th className="px-6 py-3.5">Measurement Status</th>
+                    <th className="px-6 py-3.5">Location</th>
+                    <th className="px-6 py-3.5">Carpet Area</th>
+                    <th className="px-6 py-3.5">Assigned To</th>
+                    <th className="px-6 py-3.5">Site Survey Status</th>
                     <th className="px-6 py-3.5 text-right rounded-tr-2xl">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[hsl(var(--border))]">
-                  {paginatedLeads.map((lead, idx) => {
+                <tbody className="divide-y divide-[hsl(var(--border))] text-xs">
+                  {paginatedLeads.map((lead) => {
                     const pendingSiteVisit = pendingActivities.find(
                       (act) => act.customer?._id === lead._id && act.type === 'Site Visit'
                     );
                     const resolvedScheduledDate = lead.siteVisitScheduledDate || pendingSiteVisit?.scheduledDate;
 
                     return (
-                      <motion.tr
+                      <tr
                         key={lead._id}
                         onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=site`)}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.15, delay: idx * 0.02 }}
                         className="hover:bg-[hsl(var(--accent))] transition-colors group cursor-pointer"
                       >
                         {/* Lead Info */}
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
                             <div className="w-9 h-9 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 font-extrabold text-xs shrink-0">
                               {lead.name.charAt(0).toUpperCase()}
                             </div>
-                            <div>
-                              <div className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-purple-600 transition-colors">
+                            <div className="min-w-0 flex-1">
+                              <div 
+                                className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-purple-600 transition-colors truncate max-w-[140px] sm:max-w-[200px] lg:max-w-[280px]"
+                                title={lead.name}
+                              >
                                 {lead.name}
                               </div>
                               <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="text-[10px] font-mono font-bold text-purple-600 bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20">
+                                <span className="text-[10px] font-mono font-bold text-purple-600 bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20 shrink-0">
                                   {lead.leadNumber || 'LD-XXXX'}
                                 </span>
-                                <span className="text-[11px] text-[hsl(var(--muted-foreground))]">
+                                <span className="text-[11px] text-[hsl(var(--muted-foreground))] truncate">
                                   {lead.mobileNumber}
                                 </span>
                               </div>
@@ -318,13 +316,13 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
 
                         {/* Location */}
                         <td className="px-6 py-4 space-y-0.5 text-xs">
-                          <div className="flex items-center gap-1.5 text-[hsl(var(--foreground))] font-semibold">
-                            <Home size={13} className="text-[hsl(var(--muted-foreground))]" />
-                            <span className="truncate max-w-[200px]">{lead.propertyType || 'Residential'}</span>
+                          <div className="flex items-center gap-1.5 text-[hsl(var(--foreground))] font-semibold" title={lead.propertyType || 'Residential'}>
+                            <Home size={13} className="text-[hsl(var(--muted-foreground))] shrink-0" />
+                            <span className="truncate max-w-[140px] sm:max-w-[180px]">{lead.propertyType || 'Residential'}</span>
                           </div>
-                          <div className="text-[11px] text-[hsl(var(--muted-foreground))] flex items-center gap-1 truncate max-w-[200px]">
-                            <MapPin size={11} className="shrink-0" />
-                            <span>{lead.projectLocation || 'Location Pending'}</span>
+                          <div className="text-[11px] text-[hsl(var(--muted-foreground))] flex items-center gap-1 truncate max-w-[160px] lg:max-w-[220px]" title={lead.projectLocation || lead.city || 'Location Pending'}>
+                            <MapPin size={11} className="shrink-0 text-purple-500" />
+                            <span className="truncate">{lead.projectLocation || lead.city || 'Location Pending'}</span>
                           </div>
                         </td>
 
@@ -413,7 +411,7 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                             </button>
                           )}
                         </td>
-                      </motion.tr>
+                      </tr>
                     );
                   })}
                 </tbody>

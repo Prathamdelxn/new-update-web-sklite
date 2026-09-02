@@ -22,6 +22,7 @@ import {
   UserCheck,
   X,
   Eye,
+  EyeOff,
   Shield,
   CheckCircle2,
   MinusCircle,
@@ -229,6 +230,7 @@ function AddUserModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
   const toast = useToast();
   const [form, setForm] = useState<AddUserForm>(INITIAL_FORM);
   const [saving, setSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const set = (field: keyof AddUserForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -316,7 +318,24 @@ function AddUserModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
           {/* Password */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Password</label>
-            <input type="password" value={form.password} onChange={set('password')} placeholder="Leave blank for Welcome@123" className={fieldCls} />
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={form.password}
+                onChange={set('password')}
+                placeholder="Leave blank for Welcome@123"
+                className={`${fieldCls} pl-9 pr-9`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors p-0.5 rounded focus:outline-none cursor-pointer"
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              </button>
+            </div>
             <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Default password is <span className="font-mono font-semibold">Welcome@123</span> if left blank</p>
           </div>
 
@@ -407,6 +426,7 @@ function EditUserModal({
     status: user.status || 'active',
   });
   const [saving, setSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const set = (field: keyof EditUserForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -497,7 +517,21 @@ function EditUserModal({
             <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">New Password (leave blank to keep current)</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
-              <input type="password" value={form.password} onChange={set('password')} placeholder="••••••••" className={`${fieldCls} pl-9`} />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={form.password}
+                onChange={set('password')}
+                placeholder="••••••••"
+                className={`${fieldCls} pl-9 pr-9`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors p-0.5 rounded focus:outline-none cursor-pointer"
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              </button>
             </div>
           </div>
 

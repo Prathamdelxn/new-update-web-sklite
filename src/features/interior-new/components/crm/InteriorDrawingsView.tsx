@@ -14,6 +14,8 @@ import {
   Layers,
   MapPin,
   Home,
+  Palette,
+  UploadCloud,
   XCircle,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -194,52 +196,62 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                         <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 font-extrabold text-xs shrink-0">
                           {lead.name.charAt(0).toUpperCase()}
                         </div>
-                        <div className="min-w-0">
-                          <h4 className="text-xs font-bold text-[hsl(var(--foreground))] truncate">{lead.name}</h4>
+                        <div className="min-w-0 flex-1">
+                          <h4 
+                            className="text-xs font-bold text-[hsl(var(--foreground))] truncate max-w-[150px] sm:max-w-[220px]"
+                            title={lead.name}
+                          >
+                            {lead.name}
+                          </h4>
                           <div className="flex items-center gap-1.5 text-[10px]">
-                            <span className="font-mono text-indigo-600 bg-indigo-500/10 px-1.5 py-0.2 rounded border border-indigo-500/20 font-bold">
+                            <span className="font-mono text-indigo-600 bg-indigo-500/10 px-1.5 py-0.2 rounded border border-indigo-500/20 font-bold shrink-0">
                               {lead.leadNumber || 'LD-XXXX'}
                             </span>
                             <span className="text-[hsl(var(--muted-foreground))]">•</span>
-                            <span className="text-[hsl(var(--muted-foreground))]">{lead.mobileNumber}</span>
+                            <span className="text-[hsl(var(--muted-foreground))] truncate">{lead.mobileNumber}</span>
                           </div>
                         </div>
                       </div>
 
                       <span
                         className={cn(
-'shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border',
+                          'shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border',
                           hasDrawings
                             ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                             : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
                         )}
                       >
-                        {hasDrawings ? `${lead.designFiles.length} File${lead.designFiles.length === 1 ? '' : 's'} ✓` : 'Pending'}
+                        {hasDrawings ? `${lead.designFiles.length} Designs ✓` : 'Pending Design'}
                       </span>
                     </div>
 
-                    <div className="text-[11px] bg-[hsl(var(--muted)/0.4)] p-2 rounded-xl border border-[hsl(var(--border)/0.5)] flex items-center justify-between">
-                      <span className="font-medium text-[hsl(var(--foreground))]">{lead.propertyType || 'Residential'}</span>
-                      <span className="text-[hsl(var(--muted-foreground))]">{lead.projectLocation || 'Location Pending'}</span>
+                    <div className="flex items-center justify-between gap-2 text-[11px] bg-[hsl(var(--muted)/0.4)] p-2 rounded-xl border border-[hsl(var(--border)/0.5)]">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <Palette size={11} className="text-indigo-500 shrink-0" />
+                        <span className="truncate text-[hsl(var(--foreground))]">{lead.propertyType || 'Residential'}</span>
+                      </div>
+                      <div className="text-[10px] text-[hsl(var(--muted-foreground))] shrink-0 font-medium">
+                        {hasDrawings ? `${lead.designFiles.length} files attached` : 'No drawings yet'}
+                      </div>
                     </div>
 
-                    {/* Actions */}
+                    {/* Actions Ribbon */}
                     <div className="flex items-center justify-between gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => onUploadDesign(lead._id)}
                         className={cn(
-'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
+                          'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
                           hasDrawings
                             ? 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
                             : 'bg-indigo-600 text-white'
                         )}
                       >
-                        <Upload size={11} /> {hasDrawings ? 'Edit Drawings' : 'Upload Drawings'}
+                        <UploadCloud size={11} /> {hasDrawings ? 'Manage Files' : 'Upload'}
                       </button>
 
                       {hasDrawings &&
                         onPassToBoq &&
-                        (isPassedToNext ? (
+                        (['Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Won', 'Converted'].includes(lead.status) ? (
                           <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
                             Passed ✓
                           </span>
@@ -263,10 +275,9 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                 <thead className="bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] uppercase text-[10px] font-black tracking-widest">
                   <tr>
                     <th className="px-6 py-3.5 rounded-tl-2xl">Lead Info</th>
-                    <th className="px-6 py-3.5">Property Info</th>
-                    <th className="px-6 py-3.5">Assigned To</th>
-                    <th className="px-6 py-3.5">Drawings Status</th>
-                    <th className="px-6 py-3.5">Stage</th>
+                    <th className="px-6 py-3.5">Property & Location</th>
+                    <th className="px-6 py-3.5">Drawing Files Attached</th>
+                    <th className="px-6 py-3.5">Drawing Status</th>
                     <th className="px-6 py-3.5 text-right rounded-tr-2xl">Actions</th>
                   </tr>
                 </thead>
@@ -284,7 +295,7 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                     return (
                       <motion.tr
                         key={lead._id}
-                        onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=design`)}
+                        onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=designs`)}
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.15, delay: idx * 0.02 }}
@@ -292,19 +303,22 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                       >
                         {/* Lead Info */}
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
                             <div className="w-9 h-9 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 font-extrabold text-xs shrink-0">
                               {lead.name.charAt(0).toUpperCase()}
                             </div>
-                            <div>
-                              <div className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-indigo-600 transition-colors">
+                            <div className="min-w-0 flex-1">
+                              <div 
+                                className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-indigo-600 transition-colors truncate max-w-[140px] sm:max-w-[200px] lg:max-w-[280px]"
+                                title={lead.name}
+                              >
                                 {lead.name}
                               </div>
                               <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="text-[10px] font-mono font-bold text-indigo-600 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">
+                                <span className="text-[10px] font-mono font-bold text-indigo-600 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20 shrink-0">
                                   {lead.leadNumber || 'LD-XXXX'}
                                 </span>
-                                <span className="text-[11px] text-[hsl(var(--muted-foreground))]">
+                                <span className="text-[11px] text-[hsl(var(--muted-foreground))] truncate">
                                   {lead.mobileNumber}
                                 </span>
                               </div>
@@ -314,22 +328,25 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
 
                         {/* Location */}
                         <td className="px-6 py-4 space-y-0.5 text-xs">
-                          <div className="flex items-center gap-1.5 text-[hsl(var(--foreground))] font-semibold">
-                            <Home size={13} className="text-[hsl(var(--muted-foreground))]" />
-                            <span className="truncate max-w-[200px]">{lead.propertyType || 'Residential'}</span>
+                          <div className="flex items-center gap-1.5 text-[hsl(var(--foreground))] font-semibold" title={lead.propertyType || 'Residential'}>
+                            <Home size={13} className="text-[hsl(var(--muted-foreground))] shrink-0" />
+                            <span className="truncate max-w-[140px] sm:max-w-[180px]">{lead.propertyType || 'Residential'}</span>
                           </div>
-                          <div className="text-[11px] text-[hsl(var(--muted-foreground))] flex items-center gap-1 truncate max-w-[200px]">
-                            <MapPin size={11} className="shrink-0" />
-                            <span>{lead.projectLocation || 'Location Pending'}</span>
+                          <div className="text-[11px] text-[hsl(var(--muted-foreground))] flex items-center gap-1 truncate max-w-[160px] lg:max-w-[220px]" title={lead.projectLocation || lead.city || 'Location Pending'}>
+                            <MapPin size={11} className="shrink-0 text-indigo-500" />
+                            <span className="truncate">{lead.projectLocation || lead.city || 'Location Pending'}</span>
                           </div>
                         </td>
 
                         {/* Assigned To */}
                         <td className="px-6 py-4">
                           {lead.assignedSalesExecutive ? (
-                            <div className="flex items-center gap-1.5 text-xs font-bold text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] w-max">
-                              <User size={13} className="text-indigo-600" />
-                              {displayUserName(lead.assignedSalesExecutive)}
+                            <div 
+                              className="flex items-center gap-1.5 text-xs font-bold text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] max-w-[140px] sm:max-w-[180px]"
+                              title={displayUserName(lead.assignedSalesExecutive)}
+                            >
+                              <User size={13} className="text-indigo-600 shrink-0" />
+                              <span className="truncate">{displayUserName(lead.assignedSalesExecutive)}</span>
                             </div>
                           ) : (
                             <span className="text-xs text-[hsl(var(--muted-foreground))] italic">Unassigned</span>

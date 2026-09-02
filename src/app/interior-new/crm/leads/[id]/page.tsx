@@ -255,10 +255,17 @@ export default function Lead360View() {
               <ArrowLeft className="w-4 h-4" />
             </button>
             
-            <div className="flex flex-col gap-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-black text-[hsl(var(--foreground))] tracking-tight truncate">{lead.name}</h1>
-                <span className="font-mono bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-2 py-0.5 rounded-lg text-[11px] sm:text-xs font-bold border border-[hsl(var(--border))] shrink-0">{lead.leadNumber || 'LD-XXXX'}</span>
+            <div className="flex flex-col gap-1 min-w-0 max-w-full">
+              <div className="flex items-center gap-2 flex-wrap min-w-0">
+                <h1 
+                  className="text-lg sm:text-xl md:text-2xl font-black text-[hsl(var(--foreground))] tracking-tight truncate max-w-[200px] sm:max-w-[360px] md:max-w-[520px]"
+                  title={lead.name}
+                >
+                  {lead.name}
+                </h1>
+                <span className="font-mono bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-2 py-0.5 rounded-lg text-[11px] sm:text-xs font-bold border border-[hsl(var(--border))] shrink-0">
+                  {lead.leadNumber || 'LD-XXXX'}
+                </span>
               </div>
               
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs">

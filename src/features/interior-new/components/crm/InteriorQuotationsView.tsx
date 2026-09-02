@@ -4,7 +4,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { FileText, ArrowRight, Phone, Trophy, Search, ChevronLeft, ChevronRight, Edit3, XCircle } from 'lucide-react';
+import { FileText, ArrowRight, Phone, Trophy, Search, ChevronLeft, ChevronRight, Edit3, XCircle, Building2, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { InteriorLead } from './InteriorLeadsTable';
 import { motion } from 'framer-motion';
@@ -172,14 +172,19 @@ export function InteriorQuotationsView({
                         <div className="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-600 font-extrabold text-xs shrink-0">
                           {lead.name.charAt(0).toUpperCase()}
                         </div>
-                        <div className="min-w-0">
-                          <h4 className="text-xs font-bold text-[hsl(var(--foreground))] truncate">{lead.name}</h4>
+                        <div className="min-w-0 flex-1">
+                          <h4 
+                            className="text-xs font-bold text-[hsl(var(--foreground))] truncate max-w-[150px] sm:max-w-[220px]"
+                            title={lead.name}
+                          >
+                            {lead.name}
+                          </h4>
                           <div className="flex items-center gap-1.5 text-[10px]">
-                            <span className="font-mono text-rose-600 bg-rose-500/10 px-1.5 py-0.2 rounded border border-rose-500/20 font-bold">
+                            <span className="font-mono text-rose-600 bg-rose-500/10 px-1.5 py-0.2 rounded border border-rose-500/20 font-bold shrink-0">
                               {lead.leadNumber || 'LD-XXXX'}
                             </span>
                             <span className="text-[hsl(var(--muted-foreground))]">•</span>
-                            <span className="text-[hsl(var(--muted-foreground))]">{lead.mobileNumber}</span>
+                            <span className="text-[hsl(var(--muted-foreground))] truncate">{lead.mobileNumber}</span>
                           </div>
                         </div>
                       </div>
@@ -297,16 +302,19 @@ export function InteriorQuotationsView({
                       >
                         {/* Lead Info */}
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
                             <div className="w-9 h-9 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 font-extrabold text-xs shrink-0">
                               {lead.name.charAt(0).toUpperCase()}
                             </div>
-                            <div>
-                              <div className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-indigo-600 transition-colors">
+                            <div className="min-w-0 flex-1">
+                              <div 
+                                className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-indigo-600 transition-colors truncate max-w-[140px] sm:max-w-[200px] lg:max-w-[280px]"
+                                title={lead.name}
+                              >
                                 {lead.name}
                               </div>
                               <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="text-[10px] font-mono font-bold text-indigo-600 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">
+                                <span className="text-[10px] font-mono font-bold text-indigo-600 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20 shrink-0">
                                   {lead.leadNumber || 'LD-XXXX'}
                                 </span>
                               </div>
@@ -316,9 +324,9 @@ export function InteriorQuotationsView({
 
                         {/* Contact */}
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--foreground))] font-semibold">
-                            <Phone size={13} className="text-[hsl(var(--muted-foreground))]" />
-                            {lead.mobileNumber}
+                          <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--foreground))] font-semibold" title={lead.mobileNumber || ''}>
+                            <Phone size={13} className="text-[hsl(var(--muted-foreground))] shrink-0" />
+                            <span className="truncate max-w-[130px]">{lead.mobileNumber || '-'}</span>
                           </div>
                         </td>
 

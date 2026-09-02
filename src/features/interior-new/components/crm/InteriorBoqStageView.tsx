@@ -14,6 +14,7 @@ import {
   MapPin,
   Home,
   FileSpreadsheet,
+  Building2,
   XCircle,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -186,14 +187,19 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                         <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 font-extrabold text-xs shrink-0">
                           {lead.name.charAt(0).toUpperCase()}
                         </div>
-                        <div className="min-w-0">
-                          <h4 className="text-xs font-bold text-[hsl(var(--foreground))] truncate">{lead.name}</h4>
+                        <div className="min-w-0 flex-1">
+                          <h4 
+                            className="text-xs font-bold text-[hsl(var(--foreground))] truncate max-w-[150px] sm:max-w-[220px]"
+                            title={lead.name}
+                          >
+                            {lead.name}
+                          </h4>
                           <div className="flex items-center gap-1.5 text-[10px]">
-                            <span className="font-mono text-blue-600 bg-blue-500/10 px-1.5 py-0.2 rounded border border-blue-500/20 font-bold">
+                            <span className="font-mono text-blue-600 bg-blue-500/10 px-1.5 py-0.2 rounded border border-blue-500/20 font-bold shrink-0">
                               {lead.leadNumber || 'LD-XXXX'}
                             </span>
                             <span className="text-[hsl(var(--muted-foreground))]">•</span>
-                            <span className="text-[hsl(var(--muted-foreground))]">{lead.mobileNumber}</span>
+                            <span className="text-[hsl(var(--muted-foreground))] truncate">{lead.mobileNumber}</span>
                           </div>
                         </div>
                       </div>
@@ -206,36 +212,37 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                             : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
                         )}
                       >
-                        {hasBoqs ? `BOQ v${lead.boqs.length} ✓` : 'Pending'}
+                        {hasBoqs ? `${lead.boqs.length} BOQ Estimation${lead.boqs.length === 1 ? '' : 's'} ✓` : 'Pending BOQ'}
                       </span>
                     </div>
 
-                    <div className="text-[11px] bg-[hsl(var(--muted)/0.4)] p-2 rounded-xl border border-[hsl(var(--border)/0.5)] flex items-center justify-between">
-                      <span className="font-medium text-[hsl(var(--foreground))]">{lead.propertyType || 'Residential'}</span>
-                      {latestBoq?.totalAmount ? (
-                        <span className="font-bold text-emerald-600">₹{latestBoq.totalAmount.toLocaleString()}</span>
-                      ) : (
-                        <span className="text-[hsl(var(--muted-foreground))]">{lead.projectLocation || 'Location Pending'}</span>
-                      )}
+                    <div className="flex items-center justify-between gap-2 text-[11px] bg-[hsl(var(--muted)/0.4)] p-2 rounded-xl border border-[hsl(var(--border)/0.5)]">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <Building2 size={11} className="text-blue-500 shrink-0" />
+                        <span className="truncate text-[hsl(var(--foreground))]">{lead.propertyType || 'Residential'}</span>
+                      </div>
+                      <div className="text-[10px] text-emerald-600 font-bold shrink-0">
+                        {hasBoqs ? `₹${(lead.boqs[lead.boqs.length - 1]?.totalAmount || 0).toLocaleString('en-IN')}` : 'No estimate'}
+                      </div>
                     </div>
 
-                    {/* Actions */}
+                    {/* Actions Ribbon */}
                     <div className="flex items-center justify-between gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => onAddBoq(lead._id)}
                         className={cn(
-'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
+                          'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
                           hasBoqs
                             ? 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
                             : 'bg-blue-600 text-white'
                         )}
                       >
-                        <Calculator size={11} /> {hasBoqs ? 'Edit BOQ' : 'Create BOQ'}
+                        <FileSpreadsheet size={11} /> {hasBoqs ? 'Edit BOQ' : 'Create BOQ'}
                       </button>
 
                       {hasBoqs &&
                         onPassToQuotations &&
-                        (isPassedToNext ? (
+                        (['Under Quotation', 'Negotiation', 'Won', 'Converted'].includes(lead.status) ? (
                           <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
                             Passed ✓
                           </span>
@@ -260,8 +267,8 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                   <tr>
                     <th className="px-6 py-3.5 rounded-tl-2xl">Lead Info</th>
                     <th className="px-6 py-3.5">Property & Location</th>
-                    <th className="px-6 py-3.5">BOQ Version & Estimate</th>
-                    <th className="px-6 py-3.5">Status</th>
+                    <th className="px-6 py-3.5">Latest BOQ Value</th>
+                    <th className="px-6 py-3.5">BOQ Status</th>
                     <th className="px-6 py-3.5 text-right rounded-tr-2xl">Actions</th>
                   </tr>
                 </thead>
@@ -287,19 +294,22 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                       >
                         {/* Lead Info */}
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
                             <div className="w-9 h-9 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 font-extrabold text-xs shrink-0">
                               {lead.name.charAt(0).toUpperCase()}
                             </div>
-                            <div>
-                              <div className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-blue-600 transition-colors">
+                            <div className="min-w-0 flex-1">
+                              <div 
+                                className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-blue-600 transition-colors truncate max-w-[140px] sm:max-w-[200px] lg:max-w-[280px]"
+                                title={lead.name}
+                              >
                                 {lead.name}
                               </div>
                               <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="text-[10px] font-mono font-bold text-blue-600 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">
+                                <span className="text-[10px] font-mono font-bold text-blue-600 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20 shrink-0">
                                   {lead.leadNumber || 'LD-XXXX'}
                                 </span>
-                                <span className="text-[11px] text-[hsl(var(--muted-foreground))]">
+                                <span className="text-[11px] text-[hsl(var(--muted-foreground))] truncate">
                                   {lead.mobileNumber}
                                 </span>
                               </div>
@@ -309,13 +319,13 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
 
                         {/* Location */}
                         <td className="px-6 py-4 space-y-0.5 text-xs">
-                          <div className="flex items-center gap-1.5 text-[hsl(var(--foreground))] font-semibold">
-                            <Home size={13} className="text-[hsl(var(--muted-foreground))]" />
-                            <span className="truncate max-w-[200px]">{lead.propertyType || 'Residential'}</span>
+                          <div className="flex items-center gap-1.5 text-[hsl(var(--foreground))] font-semibold" title={lead.propertyType || 'Residential'}>
+                            <Home size={13} className="text-[hsl(var(--muted-foreground))] shrink-0" />
+                            <span className="truncate max-w-[140px] sm:max-w-[180px]">{lead.propertyType || 'Residential'}</span>
                           </div>
-                          <div className="text-[11px] text-[hsl(var(--muted-foreground))] flex items-center gap-1 truncate max-w-[200px]">
-                            <MapPin size={11} className="shrink-0" />
-                            <span>{lead.projectLocation || 'Location Pending'}</span>
+                          <div className="text-[11px] text-[hsl(var(--muted-foreground))] flex items-center gap-1 truncate max-w-[160px] lg:max-w-[220px]" title={lead.projectLocation || lead.city || 'Location Pending'}>
+                            <MapPin size={11} className="shrink-0 text-blue-500" />
+                            <span className="truncate">{lead.projectLocation || lead.city || 'Location Pending'}</span>
                           </div>
                         </td>
 
@@ -324,13 +334,17 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                           {hasBoqs ? (
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-500/10 text-blue-700 text-xs font-bold border border-blue-500/20">
-                                  <FileSpreadsheet size={12} /> v{lead.boqs.length} ({latestBoq?.title || 'Main BOQ'})
+                                <span 
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-500/10 text-blue-700 text-xs font-bold border border-blue-500/20 max-w-[160px] sm:max-w-[220px] truncate"
+                                  title={latestBoq?.title || `BOQ v${lead.boqs.length}`}
+                                >
+                                  <FileSpreadsheet size={12} className="shrink-0" />
+                                  <span className="truncate">v{lead.boqs.length} ({latestBoq?.title || 'Main BOQ'})</span>
                                 </span>
                               </div>
                               {latestBoq?.totalAmount ? (
                                 <div className="text-xs font-extrabold text-emerald-600">
-                                  Total: ₹{latestBoq.totalAmount.toLocaleString()}
+                                  Total: ₹{latestBoq.totalAmount.toLocaleString('en-IN')}
                                 </div>
                               ) : null}
                             </div>

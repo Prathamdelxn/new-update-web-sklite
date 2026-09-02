@@ -522,15 +522,18 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                         <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-indigo-500/15 to-purple-500/15 border border-indigo-500/20 flex items-center justify-center text-indigo-600 font-black text-sm shrink-0">
                           {lead.name.charAt(0).toUpperCase()}
                         </div>
-                        <div className="min-w-0">
-                          <h4 className="text-xs font-extrabold text-[hsl(var(--foreground))] truncate leading-snug">
+                        <div className="min-w-0 flex-1">
+                          <h4 
+                            className="text-xs font-extrabold text-[hsl(var(--foreground))] truncate leading-snug max-w-[160px] sm:max-w-[240px]"
+                            title={lead.name}
+                          >
                             {lead.name}
                           </h4>
                           <div className="flex items-center gap-1.5 mt-0.5 text-[10px]">
-                            <span className="font-mono font-bold text-indigo-600 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">
+                            <span className="font-mono font-bold text-indigo-600 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20 shrink-0">
                               {lead.leadNumber || 'LD-XXXX'}
                             </span>
-                            <span className="text-[hsl(var(--muted-foreground))]">
+                            <span className="text-[hsl(var(--muted-foreground))] truncate">
                               {new Date(lead.createdAt).toLocaleDateString()}
                             </span>
                           </div>
@@ -740,6 +743,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                               <a
                                 href={`mailto:${lead.email}`}
                                 className="truncate max-w-[150px] hover:underline hover:text-[hsl(var(--foreground))]"
+                                title={lead.email}
                               >
                                 {lead.email}
                               </a>
@@ -749,7 +753,10 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
 
                         {/* Source */}
                         <td className="px-6 py-4">
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[hsl(var(--muted))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] text-[11px] font-semibold">
+                          <span 
+                            className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[hsl(var(--muted))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] text-[11px] font-semibold truncate max-w-[120px]"
+                            title={lead.leadSource || 'Direct'}
+                          >
                             {lead.leadSource || 'Direct'}
                           </span>
                         </td>
@@ -757,9 +764,12 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                         {/* Assigned To */}
                         <td className="px-6 py-4">
                           {lead.assignedSalesExecutive ? (
-                            <div className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--foreground))] bg-[hsl(var(--muted)/0.6)] px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] w-max">
+                            <div 
+                              className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--foreground))] bg-[hsl(var(--muted)/0.6)] px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] max-w-[140px] sm:max-w-[180px]"
+                              title={displayUserName(lead.assignedSalesExecutive)}
+                            >
                               <UserCircle size={14} className="text-indigo-600 shrink-0" />
-                              {displayUserName(lead.assignedSalesExecutive)}
+                              <span className="truncate">{displayUserName(lead.assignedSalesExecutive)}</span>
                             </div>
                           ) : (
                             <span className="text-xs text-[hsl(var(--muted-foreground))] italic">Unassigned</span>
@@ -768,14 +778,14 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
 
                         {/* Property Info */}
                         <td className="px-6 py-4 space-y-1 text-xs">
-                          <div className="flex items-center gap-1.5 text-[hsl(var(--foreground))] font-semibold">
-                            <Building size={13} className="text-[hsl(var(--muted-foreground))]" />
-                            {lead.propertyType || 'Interior Project'}
+                          <div className="flex items-center gap-1.5 text-[hsl(var(--foreground))] font-semibold" title={lead.propertyType || 'Interior Project'}>
+                            <Building size={13} className="text-[hsl(var(--muted-foreground))] shrink-0" />
+                            <span className="truncate max-w-[140px]">{lead.propertyType || 'Interior Project'}</span>
                           </div>
                           {lead.projectLocation ? (
-                            <div className="text-[11px] text-[hsl(var(--muted-foreground))] max-w-[150px] flex items-center gap-1">
-                              <MapPin size={11} className="shrink-0" />
-                              <span className="truncate" title={lead.projectLocation}>{lead.projectLocation}</span>
+                            <div className="text-[11px] text-[hsl(var(--muted-foreground))] max-w-[160px] lg:max-w-[200px] flex items-center gap-1" title={lead.projectLocation}>
+                              <MapPin size={11} className="shrink-0 text-purple-500" />
+                              <span className="truncate">{lead.projectLocation}</span>
                             </div>
                           ) : (
                             <span className="text-[11px] text-[hsl(var(--muted-foreground))] italic">Location pending</span>
