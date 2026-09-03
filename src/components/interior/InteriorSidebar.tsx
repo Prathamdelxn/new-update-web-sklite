@@ -100,7 +100,7 @@ export function InteriorSidebar({ organizationName, collapsed, onToggleCollapse,
             </div>
             {!collapsed && (
               <div className="min-w-0">
-                <h2 className="text-sm font-bold tracking-tight text-[hsl(var(--foreground))] truncate">InteriorOS</h2>
+                <h2 className="text-sm font-bold tracking-tight text-[hsl(var(--foreground))] truncate">SkyStruct-Lite Interior</h2>
                 <p className="text-[10px] text-[hsl(var(--muted-foreground))] truncate">{organizationName || 'Workspace'}</p>
               </div>
             )}

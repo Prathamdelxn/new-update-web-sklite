@@ -13,6 +13,7 @@ import {
   FileText,
   XCircle,
 } from 'lucide-react';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 export type InteriorCrmStage =
   | 'leads'
@@ -32,15 +33,15 @@ interface InteriorCrmFlowTabsProps {
   stageCounts?: Partial<Record<InteriorCrmStage, number>>;
 }
 
-const FLOW_STAGES: { id: InteriorCrmStage; label: string; icon: React.ElementType }[] = [
-  { id: 'leads', label: 'All Leads', icon: Users },
-  { id: 'follow_ups', label: 'Follow-ups', icon: PhoneCall },
-  { id: 'site_visits', label: 'Site Visits', icon: MapPin },
-  { id: 'requirement_design', label: 'Requirements', icon: PenTool },
-  { id: 'drawing', label: 'Drawings', icon: Ruler },
-  { id: 'boq', label: 'BOQ', icon: Calculator },
-  { id: 'quotations', label: 'Quotations', icon: FileText },
-  { id: 'lost_leads', label: 'Lost Leads', icon: XCircle },
+const FLOW_STAGES: { id: InteriorCrmStage; label: string; icon: React.ElementType; moduleKey: string }[] = [
+  { id: 'leads', label: 'All Leads', icon: Users, moduleKey: 'crm_leads' },
+  { id: 'follow_ups', label: 'Follow-ups', icon: PhoneCall, moduleKey: 'crm_followups' },
+  { id: 'site_visits', label: 'Site Visits', icon: MapPin, moduleKey: 'crm_site_visits' },
+  { id: 'requirement_design', label: 'Requirements', icon: PenTool, moduleKey: 'crm_requirements' },
+  { id: 'drawing', label: 'Drawings', icon: Ruler, moduleKey: 'crm_drawings' },
+  { id: 'boq', label: 'BOQ', icon: Calculator, moduleKey: 'crm_boq' },
+  { id: 'quotations', label: 'Quotations', icon: FileText, moduleKey: 'crm_quotations' },
+  { id: 'lost_leads', label: 'Lost Leads', icon: XCircle, moduleKey: 'crm_leads' },
 ];
 
 export const InteriorCrmFlowTabs: React.FC<InteriorCrmFlowTabsProps> = ({
@@ -48,10 +49,16 @@ export const InteriorCrmFlowTabs: React.FC<InteriorCrmFlowTabsProps> = ({
   onChange,
   stageCounts = {},
 }) => {
+  const { hasPermission } = usePermissions();
+
+  const visibleStages = React.useMemo(() => {
+    return FLOW_STAGES.filter((stage) => hasPermission(stage.moduleKey, 'read'));
+  }, [hasPermission]);
+
   return (
     <div className="w-full relative bg-[hsl(var(--card))] border-b border-[hsl(var(--border))] overflow-x-auto scrollbar-none touch-pan-x">
       <div className="flex items-center w-full min-w-max px-2 py-1 sm:py-1.5 gap-1">
-        {FLOW_STAGES.map((stage) => {
+        {visibleStages.map((stage) => {
           const isActive = activeTab === stage.id;
           const Icon = stage.icon;
           const count = stageCounts[stage.id];

@@ -29,6 +29,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 export interface InteriorLead {
   _id: string;
@@ -135,6 +136,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
   activeTab = 'leads',
 }) => {
   const router = useRouter();
+  const { hasPermission } = usePermissions();
 
   // Search, Filter & Pagination State
   const [searchTerm, setSearchTerm] = useState('');
@@ -367,14 +369,16 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
               </button>
             )}
 
-            <button
-              onClick={handleExportCSV}
-              disabled={filteredLeads.length === 0}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] rounded-xl transition-all border border-[hsl(var(--border))] disabled:opacity-50 cursor-pointer"
-              title="Export visible leads to CSV"
-            >
-              <Download size={13} /> Export CSV
-            </button>
+            {hasPermission('crm_leads', 'export') && (
+              <button
+                onClick={handleExportCSV}
+                disabled={filteredLeads.length === 0}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] rounded-xl transition-all border border-[hsl(var(--border))] disabled:opacity-50 cursor-pointer"
+                title="Export visible leads to CSV"
+              >
+                <Download size={13} /> Export CSV
+              </button>
+            )}
           </div>
         </div>
 
@@ -467,13 +471,15 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                 <RotateCcw size={12} /> Clear all filters
               </button>
             )}
-            <button
-              onClick={handleExportCSV}
-              disabled={filteredLeads.length === 0}
-              className="ml-auto inline-flex items-center gap-1 text-[11px] font-bold text-[hsl(var(--foreground))] py-1"
-            >
-              <Download size={12} /> Export CSV
-            </button>
+            {hasPermission('crm_leads', 'export') && (
+              <button
+                onClick={handleExportCSV}
+                disabled={filteredLeads.length === 0}
+                className="ml-auto inline-flex items-center gap-1 text-[11px] font-bold text-[hsl(var(--foreground))] py-1"
+              >
+                <Download size={12} /> Export CSV
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -630,14 +636,16 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
 
                         {lead.status !== 'Won' && lead.status !== 'Converted' ? (
                           <>
-                            <button
-                              onClick={() => onEdit(lead)}
-                              className="p-2 rounded-xl bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] active:scale-95"
-                              title="Edit Lead"
-                            >
-                              <Pencil size={13} />
-                            </button>
-                            {onDelete && (
+                            {hasPermission('crm_leads', 'update') && (
+                              <button
+                                onClick={() => onEdit(lead)}
+                                className="p-2 rounded-xl bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] active:scale-95"
+                                title="Edit Lead"
+                              >
+                                <Pencil size={13} />
+                              </button>
+                            )}
+                            {onDelete && hasPermission('crm_leads', 'delete') && (
                               <button
                                 onClick={() => onDelete(lead)}
                                 className="p-2 rounded-xl bg-rose-500/10 text-rose-600 border border-rose-500/20 active:scale-95"
@@ -863,15 +871,17 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
 
                                 {lead.status !== 'Won' && lead.status !== 'Converted' ? (
                                   <>
-                                    <button
-                                      onClick={() => onEdit(lead)}
-                                      className="p-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-xl transition-all border border-[hsl(var(--border))] cursor-pointer"
-                                      title="Edit Lead"
-                                    >
-                                      <Pencil size={14} />
-                                    </button>
+                                    {hasPermission('crm_leads', 'update') && (
+                                      <button
+                                        onClick={() => onEdit(lead)}
+                                        className="p-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-xl transition-all border border-[hsl(var(--border))] cursor-pointer"
+                                        title="Edit Lead"
+                                      >
+                                        <Pencil size={14} />
+                                      </button>
+                                    )}
 
-                                    {onDelete && (
+                                    {onDelete && hasPermission('crm_leads', 'delete') && (
                                       <button
                                         onClick={() => onDelete(lead)}
                                         className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded-xl transition-all border border-rose-500/20 cursor-pointer"

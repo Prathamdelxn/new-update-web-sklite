@@ -37,9 +37,11 @@ import { Calendar, Lightbulb, Users, MapPin, FileText, Trophy, Plus, TrendingUp 
 import { motion, AnimatePresence } from 'framer-motion';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 export default function InteriorCrmView() {
   const toast = useToast();
+  const { hasPermission } = usePermissions();
   const [activeTab, setActiveTab] = useState<InteriorCrmStage>('leads');
   const [leads, setLeads] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
@@ -324,12 +326,14 @@ export default function InteriorCrmView() {
           </p>
         </div>
 
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-[hsl(var(--primary-foreground))] px-4 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 cursor-pointer"
-        >
-          <Plus size={15} /> Add New Lead
-        </button>
+        {hasPermission('crm_leads', 'create') && (
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-[hsl(var(--primary-foreground))] px-4 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 cursor-pointer"
+          >
+            <Plus size={15} /> Add New Lead
+          </button>
+        )}
       </div>
 
       {/* CRM Flow Tabs */}

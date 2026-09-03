@@ -74,31 +74,41 @@ interface UserWithProjects {
 // Static role & module data (mirrors backend project-permissions.ts)
 // ---------------------------------------------------------------------------
 const ALL_MODULES = [
-  { key: 'projects',         label: 'Project Config' },
-  { key: 'wbs',              label: 'WBS Hierarchy' },
-  { key: 'tasks',            label: 'Tasks' },
-  { key: 'milestones',       label: 'Milestones' },
-  { key: 'dpr',              label: 'Daily Progress' },
-  { key: 'weekly_reports',   label: 'Weekly Reports' },
-  { key: 'procurement',      label: 'Procurement' },
-  { key: 'purchase_orders',  label: 'Purchase Orders' },
-  { key: 'drawings',         label: 'Drawings' },
-  { key: 'rfis',             label: 'RFIs' },
-  { key: 'mom',              label: 'Minutes of Meeting' },
-  { key: 'risks',            label: 'Risks' },
-  { key: 'snags',            label: 'Snags' },
-  { key: 'ncrs',             label: 'NCRs' },
-  { key: 'utilities',        label: 'Utilities' },
-  { key: 'photos',           label: 'Site Photos' },
-  { key: 'handover',         label: 'Handover' },
-  { key: 'users',            label: 'Team / Members' },
-  { key: 'filemgt',          label: 'File Management' },
-  { key: 'financials',       label: 'Payments & Financials' },
+  // CRM Pipeline Stages
+  { key: 'crm_leads',         label: 'CRM: Leads Pipeline',       category: 'CRM Pipeline' },
+  { key: 'crm_followups',     label: 'CRM: Follow-ups & Calls',   category: 'CRM Pipeline' },
+  { key: 'crm_site_visits',   label: 'CRM: Site Survey & Specs',  category: 'CRM Pipeline' },
+  { key: 'crm_requirements',  label: 'CRM: Scope & Design',       category: 'CRM Pipeline' },
+  { key: 'crm_drawings',      label: 'CRM: 2D/3D Design Files',   category: 'CRM Pipeline' },
+  { key: 'crm_boq',           label: 'CRM: BOQ Estimation',       category: 'CRM Pipeline' },
+  { key: 'crm_quotations',    label: 'CRM: Quotes & Conversion',  category: 'CRM Pipeline' },
+
+  // Execution & Project Modules
+  { key: 'projects',         label: 'Project Config',            category: 'Project Execution' },
+  { key: 'wbs',              label: 'WBS Hierarchy',             category: 'Project Execution' },
+  { key: 'tasks',            label: 'Tasks',                     category: 'Project Execution' },
+  { key: 'milestones',       label: 'Milestones',                category: 'Project Execution' },
+  { key: 'dpr',              label: 'Daily Progress',            category: 'Project Execution' },
+  { key: 'weekly_reports',   label: 'Weekly Reports',            category: 'Project Execution' },
+  { key: 'procurement',      label: 'Procurement',               category: 'Project Execution' },
+  { key: 'purchase_orders',  label: 'Purchase Orders',           category: 'Project Execution' },
+  { key: 'drawings',         label: 'Drawings & CAD',            category: 'Project Execution' },
+  { key: 'rfis',             label: 'RFIs',                      category: 'Project Execution' },
+  { key: 'mom',              label: 'Minutes of Meeting',        category: 'Project Execution' },
+  { key: 'risks',            label: 'Risks',                     category: 'Project Execution' },
+  { key: 'snags',            label: 'Snags',                     category: 'Project Execution' },
+  { key: 'ncrs',             label: 'NCRs',                      category: 'Project Execution' },
+  { key: 'utilities',        label: 'Utilities',                 category: 'Project Execution' },
+  { key: 'photos',           label: 'Site Photos',               category: 'Project Execution' },
+  { key: 'handover',         label: 'Handover',                  category: 'Project Execution' },
+  { key: 'users',            label: 'Team / Members',            category: 'Project Execution' },
+  { key: 'filemgt',          label: 'File Management',           category: 'Project Execution' },
+  { key: 'financials',       label: 'Payments & Financials',     category: 'Project Execution' },
 ];
 
 const ALL_ACTIONS = ['create', 'read', 'update', 'delete', 'approve', 'export', 'manage'];
 
-type ProjectRoleKey = 'project_manager' | 'site_engineer' | 'quantity_surveyor' | 'designer' | 'sub_contractor' | 'client_representative' | 'viewer';
+type ProjectRoleKey = 'project_manager' | 'sales_executive' | 'site_engineer' | 'quantity_surveyor' | 'designer' | 'sub_contractor' | 'client_representative' | 'viewer';
 
 const full  = ['create', 'read', 'update', 'delete', 'approve', 'export', 'manage'];
 const crud  = ['create', 'read', 'update', 'delete'];
@@ -106,45 +116,73 @@ const cru   = ['create', 'read', 'update'];
 const ro    = ['read'];
 const none: string[] = [];
 
-// Role permission matrix (mirrors backend project-permissions.ts)
+// Role permission matrix (mirrors backend project-permissions.ts and role.model.ts)
 const ROLE_MATRIX: Record<ProjectRoleKey, Record<string, string[]>> = {
   project_manager: {
+    crm_leads: full, crm_followups: full, crm_site_visits: full,
+    crm_requirements: full, crm_drawings: full, crm_boq: full, crm_quotations: full,
     projects: full, wbs: full, tasks: full, milestones: full, dpr: full,
     weekly_reports: full, procurement: full, purchase_orders: full, drawings: full,
     rfis: full, mom: full, risks: full, snags: full, ncrs: full, utilities: full,
     photos: full, handover: full, users: full, filemgt: full, financials: full,
   },
+  sales_executive: {
+    crm_leads: ['create', 'read', 'update', 'export', 'manage'],
+    crm_followups: full,
+    crm_site_visits: ['create', 'read', 'update', 'manage'],
+    crm_requirements: ro,
+    crm_drawings: ro,
+    crm_boq: ro,
+    crm_quotations: ['create', 'read', 'update', 'export', 'manage', 'approve'],
+    projects: ro, wbs: none, tasks: ro, milestones: ro, dpr: none,
+    weekly_reports: ro, procurement: none, purchase_orders: none, drawings: ro,
+    rfis: ro, mom: ro, risks: none, snags: none, ncrs: none, utilities: none,
+    photos: ro, handover: ro, users: ro, filemgt: ro, financials: ro,
+  },
   site_engineer: {
+    crm_leads: ro, crm_followups: cru, crm_site_visits: full,
+    crm_requirements: ro, crm_drawings: ro, crm_boq: ro, crm_quotations: ro,
     projects: ro, wbs: ro, tasks: cru, milestones: ro, dpr: crud, weekly_reports: crud,
     procurement: ro, purchase_orders: ro, drawings: ro, rfis: crud, mom: crud,
     risks: crud, snags: crud, ncrs: crud, utilities: crud, photos: crud,
     handover: ro, users: ro, filemgt: crud, financials: ro,
   },
   quantity_surveyor: {
+    crm_leads: ro, crm_followups: ro, crm_site_visits: ro,
+    crm_requirements: ro, crm_drawings: ro, crm_boq: full, crm_quotations: ['create', 'read', 'update', 'export', 'approve'],
     projects: ro, wbs: ro, tasks: ro, milestones: ro, dpr: ro, weekly_reports: ro,
     procurement: crud, purchase_orders: crud, drawings: ro, rfis: ro, mom: ro,
     risks: ro, snags: ro, ncrs: ro, utilities: crud, photos: ro,
     handover: ro, users: none, filemgt: crud, financials: crud,
   },
   designer: {
+    crm_leads: ro, crm_followups: ro, crm_site_visits: cru,
+    crm_requirements: ['create', 'read', 'update', 'manage'], crm_drawings: full,
+    crm_boq: ro, crm_quotations: ro,
     projects: ro, wbs: ro, tasks: ro, milestones: ro, dpr: none, weekly_reports: none,
     procurement: none, purchase_orders: none, drawings: crud, rfis: crud, mom: ro,
     risks: ro, snags: ro, ncrs: ro, utilities: none, photos: crud,
     handover: ro, users: none, filemgt: crud, financials: ro,
   },
   sub_contractor: {
+    crm_leads: none, crm_followups: none, crm_site_visits: none,
+    crm_requirements: none, crm_drawings: ro, crm_boq: none, crm_quotations: none,
     projects: ro, wbs: none, tasks: cru, milestones: none, dpr: ro, weekly_reports: none,
     procurement: ro, purchase_orders: ro, drawings: ro, rfis: ro, mom: none,
     risks: none, snags: ro, ncrs: ro, utilities: none, photos: ro,
     handover: none, users: none, filemgt: ro, financials: ro,
   },
   client_representative: {
+    crm_leads: ro, crm_followups: ro, crm_site_visits: ro,
+    crm_requirements: ro, crm_drawings: ro, crm_boq: ro, crm_quotations: ro,
     projects: ro, wbs: ro, tasks: ro, milestones: ro, dpr: ro, weekly_reports: ro,
     procurement: ro, purchase_orders: ro, drawings: ro, rfis: ro, mom: ro,
     risks: ro, snags: ro, ncrs: ro, utilities: ro, photos: ro,
     handover: ro, users: none, filemgt: ro, financials: ro,
   },
   viewer: {
+    crm_leads: ro, crm_followups: ro, crm_site_visits: ro,
+    crm_requirements: ro, crm_drawings: ro, crm_boq: ro, crm_quotations: ro,
     projects: ro, wbs: ro, tasks: ro, milestones: ro, dpr: ro, weekly_reports: ro,
     procurement: ro, purchase_orders: ro, drawings: ro, rfis: ro, mom: ro,
     risks: ro, snags: ro, ncrs: ro, utilities: ro, photos: ro,
@@ -153,13 +191,14 @@ const ROLE_MATRIX: Record<ProjectRoleKey, Record<string, string[]>> = {
 };
 
 const ROLE_DEFS: { key: ProjectRoleKey; label: string; desc: string }[] = [
-  { key: 'project_manager',       label: 'Project Manager',     desc: 'Full access to all modules' },
-  { key: 'site_engineer',         label: 'Site Engineer',       desc: 'Field-focused CRUD + own tasks' },
-  { key: 'quantity_surveyor',     label: 'Quantity Surveyor',   desc: 'Procurement & financials focused' },
-  { key: 'designer',              label: 'Designer',            desc: 'Drawings, RFIs & photos access' },
-  { key: 'sub_contractor',        label: 'Sub Contractor',      desc: 'Own tasks + limited read' },
-  { key: 'client_representative', label: 'Client Rep.',         desc: 'Read-heavy + project config read' },
-  { key: 'viewer',                label: 'Viewer',              desc: 'Read-only across all modules' },
+  { key: 'project_manager',       label: 'Project Manager',     desc: 'Full access to CRM pipeline & project execution' },
+  { key: 'sales_executive',       label: 'Sales Executive',     desc: 'Leads, follow-ups, quotes & project conversion' },
+  { key: 'site_engineer',         label: 'Site Engineer',       desc: 'Field surveys, measurements & daily progress' },
+  { key: 'quantity_surveyor',     label: 'Quantity Surveyor',   desc: 'BOQ estimation, rate analysis & quotations' },
+  { key: 'designer',              label: 'Designer / Architect', desc: 'Design files, scope modeling & site requirements' },
+  { key: 'sub_contractor',        label: 'Sub Contractor',      desc: 'Assigned execution tasks & limited drawing view' },
+  { key: 'client_representative', label: 'Client Rep.',         desc: 'Read-only stakeholder oversight across all stages' },
+  { key: 'viewer',                label: 'Viewer',              desc: 'General read-only access' },
 ];
 
 // Action badge styling
