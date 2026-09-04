@@ -5,7 +5,6 @@ import { AuthProvider } from "@/providers/AuthContext";
 import { ToastProvider } from "@/providers/ToastContext";
 import { ConfirmProvider } from "@/providers/ConfirmContext";
 import { SocketProvider } from "@/providers/SocketContext";
-import "@/bones/registry.js";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],

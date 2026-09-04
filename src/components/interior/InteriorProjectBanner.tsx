@@ -183,7 +183,7 @@ export function InteriorProjectBanner({ projectId, project, loading }: InteriorP
         )}
       </div>
 
-      <div ref={containerRef} className="flex items-center gap-x-4 sm:gap-x-6 gap-y-2 pt-2.5 sm:pt-4 border-b border-[hsl(var(--border))] pb-2 overflow-x-auto scrollbar-none touch-pan-x flex-nowrap">
+      <div ref={containerRef} className="relative z-30 flex items-center gap-x-4 sm:gap-x-6 gap-y-2 pt-2.5 sm:pt-4 border-b border-[hsl(var(--border))] pb-2 overflow-visible flex-wrap sm:flex-nowrap">
         {categories.map((cat) => {
           const isActive = cat.items.some((item) => ('exact' in item && item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + '/')));
 
@@ -192,24 +192,24 @@ export function InteriorProjectBanner({ projectId, project, loading }: InteriorP
               <button
                 onClick={() => setOpenCategory(openCategory === cat.name ? null : cat.name)}
                 className={cn(
-                  'relative pb-2.5 flex items-center gap-1.5 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap focus:outline-none',
+                  'relative pb-2.5 flex items-center gap-1.5 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap focus:outline-none cursor-pointer',
                   isActive ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
                 )}
               >
                 <span>{cat.icon}</span>
                 <span>{cat.name}</span>
-                <ChevronDown className={cn('w-3 h-3 transition-transform duration-200', openCategory === cat.name && 'rotate-180')} />
+                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', openCategory === cat.name && 'rotate-180')} />
                 {isActive && <motion.div layoutId="activeProjectTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[hsl(var(--primary))]" />}
               </button>
 
               <AnimatePresence>
                 {openCategory === cat.name && (
                   <motion.div
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 6 }}
+                    initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 6, scale: 0.96 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 mt-1 z-50 min-w-[200px] max-w-[calc(100vw-32px)] py-1 border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))]"
+                    className="absolute top-full left-0 mt-1 z-50 min-w-[210px] py-1.5 border border-[hsl(var(--border))] rounded-xl bg-white shadow-xl"
                   >
                     {cat.items.map((item) => {
                       const itemActive = 'exact' in item && item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + '/');

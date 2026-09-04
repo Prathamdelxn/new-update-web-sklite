@@ -1,6 +1,7 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Shell } from '@/components/layouts/Shell';
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 import { CreateProjectModal } from '@/components/modals/CreateProjectModal';
@@ -12,7 +13,7 @@ import {
   Info, FileText, DollarSign, Package, Files, Map,
   AlertCircle, ShieldAlert, Calendar,
   TrendingUp, GanttChart, ClipboardList, CreditCard,
-  ChevronLeft, Pencil, MessageSquare,
+  ChevronLeft, Pencil, MessageSquare, ChevronDown,
   ClipboardCheck, History, LayoutGrid, Sofa, LayoutDashboard, Clock,
   Lock, ArrowRight
 } from 'lucide-react';
@@ -93,8 +94,21 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user } = useAuth();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const dropdownContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownContainerRef.current && !dropdownContainerRef.current.contains(event.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const visibleTabs = getVisibleTabs(project?.projectType, project?.siteSurveyor);
+  const visibleGroups = TAB_GROUPS.filter(g => g.tabIds.some(id => visibleTabs.some(t => t.id === id)));
   const activeTab = (ALL_TABS as readonly { id: string }[]).find(t => pathname.includes(`/${t.id}`))?.id || 'dashboard';
 
   const isSurveyPending = (project?.status === 'Site Survey' || (project?.status === 'Initialized' && project?.needSiteSurvey)) && (project as any)?.surveyStatus !== 'Approved';
@@ -159,30 +173,137 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
         ) : project ? (
           <>
             <div className="space-y-0">
-              {/* ── Navigation card ── */}
-              <div className="bg-white/85 backdrop-blur-md border border-slate-200/60 rounded-2xl p-1.5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.8)] mb-5">
-                {/* Row 2: All Tabs */}
-                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
-                  {visibleTabs.map((tab) => {
-                    const isActive = activeTab === tab.id;
-                    const TabIcon = tab.icon;
+              {/* ── Navigation card with Nested Tabs & Dropdowns ── */}
+              <div ref={dropdownContainerRef} className="relative z-30 bg-white/85 backdrop-blur-md border border-slate-200/60 rounded-2xl p-2 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.8)] mb-5 space-y-2">
+                {/* Row 1: Category Groups with Dropdowns */}
+                <div className="flex items-center gap-1.5 overflow-visible flex-wrap sm:flex-nowrap">
+                  {visibleGroups.map((group) => {
+                    const groupTabs = visibleTabs.filter(t => group.tabIds.includes(t.id));
+                    if (groupTabs.length === 0) return null;
+
+                    const isGroupActive = groupTabs.some(t => t.id === activeTab);
+                    const isDropdownOpen = openDropdown === group.id;
+                    const GroupIcon = group.icon;
+
+                    // Single tab group (direct navigation)
+                    if (groupTabs.length === 1) {
+                      const tab = groupTabs[0];
+                      const TabIcon = tab.icon;
+                      return (
+                        <button
+                          key={group.id}
+                          onClick={() => {
+                            setOpenDropdown(null);
+                            router.push(`/projects/${projectId}/${tab.id}`);
+                          }}
+                          className={cn(
+                            'flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-150 shrink-0 select-none cursor-pointer',
+                            isGroupActive
+                              ? 'bg-blue-600 text-white shadow-sm border border-blue-700/10'
+                              : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/70'
+                          )}
+                        >
+                          <TabIcon className={cn("w-3.5 h-3.5 shrink-0 transition-colors", isGroupActive ? "text-white" : "text-slate-400")} />
+                          <span className="inline">{group.label}</span>
+                        </button>
+                      );
+                    }
+
+                    // Multi-tab group with dropdown & click-to-navigate
                     return (
-                      <button
-                        key={tab.id}
-                        onClick={() => router.push(`/projects/${projectId}/${tab.id}`)}
-                        className={cn(
-                          'flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-150 shrink-0 select-none cursor-pointer',
-                          isActive
-                            ? 'bg-blue-600 text-white shadow-sm border border-blue-700/10'
-                            : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/70'
-                        )}
-                      >
-                        <TabIcon className={cn("w-3.5 h-3.5 shrink-0 transition-colors", isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600")} />
-                        <span className="inline">{tab.name}</span>
-                      </button>
+                      <div key={group.id} className="relative shrink-0">
+                        <button
+                          onClick={() => setOpenDropdown(isDropdownOpen ? null : group.id)}
+                          className={cn(
+                            'flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-150 shrink-0 select-none cursor-pointer',
+                            isGroupActive
+                              ? 'bg-blue-600 text-white shadow-sm border border-blue-700/10'
+                              : isDropdownOpen
+                              ? 'bg-slate-200 text-slate-900'
+                              : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/70'
+                          )}
+                        >
+                          <GroupIcon className={cn("w-3.5 h-3.5 shrink-0 transition-colors", isGroupActive ? "text-white" : "text-slate-400")} />
+                          <span className="inline">{group.label}</span>
+                          <ChevronDown className={cn(
+                            "w-3.5 h-3.5 transition-transform duration-200 shrink-0",
+                            isDropdownOpen && "rotate-180",
+                            isGroupActive ? "text-white/90" : "text-slate-400"
+                          )} />
+                        </button>
+
+                        <AnimatePresence>
+                          {isDropdownOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                              transition={{ duration: 0.15 }}
+                              className="absolute top-full left-0 mt-1.5 min-w-[190px] bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 overflow-hidden"
+                            >
+                              {groupTabs.map((tab) => {
+                                const isItemActive = tab.id === activeTab;
+                                const ItemIcon = tab.icon;
+                                return (
+                                  <button
+                                    key={tab.id}
+                                    onClick={() => {
+                                      setOpenDropdown(null);
+                                      router.push(`/projects/${projectId}/${tab.id}`);
+                                    }}
+                                    className={cn(
+                                      'flex items-center gap-2.5 w-full px-3.5 py-2 text-xs font-medium text-left transition-colors cursor-pointer',
+                                      isItemActive
+                                        ? 'bg-blue-50 text-blue-700 font-bold'
+                                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                    )}
+                                  >
+                                    <ItemIcon className={cn("w-3.5 h-3.5 shrink-0", isItemActive ? "text-blue-600" : "text-slate-400")} />
+                                    <span>{tab.name}</span>
+                                  </button>
+                                );
+                              })}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     );
                   })}
                 </div>
+
+                {/* Row 2: Sub-tabs of Active Group (Nested Sub-Navigation) */}
+                {(() => {
+                  const activeGroupObj = visibleGroups.find(g => g.tabIds.includes(activeTab as any));
+                  const subTabs = visibleTabs.filter(t => activeGroupObj?.tabIds.includes(t.id));
+                  if (!subTabs || subTabs.length <= 1) return null;
+
+                  return (
+                    <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 py-1 shrink-0">
+                        {activeGroupObj?.label}:
+                      </span>
+                      {subTabs.map((tab) => {
+                        const isSubActive = tab.id === activeTab;
+                        const SubIcon = tab.icon;
+                        return (
+                          <button
+                            key={tab.id}
+                            onClick={() => router.push(`/projects/${projectId}/${tab.id}`)}
+                            className={cn(
+                              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-150 shrink-0 cursor-pointer',
+                              isSubActive
+                                ? 'bg-slate-900 text-white shadow-sm'
+                                : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900'
+                            )}
+                          >
+                            <SubIcon className={cn("w-3 h-3 shrink-0", isSubActive ? "text-white" : "text-slate-500")} />
+                            <span>{tab.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
 
               {isRestrictedTab ? (
