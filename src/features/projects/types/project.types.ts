@@ -18,6 +18,14 @@ export interface Project {
   projectType: 'Construction' | 'Interior';
   needSiteSurvey: boolean;
   currency?: string;
+  siteLocation?: {
+    address?: string;
+    latitude?: number;
+    longitude?: number;
+  } | string;
+  attendanceRadius?: number;
+  projectCode?: string;
+  progress?: number;
   siteSurveyor?: string | User;
   surveyStatus?: string;
   snaggedBy?: string | User;

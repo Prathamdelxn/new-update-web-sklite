@@ -131,7 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         Cookies.set('industryType', 'construction', { expires: 7 });
       }
       setUser(userData);
-      const targetPath = isInteriorOrg ? '/interior-new' : '/dashboard';
+      const targetPath = isInteriorOrg ? '/interior-new' : '/construction-dashboard';
       router.push(targetPath);
       return;
     }
@@ -158,7 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       setUser(userData);
       console.log('Login userData:', userData);
-      const targetPath = isInterior ? '/interior-new' : '/dashboard';
+      const targetPath = isInterior ? '/interior-new' : '/construction-dashboard';
       router.push(targetPath);
     }
   };

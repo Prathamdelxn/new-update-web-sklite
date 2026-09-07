@@ -314,31 +314,17 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h3 className="text-xl font-bold text-gray-900">{activeType === 'Snag' ? 'Snag Tracker' : 'Issue Tracker'}</h3>
-          <p className="text-sm text-slate-500 mt-1">{activeType === 'Snag' ? 'Track defects and snagging items on site.' : 'Report and track site issues and field problems.'}</p>
+          <h3 className="text-lg font-bold text-slate-900">{activeType === 'Snag' ? 'Snag Tracker' : 'Issue Tracker'}</h3>
+          <p className="text-xs text-slate-500 mt-0.5">{activeType === 'Snag' ? 'Track defects and snagging items on site.' : 'Report and track site issues and field problems.'}</p>
         </div>
 
         <div className="flex items-center space-x-3">
-          {/* <div className="flex p-1 bg-gray-100 border border-gray-200 rounded-xl">
-            <button
-              onClick={() => setActiveType('Issue')}
-              className={cn('px-4 py-1.5 rounded-lg text-xs font-bold transition-all', activeType === 'Issue' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-500 hover:text-gray-900')}
-            >
-              Issues
-            </button>
-            <button
-              onClick={() => setActiveType('Snag')}
-              className={cn('px-4 py-1.5 rounded-lg text-xs font-bold transition-all', activeType === 'Snag' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-500 hover:text-gray-900')}
-            >
-              Snags
-            </button>
-          </div> */}
           {activeType === 'Issue' && (
             <button
               onClick={() => { fetchEscalationMatrix(); setIsEscalationOpen(true); }}
-              className="flex items-center space-x-2 px-4 py-2 bg-orange-50 border border-orange-200 rounded-xl text-sm font-bold text-orange-700 hover:bg-orange-100 transition-all"
+              className="flex items-center space-x-1.5 px-3.5 py-2 bg-orange-50 border border-orange-200 rounded-xl text-xs font-bold text-orange-700 hover:bg-orange-100 transition-all shadow-2xs"
             >
-              <GitBranch className="w-4 h-4" />
+              <GitBranch className="w-3.5 h-3.5" />
               <span>Escalation Matrix</span>
             </button>
           )}
@@ -348,12 +334,12 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                 <button
                   onClick={handleBulkSendDrafts}
                   disabled={bulkSubmitting}
-                  className="flex items-center space-x-2 bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 hover:border-amber-300 px-4 py-2 rounded-xl text-sm font-bold transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-sm"
+                  className="flex items-center space-x-1.5 bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 hover:border-amber-300 px-3.5 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 cursor-pointer shadow-2xs"
                 >
                   {bulkSubmitting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <Wrench className="w-4 h-4" />
+                    <Wrench className="w-3.5 h-3.5" />
                   )}
                   <span>Send Drafts ({issues.filter(i => i.status === 'Draft').length})</span>
                 </button>
@@ -362,12 +348,12 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                 <button
                   onClick={handleFinalizeSnagging}
                   disabled={finalizing}
-                  className="flex items-center space-x-2 bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 px-4 py-2 rounded-xl text-sm font-bold transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-sm"
+                  className="flex items-center space-x-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 px-3.5 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 cursor-pointer shadow-2xs"
                 >
                   {finalizing ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <CheckCircle className="w-4 h-4" />
+                    <CheckCircle className="w-3.5 h-3.5" />
                   )}
                   <span>Finalize Snagging</span>
                 </button>
@@ -377,9 +363,9 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
           {(canCreate || isInspector) && (
             <button
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all active:scale-[0.98] shadow-lg shadow-blue-600/20"
+              className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5" />
               <span>Report {activeType}</span>
             </button>
           )}
@@ -388,12 +374,12 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
 
       {/* Render conditional snagging not started page if activeType is Snag and Snagging is not active */}
       {activeType === 'Snag' && !isSnaggingActive ? (
-        <div className="flex flex-col items-center justify-center py-20 px-8 bg-slate-50 border border-dashed border-slate-200 rounded-3xl text-center">
-          <div className="p-4 bg-amber-50 border border-amber-100 rounded-full shadow-sm mb-4 text-amber-600">
+        <div className="flex flex-col items-center justify-center py-20 px-8 bg-slate-50/80 border border-dashed border-slate-200 rounded-2xl text-center">
+          <div className="p-4 bg-amber-50 border border-amber-100 rounded-full shadow-2xs mb-4 text-amber-600">
             <ClipboardList className="w-10 h-10" />
           </div>
-          <h3 className="text-base font-bold text-gray-900">Snagging Phase Not Started</h3>
-          <p className="text-xs text-slate-500 mt-2 max-w-sm">
+          <h3 className="text-sm font-bold text-slate-900">Snagging Phase Not Started</h3>
+          <p className="text-xs text-slate-500 mt-1.5 max-w-sm">
             The snagging inspection phase has not commenced for this project. Once initiated, quality tracking records will appear here.
           </p>
         </div>
@@ -407,10 +393,10 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
               { label: 'In Progress', value: typeIssues.filter(i => i.status === 'In Progress').length, color: 'text-amber-600' },
               { label: 'Resolved', value: typeIssues.filter(i => i.status === 'Resolved').length, color: 'text-emerald-600' },
             ].map((stat, i) => (
-              <GlassCard key={i} className="p-4 border-gray-200" gradient>
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">{stat.label}</p>
-                <p className={cn('text-2xl font-black', stat.color)}>{stat.value}</p>
-              </GlassCard>
+              <div key={i} className="p-4 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{stat.label}</p>
+                <p className={cn('text-2xl font-extrabold', stat.color)}>{stat.value}</p>
+              </div>
             ))}
           </div>
 

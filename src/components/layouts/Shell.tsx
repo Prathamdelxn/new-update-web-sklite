@@ -27,13 +27,13 @@ export const Shell: React.FC<ShellProps> = ({ children, headerContent }) => {
 
   useEffect(() => {
     if (!loading && isInterior) {
-      if (pathname?.startsWith('/projects')) {
+      if (pathname?.startsWith('/projects') || pathname?.startsWith('/construction-dashboard/projects')) {
         router.replace('/interior-new/projects');
-      } else if (pathname?.startsWith('/users')) {
+      } else if (pathname?.startsWith('/users') || pathname?.startsWith('/construction-dashboard/users')) {
         router.replace('/interior-new/users-roles');
-      } else if (pathname?.startsWith('/settings')) {
+      } else if (pathname?.startsWith('/settings') || pathname?.startsWith('/construction-dashboard/settings')) {
         router.replace('/interior-new/settings');
-      } else if (pathname?.startsWith('/profile')) {
+      } else if (pathname?.startsWith('/profile') || pathname?.startsWith('/construction-dashboard/profile')) {
         router.replace('/interior-new/profile');
       } else {
         router.replace('/interior-new');
@@ -90,7 +90,7 @@ export const Shell: React.FC<ShellProps> = ({ children, headerContent }) => {
         
         <main className={cn(
           "flex-1 px-4 md:px-8 pb-8 transition-all duration-300",
-          pathname === '/projects' ? "pt-12" : "pt-24"
+          (pathname === '/construction-dashboard/projects' || pathname === '/projects') ? "pt-12" : "pt-24"
         )}>
           <div className="max-w-7xl mx-auto">
             {children}

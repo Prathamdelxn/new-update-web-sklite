@@ -385,19 +385,19 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
   return (
     <div className="space-y-6">
       {/* Sub-Tabs */}
-      <div className="flex flex-wrap gap-2 bg-gray-100 p-1.5 rounded-2xl border border-gray-200 w-full sm:w-fit">
+      <div className="flex flex-wrap gap-1.5 bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200/80 w-full sm:w-fit shadow-2xs">
         {subTabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveSubTab(tab.id)}
             className={cn(
-              "flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all",
+              "flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all",
               activeSubTab === tab.id
-                ? "bg-blue-600 text-white"
-                : "text-slate-500 hover:text-gray-900 hover:bg-white"
+                ? "bg-white text-blue-700 shadow-2xs border border-slate-200/60"
+                : "text-slate-500 hover:text-slate-900 hover:bg-white/60"
             )}
           >
-            <tab.icon className="w-4 h-4" />
+            <tab.icon className="w-3.5 h-3.5" />
             <span>{tab.name}</span>
           </button>
         ))}
@@ -406,46 +406,46 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
       {['all', 'low-stock', 'out-of-stock'].includes(activeSubTab) && (
         <div className="space-y-6">
           {/* Inventory Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <GlassCard className="p-4 border-gray-200 shadow-none" gradient>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Total Materials</p>
-              <p className="text-2xl font-black text-gray-900 mt-1">{materials.length}</p>
-            </GlassCard>
-            <GlassCard className="p-4 border-gray-200 shadow-none">
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Low Stock Items</p>
-              <p className="text-2xl font-black text-red-600 mt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
+            <div className="p-4.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Materials</p>
+              <p className="text-2xl font-extrabold text-slate-900 mt-1">{materials.length}</p>
+            </div>
+            <div className="p-4.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Low Stock Items</p>
+              <p className="text-2xl font-extrabold text-red-600 mt-1">
                 {materials.filter(m => {
                   const stock = m.currentStock ?? ((m.totalReceived || 0) - (m.totalConsumed || 0));
                   const min = m.minimumStock ?? m.minStock ?? 0;
                   return stock <= min && stock >= 0;
                 }).length}
               </p>
-            </GlassCard>
-            <GlassCard className="p-4 border-gray-200 shadow-none">
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Total Received</p>
-              <p className="text-2xl font-black text-emerald-600 mt-1 break-all">
+            </div>
+            <div className="p-4.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Received</p>
+              <p className="text-2xl font-extrabold text-emerald-600 mt-1 break-all">
                 {formatCompact(materials.reduce((sum, m) => sum + (m.totalReceived || 0), 0))}
               </p>
-            </GlassCard>
-            <GlassCard className="p-4 border-gray-200 shadow-none">
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Total Consumed</p>
-              <p className="text-2xl font-black text-blue-600 mt-1 break-all">
+            </div>
+            <div className="p-4.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Consumed</p>
+              <p className="text-2xl font-extrabold text-blue-600 mt-1 break-all">
                 {formatCompact(materials.reduce((sum, m) => sum + (m.totalConsumed || 0), 0))}
               </p>
-            </GlassCard>
+            </div>
           </div>
 
           {/* Toolbar */}
-          <GlassCard className="p-4 border-gray-200 shadow-none" gradient>
+          <div className="p-4 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs">
             <div className="flex flex-col md:flex-row gap-4 justify-between">
               <div className="relative flex-1 max-w-md group">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                 <input
                   type="text"
                   placeholder="Search materials..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 pl-10 pr-4 text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  className="w-full bg-slate-50 border border-slate-200/80 rounded-xl py-2 pl-10 pr-4 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-2xs"
                 />
               </div>
 
@@ -457,15 +457,15 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     setSelectedMaterial(null);
                     setIsModalOpen(true);
                   }}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 border border-blue-500 rounded-xl text-sm font-bold text-white hover:bg-blue-500 transition-all"
+                  className="flex items-center space-x-1.5 px-4 py-2 bg-blue-600 border border-blue-500 rounded-xl text-xs font-bold text-white hover:bg-blue-500 transition-all shadow-xs"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-3.5 h-3.5" />
                   <span>New Material</span>
                 </button>
                 )}
               </div>
             </div>
-          </GlassCard>
+          </div>
 
           {/* Inventory Table */}
           <SkeletonLoader loading={loading} preset="table">{(!loading && materials.length > 0) || !loading ? (

@@ -512,24 +512,25 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
       {/* Upper Grid: Status Widget & Geofence Manager */}
 
       {/* Tabs for reporting: Today's Logs vs Monthly History */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
 
         {/* Sub-tab selection */}
-        <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/50">
-          <div className="px-6 py-4">
-            <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-6 py-4">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">
               {activeSection === 'Labour' ? 'Labour Management' : 'Attendance Logs & Reports'}
             </h3>
+            <p className="text-xs text-slate-500 mt-0.5">Real-time attendance logs, geofencing verification, and workforce tracking.</p>
           </div>
           {isManagerOrAdmin && (
-            <div className="flex p-1 mr-4 bg-gray-100 border border-gray-200 rounded-xl">
+            <div className="flex p-1 bg-slate-100/90 border border-slate-200/80 rounded-xl shadow-2xs">
               {(['Attendance', 'Labour'] as const).map(s => (
                 <button
                   key={s}
                   onClick={() => setActiveSection(s)}
                   className={cn(
                     'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all',
-                    activeSection === s ? 'bg-white shadow text-gray-900' : 'text-slate-500'
+                    activeSection === s ? 'bg-white shadow-2xs text-blue-700 border border-slate-200/60' : 'text-slate-500 hover:text-slate-900'
                   )}
                 >
                   {s}
@@ -550,13 +551,13 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <h4 className="text-xs font-black uppercase text-slate-400 tracking-wider">On-Site Log (Today)</h4>
+                <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">On-Site Log (Today)</h4>
               </div>
               {isAdmin && !isLocked && (
                 <button
                   type="button"
                   onClick={() => { setManualUserId(''); setManualDate(new Date().toISOString().slice(0, 10)); setIsManualOpen(true); }}
-                  className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-xl py-1.5 px-3 text-xs font-bold transition-all shadow-sm"
+                  className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/60 rounded-xl py-1.5 px-3 text-xs font-bold transition-all shadow-2xs"
                 >
                   <UserPlus className="w-3.5 h-3.5" />
                   <span>Mark Attendance</span>
@@ -569,12 +570,12 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                 <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />
               </div>
             ) : dailyLogs.length === 0 ? (
-              <div className="text-center py-12 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+              <div className="text-center py-12 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
                 <User className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                 <p className="text-xs font-semibold text-slate-400">No one has checked in today yet.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-xl border border-gray-200">
+              <div className="overflow-x-auto rounded-xl border border-slate-200/80 shadow-2xs">
                 <table className="w-full border-collapse text-left text-xs">
                   <thead>
                     <tr className="bg-slate-50 border-b border-gray-200 font-bold text-slate-600">

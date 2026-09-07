@@ -248,43 +248,46 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
       fetchBOQ();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to approve');
-    } finally { setUpdatingItemId(null); }
+    } finally {
+      setUpdatingItemId(null);
+    }
   };
 
   const handleConfirmRejection = async (reason: string) => {
     if (!rejectionItemId) return;
     setUpdatingItemId(rejectionItemId);
     try {
-      await api.patch(`/projects/${projectId}/boq/${rejectionItemId}/status`, { 
-        status: 'Rejected', 
-        rejectionReason: reason 
+      await api.patch(`/projects/${projectId}/boq/${rejectionItemId}/status`, {
+        status: 'Rejected',
+        rejectionReason: reason,
       });
       toast.success('Item rejected');
       setRejectionItemId(null);
       setViewingItem(null);
       fetchBOQ();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to reject');
-    } finally { setUpdatingItemId(null); }
+      toast.error(err.response?.data?.message || 'Failed to reject item');
+    } finally {
+      setUpdatingItemId(null);
+    }
   };
 
-  const handleExportCSV = () => {
-    const headers = ['Group Name', 'Item Number', 'Item Description', 'Unit', 'Quantity', 'Unit Cost', 'Total Cost', 'Status', 'Version'];
-    const rows = items.map(i => [
-      i.groupName, i.itemNumber || '', i.itemDescription,
-      i.unit || '', i.quantity, i.unitCost, i.totalCost, i.status, (i as any).version || 1,
-    ]);
-    const csv = [headers, ...rows].map(r =>
-      r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')
-    ).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `BOQ_${new Date().toISOString().slice(0, 10)}.csv`; a.click();
-    URL.revokeObjectURL(url);
-  };
+  // Filtered grouped items
+  const filteredGroupedItems = Object.entries(groupedItems).reduce((acc, [group, groupItems]) => {
+    const matchingItems = groupItems.filter(item => {
+      const matchSearch = item.itemDescription?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          item.itemNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          group.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchStatus = statusFilter === 'All' || item.status === statusFilter;
+      return matchSearch && matchStatus;
+    });
 
-  // ──────────────────────────────────────────────────────────────────────────
+    if (matchingItems.length > 0) {
+      acc[group] = matchingItems;
+    }
+    return acc;
+  }, {} as Record<string, BOQItem[]>);
+
   if (!canView) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -348,7 +351,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
               placeholder="Search groups or items..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-gray-200 rounded-lg py-2 pl-9 pr-4 text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+              className="w-full bg-white border border-slate-200/80 rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs focus:outline-none focus:ring-3 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
             />
           </div>
 

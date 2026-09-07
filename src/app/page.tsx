@@ -85,7 +85,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     if (!loading && (user || isInteriorSession())) {
-      router.push(isInterior ? '/interior-new' : '/dashboard');
+      router.push(isInterior ? '/interior-new' : '/construction-dashboard');
     }
   }, [loading, router, user, isInterior]);
 

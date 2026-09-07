@@ -269,7 +269,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
     <div
       ref={containerRef}
       style={chatHeight ? { height: chatHeight } : undefined}
-      className="flex flex-col h-[calc(100dvh-260px)] min-h-[420px] sm:h-[700px] bg-gray-50/50 rounded-2xl border border-gray-200 overflow-hidden relative"
+      className="flex flex-col h-[calc(100dvh-260px)] min-h-[420px] sm:h-[700px] bg-slate-50/50 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden relative"
     >
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
         {messages.length === 0 ? (

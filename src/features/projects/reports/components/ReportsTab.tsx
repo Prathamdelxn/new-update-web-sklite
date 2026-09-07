@@ -527,18 +527,18 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
 
   return (
     <SkeletonLoader loading={loading} preset="list">
-      <div className="space-y-4">
+      <div className="space-y-6">
         {/* Toggle Box */}
         <div className="flex justify-between items-center flex-wrap gap-3">
           <div className="flex items-center gap-2">
-            <div className="flex p-1 bg-gray-100 border border-gray-200 rounded-xl w-fit">
+            <div className="flex p-1 bg-slate-100/90 border border-slate-200/80 rounded-xl w-fit shadow-2xs">
               <button
                 onClick={() => setReportType('Daily')}
                 className={cn(
                   'py-1.5 px-4 rounded-lg text-xs font-bold transition-all',
                   reportType === 'Daily'
-                    ? 'bg-white shadow text-blue-600'
-                    : 'text-slate-500 hover:text-gray-700'
+                    ? 'bg-white shadow-2xs text-blue-700 border border-slate-200/60'
+                    : 'text-slate-500 hover:text-slate-900'
                 )}
               >
                 Daily
@@ -548,8 +548,8 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                 className={cn(
                   'py-1.5 px-4 rounded-lg text-xs font-bold transition-all',
                   reportType === 'Monthly'
-                    ? 'bg-white shadow text-blue-600'
-                    : 'text-slate-500 hover:text-gray-700'
+                    ? 'bg-white shadow-2xs text-blue-700 border border-slate-200/60'
+                    : 'text-slate-500 hover:text-slate-900'
                 )}
               >
                 Monthly
@@ -558,31 +558,17 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
 
             <button
               onClick={handleExportReport}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 border border-gray-200 rounded-xl text-xs font-bold text-slate-600 transition-all shadow-sm active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-700 transition-all shadow-2xs active:scale-95 cursor-pointer"
               title="Export Report to CSV"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-3.5 h-3.5 text-slate-500" />
               <span>Export CSV</span>
             </button>
-
-            {/* <button
-              onClick={handleDownloadPDF}
-              disabled={downloadingPDF}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 border border-emerald-700/10 rounded-xl text-xs font-bold text-white transition-all shadow-sm active:scale-95 disabled:opacity-50 cursor-pointer"
-              title="Download PDF Report"
-            >
-              {downloadingPDF ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
-              ) : (
-                <FileText className="w-3.5 h-3.5" />
-              )}
-              <span>{downloadingPDF ? 'Downloading...' : 'Download PDF'}</span>
-            </button> */}
 
             <button
               onClick={handleEmailReport}
               disabled={emailing}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 border border-blue-700/10 rounded-xl text-xs font-bold text-white transition-all shadow-sm active:scale-95 disabled:opacity-50 cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-xl text-xs font-bold text-white transition-all shadow-xs active:scale-95 disabled:opacity-50 cursor-pointer"
               title="Email PDF Report"
             >
               {emailing ? (

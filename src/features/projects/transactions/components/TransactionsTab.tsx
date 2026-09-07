@@ -378,49 +378,51 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
     <SkeletonLoader loading={loading} preset="table">
       <div className="space-y-6">
         {/* Balance Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-1 bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col items-center justify-center">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
+        <div className="md:col-span-1 bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xs p-5 md:p-6 flex flex-col items-center justify-center">
           <div className="flex items-center space-x-2 mb-1">
-            <Wallet className="w-4 h-4 text-slate-500" />
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Net Balance</span>
+            <div className="w-6 h-6 rounded-md bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+              <Wallet className="w-3.5 h-3.5" />
+            </div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Net Balance</span>
           </div>
-          <p className={`text-3xl font-black mt-1 text-center break-all ${netBalance >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
+          <p className={`text-3xl font-extrabold mt-1 text-center break-all ${netBalance >= 0 ? 'text-slate-900' : 'text-red-600'}`}>
             {formatExactCurrency(netBalance, (project as any)?.currency || '$')}
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+        <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xs p-5 md:p-6 flex items-center space-x-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0">
             <TrendingUp className="w-6 h-6 text-emerald-600" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Inflow</p>
-            <p className="text-2xl font-black text-gray-900 mt-1 break-all">{formatExactCurrency(totals.incoming, (project as any)?.currency || '$')}</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Inflow</p>
+            <p className="text-2xl font-extrabold text-emerald-600 mt-1 break-all">{formatExactCurrency(totals.incoming, (project as any)?.currency || '$')}</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+        <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xs p-5 md:p-6 flex items-center space-x-4">
+          <div className="w-12 h-12 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center shrink-0">
             <TrendingDown className="w-6 h-6 text-red-600" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Outflow</p>
-            <p className="text-2xl font-black text-gray-900 mt-1 break-all">{formatExactCurrency(totals.outgoing, (project as any)?.currency || '$')}</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Outflow</p>
+            <p className="text-2xl font-extrabold text-red-600 mt-1 break-all">{formatExactCurrency(totals.outgoing, (project as any)?.currency || '$')}</p>
           </div>
         </div>
       </div>
 
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center space-x-2 overflow-x-auto pb-1 w-full sm:w-auto">
+        <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 w-full sm:w-auto">
           {FILTERS.map((f) => (
             <button
               key={f}
               onClick={() => setActiveFilter(f)}
-              className={`px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all border ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border shadow-2xs ${
                 activeFilter === f
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                  : 'bg-white text-slate-600 border-gray-200 hover:border-gray-300'
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:text-slate-900'
               }`}
             >
               {f}
@@ -436,15 +438,15 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
               placeholder="Search records..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full sm:w-64 pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className="w-full sm:w-64 pl-9 pr-4 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs"
             />
           </div>
           {canCreate && (
           <button
             onClick={() => setShowTypeSheet(true)}
-            className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-xl text-sm font-bold transition-all shadow-sm shadow-blue-600/20 shrink-0"
+            className="flex items-center justify-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs shrink-0"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             <span>Add Record</span>
           </button>
           )}

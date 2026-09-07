@@ -61,34 +61,34 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="w-full max-w-md relative z-10"
           >
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 overflow-visible">
+            <div className="bg-white rounded-3xl shadow-2xl border border-slate-200/90 p-6 sm:p-7 overflow-visible">
               <button
                 onClick={onClose}
-                className="absolute right-4 top-4 text-slate-400 hover:text-gray-900 transition-colors"
+                className="absolute right-5 top-5 p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
 
               <div className="flex flex-col items-center text-center mb-6">
-                <div className="mb-4 p-3 rounded-2xl bg-gray-50 border border-gray-200">
+                <div className="mb-4 p-3.5 rounded-2xl bg-slate-50 border border-slate-150 shadow-2xs">
                   {getIcon()}
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed">{message}</p>
+                <h3 className="text-xl font-bold text-slate-900 mb-1.5 tracking-tight">{title}</h3>
+                <p className="text-slate-500 text-sm leading-relaxed max-w-xs">{message}</p>
               </div>
 
               <div className="flex space-x-3">
                 <button
                   onClick={onClose}
                   disabled={isLoading}
-                  className="flex-1 py-3 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-medium transition-all active:scale-[0.98] disabled:opacity-50"
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-50"
                 >
                   {cancelText}
                 </button>
                 <button
                   onClick={onConfirm}
                   disabled={isLoading}
-                  className={`flex-1 py-3 px-4 rounded-xl text-white font-bold transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg ${getConfirmButtonStyles()}`}
+                  className={`flex-1 py-2.5 px-4 rounded-xl text-white font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-50 shadow-md ${getConfirmButtonStyles()}`}
                 >
                   {isLoading ? 'Processing...' : confirmText}
                 </button>

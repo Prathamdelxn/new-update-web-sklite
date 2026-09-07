@@ -51,7 +51,7 @@ export const GlobalSearch: React.FC = () => {
         if (projRes.status === 'fulfilled') {
           projRes.value.data.forEach((p: any) => {
             if (p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)) {
-              matches.push({ type: 'project', _id: p._id, title: p.name, subtitle: p.status, href: `/projects/${p._id}` });
+              matches.push({ type: 'project', _id: p._id, title: p.name, subtitle: p.status, href: `/construction-dashboard/projects/${p._id}` });
             }
           });
         }
@@ -59,7 +59,7 @@ export const GlobalSearch: React.FC = () => {
         if (templateRes.status === 'fulfilled') {
           templateRes.value.data.forEach((t: any) => {
             if (t.name?.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q)) {
-              matches.push({ type: 'template', _id: t._id, title: t.name, subtitle: t.category, href: `/templates` });
+              matches.push({ type: 'template', _id: t._id, title: t.name, subtitle: t.category, href: `/construction-dashboard/templates` });
             }
           });
         }
@@ -86,6 +86,17 @@ export const GlobalSearch: React.FC = () => {
     return () => window.document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleSelect = (result: SearchResult) => {
     router.push(result.href);
     setQuery('');
@@ -95,10 +106,10 @@ export const GlobalSearch: React.FC = () => {
   return (
     <div ref={containerRef} className="relative hidden md:flex items-center w-64 lg:w-80">
       <div className={cn(
-        'w-full flex items-center bg-gray-50 border rounded-xl px-3 py-1.5 transition-all',
-        open ? 'border-blue-400 ring-2 ring-blue-500/20' : 'border-gray-200 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-500/20'
+        'w-full flex items-center bg-slate-50/80 border rounded-xl px-3 py-1.5 transition-all shadow-2xs',
+        open ? 'border-blue-500 ring-3 ring-blue-500/10 bg-white' : 'border-slate-200 hover:border-slate-300 focus-within:border-blue-500 focus-within:ring-3 focus-within:ring-blue-500/10 focus-within:bg-white'
       )}>
-        {loading ? <Loader2 className="w-4 h-4 text-blue-400 animate-spin shrink-0" /> : <Search className="w-4 h-4 text-slate-400 shrink-0" />}
+        {loading ? <Loader2 className="w-4 h-4 text-blue-500 animate-spin shrink-0" /> : <Search className="w-4 h-4 text-slate-400 shrink-0" />}
         <input
           ref={inputRef}
           type="text"
@@ -106,12 +117,16 @@ export const GlobalSearch: React.FC = () => {
           onChange={e => setQuery(e.target.value)}
           onFocus={() => { if (results.length > 0) setOpen(true); }}
           placeholder="Search projects, templates..."
-          className="bg-transparent border-none outline-none text-sm text-gray-900 px-2 w-full placeholder:text-slate-400"
+          className="bg-transparent border-none outline-none text-xs font-medium text-slate-900 px-2 w-full placeholder:text-slate-400"
         />
-        {query && (
-          <button onClick={() => { setQuery(''); setOpen(false); }} className="p-0.5 text-slate-400 hover:text-gray-900 transition-colors">
+        {query ? (
+          <button onClick={() => { setQuery(''); setOpen(false); }} className="p-0.5 text-slate-400 hover:text-slate-700 transition-colors">
             <X className="w-3.5 h-3.5" />
           </button>
+        ) : (
+          <kbd className="hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 bg-white border border-slate-200 rounded shadow-2xs select-none">
+            ⌘K
+          </kbd>
         )}
       </div>
 

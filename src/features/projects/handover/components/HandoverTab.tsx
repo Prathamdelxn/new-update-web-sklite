@@ -467,18 +467,18 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
     const Icon = icon;
 
     return (
-      <div className="bg-white border border-slate-100/70 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-white/90 backdrop-blur-md border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs hover:border-slate-300 hover:shadow-card-hover transition-all">
         <button
           type="button"
           onClick={() => toggleSection(key)}
-          className="w-full flex items-center justify-between p-4 hover:bg-slate-50/50 transition-colors"
+          className="w-full flex items-center justify-between p-4 hover:bg-slate-50/60 transition-colors"
         >
           <div className="flex items-center space-x-3 text-left">
-            <div className={cn('p-2 rounded-xl border border-transparent shrink-0', isOk ? 'bg-emerald-50/80 text-emerald-600' : 'bg-amber-50/80 text-amber-600')}>
+            <div className={cn('p-2.5 rounded-xl border shrink-0', isOk ? 'bg-emerald-50 text-emerald-600 border-emerald-200/50' : 'bg-amber-50 text-amber-600 border-amber-200/50')}>
               <Icon className="w-5 h-5" />
             </div>
             <div>
-              <h5 className="text-sm font-bold text-slate-800">{title}</h5>
+              <h5 className="text-sm font-bold text-slate-800 tracking-tight">{title}</h5>
               <p className={cn('text-xs mt-0.5 font-medium', isOk ? 'text-emerald-600' : 'text-amber-600')}>
                 {countMessage}
               </p>
@@ -486,7 +486,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
           </div>
 
           <div className="flex items-center space-x-2">
-            <span className={cn('px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider', isOk ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/20' : 'bg-amber-50 text-amber-700 border border-amber-200/20')}>
+            <span className={cn('px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider', isOk ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' : 'bg-amber-50 text-amber-700 border border-amber-200/60')}>
               {isOk ? 'PASSED' : 'PENDING'}
             </span>
             {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}

@@ -168,12 +168,15 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
 
   return (
     <SkeletonLoader loading={loading} preset="list">
-      <div className="space-y-8">
-        {/* Premium Dark Statistics Card */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl text-white">
-          <div className="flex items-center justify-between mb-6">
-            <h4 className="text-sm font-bold text-slate-400">Risk Overview</h4>
-            <div className="bg-slate-800 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700/50">
+      <div className="space-y-6">
+        {/* Statistics Card */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-md text-white">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Risk Assessment Overview</h4>
+              <p className="text-xs text-slate-500 mt-0.5">Active risk factors and mitigation statuses</p>
+            </div>
+            <div className="bg-slate-800 px-3 py-1 rounded-lg text-xs font-bold border border-slate-700/50 text-slate-300">
               {risks.length} Total Risks
             </div>
           </div>
@@ -181,39 +184,39 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
           <div className="grid grid-cols-3 gap-4">
             <div className="flex flex-col space-y-1">
               <div className="flex items-center space-x-2 text-xs font-semibold text-slate-400">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500 block" />
+                <span className="w-2 h-2 rounded-full bg-red-500 block" />
                 <span>Critical</span>
               </div>
-              <span className="text-2xl font-black">{risks.filter(r => r.status === 'Critical').length}</span>
+              <span className="text-2xl font-extrabold">{risks.filter(r => r.status === 'Critical').length}</span>
             </div>
 
             <div className="flex flex-col space-y-1 border-l border-slate-800 pl-4">
               <div className="flex items-center space-x-2 text-xs font-semibold text-slate-400">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 block" />
+                <span className="w-2 h-2 rounded-full bg-amber-500 block" />
                 <span>Active</span>
               </div>
-              <span className="text-2xl font-black">{risks.filter(r => r.status === 'Active').length}</span>
+              <span className="text-2xl font-extrabold">{risks.filter(r => r.status === 'Active').length}</span>
             </div>
 
             <div className="flex flex-col space-y-1 border-l border-slate-800 pl-4">
               <div className="flex items-center space-x-2 text-xs font-semibold text-slate-400">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 block" />
+                <span className="w-2 h-2 rounded-full bg-emerald-500 block" />
                 <span>Resolved</span>
               </div>
-              <span className="text-2xl font-black">{risks.filter(r => r.status === 'Resolved').length}</span>
+              <span className="text-2xl font-extrabold">{risks.filter(r => r.status === 'Resolved').length}</span>
             </div>
           </div>
         </div>
 
         {/* Filters and Search Action Row */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             {STATUS_FILTERS.map(f => (
               <button
                 key={f}
                 onClick={() => setStatusFilter(f)}
                 className={cn(
-                  'px-4 py-2 rounded-2xl text-xs font-bold border transition-all',
+                  'px-3 py-1.5 rounded-xl text-xs font-bold border transition-all shadow-2xs',
                   statusFilter === f
                     ? f === 'Critical'  ? 'bg-red-600 border-red-600 text-white' :
                       f === 'Resolved'  ? 'bg-emerald-600 border-emerald-600 text-white' :
@@ -236,10 +239,10 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
           {canCreate && (
             <button
               onClick={() => setIsCreateOpen(true)}
-              className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-2xl text-sm font-bold transition-all active:scale-[0.98] shadow-lg shadow-blue-600/10 shrink-0"
+              className="flex items-center justify-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs shrink-0"
             >
-              <Plus className="w-4 h-4" />
-              <span>Identify Risk</span>
+              <Plus className="w-3.5 h-3.5" />
+              <span>New Risk</span>
             </button>
           )}
         </div>

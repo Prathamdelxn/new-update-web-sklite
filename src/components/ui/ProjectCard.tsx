@@ -4,10 +4,11 @@ import React from 'react';
 import Link from 'next/link';
 import {
   MessageCircle, Pencil, Trash2, AlertCircle,
-  Send, ClipboardCheck, Calendar, Users, MapPin,
+  Send, ClipboardCheck, Calendar, MapPin, Layers,
+  CheckCircle2, Clock, Target, Building2, 
+  Briefcase, FolderOpen, ArrowUpRight
 } from 'lucide-react';
 import { Project } from '@/types';
-import { GlassCard } from './GlassCard';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/providers/AuthContext';
 
@@ -28,19 +29,19 @@ interface ProjectCardProps {
   allUsers?: any[];
 }
 
-const statusColors: Record<string, string> = {
-  'Initialized': 'bg-blue-50 text-blue-755 border-blue-200/60',
-  'Planning': 'bg-purple-50 text-purple-755 border-purple-200/60',
-  'Site Survey': 'bg-cyan-50 text-cyan-755 border-cyan-200/60',
-  'Ongoing': 'bg-emerald-50 text-emerald-755 border-emerald-200/60',
-  'Under Snagging': 'bg-amber-50 text-amber-755 border-amber-200/60',
-  'Snagging Completed': 'bg-orange-50 text-orange-755 border-orange-200/60',
-  'Completed': 'bg-green-50 text-green-755 border-green-200/60',
-  'Pending Handover': 'bg-violet-50 text-violet-755 border-violet-200/60',
-  'Handover Rejected': 'bg-rose-50 text-rose-755 border-rose-200/60',
-  'Handover Completed': 'bg-teal-50 text-teal-755 border-teal-200/60',
-  'On Hold': 'bg-slate-100 text-slate-700 border-slate-200/60',
-  'Cancelled': 'bg-red-50 text-red-755 border-red-200/60',
+const statusConfig: Record<string, { color: string; bg: string; border: string; icon: any }> = {
+  'Initialized': { color: '#64748b', bg: '#f1f5f9', border: '#e2e8f0', icon: Clock },
+  'Planning': { color: '#4f46e5', bg: '#eef2ff', border: '#c7d2fe', icon: Target },
+  'Site Survey': { color: '#0284c7', bg: '#f0f9ff', border: '#bae6fd', icon: MapPin },
+  'Ongoing': { color: '#059669', bg: '#ecfdf5', border: '#a7f3d0', icon: Briefcase },
+  'Under Snagging': { color: '#d97706', bg: '#fffbeb', border: '#fde68a', icon: AlertCircle },
+  'Snagging Completed': { color: '#ea580c', bg: '#fff7ed', border: '#fed7aa', icon: CheckCircle2 },
+  'Completed': { color: '#059669', bg: '#ecfdf5', border: '#a7f3d0', icon: CheckCircle2 },
+  'Pending Handover': { color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe', icon: FolderOpen },
+  'Handover Rejected': { color: '#e11d48', bg: '#fff1f2', border: '#fecdd3', icon: AlertCircle },
+  'Handover Completed': { color: '#0d9488', bg: '#f0fdfa', border: '#99f6e4', icon: CheckCircle2 },
+  'On Hold': { color: '#d97706', bg: '#fffbeb', border: '#fde68a', icon: Clock },
+  'Cancelled': { color: '#e11d48', bg: '#fff1f2', border: '#fecdd3', icon: AlertCircle },
 };
 
 const STATUS_PROGRESS: Record<string, number> = {
@@ -51,142 +52,197 @@ const STATUS_PROGRESS: Record<string, number> = {
 };
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
-  project, basePath = '/projects', onEdit, onDelete, onSendForSurvey, onCompleteSurvey, allUsers = [],
+  project, basePath = '/construction-dashboard/projects', onEdit, onDelete, onSendForSurvey, onCompleteSurvey, allUsers = [],
 }) => {
-  const progress = STATUS_PROGRESS[project.status] ?? 10;
+  const progress = STATUS_PROGRESS[project.status] ?? (project as any).progress ?? 10;
   const { user } = useAuth();
   const isAdmin = user?.role?.name === 'admin' || (user as any)?.role === 'admin' || (user as any)?.isAdmin;
 
-  // A string `category` here is an unpopulated ref (raw ObjectId) rather than
-  // a resolved category — only a populated object has a human-readable name.
-  const categoryName = typeof project.category === 'string'
-    ? ''
-    : (project.category as any)?.name || '';
+  // Resolve category name gracefully
+  const categoryName =
+    (typeof project.category === 'object' && project.category ? (project.category as any).name : null) ||
+    (typeof (project as any).templateCategory === 'object' && (project as any).templateCategory ? (project as any).templateCategory.name : null) ||
+    (typeof (project as any).templateId === 'object' && (project as any).templateId?.category?.name ? (project as any).templateId.category.name : null) ||
+    (typeof (project as any).templateId === 'object' && (project as any).templateId?.name ? (project as any).templateId.name : null) ||
+    (project as any).categoryName ||
+    (project as any).customer?.propertyType ||
+    (typeof project.category === 'string' && (project.category as string).length < 24 && !/^[0-9a-fA-F]{24}$/.test(project.category) ? project.category : null) ||
+    (project as any).projectType ||
+    'General Construction';
 
   const surveyorId = typeof project.siteSurveyor === 'object'
     ? (project.siteSurveyor as any)?._id
     : project.siteSurveyor;
   const isAssignedSurveyor = !!(surveyorId && (user?.id === surveyorId || user?._id === surveyorId));
 
-  const statusColor = statusColors[project.status] || 'text-blue-700 bg-blue-100 border-blue-200';
-  const endDate = project.endDate ? new Date(project.endDate) : null;
-  const isOverdue = endDate && endDate < new Date() && project.status !== 'Completed' && project.status !== 'Handover Completed' && project.status !== 'Cancelled';
+  const statusStyle = statusConfig[project.status] || {
+    color: '#4f46e5',
+    bg: '#eef2ff',
+    border: '#c7d2fe',
+    icon: Target
+  };
+  const StatusIcon = statusStyle.icon;
 
-  // Standardize progress color
   const isFinished = project.status === 'Completed' || project.status === 'Handover Completed';
-  const progressColorClass = isFinished ? 'bg-emerald-500' : 'bg-blue-600';
+
+  const locationText =
+    (project.siteLocation && typeof project.siteLocation === 'object' && project.siteLocation.address?.trim() ? project.siteLocation.address : null) ||
+    (typeof project.siteLocation === 'string' && (project.siteLocation as string).trim() ? project.siteLocation : null) ||
+    (project as any).siteAddress ||
+    (project as any).location ||
+    (project as any).address ||
+    (project.description && project.description.trim() ? project.description : null) ||
+    'Location not specified';
 
   return (
-    <div
-      className="group hover:border-blue-200 hover:shadow-md transition-all duration-300 flex flex-col h-full shadow-sm relative p-0 overflow-hidden rounded-xl bg-white border border-gray-200"
-    >
-      <Link href={`${basePath}/${project._id}`} className="flex flex-col flex-1 outline-none">
+    <div className="group relative bg-white rounded-xl border border-slate-200/90 hover:border-indigo-400/80 hover:shadow-md transition-all duration-200 flex flex-col h-full overflow-hidden">
+      
+      {/* Top Accent Stripe on hover */}
+      <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-        {/* ── Header ── */}
-        <div className="flex items-start justify-between p-4 border-b border-slate-50/50">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center shrink-0 shadow-sm">
-              <Users className="w-5 h-5 text-blue-600" />
+      <Link href={`${basePath}/${project._id}`} className="flex flex-col flex-1 p-4 pb-3 outline-none">
+        
+        {/* ── Top Header Row ── */}
+        <div className="flex items-start justify-between gap-2.5 mb-3">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            {/* Building Icon Avatar */}
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-50 via-slate-50 to-blue-50 border border-indigo-100/90 flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:border-indigo-300 group-hover:bg-indigo-50 transition-all shadow-2xs">
+              <Building2 className="w-4 h-4 text-indigo-600 group-hover:text-indigo-700 transition-colors" />
             </div>
-            <div className="min-w-0">
-              <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500 block truncate">
-                {categoryName || 'General'}
-              </span>
-              <h3 className="text-base font-semibold text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-1 leading-snug tracking-tight mt-0.5">
+            
+            {/* Title & Category Subtitle */}
+            <div className="min-w-0 flex-1">
+              <h3 className="text-[13.5px] font-bold text-slate-900 tracking-tight group-hover:text-indigo-600 transition-colors truncate">
                 {project.name}
               </h3>
+              <div className="flex items-center gap-1 mt-0.5">
+                <Layers className="w-3 h-3 text-indigo-500 shrink-0" />
+                <span className="text-[11px] font-semibold text-slate-500 truncate">
+                  {categoryName}
+                </span>
+              </div>
             </div>
           </div>
-          <span className={cn(
-            'px-2 py-1 rounded-md text-[9px] font-medium uppercase tracking-wider border shrink-0',
-            statusColor
-          )}>
-            {project.status?.replace(/ /g, '')}
-          </span>
+
+          {/* Status Badge */}
+          <div 
+            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10.5px] font-bold shrink-0 shadow-2xs"
+            style={{
+              backgroundColor: statusStyle.bg,
+              color: statusStyle.color,
+              border: `1px solid ${statusStyle.border}`
+            }}
+          >
+            <StatusIcon className="w-3 h-3 shrink-0" />
+            <span className="truncate max-w-[85px]">{project.status}</span>
+          </div>
         </div>
 
-        {/* ── White Body ── */}
-        <div className="p-4 flex-1 flex flex-col justify-between">
-          <div className="space-y-4">
+        {/* ── Location Row ── */}
+        <div className="flex items-center gap-1.5 text-xs text-slate-600 bg-slate-50/80 rounded-lg px-2.5 py-1.5 border border-slate-100 mb-2.5 font-medium">
+          <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <span className="truncate text-[11.5px]" title={locationText}>{locationText}</span>
+        </div>
 
-            {/* Location + Badges */}
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-1 text-xs text-slate-500 truncate max-w-[50%]">
-                <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span className="truncate">{project.description || 'Global Site'}</span>
-              </div>
+        {/* ── Meta Badges Row ── */}
+        <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
+          {(project as any).projectCode && (
+            <span className="inline-flex items-center gap-1 bg-slate-100/90 text-slate-600 px-2 py-0.5 rounded text-[9.5px] font-bold tracking-wide border border-slate-200/70">
+              <FolderOpen className="w-2.5 h-2.5 text-slate-400" />
+              {(project as any).projectCode}
+            </span>
+          )}
 
-              {(project as any).projectCode && (
-                <div className="bg-slate-100 px-1.5 py-0.5 rounded text-[9px] font-bold text-slate-500">
-                  {(project as any).projectCode}
-                </div>
+          {project.clientName && (
+            <span className="inline-flex items-center bg-slate-100/80 text-slate-600 px-2 py-0.5 rounded text-[9.5px] font-bold tracking-wide border border-slate-200/60 truncate max-w-[120px]" title={project.clientName}>
+              Client: {project.clientName}
+            </span>
+          )}
+
+          {!isAdmin && project.hasPendingPlans && (
+            <span className="inline-flex items-center gap-1 bg-rose-50 text-rose-600 px-2 py-0.5 rounded text-[9.5px] font-extrabold tracking-wide border border-rose-200/80 animate-pulse">
+              <AlertCircle className="w-2.5 h-2.5" />
+              ACTION REQ
+            </span>
+          )}
+
+          {(project as any).projectType === 'Interior' && (
+            <span className="bg-purple-50 border border-purple-200/80 text-purple-600 px-2 py-0.5 rounded text-[9.5px] font-extrabold tracking-wide">
+              INTERIOR
+            </span>
+          )}
+
+          {isFinished && (
+            <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded text-[9.5px] font-bold border border-emerald-200/80">
+              <CheckCircle2 className="w-2.5 h-2.5" />
+              Done
+            </span>
+          )}
+        </div>
+
+        {/* ── Progress Section ── */}
+        <div className="mt-auto pt-2.5 border-t border-slate-100 space-y-1.5">
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Progress</span>
+            <span className={cn(
+              "font-extrabold tabular-nums text-xs",
+              isFinished ? "text-emerald-600" : "text-indigo-600"
+            )}>
+              {Math.round(progress)}%
+            </span>
+          </div>
+          
+          <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/40">
+            <div
+              className={cn(
+                'h-full rounded-full transition-all duration-500',
+                isFinished
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
+                  : 'bg-gradient-to-r from-indigo-500 via-indigo-600 to-blue-600'
               )}
+              style={{ width: `${Math.max(4, progress)}%` }}
+            />
+          </div>
+        </div>
 
-              {!isAdmin && project.hasPendingPlans && (
-                <div className="bg-red-50 border border-red-100 px-1.5 py-0.5 rounded text-[9px] font-bold text-red-600">
-                  ACTION REQUIRED
-                </div>
-              )}
-
-              {(project as any).projectType === 'Interior' && (
-                <div className="bg-purple-50 border border-purple-100 px-1.5 py-0.5 rounded text-[9px] font-bold text-purple-600">
-                  INTERIOR
-                </div>
-              )}
-            </div>
-
-            {/* Progress Bar */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-medium text-slate-500 tracking-wider">PROGRESS</span>
-                <span className="text-[10px] font-semibold text-slate-700">{Math.round(progress)}%</span>
+        {/* Surveyor Alert */}
+        {isAssignedSurveyor && (project.status === 'Site Survey' || project.status === 'Planning') && (project as any).surveyStatus !== 'Approved' && (
+          <div className="mt-2.5">
+            {(project as any).surveyStatus === 'Needs Attention' && (
+              <div className="flex items-center gap-1.5 bg-rose-50 border border-rose-200/80 p-1.5 rounded-lg text-[10.5px] font-bold text-rose-700">
+                <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                <span className="truncate">Survey Rejected — Attention needed</span>
               </div>
-              <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className={cn('h-full rounded-full transition-all', progressColorClass)}
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Surveyor Alerts */}
-            {isAssignedSurveyor && (project.status === 'Site Survey' || project.status === 'Planning') && (project as any).surveyStatus !== 'Approved' && (
-              <div className="flex flex-col gap-1.5 mt-2">
-                {(project as any).surveyStatus === 'Needs Attention' && (
-                  <div className="flex items-center gap-1.5 bg-red-50 border border-red-100 p-2 rounded-lg">
-                    <AlertCircle className="w-3.5 h-3.5 text-red-600" />
-                    <span className="text-[10px] font-bold text-red-600">Survey Rejected</span>
-                  </div>
-                )}
-                {(project as any).surveyStatus === 'Submitted' && (project as any).surveyRejectionReason && (
-                  <div className="flex items-center gap-1.5 bg-green-50 border border-green-100 p-2 rounded-lg">
-                    <ClipboardCheck className="w-3.5 h-3.5 text-green-600" />
-                    <span className="text-[10px] font-bold text-green-600">Rejection Resolved</span>
-                  </div>
-                )}
+            )}
+            {(project as any).surveyStatus === 'Submitted' && (project as any).surveyRejectionReason && (
+              <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/80 p-1.5 rounded-lg text-[10.5px] font-bold text-emerald-700">
+                <ClipboardCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span className="truncate">Survey Resolved — Under review</span>
               </div>
             )}
           </div>
-        </div>
+        )}
       </Link>
 
-      {/* ── Footer Actions ── */}
-      <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 bg-slate-50/30">
-
+      {/* ── Footer Action Bar ── */}
+      <div className="flex items-center justify-between px-4 py-2 border-t border-slate-100 bg-slate-50/60">
+        
         {/* Date */}
-        <div className="flex items-center gap-1.5 text-blue-500">
-          <Calendar className="w-3.5 h-3.5" />
-          <span className="text-[10px] font-medium">
-            Start: {project.startDate ? new Date(project.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : (project.createdAt ? new Date(project.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'No date')}
+        <div className="flex items-center gap-1 text-[11px] font-medium text-slate-500">
+          <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
+          <span className="truncate text-[10.5px]">
+            {project.startDate
+              ? new Date(project.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+              : (project.createdAt ? new Date(project.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—')}
           </span>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {project.needSiteSurvey && !project.siteSurveyor && onSendForSurvey && (
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSendForSurvey(project); }}
-              className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50 border border-blue-200/60 text-blue-600 hover:bg-blue-100 transition-colors"
+              className="w-7.5 h-7.5 flex items-center justify-center rounded-lg bg-sky-50 text-sky-600 hover:bg-sky-100 border border-sky-200/80 transition-all active:scale-95 cursor-pointer shadow-2xs"
               title="Send for Survey"
             >
               <Send className="w-3.5 h-3.5" />
@@ -196,48 +252,50 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           {isAssignedSurveyor && (project.status === 'Site Survey' || project.status === 'Planning') && (project as any).surveyStatus !== 'Approved' && onCompleteSurvey && (
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onCompleteSurvey(project); }}
-              className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50 border border-blue-200/60 text-blue-600 hover:bg-blue-100 transition-colors"
+              className="w-7.5 h-7.5 flex items-center justify-center rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-100 border border-teal-200/80 transition-all active:scale-95 cursor-pointer shadow-2xs"
               title={(project as any).surveyStatus ? 'Edit Survey' : 'Start Survey'}
             >
               <ClipboardCheck className="w-3.5 h-3.5" />
             </button>
           )}
 
-          <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `/projects/${project._id}/chat`; }}
-            className="flex items-center justify-center w-7 h-7 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors relative"
-            title="Chat"
+          <Link
+            href={`${basePath}/${project._id}/chat`}
+            onClick={(e) => e.stopPropagation()}
+            className="w-7.5 h-7.5 flex items-center justify-center rounded-lg bg-white text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 border border-slate-200/90 hover:border-emerald-200 transition-all active:scale-95 cursor-pointer shadow-2xs"
+            title="Team Chat"
           >
-            <MessageCircle className="w-4 h-4" />
-            {/* If there were unread messages, add a badge here */}
-          </button>
+            <MessageCircle className="w-3.5 h-3.5" />
+          </Link>
 
           {onEdit && (
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(project); }}
-              className="flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-              title="Edit"
+              className="w-7.5 h-7.5 flex items-center justify-center rounded-lg bg-white text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200/90 hover:border-indigo-200 transition-all active:scale-95 cursor-pointer shadow-2xs"
+              title="Edit Project"
             >
-              <Pencil className="w-4 h-4" />
+              <Pencil className="w-3.5 h-3.5" />
             </button>
           )}
 
           {onDelete && (
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(project); }}
-              className="flex items-center justify-center w-7 h-7 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
-              title="Delete"
+              className="w-7.5 h-7.5 flex items-center justify-center rounded-lg bg-white text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200/90 hover:border-rose-200 transition-all active:scale-95 cursor-pointer shadow-2xs"
+              title="Delete Project"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           )}
+
+        
         </div>
       </div>
 
-      {/* Pending plans badge top-right floating */}
+      {/* Floating Action Beacon if pending plans */}
       {project.hasPendingPlans && (
-        <div className="absolute top-2 right-2 w-4.5 h-4.5 bg-red-500 rounded-full flex items-center justify-center border-2 border-white shadow-sm animate-pulse pointer-events-none z-10">
-          <AlertCircle className="w-2.5 h-2.5 text-white" />
+        <div className="absolute top-2.5 right-2.5 w-3 h-3 bg-rose-500 rounded-full flex items-center justify-center border-2 border-white shadow-xs animate-pulse pointer-events-none z-10">
+          <AlertCircle className="w-2 h-2 text-white" />
         </div>
       )}
     </div>

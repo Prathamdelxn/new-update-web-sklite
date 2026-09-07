@@ -38,12 +38,18 @@
   --color-success: var(--success);
   --color-danger: var(--danger);
   --color-warning: var(--warning);
-  --font-sans: var(--font-jakarta), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
 }
 
 @layer base {
   body {
     @apply bg-background text-foreground font-sans;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Professional tabular figures for finance, milestones, BOQs & quantitative data */
+  .tabular-nums, table, [data-tabular] {
+    font-variant-numeric: tabular-nums;
   }
 }
 
@@ -107,14 +113,26 @@
 }
 
 @utility glass {
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03), 0 1px 2px rgba(15, 23, 42, 0.02);
 }
 
 @utility glass-card {
-  @apply glass transition-all duration-300;
+  @apply glass transition-all duration-200;
+}
+
+@utility shadow-subtle {
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04), 0 1px 3px 0 rgba(15, 23, 42, 0.02);
+}
+
+@utility shadow-card {
+  box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.04), 0 1px 4px -1px rgba(15, 23, 42, 0.02);
+}
+
+@utility shadow-card-hover {
+  box-shadow: 0 12px 24px -6px rgba(15, 23, 42, 0.06), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
 }
 
 @utility scrollbar-hide {
@@ -127,12 +145,12 @@
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F1F5F9;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -143,3 +161,4 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #94A3B8;
 }
+

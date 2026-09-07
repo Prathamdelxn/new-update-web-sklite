@@ -172,7 +172,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Milestones */}
         <button
-          onClick={() => router.push(`/projects/${projectId}/milestones`)}
+          onClick={() => router.push(`/construction-dashboard/projects/${projectId}/milestones`)}
           className="text-left"
         >
           <GlassCard className="p-5 border-gray-200 hover:border-blue-500/50 transition-all cursor-pointer h-full">
@@ -195,7 +195,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
 
         {/* Issues */}
         <button
-          onClick={() => router.push(`/projects/${projectId}/issues`)}
+          onClick={() => router.push(`/construction-dashboard/projects/${projectId}/issues`)}
           className="text-left"
         >
           <GlassCard className="p-5 border-gray-200 hover:border-amber-500/50 transition-all cursor-pointer h-full">
@@ -214,7 +214,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
 
         {/* Risks */}
         <button
-          onClick={() => router.push(`/projects/${projectId}/risks`)}
+          onClick={() => router.push(`/construction-dashboard/projects/${projectId}/risks`)}
           className="text-left"
         >
           <GlassCard className="p-5 border-gray-200 hover:border-rose-500/50 transition-all cursor-pointer h-full">
@@ -233,7 +233,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
 
         {/* Team */}
         <button
-          onClick={() => router.push(`/projects/${projectId}/details`)}
+          onClick={() => router.push(`/construction-dashboard/projects/${projectId}/details`)}
           className="text-left"
         >
           <GlassCard className="p-5 border-gray-200 hover:border-purple-500/50 transition-all cursor-pointer h-full">
@@ -325,7 +325,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-sm font-bold text-gray-900">Team</h4>
                 <button
-                  onClick={() => router.push(`/projects/${projectId}/details`)}
+                  onClick={() => router.push(`/construction-dashboard/projects/${projectId}/details`)}
                   className="text-[10px] font-bold text-blue-600 hover:text-blue-500"
                 >
                   Manage
@@ -366,7 +366,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
               {quickLinks.map(({ label, icon: Icon, tab, color }) => (
                 <button
                   key={tab}
-                  onClick={() => router.push(`/projects/${projectId}/${tab}`)}
+                  onClick={() => router.push(`/construction-dashboard/projects/${projectId}/${tab}`)}
                   className={cn(
                     'flex flex-col items-center gap-2 p-3 rounded-xl border transition-all hover:scale-[1.02] active:scale-[0.98]',
                     color
@@ -389,7 +389,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
                 <h4 className="text-sm font-bold text-gray-900">Recent Activity</h4>
               </div>
               <button
-                onClick={() => router.push(`/projects/${projectId}/audit`)}
+                onClick={() => router.push(`/construction-dashboard/projects/${projectId}/audit`)}
                 className="flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:text-blue-500"
               >
                 View All <ChevronRight className="w-3 h-3" />
@@ -430,7 +430,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
                   <h4 className="text-sm font-bold text-gray-900">Budget Overview</h4>
                 </div>
                 <button
-                  onClick={() => router.push(`/projects/${projectId}/budget`)}
+                  onClick={() => router.push(`/construction-dashboard/projects/${projectId}/budget`)}
                   className="flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:text-blue-500"
                 >
                   Details <ChevronRight className="w-3 h-3" />

@@ -211,8 +211,8 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
   };
 
   const ffeRoute = project?.projectType === 'Interior'
-    ? `/interior/projects/${projectId}/ffe`
-    : `/projects/${projectId}/ffe`;
+    ? `/interior-new/projects/${projectId}/ffe`
+    : `/construction-dashboard/projects/${projectId}/ffe`;
 
   const inputCls = 'w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-slate-900 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all';
 

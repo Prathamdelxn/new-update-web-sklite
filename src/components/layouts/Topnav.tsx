@@ -1,91 +1,3 @@
-// 'use client';
-
-// import React, { useState, useRef, useEffect } from 'react';
-// import { Menu, User, LogOut, ChevronDown } from 'lucide-react';
-// import { useAuth } from '@/providers/AuthContext';
-// import { GlobalSearch } from '@/components/shared/GlobalSearch';
-// import { NotificationCenter } from '@/components/shared/NotificationCenter';
-// import Link from 'next/link';
-
-// interface TopnavProps {
-//   onMenuClick: () => void;
-// }
-
-// export const Topnav: React.FC<TopnavProps> = ({ onMenuClick }) => {
-//   const { user, logout } = useAuth();
-//   const [showMenu, setShowMenu] = useState(false);
-//   const menuRef = useRef<HTMLDivElement>(null);
-
-//   useEffect(() => {
-//     if (!showMenu) return;
-//     const close = (e: MouseEvent) => {
-//       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-//         setShowMenu(false);
-//       }
-//     };
-//     document.addEventListener('mousedown', close);
-//     return () => document.removeEventListener('mousedown', close);
-//   }, [showMenu]);
-
-//   return (
-//     <header className="h-16 fixed top-0 right-0 left-0 lg:left-64 bg-white border-b border-gray-200 z-30 transition-all">
-//       <div className="h-full px-4 lg:px-8 flex items-center justify-between">
-//         <div className="flex items-center space-x-4">
-//           <button
-//             onClick={onMenuClick}
-//             className="lg:hidden p-2 text-slate-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-//           >
-//             <Menu className="w-6 h-6" />
-//           </button>
-
-//           <GlobalSearch />
-//         </div>
-
-//         <div className="flex items-center space-x-2 md:space-x-3">
-//           <NotificationCenter />
-
-//           <div className="h-8 w-px bg-gray-200 mx-1 hidden sm:block"></div>
-
-//           <div className="relative" ref={menuRef}>
-//             <button
-//               onClick={() => setShowMenu(v => !v)}
-//               className="flex items-center space-x-2.5 p-1.5 rounded-xl hover:bg-gray-100 transition-all"
-//             >
-//               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-xs font-bold text-white shadow-sm">
-//                 {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-//               </div>
-//               <div className="hidden sm:block text-left">
-//                 <p className="text-xs font-bold text-gray-900 leading-tight">{user?.name || 'User'}</p>
-//                 <p className="text-[10px] text-slate-500 leading-tight">{user?.role?.name || 'Member'}</p>
-//               </div>
-//               <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${showMenu ? 'rotate-180' : ''}`} />
-//             </button>
-
-//             {showMenu && (
-//               <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden p-1 z-50">
-//                 <Link
-//                   href="/profile"
-//                   onClick={() => setShowMenu(false)}
-//                   className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
-//                 >
-//                   <User className="w-4 h-4 text-slate-400" />
-//                   <span>Profile Settings</span>
-//                 </Link>
-//                 <button
-//                   onClick={() => { setShowMenu(false); logout(); }}
-//                   className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-//                 >
-//                   <LogOut className="w-4 h-4" />
-//                   <span>Sign Out</span>
-//                 </button>
-//               </div>
-//             )}
-//           </div>
-//         </div>
-//       </div>
-//     </header>
-//   );
-// };
 'use client';
  
 import React, { useState, useRef, useEffect } from 'react';
@@ -124,94 +36,71 @@ export const Topnav: React.FC<TopnavProps> = ({ onMenuClick, isSidebarCollapsed,
     return () => document.removeEventListener('mousedown', close);
   }, [showMenu]);
 
-  const showSearch = !pathname.startsWith('/projects');
+  const showSearch = !pathname.startsWith('/projects') && !pathname.startsWith('/construction-dashboard/projects');
 
-  const isProjectsListPage = pathname === '/projects';
-  const isProjectDetailPage = pathname.startsWith('/projects/') && pathname !== '/projects';
+  const isProjectsListPage = pathname === '/projects' || pathname === '/construction-dashboard/projects';
+  const isProjectDetailPage =
+    (pathname.startsWith('/projects/') && pathname !== '/projects') ||
+    (pathname.startsWith('/construction-dashboard/projects/') && pathname !== '/construction-dashboard/projects');
 
   return (
     <header className={cn(
-      "fixed top-0 right-0 left-0 z-30 transition-all duration-300",
-      isProjectsListPage
-        ? "h-12 bg-[#F8FAFF] border-b-0"
-        : isInterior
-          ? "h-16 bg-gradient-to-r from-blue-50/50 via-white to-white border-b border-blue-100"
-          : "h-16 bg-white border-b border-gray-200",
-      isSidebarCollapsed ? 'lg:left-20' : 'lg:left-[280px]'
+      "fixed top-0 right-0 left-0 z-30 h-15 bg-white border-b border-slate-200/80 shadow-2xs transition-all duration-200",
+      isSidebarCollapsed ? 'lg:left-[72px]' : 'lg:left-[260px]'
     )}>
-      <div className="h-full px-4 lg:px-8 flex items-center justify-between">
-        <div className="flex items-center space-x-4 flex-1 min-w-0">
-          {!isProjectDetailPage && (
-            <button
-              onClick={onMenuClick}
-              className="lg:hidden p-2 text-slate-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors shrink-0"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
-          )}
+      <div className="h-full px-4 lg:px-8 flex items-center justify-between gap-4">
+        <div className="flex items-center space-x-3 flex-1 min-w-0">
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors shrink-0 cursor-pointer"
+            aria-label="Open sidebar"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
 
-          {headerContent ? (
-            <div className="flex-1 min-w-0">
-              {headerContent}
-            </div>
-          ) : (
-            showSearch && <GlobalSearch />
-          )}
+         
         </div>
  
-        <div className="flex items-center space-x-2 md:space-x-3">
+        <div className="flex items-center space-x-2 md:space-x-3 shrink-0">
           <div className="hidden sm:block">
             <NotificationCenter />
           </div>
 
-          <div className="h-8 w-px bg-gray-200 mx-1 hidden sm:block"></div>
+          <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
  
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setShowMenu(v => !v)}
-              className={cn(
-                "flex items-center space-x-2.5 p-1.5 rounded-xl transition-all",
-                isInterior ? "hover:bg-blue-50" : "hover:bg-gray-100"
-              )}
+              className="flex items-center space-x-2.5 p-1.5 rounded-xl hover:bg-slate-100 transition-all cursor-pointer"
             >
-              <div className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm",
-                isInterior ? "bg-gradient-to-br from-blue-600 to-blue-800" : "bg-gradient-to-br from-blue-500 to-blue-700"
-              )}>
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-xs font-bold text-white shadow-2xs">
                 {user?.name?.charAt(0)?.toUpperCase() || 'U'}
               </div>
               <div className="hidden sm:block text-left">
-                <p className="text-xs font-bold text-gray-900 leading-tight">{user?.name || 'User'}</p>
-                <p className={cn("text-[10px] leading-tight font-bold", isInterior ? "text-blue-600" : "text-slate-500")}>
-                  {isInterior ? 'Interior Fit-outs' : (user?.role?.name || 'Member')}
+                <p className="text-xs truncate w-[100px] font-bold text-slate-900 leading-tight">{user?.name || 'User'}</p>
+                <p className="text-[10px]  font-semibold text-slate-500 leading-tight">
+                  {user?.role?.name || 'Member'}
                 </p>
               </div>
-              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${showMenu ? 'rotate-180' : ''}`} />
+              <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform duration-200", showMenu && "rotate-180")} />
             </button>
  
             {showMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden p-1 z-50">
-                <div className="px-3 py-2 border-b border-gray-100 mb-1">
-                  <p className="text-sm font-medium text-gray-900 truncate">
+              <div className="absolute right-0 mt-2 w-52 bg-white border border-slate-200/80 rounded-2xl shadow-xl overflow-hidden p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-3 py-2 border-b border-slate-100 mb-1">
+                  <p className="text-xs font-bold text-slate-900 truncate">
                     {user?.name || 'User'}
                   </p>
-                  <p className="text-xs text-slate-500 truncate">
+                  <p className="text-[11px] text-slate-500 truncate">
                     {user?.email || 'user@example.com'}
                   </p>
                 </div>
-                <Link
-                  href="/profile"
-                  onClick={() => setShowMenu(false)}
-                  className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
-                >
-                  <User className="w-4 h-4 text-slate-400" />
-                  <span>Profile Settings</span>
-                </Link>
+               
                 <button
                   onClick={() => { setShowMenu(false); logout(); }}
-                  className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                  className="w-full flex items-center space-x-2.5 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-4 h-4 text-red-500" />
                   <span>Sign Out</span>
                 </button>
               </div>

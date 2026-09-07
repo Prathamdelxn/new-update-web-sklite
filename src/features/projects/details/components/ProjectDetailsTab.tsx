@@ -155,8 +155,8 @@ export function ProjectDetailsTab() {
               <button
                 onClick={() => {
                   const surveyPath = project.projectType === 'Interior'
-                    ? `/interior/projects/${projectId}/site-survey`
-                    : `/projects/${projectId}/site-survey`;
+                    ? `/interior-new/projects/${projectId}/site-survey`
+                    : `/construction-dashboard/projects/${projectId}/site-survey`;
                   router.push(surveyPath);
                 }}
                 className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs shrink-0"
@@ -190,8 +190,8 @@ export function ProjectDetailsTab() {
               <button
                 onClick={() => {
                   const surveyPath = project.projectType === 'Interior'
-                    ? `/interior/projects/${projectId}/site-survey`
-                    : `/projects/${projectId}/site-survey`;
+                    ? `/interior-new/projects/${projectId}/site-survey`
+                    : `/construction-dashboard/projects/${projectId}/site-survey`;
                   router.push(surveyPath);
                 }}
                 className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs shrink-0"
@@ -225,8 +225,8 @@ export function ProjectDetailsTab() {
               <button
                 onClick={() => {
                   const surveyPath = project.projectType === 'Interior'
-                    ? `/interior/projects/${projectId}/site-survey`
-                    : `/projects/${projectId}/site-survey`;
+                    ? `/interior-new/projects/${projectId}/site-survey`
+                    : `/construction-dashboard/projects/${projectId}/site-survey`;
                   router.push(surveyPath);
                 }}
                 className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs shrink-0"
@@ -278,8 +278,8 @@ export function ProjectDetailsTab() {
                 <button
                   onClick={() => {
                     const surveyPath = project.projectType === 'Interior'
-                      ? `/interior/projects/${projectId}/site-survey`
-                      : `/projects/${projectId}/site-survey`;
+                      ? `/interior-new/projects/${projectId}/site-survey`
+                      : `/construction-dashboard/projects/${projectId}/site-survey`;
                     router.push(surveyPath);
                   }}
                   className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-4 py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
@@ -327,130 +327,139 @@ export function ProjectDetailsTab() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
         
         {/* Bento Card 1: Project Details Hero */}
-        <GlassCard className="p-4.5 md:p-5 border-gray-200 lg:col-span-2 flex flex-col justify-between" gradient>
+        <div className="p-5 md:p-6 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs lg:col-span-2 flex flex-col justify-between hover:border-slate-300 transition-all">
           <div>
-            <div className="flex items-center space-x-1.5">
-              <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-blue-50 text-blue-600 border border-blue-100">
+            <div className="flex items-center space-x-2">
+              <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200/60 shadow-2xs">
                 {project.status || 'Planning'}
               </span>
-              <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
+              <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs">
                 {project.category?.name || 'General'}
               </span>
             </div>
             
-            <h2 className="text-xl md:text-2xl font-extrabold text-gray-900 tracking-tight mt-2.5 flex items-baseline">
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight mt-3 flex items-baseline flex-wrap gap-2">
               {project.name}
               {project.projectCode && (
-                <span className="text-sm md:text-base font-medium text-slate-500 ml-2">
-                  ({project.projectCode})
+                <span className="text-xs md:text-sm font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                  {project.projectCode}
                 </span>
               )}
             </h2>
-            <p className="text-slate-500 mt-2 text-xs leading-relaxed">
+            <p className="text-slate-600 mt-2 text-xs leading-relaxed font-normal">
               {project.description || 'No description provided.'}
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 bg-slate-50 border border-slate-100 rounded-xl p-3 mt-4">
+          <div className="grid grid-cols-2 gap-3 bg-slate-50/80 border border-slate-200/80 rounded-xl p-3.5 mt-5">
             <div>
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Start Date</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Start Date</span>
               <span className="text-xs font-bold text-slate-800 mt-0.5 block">
                 {project.startDate ? new Date(project.startDate).toLocaleDateString() : 'N/A'}
               </span>
             </div>
             <div>
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Target Date</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Target Date</span>
               <span className="text-xs font-bold text-slate-800 mt-0.5 block">
                 {project.endDate ? new Date(project.endDate).toLocaleDateString() : 'N/A'}
               </span>
             </div>
           </div>
-        </GlassCard>
+        </div>
 
         {/* Bento Card 2: Total Budget */}
-        <GlassCard
+        <div
           onClick={() => setShowBudgetHist(true)}
-          className="p-4.5 md:p-5 border-gray-200 flex flex-col justify-between hover:border-blue-500/30 hover:shadow-md cursor-pointer transition-all duration-300 group"
-          gradient
+          className="p-5 md:p-6 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs flex flex-col justify-between hover:border-blue-300 hover:shadow-card-hover cursor-pointer transition-all duration-200 group"
         >
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Budget</span>
-              <History className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 transition-colors" />
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Budget</span>
+              <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform">
+                <History className="w-3.5 h-3.5" />
+              </div>
             </div>
             
-            <h3 className="text-xl md:text-2xl font-extrabold text-gray-900 tracking-tight mt-4">
+            <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-4">
               {formatCurrency(project.budgetHistory?.[project.budgetHistory.length - 1]?.amount || 0, project.currency || '$')}
             </h3>
-            <p className="text-[10px] text-slate-400 mt-1">Latest Approved Base Budget</p>
+            <p className="text-[11px] text-slate-500 mt-1 font-medium">Latest Approved Base Budget</p>
           </div>
           
-          <div className="text-[9px] font-black text-blue-600 uppercase tracking-wider mt-4 group-hover:translate-x-1 transition-transform flex items-center space-x-0.5">
+          <div className="text-[11px] font-bold text-blue-600 uppercase tracking-wider mt-4 group-hover:translate-x-1 transition-transform flex items-center space-x-1 pt-3 border-t border-slate-100">
             <span>Budget Lifecycle</span>
-            <ChevronRight className="w-3 h-3" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </div>
-        </GlassCard>
+        </div>
 
         {/* Bento Card 3: Days Remaining */}
-        <GlassCard className="p-4.5 md:p-5 border-gray-200 flex flex-col justify-between" gradient>
+        <div className="p-5 md:p-6 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
           <div>
-            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Days Remaining</span>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Days Remaining</span>
+              <div className="w-7 h-7 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+                <Clock className="w-3.5 h-3.5" />
+              </div>
+            </div>
             
-            <h3 className="text-xl md:text-2xl font-extrabold text-gray-900 tracking-tight mt-4">
+            <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-4">
               {daysRem !== 'N/A' ? `${daysRem} Days` : 'N/A'}
             </h3>
-            <p className="text-[10px] text-slate-400 mt-1">Time Remaining Until Target Handover</p>
+            <p className="text-[11px] text-slate-500 mt-1 font-medium">Time Remaining Until Target Handover</p>
           </div>
-          <div className="flex items-center space-x-1 text-slate-400 mt-4">
-            <Clock className="w-3.5 h-3.5" />
-            <span className="text-[9px] font-bold uppercase tracking-wider">Scheduled Target</span>
+          <div className="flex items-center space-x-1.5 text-slate-400 mt-4 pt-3 border-t border-slate-100">
+            <span className="text-[10px] font-bold uppercase tracking-wider">Scheduled Target</span>
           </div>
-        </GlassCard>
+        </div>
 
         {/* Bento Card 4: Project Area */}
-        <GlassCard className="p-4.5 md:p-5 border-gray-200 flex flex-col justify-between" gradient>
+        <div className="p-5 md:p-6 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
           <div className="flex flex-col h-full justify-between">
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Project Area</span>
-                <Map className="w-3.5 h-3.5 text-slate-400" />
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Project Area</span>
+                <div className="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                  <Map className="w-3.5 h-3.5" />
+                </div>
               </div>
-              <h3 className="text-xl md:text-2xl font-extrabold text-gray-900 tracking-tight mt-4">
+              <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-4">
                 {project.area ? `${Number(project.area).toLocaleString()} ${project.areaUnit ? project.areaUnit.toUpperCase() : 'SQFT'}` : 'N/A'}
               </h3>
-              <p className="text-[10px] text-slate-400 mt-1">Total Site Area</p>
+              <p className="text-[11px] text-slate-500 mt-1 font-medium">Total Site Area</p>
             </div>
             
             {project?.siteLocation?.latitude != null && project?.siteLocation?.longitude != null && (
-              <div className="mt-4">
+              <div className="mt-4 pt-3 border-t border-slate-100">
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${project.siteLocation.latitude},${project.siteLocation.longitude}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200/60 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors shadow-2xs"
                 >
                   <Map className="w-3.5 h-3.5" />
-                  <span className="text-xs font-bold">Map</span>
+                  <span className="text-xs font-bold">View Location</span>
                 </a>
               </div>
             )}
           </div>
-        </GlassCard>
+        </div>
 
-        {/* Bento Card 4: Coordination Team */}
-        <GlassCard className="p-4.5 md:p-5 border-gray-200 lg:col-span-2 flex flex-col justify-between" gradient>
+        {/* Bento Card 5: Coordination Team */}
+        <div className="p-5 md:p-6 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs lg:col-span-2 flex flex-col justify-between hover:border-slate-300 transition-all">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-1.5">
-                <Users className="w-4.5 h-4.5 text-slate-700" />
-                <h3 className="text-sm xl:text-base font-bold text-slate-900">Coordination Team</h3>
+              <div className="flex items-center space-x-2">
+                <div className="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                  <Users className="w-4 h-4" />
+                </div>
+                <h3 className="text-sm font-bold text-slate-900">Coordination Team</h3>
               </div>
               {!isProjectLocked(project) && (
                 <button
                   onClick={() => setIsTeamModalOpen(true)}
-                  className="flex items-center space-x-0.5 px-2 py-1 bg-blue-50 border border-blue-100 hover:border-blue-300 text-blue-600 rounded-lg text-[10px] font-black uppercase transition-all"
+                  className="flex items-center space-x-1 px-3 py-1.5 bg-blue-50 border border-blue-200/60 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold transition-all shadow-2xs"
                 >
-                  <Plus className="w-3 h-3" />
+                  <Plus className="w-3.5 h-3.5" />
                   <span>Manage</span>
                 </button>
               )}
@@ -459,16 +468,16 @@ export function ProjectDetailsTab() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               
               {/* Creator display */}
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center space-x-2.5">
-                <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-xs font-black text-white shrink-0">
+              <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/60 flex items-center space-x-3">
+                <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-2xs">
                   {(project.createdBy?.name || 'S').charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-bold text-slate-900 truncate">
+                  <p className="text-xs font-bold text-slate-900 truncate">
                     {project.createdBy?.name || 'Manager'}
                   </p>
-                  <p className="text-[9px] text-blue-600 truncate font-bold mt-0.5">Admin</p>
-                  <p className="text-[9px] text-slate-400 truncate">
+                  <p className="text-[10px] text-blue-700 truncate font-semibold mt-0.5">Admin</p>
+                  <p className="text-[10px] text-slate-400 truncate">
                     {project.createdBy?.email || 'admin@creator'}
                   </p>
                 </div>
@@ -505,7 +514,7 @@ export function ProjectDetailsTab() {
               })}
             </div>
           </div>
-        </GlassCard>
+        </div>
       </div>
 
       {/* ── Budget History Modal ── */}

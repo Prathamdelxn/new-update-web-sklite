@@ -427,15 +427,15 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
       ) : (
       <div className="space-y-6">
         {/* View switcher */}
-        <div className="flex p-1 bg-gray-100 border border-gray-200 rounded-xl w-fit">
+        <div className="flex p-1 bg-slate-100/90 border border-slate-200/80 rounded-xl w-fit shadow-2xs">
           <button
             type="button"
             onClick={() => setActiveView('milestones')}
             className={cn(
               'py-1.5 px-4 rounded-lg text-xs font-bold transition-all',
               activeView === 'milestones'
-                ? 'bg-white shadow text-blue-600'
-                : 'text-slate-500 hover:text-gray-700'
+                ? 'bg-white shadow-2xs text-blue-700 border border-slate-200/60'
+                : 'text-slate-500 hover:text-slate-900'
             )}
           >
             Milestones
@@ -446,8 +446,8 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
             className={cn(
               'py-1.5 px-4 rounded-lg text-xs font-bold transition-all',
               activeView === 'timeline'
-                ? 'bg-white shadow text-blue-600'
-                : 'text-slate-500 hover:text-gray-700'
+                ? 'bg-white shadow-2xs text-blue-700 border border-slate-200/60'
+                : 'text-slate-500 hover:text-slate-900'
             )}
           >
             Timeline
@@ -461,35 +461,35 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h3 className="text-xl font-bold text-gray-900"> </h3>
-          <p className="text-sm text-slate-500 mt-1">Key targets and critical path objectives.</p>
+          <h3 className="text-lg font-bold text-slate-900">Project Milestones</h3>
+          <p className="text-xs text-slate-500 mt-0.5">Key targets, task completion tracking, and critical path objectives.</p>
         </div>
         <div className="flex items-center space-x-3">
-          <div className="flex p-1 bg-gray-100 border border-gray-200 rounded-xl">
-            <button onClick={() => setView('cards')} className={cn('p-1.5 rounded-lg transition-all', view === 'cards' ? 'bg-white shadow text-blue-600' : 'text-slate-400 hover:text-gray-700')}>
+          <div className="flex p-1 bg-slate-100/90 border border-slate-200/80 rounded-xl shadow-2xs">
+            <button onClick={() => setView('cards')} className={cn('p-1.5 rounded-lg transition-all', view === 'cards' ? 'bg-white shadow-2xs text-blue-700 border border-slate-200/60' : 'text-slate-400 hover:text-slate-700')}>
               <LayoutGrid className="w-4 h-4" />
             </button>
-            <button onClick={() => setView('list')} className={cn('p-1.5 rounded-lg transition-all', view === 'list' ? 'bg-white shadow text-blue-600' : 'text-slate-400 hover:text-gray-700')}>
+            <button onClick={() => setView('list')} className={cn('p-1.5 rounded-lg transition-all', view === 'list' ? 'bg-white shadow-2xs text-blue-700 border border-slate-200/60' : 'text-slate-400 hover:text-slate-700')}>
               <List className="w-4 h-4" />
             </button>
-            <button onClick={() => setView('gantt')} className={cn('p-1.5 rounded-lg transition-all', view === 'gantt' ? 'bg-white shadow text-blue-600' : 'text-slate-400 hover:text-gray-700')}>
+            <button onClick={() => setView('gantt')} className={cn('p-1.5 rounded-lg transition-all', view === 'gantt' ? 'bg-white shadow-2xs text-blue-700 border border-slate-200/60' : 'text-slate-400 hover:text-slate-700')}>
               <AlignLeft className="w-4 h-4" />
             </button>
           </div>
           {canCreate && (
             <button
               onClick={() => setIsXERModalOpen(true)}
-              className="flex items-center space-x-2 bg-violet-50 border border-violet-200 text-violet-700 hover:bg-violet-100 px-4 py-2 rounded-xl text-sm font-bold transition-all active:scale-[0.98]"
+              className="flex items-center space-x-1.5 bg-violet-50 border border-violet-200 text-violet-700 hover:bg-violet-100 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-2xs"
             >
-              <FileText className="w-4 h-4" /><span>Import XER</span>
+              <FileText className="w-3.5 h-3.5" /><span>Import XER</span>
             </button>
           )}
           {canCreate && (
             <button
               onClick={openCreateModal}
-              className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all active:scale-[0.98] shadow-lg shadow-blue-600/20"
+              className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs"
             >
-              <Plus className="w-4 h-4" /><span>New Milestone</span>
+              <Plus className="w-3.5 h-3.5" /><span>New Milestone</span>
             </button>
           )}
         </div>
@@ -621,7 +621,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       )}
-                      <button onClick={() => router.push(`/projects/${projectId}/milestones/${milestone._id}`)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 border border-blue-100 bg-blue-50/50">
+                      <button onClick={() => router.push(`/construction-dashboard/projects/${projectId}/milestones/${milestone._id}`)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 border border-blue-100 bg-blue-50/50">
                         <ChevronRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -745,7 +745,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                               </button>
                             )}
                             <button
-                              onClick={() => router.push(`/projects/${projectId}/milestones/${milestone._id}`)}
+                              onClick={() => router.push(`/construction-dashboard/projects/${projectId}/milestones/${milestone._id}`)}
                               className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 border border-blue-100 transition-all"
                               title="View details"
                             >
@@ -826,27 +826,32 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
 
       {/* ── Card view ── */}
       {view === 'cards' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {milestones.map((milestone) => {
             const completedTasks = milestone.tasks?.filter((t: any) => t.isCompleted).length || 0;
             const totalTasks     = milestone.tasks?.length || 0;
             const progress       = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : (milestone.status === 'Completed' ? 100 : 0);
             const isExpanded     = expandedId === milestone._id;
             return (
-              <div key={milestone._id} className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow flex flex-col h-full overflow-hidden">
+              <div key={milestone._id} className="bg-white/90 backdrop-blur-md border border-slate-200/80 rounded-2xl shadow-xs hover:border-slate-300 hover:shadow-card-hover transition-all flex flex-col h-full overflow-hidden group">
                 <div className="p-5 flex-1 flex flex-col">
                   {/* Header: Title and Menu */}
-                  <div className="flex justify-between items-start gap-4">
-                    <div className="min-w-0 flex-1 cursor-pointer" onClick={() => router.push(`/projects/${projectId}/milestones/${milestone._id}`)}>
-                      <h4 className="text-base font-semibold text-gray-900 truncate" title={milestone.name}>{milestone.name}</h4>
+                  <div className="flex justify-between items-start gap-3">
+                    <div className="min-w-0 flex-1 cursor-pointer" onClick={() => router.push(`/construction-dashboard/projects/${projectId}/milestones/${milestone._id}`)}>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className={cn('px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border shadow-2xs', getStatusStyle(milestone.status || 'Pending'))}>
+                          {milestone.status || 'Pending'}
+                        </span>
+                      </div>
+                      <h4 className="text-base font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors" title={milestone.name}>{milestone.name}</h4>
                       {milestone.dueDate && (
-                        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-500">
-                          <Calendar className="w-3.5 h-3.5" />
+                        <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-500 font-medium">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
                           <span>Due {new Date(milestone.dueDate).toLocaleDateString()}</span>
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-1 shrink-0">
                       {(canUpdate || canDelete) && (
                         <button
                           onClick={e => {
@@ -859,7 +864,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                               setMilestoneMenuId(milestone._id);
                             }
                           }}
-                          className="p-1 text-slate-400 hover:text-gray-900 rounded-md hover:bg-gray-100 transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
                         >
                           <MoreVertical className="w-4 h-4" />
                         </button>
@@ -869,43 +874,44 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
 
                   {/* Description */}
                   {milestone.description && (
-                    <p className="text-sm text-slate-600 mt-3 line-clamp-2 cursor-pointer flex-1" onClick={() => router.push(`/projects/${projectId}/milestones/${milestone._id}`)}>
+                    <p className="text-xs text-slate-500 mt-2.5 line-clamp-2 cursor-pointer flex-1 leading-relaxed" onClick={() => router.push(`/construction-dashboard/projects/${projectId}/milestones/${milestone._id}`)}>
                       {milestone.description}
                     </p>
                   )}
                   {!milestone.description && <div className="flex-1" />}
 
                   {/* Progress */}
-                  <div className="mt-5 space-y-2 cursor-pointer" onClick={() => router.push(`/projects/${projectId}/milestones/${milestone._id}`)}>
+                  <div className="mt-4 space-y-1.5 cursor-pointer" onClick={() => router.push(`/construction-dashboard/projects/${projectId}/milestones/${milestone._id}`)}>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-500 font-medium">Progress</span>
-                      <span className="font-semibold text-gray-900">{progress}%</span>
+                      <span className="text-slate-500 font-semibold text-[11px]">Progress</span>
+                      <span className="font-bold text-slate-900">{progress}%</span>
                     </div>
-                    <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-200">
+                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
                       <motion.div
                         initial={{ width: 0 }} animate={{ width: `${progress}%` }} transition={{ duration: 0.6 }}
-                        className={cn('h-full rounded-full', milestone.status === 'Completed' ? 'bg-emerald-500' : milestone.status === 'On Hold' ? 'bg-amber-500' : 'bg-blue-500')}
+                        className={cn('h-full rounded-full', milestone.status === 'Completed' ? 'bg-emerald-500' : milestone.status === 'On Hold' ? 'bg-amber-500' : 'bg-blue-600')}
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Footer / Checklist */}
-                <div className="border-t border-gray-100 bg-gray-50/30">
+                <div className="border-t border-slate-100 bg-slate-50/50">
                   <div className="flex items-center justify-between px-5 py-3">
                     <button
                       onClick={() => setExpandedId(isExpanded ? null : milestone._id)}
-                      className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-gray-900 transition-colors"
+                      className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors"
                     >
-                      <List className="w-3.5 h-3.5" />
+                      <List className="w-3.5 h-3.5 text-slate-400" />
                       <span>{completedTasks}/{totalTasks} Tasks</span>
                       {totalTasks > 0 && (isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />)}
                     </button>
                     <button
-                      onClick={() => router.push(`/projects/${projectId}/milestones/${milestone._id}`)}
-                      className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                      onClick={() => router.push(`/construction-dashboard/projects/${projectId}/milestones/${milestone._id}`)}
+                      className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-0.5"
                     >
-                      View Details
+                      <span>Details</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
 

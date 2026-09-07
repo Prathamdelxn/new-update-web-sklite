@@ -119,17 +119,17 @@ export const UserList = () => {
 
         {/* Org-level summary strip */}
         {!loading && users.length > 0 && (
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-xl">
-              <UsersIcon className="w-4 h-4 text-blue-600" />
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex items-center gap-2 px-3.5 py-1.5 bg-blue-50/80 border border-blue-200/60 rounded-xl shadow-2xs">
+              <UsersIcon className="w-3.5 h-3.5 text-blue-600" />
               <span className="text-xs font-bold text-blue-700">{users.length} Organisation Member{users.length !== 1 ? 's' : ''}</span>
             </div>
             {uniqueRoles.map(role => {
               const count = users.filter(u => (typeof u.role === 'object' ? u.role?.name : u.role) === role).length;
               return (
-                <div key={role} className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl">
-                  <span className="text-xs font-bold text-slate-500">{role}</span>
-                  <span className="ml-1.5 text-xs font-black text-gray-900">{count}</span>
+                <div key={role} className="px-3 py-1.5 bg-slate-50/80 border border-slate-200/60 rounded-xl shadow-2xs">
+                  <span className="text-xs font-semibold text-slate-500">{role}</span>
+                  <span className="ml-1.5 text-xs font-extrabold text-slate-900">{count}</span>
                 </div>
               );
             })}
@@ -138,13 +138,13 @@ export const UserList = () => {
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="relative flex-1 max-w-md group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
           <input
             type="text"
             placeholder="Search by name or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3 pl-12 pr-4 text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+            className="w-full bg-slate-50 border border-slate-200/80 rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-2xs"
           />
         </div>
 
@@ -152,20 +152,20 @@ export const UserList = () => {
           <div className="relative" ref={filterRef}>
             <button
               onClick={() => setShowFilterMenu(v => !v)}
-              className={`p-3 border rounded-xl transition-all relative ${roleFilter ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-gray-50 border-gray-200 text-slate-400 hover:text-gray-900'}`}
+              className={`p-2.5 border rounded-xl transition-all relative shadow-2xs ${roleFilter ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}
               title="Filter by role"
             >
-              <Filter className="w-5 h-5" />
+              <Filter className="w-4 h-4" />
               {roleFilter && <span className="absolute top-1 right-1 w-2 h-2 bg-blue-600 rounded-full" />}
             </button>
             {showFilterMenu && (
-              <div className="absolute right-0 top-full mt-2 w-44 bg-white border border-gray-200 rounded-xl shadow-lg z-30 overflow-hidden">
-                <div className="px-3 py-2 border-b border-gray-100">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Filter by Role</p>
+              <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200/80 rounded-2xl shadow-card-hover z-30 overflow-hidden py-1">
+                <div className="px-3.5 py-2 border-b border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Filter by Role</p>
                 </div>
                 <button
                   onClick={() => { setRoleFilter(null); setShowFilterMenu(false); }}
-                  className={`w-full px-4 py-2.5 text-left text-sm font-semibold transition-colors ${!roleFilter ? 'text-blue-600 bg-blue-50' : 'text-slate-600 hover:bg-gray-50'}`}
+                  className={`w-full px-3.5 py-2 text-left text-xs font-bold transition-colors ${!roleFilter ? 'text-blue-600 bg-blue-50' : 'text-slate-600 hover:bg-slate-50'}`}
                 >
                   All Roles
                 </button>
@@ -173,7 +173,7 @@ export const UserList = () => {
                   <button
                     key={role}
                     onClick={() => { setRoleFilter(role); setShowFilterMenu(false); }}
-                    className={`w-full px-4 py-2.5 text-left text-sm font-semibold transition-colors ${roleFilter === role ? 'text-blue-600 bg-blue-50' : 'text-slate-600 hover:bg-gray-50'}`}
+                    className={`w-full px-3.5 py-2 text-left text-xs font-bold transition-colors ${roleFilter === role ? 'text-blue-600 bg-blue-50' : 'text-slate-600 hover:bg-slate-50'}`}
                   >
                     {role}
                   </button>
@@ -183,15 +183,15 @@ export const UserList = () => {
           </div>
           <button
             onClick={() => { setEditingUser(null); setIsModalOpen(true); }}
-            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-2xl text-sm font-bold transition-all active:scale-[0.98] shadow-lg shadow-blue-600/20"
+            className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs shrink-0"
           >
-            <UserPlus className="w-4 h-4" />
+            <UserPlus className="w-3.5 h-3.5" />
             <span>Add New Member</span>
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {pagedUsers.map((user, idx) => {
           let roleName = typeof user.role === 'object' ? user.role?.name : user.role;
           if (!roleName && user.projects?.length > 0) {
@@ -205,10 +205,10 @@ export const UserList = () => {
           
           const getRoleStyle = (r: string) => {
             switch (r?.toLowerCase()) {
-              case 'administrator': return { bg: 'bg-red-100', text: 'text-red-500', border: 'border-red-100', dot: 'bg-red-500' };
-              case 'site manager': return { bg: 'bg-amber-100', text: 'text-amber-600', border: 'border-amber-100', dot: 'bg-amber-600' };
-              case 'contractor': return { bg: 'bg-blue-100', text: 'text-blue-600', border: 'border-blue-100', dot: 'bg-blue-600' };
-              default: return { bg: 'bg-slate-100', text: 'text-slate-500', border: 'border-slate-100', dot: 'bg-slate-500' };
+              case 'administrator': return { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200/60', dot: 'bg-red-500' };
+              case 'site manager': return { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200/60', dot: 'bg-amber-500' };
+              case 'contractor': return { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200/60', dot: 'bg-blue-500' };
+              default: return { bg: 'bg-slate-50', text: 'text-slate-700', border: 'border-slate-200', dot: 'bg-slate-400' };
             }
           };
           const rStyle = getRoleStyle(roleName);
@@ -230,24 +230,24 @@ export const UserList = () => {
           const canManageThisUser = !isTargetAdmin || isSelf;
 
           return (
-            <GlassCard key={user._id || `user-${idx}`} className="p-4 border-gray-200 transition-all flex items-center justify-between" gradient>
-              <div className="flex items-center space-x-4 flex-1 min-w-0 pr-2">
+            <div key={user._id || `user-${idx}`} className="p-4.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs hover:border-slate-300 hover:shadow-card-hover transition-all flex items-center justify-between group">
+              <div className="flex items-center space-x-3.5 flex-1 min-w-0 pr-2">
                 <div className="relative shrink-0">
-                  <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center text-lg font-black text-white">
+                  <div className="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center text-sm font-bold text-white shadow-2xs">
                     {initials}
                   </div>
                   {roleName && roleName !== 'No Role' && (
-                    <div className={cn("absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white", rStyle.dot)} />
+                    <div className={cn("absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white", rStyle.dot)} />
                   )}
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-base font-bold text-slate-900 break-words">{user.name}</h4>
-                  <p className="text-xs font-semibold text-slate-400 mt-0.5 mb-1.5 break-all whitespace-normal" title={user.email}>{user.email}</p>
+                  <h4 className="text-sm font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">{user.name}</h4>
+                  <p className="text-[11px] font-medium text-slate-400 mt-0.5 mb-1.5 truncate" title={user.email}>{user.email}</p>
                   
                   {roleName && roleName !== 'No Role' && (
-                    <div className={cn("inline-flex items-center px-2 py-1 rounded-lg border", rStyle.bg, rStyle.border)}>
-                      <span className={cn("text-[10px] font-black uppercase tracking-wider", rStyle.text)}>
+                    <div className={cn("inline-flex items-center px-2 py-0.5 rounded-md border shadow-2xs", rStyle.bg, rStyle.border)}>
+                      <span className={cn("text-[10px] font-bold uppercase tracking-wider", rStyle.text)}>
                         {roleName}
                       </span>
                     </div>
@@ -256,22 +256,22 @@ export const UserList = () => {
               </div>
 
               {canManageThisUser && (
-                <div className="flex items-center space-x-2 shrink-0">
+                <div className="flex items-center space-x-1.5 shrink-0">
                   <button
                     onClick={() => openEdit(user)}
-                    className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-colors"
+                    className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-colors"
                   >
-                    <Pencil className="w-4 h-4" />
+                    <Pencil className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => openDelete(user)}
-                    className="w-9 h-9 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-100 hover:border-red-200 transition-colors"
+                    className="w-8 h-8 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-100 hover:border-red-200 transition-colors"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               )}
-            </GlassCard>
+            </div>
           );
         })}
 

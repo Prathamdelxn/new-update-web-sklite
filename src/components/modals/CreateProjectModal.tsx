@@ -30,9 +30,9 @@ interface CreateProjectModalProps {
   projectId?: string;
 }
 
-const inputCls = 'w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all';
-const inputErrCls = 'w-full bg-gray-50 border border-red-400 rounded-xl py-3 px-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-sm transition-all';
-const labelCls = 'block text-xs font-bold text-slate-600 mb-1.5 ml-0.5';
+const inputCls = 'w-full bg-slate-50/80 border border-slate-250/90 rounded-xl py-2.5 px-3.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all hover:border-slate-300';
+const inputErrCls = 'w-full bg-slate-50/80 border border-red-400 rounded-xl py-2.5 px-3.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-sm transition-all';
+const labelCls = 'block text-xs font-bold text-slate-700 mb-1.5 ml-0.5 tracking-tight';
 
 const emptyForm = {
   name: '',
