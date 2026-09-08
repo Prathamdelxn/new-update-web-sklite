@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { X, MapPin } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
+import { validateNonEmpty, ValidationErrors } from '@/lib/crmValidation';
 
 interface Props {
   isOpen: boolean;
@@ -24,6 +25,7 @@ function userLabel(u: any) {
 export function InteriorSendToSiteVisitModal({ isOpen, onClose, customerId, onSuccess, users = [] }: Props) {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<ValidationErrors>({});
   const [assignedSalesExecutive, setAssignedSalesExecutive] = useState('');
   const [scheduledDate, setScheduledDate] = useState('');
   const [remarks, setRemarks] = useState('');
@@ -33,41 +35,73 @@ export function InteriorSendToSiteVisitModal({ isOpen, onClose, customerId, onSu
       setAssignedSalesExecutive('');
       setScheduledDate('');
       setRemarks('');
+      setErrors({});
     }
   }, [isOpen]);
 
-
   if (!isOpen) return null;
+
+  const validateForm = (): boolean => {
+    const newErrors: ValidationErrors = {
+      assignedSalesExecutive: validateNonEmpty(assignedSalesExecutive, 'Assign member'),
+    };
+    setErrors(newErrors);
+    return !Object.values(newErrors).some((err) => err !== null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) {
+      toast.error('Please assign a team member for the site visit');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
+      const visitDate = scheduledDate ? new Date(scheduledDate) : new Date();
+
       const updatePayload: any = {
         status: 'Under Site Visit',
-        siteVisitScheduledDate: scheduledDate || new Date(),
+        siteVisitScheduledDate: visitDate.toISOString(),
+        assignedSalesExecutive: assignedSalesExecutive.trim(),
       };
-
-      if (assignedSalesExecutive) {
-        updatePayload.assignedSalesExecutive = assignedSalesExecutive;
-      }
 
       await interiorCrmService.updateCustomer(customerId, updatePayload);
 
       await interiorCrmService.createActivity({
         customer: customerId,
         type: 'Site Visit',
-        status: 'Completed',
-        scheduledDate: scheduledDate || new Date(),
-        remarks: remarks || 'Lead passed to Site Visit and assigned to site team.',
+        status: 'Pending',
+        scheduledDate: visitDate.toISOString(),
+        remarks: remarks.trim() || 'Lead passed to Site Visit and assigned to site team.',
       });
 
-      toast.success('Successfully sent to Site Visits!');
+      // Automatically complete any pending follow-up activities for this customer
+      try {
+        const activitiesRes = await interiorCrmService.getActivities();
+        const acts = activitiesRes?.data || (Array.isArray(activitiesRes) ? activitiesRes : []);
+        const pendingFollowUps = acts.filter((a: any) => {
+          const cId = a.customer?._id || a.customer?.id || a.customer;
+          return cId === customerId && a.status === 'Pending' && a.type !== 'Site Visit';
+        });
+
+        for (const act of pendingFollowUps) {
+          await interiorCrmService.updateActivity(act._id, {
+            status: 'Completed',
+            completedDate: new Date(),
+          });
+        }
+      } catch (actErr) {
+        console.warn('Failed to auto-complete pending follow-ups:', actErr);
+      }
+
+      toast.success('Follow-up completed & scheduled for Site Visit!');
       onSuccess();
       onClose();
+      setErrors({});
     } catch (error: any) {
-      toast.error('Failed to send to site visit');
+      toast.error(error.response?.data?.message || 'Failed to send to site visit');
     } finally {
       setIsSubmitting(false);
     }
@@ -90,18 +124,27 @@ export function InteriorSendToSiteVisitModal({ isOpen, onClose, customerId, onSu
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-bold text-[hsl(var(--foreground))]">Assign Member to Site Visit</label>
+            <label className="text-xs font-bold text-[hsl(var(--foreground))]">Assign Member to Site Visit *</label>
             <select
               value={assignedSalesExecutive}
-              onChange={e => setAssignedSalesExecutive(e.target.value)}
-              className="w-full mt-1.5 px-4 py-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none"
-              required
+              onChange={e => {
+                setAssignedSalesExecutive(e.target.value);
+                if (errors.assignedSalesExecutive) setErrors({ ...errors, assignedSalesExecutive: null });
+              }}
+              className={`w-full mt-1.5 px-4 py-3 rounded-xl border bg-[hsl(var(--background))] text-sm outline-none transition-all ${
+                errors.assignedSalesExecutive
+                  ? 'border-red-500 focus:ring-2 focus:ring-red-500/20'
+                  : 'border-[hsl(var(--border))] focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500'
+              }`}
             >
               <option value="">-- Select Member --</option>
               {users.map(u => (
                 <option key={u._id || u.id} value={u._id || u.id}>{userLabel(u)}</option>
               ))}
             </select>
+            {errors.assignedSalesExecutive && (
+              <p className="text-xs text-red-500 mt-1">{errors.assignedSalesExecutive}</p>
+            )}
           </div>
 
           <div>

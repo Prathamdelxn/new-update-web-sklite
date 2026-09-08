@@ -198,7 +198,7 @@ export const InteriorRequirementDesignView = ({
                           : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
                       )}
                     >
-                      {lead.requirements && lead.requirements.length > 0 ? 'Documented ✓' : 'Pending'}
+                      {lead.requirements && lead.requirements.length > 0 ? 'Documented ' : 'Pending'}
                     </span>
                   </div>
 
@@ -230,7 +230,7 @@ export const InteriorRequirementDesignView = ({
                     {lead.requirements && lead.requirements.length > 0 && handlePassToNext && (
                       ['Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Won', 'Converted'].includes(lead.status) ? (
                         <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
-                          Passed ✓
+                          Passed 
                         </span>
                       ) : (
                         <button
@@ -337,7 +337,7 @@ export const InteriorRequirementDesignView = ({
                           )}
                         >
                           {lead.requirements && lead.requirements.length > 0
-                            ? `${lead.requirements.length} Rooms Configured ✓`
+                            ? `${lead.requirements.length} Rooms Configured `
                             : 'Pending'}
                         </span>
                       </td>
@@ -373,7 +373,7 @@ export const InteriorRequirementDesignView = ({
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-xs font-bold"
                               title="Lead has already been passed to Drawings"
                             >
-                              Passed to Drawing ✓
+                              Passed to Drawing 
                             </span>
                           ) : (
                             <button

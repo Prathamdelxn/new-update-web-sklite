@@ -4,8 +4,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
-import { Calendar, Clock, Phone, UserCircle, MapPin, CheckCircle2, Search, ArrowRight, CheckCircle, XCircle, MessageSquare } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Clock, Phone, UserCircle, MapPin, CheckCircle2, Search, CheckCircle, XCircle, MessageSquare } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/providers/ToastContext';
 import { cn } from '@/lib/utils';
@@ -123,7 +122,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
           <button
             onClick={() => setActiveTab('all')}
             className={cn(
-'flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all whitespace-nowrap text-center',
+              'flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all whitespace-nowrap text-center cursor-pointer',
               activeTab === 'all'
                 ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-sm'
                 : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
@@ -134,7 +133,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
           <button
             onClick={() => setActiveTab('pending')}
             className={cn(
-'flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all whitespace-nowrap flex items-center justify-center gap-1.5',
+              'flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all whitespace-nowrap flex items-center justify-center gap-1.5 cursor-pointer',
               activeTab === 'pending'
                 ? 'bg-amber-500 text-white shadow-sm'
                 : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
@@ -145,7 +144,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
           <button
             onClick={() => setActiveTab('completed')}
             className={cn(
-'flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all whitespace-nowrap flex items-center justify-center gap-1.5',
+              'flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all whitespace-nowrap flex items-center justify-center gap-1.5 cursor-pointer',
               activeTab === 'completed'
                 ? 'bg-emerald-600 text-white shadow-sm'
                 : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
@@ -168,7 +167,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
           {searchTerm && (
             <button
               onClick={() => setSearchTerm('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] cursor-pointer"
             >
               Clear
             </button>
@@ -204,7 +203,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
           <>
             {/* MOBILE CARD VIEW (< md) */}
             <div className="block md:hidden divide-y divide-[hsl(var(--border))]">
-              {filteredFollowUps.map((act, idx) => (
+              {filteredFollowUps.map((act) => (
                 <div
                   key={act._id}
                   onClick={() => router.push(`/interior-new/crm/leads/${act.customer?._id}`)}
@@ -217,7 +216,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
                       </div>
                       <div className="min-w-0 flex-1">
                         <h4 
-                          className="text-xs font-bold text-[hsl(var(--foreground))] truncate max-w-[100px] sm:max-w-[220px]"
+                          className="text-xs font-bold text-[hsl(var(--foreground))] truncate max-w-[140px] sm:max-w-[220px]"
                           title={act.customer?.name || 'Unknown'}
                         >
                           {act.customer?.name || 'Unknown'}
@@ -232,7 +231,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
 
                     <span
                       className={cn(
-'shrink-0 inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border',
+                        'shrink-0 inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border',
                         act.status === 'Completed'
                           ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                           : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
@@ -242,7 +241,6 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
                     </span>
                   </div>
 
-                  {/* Activity Details */}
                   <div className="bg-[hsl(var(--muted)/0.4)] p-2.5 rounded-xl border border-[hsl(var(--border)/0.5)] space-y-1 text-xs">
                     <div className="flex items-center justify-between font-bold">
                       <span className="text-[hsl(var(--foreground))]">{act.type}</span>
@@ -257,49 +255,27 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
                     )}
                   </div>
 
-                  {/* Actions Ribbon */}
                   <div className="flex items-center justify-between pt-1 border-t border-[hsl(var(--border)/0.5)] text-xs" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-1.5">
                       {act.customer?.mobileNumber && (
-                        <a
-                          href={`tel:${act.customer.mobileNumber}`}
-                          className="p-1.5 rounded-lg bg-[hsl(var(--muted))] hover:bg-emerald-500/10 text-emerald-600 transition-colors border border-[hsl(var(--border))]"
-                          title="Call Lead"
-                        >
-                          <Phone size={12} />
-                        </a>
+                        <a href={`tel:${act.customer.mobileNumber}`} className="p-1.5 rounded-lg bg-[hsl(var(--muted))] hover:bg-emerald-500/10 text-emerald-600 transition-colors border border-[hsl(var(--border))]" title="Call Lead"><Phone size={12} /></a>
                       )}
                       {act.customer?.mobileNumber && (
-                        <a
-                          href={`https://wa.me/${act.customer.mobileNumber.replace(/\D/g, '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded-lg bg-[hsl(var(--muted))] hover:bg-emerald-500/10 text-emerald-600 transition-colors border border-[hsl(var(--border))]"
-                          title="WhatsApp Lead"
-                        >
-                          <MessageSquare size={12} />
-                        </a>
+                        <a href={`https://wa.me/${act.customer.mobileNumber.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg bg-[hsl(var(--muted))] hover:bg-emerald-500/10 text-emerald-600 transition-colors border border-[hsl(var(--border))]" title="WhatsApp Lead"><MessageSquare size={12} /></a>
                       )}
                     </div>
-
                     <div className="flex items-center gap-1.5">
-                      {act.status !== 'Completed' ? (
+                      {act.status !== 'Completed' && (
                         <button
-                          onClick={(e) => handleCompleteActivity(act._id, e)}
-                          disabled={completingId === act._id}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onPassToSiteVisit(act.customer?._id || act.customer?.id);
+                          }}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer shadow-sm"
+                          title="Complete Follow-up and Send to Site Visit"
                         >
                           <CheckCircle2 size={12} /> Done
                         </button>
-                      ) : (
-                        ['New Lead', 'Contacted', 'Meeting Scheduled'].includes(act.customer?.status || '') && (
-                          <button
-                            onClick={() => onPassToSiteVisit(act.customer?._id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-white bg-purple-600 text-xs font-bold rounded-lg active:scale-95 cursor-pointer"
-                          >
-                            <MapPin size={11} /> Site Visit
-                          </button>
-                        )
                       )}
                     </div>
                   </div>
@@ -309,14 +285,15 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
 
             {/* Desktop Table View */}
             <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse whitespace-nowrap">
                 <thead>
                   <tr className="border-b border-[hsl(var(--border))] text-[11px] font-black uppercase tracking-wider text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.3)]">
                     <th className="px-6 py-4">Lead / Customer</th>
+                    <th className="px-6 py-4">Assigned Member</th>
                     <th className="px-6 py-4">Follow-up Type</th>
                     <th className="px-6 py-4">Scheduled Date</th>
                     <th className="px-6 py-4">Remarks / Notes</th>
-                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-center">Status</th>
                     <th className="px-6 py-4 text-right">Action</th>
                   </tr>
                 </thead>
@@ -327,7 +304,6 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
                       onClick={() => router.push(`/interior-new/crm/leads/${act.customer?._id}`)}
                       className="hover:bg-[hsl(var(--accent))] transition-colors group cursor-pointer"
                     >
-                      {/* Customer Info */}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="w-9 h-9 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 font-extrabold text-xs shrink-0">
@@ -335,19 +311,23 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
                           </div>
                           <div className="min-w-0 flex-1">
                             <div 
-                              className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-amber-600 transition-colors truncate max-w-[100px] sm:max-w-[200px] lg:max-w-[280px]"
+                              className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-amber-600 transition-colors truncate max-w-[120px] sm:max-w-[180px] lg:max-w-[240px]"
                               title={act.customer?.name || 'Unknown'}
                             >
                               {act.customer?.name || 'Unknown'}
                             </div>
-                            <div className="text-[10px] font-mono text-[hsl(var(--muted-foreground))] shrink-0">
-                              {act.customer?.leadNumber || 'LD-XXXX'}
+                            <div className="flex items-center gap-1.5 text-[10px]">
+                              <span className="font-mono text-purple-600 bg-purple-500/10 px-1 py-0.2 rounded font-bold shrink-0">{act.customer?.leadNumber || 'LD-XXXX'}</span>
+                              {act.customer?.mobileNumber && (
+                                <>
+                                  <span className="text-[hsl(var(--muted-foreground))]">•</span>
+                                  <span className="text-[hsl(var(--muted-foreground))] truncate">{act.customer.mobileNumber}</span>
+                                </>
+                              )}
                             </div>
                           </div>
                         </div>
                       </td>
-
-                      {/* Assigned To */}
                       <td className="px-6 py-4">
                         {act.customer?.assignedSalesExecutive ? (
                           <div className="flex items-center gap-1.5 text-xs font-bold text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] w-max">
@@ -358,104 +338,55 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
                           <span className="text-xs text-[hsl(var(--muted-foreground))] italic">Unassigned</span>
                         )}
                       </td>
-
-                      {/* Scheduled / Completed For */}
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-black tracking-wider uppercase bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                          {act.type || 'Phone Call'}
+                        </span>
+                      </td>
                       <td className="px-6 py-4">
                         {act.status === 'Completed' ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 text-xs font-bold">
-                            <CheckCircle size={12} />
-                            {new Date(act.completedDate || act.updatedAt || act.createdAt).toLocaleString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              hour: 'numeric',
-                              minute: '2-digit',
-                            })}
+                            <CheckCircle size={12} /> {new Date(act.completedDate || act.updatedAt || act.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-700 text-xs font-bold">
-                            <Clock size={12} />
-                            {new Date(act.scheduledDate || act.createdAt).toLocaleString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              hour: 'numeric',
-                              minute: '2-digit',
-                            })}
+                            <Clock size={12} /> {new Date(act.scheduledDate || act.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                           </span>
                         )}
                       </td>
-
-                      {/* Type & Follow-up Status */}
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black tracking-wider uppercase bg-blue-500/10 text-blue-600 border border-blue-500/20">
-                              {act.type}
-                            </span>
-                            <span
-                              className={cn(
-'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black tracking-wider uppercase border',
-                                act.status === 'Completed'
-                                  ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
-                                  : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
-                              )}
-                            >
-                              {act.status === 'Completed' ? 'Completed ✓' : 'Pending'}
-                            </span>
-                          </div>
-                          {act.customer?.status && (
-                            <div className="text-[10px] font-bold text-[hsl(var(--muted-foreground))]">
-                              Stage: <span className="text-[hsl(var(--foreground))]">{act.customer.status}</span>
-                            </div>
-                          )}
-                        </div>
+                      <td className="px-6 py-4 text-xs text-[hsl(var(--muted-foreground))] max-w-[200px] truncate" title={act.remarks || ''}>
+                        {act.remarks || <span className="italic text-[hsl(var(--muted-foreground)/0.6)]">No remarks</span>}
                       </td>
-
-                      {/* Remarks */}
-                      <td className="px-6 py-4 text-xs text-[hsl(var(--muted-foreground))] max-w-[170px] truncate" title={act.remarks}>
-                        {act.remarks || '-'}
+                      <td className="px-6 py-4 text-center">
+                        <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase border', act.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border-amber-500/20')}>
+                          {act.status === 'Completed' ? 'Completed ' : 'Pending'}
+                        </span>
                       </td>
-
-                      {/* Actions */}
-                      <td className="px-6 py-4 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
-                        {act.status === 'Pending' && (
-                          <button
-                            onClick={(e) => handleCompleteActivity(act._id, e)}
-                            disabled={completingId === act._id}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
-                            title="Mark Follow-up as Completed"
-                          >
-                            <CheckCircle2 size={13} /> {completingId === act._id ? 'Saving...' : 'Done'}
-                          </button>
-                        )}
-
-                        {act.status === 'Completed' &&
-                          ['New Lead', 'Contacted', 'Meeting Scheduled'].includes(act.customer?.status || '') && (
+                      <td className="px-6 py-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-2">
+                          {act.status === 'Pending' && (
                             <button
-                              onClick={() => onPassToSiteVisit(act.customer?._id)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-white bg-purple-600 hover:bg-purple-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                              title="Send this Lead to Site Visit"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onPassToSiteVisit(act.customer?._id || act.customer?.id);
+                              }}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm"
+                              title="Complete Follow-up and Send to Site Visit"
                             >
-                              <MapPin size={12} /> Site Visit
+                              <CheckCircle2 size={13} />
+                            
                             </button>
                           )}
-
-                        <button
-                          onClick={() => router.push(`/interior-new/crm/leads/${act.customer?._id}`)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] rounded-lg text-xs font-bold transition-all border border-[hsl(var(--border))] cursor-pointer"
-                          title="View Lead Profile"
-                        >
-                          <ArrowRight size={13} />
-                        </button>
-
-                        {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(act.customer?.status) && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); onMarkAsLost(act.customer?._id); }}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
-                            title="Mark as Lost"
-                          >
-                            <XCircle size={14} />
-                          </button>
-                        )}
+                          {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(act.customer?.status) && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onMarkAsLost(act.customer?._id); }}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
+                              title="Mark as Lost"
+                            >
+                              <XCircle size={14} />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -468,5 +399,3 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
     </div>
   );
 };
-
-

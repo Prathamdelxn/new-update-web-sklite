@@ -495,7 +495,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                           <div className="flex items-center gap-1.5">
                             <button
                               onClick={isRecording ? handleStopRecording : handleStartRecording}
-                              title={isRecording ? 'Stop recording' : newVoiceUri ? 'Voice recorded ✓' : 'Record voice'}
+                              title={isRecording ? 'Stop recording' : newVoiceUri ? 'Voice recorded' : 'Record voice'}
                               className={cn(
                                 'p-2 rounded-lg border transition-all shrink-0',
                                 isRecording  ? 'bg-red-50 border-red-200 text-red-600 animate-pulse' :
@@ -507,7 +507,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                             </button>
                             <button
                               onClick={() => imgInputRef.current?.click()}
-                              title={newImageUri ? 'Image attached ✓' : 'Attach image'}
+                              title={newImageUri ? 'Image attached' : 'Attach image'}
                               className={cn(
                                 'p-2 rounded-lg border transition-all shrink-0',
                                 newImageUri ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-white border-gray-200 text-slate-500 hover:border-gray-300'

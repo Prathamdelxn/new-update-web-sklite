@@ -318,7 +318,7 @@ export function generateWprHtml(report: WPRData, project?: any): string {
         <div class="sec-title">2. Delayed Tasks & Milestone Deviations</div>
         <div class="content-box">
           ${delayedList.length === 0 ? (
-            '<span style="color: #10b981; font-weight: 600;">✓ Zero milestone delays logged. Project timeline strictly adheres to baseline schedule.</span>'
+            '<span style="color: #10b981; font-weight: 600;"> Zero milestone delays logged. Project timeline strictly adheres to baseline schedule.</span>'
           ) : (
             `<ul class="item-list">
               ${delayedList.map((item) => `
@@ -335,7 +335,7 @@ export function generateWprHtml(report: WPRData, project?: any): string {
         <div class="sec-title">3. Identified Project Risks & Quality Concerns</div>
         <div class="content-box">
           ${risksList.length === 0 ? (
-            '<span style="color: #10b981; font-weight: 600;">✓ No critical risks flagged. Site operations running smoothly without material or execution bottlenecks.</span>'
+            '<span style="color: #10b981; font-weight: 600;"> No critical risks flagged. Site operations running smoothly without material or execution bottlenecks.</span>'
           ) : (
             `<ul class="item-list">
               ${risksList.map((item) => `

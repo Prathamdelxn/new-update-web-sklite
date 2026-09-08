@@ -62,7 +62,7 @@ interface InteriorLeadsTableProps {
   onPassToRequirements?: (leadId: string) => void;
   onPassToDrawing?: (leadId: string) => void;
   onPassToBoq?: (leadId: string) => void;
-  onAddBoq?: (leadId: string) => void;
+  onAddBoq?: (leadId: string, boqIndex?: number) => void;
   onPassToQuotations?: (leadId: string) => void;
   onCreateQuotation?: (leadId: string) => void;
   onUploadDesign?: (leadId: string) => void;
@@ -93,7 +93,7 @@ function getLeadStatusInfo(lead: any) {
     return { label: 'Lost', style: 'bg-rose-500/10 text-rose-600 border-rose-500/20' };
   }
   if (hasAcceptedQuote || lead.status === 'Booking Pending') {
-    return { label: 'Quotation Approved ✓', style: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' };
+    return { label: 'Quotation Approved ', style: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' };
   }
   if (hasRejectedQuote) {
     return { label: 'Quotation Rejected', style: 'bg-rose-500/10 text-rose-600 border-rose-500/20' };
@@ -839,12 +839,27 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                             )}
 
                             {activeTab === 'boq' && onAddBoq && (
-                              <button
-                                onClick={() => onAddBoq(lead._id)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 text-white hover:bg-teal-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                              >
-                                {(!lead.boqs || lead.boqs.length === 0) ? 'Add BOQ' : 'View/Edit'}
-                              </button>
+                              (() => {
+                                const hasAcceptedQuote = lead.quotations && lead.quotations.some((q: any) => q.status === 'Accepted');
+                                const isQuotationApproved = hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(lead.status) || Boolean((lead as any).linkedProject);
+
+                                if (isQuotationApproved) {
+                                  return (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-lg text-xs font-bold" title="Quotation is approved, BOQ cannot be edited">
+                                      <Lock size={11} /> Locked
+                                    </span>
+                                  );
+                                }
+
+                                return (
+                                  <button
+                                    onClick={() => onAddBoq(lead._id, (lead.boqs && lead.boqs.length > 0) ? lead.boqs.length - 1 : undefined)}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 text-white hover:bg-teal-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                                  >
+                                    {(!lead.boqs || lead.boqs.length === 0) ? 'Add BOQ' : 'View/Edit'}
+                                  </button>
+                                );
+                              })()
                             )}
 
                             {activeTab === 'boq' && onPassToQuotations && lead.boqs && lead.boqs.length > 0 && (

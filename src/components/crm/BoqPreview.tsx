@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Printer, Pencil } from 'lucide-react';
+import { Printer, Pencil, Lock } from 'lucide-react';
 
 interface BoqPreviewProps {
   lead: any;
@@ -12,7 +12,9 @@ interface BoqPreviewProps {
 
 export function BoqPreview({ lead, boqIndex, onEdit }: BoqPreviewProps) {
   const boq = lead?.boqs?.[boqIndex];
-  const isConverted = lead?.status === 'Won' || lead?.status === 'Converted' || !!lead?.linkedProject;
+  const hasAcceptedQuote = lead?.quotations && lead.quotations.some((q: any) => q.status === 'Accepted');
+  const isQuotationApproved = hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(lead?.status || '') || Boolean(lead?.linkedProject);
+  const isLocked = isQuotationApproved;
 
   const handlePrint = () => {
     window.print();
@@ -29,17 +31,23 @@ export function BoqPreview({ lead, boqIndex, onEdit }: BoqPreviewProps) {
           <p className="text-xs text-[hsl(var(--muted-foreground))]">Generated on {boq.createdAt ? new Date(boq.createdAt).toLocaleDateString() : 'N/A'}</p>
         </div>
         <div className="flex items-center gap-2">
-          {!isConverted && onEdit && (
-            <button
-              onClick={onEdit}
-              className="text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95"
-            >
-              <Pencil size={13} /> Edit BOQ
-            </button>
+          {isLocked ? (
+            <span className="text-xs font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-xl flex items-center gap-1.5">
+              <Lock size={13} /> Quotation Approved (Locked)
+            </span>
+          ) : (
+            onEdit && (
+              <button
+                onClick={onEdit}
+                className="text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95 cursor-pointer"
+              >
+                <Pencil size={13} /> Edit BOQ
+              </button>
+            )
           )}
           <button
             onClick={handlePrint}
-            className="text-xs font-bold bg-[hsl(var(--foreground))] text-[hsl(var(--background))] px-4 py-2 rounded-xl hover:opacity-90 transition flex items-center gap-1.5 active:scale-95"
+            className="text-xs font-bold bg-[hsl(var(--foreground))] text-[hsl(var(--background))] px-4 py-2 rounded-xl hover:opacity-90 transition flex items-center gap-1.5 active:scale-95 cursor-pointer"
           >
             <Printer size={14} /> Print
           </button>

@@ -221,7 +221,7 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                             : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
                         )}
                       >
-                        {hasDrawings ? `${lead.designFiles.length} Designs ✓` : 'Pending Design'}
+                        {hasDrawings ? `${lead.designFiles.length} Designs ` : 'Pending Design'}
                       </span>
                     </div>
 
@@ -253,7 +253,7 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                         onPassToBoq &&
                         (['Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Won', 'Converted'].includes(lead.status) ? (
                           <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
-                            Passed ✓
+                            Passed 
                           </span>
                         ) : (
                           <button
@@ -399,7 +399,7 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                                 className="inline-flex items-center gap-1 px-2.5 py-1.5 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-xs font-bold"
                                 title="Lead has already been passed to BOQ"
                               >
-                                Passed to BOQ ✓
+                                Passed to BOQ 
                               </span>
                             ) : (
                               <button

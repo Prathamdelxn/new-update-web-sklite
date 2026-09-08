@@ -62,6 +62,7 @@ export default function InteriorCrmView() {
   const [isSendToDrawingOpen, setIsSendToDrawingOpen] = useState(false);
   const [isSendToBoqOpen, setIsSendToBoqOpen] = useState(false);
   const [isAddBoqOpen, setIsAddBoqOpen] = useState(false);
+  const [editingBoqIndex, setEditingBoqIndex] = useState<number | null>(null);
   const [isSendToQuotationsOpen, setIsSendToQuotationsOpen] = useState(false);
   const [isQuotationBuilderOpen, setIsQuotationBuilderOpen] = useState(false);
   const [isConvertToProjectOpen, setIsConvertToProjectOpen] = useState(false);
@@ -270,10 +271,13 @@ export default function InteriorCrmView() {
     setIsSendToBoqOpen(true);
   };
 
-  const openAddBoqModal = (leadId: string) => {
+  const openAddBoqModal = (leadId: string, boqIndex?: number) => {
     const lead = leads.find(l => l._id === leadId);
     setActionLeadId(leadId);
     setActionLeadName(lead?.name || '');
+    const hasBoqs = lead?.boqs && lead.boqs.length > 0;
+    const targetIdx = boqIndex !== undefined ? boqIndex : (hasBoqs ? lead.boqs.length - 1 : null);
+    setEditingBoqIndex(targetIdx);
     setIsAddBoqOpen(true);
   };
 
@@ -485,7 +489,8 @@ export default function InteriorCrmView() {
         users={users}
         initialRequirements={leads.find(l => l._id === actionLeadId)?.requirements || []}
         initialBudget={leads.find(l => l._id === actionLeadId)?.budgetRange || ''}
-        isReadOnly={['Under Drawing', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Converted'].includes(leads.find(l => l._id === actionLeadId)?.status || '')}
+        currentStatus={leads.find(l => l._id === actionLeadId)?.status || ''}
+        isReadOnly={['Won', 'Converted'].includes(leads.find(l => l._id === actionLeadId)?.status || '')}
       />
 
       <InteriorUploadDesignModal
@@ -530,9 +535,21 @@ export default function InteriorCrmView() {
 
       <InteriorBoqBuilderModal
         isOpen={isAddBoqOpen}
-        onClose={() => setIsAddBoqOpen(false)}
+        onClose={() => {
+          setIsAddBoqOpen(false);
+          setEditingBoqIndex(null);
+        }}
         customerId={actionLeadId || ''}
         existingBoqs={leads.find(l => l._id === actionLeadId)?.boqs || []}
+        editingBoqIndex={editingBoqIndex}
+        isReadOnly={Boolean(
+          (() => {
+            const currentLead = leads.find(l => l._id === actionLeadId);
+            if (!currentLead) return false;
+            const hasAcceptedQuote = currentLead.quotations && currentLead.quotations.some((q: any) => q.status === 'Accepted');
+            return hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(currentLead.status || '') || Boolean(currentLead.linkedProject);
+          })()
+        )}
         onSuccess={fetchLeads}
       />
 

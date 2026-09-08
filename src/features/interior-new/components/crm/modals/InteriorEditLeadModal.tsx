@@ -96,7 +96,13 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
         projectLocation: formData.projectLocation.trim() || undefined,
       };
 
-      await interiorCrmService.updateCustomer(lead._id, payload);
+      const leadId = lead._id || lead.id;
+      if (!leadId) {
+        toast.error('Lead ID not found');
+        return;
+      }
+
+      await interiorCrmService.updateCustomer(leadId, payload);
       toast.success('Lead updated successfully!');
       onSuccess();
       onClose();
