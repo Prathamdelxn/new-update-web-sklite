@@ -31,6 +31,7 @@ function LoginForm() {
     e.preventDefault();
     setFpLoading(true);
     try {
+      console.log
       if (industryType === 'interior') {
         await interiorApiClient.post('/auth/forgot-password', { email: fpEmail });
       } else {
