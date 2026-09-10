@@ -24,35 +24,52 @@ interface BoqBuilderModalProps {
   customerId: string;
   existingBoqs?: any[];
   editingBoqIndex?: number | null;
+  isReadOnly?: boolean;
   onSuccess: () => void;
 }
 
-export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingBoqs = [], editingBoqIndex = null, onSuccess }: BoqBuilderModalProps) {
+export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingBoqs = [], editingBoqIndex = null, isReadOnly = false, onSuccess }: BoqBuilderModalProps) {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<BoqItem[]>([]);
 
-  const isEditing = editingBoqIndex !== null && editingBoqIndex >= 0 && existingBoqs[editingBoqIndex];
-
-  React.useEffect(() => {
-    if (!isOpen) {
-      setNotes('');
-      setItems([]);
-    }
-  }, [isOpen]);
+  const isEditing = editingBoqIndex !== null && editingBoqIndex !== undefined && editingBoqIndex >= 0 && Boolean(existingBoqs && existingBoqs[editingBoqIndex]);
+  const targetBoq = isEditing ? existingBoqs[editingBoqIndex!] : null;
 
   React.useEffect(() => {
     if (isOpen) {
-      if (isEditing) {
-        const targetBoq = existingBoqs[editingBoqIndex!];
-        setItems(targetBoq.items && targetBoq.items.length > 0 ? targetBoq.items : [{ serialNumber: 1, category: 'Flooring', itemName: '', description: '', quantity: 1, unit: 'sqft', rate: 0, amount: 0 }]);
+      if (isEditing && targetBoq) {
+        if (targetBoq.items && Array.isArray(targetBoq.items) && targetBoq.items.length > 0) {
+          setItems(
+            targetBoq.items.map((it: any, idx: number) => {
+              const qty = Number(it.quantity) || 0;
+              const rate = Number(it.rate) || 0;
+              const amount = Number(it.amount) || (qty * rate);
+              return {
+                serialNumber: it.serialNumber || idx + 1,
+                category: it.category || 'Flooring',
+                itemName: it.itemName || '',
+                description: it.description || '',
+                quantity: qty,
+                unit: it.unit || 'sqft',
+                rate: rate,
+                amount: amount,
+              };
+            })
+          );
+        } else {
+          setItems([{ serialNumber: 1, category: 'Flooring', itemName: '', description: '', quantity: 1, unit: 'sqft', rate: 0, amount: 0 }]);
+        }
         setNotes(targetBoq.notes || '');
       } else {
         setItems([{ serialNumber: 1, category: 'Flooring', itemName: '', description: '', quantity: 1, unit: 'sqft', rate: 0, amount: 0 }]);
         setNotes('');
       }
+    } else {
+      setNotes('');
+      setItems([]);
     }
   }, [isOpen, editingBoqIndex, existingBoqs]);
 
@@ -96,11 +113,24 @@ export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingB
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (isReadOnly) {
+      return toast.error("BOQ cannot be edited because the quotation has already been approved.");
+    }
+
     if (items.length === 0) {
       return toast.error("Please add at least one line item to the BOQ.");
     }
     if (items.some(i => !i.itemName || !i.itemName.trim())) {
       return toast.error("Please provide an item name for all items.");
+    }
+    if (items.some(i => !i.quantity || Number(i.quantity) <= 0)) {
+      return toast.error("Quantity must be greater than 0 for all items.");
+    }
+    if (items.some(i => i.rate === undefined || i.rate === null || Number(i.rate) <= 0)) {
+      return toast.error("Unit rate must be greater than ₹0 for all items.");
+    }
+    if (totalAmount <= 0) {
+      return toast.error("Total BOQ amount must be greater than ₹0 to save.");
     }
 
     setIsSubmitting(true);
@@ -108,9 +138,9 @@ export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingB
     try {
       const updatedBoqs = [...(existingBoqs || [])];
       
-      if (isEditing) {
-        const currentBoq = updatedBoqs[editingBoqIndex!];
-        updatedBoqs[editingBoqIndex!] = {
+      if (isEditing && editingBoqIndex !== null && editingBoqIndex >= 0 && updatedBoqs[editingBoqIndex]) {
+        const currentBoq = updatedBoqs[editingBoqIndex];
+        updatedBoqs[editingBoqIndex] = {
           ...currentBoq,
           items,
           totalAmount,
@@ -171,12 +201,19 @@ export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingB
           {/* Header */}
           <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))] shrink-0 bg-[hsl(var(--muted)/0.5)]">
             <div>
-              <h3 className="text-lg font-black text-[hsl(var(--foreground))] flex items-center gap-2">
-                <Calculator className="w-5 h-5 text-indigo-600" />
-                {isEditing ? `Edit BOQ (Version ${existingBoqs[editingBoqIndex!]?.version || (editingBoqIndex! + 1)})` : `New BOQ Version (Version ${existingBoqs.length + 1})`}
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-black text-[hsl(var(--foreground))] flex items-center gap-2">
+                  <Calculator className="w-5 h-5 text-indigo-600" />
+                  {isReadOnly ? `View BOQ (Version ${targetBoq?.version || (editingBoqIndex! + 1)})` : isEditing ? `Edit BOQ (Version ${targetBoq?.version || (editingBoqIndex! + 1)})` : `New BOQ Version (Version ${existingBoqs.length + 1})`}
+                </h3>
+                {isReadOnly && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                    Quotation Approved (Locked)
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
-                {isEditing ? 'Update item quantities, rates, and descriptions for this version.' : 'Draft a new BOQ version before passing to Quotations.'}
+                {isReadOnly ? 'This BOQ is locked because the client quotation has been approved.' : isEditing ? 'Update item quantities, rates, descriptions, and remarks for this version.' : 'Draft a new BOQ version before passing to Quotations.'}
               </p>
             </div>
             <button onClick={onClose} className="p-2 rounded-xl hover:bg-[hsl(var(--accent))] transition-colors">
@@ -204,7 +241,7 @@ export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingB
                           <th className="p-3 w-20 text-center">Unit</th>
                           <th className="p-3 w-28 text-right">Unit Rate (₹)</th>
                           <th className="p-3 w-32 text-right">Amount (₹)</th>
-                          <th className="p-3 w-12 text-center" />
+                          {!isReadOnly && <th className="p-3 w-12 text-center" />}
                         </tr>
                       </thead>
                       <tbody>
@@ -216,6 +253,7 @@ export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingB
                                 list="boq-categories"
                                 className="h-9"
                                 placeholder="Category"
+                                disabled={isReadOnly}
                                 value={item.category}
                                 onChange={(e) => updateItemField(idx, 'category', e.target.value)}
                               />
@@ -238,12 +276,14 @@ export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingB
                               <Input 
                                 required 
                                 placeholder="Item / material specifications" 
+                                disabled={isReadOnly}
                                 value={item.itemName} 
                                 onChange={(e) => updateItemField(idx, 'itemName', e.target.value)} 
                                 className="h-9 mb-1" 
                               />
                               <Input 
                                 placeholder="Description (optional)" 
+                                disabled={isReadOnly}
                                 value={item.description} 
                                 onChange={(e) => updateItemField(idx, 'description', e.target.value)} 
                                 className="h-7 text-[10px]" 
@@ -255,6 +295,7 @@ export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingB
                                 required 
                                 min={0.01} 
                                 step="any" 
+                                disabled={isReadOnly}
                                 value={item.quantity || ''} 
                                 onChange={(e) => updateItemField(idx, 'quantity', parseFloat(e.target.value) || 0)} 
                                 className="h-9 text-right" 
@@ -264,6 +305,7 @@ export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingB
                               <Input 
                                 required 
                                 placeholder="sqft" 
+                                disabled={isReadOnly}
                                 value={item.unit} 
                                 onChange={(e) => updateItemField(idx, 'unit', e.target.value)} 
                                 className="h-9 text-center uppercase" 
@@ -273,8 +315,9 @@ export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingB
                               <Input 
                                 type="number" 
                                 required 
-                                min={0} 
+                                min={0.01} 
                                 step="any" 
+                                disabled={isReadOnly}
                                 value={item.rate || ''} 
                                 onChange={(e) => updateItemField(idx, 'rate', parseFloat(e.target.value) || 0)} 
                                 className="h-9 text-right" 
@@ -283,16 +326,18 @@ export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingB
                             <td className="p-3 text-right font-bold text-[hsl(var(--foreground))]">
                               ₹{item.amount?.toLocaleString('en-IN') || 0}
                             </td>
-                            <td className="p-2 text-center">
-                              <button
-                                type="button"
-                                onClick={() => removeItemRow(idx)}
-                                disabled={items.length === 1}
-                                className="p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </td>
+                            {!isReadOnly && (
+                              <td className="p-2 text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => removeItemRow(idx)}
+                                  disabled={items.length === 1}
+                                  className="p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </td>
+                            )}
                           </tr>
                         ))}
                       </tbody>
@@ -300,13 +345,17 @@ export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingB
                   </div>
                   
                   <div className="p-4 bg-[hsl(var(--card))] border-t border-[hsl(var(--border))] flex justify-between items-center">
-                    <button
-                      type="button"
-                      onClick={addItemRow}
-                      className="flex items-center gap-2 text-xs font-bold text-teal-600 hover:text-teal-700 bg-teal-50 hover:bg-teal-100 px-4 py-2 rounded-lg transition-colors border border-teal-100 border-dashed"
-                    >
-                      <Plus size={14} /> Add Row
-                    </button>
+                    {!isReadOnly ? (
+                      <button
+                        type="button"
+                        onClick={addItemRow}
+                        className="flex items-center gap-2 text-xs font-bold text-teal-600 hover:text-teal-700 bg-teal-50 hover:bg-teal-100 px-4 py-2 rounded-lg transition-colors border border-teal-100 border-dashed"
+                      >
+                        <Plus size={14} /> Add Row
+                      </button>
+                    ) : (
+                      <div />
+                    )}
                     
                     <div className="flex items-center gap-4">
                       <span className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Total BOQ Amount</span>
@@ -315,6 +364,20 @@ export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingB
                   </div>
                 </div>
 
+                {/* Remarks / Notes Field */}
+                <div className="pt-2">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block mb-1.5">
+                    BOQ Remarks / Terms
+                  </label>
+                  <textarea
+                    rows={3}
+                    disabled={isReadOnly}
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Enter any notes, payment terms, or material scope notes for this BOQ..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-medium text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all resize-none disabled:opacity-75 disabled:cursor-not-allowed"
+                  />
+                </div>
               </div>
 
             </div>
@@ -326,16 +389,18 @@ export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingB
                 onClick={onClose}
                 className="px-6 py-2.5 rounded-xl text-sm font-bold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--accent))] transition-colors"
               >
-                Cancel
+                {isReadOnly ? 'Close' : 'Cancel'}
               </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-50 transition-all flex items-center gap-2 active:scale-95"
-              >
-                <Save size={16} />
-                {isSubmitting ? 'Saving BOQ...' : 'Save BOQ Version'}
-              </button>
+              {!isReadOnly && (
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-50 transition-all flex items-center gap-2 active:scale-95"
+                >
+                  <Save size={16} />
+                  {isSubmitting ? 'Saving BOQ...' : isEditing ? 'Update BOQ' : 'Save BOQ Version'}
+                </button>
+              )}
             </div>
           </form>
         </motion.div>

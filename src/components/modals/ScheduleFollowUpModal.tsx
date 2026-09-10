@@ -33,6 +33,7 @@ export function ScheduleFollowUpModal({ isOpen, onClose, customerId, customerNam
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {
       scheduledDate: validateRequiredDate(form.scheduledDate, 'Follow-up date & time'),
+      assignedSalesExecutive: validateNonEmpty(form.assignedSalesExecutive, 'Assign member'),
       remarks: validateNonEmpty(form.remarks, 'Follow-up goal / notes'),
     };
     setErrors(newErrors);
@@ -103,41 +104,57 @@ export function ScheduleFollowUpModal({ isOpen, onClose, customerId, customerNam
               </select>
             </div>
             <div>
-              <label className="text-xs font-bold text-slate-700">Date & Time</label>
+              <label className="text-xs font-bold text-slate-700">Date & Time *</label>
               <input 
                 type="datetime-local"
-                required
                 value={form.scheduledDate}
-                onChange={e => setForm({...form, scheduledDate: e.target.value})}
-                className="w-full mt-1.5 px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-blue-500 outline-none"
+                onChange={e => {
+                  setForm({...form, scheduledDate: e.target.value});
+                  if (errors.scheduledDate) setErrors({...errors, scheduledDate: null});
+                }}
+                className={`w-full mt-1.5 px-4 py-2.5 rounded-xl border text-sm outline-none transition-all ${
+                  errors.scheduledDate ? 'border-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-slate-200 focus:border-blue-500'
+                }`}
               />
+              {errors.scheduledDate && <p className="text-xs text-red-500 mt-1">{errors.scheduledDate}</p>}
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-700">Assign Member</label>
+            <label className="text-xs font-bold text-slate-700">Assign Member *</label>
             <select 
               value={form.assignedSalesExecutive}
-              onChange={e => setForm({...form, assignedSalesExecutive: e.target.value})}
-              className="w-full mt-1.5 px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-blue-500 outline-none"
+              onChange={e => {
+                setForm({...form, assignedSalesExecutive: e.target.value});
+                if (errors.assignedSalesExecutive) setErrors({...errors, assignedSalesExecutive: null});
+              }}
+              className={`w-full mt-1.5 px-4 py-2.5 rounded-xl border text-sm outline-none transition-all ${
+                errors.assignedSalesExecutive ? 'border-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-slate-200 focus:border-blue-500'
+              }`}
             >
-              <option value="">Unassigned (Keep Current)</option>
+              <option value="">Select a member...</option>
               {users.map(u => (
                 <option key={u._id} value={u._id}>{u.name} ({u.role?.name || 'User'})</option>
               ))}
             </select>
+            {errors.assignedSalesExecutive && <p className="text-xs text-red-500 mt-1">{errors.assignedSalesExecutive}</p>}
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-700">Follow-up Goal / Notes</label>
+            <label className="text-xs font-bold text-slate-700">Follow-up Goal / Notes *</label>
             <textarea 
-              required
               rows={4}
               value={form.remarks}
-              onChange={e => setForm({...form, remarks: e.target.value})}
+              onChange={e => {
+                setForm({...form, remarks: e.target.value});
+                if (errors.remarks) setErrors({...errors, remarks: null});
+              }}
               placeholder="E.g., Call to discuss revised quotation..."
-              className="w-full mt-1.5 px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-blue-500 outline-none resize-none"
+              className={`w-full mt-1.5 px-4 py-3 rounded-xl border text-sm outline-none resize-none transition-all ${
+                errors.remarks ? 'border-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-slate-200 focus:border-blue-500'
+              }`}
             />
+            {errors.remarks && <p className="text-xs text-red-500 mt-1">{errors.remarks}</p>}
           </div>
 
           <div className="pt-4 flex justify-end gap-3">

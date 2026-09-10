@@ -50,6 +50,7 @@ export function InteriorScheduleFollowUpModal({ isOpen, onClose, customerId, cus
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {
       scheduledDate: validateRequiredDate(form.scheduledDate, 'Follow-up date & time'),
+      assignedSalesExecutive: validateNonEmpty(form.assignedSalesExecutive, 'Assign member'),
       remarks: validateNonEmpty(form.remarks, 'Follow-up goal / notes'),
     };
     setErrors(newErrors);
@@ -135,17 +136,23 @@ export function InteriorScheduleFollowUpModal({ isOpen, onClose, customerId, cus
           </div>
 
           <div>
-            <label className="text-xs font-bold text-[hsl(var(--foreground))]">Assign Member</label>
+            <label className="text-xs font-bold text-[hsl(var(--foreground))]">Assign Member *</label>
             <select
               value={form.assignedSalesExecutive}
-              onChange={e => setForm({...form, assignedSalesExecutive: e.target.value})}
-              className="w-full mt-1.5 px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:border-[hsl(var(--ring))] outline-none"
+              onChange={e => {
+                setForm({...form, assignedSalesExecutive: e.target.value});
+                if (errors.assignedSalesExecutive) setErrors({...errors, assignedSalesExecutive: null});
+              }}
+              className={`w-full mt-1.5 px-4 py-2.5 rounded-xl border bg-[hsl(var(--background))] text-sm outline-none transition-all ${
+                errors.assignedSalesExecutive ? 'border-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-[hsl(var(--border))] focus:border-[hsl(var(--ring))]'
+              }`}
             >
-              <option value="">Unassigned (Keep Current)</option>
+              <option value="">Select a member...</option>
               {users.map(u => (
                 <option key={u._id || u.id} value={u._id || u.id}>{userLabel(u)}</option>
               ))}
             </select>
+            {errors.assignedSalesExecutive && <p className="text-xs text-red-500 mt-1">{errors.assignedSalesExecutive}</p>}
           </div>
 
           <div>

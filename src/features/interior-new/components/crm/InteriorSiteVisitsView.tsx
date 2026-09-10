@@ -174,7 +174,7 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
             <div className="block md:hidden divide-y divide-[hsl(var(--border))]">
               {paginatedLeads.map((lead, idx) => {
                 const pendingSiteVisit = pendingActivities.find(
-                  (act) => act.customer?._id === lead._id && act.type === 'Site Visit'
+                  (act) => ((act.customer?._id || act.customer) === lead._id) && act.type === 'Site Visit'
                 );
                 const resolvedScheduledDate = lead.siteVisitScheduledDate || pendingSiteVisit?.scheduledDate;
 
@@ -214,7 +214,7 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                             : 'bg-purple-500/10 text-purple-600 border-purple-500/20'
                         )}
                       >
-                        {lead.siteMeasurements ? 'Measured ✓' : 'Pending Survey'}
+                        {lead.siteMeasurements ? 'Measured ' : 'Pending Survey'}
                       </span>
                     </div>
 
@@ -223,10 +223,24 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                         <MapPin size={11} className="text-purple-500 shrink-0" />
                         <span className="truncate text-[hsl(var(--foreground))]">{lead.projectLocation || lead.city || 'Location pending'}</span>
                       </div>
-                      <div className="text-[10px] text-[hsl(var(--muted-foreground))] shrink-0">
-                        {lead.siteMeasurements ? `${lead.siteMeasurements.carpetArea || 0} sq.ft` : 'No specs'}
+                      <div className="text-[10px] text-[hsl(var(--muted-foreground))] shrink-0 font-medium">
+                        {lead.propertyType || 'Residential'}
                       </div>
                     </div>
+
+                    {resolvedScheduledDate && (
+                      <div className="flex items-center gap-1.5 text-[10px] text-purple-700 bg-purple-500/10 px-2.5 py-1 rounded-lg border border-purple-500/20 font-bold w-fit">
+                        <CalendarIcon size={11} className="text-purple-600 shrink-0" />
+                        <span>
+                          {new Date(resolvedScheduledDate).toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
+                    )}
 
                     {/* Actions Ribbon */}
                     <div className="flex items-center justify-between gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
@@ -270,16 +284,15 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                   <tr>
                     <th className="px-6 py-3.5 rounded-tl-2xl">Lead Info</th>
                     <th className="px-6 py-3.5">Location</th>
-                    <th className="px-6 py-3.5">Carpet Area</th>
-                    <th className="px-6 py-3.5">Assigned To</th>
-                    <th className="px-6 py-3.5">Site Survey Status</th>
+                    <th className="px-6 py-3.5">Scheduled Date</th>
+                    <th className="px-6 py-3.5 text-center">Site Survey Status</th>
                     <th className="px-6 py-3.5 text-right rounded-tr-2xl">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border))] text-xs">
                   {paginatedLeads.map((lead) => {
                     const pendingSiteVisit = pendingActivities.find(
-                      (act) => act.customer?._id === lead._id && act.type === 'Site Visit'
+                      (act) => ((act.customer?._id || act.customer) === lead._id) && act.type === 'Site Visit'
                     );
                     const resolvedScheduledDate = lead.siteVisitScheduledDate || pendingSiteVisit?.scheduledDate;
 
@@ -344,7 +357,7 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                         </td>
 
                         {/* Status */}
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-center">
                           <span
                             className={cn(
 'inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border',
@@ -353,7 +366,7 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                                 : 'bg-purple-500/10 text-purple-600 border-purple-500/20'
                             )}
                           >
-                            {lead.siteMeasurements ? 'Measurement Done ✓' : lead.status}
+                            {lead.siteMeasurements ? 'Measurement Done ' : lead.status}
                           </span>
                         </td>
 
@@ -390,7 +403,7 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                                 className="inline-flex items-center gap-1 px-2.5 py-1.5 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-xs font-bold"
                                 title="Lead has already been passed to Requirements & Design"
                               >
-                                Passed to Req ✓
+                                Passed to Req 
                               </span>
                             ) : (
                               <button

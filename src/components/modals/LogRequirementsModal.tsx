@@ -113,6 +113,8 @@ export const LogRequirementsModal = ({
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [budgetRange, setBudgetRange] = useState(initialBudget || '');
+  const [budgetError, setBudgetError] = useState<string | null>(null);
+  const [roomErrors, setRoomErrors] = useState<{ [key: number]: { roomName?: string } }>({});
   const [activeSubTab, setActiveSubTab] = useState<{ [key: number]: 'functional' | 'aesthetic' | 'notes' }>({});
   const [collapsedRooms, setCollapsedRooms] = useState<{ [key: number]: boolean }>({});
 
@@ -123,6 +125,8 @@ export const LogRequirementsModal = ({
   useEffect(() => {
     if (isOpen) {
       setBudgetRange(initialBudget || '');
+      setBudgetError(null);
+      setRoomErrors({});
       if (initialRequirements && initialRequirements.length > 0) {
         setRequirements(
           initialRequirements.map((r) => ({
@@ -159,6 +163,11 @@ export const LogRequirementsModal = ({
       return;
     }
     setRequirements((prev) => prev.filter((_, i) => i !== index));
+    setRoomErrors((prev) => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
   };
 
   const updateRoom = (index: number, field: keyof RoomRequirement, value: any) => {
@@ -184,12 +193,30 @@ export const LogRequirementsModal = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    let hasError = false;
+    if (!budgetRange || !budgetRange.trim()) {
+      setBudgetError('Target estimated budget is required');
+      hasError = true;
+    } else {
+      setBudgetError(null);
+    }
+
     if (requirements.length === 0) {
       toast.error('Please add at least one room requirement.');
       return;
     }
-    if (requirements.some((r) => !r.roomName || !r.roomName.trim())) {
-      toast.error('Please specify a name for each room/space.');
+
+    const newRoomErrors: { [key: number]: { roomName?: string } } = {};
+    requirements.forEach((r, idx) => {
+      if (!r.roomName || !r.roomName.trim()) {
+        newRoomErrors[idx] = { roomName: 'Room name is required' };
+        hasError = true;
+      }
+    });
+    setRoomErrors(newRoomErrors);
+
+    if (hasError) {
+      toast.error('Please fill in all required fields');
       return;
     }
 
@@ -225,19 +252,24 @@ export const LogRequirementsModal = ({
 
       await interiorApiClient.patch(`/crm/customers/${customerId}`, updatePayload);
 
-      await interiorApiClient.post('/crm/activities', {
-        customer: customerId,
-        type: 'Requirement Gathering',
-        status: 'Completed',
-        remarks: `Logged detailed functional & aesthetic requirements for ${sanitizedRequirements.length} rooms.`,
-        completedDate: new Date()
-      });
+      try {
+        await interiorApiClient.post('/crm/activities', {
+          customer: customerId,
+          type: 'Requirement Gathering',
+          status: 'Completed',
+          remarks: `Logged detailed functional & aesthetic requirements for ${sanitizedRequirements.length} rooms.`,
+          completedDate: new Date()
+        });
+      } catch (actErr) {
+        console.warn('Activity log skipped:', actErr);
+      }
 
       toast.success('Design requirements saved successfully!');
       onSuccess();
       onClose();
-    } catch (error) {
-      toast.error('Failed to save requirements');
+    } catch (error: any) {
+      console.error('Failed to save requirements:', error);
+      toast.error(error?.response?.data?.message || error?.message || 'Failed to save requirements');
     } finally {
       setIsSubmitting(false);
     }
@@ -277,19 +309,21 @@ export const LogRequirementsModal = ({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto custom-scrollbar flex flex-col gap-6">
-          {/* Target Estimated Budget Card */}
-          <div className="bg-slate-50 border border-slate-200 rounded-3xl p-5 space-y-4">
-            <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-200">
-              <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center font-bold">
-                <DollarSign size={16} />
-              </div>
-              <div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
-                  Target Estimated Budget
-                </h3>
-                <p className="text-[11px] text-slate-500">
-                  Client's target budget or approved commercial budget range for this interior scope.
-                </p>
+          {/* Overall Project Scope & Estimated Budget */}
+          <div className="bg-slate-50 border border-slate-200 rounded-3xl p-5 md:p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                  <DollarSign size={16} />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                    Target Estimated Budget <span className="text-red-500">*</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Client's target budget or approved commercial budget range for this interior scope.
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -299,12 +333,20 @@ export const LogRequirementsModal = ({
                 <input
                   type="text"
                   value={budgetRange}
-                  onChange={(e) => setBudgetRange(e.target.value)}
+                  onChange={(e) => {
+                    setBudgetRange(e.target.value);
+                    if (budgetError) setBudgetError(null);
+                  }}
                   placeholder="e.g. ₹5L - ₹10L or ₹15,00,000"
-                  className="w-full bg-white border border-slate-200 rounded-2xl pl-9 pr-4 py-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  className={`w-full bg-white border rounded-2xl pl-9 pr-4 py-2.5 text-xs font-bold text-slate-800 outline-none transition-all ${
+                    budgetError
+                      ? 'border-red-500 focus:ring-2 focus:ring-red-500/20'
+                      : 'border-slate-200 focus:ring-2 focus:ring-blue-500'
+                  }`}
                   disabled={isReadOnly}
                 />
               </div>
+              {budgetError && <p className="text-[10px] text-red-500 -mt-1 font-medium">{budgetError}</p>}
 
               {!isReadOnly && (
                 <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
@@ -313,7 +355,10 @@ export const LogRequirementsModal = ({
                     <button
                       key={chip}
                       type="button"
-                      onClick={() => setBudgetRange(chip)}
+                      onClick={() => {
+                        setBudgetRange(chip);
+                        if (budgetError) setBudgetError(null);
+                      }}
                       className={`text-[10px] font-bold px-2.5 py-1 rounded-xl border transition-all ${
                         budgetRange === chip
                           ? 'bg-amber-500 text-white border-amber-600 shadow-sm'
@@ -346,12 +391,28 @@ export const LogRequirementsModal = ({
                         <input
                           type="text"
                           value={req.roomName}
-                          onChange={(e) => updateRoom(index, 'roomName', e.target.value)}
-                          placeholder="e.g. Master Bedroom, Living Room, Executive Office"
-                          className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                          onChange={(e) => {
+                            updateRoom(index, 'roomName', e.target.value);
+                            if (roomErrors[index]?.roomName) {
+                              setRoomErrors((prev) => {
+                                const next = { ...prev };
+                                delete next[index];
+                                return next;
+                              });
+                            }
+                          }}
+                          placeholder="e.g. Master Bedroom, Living Room, Executive Office *"
+                          className={`w-full bg-white border rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none ${
+                            roomErrors[index]?.roomName
+                              ? 'border-red-500 focus:ring-2 focus:ring-red-500/20'
+                              : 'border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500'
+                          }`}
                           required
                           disabled={isReadOnly}
                         />
+                        {roomErrors[index]?.roomName && (
+                          <p className="text-[10px] text-red-500 mt-1 font-medium">{roomErrors[index].roomName}</p>
+                        )}
                       </div>
 
                       {req.interiorType && (

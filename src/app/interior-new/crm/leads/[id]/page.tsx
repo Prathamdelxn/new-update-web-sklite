@@ -7,7 +7,7 @@ import { useInteriorAuthGuard } from '@/lib/useInteriorAuthGuard';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
-import { ArrowLeft, User, Phone, Mail, Building, DollarSign, Activity, Plus, MessageSquare, X, CheckCircle2, Calendar, MapPin, Ruler, PenTool, UploadCloud, File as FileIcon, Image as ImageIcon, Calculator, FileText, ChevronDown, Pencil, Trash2, DoorOpen, Maximize2, Columns, Zap, Droplets, Wind, Armchair, AlertTriangle, Layers, Palette, Sliders, Sun, Sparkles, Box, Archive, ExternalLink, Eye, Lock } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail, Building, DollarSign, Activity, Plus, MessageSquare, X, CheckCircle2, Calendar, MapPin, Ruler, PenTool, UploadCloud, File as FileIcon, Image as ImageIcon, Calculator, FileText, ChevronDown, Pencil, Trash2, DoorOpen, Maximize2, Columns, Zap, Droplets, Wind, Armchair, AlertTriangle, Layers, Palette, Sliders, Sun, Sparkles, Box, Archive, ExternalLink, Eye, Lock, Copy, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { InteriorLogSiteVisitModal } from '@/features/interior-new/components/crm/modals/InteriorLogSiteVisitModal';
@@ -38,6 +38,15 @@ export default function Lead360View() {
   const [activities, setActivities] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [copiedLocation, setCopiedLocation] = useState(false);
+
+  const handleCopyLocation = (text: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedLocation(true);
+    toast.success('Address copied to clipboard');
+    setTimeout(() => setCopiedLocation(false), 2000);
+  };
   const [isSiteVisitModalOpen, setIsSiteVisitModalOpen] = useState(false);
   const [isSendToSiteVisitOpen, setIsSendToSiteVisitOpen] = useState(false);
   const [isSendToReqOpen, setIsSendToReqOpen] = useState(false);
@@ -242,11 +251,11 @@ export default function Lead360View() {
 
   return (
     <InteriorShell>
-      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 pb-24 p-3 sm:p-4 md:p-8 animate-in fade-in duration-500 max-w-full overflow-x-hidden">
+      <div className="w-full max-w-7xl mx-auto space-y-4 sm:space-y-6 pb-24 p-2.5 sm:p-4 md:p-8 animate-in fade-in duration-500 overflow-x-hidden">
         
         {/* --- 1. SLEEK PROFILE HEADER --- */}
-        <div className="bg-[hsl(var(--card))] rounded-2xl p-3.5 sm:p-5 md:p-6 border border-[hsl(var(--border))] flex flex-col md:flex-row md:items-center justify-between gap-3.5 sm:gap-5">
-          <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
+        <div className="bg-[hsl(var(--card))] rounded-2xl p-3 sm:p-5 md:p-6 border border-[hsl(var(--border))] flex flex-col md:flex-row md:items-center justify-between gap-3.5 sm:gap-5 shadow-xs">
+          <div className="flex items-start sm:items-center gap-2.5 sm:gap-4 min-w-0 max-w-full">
             <button 
               onClick={() => router.push('/interior-new/crm')}
               className="p-2 sm:p-2.5 bg-[hsl(var(--muted))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] rounded-xl transition-all shrink-0 active:scale-95 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
@@ -258,45 +267,55 @@ export default function Lead360View() {
             <div className="flex flex-col gap-1 min-w-0 max-w-full">
               <div className="flex items-center gap-2 flex-wrap min-w-0">
                 <h1 
-                  className="text-lg sm:text-xl md:text-2xl font-black text-[hsl(var(--foreground))] tracking-tight truncate max-w-[200px] sm:max-w-[360px] md:max-w-[520px]"
+                  className="text-base sm:text-xl md:text-2xl font-black text-[hsl(var(--foreground))] tracking-tight truncate max-w-[170px] xs:max-w-[260px] sm:max-w-[380px] md:max-w-[520px]"
                   title={lead.name}
                 >
                   {lead.name}
                 </h1>
-                <span className="font-mono bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-2 py-0.5 rounded-lg text-[11px] sm:text-xs font-bold border border-[hsl(var(--border))] shrink-0">
+                <span className="font-mono bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-2 py-0.5 rounded-lg text-[10px] sm:text-xs font-bold border border-[hsl(var(--border))] shrink-0">
                   {lead.leadNumber || 'LD-XXXX'}
                 </span>
               </div>
               
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs">
-                <a href={`tel:${lead.mobileNumber}`} className="flex items-center gap-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] font-medium bg-[hsl(var(--muted)/0.5)] px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md border border-[hsl(var(--border))] transition-colors">
+                <a href={`tel:${lead.mobileNumber}`} className="flex items-center gap-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] font-medium bg-[hsl(var(--muted)/0.5)] px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md border border-[hsl(var(--border))] transition-colors shrink-0">
                   <Phone size={12} className="text-blue-500 shrink-0" /> {lead.mobileNumber}
                 </a>
                 {lead.email && (
-                  <a href={`mailto:${lead.email}`} className="flex items-center gap-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] font-medium bg-[hsl(var(--muted)/0.5)] px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md border border-[hsl(var(--border))] transition-colors truncate max-w-[220px]">
+                  <a href={`mailto:${lead.email}`} className="flex items-center gap-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] font-medium bg-[hsl(var(--muted)/0.5)] px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md border border-[hsl(var(--border))] transition-colors truncate max-w-[160px] sm:max-w-[220px]">
                     <Mail size={12} className="text-purple-500 shrink-0" /> {lead.email}
                   </a>
                 )}
                 {(lead.projectLocation || lead.city) && (
-                  <div className="flex items-center gap-1.5 text-[hsl(var(--muted-foreground))] font-medium bg-[hsl(var(--muted)/0.5)] px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md border border-[hsl(var(--border))] truncate">
-                    <MapPin size={12} className="text-amber-500 shrink-0" /> {lead.projectLocation || lead.city}
+                  <div 
+                    title={`Site Location: ${lead.projectLocation || lead.city}`}
+                    onClick={() => handleCopyLocation(lead.projectLocation || lead.city)}
+                    className="flex items-center gap-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] font-medium bg-[hsl(var(--muted)/0.5)] px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md border border-[hsl(var(--border))] min-w-0 max-w-[200px] xs:max-w-[280px] sm:max-w-[400px] md:max-w-[520px] transition-colors group cursor-pointer"
+                  >
+                    <MapPin size={12} className="text-amber-500 shrink-0" />
+                    <span className="truncate">
+                      {lead.projectLocation || lead.city}
+                    </span>
+                    <span title="Copy Address" className="opacity-60 group-hover:opacity-100 transition-opacity ml-0.5 shrink-0">
+                      {copiedLocation ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
+                    </span>
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap w-full md:w-auto pt-2 md:pt-0 border-t md:border-t-0 border-[hsl(var(--border)/0.6)]">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap w-full md:w-auto pt-2.5 md:pt-0 border-t md:border-t-0 border-[hsl(var(--border)/0.6)] justify-start md:justify-end">
             {(() => {
               const latestQuote = lead.quotations?.[lead.quotations.length - 1];
               let displayStatus = lead.status;
               let badgeColor = "bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]";
 
               if (lead.status === 'Converted' || lead.status === 'Won' || isConverted) {
-                displayStatus = 'Converted ✓';
+                displayStatus = 'Converted ';
                 badgeColor = 'bg-emerald-600 text-white border-emerald-700';
               } else if (latestQuote?.status === 'Accepted') {
-                displayStatus = 'Quotation Approved ✓';
+                displayStatus = 'Quotation Approved';
                 badgeColor = 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30';
               } else if (latestQuote?.status === 'Rejected') {
                 displayStatus = 'Quotation Rejected';
@@ -324,7 +343,7 @@ export default function Lead360View() {
                 badgeColor = 'bg-teal-500/10 text-teal-600 border-teal-500/30';
               } else if (['Under Quotation', 'Quotation Pending', 'Quotation Sent', 'Negotiation', 'Booking Pending'].includes(lead.status)) {
                 if (latestQuote?.status === 'Accepted' || lead.status === 'Booking Pending') {
-                  displayStatus = 'Quotation Approved ✓';
+                  displayStatus = 'Quotation Approved';
                   badgeColor = 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30';
                 } else if (latestQuote?.status === 'Rejected') {
                   displayStatus = 'Quotation Rejected';
@@ -597,92 +616,237 @@ export default function Lead360View() {
                     </p>
                   </div>
                 </div>
-                <div className="bg-[hsl(var(--card))] p-2.5 sm:p-3.5 rounded-xl border border-[hsl(var(--border))] flex items-center gap-2.5 sm:gap-3">
+                <div 
+                  className="bg-[hsl(var(--card))] p-2.5 sm:p-3.5 rounded-xl border border-[hsl(var(--border))] flex items-center gap-2.5 sm:gap-3 group cursor-pointer hover:border-amber-500/40 transition-all"
+                  title={`Site Location: ${lead.projectLocation || lead.city || 'Not specified'}`}
+                  onClick={() => handleCopyLocation(lead.projectLocation || lead.city)}
+                >
                   <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-600 shrink-0"><MapPin size={14} /></span>
-                  <div className="overflow-hidden min-w-0">
+                  <div className="overflow-hidden min-w-0 flex-1">
                     <p className="text-[9px] sm:text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider truncate">Location</p>
                     <p className="font-bold text-[hsl(var(--foreground))] text-[11px] sm:text-xs truncate mt-0.5">{lead.projectLocation || lead.city || 'Not specified'}</p>
                   </div>
+                  <span className="opacity-0 group-hover:opacity-100 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-opacity shrink-0">
+                    {copiedLocation ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                  </span>
                 </div>
               </div>
 
-              {/* Activity Timeline */}
-              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
-                  <h3 className="text-xs sm:text-sm font-black uppercase tracking-widest text-[hsl(var(--muted-foreground))] flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-blue-500" /> Activity Timeline
-                  </h3>
-                  {!isConverted && (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <button
-                        onClick={() => setIsActivityModalOpen(true)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all active:scale-95"
-                      >
-                        <Plus size={13} /> Log Note
-                      </button>
-                      {!['Under Quotation', 'Quotation Pending', 'Quotation Sent', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) &&
-                        (!lead.quotations || lead.quotations.length === 0) && (
-                          <button
-                            onClick={() => setIsFollowUpModalOpen(true)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 border border-blue-500/20 rounded-xl text-xs font-bold transition-all active:scale-95"
-                          >
-                            <Plus size={13} /> Schedule Follow-up
-                          </button>
-                        )}
-                    </div>
-                  )}
-                </div>
+              {/* Main Content Grid: Site & Client Info (Left) + Activity Timeline (Right) */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
                 
-                <div className="relative border-l-2 border-[hsl(var(--border))] ml-2.5 sm:ml-4 pl-4 sm:pl-8 space-y-5 sm:space-y-8">
-                  {activities.length === 0 ? (
-                    <div className="py-10 sm:py-12 flex flex-col items-center text-center">
-                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[hsl(var(--muted))] rounded-full flex items-center justify-center text-[hsl(var(--muted-foreground))] mb-3">
-                        <MessageSquare size={20} className="sm:w-6 sm:h-6" />
-                      </div>
-                      <p className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">No activities logged</p>
-                      <p className="text-[11px] sm:text-xs text-[hsl(var(--muted-foreground))] mt-0.5">Keep track of calls, meetings, and notes here.</p>
-                    </div>
-                  ) : (
-                    activities.map((act) => {
-                      const loggedByUser = users.find(u => u._id === (act.user?._id || act.user) || u.clerkUserId === (act.user?._id || act.user));
-                      const userName = loggedByUser?.name || act.user?.name || 'System';
-                      const initial = userName.charAt(0).toUpperCase();
-
-                      return (
-                      <div key={act._id} className="relative group">
-                        <div className={cn(
-                          "absolute -left-[1.35rem] sm:-left-[2.6rem] top-1.5 w-3.5 h-3.5 sm:w-5 sm:h-5 rounded-full border-2 sm:border-4 border-[hsl(var(--card))] flex items-center justify-center",
-                          act.status === 'Pending' ? "bg-amber-400" : "bg-blue-500"
-                        )}></div>
-                        
-                        <div className="bg-[hsl(var(--muted)/0.5)] hover:bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-2xl p-3.5 sm:p-5 transition-colors">
-                          <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-                            <span className={cn(
-                              "text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg border",
-                              act.status === 'Pending' ? "bg-amber-500/10 text-amber-600 border-amber-500/20" : "bg-blue-500/10 text-blue-600 border-blue-500/20"
-                            )}>
-                              {act.type} {act.status === 'Pending' && '• Scheduled'}
-                            </span>
-                            <span className="text-[11px] sm:text-xs font-bold text-[hsl(var(--muted-foreground))]">
-                              {act.status === 'Pending' 
-                                ? `Due: ${new Date(act.scheduledDate).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` 
-                                : new Date(act.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-                              }
-                            </span>
-                          </div>
-                          <p className="text-xs sm:text-sm text-[hsl(var(--foreground))] font-medium leading-relaxed">{act.remarks}</p>
-                          <div className="flex items-center gap-2 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-[hsl(var(--border))]">
-                            <div className="w-5 h-5 rounded-full bg-[hsl(var(--muted))] flex items-center justify-center text-[8px] font-bold text-[hsl(var(--muted-foreground))] shrink-0">
-                              {initial}
-                            </div>
-                            <p className="text-[11px] sm:text-xs font-semibold text-[hsl(var(--muted-foreground))] truncate">
-                              {act.status === 'Pending' ? 'Scheduled by' : 'Logged by'} <span className="text-[hsl(var(--foreground))]">{userName}</span>
-                            </p>
-                          </div>
+                {/* Left Column: Comprehensive Site Location & Project Specs (5 cols) */}
+                <div className="lg:col-span-5 space-y-5">
+                  {/* Dedicated Site Location Card */}
+                  <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 shrink-0">
+                          <MapPin size={16} />
+                        </div>
+                        <div>
+                          <h3 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">Site & Project Location</h3>
+                          <p className="text-[10px] sm:text-[11px] text-[hsl(var(--muted-foreground))]">Full project site address & navigation</p>
                         </div>
                       </div>
-                    )})
-                  )}
+                      {!isConverted && (
+                        <button
+                          onClick={() => setIsEditModalOpen(true)}
+                          className="text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1"
+                          title="Edit Location & Lead Details"
+                        >
+                          <Pencil size={11} /> Edit
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Address Box */}
+                    <div className="bg-[hsl(var(--muted)/0.4)] border border-[hsl(var(--border))] rounded-xl p-3.5 sm:p-4 space-y-3">
+                      <div className="flex items-start gap-2.5">
+                        <MapPin size={16} className="text-amber-500 shrink-0 mt-0.5" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-1.5">
+                            Full Site Address
+                          </p>
+                          <p className="text-xs sm:text-sm font-semibold text-[hsl(var(--foreground))] leading-relaxed whitespace-normal break-words selection:bg-amber-500/20">
+                            {lead.projectLocation || lead.city || 'No specific site address provided yet.'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons: Copy Address & Google Maps Link */}
+                      {(lead.projectLocation || lead.city) && (
+                        <div className="flex flex-wrap items-center gap-2 pt-2.5 border-t border-[hsl(var(--border))]">
+                          <button
+                            type="button"
+                            onClick={() => handleCopyLocation(lead.projectLocation || lead.city)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] text-[11px] sm:text-xs font-bold text-[hsl(var(--foreground))] transition-all active:scale-95 shadow-xs"
+                          >
+                            {copiedLocation ? (
+                              <>
+                                <Check size={12} className="text-emerald-500" /> Copied Address
+                              </>
+                            ) : (
+                              <>
+                                <Copy size={12} className="text-[hsl(var(--muted-foreground))]" /> Copy Address
+                              </>
+                            )}
+                          </button>
+
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.projectLocation || lead.city)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-[11px] sm:text-xs font-bold text-blue-600 transition-all active:scale-95 shadow-xs"
+                          >
+                            <ExternalLink size={12} /> Open in Maps
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Client & Scope Details Card */}
+                  <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 sm:p-5 shadow-sm space-y-3.5">
+                    <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0">
+                          <User size={16} />
+                        </div>
+                        <div>
+                          <h3 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">Lead & Contact Info</h3>
+                          <p className="text-[10px] sm:text-[11px] text-[hsl(var(--muted-foreground))]">Client communication details</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2.5 text-xs">
+                      <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1 p-2.5 rounded-xl bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border)/0.7)]">
+                        <span className="text-[hsl(var(--muted-foreground))] font-medium flex items-center gap-2 shrink-0">
+                          <User size={13} className="text-blue-500" /> Full Name
+                        </span>
+                        <span className="font-bold text-[hsl(var(--foreground))] break-words min-w-0">{lead.name}</span>
+                      </div>
+
+                      <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1 p-2.5 rounded-xl bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border)/0.7)]">
+                        <span className="text-[hsl(var(--muted-foreground))] font-medium flex items-center gap-2 shrink-0">
+                          <Phone size={13} className="text-emerald-500" /> Mobile
+                        </span>
+                        <a href={`tel:${lead.mobileNumber}`} className="font-bold text-blue-600 hover:underline break-all min-w-0">
+                          {lead.mobileNumber}
+                        </a>
+                      </div>
+
+                      {lead.email && (
+                        <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1 p-2.5 rounded-xl bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border)/0.7)]">
+                          <span className="text-[hsl(var(--muted-foreground))] font-medium flex items-center gap-2 shrink-0">
+                            <Mail size={13} className="text-purple-500" /> Email
+                          </span>
+                          <a href={`mailto:${lead.email}`} className="font-bold text-blue-600 hover:underline break-all min-w-0">
+                            {lead.email}
+                          </a>
+                        </div>
+                      )}
+
+                      <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1 p-2.5 rounded-xl bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border)/0.7)]">
+                        <span className="text-[hsl(var(--muted-foreground))] font-medium flex items-center gap-2 shrink-0">
+                          <Building size={13} className="text-indigo-500" /> Property Type
+                        </span>
+                        <span className="font-bold text-[hsl(var(--foreground))] break-words min-w-0">{lead.propertyType || 'Standard'}</span>
+                      </div>
+
+                      <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1 p-2.5 rounded-xl bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border)/0.7)]">
+                        <span className="text-[hsl(var(--muted-foreground))] font-medium flex items-center gap-2 shrink-0">
+                          <DollarSign size={13} className="text-amber-500" /> Budget / Quote
+                        </span>
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400 break-words min-w-0">
+                          {lead.quotations?.[lead.quotations.length - 1]?.grandTotal
+                            ? `₹${lead.quotations[lead.quotations.length - 1].grandTotal.toLocaleString('en-IN')}`
+                            : lead.budgetRange || 'Pending'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Activity Timeline (7 cols) */}
+                <div className="lg:col-span-7 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 sm:p-6 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
+                    <h3 className="text-xs sm:text-sm font-black uppercase tracking-widest text-[hsl(var(--muted-foreground))] flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-blue-500" /> Activity Timeline
+                    </h3>
+                    {!isConverted && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          onClick={() => setIsActivityModalOpen(true)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all active:scale-95"
+                        >
+                          <Plus size={13} /> Log Note
+                        </button>
+                        {!['Under Quotation', 'Quotation Pending', 'Quotation Sent', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) &&
+                          (!lead.quotations || lead.quotations.length === 0) && (
+                            <button
+                              onClick={() => setIsFollowUpModalOpen(true)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 border border-blue-500/20 rounded-xl text-xs font-bold transition-all active:scale-95"
+                            >
+                              <Plus size={13} /> Schedule Follow-up
+                            </button>
+                          )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="relative border-l-2 border-[hsl(var(--border))] ml-2.5 sm:ml-4 pl-4 sm:pl-8 space-y-5 sm:space-y-8">
+                    {activities.length === 0 ? (
+                      <div className="py-10 sm:py-12 flex flex-col items-center text-center">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[hsl(var(--muted))] rounded-full flex items-center justify-center text-[hsl(var(--muted-foreground))] mb-3">
+                          <MessageSquare size={20} className="sm:w-6 sm:h-6" />
+                        </div>
+                        <p className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">No activities logged</p>
+                        <p className="text-[11px] sm:text-xs text-[hsl(var(--muted-foreground))] mt-0.5">Keep track of calls, meetings, and notes here.</p>
+                      </div>
+                    ) : (
+                      activities.map((act) => {
+                        const loggedByUser = users.find(u => u._id === (act.user?._id || act.user) || u.clerkUserId === (act.user?._id || act.user));
+                        const userName = loggedByUser?.name || act.user?.name || 'System';
+                        const initial = userName.charAt(0).toUpperCase();
+
+                        return (
+                        <div key={act._id} className="relative group">
+                          <div className={cn(
+                            "absolute -left-[1.35rem] sm:-left-[2.6rem] top-1.5 w-3.5 h-3.5 sm:w-5 sm:h-5 rounded-full border-2 sm:border-4 border-[hsl(var(--card))] flex items-center justify-center",
+                            act.status === 'Pending' ? "bg-amber-400" : "bg-blue-500"
+                          )}></div>
+                          
+                          <div className="bg-[hsl(var(--muted)/0.5)] hover:bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-2xl p-3.5 sm:p-5 transition-colors">
+                            <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+                              <span className={cn(
+                                "text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg border",
+                                act.status === 'Pending' ? "bg-amber-500/10 text-amber-600 border-amber-500/20" : "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                              )}>
+                                {act.type} {act.status === 'Pending' && '• Scheduled'}
+                              </span>
+                              <span className="text-[11px] sm:text-xs font-bold text-[hsl(var(--muted-foreground))]">
+                                {act.status === 'Pending' 
+                                  ? `Due: ${new Date(act.scheduledDate).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` 
+                                  : new Date(act.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+                                }
+                              </span>
+                            </div>
+                            <p className="text-xs sm:text-sm text-[hsl(var(--foreground))] font-medium leading-relaxed">{act.remarks}</p>
+                            <div className="flex items-center gap-2 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-[hsl(var(--border))]">
+                              <div className="w-5 h-5 rounded-full bg-[hsl(var(--muted))] flex items-center justify-center text-[8px] font-bold text-[hsl(var(--muted-foreground))] shrink-0">
+                                {initial}
+                              </div>
+                              <p className="text-[11px] sm:text-xs font-semibold text-[hsl(var(--muted-foreground))] truncate">
+                                {act.status === 'Pending' ? 'Scheduled by' : 'Logged by'} <span className="text-[hsl(var(--foreground))]">{userName}</span>
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )})
+                    )}
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -1627,11 +1791,22 @@ export default function Lead360View() {
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 mb-6 max-w-sm">
                     Create a detailed Bill of Quantities based on requirements and designs.
                   </p>
-                  {!isConverted && (
-                    <button onClick={() => setIsBoqModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 sm:px-6 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5">
-                      <Plus size={15} /> Create BOQ
-                    </button>
-                  )}
+                  {(() => {
+                    const hasAcceptedQuote = lead?.quotations && lead.quotations.some((q: any) => q.status === 'Accepted');
+                    const isQuotationApproved = hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(lead?.status || '') || Boolean(lead?.linkedProject);
+                    if (isConverted || isQuotationApproved) {
+                      return (
+                        <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-xs font-bold">
+                          <Lock size={13} /> Quotation Approved (BOQ Locked)
+                        </span>
+                      );
+                    }
+                    return (
+                      <button onClick={() => setIsBoqModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 sm:px-6 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5">
+                        <Plus size={15} /> Create BOQ
+                      </button>
+                    );
+                  })()}
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -1654,28 +1829,44 @@ export default function Lead360View() {
                       </div>
                     </div>
 
-                    {!isConverted && (
-                      <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-                        <button
-                          onClick={() => {
-                            setEditingBoqIndex(activeBoqIndex);
-                            setIsBoqModalOpen(true);
-                          }}
-                          className="flex-1 sm:flex-initial justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5"
-                        >
-                          <Pencil size={13} /> Edit Current BOQ
-                        </button>
-                        <button
-                          onClick={() => {
-                            setEditingBoqIndex(null);
-                            setIsBoqModalOpen(true);
-                          }}
-                          className="flex-1 sm:flex-initial justify-center bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] px-3.5 py-2 rounded-xl text-xs font-bold transition-all border border-[hsl(var(--border))] active:scale-95 flex items-center gap-1.5"
-                        >
-                          <Plus size={14} /> New BOQ Version
-                        </button>
-                      </div>
-                    )}
+                    {(() => {
+                      const hasAcceptedQuote = lead.quotations && lead.quotations.some((q: any) => q.status === 'Accepted');
+                      const isQuotationApproved = hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(lead.status) || Boolean(lead.linkedProject);
+                      const isBoqLocked = isConverted || isQuotationApproved;
+
+                      if (isBoqLocked) {
+                        return (
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-xs font-bold">
+                              <Lock size={13} /> Quotation Approved (BOQ Locked)
+                            </span>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+                          <button
+                            onClick={() => {
+                              setEditingBoqIndex(activeBoqIndex);
+                              setIsBoqModalOpen(true);
+                            }}
+                            className="flex-1 sm:flex-initial justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Pencil size={13} /> Edit Current BOQ
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingBoqIndex(null);
+                              setIsBoqModalOpen(true);
+                            }}
+                            className="flex-1 sm:flex-initial justify-center bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] px-3.5 py-2 rounded-xl text-xs font-bold transition-all border border-[hsl(var(--border))] active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Plus size={14} /> New BOQ Version
+                          </button>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {lead.boqs.length > 1 && (
@@ -1702,10 +1893,15 @@ export default function Lead360View() {
                       lead={lead} 
                       boqIndex={activeBoqIndex} 
                       onSuccess={fetchData} 
-                      onEdit={isConverted ? undefined : () => {
-                        setEditingBoqIndex(activeBoqIndex);
-                        setIsBoqModalOpen(true);
-                      }}
+                      onEdit={(() => {
+                        const hasAcceptedQuote = lead.quotations && lead.quotations.some((q: any) => q.status === 'Accepted');
+                        const isQuotationApproved = hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(lead.status) || Boolean(lead.linkedProject);
+                        const isBoqLocked = isConverted || isQuotationApproved;
+                        return isBoqLocked ? undefined : () => {
+                          setEditingBoqIndex(activeBoqIndex);
+                          setIsBoqModalOpen(true);
+                        };
+                      })()}
                     />
                   </div>
                 </div>
@@ -1926,7 +2122,8 @@ export default function Lead360View() {
         users={users}
         initialRequirements={lead?.requirements || []}
         initialBudget={lead?.budgetRange || ''}
-        isReadOnly={['Under Drawing', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Converted'].includes(lead?.status || '')}
+        currentStatus={lead?.status || ''}
+        isReadOnly={['Won', 'Converted'].includes(lead?.status || '')}
       />
       <InteriorUploadDesignModal
         isOpen={isDesignModalOpen}
@@ -1965,6 +2162,12 @@ export default function Lead360View() {
         customerId={lead?._id || ''}
         existingBoqs={lead?.boqs || []}
         editingBoqIndex={editingBoqIndex}
+        isReadOnly={Boolean(
+          isConverted ||
+          (lead?.quotations && lead.quotations.some((q: any) => q.status === 'Accepted')) ||
+          ['Booking Pending', 'Won', 'Converted'].includes(lead?.status || '') ||
+          Boolean(lead?.linkedProject)
+        )}
         onSuccess={fetchData}
       />
       <InteriorScheduleFollowUpModal

@@ -204,7 +204,7 @@ export function InteriorQuotationsView({
                         {lead.status === 'Converted'
                           ? 'Converted'
                           : (latestQuote?.status === 'Accepted' || lead.status === 'Booking Pending')
-                          ? 'Approved ✓'
+                          ? 'Approved '
                           : latestQuote?.status === 'Rejected'
                           ? 'Rejected'
                           : 'Pending'}
@@ -256,7 +256,7 @@ export function InteriorQuotationsView({
                         latestQuote?.status === 'Accepted' &&
                         (lead.status === 'Won' || lead.status === 'Converted' ? (
                           <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
-                            Converted ✓
+                            Converted 
                           </span>
                         ) : (
                           <button
@@ -379,7 +379,7 @@ export function InteriorQuotationsView({
                             {lead.status === 'Converted'
                               ? 'Converted'
                               : (latestQuote?.status === 'Accepted' || lead.status === 'Booking Pending')
-                              ? 'Quotation Approved ✓'
+                              ? 'Quotation Approved '
                               : latestQuote?.status === 'Rejected'
                               ? 'Quotation Rejected'
                               : 'Under Quotation'}
@@ -423,7 +423,7 @@ export function InteriorQuotationsView({
                                 className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 rounded-lg text-xs font-bold"
                                 title="Lead converted into Active Project"
                               >
-                                <Trophy size={13} /> Converted ✓
+                                <Trophy size={13} /> Converted 
                               </span>
                             ) : (
                               <button

@@ -4,6 +4,7 @@ import { X, MapPin } from 'lucide-react';
 import api from '@/services/api.client';
 import interiorApiClient from '@/services/interiorApi.client';
 import { useToast } from '@/providers/ToastContext';
+import { validateNonEmpty, ValidationErrors } from '@/lib/crmValidation';
 
 interface Props {
   isOpen: boolean;
@@ -16,26 +17,48 @@ interface Props {
 export function SendToSiteVisitModal({ isOpen, onClose, customerId, onSuccess, users = [] }: Props) {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<ValidationErrors>({});
   const [assignedSalesExecutive, setAssignedSalesExecutive] = useState('');
   const [scheduledDate, setScheduledDate] = useState('');
   const [remarks, setRemarks] = useState('');
 
+  React.useEffect(() => {
+    if (!isOpen) {
+      setAssignedSalesExecutive('');
+      setScheduledDate('');
+      setRemarks('');
+      setErrors({});
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
+  const validateForm = (): boolean => {
+    const newErrors: ValidationErrors = {
+      assignedSalesExecutive: validateNonEmpty(assignedSalesExecutive, 'Assign member'),
+    };
+    setErrors(newErrors);
+    return !Object.values(newErrors).some((err) => err !== null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) {
+      toast.error('Please assign a team member for the site visit');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
+      const visitDate = scheduledDate ? new Date(scheduledDate) : new Date();
+
       // 1. Update Customer Status & Assignment
       const updatePayload: any = {
         status: 'Meeting Scheduled', // This puts them in the Site Visits tab
-        siteVisitScheduledDate: scheduledDate || new Date(),
+        siteVisitScheduledDate: visitDate.toISOString(),
+        assignedSalesExecutive: assignedSalesExecutive.trim(),
       };
-      
-      if (assignedSalesExecutive) {
-        updatePayload.assignedSalesExecutive = assignedSalesExecutive;
-      }
 
       await api.patch(`/crm/customers/${customerId}`, updatePayload);
 
@@ -44,15 +67,16 @@ export function SendToSiteVisitModal({ isOpen, onClose, customerId, onSuccess, u
         customer: customerId,
         type: 'Site Visit',
         status: 'Pending',
-        scheduledDate: scheduledDate || new Date(),
-        remarks: remarks || 'Site visit scheduled.',
+        scheduledDate: visitDate.toISOString(),
+        remarks: remarks.trim() || 'Site visit scheduled.',
       });
 
       toast.success('Successfully sent to Site Visits!');
       onSuccess();
       onClose();
+      setErrors({});
     } catch (error: any) {
-      toast.error('Failed to send to site visit');
+      toast.error(error.response?.data?.message || 'Failed to send to site visit');
     } finally {
       setIsSubmitting(false);
     }
@@ -75,18 +99,27 @@ export function SendToSiteVisitModal({ isOpen, onClose, customerId, onSuccess, u
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-bold text-slate-700">Assign Member to Site Visit</label>
+            <label className="text-xs font-bold text-slate-700">Assign Member to Site Visit *</label>
             <select 
               value={assignedSalesExecutive}
-              onChange={e => setAssignedSalesExecutive(e.target.value)}
-              className="w-full mt-1.5 px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none"
-              required
+              onChange={e => {
+                setAssignedSalesExecutive(e.target.value);
+                if (errors.assignedSalesExecutive) setErrors({ ...errors, assignedSalesExecutive: null });
+              }}
+              className={`w-full mt-1.5 px-4 py-3 rounded-xl border text-sm outline-none transition-all ${
+                errors.assignedSalesExecutive
+                  ? 'border-red-500 focus:ring-2 focus:ring-red-500/20'
+                  : 'border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500'
+              }`}
             >
               <option value="">-- Select Member --</option>
               {users.map(u => (
                 <option key={u._id} value={u._id}>{u.name} ({u.role?.name || 'User'})</option>
               ))}
             </select>
+            {errors.assignedSalesExecutive && (
+              <p className="text-xs text-red-500 mt-1">{errors.assignedSalesExecutive}</p>
+            )}
           </div>
 
           <div>

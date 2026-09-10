@@ -113,7 +113,20 @@ export const LogSiteVisitModal = ({
     const files = e.target.files;
     if (!files) return;
 
+    const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
+    const validImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+
     Array.from(files).forEach((file) => {
+      if (!validImageTypes.includes(file.type) && !file.type.startsWith('image/')) {
+        toast.error(`"${file.name}" is not a supported image file. Please upload JPEG, PNG, or WEBP.`);
+        return;
+      }
+
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`"${file.name}" exceeds the 15MB maximum file size.`);
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
@@ -122,20 +135,69 @@ export const LogSiteVisitModal = ({
       };
       reader.readAsDataURL(file);
     });
+
+    e.target.value = '';
   };
 
   const removePhoto = (index: number) => {
     setPhotos((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const validateField = (name: string, value: string): string | null => {
+    switch (name) {
+      case 'carpetArea': {
+        if (!value || !value.trim()) {
+          return 'Carpet Area is required';
+        }
+        const num = parseFloat(value.trim());
+        if (isNaN(num)) {
+          return 'Carpet Area must be a valid number (e.g. 1200)';
+        }
+        if (num <= 0) {
+          return 'Carpet Area must be greater than 0';
+        }
+        if (num > 1000000) {
+          return 'Carpet Area seems unusually large (max 1,000,000 sq.ft)';
+        }
+        return null;
+      }
+      case 'ceilingHeight': {
+        if (!value || !value.trim()) {
+          return 'Ceiling Height is required';
+        }
+        const num = parseFloat(value.trim());
+        if (isNaN(num)) {
+          return 'Ceiling Height must be a valid number (e.g. 10 or 10.5)';
+        }
+        if (num <= 0) {
+          return 'Ceiling Height must be greater than 0';
+        }
+        if (num > 100) {
+          return 'Ceiling Height seems unusually large (max 100 ft)';
+        }
+        return null;
+      }
+      case 'rooms': {
+        if (!value || !value.trim()) {
+          return 'Rooms to Design is required (e.g. 3BHK or Living, Kitchen, Bed)';
+        }
+        if (value.trim().length < 2) {
+          return 'Rooms to Design must be at least 2 characters';
+        }
+        return null;
+      }
+      default:
+        return null;
+    }
+  };
+
   const validateForm = (): boolean => {
-    const newErrors: ValidationErrors = {};
-    if (measurements.carpetArea && validatePositiveNumber(measurements.carpetArea, 'Carpet Area')) {
-      newErrors.carpetArea = validatePositiveNumber(measurements.carpetArea, 'Carpet Area');
-    }
-    if (measurements.ceilingHeight && validatePositiveNumber(measurements.ceilingHeight, 'Ceiling Height')) {
-      newErrors.ceilingHeight = validatePositiveNumber(measurements.ceilingHeight, 'Ceiling Height');
-    }
+    const newErrors: ValidationErrors = {
+      carpetArea: validateField('carpetArea', measurements.carpetArea),
+      ceilingHeight: validateField('ceilingHeight', measurements.ceilingHeight),
+      rooms: validateField('rooms', measurements.rooms),
+    };
+
     setErrors(newErrors);
     return !Object.values(newErrors).some((err) => err !== null);
   };
@@ -143,7 +205,7 @@ export const LogSiteVisitModal = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
-      toast.error('Please fix the measurement errors');
+      toast.error('Please fill in all required measurement fields with valid numbers');
       return;
     }
     setIsSubmitting(true);
@@ -173,20 +235,25 @@ export const LogSiteVisitModal = ({
 
       await interiorApiClient.patch(`/crm/customers/${customerId}`, updatePayload);
 
-      await interiorApiClient.post('/crm/activities', {
-        customer: customerId,
-        type: 'Site Visit',
-        status: 'Completed',
-        remarks: 'Completed site visit and uploaded detailed measurements/photos.',
-        scheduledDate: new Date(),
-        completedDate: new Date()
-      });
+      try {
+        await interiorApiClient.post('/crm/activities', {
+          customer: customerId,
+          type: 'Site Visit',
+          status: 'Completed',
+          remarks: initialMeasurements ? 'Updated site measurements and site photos.' : 'Completed site visit and uploaded detailed measurements/photos.',
+          scheduledDate: new Date(),
+          completedDate: new Date()
+        });
+      } catch (actErr) {
+        console.warn('Activity log skipped:', actErr);
+      }
 
       toast.success('Site visit logged successfully!');
       onSuccess();
       onClose();
-    } catch (error) {
-      toast.error('Failed to log site visit');
+    } catch (error: any) {
+      console.error('Failed to log site visit:', error);
+      toast.error(error?.response?.data?.message || error?.message || 'Failed to log site visit');
     } finally {
       setIsSubmitting(false);
     }
@@ -251,7 +318,7 @@ export const LogSiteVisitModal = ({
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1.5">
                   <Layers size={13} className="text-purple-600" />
-                  Ceiling Height (Ft)
+                  Ceiling Height (Ft) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -285,7 +352,10 @@ export const LogSiteVisitModal = ({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1.5">Carpet Area (Sq.Ft)</label>
+                <label className="block text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1.5">
+                  <Ruler size={13} className="text-emerald-600" />
+                  Carpet Area (Sq.Ft) <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   value={measurements.carpetArea}
@@ -304,14 +374,25 @@ export const LogSiteVisitModal = ({
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-slate-600 mb-1.5">Rooms to Design (e.g. 3BHK)</label>
+                <label className="block text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1.5">
+                  <Columns size={13} className="text-blue-600" />
+                  Rooms to Design (e.g. 3BHK) <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   value={measurements.rooms}
-                  onChange={(e) => setMeasurements({ ...measurements, rooms: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                  onChange={(e) => {
+                    setMeasurements({ ...measurements, rooms: e.target.value });
+                    if (errors.rooms) setErrors({ ...errors, rooms: null });
+                  }}
+                  className={`w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-xs text-slate-800 outline-none transition-all ${
+                    errors.rooms
+                      ? 'border-red-500 focus:ring-2 focus:ring-red-500/20'
+                      : 'border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500'
+                  }`}
                   placeholder="Kitchen, Living Room, 2 Bedrooms"
                 />
+                {errors.rooms && <p className="text-[10px] text-red-500 mt-1">{errors.rooms}</p>}
               </div>
             </div>
           </div>
@@ -478,10 +559,18 @@ export const LogSiteVisitModal = ({
                 </label>
                 <textarea
                   value={measurements.notes}
-                  onChange={(e) => setMeasurements({ ...measurements, notes: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all h-20 resize-none"
+                  onChange={(e) => {
+                    setMeasurements({ ...measurements, notes: e.target.value });
+                    if (errors.notes) setErrors({ ...errors, notes: null });
+                  }}
+                  className={`w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-xs text-slate-800 outline-none transition-all h-20 resize-none ${
+                    errors.notes
+                      ? 'border-red-500 focus:ring-2 focus:ring-red-500/20'
+                      : 'border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500'
+                  }`}
                   placeholder="Enter any additional remarks, client preferences observed on site..."
                 />
+                {errors.notes && <p className="text-[10px] text-red-500 mt-1">{errors.notes}</p>}
               </div>
             </div>
           </div>
