@@ -61,7 +61,12 @@ export default function RegisterPage() {
 
     if (!name || !email || !password || !confirmPassword) return toast.error('Please fill in all required fields');
     if (password !== confirmPassword) return toast.error('Passwords do not match');
-    if (password.length < 6) return toast.error('Password must be at least 6 characters');
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim().toLowerCase())) return toast.error('Invalid email address');
+    
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(password)) return toast.error('Password must be at least 8 characters long, and contain at least one uppercase letter, one lowercase letter, one number, and one special symbol');
     setIsLoading(true);
     try {
       await register({ name, email, password, phoneNumber, industryType });
@@ -237,7 +242,15 @@ export default function RegisterPage() {
                     </div>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <div><label className="text-xs font-semibold text-slate-700">Password</label><div className="relative mt-1"><Lock className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" /><input type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} className={inputClass} placeholder="Password" required /><button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-900">{showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}</button></div></div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-700">Password</label>
+                      <div className="relative mt-1">
+                        <Lock className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                        <input type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} className={inputClass} placeholder="Password" required />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-900">{showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}</button>
+                      </div>
+                      <p className="mt-1 text-[10px] text-slate-400">Must include an uppercase, lowercase, number, and special symbol.</p>
+                    </div>
                     <div><label className="text-xs font-semibold text-slate-700">Confirm password</label><div className="relative mt-1"><Lock className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" /><input type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className={inputClass} placeholder="Confirm password" required /></div></div>
                   </div>
                 </>

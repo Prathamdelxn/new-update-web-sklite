@@ -185,7 +185,8 @@ export function InteriorProjectBanner({ projectId, project, loading }: InteriorP
 
       <div ref={containerRef} className="relative z-30 flex items-center gap-x-4 sm:gap-x-6 gap-y-2 pt-2.5 sm:pt-4 border-b border-[hsl(var(--border))] pb-2 overflow-visible flex-wrap sm:flex-nowrap">
         {categories.map((cat) => {
-          const isActive = cat.items.some((item) => ('exact' in item && item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + '/')));
+          const activeItem = cat.items.find((item) => ('exact' in item && item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + '/')));
+          const isActive = !!activeItem;
 
           return (
             <div key={cat.name} className="relative shrink-0">
@@ -197,7 +198,7 @@ export function InteriorProjectBanner({ projectId, project, loading }: InteriorP
                 )}
               >
                 <span>{cat.icon}</span>
-                <span>{cat.name}</span>
+                <span>{isActive ? activeItem.label : cat.name}</span>
                 <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', openCategory === cat.name && 'rotate-180')} />
                 {isActive && <motion.div layoutId="activeProjectTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[hsl(var(--primary))]" />}
               </button>
