@@ -18,6 +18,8 @@ const getBaseUrl = (): string => {
   return (process.env.NEXT_PUBLIC_INTERIOR_API_URL || 'http://localhost:3002').replace(/\/+$/, '');
 };
 
+import Cookies from 'js-cookie';
+
 export const interiorApiClient = axios.create({
   baseURL: `${getBaseUrl()}/api/v1`,
   headers: {
@@ -29,7 +31,11 @@ export const interiorApiClient = axios.create({
 interiorApiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('interiorAccessToken');
+      const token =
+        localStorage.getItem('interiorAccessToken') ||
+        localStorage.getItem('token') ||
+        Cookies.get('interiorAccessToken') ||
+        Cookies.get('token');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }

@@ -11,6 +11,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { cn, formatCurrency } from '@/lib/utils';
 import api from '@/services/api.client';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
+import { useIsAdmin } from '@/hooks/usePermission';
 
 interface ProjectDashboardTabProps {
   projectId: string;
@@ -41,6 +42,7 @@ const STATUS_PROGRESS: Record<string, number> = {
 export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projectId }) => {
   const { project } = useProjectContext();
   const router = useRouter();
+  const isAdmin = useIsAdmin();
 
   const [stats, setStats] = useState({
     milestones: { total: 0, completed: 0 },
@@ -388,12 +390,14 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
                 </div>
                 <h4 className="text-sm font-bold text-gray-900">Recent Activity</h4>
               </div>
-              <button
-                onClick={() => router.push(`/construction-dashboard/projects/${projectId}/audit`)}
-                className="flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:text-blue-500"
-              >
-                View All <ChevronRight className="w-3 h-3" />
-              </button>
+              {isAdmin && (
+                <button
+                  onClick={() => router.push(`/construction-dashboard/projects/${projectId}/audit`)}
+                  className="flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:text-blue-500"
+                >
+                  View All <ChevronRight className="w-3 h-3" />
+                </button>
+              )}
             </div>
             {recentActivity.length === 0 ? (
               <p className="text-xs text-slate-400 italic py-4 text-center">No activity recorded yet.</p>
