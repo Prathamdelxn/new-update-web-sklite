@@ -146,13 +146,7 @@ export default function InteriorNewDashboardView() {
             {refreshing ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <RefreshCw className="w-3.5 h-3.5 mr-1.5" />}
             Refresh
           </Button>
-          <Link
-            href="/interior-new/crm"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted))] text-xs font-semibold text-[hsl(var(--foreground))] transition-colors"
-          >
-            <Users className="w-3.5 h-3.5 text-blue-500" />
-            CRM Pipeline
-          </Link>
+          
           <Link
             href="/interior-new/projects"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] hover:opacity-90 text-xs font-semibold text-[hsl(var(--primary-foreground))] transition-opacity shadow-sm"

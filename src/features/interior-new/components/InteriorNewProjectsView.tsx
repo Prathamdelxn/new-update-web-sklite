@@ -21,6 +21,7 @@ import {
   TrendingUp,
   Clock,
   AlertTriangle,
+  AlertCircle,
   X,
   Loader2,
   Pencil,
@@ -129,11 +130,84 @@ export default function InteriorNewProjectsView() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [formData, setFormData] = useState(emptyFormData);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const validateFormFields = (): Record<string, string> => {
+    const errors: Record<string, string> = {};
+
+    const nameTrimmed = (formData.name || '').trim();
+    if (!nameTrimmed) {
+      errors.name = 'Project name is required';
+    } else if (nameTrimmed.length < 3) {
+      errors.name = 'Project name must be at least 3 characters';
+    } else if (nameTrimmed.length > 80) {
+      errors.name = 'Project name cannot exceed 80 characters';
+    }
+
+    const clientTrimmed = (formData.client || '').trim();
+    if (!clientTrimmed) {
+      errors.client = 'Client / Customer name is required';
+    } else if (clientTrimmed.length < 2) {
+      errors.client = 'Client name must be at least 2 characters';
+    } else if (clientTrimmed.length > 60) {
+      errors.client = 'Client name cannot exceed 60 characters';
+    }
+
+    if (!formData.startDate) {
+      errors.startDate = 'Start date is required';
+    }
+
+    if (!formData.endDate) {
+      errors.endDate = 'Target completion date is required';
+    } else if (formData.startDate && new Date(formData.endDate) < new Date(formData.startDate)) {
+      errors.endDate = 'Target completion date cannot be earlier than start date';
+    }
+
+    const budgetStr = String(formData.budgetAmount || '').trim();
+    if (!budgetStr) {
+      errors.budgetAmount = 'Contract budget is required';
+    } else {
+      const budgetNum = Number(budgetStr);
+      if (isNaN(budgetNum)) {
+        errors.budgetAmount = 'Please enter a valid numeric budget';
+      } else if (budgetNum <= 0) {
+        errors.budgetAmount = 'Budget must be greater than 0';
+      } else if (budgetNum > 10000000000) {
+        errors.budgetAmount = 'Budget amount is excessively large';
+      }
+    }
+
+    if (formData.city && formData.city.trim().length > 50) {
+      errors.city = 'City cannot exceed 50 characters';
+    }
+
+    if (formData.address && formData.address.trim().length > 120) {
+      errors.address = 'Address cannot exceed 120 characters';
+    }
+
+    if (formData.description && formData.description.trim().length > 500) {
+      errors.description = 'Description cannot exceed 500 characters';
+    }
+
+    return errors;
+  };
+
+  const updateFormField = (field: keyof typeof emptyFormData, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (formErrors[field]) {
+      setFormErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingProjectId(null);
     setFormData(emptyFormData);
+    setFormErrors({});
   };
 
   const loadProjects = useCallback(async () => {
@@ -171,6 +245,7 @@ export default function InteriorNewProjectsView() {
       description: project.description || '',
       templateId: project.templateId || '',
     });
+    setFormErrors({});
     setIsDialogOpen(true);
   };
 
@@ -197,19 +272,31 @@ export default function InteriorNewProjectsView() {
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
+    const errors = validateFormFields();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      const firstMsg = Object.values(errors)[0];
+      toast.error(firstMsg || 'Please correct the highlighted form errors before submitting.');
+      return;
+    }
+    setFormErrors({});
+
     try {
       setCreateLoading(true);
       const budgetNum = parseFloat(formData.budgetAmount) || 0;
       const payload = {
-        name: formData.name,
-        client: formData.client,
+        name: formData.name.trim(),
+        client: formData.client.trim(),
         type: formData.type,
-        startDate: formData.startDate || new Date().toISOString().split('T')[0],
-        endDate: formData.endDate || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        startDate: formData.startDate,
+        endDate: formData.endDate,
         budget: { amount: budgetNum, currency: 'INR' },
         totalBudget: budgetNum,
-        location: { city: formData.city, address: formData.address },
-        description: formData.description,
+        location: {
+          city: (formData.city || '').trim(),
+          address: (formData.address || '').trim(),
+        },
+        description: (formData.description || '').trim(),
         templateId: formData.templateId || undefined,
       };
 
@@ -222,9 +309,10 @@ export default function InteriorNewProjectsView() {
       }
       handleCloseDialog();
       await loadProjects();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save project', err);
-      toast.error('Failed to save project');
+      const serverMsg = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to save project';
+      toast.error(serverMsg);
     } finally {
       setCreateLoading(false);
     }
@@ -993,7 +1081,7 @@ export default function InteriorNewProjectsView() {
                 </button>
               </div>
 
-              <form onSubmit={handleCreateProject} className="flex-1 flex flex-col overflow-hidden">
+              <form onSubmit={handleCreateProject} className="flex-1 flex flex-col overflow-hidden" noValidate>
                 <div className="p-4 sm:p-6 space-y-3.5 sm:space-y-4 overflow-y-auto max-h-[calc(90vh-130px)]">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                     <div className="space-y-1.5 sm:col-span-2">
@@ -1005,8 +1093,15 @@ export default function InteriorNewProjectsView() {
                         maxLength={80}
                         placeholder="e.g. DLF Cyber Park Tower C — 4th Floor"
                         value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        onChange={(e) => updateFormField('name', e.target.value)}
+                        className={cn(formErrors.name && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
                       />
+                      {formErrors.name && (
+                        <p className="text-[11px] font-medium text-rose-500 flex items-center gap-1 mt-1">
+                          <AlertCircle className="w-3 h-3 shrink-0" />
+                          {formErrors.name}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-1.5">
@@ -1018,8 +1113,15 @@ export default function InteriorNewProjectsView() {
                         maxLength={60}
                         placeholder="e.g. DLF Limited"
                         value={formData.client}
-                        onChange={(e) => setFormData({ ...formData, client: e.target.value })}
+                        onChange={(e) => updateFormField('client', e.target.value)}
+                        className={cn(formErrors.client && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
                       />
+                      {formErrors.client && (
+                        <p className="text-[11px] font-medium text-rose-500 flex items-center gap-1 mt-1">
+                          <AlertCircle className="w-3 h-3 shrink-0" />
+                          {formErrors.client}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-1.5">
@@ -1029,31 +1131,13 @@ export default function InteriorNewProjectsView() {
                       <select
                         className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1.5 focus:ring-[hsl(var(--primary))]"
                         value={formData.type}
-                        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                        onChange={(e) => updateFormField('type', e.target.value)}
                       >
                         <option value="Commercial Office">Commercial Office</option>
                         <option value="Residential">Residential</option>
                         <option value="Tech Office">Tech Office</option>
                         <option value="Co-working Space">Co-working Space</option>
                         <option value="General">General</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-1.5 sm:col-span-2">
-                      <label className="text-xs font-bold text-[hsl(var(--foreground))]">
-                        WBS / Room Template (Optional)
-                      </label>
-                      <select
-                        className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1.5 focus:ring-[hsl(var(--primary))]"
-                        value={formData.templateId}
-                        onChange={(e) => setFormData({ ...formData, templateId: e.target.value })}
-                      >
-                        <option value="">No Template (Empty Project)</option>
-                        {templates.map((t: any) => (
-                          <option key={t._id} value={t._id}>
-                            {t.name} ({t.category})
-                          </option>
-                        ))}
                       </select>
                     </div>
                   </div>
@@ -1068,8 +1152,15 @@ export default function InteriorNewProjectsView() {
                         required
                         type="date"
                         value={formData.startDate}
-                        onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                        onChange={(e) => updateFormField('startDate', e.target.value)}
+                        className={cn(formErrors.startDate && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
                       />
+                      {formErrors.startDate && (
+                        <p className="text-[11px] font-medium text-rose-500 flex items-center gap-1 mt-1">
+                          <AlertCircle className="w-3 h-3 shrink-0" />
+                          {formErrors.startDate}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1">
@@ -1079,8 +1170,15 @@ export default function InteriorNewProjectsView() {
                         required
                         type="date"
                         value={formData.endDate}
-                        onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                        onChange={(e) => updateFormField('endDate', e.target.value)}
+                        className={cn(formErrors.endDate && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
                       />
+                      {formErrors.endDate && (
+                        <p className="text-[11px] font-medium text-rose-500 flex items-center gap-1 mt-1">
+                          <AlertCircle className="w-3 h-3 shrink-0" />
+                          {formErrors.endDate}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -1093,10 +1191,19 @@ export default function InteriorNewProjectsView() {
                       <Input
                         required
                         type="number"
+                        min="1"
+                        step="any"
                         placeholder="e.g. 1500000"
                         value={formData.budgetAmount}
-                        onChange={(e) => setFormData({ ...formData, budgetAmount: e.target.value })}
+                        onChange={(e) => updateFormField('budgetAmount', e.target.value)}
+                        className={cn(formErrors.budgetAmount && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
                       />
+                      {formErrors.budgetAmount && (
+                        <p className="text-[11px] font-medium text-rose-500 flex items-center gap-1 mt-1">
+                          <AlertCircle className="w-3 h-3 shrink-0" />
+                          {formErrors.budgetAmount}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1">
@@ -1106,8 +1213,15 @@ export default function InteriorNewProjectsView() {
                         maxLength={50}
                         placeholder="e.g. Gurugram"
                         value={formData.city}
-                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        onChange={(e) => updateFormField('city', e.target.value)}
+                        className={cn(formErrors.city && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
                       />
+                      {formErrors.city && (
+                        <p className="text-[11px] font-medium text-rose-500 flex items-center gap-1 mt-1">
+                          <AlertCircle className="w-3 h-3 shrink-0" />
+                          {formErrors.city}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -1119,8 +1233,15 @@ export default function InteriorNewProjectsView() {
                       maxLength={120}
                       placeholder="e.g. Cyber City, Building 10, Sector 24"
                       value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      onChange={(e) => updateFormField('address', e.target.value)}
+                      className={cn(formErrors.address && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
                     />
+                    {formErrors.address && (
+                      <p className="text-[11px] font-medium text-rose-500 flex items-center gap-1 mt-1">
+                        <AlertCircle className="w-3 h-3 shrink-0" />
+                        {formErrors.address}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-1.5">
@@ -1130,11 +1251,20 @@ export default function InteriorNewProjectsView() {
                     <textarea
                       rows={3}
                       maxLength={500}
-                      className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-1.5 focus:ring-[hsl(var(--primary))]"
+                      className={cn(
+                        'w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-1.5 focus:ring-[hsl(var(--primary))]',
+                        formErrors.description && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500'
+                      )}
                       placeholder="Specify fit-out highlights, architectural scope..."
                       value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      onChange={(e) => updateFormField('description', e.target.value)}
                     />
+                    {formErrors.description && (
+                      <p className="text-[11px] font-medium text-rose-500 flex items-center gap-1 mt-1">
+                        <AlertCircle className="w-3 h-3 shrink-0" />
+                        {formErrors.description}
+                      </p>
+                    )}
                   </div>
                 </div>
 
