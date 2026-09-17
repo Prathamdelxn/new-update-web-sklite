@@ -196,8 +196,7 @@ export const interiorProjectService = {
     email: string;
     password?: string;
     phone?: string;
-    designation?: string;
-    department?: string;
+    role?: string;
     systemRole?: string;
   }) => interiorApiClient.post('/users', data).then((res) => res.data),
 
@@ -210,8 +209,7 @@ export const interiorProjectService = {
       email?: string;
       password?: string;
       phone?: string;
-      designation?: string;
-      department?: string;
+      role?: string;
       systemRole?: string;
       status?: string;
     }
@@ -220,4 +218,11 @@ export const interiorProjectService = {
   // Delete a user (org admin only)
   deleteUser: (userId: string) =>
     interiorApiClient.delete(`/users/${userId}`).then((res) => res.data),
+
+  // Roles
+  getRoles: () =>
+    interiorApiClient.get('/roles').then((res) => res.data),
+
+  createRole: (data: { name: string; description?: string; permissions?: any[] }) =>
+    interiorApiClient.post('/roles', data).then((res) => res.data),
 };

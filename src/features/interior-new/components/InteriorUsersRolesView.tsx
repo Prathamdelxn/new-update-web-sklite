@@ -54,6 +54,27 @@ interface ProjectAssignment {
   permissions: Permission[];
 }
 
+export interface OrgRole {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  permissions: Permission[];
+  isSystem?: boolean;
+}
+
+export const DEFAULT_ORG_ROLES: OrgRole[] = [
+  { _id: 'admin', name: 'Admin', slug: 'admin', permissions: [] },
+  { _id: 'project_manager', name: 'Project Manager', slug: 'project-manager', permissions: [] },
+  { _id: 'sales_executive', name: 'Sales / CRM Executive', slug: 'sales-executive', permissions: [] },
+  { _id: 'designer', name: 'Designer / Architect', slug: 'designer', permissions: [] },
+  { _id: 'quantity_surveyor', name: 'Quantity Surveyor', slug: 'quantity-surveyor', permissions: [] },
+  { _id: 'site_engineer', name: 'Site Engineer', slug: 'site-engineer', permissions: [] },
+  { _id: 'sub_contractor', name: 'Sub Contractor', slug: 'sub-contractor', permissions: [] },
+  { _id: 'client_representative', name: 'Client Representative', slug: 'client-representative', permissions: [] },
+  { _id: 'viewer', name: 'Viewer', slug: 'viewer', permissions: [] },
+];
+
 interface UserWithProjects {
   _id: string;
   firstName: string;
@@ -65,7 +86,7 @@ interface UserWithProjects {
   systemRole: string;
   avatar?: string;
   status: string;
-  role?: { name: string; slug: string; permissions: Permission[] };
+  role?: { _id?: string; name: string; slug: string; permissions: Permission[] };
   projectAssignments: ProjectAssignment[];
   createdAt: string;
 }
@@ -255,21 +276,64 @@ interface AddUserForm {
   email: string;
   password: string;
   phone: string;
-  designation: string;
-  department: string;
-  systemRole: string;
+  roleId: string;
 }
 
 const INITIAL_FORM: AddUserForm = {
   firstName: '', lastName: '', email: '', password: '',
-  phone: '', designation: '', department: '', systemRole: 'member',
+  phone: '', roleId: '',
 };
 
-function AddUserModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+const isNonAdminRole = (r: OrgRole) => {
+  const slug = (r.slug || '').toLowerCase();
+  const name = (r.name || '').toLowerCase();
+  return (
+    slug !== 'admin' &&
+    slug !== 'org_admin' &&
+    slug !== 'administrator' &&
+    name !== 'admin' &&
+    name !== 'administrator' &&
+    name !== 'org admin'
+  );
+};
+
+function AddUserModal({
+  roles,
+  onClose,
+  onSuccess,
+}: {
+  roles: OrgRole[];
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
   const toast = useToast();
-  const [form, setForm] = useState<AddUserForm>(INITIAL_FORM);
+  const availableRoles = (roles && roles.length > 0 ? roles : DEFAULT_ORG_ROLES).filter(isNonAdminRole);
+  const [modalRoles, setModalRoles] = useState<OrgRole[]>(() => availableRoles);
+  const [form, setForm] = useState<AddUserForm>(() => ({
+    ...INITIAL_FORM,
+    roleId: availableRoles[0]?._id || availableRoles[0]?.slug || 'project_manager',
+  }));
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Always fetch the organization's live roles directly from the backend
+  useEffect(() => {
+    interiorProjectService
+      .getRoles()
+      .then((res) => {
+        const raw = res?.data ?? res ?? [];
+        const list = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : []);
+        const filtered = list.filter(isNonAdminRole);
+        if (filtered.length > 0) {
+          setModalRoles(filtered);
+          setForm((prev) => {
+            const hasMatch = filtered.some((r: OrgRole) => r._id === prev.roleId || r.slug === prev.roleId);
+            return hasMatch && prev.roleId ? prev : { ...prev, roleId: filtered[0]._id || filtered[0].slug };
+          });
+        }
+      })
+      .catch((e) => console.error('AddUserModal fetch roles error:', e));
+  }, []);
 
   const set = (field: keyof AddUserForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -282,16 +346,18 @@ function AddUserModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
     }
     setSaving(true);
     try {
+      const selectedRole = modalRoles.find((r) => r._id === form.roleId || r.slug === form.roleId);
+      const systemRole = (selectedRole?.slug === 'admin' || selectedRole?.slug === 'org_admin') ? 'org_admin' : 'member';
+
       const payload: any = {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         email: form.email.trim(),
-        systemRole: form.systemRole,
+        role: form.roleId || undefined,
+        systemRole,
       };
-      if (form.password.trim())  payload.password    = form.password.trim();
-      if (form.phone.trim())      payload.phone       = form.phone.trim();
-      if (form.designation.trim()) payload.designation = form.designation.trim();
-      if (form.department.trim())  payload.department  = form.department.trim();
+      if (form.password.trim())  payload.password = form.password.trim();
+      if (form.phone.trim())     payload.phone    = form.phone.trim();
 
       await interiorProjectService.createUser(payload);
       toast.success(`User ${form.firstName} ${form.lastName} created successfully`);
@@ -387,26 +453,15 @@ function AddUserModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
             </div>
           </div>
 
-          {/* Designation & Department */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Designation</label>
-              <input value={form.designation} onChange={set('designation')} placeholder="e.g. Site Engineer" className={fieldCls} />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Department</label>
-              <input value={form.department} onChange={set('department')} placeholder="e.g. Operations" className={fieldCls} />
-            </div>
-          </div>
-
-          {/* System Role */}
+          {/* Role (Fetched from Organization) */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">System Role</label>
-            <select value={form.systemRole} onChange={set('systemRole')} className={fieldCls}>
-              <option value="member">Member</option>
-              <option value="manager">Manager</option>
-              <option value="org_admin">Org Admin</option>
-              <option value="viewer">Viewer</option>
+            <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Role *</label>
+            <select value={form.roleId} onChange={set('roleId')} className={fieldCls} required>
+              {modalRoles.map((r) => (
+                <option key={r._id || r.slug} value={r._id || r.slug}>
+                  {r.name}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -437,35 +492,51 @@ interface EditUserForm {
   email: string;
   password?: string;
   phone?: string;
-  designation?: string;
-  department?: string;
-  systemRole: string;
+  roleId: string;
   status: string;
 }
 
 function EditUserModal({
   user,
+  roles,
   onClose,
   onSuccess,
 }: {
   user: UserWithProjects;
+  roles: OrgRole[];
   onClose: () => void;
   onSuccess: () => void;
 }) {
   const toast = useToast();
+  const availableRoles = (roles && roles.length > 0 ? roles : DEFAULT_ORG_ROLES).filter(isNonAdminRole);
+  const [modalRoles, setModalRoles] = useState<OrgRole[]>(() => availableRoles);
+  const matchedRole = user.role?._id 
+    ? availableRoles.find(r => r._id === user.role?._id) 
+    : availableRoles.find(r => r.name.toLowerCase() === user.role?.name?.toLowerCase() || r.slug === user.systemRole || r._id === user.systemRole);
+
   const [form, setForm] = useState<EditUserForm>({
     firstName: user.firstName || '',
     lastName: user.lastName || '',
     email: user.email || '',
     password: '',
     phone: user.phone || '',
-    designation: user.designation || '',
-    department: user.department || '',
-    systemRole: user.systemRole || 'member',
+    roleId: matchedRole?._id || matchedRole?.slug || availableRoles[0]?._id || 'project_manager',
     status: user.status || 'active',
   });
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    interiorProjectService
+      .getRoles()
+      .then((res) => {
+        const raw = res?.data ?? res ?? [];
+        const list = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : []);
+        const filtered = list.filter(isNonAdminRole);
+        if (filtered.length > 0) setModalRoles(filtered);
+      })
+      .catch((e) => console.error('EditUserModal fetch roles error:', e));
+  }, []);
 
   const set = (field: keyof EditUserForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -478,17 +549,19 @@ function EditUserModal({
     }
     setSaving(true);
     try {
+      const selectedRole = modalRoles.find((r) => r._id === form.roleId || r.slug === form.roleId);
+      const systemRole = (selectedRole?.slug === 'admin' || selectedRole?.slug === 'org_admin') ? 'org_admin' : (user.systemRole || 'member');
+
       const payload: any = {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         email: form.email.trim(),
-        systemRole: form.systemRole,
+        role: form.roleId || undefined,
+        systemRole,
         status: form.status,
       };
       if (form.password && form.password.trim()) payload.password = form.password.trim();
       payload.phone = form.phone ? form.phone.trim() : '';
-      payload.designation = form.designation ? form.designation.trim() : '';
-      payload.department = form.department ? form.department.trim() : '';
 
       await interiorProjectService.updateUser(user._id, payload);
       toast.success(`User ${form.firstName} ${form.lastName} updated successfully`);
@@ -520,7 +593,7 @@ function EditUserModal({
             </div>
             <div>
               <h2 className="text-sm font-bold text-[hsl(var(--foreground))]">Edit User</h2>
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Update profile details and system access</p>
+              <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Update profile details and role access</p>
             </div>
           </div>
           <button onClick={onClose} className="p-1.5 hover:bg-[hsl(var(--muted))] rounded-lg text-[hsl(var(--muted-foreground))] transition-colors cursor-pointer">
@@ -583,28 +656,16 @@ function EditUserModal({
             </div>
           </div>
 
-          {/* Designation & Department */}
+          {/* Role & Status */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Designation</label>
-              <input value={form.designation} onChange={set('designation')} placeholder="e.g. Project Manager" className={fieldCls} />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Department</label>
-              <input value={form.department} onChange={set('department')} placeholder="e.g. Operations" className={fieldCls} />
-            </div>
-          </div>
-
-          {/* System Role & Status */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">System Role</label>
-              <select value={form.systemRole} onChange={set('systemRole')} className={fieldCls}>
-                <option value="member">Member</option>
-                <option value="manager">Manager</option>
-                <option value="org_admin">Org Admin</option>
-                <option value="super_admin">Super Admin</option>
-                <option value="viewer">Viewer</option>
+              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Role *</label>
+              <select value={form.roleId} onChange={set('roleId')} className={fieldCls} required>
+                {modalRoles.map((r) => (
+                  <option key={r._id || r.slug} value={r._id || r.slug}>
+                    {r.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="space-y-1.5">
@@ -765,7 +826,7 @@ function PermissionsModal({ assignment, onClose }: { assignment: ProjectAssignme
 // ---------------------------------------------------------------------------
 // User Row (expandable)
 // ---------------------------------------------------------------------------
-function UserRow({ user, onUserUpdated }: { user: UserWithProjects; onUserUpdated: () => void }) {
+function UserRow({ user, roles, onUserUpdated }: { user: UserWithProjects; roles: OrgRole[]; onUserUpdated: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<ProjectAssignment | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -773,6 +834,7 @@ function UserRow({ user, onUserUpdated }: { user: UserWithProjects; onUserUpdate
   const initials = getInitials(user.firstName, user.lastName);
   const avatarBg = getAvatarColor(user.firstName + user.lastName);
   const sysRole = SYSTEM_ROLE_LABELS[user.systemRole] ?? { label: user.systemRole, color: 'bg-slate-100 text-slate-600' };
+  const displayRoleName = user.role?.name || sysRole.label;
 
   return (
     <>
@@ -783,7 +845,7 @@ function UserRow({ user, onUserUpdated }: { user: UserWithProjects; onUserUpdate
       )}
       {isEditOpen && (
         <AnimatePresence>
-          <EditUserModal user={user} onClose={() => setIsEditOpen(false)} onSuccess={onUserUpdated} />
+          <EditUserModal user={user} roles={roles} onClose={() => setIsEditOpen(false)} onSuccess={onUserUpdated} />
         </AnimatePresence>
       )}
       {isDeleteOpen && (
@@ -798,7 +860,9 @@ function UserRow({ user, onUserUpdated }: { user: UserWithProjects; onUserUpdate
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm font-bold text-[hsl(var(--foreground))]">{user.firstName} {user.lastName}</span>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${sysRole.color}`}>{sysRole.label}</span>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.25)]">
+                {displayRoleName}
+              </span>
               {user.status !== 'active' && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400">{user.status}</span>
               )}
@@ -933,76 +997,90 @@ function RoleCard({ roleDef }: { roleDef: typeof ROLE_DEFS[number] }) {
             {roleDef.key === 'project_manager' && (
               <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]">FULL ACCESS</span>
             )}
+            {roleDef.key === 'sales_executive' && (
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-300 dark:border-amber-800">CRM SPECIALIST</span>
+            )}
+            {roleDef.key === 'designer' && (
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-800">DESIGN LEAD</span>
+            )}
+            {roleDef.key === 'viewer' && (
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">READ-ONLY</span>
+            )}
           </div>
-          <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-0.5">{roleDef.desc}</p>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{roleDef.desc}</p>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden sm:flex flex-col items-end gap-0.5">
-            <span className="text-xs font-bold text-[hsl(var(--foreground))]">{modulesWithAccess}/{totalModules}</span>
-            <span className="text-[10px] text-[hsl(var(--muted-foreground))]">modules</span>
+          <div className="hidden sm:flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
+            <span className="px-2 py-0.5 rounded bg-[hsl(var(--muted)/0.5)] font-semibold text-[hsl(var(--foreground))]">
+              {modulesWithAccess}/{totalModules} modules
+            </span>
+            {fullAccessCount > 0 && (
+              <span className="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 font-semibold text-[10px]">
+                {fullAccessCount} full
+              </span>
+            )}
           </div>
-          {fullAccessCount > 0 && (
-            <div className="hidden sm:flex flex-col items-end gap-0.5">
-              <span className="text-xs font-bold text-[hsl(var(--foreground))]">{fullAccessCount}</span>
-              <span className="text-[10px] text-[hsl(var(--muted-foreground))]">full</span>
-            </div>
-          )}
           {expanded ? <ChevronUp className="w-4 h-4 text-[hsl(var(--muted-foreground))]" /> : <ChevronDown className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />}
         </div>
       </div>
 
-      {/* Expanded permission matrix */}
+      {/* Expanded permissions table */}
       <AnimatePresence>
         {expanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="bg-[hsl(var(--card))] border-t border-[hsl(var(--border))]">
-              {/* Action legend */}
-              <div className="flex flex-wrap gap-1.5 px-5 pt-4 pb-2">
-                {ALL_ACTIONS.map((a) => (
-                  <span key={a} className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${ACTION_COLORS[a]}`}>{a}</span>
-                ))}
-              </div>
-
-              {/* Module rows */}
-              <div className="divide-y divide-[hsl(var(--border))]">
+            className="border-t border-[hsl(var(--border))] overflow-hidden">
+            <div className="p-4 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {ALL_MODULES.map((mod) => {
-                  const actions: string[] = matrix[mod.key] ?? [];
-                  const hasAccess = actions.length > 0;
+                  const perms = matrix[mod.key] ?? [];
+                  const hasAccess = perms.length > 0;
+                  const isFull = perms.join(',') === full.join(',');
+                  const isReadOnly = perms.join(',') === ro.join(',');
                   return (
-                    <div key={mod.key} className="flex items-center gap-3 px-5 py-2.5">
-                      {/* Module name */}
-                      <div className="w-36 shrink-0 flex items-center gap-1.5">
-                        {hasAccess
-                          ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                          : <MinusCircle className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))] opacity-40 shrink-0" />
-                        }
-                        <span className={`text-xs font-semibold ${hasAccess ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))] opacity-50'}`}>
+                    <div key={mod.key}
+                      className={`flex items-center justify-between p-2.5 rounded-lg border text-xs transition-colors ${
+                        hasAccess
+                          ? 'border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.25)]'
+                          : 'border-dashed border-[hsl(var(--border)/0.5)] opacity-40 bg-transparent'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        {hasAccess ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                        ) : (
+                          <MinusCircle className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))] shrink-0" />
+                        )}
+                        <span className={`font-medium truncate ${hasAccess ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]'}`}>
                           {mod.label}
                         </span>
                       </div>
-
-                      {/* Action pills */}
-                      <div className="flex flex-wrap gap-1">
-                        {hasAccess ? (
-                          actions.map((action) => (
-                            <span key={action} className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${ACTION_COLORS[action] ?? 'bg-slate-100 text-slate-600'}`}>
-                              {action}
-                            </span>
-                          ))
+                      <div className="flex items-center gap-1 shrink-0 ml-2">
+                        {isFull ? (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
+                            FULL
+                          </span>
+                        ) : isReadOnly ? (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                            READ
+                          </span>
+                        ) : hasAccess ? (
+                          <div className="flex gap-0.5 flex-wrap justify-end">
+                            {perms.map((act) => (
+                              <span key={act} className={`px-1 py-0.2 rounded text-[9px] font-semibold ${ACTION_COLORS[act] ?? 'bg-slate-100 text-slate-600'}`}>
+                                {act[0].toUpperCase()}
+                              </span>
+                            ))}
+                          </div>
                         ) : (
-                          <span className="text-[10px] text-[hsl(var(--muted-foreground))] opacity-40 italic">no access</span>
+                          <span className="text-[10px] text-[hsl(var(--muted-foreground))]">—</span>
                         )}
                       </div>
                     </div>
                   );
                 })}
               </div>
-              <div className="h-3" />
             </div>
           </motion.div>
         )}
@@ -1018,10 +1096,24 @@ export default function InteriorUsersRolesView() {
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<'users' | 'roles'>('users');
   const [users, setUsers] = useState<UserWithProjects[]>([]);
+  const [roles, setRoles] = useState<OrgRole[]>(DEFAULT_ORG_ROLES);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('All');
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+
+  const loadRoles = useCallback(async () => {
+    try {
+      const res = await interiorProjectService.getRoles();
+      const raw = res?.data ?? res ?? [];
+      const list = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : []);
+      if (list.length > 0) {
+        setRoles(list);
+      }
+    } catch (err: any) {
+      console.error('Failed to load organization roles:', err);
+    }
+  }, []);
 
   const loadUsers = useCallback(async () => {
     try {
@@ -1035,7 +1127,10 @@ export default function InteriorUsersRolesView() {
     }
   }, []);
 
-  useEffect(() => { loadUsers(); }, [loadUsers]);
+  useEffect(() => {
+    loadUsers();
+    loadRoles();
+  }, [loadUsers, loadRoles]);
 
   const filteredUsers = users.filter((u) => {
     const q = searchQuery.toLowerCase();
@@ -1045,7 +1140,7 @@ export default function InteriorUsersRolesView() {
       (u.designation ?? '').toLowerCase().includes(q) ||
       (u.department ?? '').toLowerCase().includes(q) ||
       u.projectAssignments.some((a) => a.projectName.toLowerCase().includes(q));
-    const matchesRole = roleFilter === 'All' || u.systemRole === roleFilter;
+    const matchesRole = roleFilter === 'All' || u.role?.name === roleFilter || u.systemRole === roleFilter;
     return matchesSearch && matchesRole;
   });
 
@@ -1067,7 +1162,7 @@ export default function InteriorUsersRolesView() {
         </div>
         {activeTab === 'users' && (
           <div className="flex items-center gap-2 shrink-0">
-            <Button variant="outline" size="sm" onClick={loadUsers} className="text-xs font-semibold" isLoading={isLoading}>
+            <Button variant="outline" size="sm" onClick={() => { loadUsers(); loadRoles(); }} className="text-xs font-semibold" isLoading={isLoading}>
               Refresh
             </Button>
             <button
@@ -1084,7 +1179,7 @@ export default function InteriorUsersRolesView() {
       {/* Add User Modal */}
       <AnimatePresence>
         {isAddUserOpen && (
-          <AddUserModal onClose={() => setIsAddUserOpen(false)} onSuccess={loadUsers} />
+          <AddUserModal roles={roles} onClose={() => setIsAddUserOpen(false)} onSuccess={loadUsers} />
         )}
       </AnimatePresence>
 
@@ -1141,12 +1236,10 @@ export default function InteriorUsersRolesView() {
               </div>
               <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}
                 className="px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] w-full sm:w-auto">
-                <option value="All">All System Roles</option>
-                <option value="super_admin">Super Admin</option>
-                <option value="org_admin">Org Admin</option>
-                <option value="manager">Manager</option>
-                <option value="member">Member</option>
-                <option value="viewer">Viewer</option>
+                <option value="All">All Roles</option>
+                {roles.map((r) => (
+                  <option key={r._id} value={r.name}>{r.name}</option>
+                ))}
               </select>
               {(searchQuery || roleFilter !== 'All') && (
                 <button onClick={() => { setSearchQuery(''); setRoleFilter('All'); }}
@@ -1177,7 +1270,7 @@ export default function InteriorUsersRolesView() {
                   </div>
                 ) : (
                   filteredUsers.map((user) => (
-                    <UserRow key={user._id} user={user} onUserUpdated={loadUsers} />
+                    <UserRow key={user._id} user={user} roles={roles} onUserUpdated={loadUsers} />
                   ))
                 )}
               </div>

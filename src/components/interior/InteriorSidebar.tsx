@@ -6,9 +6,10 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, FolderKanban, Users, Bell, Settings, ChevronLeft, ChevronRight, Building2, UsersRound } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Users, Bell, Settings, ChevronLeft, ChevronRight, Building2, UsersRound, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 interface NavItem {
   label: string;
@@ -20,10 +21,10 @@ interface NavItem {
 
 const navigation: NavItem[] = [
   { label: 'Dashboard', href: '/interior-new', icon: LayoutDashboard, wired: true },
-    { label: 'CRM', href: '/interior-new/crm', icon: Users, wired: true },
-
+  { label: 'CRM', href: '/interior-new/crm', icon: Users, wired: true },
   { label: 'Projects', href: '/interior-new/projects', icon: FolderKanban, wired: true },
   { label: 'Users & Roles', href: '/interior-new/users-roles', icon: UsersRound, wired: true },
+  { label: 'Audit Management', href: '/interior-new/audit', icon: ShieldCheck, wired: true },
 ];
 
 const bottomNavigation: NavItem[] = [];
@@ -39,6 +40,14 @@ interface InteriorSidebarProps {
 export function InteriorSidebar({ organizationName, collapsed, onToggleCollapse, mobileOpen, onCloseMobile }: InteriorSidebarProps) {
   const pathname = usePathname();
   const toast = useToast();
+  const { isOrgAdmin } = usePermissions();
+
+  const filteredNavigation = navigation.filter((item) => {
+    if (item.href === '/interior-new/audit' || item.label === 'Audit Management') {
+      return isOrgAdmin;
+    }
+    return true;
+  });
 
   const isActive = (href: string) => pathname === href || (href !== '/interior-new' && pathname.startsWith(href + '/'));
 
@@ -108,7 +117,7 @@ export function InteriorSidebar({ organizationName, collapsed, onToggleCollapse,
         </div>
 
         <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-          {navigation.map(renderNavItem)}
+          {filteredNavigation.map(renderNavItem)}
         </nav>
 
         <div className="border-t border-[hsl(var(--border))] p-2 space-y-0.5">

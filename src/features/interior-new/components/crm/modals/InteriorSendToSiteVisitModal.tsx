@@ -60,11 +60,12 @@ export function InteriorSendToSiteVisitModal({ isOpen, onClose, customerId, onSu
 
     try {
       const visitDate = scheduledDate ? new Date(scheduledDate) : new Date();
-
+      const trimmedRemarks = remarks.trim();
       const updatePayload: any = {
         status: 'Under Site Visit',
         siteVisitScheduledDate: visitDate.toISOString(),
         assignedSalesExecutive: assignedSalesExecutive.trim(),
+        remarks: trimmedRemarks || undefined,
       };
 
       await interiorCrmService.updateCustomer(customerId, updatePayload);
@@ -74,7 +75,7 @@ export function InteriorSendToSiteVisitModal({ isOpen, onClose, customerId, onSu
         type: 'Site Visit',
         status: 'Pending',
         scheduledDate: visitDate.toISOString(),
-        remarks: remarks.trim() || 'Lead passed to Site Visit and assigned to site team.',
+        remarks: trimmedRemarks || 'Lead passed to Site Visit and assigned to site team.',
       });
 
       // Automatically complete any pending follow-up activities for this customer

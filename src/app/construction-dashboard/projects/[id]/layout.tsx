@@ -5,6 +5,7 @@ import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 import { CreateProjectModal } from '@/components/modals/CreateProjectModal';
 import { ProjectProvider, useProjectContext } from '@/features/projects/contexts/ProjectContext';
 import { useAuth } from '@/providers/AuthContext';
+import { useIsAdmin } from '@/hooks/usePermission';
 import { cn } from '@/lib/utils';
 import { hasProjectPermission, isProjectLocked } from '@/lib/permissions';
 import {
@@ -58,11 +59,12 @@ const TAB_GROUPS: TabGroup[] = [
   { id: 'interior',  label: 'Interior',  icon: Sofa,            tabIds: ['rooms', 'ffe'] },
 ];
 
-// ── Builds visible tabs respecting project type & surveyor ──
-function getVisibleTabs(projectType?: string, siteSurveyor?: any) {
+// ── Builds visible tabs respecting project type & surveyor & admin role ──
+function getVisibleTabs(projectType?: string, siteSurveyor?: any, isAdmin: boolean = false) {
   return ALL_TABS
     .filter(t => t.id !== 'site-survey' || !!siteSurveyor)
-    .filter(t => t.id !== 'rooms' && t.id !== 'ffe' || projectType === 'Interior');
+    .filter(t => (t.id !== 'rooms' && t.id !== 'ffe') || projectType === 'Interior')
+    .filter(t => t.id !== 'audit' || isAdmin);
 }
 
 // ── Status badge colors ────────────────────────────────────────
@@ -91,9 +93,10 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuth();
+  const isAdmin = useIsAdmin();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const visibleTabs = getVisibleTabs(project?.projectType, project?.siteSurveyor);
+  const visibleTabs = getVisibleTabs(project?.projectType, project?.siteSurveyor, isAdmin);
   const activeTab = (ALL_TABS as readonly { id: string }[]).find(t => pathname.includes(`/${t.id}`))?.id || 'dashboard';
 
   const isSurveyPending = (project?.status === 'Site Survey' || (project?.status === 'Initialized' && project?.needSiteSurvey)) && (project as any)?.surveyStatus !== 'Approved';

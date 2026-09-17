@@ -17,6 +17,13 @@ interface ScheduleFollowUpModalProps {
   customerName?: string;
   onSuccess: () => void;
   users?: any[];
+  initialData?: {
+    _id?: string;
+    type?: string;
+    scheduledDate?: string | Date;
+    remarks?: string;
+    assignedSalesExecutive?: string;
+  } | null;
 }
 
 function userLabel(u: any) {
@@ -24,9 +31,29 @@ function userLabel(u: any) {
   return `${name} (${u.role?.name || u.role || 'User'})`;
 }
 
+function formatForDateTimeLocal(dateVal?: string | Date | null): string {
+  if (!dateVal) return '';
+  const d = new Date(dateVal);
+  if (isNaN(d.getTime())) return '';
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 import { validateRequiredDate, validateNonEmpty, ValidationErrors } from '@/lib/crmValidation';
 
-export function InteriorScheduleFollowUpModal({ isOpen, onClose, customerId, customerName, onSuccess, users = [] }: ScheduleFollowUpModalProps) {
+export function InteriorScheduleFollowUpModal({
+  isOpen,
+  onClose,
+  customerId,
+  customerName,
+  onSuccess,
+  users = [],
+  initialData = null,
+}: ScheduleFollowUpModalProps) {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -39,13 +66,33 @@ export function InteriorScheduleFollowUpModal({ isOpen, onClose, customerId, cus
   });
 
   React.useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
+      if (initialData) {
+        setForm({
+          type: initialData.type || 'Phone Call',
+          status: 'Pending',
+          scheduledDate: formatForDateTimeLocal(initialData.scheduledDate),
+          remarks: initialData.remarks || '',
+          assignedSalesExecutive: initialData.assignedSalesExecutive || '',
+        });
+      } else {
+        setForm({
+          type: 'Phone Call',
+          status: 'Pending',
+          scheduledDate: '',
+          remarks: '',
+          assignedSalesExecutive: '',
+        });
+      }
       setErrors({});
     }
-  }, [isOpen]);
-
+  }, [isOpen, initialData]);
 
   if (!isOpen) return null;
+
+  const isDateInPast = Boolean(
+    form.scheduledDate && new Date(form.scheduledDate).getTime() < Date.now()
+  );
 
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {
@@ -66,11 +113,21 @@ export function InteriorScheduleFollowUpModal({ isOpen, onClose, customerId, cus
 
     setIsSubmitting(true);
     try {
-      await interiorCrmService.createActivity({
-        ...form,
-        remarks: form.remarks.trim(),
-        customer: customerId
-      });
+      if (initialData?._id) {
+        await interiorCrmService.updateActivity(initialData._id, {
+          type: form.type,
+          scheduledDate: form.scheduledDate,
+          remarks: form.remarks.trim(),
+          status: 'Pending',
+          user: form.assignedSalesExecutive || undefined,
+        });
+      } else {
+        await interiorCrmService.createActivity({
+          ...form,
+          remarks: form.remarks.trim(),
+          customer: customerId
+        });
+      }
 
       if (form.assignedSalesExecutive) {
         await interiorCrmService.updateCustomer(customerId, {
@@ -81,10 +138,9 @@ export function InteriorScheduleFollowUpModal({ isOpen, onClose, customerId, cus
         await interiorCrmService.updateCustomer(customerId, { status: 'Contacted' });
       }
 
-      toast.success('Follow-up scheduled successfully!');
+      toast.success(initialData?._id ? 'Follow-up rescheduled successfully!' : 'Follow-up scheduled successfully!');
       onSuccess();
       onClose();
-      setForm({ type: 'Phone Call', status: 'Pending', scheduledDate: '', remarks: '', assignedSalesExecutive: '' });
       setErrors({});
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to schedule follow-up');
@@ -96,14 +152,18 @@ export function InteriorScheduleFollowUpModal({ isOpen, onClose, customerId, cus
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-lg bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6">
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-lg bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 shadow-2xl">
 
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))]">Schedule Follow-up</h2>
-            <p className="text-sm text-[hsl(var(--muted-foreground))] truncate max-w-full" title={customerName ? `with ${customerName}` : ''}>Plan a future touchpoint {customerName ? `with ${customerName}` : ''}</p>
+            <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))]">
+              {initialData?._id ? 'Reschedule Follow-up' : 'Schedule Follow-up'}
+            </h2>
+            <p className="text-sm text-[hsl(var(--muted-foreground))] truncate max-w-full" title={customerName ? `with ${customerName}` : ''}>
+              {initialData?._id ? 'Update scheduled touchpoint' : 'Plan a future touchpoint'} {customerName ? `with ${customerName}` : ''}
+            </p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-[hsl(var(--muted))] rounded-xl"><X size={20} className="text-[hsl(var(--muted-foreground))]" /></button>
+          <button onClick={onClose} className="p-2 hover:bg-[hsl(var(--muted))] rounded-xl cursor-pointer"><X size={20} className="text-[hsl(var(--muted-foreground))]" /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -119,7 +179,15 @@ export function InteriorScheduleFollowUpModal({ isOpen, onClose, customerId, cus
               </select>
             </div>
             <div>
-              <label className="text-xs font-bold text-[hsl(var(--foreground))]">Date & Time *</label>
+              <div className="flex items-center justify-between gap-1 flex-wrap">
+                <label className="text-xs font-bold text-[hsl(var(--foreground))]">Date & Time *</label>
+                {isDateInPast && (
+                  <span className="text-[9px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 border border-rose-500/25 px-1.5 py-0.2 rounded flex items-center gap-1">
+                    <span className="w-1 h-1 rounded-full bg-rose-500 animate-pulse"></span>
+                    Time is over
+                  </span>
+                )}
+              </div>
               <input
                 type="datetime-local"
                 value={form.scheduledDate}
@@ -128,9 +196,18 @@ export function InteriorScheduleFollowUpModal({ isOpen, onClose, customerId, cus
                   if (errors.scheduledDate) setErrors({...errors, scheduledDate: null});
                 }}
                 className={`w-full mt-1.5 px-4 py-2.5 rounded-xl border bg-[hsl(var(--background))] text-sm outline-none transition-all ${
-                  errors.scheduledDate ? 'border-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-[hsl(var(--border))] focus:border-[hsl(var(--ring))]'
+                  errors.scheduledDate 
+                    ? 'border-red-500 focus:ring-2 focus:ring-red-500/20' 
+                    : isDateInPast 
+                    ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20' 
+                    : 'border-[hsl(var(--border))] focus:border-[hsl(var(--ring))]'
                 }`}
               />
+              {isDateInPast && !errors.scheduledDate && (
+                <p className="text-[10px] text-rose-600 dark:text-rose-400 font-medium mt-1">
+                  * Scheduled time has passed. Pick a new date & time to reschedule.
+                </p>
+              )}
               {errors.scheduledDate && <p className="text-xs text-red-500 mt-1">{errors.scheduledDate}</p>}
             </div>
           </div>
@@ -173,9 +250,11 @@ export function InteriorScheduleFollowUpModal({ isOpen, onClose, customerId, cus
           </div>
 
           <div className="pt-4 flex justify-end gap-3">
-            <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-bold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">Cancel</button>
-            <button type="submit" disabled={isSubmitting} className="px-5 py-2.5 rounded-xl text-sm font-bold text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] disabled:opacity-50">
-              {isSubmitting ? 'Scheduling...' : 'Schedule Follow-up'}
+            <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-bold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] cursor-pointer">Cancel</button>
+            <button type="submit" disabled={isSubmitting} className="px-5 py-2.5 rounded-xl text-sm font-bold text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] disabled:opacity-50 cursor-pointer">
+              {isSubmitting 
+                ? (initialData?._id ? 'Updating...' : 'Scheduling...') 
+                : (initialData?._id ? 'Save & Reschedule' : 'Schedule Follow-up')}
             </button>
           </div>
         </form>

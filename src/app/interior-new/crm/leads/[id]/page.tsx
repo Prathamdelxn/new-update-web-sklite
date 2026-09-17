@@ -7,7 +7,7 @@ import { useInteriorAuthGuard } from '@/lib/useInteriorAuthGuard';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
-import { ArrowLeft, User, Phone, Mail, Building, DollarSign, Activity, Plus, MessageSquare, X, CheckCircle2, Calendar, MapPin, Ruler, PenTool, UploadCloud, File as FileIcon, Image as ImageIcon, Calculator, FileText, ChevronDown, Pencil, Trash2, DoorOpen, Maximize2, Columns, Zap, Droplets, Wind, Armchair, AlertTriangle, Layers, Palette, Sliders, Sun, Sparkles, Box, Archive, ExternalLink, Eye, Lock, Copy, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, User, Phone, Mail, Building, DollarSign, Activity, Plus, MessageSquare, X, CheckCircle2, Calendar, MapPin, Ruler, PenTool, UploadCloud, File as FileIcon, Image as ImageIcon, Calculator, FileText, ChevronDown, Pencil, Trash2, DoorOpen, Maximize2, Columns, Zap, Droplets, Wind, Armchair, AlertTriangle, Layers, Palette, Sliders, Sun, Sparkles, Box, Archive, ExternalLink, Eye, Lock, Copy, Check, CalendarCheck, Clock, PhoneCall } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { InteriorLogSiteVisitModal } from '@/features/interior-new/components/crm/modals/InteriorLogSiteVisitModal';
@@ -27,6 +27,7 @@ import { InteriorDeleteLeadModal } from '@/features/interior-new/components/crm/
 import { QuotationPreview } from '@/components/crm/QuotationPreview';
 import { BoqPreview } from '@/components/crm/BoqPreview';
 import { InteriorBoqBuilderModal } from '@/features/interior-new/components/crm/modals/InteriorBoqBuilderModal';
+import { InteriorLeadFollowUpsTab } from '@/features/interior-new/components/crm/InteriorLeadFollowUpsTab';
 
 export default function Lead360View() {
   const checked = useInteriorAuthGuard();
@@ -76,12 +77,6 @@ export default function Lead360View() {
 
   const [isFollowUpModalOpen, setIsFollowUpModalOpen] = useState(false);
   const [designSubTab, setDesignSubTab] = useState<'2d' | '3d'>('2d');
-  const [followUpForm, setFollowUpForm] = useState({
-    type: 'Phone Call',
-    status: 'Pending',
-    scheduledDate: '',
-    remarks: ''
-  });
 
   const fetchData = async () => {
     try {
@@ -133,30 +128,6 @@ export default function Lead360View() {
     }
   };
 
-  const handleFollowUpSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!followUpForm.scheduledDate) return toast.error('Follow-up date & time is required');
-    const trimmedRemarks = followUpForm.remarks.trim();
-    if (!trimmedRemarks) return toast.error('Follow-up goal / notes are required');
-
-    setIsSubmitting(true);
-    try {
-      await interiorCrmService.createActivity({
-        ...followUpForm,
-        remarks: trimmedRemarks,
-        customer: params.id
-      });
-      toast.success('Follow-up scheduled successfully!');
-      setIsFollowUpModalOpen(false);
-      setFollowUpForm({ type: 'Phone Call', status: 'Pending', scheduledDate: '', remarks: '' });
-      fetchData(); // refresh timeline
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || error.message || 'Failed to schedule follow-up');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleStatusChange = async (newStatus: string) => {
     try {
       await interiorCrmService.updateCustomer(params.id as string, { status: newStatus });
@@ -167,7 +138,63 @@ export default function Lead360View() {
     }
   };
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'site' | 'requirements' | 'designs' | 'boq' | 'quotations'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'followups' | 'site' | 'requirements' | 'designs' | 'boq' | 'quotations'>('overview');
+
+  const siteVisitInfo = React.useMemo(() => {
+    const siteVisitActivity = activities.find(
+      (a) => a.type === 'Site Visit' && (a.status === 'Pending' || a.remarks)
+    ) || activities.find((a) => a.type === 'Site Visit');
+
+    const note =
+      siteVisitActivity?.remarks ||
+      lead?.remarks ||
+      lead?.siteMeasurements?.notes ||
+      '';
+
+    const scheduledDate =
+      lead?.siteVisitScheduledDate ||
+      siteVisitActivity?.scheduledDate ||
+      siteVisitActivity?.createdAt;
+
+    const assignedExecutive = users.find((u) => {
+      const uId = u._id || u.id || u.clerkUserId;
+      const leadAssigned = typeof lead?.assignedSalesExecutive === 'object' && lead?.assignedSalesExecutive !== null
+        ? lead.assignedSalesExecutive._id || lead.assignedSalesExecutive.id
+        : lead?.assignedSalesExecutive;
+      const actUser = typeof siteVisitActivity?.user === 'object' && siteVisitActivity?.user !== null
+        ? siteVisitActivity.user._id || siteVisitActivity.user.id
+        : siteVisitActivity?.user;
+      return uId === leadAssigned || uId === actUser;
+    }) || (typeof lead?.assignedSalesExecutive === 'object' ? lead.assignedSalesExecutive : null);
+
+    const assignedName = assignedExecutive?.fullName ||
+      `${assignedExecutive?.firstName || ''} ${assignedExecutive?.lastName || ''}`.trim() ||
+      assignedExecutive?.name ||
+      (typeof lead?.assignedSalesExecutive === 'string' && lead?.assignedSalesExecutive ? 'Assigned Staff' : 'Assigned Site Member');
+
+    const schedulerUser = siteVisitActivity?.user
+      ? users.find((u) => (u._id || u.id || u.clerkUserId) === (typeof siteVisitActivity.user === 'object' ? siteVisitActivity.user._id || siteVisitActivity.user.id : siteVisitActivity.user))
+      : null;
+    const schedulerName = schedulerUser?.fullName || schedulerUser?.name || 'CRM Team';
+
+    return {
+      activity: siteVisitActivity,
+      note,
+      scheduledDate,
+      assignedName,
+      schedulerName,
+    };
+  }, [activities, lead, users]);
+
+  const hasFollowUp = React.useMemo(() => {
+    return activities.some(
+      (a) =>
+        a.type !== 'Status Change' &&
+        a.type !== 'System Update' &&
+        a.type !== 'Site Visit' &&
+        (Boolean(a.remarks) || a.status === 'Completed' || a.status === 'Pending')
+    );
+  }, [activities]);
 
   if (!checked) return null;
   if (isLoading) return <InteriorShell><div className="p-8 flex items-center justify-center text-slate-500 min-h-[60vh] font-medium animate-pulse">Loading Lead Profile...</div></InteriorShell>;
@@ -215,6 +242,8 @@ export default function Lead360View() {
     switch (tabId) {
       case 'overview':
         return { isLocked: false, requiredStage: 'New Lead', stageTitle: 'Overview' };
+      case 'followups':
+        return { isLocked: false, requiredStage: '', stageTitle: 'Follow-ups' };
       case 'site': {
         const isUnlocked = currentStage >= 1 || !!lead?.siteMeasurements || (lead?.sitePhotos && lead.sitePhotos.length > 0);
         return { isLocked: !isUnlocked, requiredStage: 'Under Site Visit', stageTitle: 'Site Visit' };
@@ -242,6 +271,7 @@ export default function Lead360View() {
 
   const TABS = [
     { id: 'overview', label: 'Overview' },
+    { id: 'followups', label: 'Follow-ups' },
     { id: 'site', label: 'Site Visits' },
     { id: 'requirements', label: 'Requirements' },
     { id: 'designs', label: '2D/3D Drawing' },
@@ -378,17 +408,7 @@ export default function Lead360View() {
               )
             ) : (
               <>
-                {['New Lead', 'Contacted'].includes(lead.status) &&
-                  !lead.siteMeasurements &&
-                  (!lead.quotations || lead.quotations.length === 0) && (
-                    <button
-                      onClick={() => setIsSendToSiteVisitOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
-                      title="Send to Site Visit"
-                    >
-                      <MapPin size={13} /> Send to Site Visit
-                    </button>
-                  )}
+
 
                 {['Under Site Visit', 'Measurement Done'].includes(lead.status) && (
                   (lead.siteMeasurements || (lead.sitePhotos && lead.sitePhotos.length > 0)) ? (
@@ -491,12 +511,13 @@ export default function Lead360View() {
                 )}
 
                 {['New Lead', 'Contacted'].includes(lead.status) &&
+                  !hasFollowUp &&
                   !lead.siteMeasurements &&
                   (!lead.quotations || lead.quotations.length === 0) && (
                     <button
                       onClick={() => setIsFollowUpModalOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
-                      title="Schedule Follow-up"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                      title="Schedule Initial Follow-up"
                     >
                       <Calendar size={13} /> Schedule Follow-up
                     </button>
@@ -554,12 +575,14 @@ export default function Lead360View() {
         <div className="flex items-center gap-4 sm:gap-8 border-b border-[hsl(var(--border))] overflow-x-auto scrollbar-none touch-pan-x px-2">
           {TABS.map((tab) => {
             const { isLocked } = getTabLockState(tab.id);
+            const pendingFollowUpsCount = tab.id === 'followups' ? activities.filter(a => a.status === 'Pending').length : 0;
+            const hasOverdueFollowUp = tab.id === 'followups' && activities.some(a => a.status === 'Pending' && a.scheduledDate && new Date(a.scheduledDate).getTime() < Date.now());
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
                 className={cn(
-"relative pb-4 text-sm font-bold transition-colors whitespace-nowrap outline-none flex items-center gap-1.5",
+                  "relative pb-4 text-sm font-bold transition-colors whitespace-nowrap outline-none flex items-center gap-1.5 cursor-pointer",
                   activeTab === tab.id
                     ? "text-[hsl(var(--primary))]"
                     : isLocked
@@ -568,6 +591,17 @@ export default function Lead360View() {
                 )}
               >
                 {tab.label}
+                {pendingFollowUpsCount > 0 && (
+                  <span className={cn(
+                    "px-1.5 py-0.5 rounded-full text-[10px] font-black leading-none flex items-center gap-1",
+                    hasOverdueFollowUp
+                      ? "bg-rose-500 text-white animate-pulse"
+                      : activeTab === tab.id ? "bg-amber-500 text-white" : "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                  )}>
+                    {hasOverdueFollowUp && <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />}
+                    {pendingFollowUpsCount} {hasOverdueFollowUp ? 'Overdue' : ''}
+                  </span>
+                )}
                 {isLocked && (
                   <Lock size={12} className="text-amber-500/80 shrink-0" />
                 )}
@@ -706,6 +740,8 @@ export default function Lead360View() {
                     </div>
                   </div>
 
+
+
                   {/* Client & Scope Details Card */}
                   <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 sm:p-5 shadow-sm space-y-3.5">
                     <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
@@ -783,15 +819,6 @@ export default function Lead360View() {
                         >
                           <Plus size={13} /> Log Note
                         </button>
-                        {!['Under Quotation', 'Quotation Pending', 'Quotation Sent', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) &&
-                          (!lead.quotations || lead.quotations.length === 0) && (
-                            <button
-                              onClick={() => setIsFollowUpModalOpen(true)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 border border-blue-500/20 rounded-xl text-xs font-bold transition-all active:scale-95"
-                            >
-                              <Plus size={13} /> Schedule Follow-up
-                            </button>
-                          )}
                       </div>
                     )}
                   </div>
@@ -811,24 +838,38 @@ export default function Lead360View() {
                         const userName = loggedByUser?.name || act.user?.name || 'System';
                         const initial = userName.charAt(0).toUpperCase();
 
+                        const isActOverdue = act.status === 'Pending' && act.scheduledDate && new Date(act.scheduledDate).getTime() < Date.now();
+
                         return (
                         <div key={act._id} className="relative group">
                           <div className={cn(
                             "absolute -left-[1.35rem] sm:-left-[2.6rem] top-1.5 w-3.5 h-3.5 sm:w-5 sm:h-5 rounded-full border-2 sm:border-4 border-[hsl(var(--card))] flex items-center justify-center",
-                            act.status === 'Pending' ? "bg-amber-400" : "bg-blue-500"
+                            act.status === 'Pending' ? (isActOverdue ? "bg-rose-500" : "bg-amber-400") : "bg-blue-500"
                           )}></div>
                           
-                          <div className="bg-[hsl(var(--muted)/0.5)] hover:bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-2xl p-3.5 sm:p-5 transition-colors">
+                          <div className={cn(
+                            "border rounded-2xl p-3.5 sm:p-5 transition-colors",
+                            isActOverdue 
+                              ? "bg-rose-500/5 hover:bg-rose-500/10 border-rose-500/30" 
+                              : "bg-[hsl(var(--muted)/0.5)] hover:bg-[hsl(var(--muted))] border-[hsl(var(--border))]"
+                          )}>
                             <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 mb-2 sm:mb-3">
                               <span className={cn(
                                 "text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg border",
-                                act.status === 'Pending' ? "bg-amber-500/10 text-amber-600 border-amber-500/20" : "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                                isActOverdue
+                                  ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30 font-black"
+                                  : act.status === 'Pending'
+                                  ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                                  : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                               )}>
-                                {act.type} {act.status === 'Pending' && '• Scheduled'}
+                                {act.type} {act.status === 'Pending' && (isActOverdue ? '• Overdue' : '• Scheduled')}
                               </span>
-                              <span className="text-[11px] sm:text-xs font-bold text-[hsl(var(--muted-foreground))]">
+                              <span className={cn(
+                                "text-[11px] sm:text-xs font-bold",
+                                isActOverdue ? "text-rose-600 dark:text-rose-400 font-black" : "text-[hsl(var(--muted-foreground))]"
+                              )}>
                                 {act.status === 'Pending' 
-                                  ? `Due: ${new Date(act.scheduledDate).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` 
+                                  ? `${isActOverdue ? 'Overdue: ' : 'Due: '}${new Date(act.scheduledDate).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` 
                                   : new Date(act.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
                                 }
                               </span>
@@ -852,6 +893,27 @@ export default function Lead360View() {
             </motion.div>
           )}
 
+          {activeTab === 'followups' && (
+            <motion.div
+              key="followups"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <InteriorLeadFollowUpsTab
+                lead={lead}
+                activities={activities}
+                users={users}
+                onRefresh={fetchData}
+                onScheduleFollowUp={() => setIsFollowUpModalOpen(true)}
+                onLogActivity={() => setIsActivityModalOpen(true)}
+                onSendToSiteVisit={() => setIsSendToSiteVisitOpen(true)}
+                isConverted={isConverted}
+              />
+            </motion.div>
+          )}
+
           {activeTab === 'site' && (
             <motion.div key="site" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="space-y-4 sm:space-y-6">
               {getTabLockState('site').isLocked ? (
@@ -868,46 +930,186 @@ export default function Lead360View() {
                     Complete initial follow-up and schedule a Site Visit to unlock measurement logging.
                   </p>
                 </div>
-              ) : !lead.siteMeasurements ? (
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-6 sm:p-12 text-center flex flex-col items-center">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-600 mb-3 sm:mb-4">
-                    <Ruler size={26} className="sm:w-8 sm:h-8" />
-                  </div>
-                  <h3 className="text-base sm:text-xl font-black text-[hsl(var(--foreground))]">No Site Measurements Recorded</h3>
-                  <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1.5 mb-6 max-w-md">
-                    Capture comprehensive room dimensions, ceiling heights, MEP points, structural constraints, and site photos.
-                  </p>
-                  {!isConverted && (
-                    <button onClick={() => setIsSiteVisitModalOpen(true)} className="bg-purple-600 hover:bg-purple-700 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2">
-                      <Plus size={15} /> Log Site Visit & Measurements
-                    </button>
-                  )}
-                </div>
               ) : (
                 <div className="space-y-4 sm:space-y-6">
-                  {/* Top Bar with actions */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-3.5 sm:p-5 md:px-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600 shrink-0">
-                        <Ruler size={18} />
+                  {/* 1. Primary Site Visit Briefing & Details Card */}
+                  <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-xs">
+                    {/* Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-[hsl(var(--border))]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-600 shrink-0">
+                          <MapPin size={20} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h2 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))]">
+                              Site Visit Briefing & Details
+                            </h2>
+                            <span className={cn(
+                              "text-[10px] font-bold px-2.5 py-0.5 rounded-full border shrink-0",
+                              lead.siteMeasurements
+                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                                : "bg-purple-500/10 text-purple-600 border-purple-500/20"
+                            )}>
+                              {lead.siteMeasurements ? "Survey Completed" : "Survey Pending"}
+                            </span>
+                          </div>
+                          <p className="text-[11px] sm:text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                            Assigned team member, scheduled visit time, and instructions note.
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h2 className="text-sm sm:text-base font-black text-[hsl(var(--foreground))]">Site Inspection & Technical Specs</h2>
-                        <p className="text-[11px] sm:text-xs text-[hsl(var(--muted-foreground))]">Detailed measurements, MEP points, and on-site observations.</p>
+
+                      {!isConverted && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {lead.siteMeasurements ? (
+                            <>
+                              <button
+                                onClick={() => setIsSiteVisitModalOpen(true)}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                              >
+                                <Pencil size={13} /> Edit Measurements & Photos
+                              </button>
+                              {['Under Site Visit', 'Measurement Done'].includes(lead.status) && (
+                                <button
+                                  onClick={() => setIsSendToReqOpen(true)}
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                                >
+                                  Pass to Requirements <ArrowRight size={13} />
+                                </button>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => setIsSendToSiteVisitOpen(true)}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                                title="Re-assign or change schedule"
+                              >
+                                <Pencil size={13} /> Reschedule
+                              </button>
+                              <button
+                                onClick={() => setIsSiteVisitModalOpen(true)}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm"
+                              >
+                                <Plus size={14} /> Log Measurements
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Site Visit Instructions Note Box */}
+                    <div className="bg-purple-500/[0.07] border border-purple-500/20 rounded-2xl p-4 sm:p-5 space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-purple-700 dark:text-purple-300 flex items-center gap-1.5">
+                          <MessageSquare size={13} className="text-purple-600" />
+                          Site Visit Instructions / Note Message
+                        </p>
+                        {siteVisitInfo.activity?.createdAt && (
+                          <span className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))]">
+                            Added {new Date(siteVisitInfo.activity.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                          </span>
+                        )}
+                      </div>
+                      <div className="bg-[hsl(var(--background))] border border-purple-500/20 rounded-xl p-3.5 sm:p-4 shadow-xs">
+                        <p className="text-xs sm:text-sm font-semibold text-[hsl(var(--foreground))] leading-relaxed whitespace-pre-wrap selection:bg-purple-500/20">
+                          {siteVisitInfo.note || 'Lead passed to Site Visit and assigned to site team.'}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[10px] sm:text-[11px] text-[hsl(var(--muted-foreground))] font-medium">
+                        <span>Assigned Site Member: <strong className="text-[hsl(var(--foreground))]">{siteVisitInfo.assignedName}</strong></span>
+                        {siteVisitInfo.activity?.user && (
+                          <span>Scheduled By: <strong className="text-[hsl(var(--foreground))]">{siteVisitInfo.schedulerName}</strong></span>
+                        )}
                       </div>
                     </div>
-                    {!isConverted && (
-                      <button 
-                        onClick={() => setIsSiteVisitModalOpen(true)} 
-                        className="inline-flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shrink-0"
+
+                    {/* Key Info Details Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                        <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                          <Calendar size={11} className="text-purple-500" /> Scheduled Date
+                        </p>
+                        <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-1">
+                          {siteVisitInfo.scheduledDate
+                            ? new Date(siteVisitInfo.scheduledDate).toLocaleString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                                hour: 'numeric',
+                                minute: '2-digit',
+                              })
+                            : 'Not specifically scheduled'}
+                        </p>
+                      </div>
+
+                      <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                        <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                          <User size={11} className="text-blue-500" /> Assigned Member
+                        </p>
+                        <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-1 truncate">
+                          {siteVisitInfo.assignedName}
+                        </p>
+                      </div>
+
+                      <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                        <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                          <Building size={11} className="text-emerald-500" /> Property Scope
+                        </p>
+                        <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-1 truncate">
+                          {lead.propertyType || 'Residential'}
+                        </p>
+                      </div>
+
+                      <div 
+                        className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))] group cursor-pointer hover:border-amber-500/40 transition-all"
+                        title={`Site Location: ${lead.projectLocation || lead.city || 'Not specified'}`}
+                        onClick={() => handleCopyLocation(lead.projectLocation || lead.city)}
                       >
-                        <Pencil size={13} /> Edit Measurements & Photos
-                      </button>
-                    )}
+                        <div className="flex items-center justify-between">
+                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <MapPin size={11} className="text-amber-500" /> Site Location
+                          </p>
+                          <span className="text-[10px] text-[hsl(var(--muted-foreground))] opacity-0 group-hover:opacity-100 transition-opacity">
+                            {copiedLocation ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
+                          </span>
+                        </div>
+                        <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-1 truncate">
+                          {lead.projectLocation || lead.city || 'Location Pending'}
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* 4-Card Structured Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-5">
+                  {/* 2. Measurements Content */}
+                  {!lead.siteMeasurements ? (
+                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-6 sm:p-10 text-center flex flex-col items-center space-y-4">
+                      <div className="w-14 h-14 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-600">
+                        <Ruler size={28} />
+                      </div>
+                      <div className="max-w-md space-y-1">
+                        <h3 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))]">
+                          Ready for On-Site Survey & Measurements
+                        </h3>
+                        <p className="text-[hsl(var(--muted-foreground))] text-xs leading-relaxed">
+                          Capture room dimensions, ceiling heights, door/window openings, electrical & plumbing MEP points, and high-res site photos.
+                        </p>
+                      </div>
+                      {!isConverted && (
+                        <button 
+                          onClick={() => setIsSiteVisitModalOpen(true)} 
+                          className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer shadow-sm shadow-purple-600/20"
+                        >
+                          <Plus size={16} /> Log Site Visit & Measurements
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      {/* 4-Card Structured Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-5">
                     
                     {/* Card 1: Room & Spatial Dimensions */}
                     <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4">
@@ -1137,10 +1339,12 @@ export default function Lead360View() {
                       </div>
                     )}
                   </div>
-                </div>
+                </>
               )}
-            </motion.div>
+            </div>
           )}
+        </motion.div>
+      )}
 
           {activeTab === 'requirements' && (
             <motion.div key="requirements" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="space-y-6">
@@ -2034,68 +2238,7 @@ export default function Lead360View() {
         )}
       </AnimatePresence>
 
-      {/* Schedule Follow-up Modal */}
-      <AnimatePresence>
-        {isFollowUpModalOpen && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsFollowUpModalOpen(false)} className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-lg bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 md:p-8">
-              
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))]">Schedule Follow-up</h2>
-                  <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">Plan a future touchpoint with {lead.name}</p>
-                </div>
-                <button onClick={() => setIsFollowUpModalOpen(false)} className="p-2.5 hover:bg-[hsl(var(--accent))] rounded-2xl bg-[hsl(var(--muted))] transition-colors"><X size={20} className="text-[hsl(var(--muted-foreground))]" /></button>
-              </div>
 
-              <form onSubmit={handleFollowUpSubmit} className="space-y-5">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-bold text-[hsl(var(--foreground))] uppercase tracking-wider">Follow-up Type</label>
-                    <select 
-                      value={followUpForm.type}
-                      onChange={e => setFollowUpForm({...followUpForm, type: e.target.value})}
-                      className="w-full mt-2 px-4 py-3 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] text-sm font-medium focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] outline-none transition-all"
-                    >
-                      {["Phone Call", "WhatsApp", "Meeting", "Office Visit", "Site Visit"].map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-[hsl(var(--foreground))] uppercase tracking-wider">Date & Time</label>
-                    <input 
-                      type="datetime-local"
-                      required
-                      value={followUpForm.scheduledDate}
-                      onChange={e => setFollowUpForm({...followUpForm, scheduledDate: e.target.value})}
-                      className="w-full mt-2 px-4 py-3 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] text-sm font-medium focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] outline-none transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-[hsl(var(--foreground))] uppercase tracking-wider">Goal / Notes</label>
-                  <textarea 
-                    required
-                    rows={4}
-                    value={followUpForm.remarks}
-                    onChange={e => setFollowUpForm({...followUpForm, remarks: e.target.value})}
-                    placeholder="E.g., Call to discuss revised quotation..."
-                    className="w-full mt-2 px-4 py-3 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] text-sm font-medium focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] outline-none resize-none transition-all"
-                  />
-                </div>
-
-                <div className="pt-4 flex justify-end gap-3">
-                  <button type="button" onClick={() => setIsFollowUpModalOpen(false)} className="px-6 py-3 rounded-2xl text-sm font-bold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] transition-colors">Cancel</button>
-                  <button type="submit" disabled={isSubmitting} className="px-6 py-3 rounded-2xl text-sm font-bold text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] disabled:opacity-50 transition-all active:scale-95">
-                    {isSubmitting ? 'Scheduling...' : 'Schedule Follow-up'}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       <InteriorEditLeadModal
         isOpen={isEditModalOpen}
@@ -2113,6 +2256,7 @@ export default function Lead360View() {
         users={users}
         initialMeasurements={lead?.siteMeasurements}
         initialPhotos={lead?.sitePhotos}
+        instructions={siteVisitInfo.note}
       />
       <InteriorLogRequirementsModal
         isOpen={isReqModalOpen}
@@ -2177,6 +2321,30 @@ export default function Lead360View() {
         customerName={lead?.name}
         onSuccess={fetchData}
         users={users}
+        initialData={(() => {
+          const pending = activities.find(
+            (a) => a.status === 'Pending' && a.type !== 'Site Visit' && a.type !== 'Status Change'
+          );
+          const latestFollowUp = pending || activities.find(
+            (a) => a.type !== 'Status Change' && a.type !== 'Site Visit' && a.remarks
+          );
+          
+          if (latestFollowUp) {
+            return {
+              _id: latestFollowUp._id,
+              type: latestFollowUp.type || 'Phone Call',
+              scheduledDate: latestFollowUp.scheduledDate || latestFollowUp.createdAt,
+              remarks: latestFollowUp.remarks || '',
+              assignedSalesExecutive: (typeof latestFollowUp.user === 'object' ? latestFollowUp.user?._id : latestFollowUp.user) || (typeof lead?.assignedSalesExecutive === 'object' ? lead.assignedSalesExecutive?._id : lead?.assignedSalesExecutive) || '',
+            };
+          }
+          if (lead?.assignedSalesExecutive) {
+            return {
+              assignedSalesExecutive: (typeof lead.assignedSalesExecutive === 'object' ? lead.assignedSalesExecutive._id : lead.assignedSalesExecutive) || '',
+            };
+          }
+          return null;
+        })()}
       />
       <InteriorSendToSiteVisitModal
         isOpen={isSendToSiteVisitOpen}

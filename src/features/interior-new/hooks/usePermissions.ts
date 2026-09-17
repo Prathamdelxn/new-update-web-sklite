@@ -105,7 +105,12 @@ const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, string[]>> = {
 };
 
 export function usePermissions() {
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<any>(() => {
+    if (typeof window !== 'undefined') {
+      return getInteriorUser();
+    }
+    return null;
+  });
 
   useEffect(() => {
     const user = getInteriorUser();
@@ -113,22 +118,32 @@ export function usePermissions() {
   }, []);
 
   const isOrgAdmin = useMemo(() => {
-    if (!currentUser) return true; // Default permissive in dev until user session loads
-    const sysRole = currentUser.systemRole || currentUser.role;
+    if (!currentUser) return false;
+    const sysRole = String(currentUser.systemRole || (typeof currentUser.role === 'string' ? currentUser.role : currentUser.role?.slug || currentUser.role?.name) || '').toLowerCase();
+    const roleSlug = String(currentUser.role?.slug || (typeof currentUser.role === 'string' ? currentUser.role : '') || '').toLowerCase();
+    const roleName = String(currentUser.role?.name || '').toLowerCase();
     return (
       sysRole === 'super_admin' ||
       sysRole === 'org_admin' ||
       sysRole === 'admin' ||
-      currentUser.role?.slug === 'admin'
+      sysRole === 'superadmin' ||
+      roleSlug === 'admin' ||
+      roleSlug === 'org_admin' ||
+      roleSlug === 'super_admin' ||
+      roleSlug === 'superadmin' ||
+      roleName === 'admin' ||
+      roleName === 'org admin' ||
+      roleName === 'super admin' ||
+      roleName === 'superadmin'
     );
   }, [currentUser]);
 
   const userRoleKey = useMemo(() => {
-    if (!currentUser) return 'admin';
+    if (!currentUser) return 'viewer';
     if (typeof currentUser.role === 'string') return currentUser.role.toLowerCase().replace(/[-\s]/g, '_');
     if (currentUser.role?.slug) return currentUser.role.slug.toLowerCase().replace(/[-\s]/g, '_');
     if (currentUser.systemRole) return currentUser.systemRole.toLowerCase().replace(/[-\s]/g, '_');
-    return 'admin';
+    return 'viewer';
   }, [currentUser]);
 
   const userPermissions = useMemo(() => {

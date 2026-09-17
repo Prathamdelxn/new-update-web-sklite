@@ -14,6 +14,7 @@ import {
   Phone,
   Ruler,
   XCircle,
+  MessageSquare,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { interiorCrmService } from '@/services/interiorCrm.service';
@@ -242,6 +243,16 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                       </div>
                     )}
 
+                    {(pendingSiteVisit?.remarks || lead.remarks) && (
+                      <div className="flex items-start gap-1.5 text-[11px] bg-purple-500/[0.06] border border-purple-500/20 p-2 rounded-xl text-[hsl(var(--foreground))]">
+                        <MessageSquare size={12} className="text-purple-600 shrink-0 mt-0.5" />
+                        <p className="line-clamp-2 leading-relaxed">
+                          <span className="font-bold text-purple-700 dark:text-purple-300">Note: </span>
+                          {pendingSiteVisit?.remarks || lead.remarks}
+                        </p>
+                      </div>
+                    )}
+
                     {/* Actions Ribbon */}
                     <div className="flex items-center justify-between gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
                       <button
@@ -323,6 +334,12 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                                   {lead.mobileNumber}
                                 </span>
                               </div>
+                              {(pendingSiteVisit?.remarks || lead.remarks) && (
+                                <div className="flex items-center gap-1.5 mt-1.5 text-[10px] text-purple-700 dark:text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20 max-w-[260px] truncate" title={`Site Visit Note: ${pendingSiteVisit?.remarks || lead.remarks}`}>
+                                  <MessageSquare size={10} className="shrink-0 text-purple-600" />
+                                  <span className="truncate font-medium">{pendingSiteVisit?.remarks || lead.remarks}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
