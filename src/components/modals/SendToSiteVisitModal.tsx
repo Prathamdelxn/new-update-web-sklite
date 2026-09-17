@@ -52,12 +52,13 @@ export function SendToSiteVisitModal({ isOpen, onClose, customerId, onSuccess, u
 
     try {
       const visitDate = scheduledDate ? new Date(scheduledDate) : new Date();
-
+      const trimmedRemarks = remarks.trim();
       // 1. Update Customer Status & Assignment
       const updatePayload: any = {
         status: 'Meeting Scheduled', // This puts them in the Site Visits tab
         siteVisitScheduledDate: visitDate.toISOString(),
         assignedSalesExecutive: assignedSalesExecutive.trim(),
+        remarks: trimmedRemarks || undefined,
       };
 
       await api.patch(`/crm/customers/${customerId}`, updatePayload);
@@ -68,7 +69,7 @@ export function SendToSiteVisitModal({ isOpen, onClose, customerId, onSuccess, u
         type: 'Site Visit',
         status: 'Pending',
         scheduledDate: visitDate.toISOString(),
-        remarks: remarks.trim() || 'Site visit scheduled.',
+        remarks: trimmedRemarks || 'Site visit scheduled.',
       });
 
       toast.success('Successfully sent to Site Visits!');

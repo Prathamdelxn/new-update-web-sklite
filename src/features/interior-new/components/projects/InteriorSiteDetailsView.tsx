@@ -139,6 +139,7 @@ export default function InteriorSiteDetailsView() {
               onSuccess={loadSiteDetails}
               initialMeasurements={customerData.siteMeasurements}
               initialPhotos={customerData.sitePhotos}
+              instructions={customerData.remarks || customerData.siteMeasurements?.notes}
             />
             <InteriorLogRequirementsModal
               isOpen={isReqModalOpen}
@@ -323,6 +324,27 @@ export default function InteriorSiteDetailsView() {
                 <Pencil size={12} /> Edit Measurements
               </button>
             </div>
+
+            {(customerData.remarks || customerData.siteMeasurements?.notes || customerData.siteVisitScheduledDate) && (
+              <div className="bg-purple-500/[0.06] border border-purple-500/20 rounded-2xl p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-purple-700 dark:text-purple-300 flex items-center gap-1.5">
+                    <FileText size={13} className="text-purple-600" />
+                    Site Visit Briefing & Notes
+                  </p>
+                  {customerData.siteVisitScheduledDate && (
+                    <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20">
+                      Scheduled: {new Date(customerData.siteVisitScheduledDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                  )}
+                </div>
+                {(customerData.remarks || customerData.siteMeasurements?.notes) && (
+                  <p className="text-xs font-semibold text-[hsl(var(--foreground))] leading-relaxed bg-[hsl(var(--background))] border border-purple-500/20 rounded-xl p-3">
+                    {customerData.remarks || customerData.siteMeasurements?.notes}
+                  </p>
+                )}
+              </div>
+            )}
 
             {hasMeasurements ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

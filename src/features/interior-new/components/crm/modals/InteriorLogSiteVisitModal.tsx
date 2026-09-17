@@ -31,6 +31,7 @@ interface Props {
   users?: any[];
   initialMeasurements?: any;
   initialPhotos?: string[];
+  instructions?: string;
 }
 
 export const InteriorLogSiteVisitModal = ({
@@ -39,7 +40,8 @@ export const InteriorLogSiteVisitModal = ({
   customerId,
   onSuccess,
   initialMeasurements,
-  initialPhotos = []
+  initialPhotos = [],
+  instructions
 }: Props) => {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -296,6 +298,23 @@ export const InteriorLogSiteVisitModal = ({
 
         {/* Modal Form */}
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex flex-col gap-6 custom-scrollbar">
+          {/* Site Visit Instructions / Notes from scheduling */}
+          {instructions && instructions.trim() && (
+            <div className="bg-purple-500/10 border border-purple-500/20 rounded-2xl p-4 flex items-start gap-3">
+              <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-600 flex items-center justify-center shrink-0 mt-0.5">
+                <FileText size={16} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300">
+                  Site Visit Instructions / Briefing Note
+                </p>
+                <p className="text-xs text-[hsl(var(--foreground))] mt-1 font-medium whitespace-pre-wrap leading-relaxed">
+                  {instructions}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Section 1: Room & Spatial Dimensions */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[hsl(var(--border))]">
