@@ -179,11 +179,11 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess }: QuotationP
 
       {/* A4 Printable Area */}
       <div className="overflow-x-auto w-full">
-        <div className="bg-white border border-slate-200 mx-auto rounded-xl relative overflow-hidden print:border-none print:m-0 min-w-[320px] sm:min-w-[500px]" 
-             style={{ minHeight: '297mm', maxWidth: '210mm' }}>
+        <div className="bg-white border border-slate-200 mx-auto rounded-xl relative overflow-hidden print:border-none print:m-0 min-w-[320px] sm:min-w-[500px] min-h-[297mm] print:min-h-0" 
+             style={{ maxWidth: '210mm' }}>
           
           {/* Watermark */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none z-0">
+          <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none z-0 print:hidden">
             <span className="text-6xl sm:text-8xl font-black rotate-[-45deg] tracking-widest uppercase">SKY INTERIOR</span>
           </div>
 
@@ -220,7 +220,7 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess }: QuotationP
             </div>
 
             {/* Table */}
-            <div className="flex-1 overflow-x-auto">
+            <div className="flex-1 print:flex-none overflow-x-auto mb-6 sm:mb-8">
               <table className="w-full text-left border-collapse min-w-[400px]">
                 <thead>
                   <tr className="border-b-2 border-slate-900">
@@ -232,7 +232,7 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess }: QuotationP
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {quote.items.map((item: any, idx: number) => (
-                    <tr key={idx}>
+                    <tr key={idx} className="print:break-inside-avoid">
                       <td className="py-3 sm:py-4 text-xs sm:text-sm font-medium text-slate-800">{item.description}</td>
                       <td className="py-3 sm:py-4 text-xs sm:text-sm text-slate-600 text-center">{item.quantity}</td>
                       <td className="py-3 sm:py-4 text-xs sm:text-sm text-slate-600 text-right">₹{item.unitPrice.toLocaleString('en-IN')}</td>
@@ -244,7 +244,7 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess }: QuotationP
             </div>
 
             {/* Totals Box */}
-            <div className="flex justify-end mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-slate-200">
+            <div className="flex justify-end mt-auto pt-6 sm:pt-8 border-t border-slate-200 print:break-inside-avoid">
               <div className="w-full sm:w-72 space-y-2 sm:space-y-3">
                 <div className="flex justify-between text-xs sm:text-sm text-slate-600">
                   <span>Subtotal</span>
@@ -268,7 +268,7 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess }: QuotationP
             </div>
 
             {/* Footer Notes */}
-            <div className="mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-slate-100">
+            <div className="mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-slate-100 print:break-inside-avoid">
               <p className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 sm:mb-2">Terms & Conditions</p>
               <p className="text-[11px] sm:text-xs text-slate-500 whitespace-pre-wrap leading-relaxed">
                 {quote.notes || '1. Quotation is valid for 15 days.\n2. 50% advance payment required to commence work.\n3. Goods once sold will not be taken back.'}

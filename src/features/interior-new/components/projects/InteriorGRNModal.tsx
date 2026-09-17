@@ -8,14 +8,16 @@ interface InteriorGRNModalProps {
   isOpen: boolean;
   onClose: () => void;
   po: any;
-  onSubmit: (receivedItems: any[], challanNumber: string, proofUrl: string) => Promise<void>;
+  onSubmit: (receivedItems: any[], challanNumber: string, proofUrl: string, receivedBy: string, invoiceUrl: string) => Promise<void>;
 }
 
 export const InteriorGRNModal = ({ isOpen, onClose, po, onSubmit }: InteriorGRNModalProps) => {
   const toast = useToast();
   const [submitting, setSubmitting] = useState(false);
   const [challanNumber, setChallanNumber] = useState('');
+  const [receivedBy, setReceivedBy] = useState('');
   const [proofUrl, setProofUrl] = useState('');
+  const [invoiceUrl, setInvoiceUrl] = useState('');
   
   // Initialize received quantities to be equal to ordered quantities by default
   const [receivedItems, setReceivedItems] = useState(
@@ -26,8 +28,14 @@ export const InteriorGRNModal = ({ isOpen, onClose, po, onSubmit }: InteriorGRNM
   );
 
   const getPreviouslyReceived = React.useCallback((itemName: string) => {
-    if (!po?.grns || !Array.isArray(po.grns)) return 0;
-    return po.grns.reduce((total: number, grn: any) => {
+    let grns = po?.grns;
+    if (!grns && po?.grnData?.allGrns) {
+      try { grns = JSON.parse(po.grnData.allGrns); } catch(e) {}
+    }
+    if (!grns) grns = po?.grnData ? [po.grnData] : [];
+    
+    if (!Array.isArray(grns)) return 0;
+    return grns.reduce((total: number, grn: any) => {
       const item = grn.receivedItems?.find((i: any) => i.name === itemName);
       return total + (item?.receivedQuantity || 0);
     }, 0);
@@ -46,26 +54,29 @@ export const InteriorGRNModal = ({ isOpen, onClose, po, onSubmit }: InteriorGRNM
           receivedQuantity: remaining // Default to receiving whatever is remaining
         };
       }));
-      setChallanNumber('');
+      setChallanNumber(po.poNumber || '');
+      setReceivedBy('');
       setProofUrl('');
+      setInvoiceUrl('');
     }
   }, [po, getPreviouslyReceived]);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const invoiceInputRef = React.useRef<HTMLInputElement>(null);
 
   if (!isOpen || !po) return null;
 
   const handleQuantityChange = (index: number, val: string) => {
     const newItems = [...receivedItems];
-    newItems[index].receivedQuantity = parseFloat(val) || 0;
+    newItems[index].receivedQuantity = val === '' ? '' : (parseFloat(val) || 0);
     setReceivedItems(newItems);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, setUrl: React.Dispatch<React.SetStateAction<string>>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const objectUrl = URL.createObjectURL(file);
-    setProofUrl(objectUrl);
+    setUrl(objectUrl);
     toast.success('Photo attached!');
   };
 
@@ -77,13 +88,15 @@ export const InteriorGRNModal = ({ isOpen, onClose, po, onSubmit }: InteriorGRNM
     }
     try {
       setSubmitting(true);
-      await onSubmit(receivedItems, challanNumber, proofUrl);
-      setChallanNumber('');
+      await onSubmit(receivedItems, challanNumber, proofUrl, receivedBy, invoiceUrl);
+      setChallanNumber(po?.poNumber || '');
+      setReceivedBy('');
       setProofUrl('');
+      setInvoiceUrl('');
       onClose();
     } catch (err) {
       console.error(err);
-      toast.error('Failed to submit GRM.');
+      toast.error('Failed to submit GRN.');
     } finally {
       setSubmitting(false);
     }
@@ -101,7 +114,7 @@ export const InteriorGRNModal = ({ isOpen, onClose, po, onSubmit }: InteriorGRNM
           >
             <div className="p-5 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--muted)/0.3)]">
               <div>
-                <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">Receive Material (GRM)</h3>
+                <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">Receive Material (GRN)</h3>
                 <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">Verify delivered quantities for PO: {po.poNumber}</p>
               </div>
               <button onClick={onClose} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">
@@ -112,53 +125,104 @@ export const InteriorGRNModal = ({ isOpen, onClose, po, onSubmit }: InteriorGRNM
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
               {/* Delivery Info */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Challan / Receipt No. *</label>
-                  <Input 
-                    required 
-                    placeholder="e.g. CHL-2026-882" 
-                    value={challanNumber} 
-                    onChange={(e) => setChallanNumber(e.target.value)} 
-                  />
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Challan / Receipt No. *</label>
+                    <Input 
+                      required 
+                      placeholder="e.g. CHL-2026-882" 
+                      value={challanNumber} 
+                      onChange={(e) => setChallanNumber(e.target.value)} 
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Received By / Recorded Person (Optional)</label>
+                    <Input 
+                      placeholder="e.g. John Doe" 
+                      value={receivedBy} 
+                      onChange={(e) => setReceivedBy(e.target.value)} 
+                    />
+                  </div>
                 </div>
-                <div className="space-y-1 relative">
-                  <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Delivery Proof (Photo)</label>
-                  
-                  {/* Hidden File Input */}
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    className="hidden" 
-                    ref={fileInputRef} 
-                    onChange={handleFileUpload} 
-                  />
+                <div className="space-y-4">
+                  <div className="space-y-1 relative">
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Delivery Proof (Photo)</label>
+                    
+                    {/* Hidden File Input */}
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      ref={fileInputRef} 
+                      onChange={(e) => handleFileUpload(e, setProofUrl)} 
+                    />
 
-                  {!proofUrl ? (
-                    <button 
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="w-full border border-dashed border-[hsl(var(--border))] rounded-md h-10 flex items-center justify-center gap-2 text-xs font-medium text-[hsl(var(--muted-foreground))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
-                    >
-                      <Camera className="w-4 h-4" /> Capture / Upload
-                    </button>
-                  ) : (
-                    <div className="w-full border border-[hsl(var(--border))] rounded-md overflow-hidden relative group">
-                      <img src={proofUrl} alt="Delivery Proof Preview" className="w-full h-32 object-cover" />
-                      <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2">
-                        <div className="flex items-center gap-1 text-white font-bold text-xs">
-                          <CheckCircle2 className="w-4 h-4 text-green-400" /> Attached
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button type="button" onClick={() => window.open(proofUrl, '_blank')} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-[10px] font-bold">
-                            View Full Size
-                          </button>
-                          <button type="button" onClick={() => setProofUrl('')} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-[10px] font-bold">
-                            Remove
-                          </button>
+                    {!proofUrl ? (
+                      <button 
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full border border-dashed border-[hsl(var(--border))] rounded-md h-10 flex items-center justify-center gap-2 text-xs font-medium text-[hsl(var(--muted-foreground))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
+                      >
+                        <Camera className="w-4 h-4" /> Capture / Upload
+                      </button>
+                    ) : (
+                      <div className="w-full border border-[hsl(var(--border))] rounded-md overflow-hidden relative group">
+                        <img src={proofUrl} alt="Delivery Proof Preview" className="w-full h-24 object-cover" />
+                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2">
+                          <div className="flex items-center gap-1 text-white font-bold text-xs">
+                            <CheckCircle2 className="w-4 h-4 text-green-400" /> Attached
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button type="button" onClick={() => window.open(proofUrl, '_blank')} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-[10px] font-bold">
+                              View
+                            </button>
+                            <button type="button" onClick={() => setProofUrl('')} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-[10px] font-bold">
+                              Remove
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  <div className="space-y-1 relative">
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Invoice (Photo)</label>
+                    
+                    {/* Hidden File Input */}
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      ref={invoiceInputRef} 
+                      onChange={(e) => handleFileUpload(e, setInvoiceUrl)} 
+                    />
+
+                    {!invoiceUrl ? (
+                      <button 
+                        type="button"
+                        onClick={() => invoiceInputRef.current?.click()}
+                        className="w-full border border-dashed border-[hsl(var(--border))] rounded-md h-10 flex items-center justify-center gap-2 text-xs font-medium text-[hsl(var(--muted-foreground))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
+                      >
+                        <Camera className="w-4 h-4" /> Capture / Upload
+                      </button>
+                    ) : (
+                      <div className="w-full border border-[hsl(var(--border))] rounded-md overflow-hidden relative group">
+                        <img src={invoiceUrl} alt="Invoice Preview" className="w-full h-24 object-cover" />
+                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2">
+                          <div className="flex items-center gap-1 text-white font-bold text-xs">
+                            <CheckCircle2 className="w-4 h-4 text-green-400" /> Attached
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button type="button" onClick={() => window.open(invoiceUrl, '_blank')} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-[10px] font-bold">
+                              View
+                            </button>
+                            <button type="button" onClick={() => setInvoiceUrl('')} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-[10px] font-bold">
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -187,7 +251,7 @@ export const InteriorGRNModal = ({ isOpen, onClose, po, onSubmit }: InteriorGRNM
                             type="number"
                             min="0"
                             max={item.remainingQuantity}
-                            value={item.receivedQuantity}
+                            value={item.receivedQuantity === 0 ? '' : item.receivedQuantity}
                             onChange={(e) => handleQuantityChange(idx, e.target.value)}
                             className="w-20 px-2 py-1 text-right text-xs border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.05)] rounded focus:outline-none focus:border-[hsl(var(--primary))] font-mono font-bold"
                           />

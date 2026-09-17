@@ -25,6 +25,7 @@ import {
   Camera,
   Lock,
   CreditCard,
+  Eye,
 } from 'lucide-react';
 import { SendRFQModal } from './SendRFQModal';
 import { InteriorGRNModal } from './InteriorGRNModal';
@@ -97,6 +98,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   const [newMaterialUnit, setNewMaterialUnit] = useState('');
   const [newMaterialStock, setNewMaterialStock] = useState<number | ''>(0);
   const [editingMaterialId, setEditingMaterialId] = useState<string | null>(null);
+  const [viewingImages, setViewingImages] = useState<{proofUrl?: string, invoiceUrl?: string} | null>(null);
 
   const fetchPOs = async () => {
     try {
@@ -179,25 +181,8 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   };
 
   const autoCreatePaymentForPo = async (po: any) => {
-    try {
-      const existing = payments.find((p: any) => p.type === 'outgoing' && p.poNo === po.poNumber);
-      if (!existing && (po.amount || 0) > 0) {
-        await interiorProjectService.createPayment(projectId, {
-          type: 'outgoing',
-          poNo: po.poNumber || po._id,
-          vendorName: po.vendorName || po.vendorId?.name || 'Vendor',
-          category: po.materialName || 'Wood & Plywood',
-          amount: po.amount || 0,
-          paymentDate: new Date().toISOString().split('T')[0],
-          paymentMethod: 'Bank Transfer',
-          referenceNo: `PO-AUTO-${po.poNumber || 'DUE'}`,
-          remarks: `Auto-scheduled payout for PO ${po.poNumber} (${po.materialName || 'Materials'})`,
-        });
-        await fetchPayments();
-      }
-    } catch (e) {
-      console.warn('Auto-schedule payment log:', e);
-    }
+    // Automatic payment creation is disabled so POs don't default to "Paid"
+    return;
   };
 
   useEffect(() => {
@@ -363,7 +348,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
     setSelectedPo({ ...selectedPo, items: updatedItems, amount: newTotal });
   };
 
-  const handleSubmitGRN = async (receivedItems: any[], challanNumber: string, proofUrl: string) => {
+  const handleSubmitGRN = async (receivedItems: any[], challanNumber: string, proofUrl: string, receivedBy: string, invoiceUrl: string) => {
     if (!selectedPo) return;
     try {
       setUpdatingPo(true);
@@ -371,10 +356,17 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
         receivedItems,
         challanNumber,
         proofUrl,
+        receivedBy,
+        invoiceUrl,
         receivedAt: new Date().toISOString()
       };
       
-      const currentGrns = selectedPo.grns || (selectedPo.grnData ? [selectedPo.grnData] : []);
+      let currentGrns = selectedPo.grns;
+      if (!currentGrns && selectedPo.grnData?.allGrns) {
+        try { currentGrns = JSON.parse(selectedPo.grnData.allGrns); } catch(e) {}
+      }
+      if (!currentGrns) currentGrns = selectedPo.grnData ? [selectedPo.grnData] : [];
+      
       const updatedGrns = [...currentGrns, newGrn];
 
       // Calculate if fully delivered
@@ -391,12 +383,13 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
       const newStatus = fullyDelivered ? 'delivered' : 'partially_delivered';
       
-      const updatedPo = { ...selectedPo, status: newStatus, grns: updatedGrns };
+      const updatedPo = { ...selectedPo, status: newStatus, grns: updatedGrns, grnData: { allGrns: JSON.stringify(updatedGrns) } };
       setPos(prev => prev.map(p => p._id === updatedPo._id ? updatedPo : p));
       
       await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { 
         status: newStatus,
-        grns: updatedGrns 
+        grns: updatedGrns,
+        grnData: { allGrns: JSON.stringify(updatedGrns) }
       });
       
       setSelectedPo(updatedPo);
@@ -412,17 +405,35 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
   const handleSaveRates = async () => {
     if (!selectedPo) return;
+    
+    if (selectedPo.status === 'approved') {
+      const formattedAmount = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(selectedPo.amount || 0);
+      const ok = await confirm({
+        title: 'Approve & Lock PO',
+        message: `You are about to assign this PO to ${selectedPo.vendorName || 'the vendor'} and lock in the final rates at ${formattedAmount}. This cannot be easily undone. Do you want to proceed?`,
+        confirmText: 'Approve PO',
+        type: 'warning',
+      });
+      if (!ok) return;
+    }
+
     try {
       setUpdatingPo(true);
       await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { 
+        vendorName: selectedPo.vendorName,
+        status: selectedPo.status,
         items: selectedPo.items, 
         amount: selectedPo.amount 
       });
       setPos(prev => prev.map(p => p._id === selectedPo._id ? selectedPo : p));
-      toast.success('Rates saved successfully');
+      if (selectedPo.status === 'approved') {
+        await autoCreatePaymentForPo(selectedPo);
+      }
+      toast.success('PO Details saved successfully');
+      loadAllData();
     } catch (err) {
-      console.error('Failed to save rates', err);
-      toast.error('Failed to save rates');
+      console.error('Failed to save PO details', err);
+      toast.error('Failed to save details');
     } finally {
       setUpdatingPo(false);
     }
@@ -655,6 +666,30 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                 const isFullyPaid = (item.amount || 0) > 0 && poPaidAmount >= (item.amount || 0);
                 const isPartiallyPaid = poPaidAmount > 0 && poPaidAmount < (item.amount || 0);
 
+                let receivedValue = 0;
+                let parsedGrns = item.grns;
+                if (!parsedGrns && item.grnData?.allGrns) {
+                  try { parsedGrns = JSON.parse(item.grnData.allGrns); } catch(e) {}
+                }
+                if (!parsedGrns && item.grnData) {
+                  parsedGrns = [item.grnData];
+                }
+                if (parsedGrns && Array.isArray(parsedGrns)) {
+                  item.items?.forEach((poItem: any) => {
+                    const totalReceived = parsedGrns.reduce((sum: number, grn: any) => {
+                      const rItem = grn.receivedItems?.find((ri: any) => ri.name === poItem.name);
+                      return sum + (rItem?.receivedQuantity || 0);
+                    }, 0);
+                    receivedValue += (totalReceived * (poItem.unitPrice || 0));
+                  });
+                }
+                
+                let suggestedPayment = remainingBalance;
+                if (receivedValue > 0) {
+                  suggestedPayment = Math.max(0, receivedValue - poPaidAmount);
+                  suggestedPayment = Math.min(suggestedPayment, remainingBalance);
+                }
+
                 return (
                   <motion.div
                     key={item._id}
@@ -714,7 +749,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         Create PO
                       </Button>
                     )}
-                    {activePipeline === 'dispatched' && (
+                    {(activePipeline === 'dispatched' || activePipeline === 'partially_delivered') && (
                       <Button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -727,13 +762,13 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         Receive Material
                       </Button>
                     )}
-                    {!isFullyPaid && ['approved', 'dispatched', 'delivered'].includes(item.status) && (
+                    {!isFullyPaid && ['approved', 'dispatched', 'partially_delivered', 'delivered'].includes(item.status) && (
                       <Button
                         onClick={(e) => {
                           e.stopPropagation();
                           setPayingPo(item);
                           setPaymentForm({
-                            amount: remainingBalance.toString(),
+                            amount: suggestedPayment.toString(),
                             paymentMethod: 'Bank Transfer',
                             referenceNo: '',
                             remarks: `Payment for PO ${item.poNumber} (${item.materialName})`,
@@ -746,7 +781,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         className="w-full mt-2 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 cursor-pointer flex items-center justify-center gap-1.5"
                       >
                         <CreditCard className="w-3.5 h-3.5" />
-                        Pay Vendor (₹{remainingBalance.toLocaleString('en-IN')})
+                        Pay Vendor (₹{suggestedPayment.toLocaleString('en-IN')})
                       </Button>
                     )}
                   </motion.div>
@@ -1063,7 +1098,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                             <select
                               value={selectedPo.vendorName || ''}
                               disabled={updatingPo}
-                              onChange={(e) => handleUpdateVendor(e.target.value)}
+                              onChange={(e) => setSelectedPo({ ...selectedPo, vendorName: e.target.value })}
                               className="w-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-md px-2 py-1.5 text-xs font-semibold text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                             >
                               <option value="" disabled>Select Approved Vendor...</option>
@@ -1091,7 +1126,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                               if (e.target.value === 'delivered' || e.target.value === 'partially_delivered') {
                                 setIsGRNOpen(true);
                               } else {
-                                handleUpdateStatus(e.target.value);
+                                setSelectedPo({ ...selectedPo, status: e.target.value });
                               }
                             }}
                             className="w-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-xs font-semibold text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
@@ -1110,58 +1145,61 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         </p>
                       </div>
 
-                      {selectedPo.grns && selectedPo.grns.length > 0 ? (
-                        <div className="space-y-3">
-                          <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider flex items-center gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Delivery Proofs (GRM)
-                          </span>
-                          {selectedPo.grns.map((grn: any, idx: number) => (
-                            <div key={idx} className="border border-emerald-200 bg-emerald-50/50 rounded-lg p-3">
-                              <div className="grid grid-cols-2 gap-2 text-xs">
-                                <div>
-                                  <p className="text-[10px] font-semibold text-emerald-600/70">Challan No.</p>
-                                  <p className="font-bold text-emerald-900">{grn.challanNumber}</p>
+                      {(() => {
+                        let parsedGrns = selectedPo.grns;
+                        if (!parsedGrns && selectedPo.grnData?.allGrns) {
+                          try { parsedGrns = JSON.parse(selectedPo.grnData.allGrns); } catch(e) {}
+                        }
+                        if (!parsedGrns && selectedPo.grnData) {
+                          parsedGrns = [selectedPo.grnData];
+                        }
+
+                        if (parsedGrns && parsedGrns.length > 0) {
+                          return (
+                            <div className="space-y-3">
+                              <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Delivery Proofs (GRN)
+                              </span>
+                              {parsedGrns.map((grn: any, idx: number) => (
+                                <div key={idx} className="border border-emerald-200 bg-emerald-50/50 rounded-md p-2 flex items-center justify-between">
+                                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs flex-1">
+                                    <div>
+                                      <p className="text-[9px] font-semibold text-emerald-600/70 uppercase">Challan No.</p>
+                                      <p className="font-bold text-emerald-900 leading-tight">{grn.challanNumber}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-[9px] font-semibold text-emerald-600/70 uppercase">Received On</p>
+                                      <p className="font-bold text-emerald-900 leading-tight">{grn.receivedAt ? new Date(grn.receivedAt).toLocaleDateString() : 'N/A'}</p>
+                                    </div>
+                                    {grn.receivedBy && (
+                                      <div className="col-span-2">
+                                        <p className="text-[9px] font-semibold text-emerald-600/70 uppercase">Received By</p>
+                                        <p className="font-bold text-emerald-900 leading-tight">{grn.receivedBy}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                  {(grn.proofUrl || grn.invoiceUrl) && (
+                                    <div className="shrink-0 ml-2">
+                                      <button 
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setViewingImages({ proofUrl: grn.proofUrl, invoiceUrl: grn.invoiceUrl });
+                                        }}
+                                        className="p-1.5 text-emerald-700 bg-emerald-100/70 hover:bg-emerald-200/70 rounded-md transition-colors"
+                                        title="View Proof & Invoice"
+                                      >
+                                        <Eye className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
-                                <div>
-                                  <p className="text-[10px] font-semibold text-emerald-600/70">Received On</p>
-                                  <p className="font-bold text-emerald-900">{new Date(grn.receivedAt).toLocaleDateString()}</p>
-                                </div>
-                              </div>
-                              {grn.proofUrl && (
-                                <div className="mt-2">
-                                  <a href={grn.proofUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:underline font-semibold bg-emerald-100/50 px-2 py-1 rounded">
-                                    <Camera className="w-3 h-3" /> View Photo Proof
-                                  </a>
-                                </div>
-                              )}
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                      ) : selectedPo.grnData && (
-                        <div className="space-y-2 border border-emerald-200 bg-emerald-50/50 rounded-lg p-4">
-                          <span className="text-[10px] uppercase font-bold text-emerald-700 tracking-wider flex items-center gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Delivery Proof (GRM)
-                          </span>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div>
-                              <p className="text-[10px] font-semibold text-emerald-600/70">Challan No.</p>
-                              <p className="font-bold text-emerald-900">{selectedPo.grnData.challanNumber}</p>
-                            </div>
-                            <div>
-                              <p className="text-[10px] font-semibold text-emerald-600/70">Received On</p>
-                              <p className="font-bold text-emerald-900">{new Date(selectedPo.grnData.receivedAt).toLocaleDateString()}</p>
-                            </div>
-                          </div>
-                          {selectedPo.grnData.proofUrl && (
-                            <div className="mt-2">
-                              <p className="text-[10px] font-semibold text-emerald-600/70 mb-1">Attached Photo</p>
-                              <a href={selectedPo.grnData.proofUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:underline font-semibold bg-emerald-100/50 px-2 py-1 rounded">
-                                <Camera className="w-3 h-3" /> View Photo Proof
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                          );
+                        }
+                        return null;
+                      })()}
 
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
@@ -1195,7 +1233,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                         <input 
                                           type="number" 
                                           min="0" 
-                                          value={item.unitPrice || 0} 
+                                          value={item.unitPrice || ''} 
                                           onChange={(e) => handleLocalRateChange(idx, parseFloat(e.target.value) || 0)}
                                           className="w-16 px-1 py-0.5 border border-[hsl(var(--border))] rounded bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:border-[hsl(var(--primary))] text-right"
                                         />
@@ -1221,7 +1259,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                       <input 
                                         type="number" 
                                         min="0" 
-                                        value={selectedPo.amount || 0} 
+                                        value={selectedPo.amount || ''} 
                                         onChange={(e) => {
                                           const newAmount = parseFloat(e.target.value) || 0;
                                           setSelectedPo({ ...selectedPo, amount: newAmount });
@@ -1487,6 +1525,53 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                   </Button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Image Viewer Modal */}
+      <AnimatePresence>
+        {viewingImages && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setViewingImages(null)}>
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-4xl border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--border))]">
+                <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
+                  <Camera className="w-5 h-5 text-[hsl(var(--primary))]" /> Document Viewer
+                </h3>
+                <button onClick={() => setViewingImages(null)} className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-[hsl(var(--muted)/0.2)]">
+                {viewingImages.proofUrl ? (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-bold text-center text-[hsl(var(--foreground))]">Delivery Proof</h4>
+                    <img src={viewingImages.proofUrl} alt="Delivery Proof" className="w-full h-auto rounded-lg shadow-sm border border-[hsl(var(--border))]" />
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full min-h-[200px] border-2 border-dashed border-[hsl(var(--border))] rounded-lg text-[hsl(var(--muted-foreground))] text-sm">
+                    No Delivery Proof Uploaded
+                  </div>
+                )}
+                
+                {viewingImages.invoiceUrl ? (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-bold text-center text-[hsl(var(--foreground))]">Invoice</h4>
+                    <img src={viewingImages.invoiceUrl} alt="Invoice" className="w-full h-auto rounded-lg shadow-sm border border-[hsl(var(--border))]" />
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full min-h-[200px] border-2 border-dashed border-[hsl(var(--border))] rounded-lg text-[hsl(var(--muted-foreground))] text-sm">
+                    No Invoice Uploaded
+                  </div>
+                )}
+              </div>
             </motion.div>
           </div>
         )}
