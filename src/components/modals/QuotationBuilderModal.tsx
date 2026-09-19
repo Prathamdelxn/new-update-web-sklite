@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Trash2, Calculator, Save } from 'lucide-react';
+import { X, Plus, Trash2, Calculator, Save, AlertTriangle } from 'lucide-react';
 import api from '@/services/api.client';
 import interiorApiClient from '@/services/interiorApi.client';
 import { useToast } from '@/providers/ToastContext';
@@ -26,6 +26,12 @@ export function QuotationBuilderModal({ isOpen, onClose, customerId, existingQuo
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  const hasExisting = Boolean(existingQuotations && existingQuotations.length > 0);
+  const latestQuote = hasExisting ? existingQuotations[existingQuotations.length - 1] : null;
+  const isLatestRejected = Boolean(latestQuote && latestQuote.status === 'Rejected');
+  const isLatestDraft = Boolean(latestQuote && latestQuote.status === 'Draft');
+  const isRevisionBlocked = hasExisting && !isLatestRejected && !isLatestDraft;
+
   const [items, setItems] = useState<Item[]>([
     { description: '', quantity: 1, unitPrice: 0, total: 0 }
   ]);
@@ -64,6 +70,10 @@ export function QuotationBuilderModal({ isOpen, onClose, customerId, existingQuo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isRevisionBlocked) {
+      return toast.error(`Quotation v${latestQuote?.version || 1} is currently in '${latestQuote?.status || 'Sent'}' status. Next quotation version can only be created if the current version is Rejected.`);
+    }
 
     if (items.length === 0) {
       return toast.error("Please add at least one line item to the quotation.");
@@ -161,7 +171,15 @@ export function QuotationBuilderModal({ isOpen, onClose, customerId, existingQuo
                 Quotation Builder
               </h2>
               <p className="text-sm text-slate-500 mt-1">
-                Generating Version {existingQuotations?.length ? existingQuotations.length + 1 : 1}
+                {isRevisionBlocked ? (
+                  <span className="text-amber-600 font-semibold">Version {latestQuote?.version || 1} in review ({latestQuote?.status || 'Sent'})</span>
+                ) : isLatestRejected ? (
+                  <span className="text-rose-600 font-semibold">Creating Revision Version {(existingQuotations?.length || 0) + 1} (Previous version was Rejected)</span>
+                ) : isLatestDraft ? (
+                  <span>Editing Draft Version {latestQuote?.version || 1}</span>
+                ) : (
+                  <span>Generating Initial Quotation Version 1</span>
+                )}
               </p>
             </div>
             <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-xl transition-colors">
@@ -172,6 +190,21 @@ export function QuotationBuilderModal({ isOpen, onClose, customerId, existingQuo
           {/* Body */}
           <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
             <form id="quote-form" onSubmit={handleSubmit} className="space-y-6">
+
+              {/* Revision Blocked Warning Banner */}
+              {isRevisionBlocked && (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 text-amber-800">
+                  <AlertTriangle size={18} className="shrink-0 text-amber-600 mt-0.5" />
+                  <div className="space-y-1 text-xs">
+                    <p className="font-extrabold text-sm text-amber-900">
+                      Revision Creation Locked
+                    </p>
+                    <p className="leading-relaxed font-medium">
+                      Version {latestQuote?.version || 1} is currently in <strong>"{latestQuote?.status || 'Sent'}"</strong> status. Creating a next quotation version is only permitted when the proposal is marked as <strong className="text-rose-600 font-black">Rejected</strong> by the client.
+                    </p>
+                  </div>
+                </div>
+              )}
               
               {/* Line Items Table */}
               <div className="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden">
@@ -305,11 +338,11 @@ export function QuotationBuilderModal({ isOpen, onClose, customerId, existingQuo
             <button 
               type="submit" 
               form="quote-form"
-              disabled={isSubmitting} 
-              className="px-6 py-3 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 disabled:opacity-50 transition-all flex items-center gap-2 active:scale-95"
+              disabled={isSubmitting || isRevisionBlocked} 
+              className="px-6 py-3 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 active:scale-95"
             >
               <Save size={16} />
-              {isSubmitting ? 'Saving...' : 'Save & Generate'}
+              {isSubmitting ? 'Saving...' : isRevisionBlocked ? 'Revision Locked' : 'Save & Generate'}
             </button>
           </div>
           

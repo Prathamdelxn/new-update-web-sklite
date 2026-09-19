@@ -505,6 +505,22 @@ export default function InteriorCrmView() {
         isOpen={isSendToSiteVisitOpen}
         onClose={() => setIsSendToSiteVisitOpen(false)}
         customerId={actionLeadId || ''}
+        customerName={leads.find(l => l._id === actionLeadId)?.name}
+        initialData={(() => {
+          const l = leads.find(l => l._id === actionLeadId);
+          if (!l) return null;
+          const assignedId = typeof l.assignedSalesExecutive === 'object' && l.assignedSalesExecutive !== null
+            ? l.assignedSalesExecutive._id || l.assignedSalesExecutive.id
+            : l.assignedSalesExecutive;
+          if (l.siteVisitScheduledDate || assignedId || l.remarks) {
+            return {
+              scheduledDate: l.siteVisitScheduledDate,
+              assignedSalesExecutive: assignedId || '',
+              remarks: l.remarks || '',
+            };
+          }
+          return null;
+        })()}
         onSuccess={fetchLeads}
         users={users}
       />
@@ -550,6 +566,7 @@ export default function InteriorCrmView() {
             return hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(currentLead.status || '') || Boolean(currentLead.linkedProject);
           })()
         )}
+        budgetRange={leads.find(l => l._id === actionLeadId)?.budgetRange || ''}
         onSuccess={fetchLeads}
       />
 

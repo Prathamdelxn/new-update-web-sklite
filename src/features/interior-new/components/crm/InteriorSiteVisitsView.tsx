@@ -229,19 +229,32 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                       </div>
                     </div>
 
-                    {resolvedScheduledDate && (
-                      <div className="flex items-center gap-1.5 text-[10px] text-purple-700 bg-purple-500/10 px-2.5 py-1 rounded-lg border border-purple-500/20 font-bold w-fit">
-                        <CalendarIcon size={11} className="text-purple-600 shrink-0" />
-                        <span>
-                          {new Date(resolvedScheduledDate).toLocaleString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: 'numeric',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                      </div>
-                    )}
+                    {resolvedScheduledDate && (() => {
+                      const isOverdue = !lead.siteMeasurements && new Date(resolvedScheduledDate).getTime() < Date.now();
+                      return (
+                        <div className={cn(
+                          "flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg border font-bold w-fit",
+                          isOverdue
+                            ? "text-rose-600 bg-rose-500/10 border-rose-500/30"
+                            : "text-purple-700 bg-purple-500/10 border-purple-500/20"
+                        )}>
+                          <CalendarIcon size={11} className={isOverdue ? "text-rose-600 shrink-0" : "text-purple-600 shrink-0"} />
+                          <span>
+                            {new Date(resolvedScheduledDate).toLocaleString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                          {isOverdue && (
+                            <span className="ml-1 text-[9px] font-black uppercase text-rose-600 bg-rose-500/20 px-1 py-0.2 rounded">
+                              Overdue
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {(pendingSiteVisit?.remarks || lead.remarks) && (
                       <div className="flex items-start gap-1.5 text-[11px] bg-purple-500/[0.06] border border-purple-500/20 p-2 rounded-xl text-[hsl(var(--foreground))]">
@@ -358,17 +371,32 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
 
                         {/* Scheduled Date */}
                         <td className="px-6 py-4">
-                          {resolvedScheduledDate ? (
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-500/10 border border-purple-500/20 text-purple-700 text-xs font-bold">
-                              <CalendarIcon size={12} />
-                              {new Date(resolvedScheduledDate).toLocaleString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                hour: 'numeric',
-                                minute: '2-digit',
-                              })}
-                            </div>
-                          ) : (
+                          {resolvedScheduledDate ? (() => {
+                            const isOverdue = !lead.siteMeasurements && new Date(resolvedScheduledDate).getTime() < Date.now();
+                            return (
+                              <div className={cn(
+                                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-bold",
+                                isOverdue
+                                  ? "bg-rose-500/10 border-rose-500/30 text-rose-600"
+                                  : "bg-purple-500/10 border-purple-500/20 text-purple-700"
+                              )}>
+                                <CalendarIcon size={12} className={isOverdue ? "text-rose-600" : "text-purple-600"} />
+                                <span>
+                                  {new Date(resolvedScheduledDate).toLocaleString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: 'numeric',
+                                    minute: '2-digit',
+                                  })}
+                                </span>
+                                {isOverdue && (
+                                  <span className="ml-1 text-[9px] font-black uppercase text-rose-600 bg-rose-500/20 px-1 py-0.2 rounded">
+                                    Overdue
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })() : (
                             <span className="text-xs text-[hsl(var(--muted-foreground))] italic">Not scheduled</span>
                           )}
                         </td>

@@ -2,10 +2,11 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Trash2, Calculator, Save } from 'lucide-react';
+import { X, Plus, Trash2, Calculator, Save, AlertTriangle } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
 import { Input } from '@/components/interior/ui'; // Since I'll use the Input component from UI
+import { parseMaxBudget } from '@/lib/utils';
 
 interface BoqItem {
   serialNumber: number;
@@ -25,10 +26,11 @@ interface BoqBuilderModalProps {
   existingBoqs?: any[];
   editingBoqIndex?: number | null;
   isReadOnly?: boolean;
+  budgetRange?: string;
   onSuccess: () => void;
 }
 
-export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingBoqs = [], editingBoqIndex = null, isReadOnly = false, onSuccess }: BoqBuilderModalProps) {
+export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingBoqs = [], editingBoqIndex = null, isReadOnly = false, budgetRange, onSuccess }: BoqBuilderModalProps) {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -344,24 +346,50 @@ export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingB
                     </table>
                   </div>
                   
-                  <div className="p-4 bg-[hsl(var(--card))] border-t border-[hsl(var(--border))] flex justify-between items-center">
-                    {!isReadOnly ? (
-                      <button
-                        type="button"
-                        onClick={addItemRow}
-                        className="flex items-center gap-2 text-xs font-bold text-teal-600 hover:text-teal-700 bg-teal-50 hover:bg-teal-100 px-4 py-2 rounded-lg transition-colors border border-teal-100 border-dashed"
-                      >
-                        <Plus size={14} /> Add Row
-                      </button>
-                    ) : (
-                      <div />
-                    )}
-                    
-                    <div className="flex items-center gap-4">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Total BOQ Amount</span>
-                      <span className="text-xl font-black text-teal-700">₹{totalAmount.toLocaleString('en-IN')}</span>
-                    </div>
-                  </div>
+                  {(() => {
+                    const maxBudget = parseMaxBudget(budgetRange);
+                    const isOverBudget = Boolean(maxBudget && maxBudget > 0 && totalAmount > maxBudget);
+                    const budgetExcess = isOverBudget ? totalAmount - (maxBudget || 0) : 0;
+
+                    return (
+                      <>
+                        {isOverBudget && (
+                          <div className="p-3 bg-rose-500/10 border-t border-rose-500/20 flex items-center justify-between gap-3 text-xs text-rose-700 dark:text-rose-300 font-medium">
+                            <div className="flex items-center gap-2">
+                              <AlertTriangle size={15} className="shrink-0 text-rose-600 dark:text-rose-400" />
+                              <span>
+                                <strong>Over Target Budget Warning:</strong> Exceeds estimated budget ({budgetRange}) by <strong className="font-extrabold text-rose-600 dark:text-rose-400">₹{budgetExcess.toLocaleString('en-IN')}</strong>
+                              </span>
+                            </div>
+                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30 shrink-0">
+                              +{(((totalAmount - maxBudget!) / maxBudget!) * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="p-4 bg-[hsl(var(--card))] border-t border-[hsl(var(--border))] flex justify-between items-center">
+                          {!isReadOnly ? (
+                            <button
+                              type="button"
+                              onClick={addItemRow}
+                              className="flex items-center gap-2 text-xs font-bold text-teal-600 hover:text-teal-700 bg-teal-50 hover:bg-teal-100 px-4 py-2 rounded-lg transition-colors border border-teal-100 border-dashed"
+                            >
+                              <Plus size={14} /> Add Row
+                            </button>
+                          ) : (
+                            <div />
+                          )}
+                          
+                          <div className="flex items-center gap-4">
+                            <span className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Total BOQ Amount</span>
+                            <span className={`text-xl font-black ${isOverBudget ? 'text-rose-600 dark:text-rose-400' : 'text-teal-700'}`}>
+                              ₹{totalAmount.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
 
                 {/* Remarks / Notes Field */}

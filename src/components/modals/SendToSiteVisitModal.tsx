@@ -4,7 +4,7 @@ import { X, MapPin } from 'lucide-react';
 import api from '@/services/api.client';
 import interiorApiClient from '@/services/interiorApi.client';
 import { useToast } from '@/providers/ToastContext';
-import { validateNonEmpty, ValidationErrors } from '@/lib/crmValidation';
+import { validateNonEmpty, validateRequiredDate, ValidationErrors } from '@/lib/crmValidation';
 
 interface Props {
   isOpen: boolean;
@@ -36,6 +36,7 @@ export function SendToSiteVisitModal({ isOpen, onClose, customerId, onSuccess, u
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {
       assignedSalesExecutive: validateNonEmpty(assignedSalesExecutive, 'Assign member'),
+      scheduledDate: validateRequiredDate(scheduledDate, 'Scheduled date & time'),
     };
     setErrors(newErrors);
     return !Object.values(newErrors).some((err) => err !== null);
@@ -44,7 +45,7 @@ export function SendToSiteVisitModal({ isOpen, onClose, customerId, onSuccess, u
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
-      toast.error('Please assign a team member for the site visit');
+      toast.error('Please fill in all required fields');
       return;
     }
 
@@ -124,13 +125,23 @@ export function SendToSiteVisitModal({ isOpen, onClose, customerId, onSuccess, u
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-700">Scheduled Date & Time (Optional)</label>
+            <label className="text-xs font-bold text-slate-700">Scheduled Date & Time *</label>
             <input 
               type="datetime-local"
               value={scheduledDate}
-              onChange={e => setScheduledDate(e.target.value)}
-              className="w-full mt-1.5 px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none"
+              onChange={e => {
+                setScheduledDate(e.target.value);
+                if (errors.scheduledDate) setErrors({ ...errors, scheduledDate: null });
+              }}
+              className={`w-full mt-1.5 px-4 py-3 rounded-xl border text-sm outline-none transition-all ${
+                errors.scheduledDate
+                  ? 'border-red-500 focus:ring-2 focus:ring-red-500/20'
+                  : 'border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500'
+              }`}
             />
+            {errors.scheduledDate && (
+              <p className="text-xs text-red-500 mt-1">{errors.scheduledDate}</p>
+            )}
           </div>
 
           <div>

@@ -231,18 +231,29 @@ export function InteriorQuotationsView({
                       {!latestQuote ? (
                         <button
                           onClick={() => onCreateQuotation(lead._id)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer shadow-xs"
                         >
                           <FileText size={11} /> Create Quote
                         </button>
                       ) : (
                         <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => onCreateQuotation(lead._id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
-                          >
-                            <Edit3 size={11} /> Edit
-                          </button>
+                          {latestQuote.status === 'Rejected' ? (
+                            <button
+                              onClick={() => onCreateQuotation(lead._id)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer shadow-xs"
+                              title="Create next quotation version"
+                            >
+                              <Edit3 size={11} /> New Version
+                            </button>
+                          ) : latestQuote.status === 'Draft' ? (
+                            <button
+                              onClick={() => onCreateQuotation(lead._id)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                              title="Edit draft quotation"
+                            >
+                              <Edit3 size={11} /> Edit Draft
+                            </button>
+                          ) : null}
                           <button
                             onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=quotation`)}
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
@@ -394,19 +405,29 @@ export function InteriorQuotationsView({
                           {!latestQuote ? (
                             <button
                               onClick={() => onCreateQuotation(lead._id)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
                             >
                               <FileText size={13} /> Create Quote
                             </button>
                           ) : (
                             <>
-                              <button
-                                onClick={() => onCreateQuotation(lead._id)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all cursor-pointer"
-                                title="Edit Quotation"
-                              >
-                                <Edit3 size={12} /> Edit
-                              </button>
+                              {latestQuote.status === 'Rejected' ? (
+                                <button
+                                  onClick={() => onCreateQuotation(lead._id)}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                  title="Create next quotation version (v{(lead.quotations?.length || 1) + 1})"
+                                >
+                                  <Edit3 size={12} /> New Version
+                                </button>
+                              ) : latestQuote.status === 'Draft' ? (
+                                <button
+                                  onClick={() => onCreateQuotation(lead._id)}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all cursor-pointer"
+                                  title="Edit draft quotation"
+                                >
+                                  <Edit3 size={12} /> Edit Draft
+                                </button>
+                              ) : null}
                               <button
                                 onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=quotation`)}
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-xs font-bold transition-all cursor-pointer"

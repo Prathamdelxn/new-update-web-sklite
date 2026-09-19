@@ -17,6 +17,7 @@ export function SendToRequirementsModal({ isOpen, onClose, customerId, onSuccess
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [designerAssigned, setDesignerAssigned] = useState('');
+  const [scheduledDate, setScheduledDate] = useState('');
   const [remarks, setRemarks] = useState('');
 
   if (!isOpen) return null;
@@ -29,6 +30,7 @@ export function SendToRequirementsModal({ isOpen, onClose, customerId, onSuccess
       // 1. Update Customer Status & Assignment
       const updatePayload: any = {
         status: 'Requirements Gathering', 
+        requirementScheduledDate: scheduledDate ? new Date(scheduledDate).toISOString() : undefined,
       };
       
       if (designerAssigned) {
@@ -42,10 +44,11 @@ export function SendToRequirementsModal({ isOpen, onClose, customerId, onSuccess
       // 2. Log activity
       await interiorApiClient.post('/crm/activities', {
         customer: customerId,
-        type: 'Status Change',
-        status: 'Completed',
+        type: 'Requirement Gathering',
+        status: 'Pending',
+        scheduledDate: scheduledDate ? new Date(scheduledDate).toISOString() : new Date().toISOString(),
         remarks: remarks || 'Lead passed to Requirements & Design phase.',
-        completedDate: new Date()
+        user: designerAssigned || undefined,
       });
 
       toast.success('Successfully sent to Requirements & Design!');
@@ -68,21 +71,21 @@ export function SendToRequirementsModal({ isOpen, onClose, customerId, onSuccess
             <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
               <PenTool className="text-emerald-600" /> Pass to Requirements
             </h2>
-            <p className="text-sm text-slate-500 mt-1">Assign a designer to capture requirements.</p>
+            <p className="text-sm text-slate-500 mt-1">Assign a consultant and schedule requirements gathering session.</p>
           </div>
           <button type="button" onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl"><X size={20} className="text-slate-400" /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-bold text-slate-700">Assign Designer</label>
+            <label className="text-xs font-bold text-slate-700">Assign Requirement Consultant / Team Member *</label>
             <select 
               value={designerAssigned}
               onChange={e => setDesignerAssigned(e.target.value)}
               className="w-full mt-1.5 px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
               required
             >
-              <option value="">-- Select Designer --</option>
+              <option value="">-- Select Member / Consultant --</option>
               {users.map(u => (
                 <option key={u._id} value={u._id}>{u.name} ({u.role?.name || 'User'})</option>
               ))}
@@ -90,12 +93,23 @@ export function SendToRequirementsModal({ isOpen, onClose, customerId, onSuccess
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-700">Handover Notes</label>
+            <label className="text-xs font-bold text-slate-700">Discussion / Meeting Date & Time *</label>
+            <input
+              type="datetime-local"
+              value={scheduledDate}
+              onChange={e => setScheduledDate(e.target.value)}
+              className="w-full mt-1.5 px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-slate-700">Requirement Handover & Brief Notes</label>
             <textarea 
               rows={4}
               value={remarks}
               onChange={e => setRemarks(e.target.value)}
-              placeholder="Any details the designer should know before meeting the client..."
+              placeholder="Add client preferences, specific design style expectations, budget focus, or notes from site visit..."
               className="w-full mt-1.5 px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none resize-none"
             />
           </div>

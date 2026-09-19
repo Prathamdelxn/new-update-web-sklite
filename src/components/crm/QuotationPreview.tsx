@@ -1,26 +1,33 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Printer, Download, CheckCircle2, XCircle, Rocket, Mail } from 'lucide-react';
+import { Printer, Download, CheckCircle2, XCircle, Rocket, Mail, AlertTriangle, Trash2, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
-
+import { cn, parseMaxBudget } from '@/lib/utils';
 import { useConfirm } from '@/providers/ConfirmContext';
 
 interface QuotationPreviewProps {
   lead: any;
   quotationIndex: number;
   onSuccess: () => void;
+  onAddVersion?: () => void;
 }
 
-export function QuotationPreview({ lead, quotationIndex, onSuccess }: QuotationPreviewProps) {
+export function QuotationPreview({ lead, quotationIndex, onSuccess, onAddVersion }: QuotationPreviewProps) {
   const toast = useToast();
   const { confirm, prompt } = useConfirm();
   const router = useRouter();
   const [isConverting, setIsConverting] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
-  const quote = lead.quotations[quotationIndex];
+  const [isDeleting, setIsDeleting] = useState(false);
+  const quote = lead.quotations ? lead.quotations[quotationIndex] : null;
+
+  const maxBudget = parseMaxBudget(lead?.budgetRange || lead?.estimatedBudget || lead?.budget);
+  const grandTotal = Number(quote?.grandTotal) || 0;
+  const isOverBudget = Boolean(maxBudget && maxBudget > 0 && grandTotal > maxBudget);
+  const excessAmount = isOverBudget ? grandTotal - (maxBudget || 0) : 0;
 
   const handleSendEmail = async () => {
     let emailToUse = lead.email;
@@ -58,7 +65,7 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess }: QuotationP
       if (status === 'Accepted') {
         nextLeadStatus = 'Booking Pending';
       } else if (status === 'Rejected') {
-        nextLeadStatus = 'Negotiation';
+        nextLeadStatus = 'Under Quotation';
       }
       
       await interiorCrmService.updateCustomer(lead._id, { 
@@ -74,7 +81,7 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess }: QuotationP
         remarks: `Quotation v${quote.version} was marked as ${status}`
       });
 
-      toast.success(`Quotation marked as ${status}`);
+      toast.success(`Quotation marked as ${status}. You can now add a new quotation version.`);
       onSuccess();
     } catch (error: any) {
       toast.error('Failed to update quotation status');
@@ -103,27 +110,68 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess }: QuotationP
     }
   };
 
+  const handleDeleteQuotation = async () => {
+    const ok = await confirm({
+      title: `Delete Quotation Version ${quote?.version || quotationIndex + 1}`,
+      message: `Are you sure you want to delete Quotation Version ${quote?.version || quotationIndex + 1} (Total: ₹${grandTotal.toLocaleString('en-IN')})? This action cannot be undone.`,
+      confirmText: 'Delete Quotation',
+      type: 'danger',
+    });
+    if (!ok) return;
+
+    setIsDeleting(true);
+    try {
+      const updatedQuotations = (lead.quotations || [])
+        .filter((_: any, idx: number) => idx !== quotationIndex)
+        .map((q: any, i: number) => ({ ...q, version: i + 1 }));
+
+      await interiorCrmService.updateCustomer(lead._id, {
+        quotations: updatedQuotations,
+      });
+
+      await interiorCrmService.createActivity({
+        customer: lead._id,
+        type: 'Status Change',
+        status: 'Completed',
+        remarks: `Deleted Quotation Version ${quote?.version || quotationIndex + 1}`
+      });
+
+      toast.success(`Quotation Version ${quote?.version || quotationIndex + 1} deleted successfully!`);
+      onSuccess();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to delete quotation');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
 
-  const isConverted = lead?.status === 'Won' || lead?.status === 'Converted' || !!lead?.linkedProject;
+  const isConverted = lead?.status === 'Won' || lead?.status === 'Converted' || lead?.status === 'Lost' || !!lead?.linkedProject;
 
   if (!quote) return null;
 
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Actions Bar (Hidden on print) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 print:hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[hsl(var(--card))] p-3.5 sm:p-4 rounded-2xl border border-[hsl(var(--border))] shadow-xs print:hidden">
         <div className="flex items-center gap-3">
-          <h3 className="font-bold text-slate-800 text-sm sm:text-base">Version {quote.version}</h3>
-          <span className={`text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-md ${
-            quote.status === 'Accepted' ? 'bg-emerald-100 text-emerald-700' :
-            quote.status === 'Rejected' ? 'bg-red-100 text-red-700' :
-            'bg-amber-100 text-amber-700'
-          }`}>
-            {quote.status}
+          <h3 className="font-bold text-[hsl(var(--foreground))] text-sm sm:text-base">Version {quote.version}</h3>
+          <span className={cn(
+            "text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full border uppercase tracking-wider",
+            quote.status === 'Accepted' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
+            quote.status === 'Rejected' ? 'bg-rose-500/10 text-rose-600 border-rose-500/20' :
+            'bg-amber-500/10 text-amber-600 border-amber-500/20'
+          )}>
+            {quote.status || 'Draft'}
           </span>
+          {isOverBudget && (
+            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 border border-rose-500/30 flex items-center gap-1">
+              <AlertTriangle size={11} /> Over Budget by ₹{excessAmount.toLocaleString('en-IN')}
+            </span>
+          )}
         </div>
         
         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap w-full sm:w-auto">
@@ -131,17 +179,30 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess }: QuotationP
             <>
               <button 
                 onClick={() => handleStatusUpdate('Accepted')}
-                className="text-xs font-bold bg-emerald-50 text-emerald-700 px-3 py-2 rounded-xl hover:bg-emerald-100 transition flex items-center gap-1.5"
+                className="text-xs font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-3 py-2 rounded-xl hover:bg-emerald-500/20 transition flex items-center gap-1.5 active:scale-95 cursor-pointer"
               >
                 <CheckCircle2 size={15} /> Mark Accepted
               </button>
               <button 
                 onClick={() => handleStatusUpdate('Rejected')}
-                className="text-xs font-bold bg-red-50 text-red-700 px-3 py-2 rounded-xl hover:bg-red-100 transition flex items-center gap-1.5"
+                className="text-xs font-bold bg-rose-500/10 text-rose-600 border border-rose-500/20 px-3 py-2 rounded-xl hover:bg-rose-500/20 transition flex items-center gap-1.5 active:scale-95 cursor-pointer"
               >
                 <XCircle size={15} /> Mark Rejected
               </button>
-              <div className="hidden sm:block w-px h-6 bg-slate-200 mx-1"></div>
+              <div className="hidden sm:block w-px h-6 bg-[hsl(var(--border))] mx-1"></div>
+            </>
+          )}
+
+          {!isConverted && quote.status === 'Rejected' && onAddVersion && (
+            <>
+              <button 
+                onClick={onAddVersion}
+                className="text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95 shadow-sm shadow-rose-600/20 cursor-pointer"
+                title="Create next quotation version"
+              >
+                <Plus size={15} /> Add Quotation Version
+              </button>
+              <div className="hidden sm:block w-px h-6 bg-[hsl(var(--border))] mx-1"></div>
             </>
           )}
 
@@ -150,19 +211,19 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess }: QuotationP
               <button 
                 onClick={handleConvertToProject}
                 disabled={isConverting}
-                className="text-xs font-bold bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition flex items-center gap-1.5 disabled:opacity-50"
+                className="text-xs font-bold bg-emerald-600 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition flex items-center gap-1.5 disabled:opacity-50 active:scale-95 shadow-sm cursor-pointer"
               >
                 <Rocket size={15} /> 
                 {isConverting ? 'Converting...' : '🎉 Convert to Project'}
               </button>
-              <div className="hidden sm:block w-px h-6 bg-slate-200 mx-1"></div>
+              <div className="hidden sm:block w-px h-6 bg-[hsl(var(--border))] mx-1"></div>
             </>
           )}
           
           <button 
             onClick={handleSendEmail}
             disabled={isSendingEmail}
-            className="text-xs font-bold bg-indigo-50 text-indigo-700 px-3.5 py-2 rounded-xl hover:bg-indigo-100 transition flex items-center gap-1.5 disabled:opacity-50"
+            className="text-xs font-bold bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 disabled:opacity-50 active:scale-95 cursor-pointer"
             title="Email Proforma Invoice & Quotation to lead"
           >
             <Mail size={15} /> {isSendingEmail ? 'Sending...' : 'Send Email'}
@@ -170,10 +231,21 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess }: QuotationP
 
           <button 
             onClick={handlePrint}
-            className="text-xs font-bold bg-slate-900 text-white px-3.5 py-2 rounded-xl hover:bg-slate-800 transition flex items-center gap-1.5"
+            className="text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95 shadow-sm cursor-pointer"
           >
             <Printer size={15} /> Print / PDF
           </button>
+
+          {!isConverted && (
+            <button 
+              onClick={handleDeleteQuotation}
+              disabled={isDeleting}
+              className="text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 px-3 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95 cursor-pointer disabled:opacity-50"
+              title="Delete this quotation version"
+            >
+              <Trash2 size={15} /> {isDeleting ? 'Deleting...' : 'Delete'}
+            </button>
+          )}
         </div>
       </div>
 

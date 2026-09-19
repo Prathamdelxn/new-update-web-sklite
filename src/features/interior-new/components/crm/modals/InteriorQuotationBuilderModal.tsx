@@ -1,10 +1,8 @@
 'use client';
 
-// Port of src/components/modals/QuotationBuilderModal.tsx, rewired to interiorCrmService.
-
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Trash2, Calculator, Save } from 'lucide-react';
+import { X, Plus, Trash2, Calculator, Save, Mail, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
 
@@ -14,8 +12,6 @@ interface Item {
   unitPrice: number;
   total: number;
 }
-
-import { Mail, CheckCircle2 } from 'lucide-react';
 
 interface QuotationBuilderModalProps {
   isOpen: boolean;
@@ -29,6 +25,12 @@ interface QuotationBuilderModalProps {
 export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, customerEmail = '', existingQuotations, onSuccess }: QuotationBuilderModalProps) {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const hasExisting = Boolean(existingQuotations && existingQuotations.length > 0);
+  const latestQuote = hasExisting ? existingQuotations[existingQuotations.length - 1] : null;
+  const isLatestRejected = Boolean(latestQuote && latestQuote.status === 'Rejected');
+  const isLatestDraft = Boolean(latestQuote && latestQuote.status === 'Draft');
+  const isRevisionBlocked = hasExisting && !isLatestRejected && !isLatestDraft;
 
   const [items, setItems] = useState<Item[]>([
     { description: '', quantity: 1, unitPrice: 0, total: 0 }
@@ -100,6 +102,10 @@ export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, cus
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isRevisionBlocked) {
+      return toast.error(`Quotation v${latestQuote?.version || 1} is currently in '${latestQuote?.status || 'Sent'}' status. Next quotation version can only be created if the current version is Rejected.`);
+    }
 
     if (items.length === 0) {
       return toast.error("Please add at least one line item to the quotation.");
@@ -215,7 +221,15 @@ export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, cus
                 Quotation Builder
               </h2>
               <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
-                Generating Version {existingQuotations?.length ? existingQuotations.length + 1 : 1}
+                {isRevisionBlocked ? (
+                  <span className="text-amber-600 font-semibold">Version {latestQuote?.version || 1} in review ({latestQuote?.status || 'Sent'})</span>
+                ) : isLatestRejected ? (
+                  <span className="text-rose-600 font-semibold">Creating Revision Version {(existingQuotations?.length || 0) + 1} (Previous version was Rejected)</span>
+                ) : isLatestDraft ? (
+                  <span>Editing Draft Version {latestQuote?.version || 1}</span>
+                ) : (
+                  <span>Generating Initial Quotation Version 1</span>
+                )}
               </p>
             </div>
             <button onClick={onClose} className="p-2 hover:bg-[hsl(var(--accent))] rounded-xl transition-colors">
@@ -226,6 +240,21 @@ export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, cus
           {/* Body */}
           <div className="flex-1 overflow-y-auto p-6">
             <form id="interior-quote-form" onSubmit={handleSubmit} className="space-y-6">
+
+              {/* Revision Blocked Warning Banner */}
+              {isRevisionBlocked && (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-start gap-3 text-amber-700 dark:text-amber-300">
+                  <AlertTriangle size={18} className="shrink-0 text-amber-600 mt-0.5" />
+                  <div className="space-y-1 text-xs">
+                    <p className="font-extrabold text-sm text-amber-800 dark:text-amber-200">
+                      Revision Creation Locked
+                    </p>
+                    <p className="leading-relaxed font-medium">
+                      Version {latestQuote?.version || 1} is currently in <strong className="font-black text-[hsl(var(--foreground))]">"{latestQuote?.status || 'Sent'}"</strong> status. Creating a next quotation version is only permitted when the proposal is marked as <strong className="text-rose-600 font-black">Rejected</strong> by the client.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Line Items Table */}
               <div className="bg-[hsl(var(--muted))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">
@@ -390,11 +419,11 @@ export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, cus
             <button
               type="submit"
               form="interior-quote-form"
-              disabled={isSubmitting}
-              className="px-6 py-3 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center gap-2 active:scale-95"
+              disabled={isSubmitting || isRevisionBlocked}
+              className="px-6 py-3 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 active:scale-95"
             >
               <Save size={16} />
-              {isSubmitting ? 'Saving...' : 'Save & Generate'}
+              {isSubmitting ? 'Saving...' : isRevisionBlocked ? 'Revision Locked' : 'Save & Generate'}
             </button>
           </div>
 

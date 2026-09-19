@@ -7,11 +7,12 @@ import { useInteriorAuthGuard } from '@/lib/useInteriorAuthGuard';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
-import { ArrowLeft, ArrowRight, User, Phone, Mail, Building, DollarSign, Activity, Plus, MessageSquare, X, CheckCircle2, Calendar, MapPin, Ruler, PenTool, UploadCloud, File as FileIcon, Image as ImageIcon, Calculator, FileText, ChevronDown, Pencil, Trash2, DoorOpen, Maximize2, Columns, Zap, Droplets, Wind, Armchair, AlertTriangle, Layers, Palette, Sliders, Sun, Sparkles, Box, Archive, ExternalLink, Eye, Lock, Copy, Check, CalendarCheck, Clock, PhoneCall } from 'lucide-react';
+import { ArrowLeft, ArrowRight, User, Phone, Mail, Building, DollarSign, Activity, Plus, MessageSquare, X, CheckCircle2, Calendar, MapPin, Ruler, PenTool, UploadCloud, File as FileIcon, Image as ImageIcon, Calculator, FileText, ChevronDown, Pencil, Trash2, DoorOpen, Maximize2, Columns, Zap, Droplets, Wind, Armchair, AlertTriangle, Layers, Palette, Sliders, Sun, Sparkles, Box, Archive, ExternalLink, Eye, Lock, Copy, Check, CalendarCheck, Clock, PhoneCall, Frown, History } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { cn, parseMaxBudget } from '@/lib/utils';
 import { InteriorLogSiteVisitModal } from '@/features/interior-new/components/crm/modals/InteriorLogSiteVisitModal';
 import { InteriorSendToSiteVisitModal } from '@/features/interior-new/components/crm/modals/InteriorSendToSiteVisitModal';
+import { InteriorSiteVisitHistoryModal } from '@/features/interior-new/components/crm/modals/InteriorSiteVisitHistoryModal';
 import { InteriorSendToRequirementsModal } from '@/features/interior-new/components/crm/modals/InteriorSendToRequirementsModal';
 import { InteriorSendToDrawingModal } from '@/features/interior-new/components/crm/modals/InteriorSendToDrawingModal';
 import { InteriorSendToBoqModal } from '@/features/interior-new/components/crm/modals/InteriorSendToBoqModal';
@@ -24,6 +25,7 @@ import { Interior3DViewerModal } from '@/features/interior-new/components/crm/mo
 import { InteriorQuotationBuilderModal } from '@/features/interior-new/components/crm/modals/InteriorQuotationBuilderModal';
 import { InteriorEditLeadModal } from '@/features/interior-new/components/crm/modals/InteriorEditLeadModal';
 import { InteriorDeleteLeadModal } from '@/features/interior-new/components/crm/modals/InteriorDeleteLeadModal';
+import { InteriorMarkAsLostModal } from '@/features/interior-new/components/crm/modals/InteriorMarkAsLostModal';
 import { QuotationPreview } from '@/components/crm/QuotationPreview';
 import { BoqPreview } from '@/components/crm/BoqPreview';
 import { InteriorBoqBuilderModal } from '@/features/interior-new/components/crm/modals/InteriorBoqBuilderModal';
@@ -50,6 +52,7 @@ export default function Lead360View() {
   };
   const [isSiteVisitModalOpen, setIsSiteVisitModalOpen] = useState(false);
   const [isSendToSiteVisitOpen, setIsSendToSiteVisitOpen] = useState(false);
+  const [isSiteVisitHistoryOpen, setIsSiteVisitHistoryOpen] = useState(false);
   const [isSendToReqOpen, setIsSendToReqOpen] = useState(false);
   const [isSendToDrawingOpen, setIsSendToDrawingOpen] = useState(false);
   const [isSendToBoqOpen, setIsSendToBoqOpen] = useState(false);
@@ -62,6 +65,7 @@ export default function Lead360View() {
   const [isQuotationModalOpen, setIsQuotationModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isMarkAsLostOpen, setIsMarkAsLostOpen] = useState(false);
   const [isDeletingLead, setIsDeletingLead] = useState(false);
   const [activeQuotationIndex, setActiveQuotationIndex] = useState(0);
   const [activeBoqIndex, setActiveBoqIndex] = useState(0);
@@ -186,12 +190,195 @@ export default function Lead360View() {
     };
   }, [activities, lead, users]);
 
+  const requirementsInfo = React.useMemo(() => {
+    const reqActivity = activities.find(
+      (a) => a.type === 'Requirement Gathering' && (a.status === 'Pending' || a.remarks)
+    ) || activities.find((a) => a.type === 'Requirement Gathering')
+      || activities.find((a) => a.type === 'Status Change' && a.remarks?.toLowerCase().includes('requirement'));
+
+    const note = reqActivity?.remarks || '';
+
+    const scheduledDate =
+      lead?.requirementScheduledDate ||
+      reqActivity?.scheduledDate ||
+      reqActivity?.createdAt;
+
+    const assignedConsultant = users.find((u) => {
+      const uId = u._id || u.id || u.clerkUserId;
+      const leadDesigner = typeof lead?.designerAssigned === 'object' && lead?.designerAssigned !== null
+        ? lead.designerAssigned._id || lead.designerAssigned.id
+        : lead?.designerAssigned;
+      const actUser = typeof reqActivity?.user === 'object' && reqActivity?.user !== null
+        ? reqActivity.user._id || reqActivity.user.id
+        : reqActivity?.user;
+      return uId === leadDesigner || uId === actUser;
+    }) || (typeof lead?.designerAssigned === 'object' ? lead.designerAssigned : null);
+
+    const assignedName = assignedConsultant?.fullName ||
+      `${assignedConsultant?.firstName || ''} ${assignedConsultant?.lastName || ''}`.trim() ||
+      assignedConsultant?.name ||
+      (typeof lead?.designerAssigned === 'string' && lead?.designerAssigned ? 'Assigned Consultant' : 'Requirement Consultant');
+
+    const schedulerUser = reqActivity?.user
+      ? users.find((u) => (u._id || u.id || u.clerkUserId) === (typeof reqActivity.user === 'object' ? reqActivity.user._id || reqActivity.user.id : reqActivity.user))
+      : null;
+    const schedulerName = schedulerUser?.fullName || schedulerUser?.name || 'CRM Team';
+
+    return {
+      activity: reqActivity,
+      note,
+      scheduledDate,
+      assignedName,
+      schedulerName,
+    };
+  }, [activities, lead, users]);
+
+  const drawingInfo = React.useMemo(() => {
+    const drawingActivity = activities.find(
+      (a) => (a.type === '2D/3D Drawing' || a.type === 'Design Phase') && (a.status === 'Pending' || a.scheduledDate || a.remarks)
+    ) || activities.find((a) => a.type === '2D/3D Drawing' || a.type === 'Design Phase')
+      || activities.find((a) => a.type === 'Status Change' && (a.remarks?.toLowerCase().includes('drawing') || a.remarks?.toLowerCase().includes('design')));
+
+    const note = drawingActivity?.remarks || '';
+
+    const scheduledDate =
+      lead?.drawingScheduledDate ||
+      lead?.drawingDueDate ||
+      lead?.designDueDate ||
+      drawingActivity?.scheduledDate ||
+      null;
+
+    const assignedDesigner = users.find((u) => {
+      const uId = u._id || u.id || u.clerkUserId;
+      const leadDesigner = typeof lead?.designerAssigned === 'object' && lead?.designerAssigned !== null
+        ? lead.designerAssigned._id || lead.designerAssigned.id
+        : lead?.designerAssigned;
+      const actUser = typeof drawingActivity?.user === 'object' && drawingActivity?.user !== null
+        ? drawingActivity.user._id || drawingActivity.user.id
+        : drawingActivity?.user;
+      return uId === leadDesigner || uId === actUser;
+    }) || (typeof lead?.designerAssigned === 'object' ? lead.designerAssigned : null);
+
+    const assignedName = assignedDesigner?.fullName ||
+      `${assignedDesigner?.firstName || ''} ${assignedDesigner?.lastName || ''}`.trim() ||
+      assignedDesigner?.name ||
+      (typeof lead?.designerAssigned === 'string' && lead?.designerAssigned ? 'Assigned Designer' : '2D/3D Designer');
+
+    const schedulerUser = drawingActivity?.user
+      ? users.find((u) => (u._id || u.id || u.clerkUserId) === (typeof drawingActivity.user === 'object' ? drawingActivity.user._id || drawingActivity.user.id : drawingActivity.user))
+      : null;
+    const schedulerName = schedulerUser?.fullName || schedulerUser?.name || 'CRM Team';
+
+    return {
+      activity: drawingActivity,
+      note,
+      scheduledDate,
+      assignedName,
+      schedulerName,
+    };
+  }, [activities, lead, users]);
+
+  const boqInfo = React.useMemo(() => {
+    const boqActivity = activities.find(
+      (a) => (a.type === 'BOQ Phase' || a.type === 'Status Change') && (a.remarks?.toLowerCase().includes('boq') || a.remarks?.toLowerCase().includes('estimat'))
+    ) || activities.find((a) => a.type === 'BOQ Phase');
+
+    const note = boqActivity?.remarks || (lead?.boqs?.[activeBoqIndex]?.notes) || '';
+
+    const currentBoq = lead?.boqs?.[activeBoqIndex] || lead?.boqs?.[0];
+    const totalAmount = currentBoq?.totalAmount || (currentBoq?.items || []).reduce((acc: number, it: any) => acc + (Number(it.amount) || (Number(it.quantity) * Number(it.rate)) || 0), 0);
+    const itemsCount = currentBoq?.items?.length || 0;
+    const categories = Array.from(new Set((currentBoq?.items || []).map((it: any) => it.category || 'General')));
+
+    const maxBudget = parseMaxBudget(lead?.budgetRange || lead?.estimatedBudget || lead?.budget);
+    const isOverBudget = Boolean(maxBudget && maxBudget > 0 && totalAmount > maxBudget);
+    const budgetExcessAmount = isOverBudget ? totalAmount - (maxBudget || 0) : 0;
+    const budgetExcessPercentage = isOverBudget && maxBudget ? ((totalAmount - maxBudget) / maxBudget) * 100 : 0;
+
+    return {
+      activity: boqActivity,
+      note,
+      currentBoq,
+      totalAmount,
+      itemsCount,
+      categoriesCount: categories.length,
+      maxBudget,
+      isOverBudget,
+      budgetExcessAmount,
+      budgetExcessPercentage,
+    };
+  }, [activities, lead, activeBoqIndex]);
+
+  const quotationInfo = React.useMemo(() => {
+    const currentQuote = lead?.quotations?.[activeQuotationIndex] || lead?.quotations?.[0];
+
+    const quoteActivity = activities.find(
+      (a) => a.type === 'Quotation Phase' || a.type === 'Quotation Handover'
+    ) || activities.find(
+      (a) => a.type === 'Status Change' &&
+        a.remarks &&
+        (a.remarks.toLowerCase().includes('assigned member:') || a.remarks.toLowerCase().includes('handover') || a.remarks.toLowerCase().includes('commercial note')) &&
+        !a.remarks.toLowerCase().includes('deleted quotation') &&
+        !a.remarks.toLowerCase().includes('marked as') &&
+        !a.remarks.toLowerCase().includes('generated quotation')
+    );
+
+    const note = quoteActivity?.remarks || (currentQuote?.notes) || '';
+
+    const grandTotal = Number(currentQuote?.grandTotal) || Number(currentQuote?.subtotal) || 0;
+    const subtotal = Number(currentQuote?.subtotal) || 0;
+    const discount = Number(currentQuote?.discount) || 0;
+    const tax = Number(currentQuote?.tax) || 0;
+    const taxPercentage = currentQuote?.taxPercentage || 0;
+    const itemsCount = currentQuote?.items?.length || 0;
+
+    const maxBudget = parseMaxBudget(lead?.budgetRange || lead?.estimatedBudget || lead?.budget);
+    const isOverBudget = Boolean(maxBudget && maxBudget > 0 && grandTotal > maxBudget);
+    const budgetExcessAmount = isOverBudget ? grandTotal - (maxBudget || 0) : 0;
+    const budgetExcessPercentage = isOverBudget && maxBudget ? ((grandTotal - maxBudget) / maxBudget) * 100 : 0;
+
+    const assignedExecutive = users.find((u) => {
+      const uId = u._id || u.id || u.clerkUserId;
+      const leadAssigned = typeof lead?.assignedSalesExecutive === 'object' && lead?.assignedSalesExecutive !== null
+        ? lead.assignedSalesExecutive._id || lead.assignedSalesExecutive.id
+        : lead?.assignedSalesExecutive;
+      const actUser = typeof quoteActivity?.user === 'object' && quoteActivity?.user !== null
+        ? quoteActivity.user._id || quoteActivity.user.id
+        : quoteActivity?.user;
+      return uId === leadAssigned || uId === actUser;
+    }) || (typeof lead?.assignedSalesExecutive === 'object' ? lead.assignedSalesExecutive : null);
+
+    const assignedName = assignedExecutive?.fullName ||
+      `${assignedExecutive?.firstName || ''} ${assignedExecutive?.lastName || ''}`.trim() ||
+      assignedExecutive?.name ||
+      (typeof lead?.assignedSalesExecutive === 'string' && lead?.assignedSalesExecutive ? 'Assigned Staff' : 'Sales Team');
+
+    return {
+      activity: quoteActivity,
+      note,
+      currentQuote,
+      grandTotal,
+      subtotal,
+      discount,
+      tax,
+      taxPercentage,
+      itemsCount,
+      assignedName,
+      maxBudget,
+      isOverBudget,
+      budgetExcessAmount,
+      budgetExcessPercentage,
+    };
+  }, [activities, lead, users, activeQuotationIndex]);
+
   const hasFollowUp = React.useMemo(() => {
     return activities.some(
       (a) =>
         a.type !== 'Status Change' &&
         a.type !== 'System Update' &&
         a.type !== 'Site Visit' &&
+        a.type !== 'Requirement Gathering' &&
+        a.type !== '2D/3D Drawing' &&
         (Boolean(a.remarks) || a.status === 'Completed' || a.status === 'Pending')
     );
   }, [activities]);
@@ -221,10 +408,14 @@ export default function Lead360View() {
     'Under Site Visit': 1,
     'Measurement Done': 1,
     'Under Requirement': 2,
+    'Requirement Completed': 2,
     'Under Drawing': 3,
     'Design Approved': 3,
     'Under BOQ Creation': 4,
     'Under Quotation': 5,
+    'Quotation Pending': 5,
+    'Quotation Sent': 5,
+    'Negotiation': 5,
     'Booking Pending': 5,
     'Won': 6,
     'Converted': 6,
@@ -232,9 +423,11 @@ export default function Lead360View() {
   };
 
   const isConverted = lead?.status === 'Won' || lead?.status === 'Converted' || !!lead?.linkedProject;
+  const isLost = lead?.status === 'Lost';
+  const isReadOnly = isConverted || isLost;
 
   const getTabLockState = (tabId: string) => {
-    if (isConverted) {
+    if (isReadOnly) {
       return { isLocked: false, requiredStage: '', stageTitle: '' };
     }
     const currentStage = STAGE_ORDER[lead?.status || 'New Lead'] ?? 0;
@@ -406,106 +599,37 @@ export default function Lead360View() {
                   <ExternalLink size={13} /> View Live Project
                 </button>
               )
+            ) : isLost ? (
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 text-rose-600 border border-rose-500/20 rounded-xl text-xs font-bold">
+                  <Lock size={13} /> Lead Lost (Locked)
+                </span>
+                <button 
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  className="p-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-xl transition-all active:scale-95"
+                  title="Delete Lead"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
             ) : (
               <>
 
 
-                {['Under Site Visit', 'Measurement Done'].includes(lead.status) && (
-                  (lead.siteMeasurements || (lead.sitePhotos && lead.sitePhotos.length > 0)) ? (
-                    <button
-                      onClick={() => setIsSendToReqOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
-                      title="Send to Requirements"
-                    >
-                      <PenTool size={13} /> Send to Requirements
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => setIsSiteVisitModalOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
-                      title="Log Measurements"
-                    >
-                      <Plus size={13} /> Log Measurements
-                    </button>
-                  )
-                )}
 
-                {['Under Requirement', 'Requirement Completed'].includes(lead.status) && (
-                  (lead.requirements && lead.requirements.length > 0) ? (
-                    <button
-                      onClick={() => setIsSendToDrawingOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
-                      title="Send to 2D/3D Drawing"
-                    >
-                      <UploadCloud size={13} /> Send to Drawings
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => setIsReqModalOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
-                      title="Add Requirements"
-                    >
-                      <Plus size={13} /> Add Requirements
-                    </button>
-                  )
-                )}
 
-                {['Under Drawing', 'Design Approved'].includes(lead.status) && (
-                  (lead.designFiles && lead.designFiles.length > 0) ? (
-                    <button
-                      onClick={() => setIsSendToBoqOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
-                      title="Send to BOQ Creation"
-                    >
-                      <Calculator size={13} /> Send to BOQ
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => setIsDesignModalOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
-                      title="Upload Drawings"
-                    >
-                      <Plus size={13} /> Upload Drawings
-                    </button>
-                  )
-                )}
 
-                {['Under BOQ Creation'].includes(lead.status) && (
-                  (lead.boqs && lead.boqs.length > 0) ? (
-                    <button
-                      onClick={() => setIsSendToQuotationsOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
-                      title="Send to Quotation Phase"
-                    >
-                      <FileText size={13} /> Send to Quotation
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => setIsBoqModalOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
-                      title="Create BOQ"
-                    >
-                      <Plus size={13} /> Create BOQ
-                    </button>
-                  )
-                )}
+
+
 
                 {['Under Quotation', 'Quotation Pending', 'Quotation Sent', 'Negotiation', 'Booking Pending'].includes(lead.status) && (
-                  (lead.quotations && lead.quotations.length > 0) ? (
+                  ((lead.quotations && lead.quotations.some((q: any) => q.status === 'Accepted' || q.status === 'Approved')) || lead.status === 'Booking Pending') && (
                     <button
                       onClick={() => setIsConvertToProjectOpen(true)}
                       className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
                       title="Convert to Won Project"
                     >
                       <CheckCircle2 size={13} /> Convert to Project
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => setIsQuotationModalOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
-                      title="Create Quotation"
-                    >
-                      <Plus size={13} /> Create Quotation
                     </button>
                   )
                 )}
@@ -522,6 +646,14 @@ export default function Lead360View() {
                       <Calendar size={13} /> Schedule Follow-up
                     </button>
                   )}
+
+                <button
+                  onClick={() => setIsMarkAsLostOpen(true)}
+                  className="p-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-xl transition-all active:scale-95"
+                  title="Mark Lead as Lost"
+                >
+                  <Frown size={15} />
+                </button>
 
                 <button 
                   onClick={() => setIsEditModalOpen(true)}
@@ -571,12 +703,38 @@ export default function Lead360View() {
           </div>
         )}
 
+        {/* --- 2B. LOST LEAD READ-ONLY NOTICE BANNER --- */}
+        {isLost && (
+          <div className="bg-rose-500/10 border border-rose-500/30 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-rose-800 dark:text-rose-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/20 flex items-center justify-center shrink-0 text-rose-600 dark:text-rose-400">
+                <Lock size={18} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-sm font-black text-[hsl(var(--foreground))]">Lead Marked as Lost (Locked & Read-Only)</h3>
+                  {lead.lostReason && (
+                    <span className="px-2 py-0.5 rounded-md bg-rose-500/15 text-rose-600 dark:text-rose-400 text-[10px] font-bold border border-rose-500/20">
+                      Reason: {lead.lostReason}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                  {lead.remarks ? `"${lead.remarks}" — ` : ''}This lead is preserved in read-only mode. All operations and stage transitions are locked.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* --- 3. TAB NAVIGATION --- */}
         <div className="flex items-center gap-4 sm:gap-8 border-b border-[hsl(var(--border))] overflow-x-auto scrollbar-none touch-pan-x px-2">
           {TABS.map((tab) => {
             const { isLocked } = getTabLockState(tab.id);
             const pendingFollowUpsCount = tab.id === 'followups' ? activities.filter(a => a.status === 'Pending').length : 0;
             const hasOverdueFollowUp = tab.id === 'followups' && activities.some(a => a.status === 'Pending' && a.scheduledDate && new Date(a.scheduledDate).getTime() < Date.now());
+            const hasOverdueSiteVisit = tab.id === 'site' && !lead?.siteMeasurements && siteVisitInfo.scheduledDate && new Date(siteVisitInfo.scheduledDate).getTime() < Date.now();
+            const hasOverdueRequirements = tab.id === 'requirements' && (!lead?.requirements || lead.requirements.length === 0) && requirementsInfo.scheduledDate && new Date(requirementsInfo.scheduledDate).getTime() < Date.now();
             return (
               <button
                 key={tab.id}
@@ -591,15 +749,15 @@ export default function Lead360View() {
                 )}
               >
                 {tab.label}
-                {pendingFollowUpsCount > 0 && (
+                {(pendingFollowUpsCount > 0 || hasOverdueSiteVisit || hasOverdueRequirements) && (
                   <span className={cn(
                     "px-1.5 py-0.5 rounded-full text-[10px] font-black leading-none flex items-center gap-1",
-                    hasOverdueFollowUp
+                    (hasOverdueFollowUp || hasOverdueSiteVisit || hasOverdueRequirements)
                       ? "bg-rose-500 text-white animate-pulse"
                       : activeTab === tab.id ? "bg-amber-500 text-white" : "bg-amber-500/20 text-amber-600 dark:text-amber-400"
                   )}>
-                    {hasOverdueFollowUp && <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />}
-                    {pendingFollowUpsCount} {hasOverdueFollowUp ? 'Overdue' : ''}
+                    {(hasOverdueFollowUp || hasOverdueSiteVisit || hasOverdueRequirements) && <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />}
+                    {tab.id === 'followups' ? `${pendingFollowUpsCount} ${hasOverdueFollowUp ? 'Overdue' : ''}` : 'Overdue'}
                   </span>
                 )}
                 {isLocked && (
@@ -683,7 +841,7 @@ export default function Lead360View() {
                           <p className="text-[10px] sm:text-[11px] text-[hsl(var(--muted-foreground))]">Full project site address & navigation</p>
                         </div>
                       </div>
-                      {!isConverted && (
+                      {!isReadOnly && (
                         <button
                           onClick={() => setIsEditModalOpen(true)}
                           className="text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1"
@@ -811,7 +969,7 @@ export default function Lead360View() {
                     <h3 className="text-xs sm:text-sm font-black uppercase tracking-widest text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                       <Activity className="w-4 h-4 text-blue-500" /> Activity Timeline
                     </h3>
-                    {!isConverted && (
+                    {!isReadOnly && (
                       <div className="flex items-center gap-2 flex-wrap">
                         <button
                           onClick={() => setIsActivityModalOpen(true)}
@@ -909,7 +1067,7 @@ export default function Lead360View() {
                 onScheduleFollowUp={() => setIsFollowUpModalOpen(true)}
                 onLogActivity={() => setIsActivityModalOpen(true)}
                 onSendToSiteVisit={() => setIsSendToSiteVisitOpen(true)}
-                isConverted={isConverted}
+                isConverted={isReadOnly}
               />
             </motion.div>
           )}
@@ -930,14 +1088,96 @@ export default function Lead360View() {
                     Complete initial follow-up and schedule a Site Visit to unlock measurement logging.
                   </p>
                 </div>
-              ) : (
+              ) : (() => {
+                const isSiteVisitOverdue = Boolean(
+                  !lead.siteMeasurements &&
+                  siteVisitInfo.scheduledDate &&
+                  new Date(siteVisitInfo.scheduledDate).getTime() < Date.now()
+                );
+
+                const getSiteVisitOverdueText = (dateStr?: string | Date) => {
+                  if (!dateStr) return 'Schedule Expired';
+                  const diffMs = Date.now() - new Date(dateStr).getTime();
+                  if (diffMs <= 0) return 'Schedule Expired';
+                  const diffMins = Math.floor(diffMs / (1000 * 60));
+                  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                  if (diffDays > 0) return `${diffDays}d overdue`;
+                  if (diffHours > 0) return `${diffHours}h overdue`;
+                  return `${Math.max(1, diffMins)}m overdue`;
+                };
+
+                return (
                 <div className="space-y-4 sm:space-y-6">
+                  {/* Site Visit Overdue Warning Banner */}
+                  {isSiteVisitOverdue && (
+                    <div className="relative overflow-hidden bg-gradient-to-r from-rose-500/15 via-rose-500/10 to-amber-500/10 border-2 border-rose-500/30 dark:border-rose-500/40 rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm animate-in slide-in-from-top-2 duration-300">
+                      <div className="flex items-start sm:items-center gap-3.5">
+                        <div className="w-11 h-11 rounded-2xl bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/30">
+                          <AlertTriangle size={22} className="animate-pulse" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="text-sm sm:text-base font-black text-rose-950 dark:text-rose-100">
+                              Site Visit Schedule Overdue
+                            </h4>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black uppercase tracking-wider shadow-xs">
+                              <Clock size={10} />
+                              {getSiteVisitOverdueText(siteVisitInfo.scheduledDate)}
+                            </span>
+                          </div>
+                          <p className="text-xs text-rose-800 dark:text-rose-300/90 mt-1 leading-relaxed">
+                            The scheduled site visit for{' '}
+                            <strong className="font-bold underline decoration-rose-400 decoration-1 underline-offset-2">
+                              {new Date(siteVisitInfo.scheduledDate).toLocaleString('en-US', {
+                                weekday: 'short',
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                                hour: 'numeric',
+                                minute: '2-digit',
+                              })}
+                            </strong>{' '}
+                            has passed without survey measurements being recorded. Please reschedule the visit or log on-site measurements.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setIsSiteVisitHistoryOpen(true)}
+                          className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-white/90 dark:bg-rose-950/60 hover:bg-white dark:hover:bg-rose-900 text-rose-900 dark:text-rose-200 border border-rose-300 dark:border-rose-700/50 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
+                          title="View previous site visit schedule history"
+                        >
+                          <History size={13} className="text-rose-600 dark:text-rose-400" /> View Schedule History
+                        </button>
+                        {!isReadOnly && (
+                          <button
+                            onClick={() => setIsSendToSiteVisitOpen(true)}
+                            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md cursor-pointer"
+                            title="Reschedule Site Visit Date & Time"
+                          >
+                            <Calendar size={13} /> Reschedule Site Visit
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* 1. Primary Site Visit Briefing & Details Card */}
-                  <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-xs">
+                  <div className={cn(
+                    "bg-[hsl(var(--card))] border rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-xs transition-colors",
+                    isSiteVisitOverdue ? "border-rose-500/30" : "border-[hsl(var(--border))]"
+                  )}>
                     {/* Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-[hsl(var(--border))]">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-600 shrink-0">
+                        <div className={cn(
+                          "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border",
+                          isSiteVisitOverdue
+                            ? "bg-rose-500/10 border-rose-500/20 text-rose-600"
+                            : "bg-purple-500/10 border-purple-500/20 text-purple-600"
+                        )}>
                           <MapPin size={20} />
                         </div>
                         <div>
@@ -946,12 +1186,26 @@ export default function Lead360View() {
                               Site Visit Briefing & Details
                             </h2>
                             <span className={cn(
-                              "text-[10px] font-bold px-2.5 py-0.5 rounded-full border shrink-0",
+                              "text-[10px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 flex items-center gap-1.5",
                               lead.siteMeasurements
                                 ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                                : isSiteVisitOverdue
+                                ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30 font-black"
                                 : "bg-purple-500/10 text-purple-600 border-purple-500/20"
                             )}>
-                              {lead.siteMeasurements ? "Survey Completed" : "Survey Pending"}
+                              {lead.siteMeasurements ? (
+                                "Survey Completed"
+                              ) : isSiteVisitOverdue ? (
+                                <>
+                                  <span className="relative flex h-1.5 w-1.5">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
+                                  </span>
+                                  Survey Overdue ({getSiteVisitOverdueText(siteVisitInfo.scheduledDate)})
+                                </>
+                              ) : (
+                                "Survey Pending"
+                              )}
                             </span>
                           </div>
                           <p className="text-[11px] sm:text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
@@ -960,44 +1214,60 @@ export default function Lead360View() {
                         </div>
                       </div>
 
-                      {!isConverted && (
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {lead.siteMeasurements ? (
-                            <>
-                              <button
-                                onClick={() => setIsSiteVisitModalOpen(true)}
-                                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
-                              >
-                                <Pencil size={13} /> Edit Measurements & Photos
-                              </button>
-                              {['Under Site Visit', 'Measurement Done'].includes(lead.status) && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => setIsSiteVisitHistoryOpen(true)}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs"
+                          title="View previous site visit schedule history"
+                        >
+                          <History size={13} className="text-purple-600 dark:text-purple-400" /> View Previous Schedule
+                        </button>
+
+                        {!isReadOnly && (
+                          <>
+                            {lead.siteMeasurements ? (
+                              <>
                                 <button
-                                  onClick={() => setIsSendToReqOpen(true)}
-                                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                                  onClick={() => setIsSiteVisitModalOpen(true)}
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
                                 >
-                                  Pass to Requirements <ArrowRight size={13} />
+                                  <Pencil size={13} /> Edit Measurements & Photos
                                 </button>
-                              )}
-                            </>
-                          ) : (
-                            <>
-                              <button
-                                onClick={() => setIsSendToSiteVisitOpen(true)}
-                                className="inline-flex items-center gap-1.5 px-3 py-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
-                                title="Re-assign or change schedule"
-                              >
-                                <Pencil size={13} /> Reschedule
-                              </button>
-                              <button
-                                onClick={() => setIsSiteVisitModalOpen(true)}
-                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm"
-                              >
-                                <Plus size={14} /> Log Measurements
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      )}
+                                {['Under Site Visit', 'Measurement Done'].includes(lead.status) && (
+                                  <button
+                                    onClick={() => setIsSendToReqOpen(true)}
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                                  >
+                                    Pass to Requirements <ArrowRight size={13} />
+                                  </button>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => setIsSendToSiteVisitOpen(true)}
+                                  className={cn(
+                                    "inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs",
+                                    isSiteVisitOverdue
+                                      ? "bg-rose-600 hover:bg-rose-700 text-white"
+                                      : "bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]"
+                                  )}
+                                  title="Re-assign or change schedule"
+                                >
+                                  <Calendar size={13} /> Reschedule
+                                </button>
+                                <button
+                                  onClick={() => setIsSiteVisitModalOpen(true)}
+                                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm"
+                                >
+                                  <Plus size={14} /> Log Measurements
+                                </button>
+                              </>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
 
                     {/* Site Visit Instructions Note Box */}
@@ -1028,11 +1298,26 @@ export default function Lead360View() {
 
                     {/* Key Info Details Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                      <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
-                        <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
-                          <Calendar size={11} className="text-purple-500" /> Scheduled Date
-                        </p>
-                        <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-1">
+                      <div className={cn(
+                        "rounded-xl p-3 border transition-colors",
+                        isSiteVisitOverdue
+                          ? "bg-rose-500/10 border-rose-500/30"
+                          : "bg-[hsl(var(--muted)/0.3)] border-[hsl(var(--border))]"
+                      )}>
+                        <div className="flex items-center justify-between">
+                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <Calendar size={11} className={isSiteVisitOverdue ? "text-rose-500" : "text-purple-500"} /> Scheduled Date
+                          </p>
+                          {isSiteVisitOverdue && (
+                            <span className="text-[9px] font-black text-rose-600 dark:text-rose-400 bg-rose-500/15 px-1.5 py-0.2 rounded border border-rose-500/30 uppercase">
+                              Time Passed
+                            </span>
+                          )}
+                        </div>
+                        <p className={cn(
+                          "font-bold text-xs mt-1",
+                          isSiteVisitOverdue ? "text-rose-600 dark:text-rose-400 font-extrabold" : "text-[hsl(var(--foreground))]"
+                        )}>
                           {siteVisitInfo.scheduledDate
                             ? new Date(siteVisitInfo.scheduledDate).toLocaleString('en-US', {
                                 month: 'short',
@@ -1097,7 +1382,7 @@ export default function Lead360View() {
                           Capture room dimensions, ceiling heights, door/window openings, electrical & plumbing MEP points, and high-res site photos.
                         </p>
                       </div>
-                      {!isConverted && (
+                      {!isReadOnly && (
                         <button 
                           onClick={() => setIsSiteVisitModalOpen(true)} 
                           className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer shadow-sm shadow-purple-600/20"
@@ -1339,12 +1624,13 @@ export default function Lead360View() {
                       </div>
                     )}
                   </div>
-                </>
-              )}
-            </div>
+                    </>
+                  )}
+                </div>
+                );
+              })()}
+            </motion.div>
           )}
-        </motion.div>
-      )}
 
           {activeTab === 'requirements' && (
             <motion.div key="requirements" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="space-y-6">
@@ -1362,52 +1648,265 @@ export default function Lead360View() {
                     Complete the Site Visit & Measurements phase first to unlock requirement logging.
                   </p>
                 </div>
-              ) : !lead.requirements || lead.requirements.length === 0 ? (
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-12 text-center flex flex-col items-center">
-                  <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-600 mb-4">
-                    <PenTool size={32} />
-                  </div>
-                  <h3 className="text-xl font-black text-[hsl(var(--foreground))]">No Requirements Logged</h3>
-                  <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1.5 mb-6 max-w-md">
-                    Capture room-by-room functional needs, aesthetic styles, materials, lighting, and client preferences.
-                  </p>
-                  {!isConverted && (
-                    <button onClick={() => setIsReqModalOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2">
-                      <Plus size={16} /> Add Design Requirements
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {/* Top Bar */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 md:px-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
-                        <PenTool size={20} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h2 className="text-base font-black text-[hsl(var(--foreground))]">Client Design Specifications</h2>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                            {lead.requirements.length} {lead.requirements.length === 1 ? 'Space' : 'Spaces'}
-                          </span>
+              ) : (() => {
+                const hasRequirements = Boolean(lead.requirements && lead.requirements.length > 0);
+                const isReqOverdue = Boolean(
+                  !hasRequirements &&
+                  requirementsInfo.scheduledDate &&
+                  new Date(requirementsInfo.scheduledDate).getTime() < Date.now()
+                );
+
+                const getReqOverdueText = (dateStr?: string | Date) => {
+                  if (!dateStr) return 'Schedule Expired';
+                  const diffMs = Date.now() - new Date(dateStr).getTime();
+                  if (diffMs <= 0) return 'Schedule Expired';
+                  const diffMins = Math.floor(diffMs / (1000 * 60));
+                  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                  if (diffDays > 0) return `${diffDays}d overdue`;
+                  if (diffHours > 0) return `${diffHours}h overdue`;
+                  return `${Math.max(1, diffMins)}m overdue`;
+                };
+
+                return (
+                  <div className="space-y-4 sm:space-y-6">
+                    {/* 1. Overdue Warning Banner */}
+                    {isReqOverdue && (
+                      <div className="relative overflow-hidden bg-gradient-to-r from-rose-500/15 via-rose-500/10 to-amber-500/10 border-2 border-rose-500/30 dark:border-rose-500/40 rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm animate-in slide-in-from-top-2 duration-300">
+                        <div className="flex items-start sm:items-center gap-3.5">
+                          <div className="w-11 h-11 rounded-2xl bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/30">
+                            <AlertTriangle size={22} className="animate-pulse" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="text-sm sm:text-base font-black text-rose-950 dark:text-rose-100">
+                                Requirements Session Overdue
+                              </h4>
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black uppercase tracking-wider shadow-xs">
+                                <Clock size={10} />
+                                {getReqOverdueText(requirementsInfo.scheduledDate)}
+                              </span>
+                            </div>
+                            <p className="text-xs text-rose-800 dark:text-rose-300/90 mt-1 leading-relaxed">
+                              The scheduled requirements session for{' '}
+                              <strong className="font-bold underline decoration-rose-400 decoration-1 underline-offset-2">
+                                {new Date(requirementsInfo.scheduledDate).toLocaleString('en-US', {
+                                  weekday: 'short',
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                  hour: 'numeric',
+                                  minute: '2-digit',
+                                })}
+                              </strong>{' '}
+                              has passed without design specifications being recorded. Please reschedule the session or capture requirements now.
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-xs text-[hsl(var(--muted-foreground))]">Functional needs, aesthetic styles, lighting, and materials per room.</p>
+                        {!isReadOnly && (
+                          <div className="flex items-center gap-2 flex-wrap shrink-0">
+                            <button
+                              onClick={() => setIsSendToReqOpen(true)}
+                              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md cursor-pointer"
+                              title="Reschedule Requirements Session"
+                            >
+                              <Calendar size={13} /> Reschedule Session
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* 2. Primary Requirements Briefing & Specifications Card */}
+                    <div className={cn(
+                      "bg-[hsl(var(--card))] border rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-xs transition-colors",
+                      isReqOverdue ? "border-rose-500/30" : "border-[hsl(var(--border))]"
+                    )}>
+                      {/* Header */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-[hsl(var(--border))]">
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border",
+                            isReqOverdue
+                              ? "bg-rose-500/10 border-rose-500/20 text-rose-600"
+                              : "bg-emerald-500/10 border-emerald-500/20 text-emerald-600"
+                          )}>
+                            <PenTool size={20} />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h2 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))]">
+                                Requirements Briefing & Specifications
+                              </h2>
+                              <span className={cn(
+                                "text-[10px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 flex items-center gap-1.5",
+                                hasRequirements
+                                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                                  : isReqOverdue
+                                  ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30 font-black"
+                                  : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                              )}>
+                                {hasRequirements ? (
+                                  `Configured (${lead.requirements.length} ${lead.requirements.length === 1 ? 'Space' : 'Spaces'})`
+                                ) : isReqOverdue ? (
+                                  <>
+                                    <span className="relative flex h-1.5 w-1.5">
+                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
+                                    </span>
+                                    Discussion Overdue ({getReqOverdueText(requirementsInfo.scheduledDate)})
+                                  </>
+                                ) : (
+                                  "Discussion Pending"
+                                )}
+                              </span>
+                            </div>
+                            <p className="text-[11px] sm:text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                              Assigned consultant, scheduled discussion time, budget range, and room-by-room design needs.
+                            </p>
+                          </div>
+                        </div>
+
+                        {!isReadOnly && (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {hasRequirements ? (
+                              <>
+                                <button
+                                  onClick={() => setIsReqModalOpen(true)}
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs"
+                                >
+                                  <Pencil size={13} /> Edit Requirements & Budget
+                                </button>
+                                {['Under Requirement', 'Requirement Completed'].includes(lead.status) && (
+                                  <button
+                                    onClick={() => setIsSendToDrawingOpen(true)}
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm"
+                                  >
+                                    Pass to 2D/3D Drawing <ArrowRight size={13} />
+                                  </button>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => setIsSendToReqOpen(true)}
+                                  className={cn(
+                                    "inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs",
+                                    isReqOverdue
+                                      ? "bg-rose-600 hover:bg-rose-700 text-white"
+                                      : "bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]"
+                                  )}
+                                  title="Re-assign or change discussion schedule"
+                                >
+                                  <Calendar size={13} /> Reschedule Session
+                                </button>
+                                <button
+                                  onClick={() => setIsReqModalOpen(true)}
+                                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm"
+                                >
+                                  <Plus size={14} /> Add Design Requirements
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Requirement Handover Notes Box */}
+                      {requirementsInfo.note && (
+                        <div className="bg-emerald-500/[0.07] border border-emerald-500/20 rounded-2xl p-4 sm:p-5 space-y-2.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                              <MessageSquare size={13} className="text-emerald-600" />
+                              Requirement Handover & Scope Notes
+                            </p>
+                            {requirementsInfo.activity?.createdAt && (
+                              <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                                Recorded {new Date(requirementsInfo.activity.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs sm:text-sm text-[hsl(var(--foreground))] font-medium leading-relaxed bg-[hsl(var(--card)/0.8)] border border-emerald-500/20 p-3 sm:p-3.5 rounded-xl whitespace-pre-wrap">
+                            {requirementsInfo.note}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* 4 Metadata Badges Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <Calendar size={11} className="text-emerald-500" /> Discussion Schedule
+                          </p>
+                          <p className={cn("font-bold text-xs mt-1 truncate", isReqOverdue ? "text-rose-600 dark:text-rose-400 font-black" : "text-[hsl(var(--foreground))]")}>
+                            {requirementsInfo.scheduledDate
+                              ? new Date(requirementsInfo.scheduledDate).toLocaleString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                  hour: 'numeric',
+                                  minute: '2-digit',
+                                })
+                              : 'Not specifically scheduled'}
+                          </p>
+                        </div>
+
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <User size={11} className="text-blue-500" /> Assigned Consultant
+                          </p>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-1 truncate">
+                            {requirementsInfo.assignedName}
+                          </p>
+                        </div>
+
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <DollarSign size={11} className="text-amber-500" /> Target Budget
+                          </p>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-1 truncate">
+                            {lead.budgetRange || 'Not specified'}
+                          </p>
+                        </div>
+
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <Building size={11} className="text-purple-500" /> Property Scope
+                          </p>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-1 truncate">
+                            {lead.propertyType || 'Residential'}
+                          </p>
+                        </div>
                       </div>
                     </div>
 
-                    {!isConverted && (
-                      <button 
-                        onClick={() => setIsReqModalOpen(true)} 
-                        className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shrink-0"
-                      >
-                        <Pencil size={13} /> Edit Requirements & Budget
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Estimated Budget & Project Overview Bar */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* 3. Empty State or Structured Room Cards */}
+                    {!hasRequirements ? (
+                      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-6 sm:p-10 text-center flex flex-col items-center space-y-4">
+                        <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-600">
+                          <PenTool size={28} />
+                        </div>
+                        <div className="max-w-md space-y-1">
+                          <h3 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))]">
+                            Ready for Detailed Requirements Logging
+                          </h3>
+                          <p className="text-[hsl(var(--muted-foreground))] text-xs leading-relaxed">
+                            Capture room-by-room functional needs, spatial usage, MEP utility requirements, interior design styles, color palettes, materials, and specific client preferences.
+                          </p>
+                        </div>
+                        {!isReadOnly && (
+                          <button 
+                            onClick={() => setIsReqModalOpen(true)} 
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer shadow-sm shadow-emerald-600/20"
+                          >
+                            <Plus size={16} /> Add Design Requirements
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {/* Estimated Budget & Project Overview Bar */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 flex items-center gap-3.5">
                       <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-black shrink-0">
                         <DollarSign size={20} />
@@ -1635,8 +2134,11 @@ export default function Lead360View() {
                   </div>
                 </div>
               )}
-            </motion.div>
-          )}
+            </div>
+          );
+        })()}
+      </motion.div>
+    )}
 
           {activeTab === 'designs' && (
             <motion.div key="designs" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="space-y-6">
@@ -1654,21 +2156,6 @@ export default function Lead360View() {
                     Complete the Client Requirements phase first to unlock 2D layout and 3D model uploads.
                   </p>
                 </div>
-              ) : !lead.designFiles || lead.designFiles.length === 0 ? (
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-12 text-center flex flex-col items-center">
-                  <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500 mb-4">
-                    <UploadCloud size={32} />
-                  </div>
-                  <h3 className="text-xl font-black text-[hsl(var(--foreground))]">No Drawings or 3D Models Uploaded</h3>
-                  <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1.5 mb-6 max-w-md">
-                    Upload 2D layouts (Floor plan, RCP, Electrical) and 3D models/renders (.dwg, .skp, .fbx, .obj, renders).
-                  </p>
-                  {!isConverted && (
-                    <button onClick={() => setIsDesignModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2">
-                      <Plus size={16} /> Upload 2D & 3D Drawings
-                    </button>
-                  )}
-                </div>
               ) : (() => {
                 const twoDFiles = (lead.designFiles || []).filter((f: any) => {
                   if (f.category === '2D') return true;
@@ -1684,63 +2171,197 @@ export default function Lead360View() {
                   return type === '3d-model';
                 });
 
+                const hasDesignFiles = Boolean(lead.designFiles && lead.designFiles.length > 0);
+
                 return (
                   <div className="space-y-4 sm:space-y-6">
-                    {/* Top Action Header Bar with Segmented Toggle Button */}
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6">
-                      <div>
-                        <div className="flex items-center gap-2 sm:gap-2.5">
-                          <h2 className="text-sm sm:text-base font-black text-[hsl(var(--foreground))]">2D & 3D Design Drawings</h2>
-                          <span className="text-[10px] font-bold px-2 sm:px-2.5 py-0.5 rounded-md bg-blue-500/10 text-blue-600 border border-blue-500/20">
-                            {lead.designFiles.length} Total Files
-                          </span>
+                    {/* Primary 2D & 3D Design Briefing & Specifications Card */}
+                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-xs">
+                      {/* Header */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-[hsl(var(--border))]">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border bg-blue-500/10 border-blue-500/20 text-blue-600">
+                            <Ruler size={20} />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h2 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))]">
+                                2D & 3D Design Drawings & Models
+                              </h2>
+                              <span className={cn(
+                                "text-[10px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 flex items-center gap-1.5",
+                                hasDesignFiles
+                                  ? "bg-blue-500/10 text-blue-600 border-blue-500/20 font-bold"
+                                  : "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                              )}>
+                                {hasDesignFiles ? (
+                                  `Drawings Ready (${lead.designFiles.length} Total Files)`
+                                ) : (
+                                  "Upload Drawings Pending"
+                                )}
+                              </span>
+                            </div>
+                            <p className="text-[11px] sm:text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                              Architectural layouts, electrical/plumbing 2D working drawings, and 3D models/photorealistic renders.
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-[11px] sm:text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                          Switch between 2D architectural layouts and 3D models/renders.
-                        </p>
+
+                        {!isReadOnly && (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {hasDesignFiles ? (
+                              <>
+                                <button
+                                  onClick={() => setIsDesignModalOpen(true)}
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs"
+                                >
+                                  <Plus size={14} /> Upload More Drawings
+                                </button>
+                                {['Under Drawing', 'Design Approved'].includes(lead.status) && (
+                                  <button
+                                    onClick={() => setIsSendToBoqOpen(true)}
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm"
+                                  >
+                                    Pass to BOQ Creation <ArrowRight size={13} />
+                                  </button>
+                                )}
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => setIsDesignModalOpen(true)}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm"
+                              >
+                                <Plus size={14} /> Upload 2D & 3D Drawings
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
 
-                      {/* Header Toggle Buttons */}
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto">
-                        <div className="flex bg-[hsl(var(--muted))] p-1 rounded-xl sm:rounded-2xl border border-[hsl(var(--border))] w-full sm:w-auto">
-                          <button
-                            type="button"
-                            onClick={() => setDesignSubTab('2d')}
-                            className={cn(
-                              "flex-1 sm:flex-initial justify-center flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs font-black transition-all active:scale-95",
-                              designSubTab === '2d'
-                                ? "bg-blue-600 text-white"
-                                : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                      {/* Design Handover Notes Box */}
+                      {drawingInfo.note && (
+                        <div className="bg-blue-500/[0.07] border border-blue-500/20 rounded-2xl p-4 sm:p-5 space-y-2.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+                              <MessageSquare size={13} className="text-blue-600" />
+                              Design Brief & Layer Guidelines
+                            </p>
+                            {drawingInfo.activity?.createdAt && (
+                              <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                                Recorded {new Date(drawingInfo.activity.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                              </span>
                             )}
-                          >
-                            <Layers size={14} />
-                            2D Drawings ({twoDFiles.length})
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDesignSubTab('3d')}
-                            className={cn(
-                              "flex-1 sm:flex-initial justify-center flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs font-black transition-all active:scale-95",
-                              designSubTab === '3d'
-                                ? "bg-purple-600 text-white"
-                                : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
-                            )}
-                          >
-                            <Box size={14} />
-                            3D Models ({threeDFiles.length})
-                          </button>
+                          </div>
+                          <p className="text-xs sm:text-sm text-[hsl(var(--foreground))] font-medium leading-relaxed bg-[hsl(var(--card)/0.8)] border border-blue-500/20 p-3 sm:p-3.5 rounded-xl whitespace-pre-wrap">
+                            {drawingInfo.note}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* 4 Metadata Badges Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+                        {/* 1. Assigned Designer */}
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <User size={11} className="text-purple-500" /> Assigned Designer
+                          </p>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-1 truncate">
+                            {drawingInfo.assignedName}
+                          </p>
                         </div>
 
-                        {!isConverted && (
-                          <button
-                            onClick={() => setIsDesignModalOpen(true)}
-                            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 sm:gap-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-[hsl(var(--primary-foreground))] px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 shrink-0"
+                        {/* 2. Design Theme */}
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <Palette size={11} className="text-emerald-500" /> Design Theme
+                          </p>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-1 truncate">
+                            {lead.requirements?.find((r: any) => r.designStyle)?.designStyle || lead.requirements?.[0]?.theme || 'Custom Style'}
+                          </p>
+                        </div>
+
+                        {/* 3. File Summary */}
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <Layers size={11} className="text-cyan-500" /> File Summary
+                          </p>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-1 truncate">
+                            {twoDFiles.length} 2D Layouts • {threeDFiles.length} 3D Files
+                          </p>
+                        </div>
+
+                        {/* 4. Property Scope */}
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <Building size={11} className="text-blue-500" /> Property Scope
+                          </p>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-1 truncate">
+                            {lead.propertyType || lead.projectLocation || 'Interior Execution'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 3. Empty State or Segmented Partitions & File Grid */}
+                    {!hasDesignFiles ? (
+                      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-6 sm:p-10 text-center flex flex-col items-center space-y-4">
+                        <div className="w-14 h-14 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-600">
+                          <UploadCloud size={28} />
+                        </div>
+                        <div className="max-w-md space-y-1">
+                          <h3 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))]">
+                            Ready for 2D & 3D Drawing Uploads
+                          </h3>
+                          <p className="text-[hsl(var(--muted-foreground))] text-xs leading-relaxed">
+                            Upload 2D layouts (Floor plans, False Ceiling RCP, Electrical & Plumbing drawings) and 3D models/photorealistic renders (.DWG, .SKP, .FBX, .OBJ, images).
+                          </p>
+                        </div>
+                        {!isReadOnly && (
+                          <button 
+                            onClick={() => setIsDesignModalOpen(true)} 
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer shadow-sm shadow-blue-600/20"
                           >
-                            <Plus size={14} /> Upload Drawings
+                            <Plus size={16} /> Upload 2D & 3D Drawings
                           </button>
                         )}
                       </div>
-                    </div>
+                    ) : (
+                      <div className="space-y-4 sm:space-y-6">
+                        {/* Segmented Switcher Bar */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-3 sm:p-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-black uppercase tracking-wider text-[hsl(var(--muted-foreground))]">File Categories:</span>
+                          </div>
+
+                          <div className="flex bg-[hsl(var(--muted))] p-1 rounded-xl sm:rounded-2xl border border-[hsl(var(--border))] w-full sm:w-auto">
+                            <button
+                              type="button"
+                              onClick={() => setDesignSubTab('2d')}
+                              className={cn(
+                                "flex-1 sm:flex-initial justify-center flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs font-black transition-all active:scale-95 cursor-pointer",
+                                designSubTab === '2d'
+                                  ? "bg-blue-600 text-white shadow-xs"
+                                  : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                              )}
+                            >
+                              <Layers size={14} />
+                              2D Layouts ({twoDFiles.length})
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDesignSubTab('3d')}
+                              className={cn(
+                                "flex-1 sm:flex-initial justify-center flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs font-black transition-all active:scale-95 cursor-pointer",
+                                designSubTab === '3d'
+                                  ? "bg-purple-600 text-white shadow-xs"
+                                  : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                              )}
+                            >
+                              <Box size={14} />
+                              3D Models & Renders ({threeDFiles.length})
+                            </button>
+                          </div>
+                        </div>
 
                     {/* Active Partition View */}
                     <AnimatePresence mode="wait">
@@ -1965,13 +2586,15 @@ export default function Lead360View() {
                       )}
                     </AnimatePresence>
                   </div>
-                );
-              })()}
-            </motion.div>
-          )}
+                )}
+              </div>
+            );
+          })()}
+        </motion.div>
+      )}
 
           {activeTab === 'boq' && (
-            <motion.div key="boq" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+            <motion.div key="boq" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="space-y-6">
               {getTabLockState('boq').isLocked ? (
                 <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-6 sm:p-12 text-center flex flex-col items-center">
                   <div className="w-12 h-12 sm:w-16 sm:h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 mb-3 sm:mb-4 border border-amber-500/20">
@@ -1986,135 +2609,281 @@ export default function Lead360View() {
                     Complete and approve drawings to unlock BOQ creation and itemized estimations.
                   </p>
                 </div>
-              ) : !lead.boqs || lead.boqs.length === 0 ? (
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-6 sm:p-10 text-center flex flex-col items-center">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500 mb-3 sm:mb-4">
-                    <Calculator size={26} className="sm:w-8 sm:h-8" />
-                  </div>
-                  <h3 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))]">No BOQ Generated</h3>
-                  <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 mb-6 max-w-sm">
-                    Create a detailed Bill of Quantities based on requirements and designs.
-                  </p>
-                  {(() => {
-                    const hasAcceptedQuote = lead?.quotations && lead.quotations.some((q: any) => q.status === 'Accepted');
-                    const isQuotationApproved = hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(lead?.status || '') || Boolean(lead?.linkedProject);
-                    if (isConverted || isQuotationApproved) {
-                      return (
-                        <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-xs font-bold">
-                          <Lock size={13} /> Quotation Approved (BOQ Locked)
-                        </span>
-                      );
-                    }
-                    return (
-                      <button onClick={() => setIsBoqModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 sm:px-6 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5">
-                        <Plus size={15} /> Create BOQ
-                      </button>
-                    );
-                  })()}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Top action bar */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-3.5 sm:p-4 md:px-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 shrink-0">
-                        <Calculator size={18} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h2 className="text-sm sm:text-base font-black text-[hsl(var(--foreground))]">Bill of Quantities (BOQ)</h2>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 border border-indigo-500/20">
-                            {lead.boqs.length} {lead.boqs.length === 1 ? 'Version' : 'Versions'}
-                          </span>
-                        </div>
-                        <p className="text-[10px] sm:text-[11px] text-[hsl(var(--muted-foreground))]">
-                          Itemized quantity specifications and material cost breakdown
-                        </p>
-                      </div>
-                    </div>
+              ) : (() => {
+                const hasBoqs = Boolean(lead.boqs && lead.boqs.length > 0);
+                const hasAcceptedQuote = lead.quotations && lead.quotations.some((q: any) => q.status === 'Accepted');
+                const isQuotationApproved = hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(lead.status) || Boolean(lead.linkedProject);
+                const isBoqLocked = isReadOnly || isQuotationApproved;
 
-                    {(() => {
-                      const hasAcceptedQuote = lead.quotations && lead.quotations.some((q: any) => q.status === 'Accepted');
-                      const isQuotationApproved = hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(lead.status) || Boolean(lead.linkedProject);
-                      const isBoqLocked = isConverted || isQuotationApproved;
-
-                      if (isBoqLocked) {
-                        return (
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-xs font-bold">
-                              <Lock size={13} /> Quotation Approved (BOQ Locked)
-                            </span>
+                return (
+                  <div className="space-y-4 sm:space-y-6">
+                    {/* Primary BOQ Header & Specifications Card */}
+                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-xs">
+                      {/* Header */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-[hsl(var(--border))]">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border bg-indigo-500/10 border-indigo-500/20 text-indigo-600">
+                            <Calculator size={20} />
                           </div>
-                        );
-                      }
-
-                      return (
-                        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-                          <button
-                            onClick={() => {
-                              setEditingBoqIndex(activeBoqIndex);
-                              setIsBoqModalOpen(true);
-                            }}
-                            className="flex-1 sm:flex-initial justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <Pencil size={13} /> Edit Current BOQ
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingBoqIndex(null);
-                              setIsBoqModalOpen(true);
-                            }}
-                            className="flex-1 sm:flex-initial justify-center bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] px-3.5 py-2 rounded-xl text-xs font-bold transition-all border border-[hsl(var(--border))] active:scale-95 flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <Plus size={14} /> New BOQ Version
-                          </button>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h2 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))]">
+                                Bill of Quantities (BOQ) & Estimations
+                              </h2>
+                              <span className={cn(
+                                "text-[10px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 flex items-center gap-1.5",
+                                hasBoqs
+                                  ? "bg-indigo-500/10 text-indigo-600 border-indigo-500/20 font-bold"
+                                  : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                              )}>
+                                {hasBoqs ? (
+                                  `BOQ Ready (${lead.boqs.length} ${lead.boqs.length === 1 ? 'Version' : 'Versions'})`
+                                ) : (
+                                  "Estimation Pending"
+                                )}
+                              </span>
+                            </div>
+                            <p className="text-[11px] sm:text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                              Itemized line-item quantities, unit rates, material specifications, and estimation versions.
+                            </p>
+                          </div>
                         </div>
-                      );
-                    })()}
-                  </div>
 
-                  {lead.boqs.length > 1 && (
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none touch-pan-x">
-                      {lead.boqs.map((q: any, idx: number) => (
-                        <button
-                          key={idx}
-                          onClick={() => setActiveBoqIndex(idx)}
-                          className={cn(
-                            "px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0",
-                            activeBoqIndex === idx 
-                              ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" 
-                              : "bg-[hsl(var(--card))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] hover:text-[hsl(var(--foreground))]"
-                          )}
-                        >
-                          Version {q.version || idx + 1}
-                        </button>
-                      ))}
+                        {!isReadOnly && (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {isBoqLocked ? (
+                              <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))] text-xs font-bold">
+                                <Lock size={13} /> {isLost ? 'Lead Lost (Locked)' : 'Quotation Approved (BOQ Locked)'}
+                              </span>
+                            ) : hasBoqs ? (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    setEditingBoqIndex(activeBoqIndex);
+                                    setIsBoqModalOpen(true);
+                                  }}
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs"
+                                >
+                                  <Pencil size={13} /> Edit Current BOQ
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setEditingBoqIndex(null);
+                                    setIsBoqModalOpen(true);
+                                  }}
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs"
+                                >
+                                  <Plus size={14} /> New Version
+                                </button>
+                                {['Under BOQ Creation', 'Design Approved', 'Under Drawing'].includes(lead.status) && (
+                                  <button
+                                    onClick={() => setIsSendToQuotationsOpen(true)}
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm"
+                                  >
+                                    Pass to Quotation <ArrowRight size={13} />
+                                  </button>
+                                )}
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => setIsBoqModalOpen(true)}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm"
+                              >
+                                <Plus size={14} /> Create Initial BOQ
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Over Budget Warning Banner */}
+                      {boqInfo.isOverBudget && hasBoqs && (
+                        <div className="bg-rose-500/[0.08] dark:bg-rose-500/15 border-2 border-rose-500/30 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 shadow-xs">
+                          <div className="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/30 mt-0.5">
+                            <AlertTriangle size={18} />
+                          </div>
+                          <div className="space-y-1 flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="text-xs sm:text-sm font-black text-rose-700 dark:text-rose-400 flex items-center gap-1.5">
+                                Over Budget Warning
+                              </h4>
+                              <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30">
+                                +{boqInfo.budgetExcessPercentage.toFixed(1)}% Over Estimate
+                              </span>
+                            </div>
+                            <p className="text-xs text-rose-900/90 dark:text-rose-200/90 leading-relaxed font-medium">
+                              Current BOQ total of <strong className="font-black text-[hsl(var(--foreground))]">₹{boqInfo.totalAmount.toLocaleString('en-IN')}</strong> exceeds the maximum estimated budget range of <strong className="font-black text-[hsl(var(--foreground))]">₹{boqInfo.maxBudget?.toLocaleString('en-IN')}</strong> ({lead.budgetRange || 'Estimate'}) by <strong className="font-black text-rose-600 dark:text-rose-400">₹{boqInfo.budgetExcessAmount.toLocaleString('en-IN')}</strong>.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Estimator Handover Notes Box */}
+                      {boqInfo.note && (
+                        <div className="bg-indigo-500/[0.07] border border-indigo-500/20 rounded-2xl p-4 sm:p-5 space-y-2.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
+                              <MessageSquare size={13} className="text-indigo-600" />
+                              Estimator Note & Scope Assumptions
+                            </p>
+                            {boqInfo.activity?.createdAt && (
+                              <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                                Recorded {new Date(boqInfo.activity.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs sm:text-sm text-[hsl(var(--foreground))] font-medium leading-relaxed bg-[hsl(var(--card)/0.8)] border border-indigo-500/20 p-3 sm:p-3.5 rounded-xl whitespace-pre-wrap">
+                            {boqInfo.note}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* 4 Metadata Badges Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+                        {/* 1. Total Estimated Amount */}
+                        <div className={cn(
+                          "rounded-xl p-3 border transition-colors",
+                          boqInfo.isOverBudget && hasBoqs
+                            ? "bg-rose-500/[0.08] border-rose-500/30"
+                            : "bg-[hsl(var(--muted)/0.3)] border-[hsl(var(--border))]"
+                        )}>
+                          <div className="flex items-center justify-between gap-1">
+                            <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                              <Calculator size={11} className={boqInfo.isOverBudget && hasBoqs ? "text-rose-500" : "text-indigo-500"} /> Total BOQ Estimate
+                            </p>
+                            {boqInfo.isOverBudget && hasBoqs && (
+                              <span className="text-[9px] font-extrabold text-rose-600 dark:text-rose-400 bg-rose-500/20 px-1.5 py-0.2 rounded border border-rose-500/30 uppercase">
+                                Exceeded
+                              </span>
+                            )}
+                          </div>
+                          <p className={cn(
+                            "font-black text-sm mt-1 truncate",
+                            boqInfo.isOverBudget && hasBoqs ? "text-rose-600 dark:text-rose-400" : "text-indigo-600 dark:text-indigo-400"
+                          )}>
+                            {hasBoqs ? `₹${boqInfo.totalAmount.toLocaleString('en-IN')}` : 'Pending Estimation'}
+                          </p>
+                        </div>
+
+                        {/* 2. Line Items & Categories */}
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <Layers size={11} className="text-purple-500" /> Items & Categories
+                          </p>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-1 truncate">
+                            {hasBoqs ? `${boqInfo.itemsCount} Items • ${boqInfo.categoriesCount} Categories` : 'No items added'}
+                          </p>
+                        </div>
+
+                        {/* 3. Target Budget */}
+                        <div className={cn(
+                          "rounded-xl p-3 border transition-colors",
+                          boqInfo.isOverBudget && hasBoqs
+                            ? "bg-amber-500/[0.08] border-amber-500/30"
+                            : "bg-[hsl(var(--muted)/0.3)] border-[hsl(var(--border))]"
+                        )}>
+                          <div className="flex items-center justify-between gap-1">
+                            <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                              <DollarSign size={11} className="text-emerald-500" /> Target Budget
+                            </p>
+                            {boqInfo.isOverBudget && hasBoqs && (
+                              <span className="text-[9px] font-extrabold text-amber-600 dark:text-amber-400 bg-amber-500/20 px-1.5 py-0.2 rounded border border-amber-500/30 uppercase">
+                                Over Budget
+                              </span>
+                            )}
+                          </div>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-1 truncate">
+                            {lead.budgetRange || 'Not specified'}
+                          </p>
+                        </div>
+
+                        {/* 4. Property Scope */}
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <Building size={11} className="text-blue-500" /> Property Scope
+                          </p>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-1 truncate">
+                            {lead.propertyType || lead.projectLocation || 'Interior Project'}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                  
-                  <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden overflow-x-auto">
-                    <BoqPreview 
-                      lead={lead} 
-                      boqIndex={activeBoqIndex} 
-                      onSuccess={fetchData} 
-                      onEdit={(() => {
-                        const hasAcceptedQuote = lead.quotations && lead.quotations.some((q: any) => q.status === 'Accepted');
-                        const isQuotationApproved = hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(lead.status) || Boolean(lead.linkedProject);
-                        const isBoqLocked = isConverted || isQuotationApproved;
-                        return isBoqLocked ? undefined : () => {
-                          setEditingBoqIndex(activeBoqIndex);
-                          setIsBoqModalOpen(true);
-                        };
-                      })()}
-                    />
+
+                    {/* Content Section: Empty State OR Version Switcher + BoqPreview */}
+                    {!hasBoqs ? (
+                      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-6 sm:p-10 text-center flex flex-col items-center space-y-4">
+                        <div className="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600">
+                          <Calculator size={28} />
+                        </div>
+                        <div className="max-w-md space-y-1">
+                          <h3 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))]">
+                            Ready for Detailed BOQ Estimation
+                          </h3>
+                          <p className="text-[hsl(var(--muted-foreground))] text-xs leading-relaxed">
+                            Build itemized quantity take-offs across flooring, carpentry, false ceiling, MEP electrical/plumbing, and finishes with unit rates and specifications.
+                          </p>
+                        </div>
+                        {!isReadOnly && !isBoqLocked && (
+                          <button 
+                            onClick={() => setIsBoqModalOpen(true)} 
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer shadow-sm shadow-indigo-600/20"
+                          >
+                            <Plus size={16} /> Create Initial BOQ
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {/* Version Switcher Bar */}
+                        {lead.boqs.length > 1 && (
+                          <div className="flex items-center justify-between gap-3 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-3 sm:p-4">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-black uppercase tracking-wider text-[hsl(var(--muted-foreground))]">BOQ Versions:</span>
+                            </div>
+                            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none touch-pan-x">
+                              {lead.boqs.map((q: any, idx: number) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => setActiveBoqIndex(idx)}
+                                  className={cn(
+                                    "px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer",
+                                    activeBoqIndex === idx 
+                                      ? "bg-indigo-600 text-white shadow-xs" 
+                                      : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))] hover:text-[hsl(var(--foreground))]"
+                                  )}
+                                >
+                                  Version {q.version || idx + 1}
+                                  {q.createdAt && (
+                                    <span className="text-[10px] opacity-70">
+                                      ({new Date(q.createdAt).toLocaleDateString()})
+                                    </span>
+                                  )}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Interactive BOQ Preview */}
+                        <BoqPreview 
+                          lead={lead} 
+                          boqIndex={activeBoqIndex} 
+                          onSuccess={fetchData} 
+                          onEdit={isBoqLocked ? undefined : () => {
+                            setEditingBoqIndex(activeBoqIndex);
+                            setIsBoqModalOpen(true);
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </motion.div>
           )}
 
           {activeTab === 'quotations' && (
-            <motion.div key="quotations" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+            <motion.div key="quotations" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="space-y-6">
               {getTabLockState('quotations').isLocked ? (
                 <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-6 sm:p-12 text-center flex flex-col items-center">
                   <div className="w-12 h-12 sm:w-16 sm:h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 mb-3 sm:mb-4 border border-amber-500/20">
@@ -2129,58 +2898,310 @@ export default function Lead360View() {
                     Finalize the BOQ estimate first to unlock commercial Quotation proposals.
                   </p>
                 </div>
-              ) : !lead.quotations || lead.quotations.length === 0 ? (
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-6 sm:p-10 text-center flex flex-col items-center">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-500 mb-3 sm:mb-4">
-                    <FileText size={26} className="sm:w-8 sm:h-8" />
-                  </div>
-                  <h3 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))]">No Quotations Generated</h3>
-                  <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 mb-6 max-w-sm">
-                    Create professional itemized quotes to secure this project.
-                  </p>
-                  {!isConverted && (
-                    <button onClick={() => setIsQuotationModalOpen(true)} className="bg-rose-600 hover:bg-rose-700 text-white px-5 sm:px-6 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5">
-                      <Plus size={15} /> Create Quotation
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {lead.quotations.length > 1 && (
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none touch-pan-x">
-                      {lead.quotations.map((q: any, idx: number) => (
-                        <button
-                          key={idx}
-                          onClick={() => setActiveQuotationIndex(idx)}
-                          className={cn(
-                            "px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0",
-                            activeQuotationIndex === idx 
-                              ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" 
-                              : "bg-[hsl(var(--card))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] hover:text-[hsl(var(--foreground))]"
-                          )}
-                        >
-                          Version {q.version}
-                          <span className={cn(
-                            "px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider",
-                            q.status === 'Accepted' ? 'bg-emerald-500 text-white' : 
-                            q.status === 'Rejected' ? 'bg-rose-500 text-white' : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
+              ) : (() => {
+                const hasQuotations = Boolean(lead.quotations && lead.quotations.length > 0);
+                const latestQuote = hasQuotations ? lead.quotations[lead.quotations.length - 1] : null;
+                const isLatestQuoteRejected = Boolean(latestQuote && latestQuote.status === 'Rejected');
+                const hasAcceptedQuote = Boolean(lead.quotations && lead.quotations.some((q: any) => q.status === 'Accepted' || q.status === 'Approved'));
+                const isQuotationApproved = hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(lead.status) || Boolean(lead.linkedProject);
+                const isQuoteLocked = isReadOnly || isQuotationApproved;
+
+                return (
+                  <div className="space-y-4 sm:space-y-6">
+                    {/* Primary Quotation Header & Specifications Card */}
+                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-xs">
+                      {/* Header */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-[hsl(var(--border))]">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border bg-rose-500/10 border-rose-500/20 text-rose-600">
+                            <FileText size={20} />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h2 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))]">
+                                Commercial Quotations & Proposals
+                              </h2>
+                              <span className={cn(
+                                "text-[10px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 flex items-center gap-1.5",
+                                hasQuotations
+                                  ? isLatestQuoteRejected
+                                    ? "bg-rose-500/10 text-rose-600 border-rose-500/20 font-bold"
+                                    : hasAcceptedQuote
+                                    ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-bold"
+                                    : "bg-blue-500/10 text-blue-600 border-blue-500/20 font-bold"
+                                  : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                              )}>
+                                {hasQuotations ? (
+                                  `Quotation Ready (${lead.quotations.length} ${lead.quotations.length === 1 ? 'Version' : 'Versions'})`
+                                ) : (
+                                  "Proposal Pending"
+                                )}
+                              </span>
+                            </div>
+                            <p className="text-[11px] sm:text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                              Itemized customer pricing proposal, discounts, tax schedules, terms of payment, and proforma invoices.
+                            </p>
+                          </div>
+                        </div>
+
+                        {!isReadOnly && (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {hasQuotations ? (
+                              <>
+                                {isLatestQuoteRejected ? (
+                                  <button
+                                    onClick={() => setIsQuotationModalOpen(true)}
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm shadow-rose-600/20"
+                                  >
+                                    <Plus size={14} /> Add Quotation Version (v{(lead.quotations.length || 1) + 1})
+                                  </button>
+                                ) : latestQuote?.status === 'Draft' ? (
+                                  <button
+                                    onClick={() => setIsQuotationModalOpen(true)}
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs"
+                                  >
+                                    <Plus size={14} /> Edit Draft Quote (v{latestQuote.version || 1})
+                                  </button>
+                                ) : (
+                                  <div 
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-bold"
+                                    title="A new quotation version can only be created if the current version is Rejected by client"
+                                  >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                    <span>Version {latestQuote?.version || 1} {latestQuote?.status || 'Sent'}</span>
+                                    <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-semibold hidden sm:inline">• Revision locked until rejected</span>
+                                  </div>
+                                )}
+
+                                {(hasAcceptedQuote || lead.status === 'Booking Pending') && !['Won', 'Converted'].includes(lead.status) && (
+                                  <button
+                                    onClick={() => setIsConvertToProjectOpen(true)}
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm"
+                                  >
+                                    <CheckCircle2 size={14} /> Convert to Project
+                                  </button>
+                                )}
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => setIsQuotationModalOpen(true)}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm"
+                              >
+                                <Plus size={14} /> Create Quotation
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Over Budget Warning Banner */}
+                      {quotationInfo.isOverBudget && hasQuotations && (
+                        <div className="bg-rose-500/[0.08] dark:bg-rose-500/15 border-2 border-rose-500/30 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 shadow-xs">
+                          <div className="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/30 mt-0.5">
+                            <AlertTriangle size={18} />
+                          </div>
+                          <div className="space-y-1 flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="text-xs sm:text-sm font-black text-rose-700 dark:text-rose-400 flex items-center gap-1.5">
+                                Over Target Budget Warning
+                              </h4>
+                              <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30">
+                                +{quotationInfo.budgetExcessPercentage.toFixed(1)}% Over Estimate
+                              </span>
+                            </div>
+                            <p className="text-xs text-rose-900/90 dark:text-rose-200/90 leading-relaxed font-medium">
+                              Current Quotation Grand Total of <strong className="font-black text-[hsl(var(--foreground))]">₹{quotationInfo.grandTotal.toLocaleString('en-IN')}</strong> exceeds the client estimated budget range of <strong className="font-black text-[hsl(var(--foreground))]">₹{quotationInfo.maxBudget?.toLocaleString('en-IN')}</strong> ({lead.budgetRange || 'Estimate'}) by <strong className="font-black text-rose-600 dark:text-rose-400">₹{quotationInfo.budgetExcessAmount.toLocaleString('en-IN')}</strong>.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Handover & Commercial Strategy Notes Box */}
+                      {quotationInfo.note && (
+                        <div className="bg-rose-500/[0.07] border border-rose-500/20 rounded-2xl p-4 sm:p-5 space-y-2.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
+                              <MessageSquare size={13} className="text-rose-600" />
+                              Commercial Handover Notes & Assumptions
+                            </p>
+                            {quotationInfo.activity?.createdAt && (
+                              <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                                Recorded {new Date(quotationInfo.activity.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs sm:text-sm text-[hsl(var(--foreground))] font-medium leading-relaxed bg-[hsl(var(--card)/0.8)] border border-rose-500/20 p-3 sm:p-3.5 rounded-xl whitespace-pre-wrap">
+                            {quotationInfo.note}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* 4 Metadata Badges Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+                        {/* 1. Grand Total */}
+                        <div className={cn(
+                          "rounded-xl p-3 border transition-colors",
+                          quotationInfo.isOverBudget && hasQuotations
+                            ? "bg-rose-500/[0.08] border-rose-500/30"
+                            : "bg-[hsl(var(--muted)/0.3)] border-[hsl(var(--border))]"
+                        )}>
+                          <div className="flex items-center justify-between gap-1">
+                            <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                              <FileText size={11} className={quotationInfo.isOverBudget && hasQuotations ? "text-rose-500" : "text-rose-500"} /> Grand Total Quote
+                            </p>
+                            {quotationInfo.isOverBudget && hasQuotations && (
+                              <span className="text-[9px] font-extrabold text-rose-600 dark:text-rose-400 bg-rose-500/20 px-1.5 py-0.2 rounded border border-rose-500/30 uppercase">
+                                Exceeded
+                              </span>
+                            )}
+                          </div>
+                          <p className={cn(
+                            "font-black text-sm mt-1 truncate",
+                            quotationInfo.isOverBudget && hasQuotations ? "text-rose-600 dark:text-rose-400" : "text-rose-600 dark:text-rose-400"
                           )}>
-                            {q.status}
-                          </span>
-                        </button>
-                      ))}
+                            {hasQuotations ? `₹${quotationInfo.grandTotal.toLocaleString('en-IN')}` : 'Pending Quote'}
+                          </p>
+                        </div>
+
+                        {/* 2. Commercial Adjustments */}
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <Sliders size={11} className="text-purple-500" /> Commercial Breakdown
+                          </p>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-1 truncate">
+                            {hasQuotations
+                              ? `${quotationInfo.discount > 0 ? `₹${quotationInfo.discount.toLocaleString('en-IN')} Disc • ` : ''}${quotationInfo.taxPercentage}% Tax (${quotationInfo.itemsCount} Items)`
+                              : 'No items priced'}
+                          </p>
+                        </div>
+
+                        {/* 3. Proposal Status */}
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <CheckCircle2 size={11} className="text-emerald-500" /> Proposal Status
+                          </p>
+                          <div className="mt-1 flex items-center gap-1.5">
+                            <span className={cn(
+                              "text-[10px] font-black uppercase px-2 py-0.5 rounded-full border",
+                              quotationInfo.currentQuote?.status === 'Accepted'
+                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                                : quotationInfo.currentQuote?.status === 'Rejected'
+                                ? "bg-rose-500/10 text-rose-600 border-rose-500/20"
+                                : quotationInfo.currentQuote?.status === 'Sent'
+                                ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                                : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                            )}>
+                              {quotationInfo.currentQuote?.status || 'Draft'}
+                            </span>
+                            <span className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] truncate">
+                              • {quotationInfo.assignedName}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* 4. Target Budget */}
+                        <div className={cn(
+                          "rounded-xl p-3 border transition-colors",
+                          quotationInfo.isOverBudget && hasQuotations
+                            ? "bg-amber-500/[0.08] border-amber-500/30"
+                            : "bg-[hsl(var(--muted)/0.3)] border-[hsl(var(--border))]"
+                        )}>
+                          <div className="flex items-center justify-between gap-1">
+                            <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                              <DollarSign size={11} className="text-emerald-500" /> Target Budget
+                            </p>
+                            {quotationInfo.isOverBudget && hasQuotations && (
+                              <span className="text-[9px] font-extrabold text-amber-600 dark:text-amber-400 bg-amber-500/20 px-1.5 py-0.2 rounded border border-amber-500/30 uppercase">
+                                Over Budget
+                              </span>
+                            )}
+                          </div>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-1 truncate">
+                            {lead.budgetRange || 'Not specified'}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                  
-                  <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden overflow-x-auto">
-                    <QuotationPreview 
-                      lead={lead} 
-                      quotationIndex={activeQuotationIndex} 
-                      onSuccess={fetchData} 
-                    />
+
+                    {/* Content Section: Empty State OR Version Switcher + QuotationPreview */}
+                    {!hasQuotations ? (
+                      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-6 sm:p-10 text-center flex flex-col items-center space-y-4">
+                        <div className="w-14 h-14 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-600">
+                          <FileText size={28} />
+                        </div>
+                        <div className="max-w-md space-y-1">
+                          <h3 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))]">
+                            Ready for Commercial Quotation
+                          </h3>
+                          <p className="text-[hsl(var(--muted-foreground))] text-xs leading-relaxed">
+                            Generate itemized pricing proposals, apply taxes, special project discounts, and email proforma invoices directly to the client.
+                          </p>
+                        </div>
+                        {!isReadOnly && (
+                          <button
+                            onClick={() => setIsQuotationModalOpen(true)}
+                            className="bg-rose-600 hover:bg-rose-700 text-white px-6 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer shadow-sm shadow-rose-600/20"
+                          >
+                            <Plus size={16} /> Create Initial Quotation
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {/* Version Switcher Bar */}
+                        {lead.quotations.length > 1 && (
+                          <div className="flex items-center justify-between gap-3 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-3 sm:p-4 shadow-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-black uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Quote Versions:</span>
+                            </div>
+                            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none touch-pan-x">
+                              {lead.quotations.map((q: any, idx: number) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => setActiveQuotationIndex(idx)}
+                                  className={cn(
+                                    "px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer",
+                                    activeQuotationIndex === idx
+                                      ? "bg-rose-600 text-white shadow-xs"
+                                      : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))] hover:text-[hsl(var(--foreground))]"
+                                  )}
+                                >
+                                  Version {q.version || idx + 1}
+                                  <span className={cn(
+                                    "px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider",
+                                    activeQuotationIndex === idx
+                                      ? "bg-white/20 text-white"
+                                      : q.status === 'Accepted'
+                                      ? "bg-emerald-500/20 text-emerald-600"
+                                      : q.status === 'Rejected'
+                                      ? "bg-rose-500/20 text-rose-600"
+                                      : "bg-[hsl(var(--background))] text-[hsl(var(--muted-foreground))]"
+                                  )}>
+                                    {q.status || 'Draft'}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Interactive Quotation Preview */}
+                        <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden overflow-x-auto">
+                          <QuotationPreview
+                            lead={lead}
+                            quotationIndex={Math.min(activeQuotationIndex, Math.max(0, (lead.quotations?.length || 1) - 1))}
+                            onAddVersion={() => setIsQuotationModalOpen(true)}
+                            onSuccess={() => {
+                              fetchData();
+                              setActiveQuotationIndex((prev) => Math.max(0, Math.min(prev, (lead.quotations?.length || 1) - 2)));
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </motion.div>
           )}
         </AnimatePresence>
@@ -2307,11 +3328,12 @@ export default function Lead360View() {
         existingBoqs={lead?.boqs || []}
         editingBoqIndex={editingBoqIndex}
         isReadOnly={Boolean(
-          isConverted ||
+          isReadOnly ||
           (lead?.quotations && lead.quotations.some((q: any) => q.status === 'Accepted')) ||
           ['Booking Pending', 'Won', 'Converted'].includes(lead?.status || '') ||
           Boolean(lead?.linkedProject)
         )}
+        budgetRange={lead?.budgetRange || ''}
         onSuccess={fetchData}
       />
       <InteriorScheduleFollowUpModal
@@ -2350,13 +3372,56 @@ export default function Lead360View() {
         isOpen={isSendToSiteVisitOpen}
         onClose={() => setIsSendToSiteVisitOpen(false)}
         customerId={params.id as string}
+        customerName={lead?.name}
+        initialData={(() => {
+          const assignedId = typeof lead?.assignedSalesExecutive === 'object' && lead?.assignedSalesExecutive !== null
+            ? lead.assignedSalesExecutive._id || lead.assignedSalesExecutive.id
+            : lead?.assignedSalesExecutive || (typeof siteVisitInfo.activity?.user === 'object' ? siteVisitInfo.activity?.user?._id : siteVisitInfo.activity?.user);
+
+          if (siteVisitInfo.scheduledDate || assignedId || siteVisitInfo.note) {
+            return {
+              scheduledDate: siteVisitInfo.scheduledDate,
+              assignedSalesExecutive: assignedId || '',
+              remarks: siteVisitInfo.note || '',
+            };
+          }
+          return null;
+        })()}
         onSuccess={fetchData}
         users={users}
+      />
+      <InteriorSiteVisitHistoryModal
+        isOpen={isSiteVisitHistoryOpen}
+        onClose={() => setIsSiteVisitHistoryOpen(false)}
+        activities={activities}
+        users={users}
+        leadName={lead?.name}
+        leadLocation={lead?.location || lead?.address}
+        onReschedule={() => setIsSendToSiteVisitOpen(true)}
+        isReadOnly={isReadOnly}
       />
       <InteriorSendToRequirementsModal
         isOpen={isSendToReqOpen}
         onClose={() => setIsSendToReqOpen(false)}
         customerId={params.id as string}
+        customerName={lead?.name}
+        initialData={(() => {
+          const designerId = typeof lead?.designerAssigned === 'object' && lead?.designerAssigned !== null
+            ? lead.designerAssigned._id || lead.designerAssigned.id
+            : lead?.designerAssigned || (typeof requirementsInfo.activity?.user === 'object' ? requirementsInfo.activity?.user?._id || requirementsInfo.activity?.user?.id : requirementsInfo.activity?.user);
+
+          const scheduledDate = lead?.requirementScheduledDate || requirementsInfo.scheduledDate;
+          const remarks = requirementsInfo.note || '';
+
+          if (designerId || scheduledDate || remarks) {
+            return {
+              assignedMember: designerId || '',
+              scheduledDate: scheduledDate,
+              remarks: remarks,
+            };
+          }
+          return null;
+        })()}
         onSuccess={fetchData}
         users={users}
       />
@@ -2364,6 +3429,24 @@ export default function Lead360View() {
         isOpen={isSendToDrawingOpen}
         onClose={() => setIsSendToDrawingOpen(false)}
         customerId={params.id as string}
+        customerName={lead?.name}
+        initialData={(() => {
+          const designerId = typeof lead?.designerAssigned === 'object' && lead?.designerAssigned !== null
+            ? lead.designerAssigned._id || lead.designerAssigned.id
+            : lead?.designerAssigned || (typeof drawingInfo.activity?.user === 'object' ? drawingInfo.activity?.user?._id || drawingInfo.activity?.user?.id : drawingInfo.activity?.user);
+
+          const scheduledDate = lead?.drawingScheduledDate || drawingInfo.scheduledDate;
+          const remarks = drawingInfo.note || '';
+
+          if (designerId || scheduledDate || remarks) {
+            return {
+              assignedDesigner: designerId || '',
+              scheduledDate: scheduledDate,
+              remarks: remarks,
+            };
+          }
+          return null;
+        })()}
         onSuccess={fetchData}
         users={users}
       />
@@ -2385,6 +3468,13 @@ export default function Lead360View() {
         isOpen={isConvertToProjectOpen}
         onClose={() => setIsConvertToProjectOpen(false)}
         customerId={params.id as string}
+        onSuccess={fetchData}
+      />
+      <InteriorMarkAsLostModal
+        isOpen={isMarkAsLostOpen}
+        onClose={() => setIsMarkAsLostOpen(false)}
+        customerId={params.id as string}
+        leadName={lead?.name}
         onSuccess={fetchData}
       />
     </InteriorShell>
