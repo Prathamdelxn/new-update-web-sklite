@@ -12,6 +12,9 @@ import interiorApiClient from '@/services/interiorApi.client';
 export const interiorCrmService = {
   // Customers / Leads
   getCustomers: (params?: any) => interiorApiClient.get('/crm/customers', { params }).then((res) => res.data),
+  getCustomerById: (customerId: string) =>
+    interiorApiClient.get(`/crm/customers/${customerId}`).then((res) => res.data),
+  getCustomerStats: () => interiorApiClient.get('/crm/customers/stats').then((res) => res.data),
   createCustomer: (data: any) => interiorApiClient.post('/crm/customers', data).then((res) => res.data),
   updateCustomer: (customerId: string, data: any) =>
     interiorApiClient.patch(`/crm/customers/${customerId}`, data).then((res) => res.data),

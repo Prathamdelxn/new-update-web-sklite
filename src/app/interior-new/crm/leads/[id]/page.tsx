@@ -84,16 +84,18 @@ export default function Lead360View() {
 
   const fetchData = async () => {
     try {
-      const leadRes = await interiorCrmService.getCustomers();
-      const customerList = leadRes?.success && leadRes?.data ? leadRes.data : Array.isArray(leadRes) ? leadRes : [];
-      const found = customerList.find((d: any) => d._id === params.id);
-      if (found) setLead(found);
+      const [leadRes, actRes, userRes] = await Promise.all([
+        interiorCrmService.getCustomerById(params.id as string),
+        interiorCrmService.getActivities(params.id as string),
+        interiorCrmService.getUsers(),
+      ]);
 
-      const actRes = await interiorCrmService.getActivities(params.id as string);
+      const singleLead = leadRes?.success && leadRes?.data ? leadRes.data : leadRes;
+      if (singleLead) setLead(singleLead);
+
       const activityList = actRes?.success && actRes?.data ? actRes.data : Array.isArray(actRes) ? actRes : [];
       setActivities(activityList);
-      
-      const userRes = await interiorCrmService.getUsers();
+
       const userList = userRes?.success && userRes?.data ? userRes.data : Array.isArray(userRes) ? userRes : [];
       setUsers(userList);
     } catch (error) {
@@ -189,6 +191,30 @@ export default function Lead360View() {
       schedulerName,
     };
   }, [activities, lead, users]);
+
+  const siteVisitActivities = React.useMemo(() => {
+    const list = (activities || []).filter(
+      (a) =>
+        a.type === 'Site Visit' &&
+        a.scheduledDate &&
+        !a.remarks?.toLowerCase().includes('recorded full measurements') &&
+        !a.remarks?.toLowerCase().includes('updated site measurements') &&
+        !a.remarks?.toLowerCase().includes('completed site visit survey')
+    );
+
+    const seen = new Set<string>();
+    const distinct: any[] = [];
+    for (const a of list) {
+      const timeKey = new Date(a.scheduledDate).toISOString().slice(0, 16);
+      if (!seen.has(timeKey)) {
+        seen.add(timeKey);
+        distinct.push(a);
+      }
+    }
+    return distinct;
+  }, [activities]);
+
+  const hasRescheduledSiteVisits = siteVisitActivities.length > 1;
 
   const requirementsInfo = React.useMemo(() => {
     const reqActivity = activities.find(
@@ -652,7 +678,7 @@ export default function Lead360View() {
                   className="p-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-xl transition-all active:scale-95"
                   title="Mark Lead as Lost"
                 >
-                  <Frown size={15} />
+                  <X size={15} />
                 </button>
 
                 <button 
@@ -749,17 +775,7 @@ export default function Lead360View() {
                 )}
               >
                 {tab.label}
-                {(pendingFollowUpsCount > 0 || hasOverdueSiteVisit || hasOverdueRequirements) && (
-                  <span className={cn(
-                    "px-1.5 py-0.5 rounded-full text-[10px] font-black leading-none flex items-center gap-1",
-                    (hasOverdueFollowUp || hasOverdueSiteVisit || hasOverdueRequirements)
-                      ? "bg-rose-500 text-white animate-pulse"
-                      : activeTab === tab.id ? "bg-amber-500 text-white" : "bg-amber-500/20 text-amber-600 dark:text-amber-400"
-                  )}>
-                    {(hasOverdueFollowUp || hasOverdueSiteVisit || hasOverdueRequirements) && <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />}
-                    {tab.id === 'followups' ? `${pendingFollowUpsCount} ${hasOverdueFollowUp ? 'Overdue' : ''}` : 'Overdue'}
-                  </span>
-                )}
+               
                 {isLocked && (
                   <Lock size={12} className="text-amber-500/80 shrink-0" />
                 )}
@@ -1143,14 +1159,16 @@ export default function Lead360View() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => setIsSiteVisitHistoryOpen(true)}
-                          className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-white/90 dark:bg-rose-950/60 hover:bg-white dark:hover:bg-rose-900 text-rose-900 dark:text-rose-200 border border-rose-300 dark:border-rose-700/50 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
-                          title="View previous site visit schedule history"
-                        >
-                          <History size={13} className="text-rose-600 dark:text-rose-400" /> View Schedule History
-                        </button>
+                        {hasRescheduledSiteVisits && (
+                          <button
+                            type="button"
+                            onClick={() => setIsSiteVisitHistoryOpen(true)}
+                            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-white/90 dark:bg-rose-950/60 hover:bg-white dark:hover:bg-rose-900 text-rose-900 dark:text-rose-200 border border-rose-300 dark:border-rose-700/50 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
+                            title="View previous site visit schedule history"
+                          >
+                            <History size={13} className="text-rose-600 dark:text-rose-400" /> View Schedule History ({siteVisitActivities.length})
+                          </button>
+                        )}
                         {!isReadOnly && (
                           <button
                             onClick={() => setIsSendToSiteVisitOpen(true)}
@@ -1215,14 +1233,16 @@ export default function Lead360View() {
                       </div>
 
                       <div className="flex items-center gap-2 flex-wrap">
-                        <button
-                          type="button"
-                          onClick={() => setIsSiteVisitHistoryOpen(true)}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs"
-                          title="View previous site visit schedule history"
-                        >
-                          <History size={13} className="text-purple-600 dark:text-purple-400" /> View Previous Schedule
-                        </button>
+                        {hasRescheduledSiteVisits && (
+                          <button
+                            type="button"
+                            onClick={() => setIsSiteVisitHistoryOpen(true)}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs"
+                            title="View previous site visit schedule history"
+                          >
+                            <History size={13} className="text-purple-600 dark:text-purple-400" /> View Previous Schedules ({siteVisitActivities.length})
+                          </button>
+                        )}
 
                         {!isReadOnly && (
                           <>
@@ -3373,7 +3393,11 @@ export default function Lead360View() {
         onClose={() => setIsSendToSiteVisitOpen(false)}
         customerId={params.id as string}
         customerName={lead?.name}
+        currentStatus={lead?.status}
         initialData={(() => {
+          const isSiteVisitStage = ['Under Site Visit', 'Measurement Done'].includes(lead?.status || '');
+          if (!isSiteVisitStage) return null;
+
           const assignedId = typeof lead?.assignedSalesExecutive === 'object' && lead?.assignedSalesExecutive !== null
             ? lead.assignedSalesExecutive._id || lead.assignedSalesExecutive.id
             : lead?.assignedSalesExecutive || (typeof siteVisitInfo.activity?.user === 'object' ? siteVisitInfo.activity?.user?._id : siteVisitInfo.activity?.user);
@@ -3405,7 +3429,11 @@ export default function Lead360View() {
         onClose={() => setIsSendToReqOpen(false)}
         customerId={params.id as string}
         customerName={lead?.name}
+        currentStatus={lead?.status}
         initialData={(() => {
+          const isRequirementStage = ['Under Requirement', 'Requirement Completed'].includes(lead?.status || '');
+          if (!isRequirementStage) return null;
+
           const designerId = typeof lead?.designerAssigned === 'object' && lead?.designerAssigned !== null
             ? lead.designerAssigned._id || lead.designerAssigned.id
             : lead?.designerAssigned || (typeof requirementsInfo.activity?.user === 'object' ? requirementsInfo.activity?.user?._id || requirementsInfo.activity?.user?.id : requirementsInfo.activity?.user);
@@ -3430,7 +3458,11 @@ export default function Lead360View() {
         onClose={() => setIsSendToDrawingOpen(false)}
         customerId={params.id as string}
         customerName={lead?.name}
+        currentStatus={lead?.status}
         initialData={(() => {
+          const isDrawingStage = ['Under Drawing', 'Design Approved'].includes(lead?.status || '');
+          if (!isDrawingStage) return null;
+
           const designerId = typeof lead?.designerAssigned === 'object' && lead?.designerAssigned !== null
             ? lead.designerAssigned._id || lead.designerAssigned.id
             : lead?.designerAssigned || (typeof drawingInfo.activity?.user === 'object' ? drawingInfo.activity?.user?._id || drawingInfo.activity?.user?.id : drawingInfo.activity?.user);

@@ -42,14 +42,34 @@ export function InteriorSiteVisitHistoryModal({
     return 'Team Member';
   };
 
-  // Filter and sort all site visit activities
-  const siteVisits = activities
-    .filter((a) => a.type === 'Site Visit' && (a.scheduledDate || a.remarks || a.status))
-    .sort((a, b) => {
-      const timeA = new Date(a.scheduledDate || a.createdAt).getTime();
-      const timeB = new Date(b.scheduledDate || b.createdAt).getTime();
-      return timeB - timeA;
-    });
+  // Filter and sort all true site visit schedule appointments
+  const siteVisits = React.useMemo(() => {
+    const list = (activities || [])
+      .filter(
+        (a) =>
+          a.type === 'Site Visit' &&
+          a.scheduledDate &&
+          !a.remarks?.toLowerCase().includes('recorded full measurements') &&
+          !a.remarks?.toLowerCase().includes('updated site measurements') &&
+          !a.remarks?.toLowerCase().includes('completed site visit survey')
+      )
+      .sort((a, b) => {
+        const timeA = new Date(a.scheduledDate || a.createdAt).getTime();
+        const timeB = new Date(b.scheduledDate || b.createdAt).getTime();
+        return timeB - timeA;
+      });
+
+    const seen = new Set<string>();
+    const distinct: any[] = [];
+    for (const a of list) {
+      const timeKey = new Date(a.scheduledDate).toISOString().slice(0, 16);
+      if (!seen.has(timeKey)) {
+        seen.add(timeKey);
+        distinct.push(a);
+      }
+    }
+    return distinct;
+  }, [activities]);
 
   return (
     <div className="fixed inset-0 z-[65] flex items-center justify-center p-4">

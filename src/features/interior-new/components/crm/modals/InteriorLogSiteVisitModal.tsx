@@ -238,13 +238,13 @@ export const InteriorLogSiteVisitModal = ({
 
       await interiorCrmService.updateCustomer(customerId, updatePayload);
 
+      // Complete any pending Site Visit activity and log measurement recording
       try {
         await interiorCrmService.createActivity({
           customer: customerId,
-          type: 'Site Visit',
+          type: 'Site Survey',
           status: 'Completed',
-          remarks: initialMeasurements ? 'Updated site measurements and site photos.' : 'Completed site visit and recorded full measurements & site photos.',
-          scheduledDate: new Date(),
+          remarks: initialMeasurements ? 'Updated site measurements and site photos.' : 'Completed site visit survey and recorded full measurements & site photos.',
           completedDate: new Date()
         });
       } catch (actErr) {

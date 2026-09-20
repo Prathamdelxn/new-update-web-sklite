@@ -235,7 +235,7 @@ export const InteriorRequirementDesignView = ({
                       ) : (
                         <button
                           onClick={() => handlePassToNext(lead._id)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
                         >
                           Pass to Drawing <ArrowRight size={11} />
                         </button>
@@ -378,7 +378,7 @@ export const InteriorRequirementDesignView = ({
                           ) : (
                             <button
                               onClick={() => handlePassToNext(lead._id)}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
                               title="Pass to 2D & 3D Drawings"
                             >
                               Pass to Drawing <ArrowRight size={13} />

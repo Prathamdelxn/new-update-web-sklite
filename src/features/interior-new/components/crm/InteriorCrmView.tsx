@@ -72,14 +72,21 @@ export default function InteriorCrmView() {
   const [deletingLead, setDeletingLead] = useState<{ id: string; name: string } | null>(null);
   const [isDeletingLead, setIsDeletingLead] = useState(false);
 
+  const [serverStats, setServerStats] = useState<any>(null);
+
   const fetchLeads = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await interiorCrmService.getCustomers();
+      const [res, userRes, statsRes] = await Promise.all([
+        interiorCrmService.getCustomers({ all: true }),
+        interiorCrmService.getUsers(),
+        interiorCrmService.getCustomerStats().catch(() => null),
+      ]);
       setLeads(res?.success && res?.data ? res.data : Array.isArray(res) ? res : []);
-
-      const userRes = await interiorCrmService.getUsers();
       setUsers(userRes?.success && userRes?.data ? userRes.data : Array.isArray(userRes) ? userRes : []);
+      if (statsRes?.success && statsRes?.data) {
+        setServerStats(statsRes.data);
+      }
     } catch (error) {
       console.error('Failed to fetch leads:', error);
     } finally {
@@ -91,8 +98,11 @@ export default function InteriorCrmView() {
     fetchLeads();
   }, [fetchLeads]);
 
-  // Dynamic stage counts for senior-level UX visibility
+  // Dynamic stage counts backed by high-speed MongoDB aggregation with local fallback
   const stageCounts = React.useMemo(() => {
+    if (serverStats) {
+      return serverStats;
+    }
     return {
       leads: leads.filter((l) => l.status !== 'Lost').length,
       follow_ups: leads.filter((l) => ['New Lead', 'Contacted', 'Meeting Scheduled'].includes(l.status)).length,
@@ -128,9 +138,10 @@ export default function InteriorCrmView() {
             'Converted',
           ].includes(l.status) || (l.quotations && l.quotations.length > 0)
       ).length,
+      won_projects: leads.filter((l) => ['Won', 'Converted'].includes(l.status)).length,
       lost_leads: leads.filter((l) => l.status === 'Lost').length,
     };
-  }, [leads]);
+  }, [serverStats, leads]);
 
   // Derive filtered leads based on the current tab
   const getFilteredLeads = () => {
@@ -505,10 +516,11 @@ export default function InteriorCrmView() {
         isOpen={isSendToSiteVisitOpen}
         onClose={() => setIsSendToSiteVisitOpen(false)}
         customerId={actionLeadId || ''}
-        customerName={leads.find(l => l._id === actionLeadId)?.name}
+        customerName={leads.find((l) => l._id === actionLeadId)?.name}
+        currentStatus={leads.find((l) => l._id === actionLeadId)?.status}
         initialData={(() => {
-          const l = leads.find(l => l._id === actionLeadId);
-          if (!l) return null;
+          const l = leads.find((l) => l._id === actionLeadId);
+          if (!l || !['Under Site Visit', 'Measurement Done'].includes(l.status)) return null;
           const assignedId = typeof l.assignedSalesExecutive === 'object' && l.assignedSalesExecutive !== null
             ? l.assignedSalesExecutive._id || l.assignedSalesExecutive.id
             : l.assignedSalesExecutive;
@@ -529,6 +541,23 @@ export default function InteriorCrmView() {
         isOpen={isSendToRequirementsOpen}
         onClose={() => setIsSendToRequirementsOpen(false)}
         customerId={actionLeadId || ''}
+        customerName={leads.find((l) => l._id === actionLeadId)?.name}
+        currentStatus={leads.find((l) => l._id === actionLeadId)?.status}
+        initialData={(() => {
+          const l = leads.find((l) => l._id === actionLeadId);
+          if (!l || !['Under Requirement', 'Requirement Completed'].includes(l.status)) return null;
+          const assignedId = typeof l.designerAssigned === 'object' && l.designerAssigned !== null
+            ? l.designerAssigned._id || l.designerAssigned.id
+            : l.designerAssigned;
+          if (assignedId || l.requirementScheduledDate || l.remarks) {
+            return {
+              assignedMember: assignedId || '',
+              scheduledDate: l.requirementScheduledDate,
+              remarks: l.remarks || '',
+            };
+          }
+          return null;
+        })()}
         onSuccess={fetchLeads}
         users={users}
       />
@@ -537,6 +566,23 @@ export default function InteriorCrmView() {
         isOpen={isSendToDrawingOpen}
         onClose={() => setIsSendToDrawingOpen(false)}
         customerId={actionLeadId || ''}
+        customerName={leads.find((l) => l._id === actionLeadId)?.name}
+        currentStatus={leads.find((l) => l._id === actionLeadId)?.status}
+        initialData={(() => {
+          const l = leads.find((l) => l._id === actionLeadId);
+          if (!l || !['Under Drawing', 'Design Approved'].includes(l.status)) return null;
+          const assignedId = typeof l.designerAssigned === 'object' && l.designerAssigned !== null
+            ? l.designerAssigned._id || l.designerAssigned.id
+            : l.designerAssigned;
+          if (assignedId || l.drawingScheduledDate || l.remarks) {
+            return {
+              assignedDesigner: assignedId || '',
+              scheduledDate: l.drawingScheduledDate,
+              remarks: l.remarks || '',
+            };
+          }
+          return null;
+        })()}
         onSuccess={fetchLeads}
         users={users}
       />

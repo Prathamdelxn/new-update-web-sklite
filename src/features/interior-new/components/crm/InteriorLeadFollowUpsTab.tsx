@@ -141,13 +141,6 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
     }
   };
 
-  const isPending = currentFollowUp?.status === 'Pending';
-  const isOverdue = Boolean(
-    isPending &&
-      currentFollowUp?.scheduledDate &&
-      new Date(currentFollowUp.scheduledDate).getTime() < Date.now()
-  );
-
   const isInitialPhase = ['New Lead', 'Contacted', 'Meeting Scheduled'].includes(lead?.status || '');
   const hasSiteVisitStarted =
     !isInitialPhase ||
@@ -156,6 +149,35 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
     Boolean(lead?.siteMeasurements) ||
     (Array.isArray(lead?.sitePhotos) && lead.sitePhotos.length > 0) ||
     Boolean(lead?.linkedProject);
+
+  const isLeadProgressed =
+    !isInitialPhase ||
+    isConverted ||
+    Boolean(lead?.linkedProject) ||
+    [
+      'Won',
+      'Converted',
+      'Booking Pending',
+      'Under Quotation',
+      'Quotation Pending',
+      'Quotation Sent',
+      'Negotiation',
+      'Under BOQ Creation',
+      'Under Drawing',
+      'Design Approved',
+      'Under Requirement',
+      'Requirement Completed',
+      'Under Site Visit',
+      'Measurement Done',
+    ].includes(lead?.status || '');
+
+  // Only consider follow-up pending/overdue if the lead has NOT progressed past the follow-up stage
+  const isPending = currentFollowUp?.status === 'Pending' && !isLeadProgressed;
+  const isOverdue = Boolean(
+    isPending &&
+      currentFollowUp?.scheduledDate &&
+      new Date(currentFollowUp.scheduledDate).getTime() < Date.now()
+  );
 
   const canSendToSiteVisit = !isConverted && !hasSiteVisitStarted && (!lead?.quotations || lead.quotations.length === 0);
 
@@ -222,7 +244,7 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
                         Overdue ({getOverdueText(currentFollowUp.scheduledDate)})
                       </>
                     ) : 'Pending Touchpoint'
-                  ) : 'Completed'}
+                  ) : isLeadProgressed ? 'Stage Completed' : 'Completed'}
                 </span>
                 {allFollowUps.length > 1 && (
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))]">
@@ -373,7 +395,7 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
               const isItemActive = item._id === currentFollowUp?._id;
               const itemUser = getUserDisplayName(item.user);
               const itemDate = item.scheduledDate || item.createdAt;
-              const isItemOverdue = item.status === 'Pending' && item.scheduledDate && new Date(item.scheduledDate).getTime() < Date.now();
+              const isItemOverdue = !isLeadProgressed && item.status === 'Pending' && item.scheduledDate && new Date(item.scheduledDate).getTime() < Date.now();
 
               return (
                 <div key={item._id || idx} className="relative group">
@@ -381,7 +403,7 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
                   <div className={cn(
                     "absolute -left-[1.35rem] sm:-left-[1.85rem] top-1.5 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-2 border-[hsl(var(--card))] flex items-center justify-center",
                     isItemActive
-                      ? isItemOverdue ? "bg-rose-500" : "bg-blue-500"
+                      ? isItemOverdue ? "bg-rose-500" : isLeadProgressed ? "bg-emerald-500" : "bg-blue-500"
                       : "bg-emerald-500"
                   )}></div>
 
@@ -391,6 +413,8 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
                     isItemActive
                       ? isItemOverdue
                         ? "bg-rose-500/5 hover:bg-rose-500/10 border-rose-500/30"
+                        : isLeadProgressed
+                        ? "bg-emerald-500/5 hover:bg-emerald-500/10 border-emerald-500/20"
                         : "bg-blue-500/5 hover:bg-blue-500/10 border-blue-500/30"
                       : "bg-[hsl(var(--muted)/0.3)] hover:bg-[hsl(var(--muted)/0.6)] border-[hsl(var(--border))]"
                   )}>
@@ -407,10 +431,18 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
                           isItemActive
                             ? isItemOverdue
                               ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30"
+                              : isLeadProgressed
+                              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                               : "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30"
                             : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                         )}>
-                          {isItemActive ? (isItemOverdue ? 'Active • Overdue' : 'Active Schedule') : 'Past Touchpoint'}
+                          {isItemActive
+                            ? isItemOverdue
+                              ? 'Active • Overdue'
+                              : isLeadProgressed
+                              ? 'Stage Progressed'
+                              : 'Active Schedule'
+                            : 'Past Touchpoint'}
                         </span>
                       </div>
 
