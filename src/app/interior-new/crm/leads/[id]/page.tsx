@@ -531,8 +531,13 @@ export default function Lead360View() {
                   <Phone size={12} className="text-blue-500 shrink-0" /> {lead.mobileNumber}
                 </a>
                 {lead.email && (
-                  <a href={`mailto:${lead.email}`} className="flex items-center gap-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] font-medium bg-[hsl(var(--muted)/0.5)] px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md border border-[hsl(var(--border))] transition-colors truncate max-w-[160px] sm:max-w-[220px]">
-                    <Mail size={12} className="text-purple-500 shrink-0" /> {lead.email}
+                  <a 
+                    href={`mailto:${lead.email}`} 
+                    title={lead.email}
+                    className="inline-flex items-center gap-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] font-medium bg-[hsl(var(--muted)/0.5)] px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md border border-[hsl(var(--border))] transition-colors min-w-0 max-w-[160px] sm:max-w-[220px] overflow-hidden"
+                  >
+                    <Mail size={12} className="text-purple-500 shrink-0" />
+                    <span className="truncate min-w-0 flex-1 mr-1">{lead.email}</span>
                   </a>
                 )}
                 {(lead.projectLocation || lead.city) && (
@@ -980,7 +985,7 @@ export default function Lead360View() {
                 </div>
 
                 {/* Right Column: Activity Timeline (7 cols) */}
-                <div className="lg:col-span-7 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 sm:p-6 shadow-sm">
+                <div className="lg:col-span-7 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 sm:p-6 shadow-sm min-w-0">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
                     <h3 className="text-xs sm:text-sm font-black uppercase tracking-widest text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                       <Activity className="w-4 h-4 text-blue-500" /> Activity Timeline
@@ -1015,14 +1020,14 @@ export default function Lead360View() {
                         const isActOverdue = act.status === 'Pending' && act.scheduledDate && new Date(act.scheduledDate).getTime() < Date.now();
 
                         return (
-                        <div key={act._id} className="relative group">
+                        <div key={act._id} className="relative group min-w-0">
                           <div className={cn(
                             "absolute -left-[1.35rem] sm:-left-[2.6rem] top-1.5 w-3.5 h-3.5 sm:w-5 sm:h-5 rounded-full border-2 sm:border-4 border-[hsl(var(--card))] flex items-center justify-center",
                             act.status === 'Pending' ? (isActOverdue ? "bg-rose-500" : "bg-amber-400") : "bg-blue-500"
                           )}></div>
                           
                           <div className={cn(
-                            "border rounded-2xl p-3.5 sm:p-5 transition-colors",
+                            "border rounded-2xl p-3.5 sm:p-5 transition-colors min-w-0 overflow-hidden",
                             isActOverdue 
                               ? "bg-rose-500/5 hover:bg-rose-500/10 border-rose-500/30" 
                               : "bg-[hsl(var(--muted)/0.5)] hover:bg-[hsl(var(--muted))] border-[hsl(var(--border))]"
@@ -1031,7 +1036,7 @@ export default function Lead360View() {
                               <span className={cn(
                                 "text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg border",
                                 isActOverdue
-                                  ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30 font-black"
+                                   ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30 font-black"
                                   : act.status === 'Pending'
                                   ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
                                   : "bg-blue-500/10 text-blue-600 border-blue-500/20"
@@ -1048,7 +1053,7 @@ export default function Lead360View() {
                                 }
                               </span>
                             </div>
-                            <p className="text-xs sm:text-sm text-[hsl(var(--foreground))] font-medium leading-relaxed">{act.remarks}</p>
+                            <p className="text-xs sm:text-sm text-[hsl(var(--foreground))] font-medium leading-relaxed break-words [overflow-wrap:anywhere] whitespace-pre-wrap">{act.remarks}</p>
                             <div className="flex items-center gap-2 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-[hsl(var(--border))]">
                               <div className="w-5 h-5 rounded-full bg-[hsl(var(--muted))] flex items-center justify-center text-[8px] font-bold text-[hsl(var(--muted-foreground))] shrink-0">
                                 {initial}
@@ -1304,7 +1309,7 @@ export default function Lead360View() {
                         )}
                       </div>
                       <div className="bg-[hsl(var(--background))] border border-purple-500/20 rounded-xl p-3.5 sm:p-4 shadow-xs">
-                        <p className="text-xs sm:text-sm font-semibold text-[hsl(var(--foreground))] leading-relaxed whitespace-pre-wrap selection:bg-purple-500/20">
+                        <p className="text-xs sm:text-sm font-semibold text-[hsl(var(--foreground))] leading-relaxed whitespace-pre-wrap selection:bg-purple-500/20 break-words [overflow-wrap:anywhere]">
                           {siteVisitInfo.note || 'Lead passed to Site Visit and assigned to site team.'}
                         </p>
                       </div>
@@ -1414,10 +1419,10 @@ export default function Lead360View() {
                   ) : (
                     <>
                       {/* 4-Card Structured Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-5">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-5 min-w-0">
                     
                     {/* Card 1: Room & Spatial Dimensions */}
-                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4">
+                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4 min-w-0 overflow-hidden">
                       <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
                         <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
                           <Maximize2 size={16} className="text-purple-500" />
@@ -1428,42 +1433,42 @@ export default function Lead360View() {
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                      <div className="grid grid-cols-2 gap-3 min-w-0">
+                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">Carpet Area</p>
-                          <p className="font-black text-sm text-[hsl(var(--foreground))]">
+                          <p className="font-black text-sm text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
                             {lead.siteMeasurements.carpetArea || '—'} <span className="text-[10px] font-medium text-[hsl(var(--muted-foreground))]">Sq.Ft</span>
                           </p>
                         </div>
 
-                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">Ceiling Height</p>
-                          <p className="font-black text-sm text-[hsl(var(--foreground))]">
+                          <p className="font-black text-sm text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
                             {lead.siteMeasurements.ceilingHeight || '—'} <span className="text-[10px] font-medium text-[hsl(var(--muted-foreground))]">Ft</span>
                           </p>
                         </div>
 
-                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] col-span-2">
+                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] col-span-2 min-w-0">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
                             <Maximize2 size={11} className="text-purple-500" /> Room Dimensions (Length × Width)
                           </p>
-                          <p className="font-bold text-xs text-[hsl(var(--foreground))]">
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
                             {lead.siteMeasurements.roomDimensions || 'Not recorded'}
                           </p>
                         </div>
 
-                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] col-span-2">
+                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] col-span-2 min-w-0">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
                             <Layers size={11} className="text-indigo-500" /> Floor-to-Ceiling Height
                           </p>
-                          <p className="font-semibold text-xs text-[hsl(var(--foreground))]">
+                          <p className="font-semibold text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
                             {lead.siteMeasurements.floorToCeilingHeight || 'Not recorded'}
                           </p>
                         </div>
 
-                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] col-span-2">
+                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] col-span-2 min-w-0">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">Rooms to Design</p>
-                          <p className="font-semibold text-xs text-[hsl(var(--foreground))]">
+                          <p className="font-semibold text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
                             {lead.siteMeasurements.rooms || 'Not specified'}
                           </p>
                         </div>
@@ -1471,7 +1476,7 @@ export default function Lead360View() {
                     </div>
 
                     {/* Card 2: Openings & Structural Elements */}
-                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4">
+                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4 min-w-0 overflow-hidden">
                       <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
                         <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
                           <DoorOpen size={16} className="text-blue-500" />
@@ -1482,39 +1487,39 @@ export default function Lead360View() {
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-1 gap-3">
-                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                      <div className="grid grid-cols-1 gap-3 min-w-0">
+                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
                             <DoorOpen size={11} className="text-blue-500" /> Door Dimensions
                           </p>
-                          <p className="font-semibold text-xs text-[hsl(var(--foreground))]">
+                          <p className="font-semibold text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
                             {lead.siteMeasurements.doorDimensions || 'Not recorded'}
                           </p>
                         </div>
 
-                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
                             <Maximize2 size={11} className="text-sky-500" /> Window Dimensions
                           </p>
-                          <p className="font-semibold text-xs text-[hsl(var(--foreground))]">
+                          <p className="font-semibold text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
                             {lead.siteMeasurements.windowDimensions || 'Not recorded'}
                           </p>
                         </div>
 
-                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
                             <Columns size={11} className="text-amber-500" /> Wall Thickness
                           </p>
-                          <p className="font-semibold text-xs text-[hsl(var(--foreground))]">
+                          <p className="font-semibold text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
                             {lead.siteMeasurements.wallThickness || 'Not recorded'}
                           </p>
                         </div>
 
-                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
                             <Columns size={11} className="text-orange-500" /> Column / Beam Dimensions
                           </p>
-                          <p className="font-semibold text-xs text-[hsl(var(--foreground))]">
+                          <p className="font-semibold text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
                             {lead.siteMeasurements.columnBeamDimensions || 'Not recorded'}
                           </p>
                         </div>
@@ -1522,7 +1527,7 @@ export default function Lead360View() {
                     </div>
 
                     {/* Card 3: MEP & Utility Services */}
-                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4">
+                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4 min-w-0 overflow-hidden">
                       <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
                         <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
                           <Zap size={16} className="text-amber-500" />
@@ -1533,30 +1538,30 @@ export default function Lead360View() {
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-1 gap-3">
-                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                      <div className="grid grid-cols-1 gap-3 min-w-0">
+                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0">
                           <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                             <Zap size={11} /> Existing Electrical Points
                           </p>
-                          <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed">
+                          <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
                             {lead.siteMeasurements.electricalPoints || 'No electrical notes recorded'}
                           </p>
                         </div>
 
-                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0">
                           <p className="text-[10px] font-bold text-cyan-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                             <Droplets size={11} /> Plumbing Points
                           </p>
-                          <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed">
+                          <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
                             {lead.siteMeasurements.plumbingPoints || 'No plumbing points recorded'}
                           </p>
                         </div>
 
-                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0">
                           <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                             <Wind size={11} /> AC Locations & Piping
                           </p>
-                          <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed">
+                          <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
                             {lead.siteMeasurements.acLocations || 'No AC locations recorded'}
                           </p>
                         </div>
@@ -1564,7 +1569,7 @@ export default function Lead360View() {
                     </div>
 
                     {/* Card 4: Furniture, Constraints & Notes */}
-                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4">
+                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4 min-w-0 overflow-hidden">
                       <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
                         <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
                           <Armchair size={16} className="text-emerald-500" />
@@ -1575,30 +1580,30 @@ export default function Lead360View() {
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-1 gap-3">
-                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                      <div className="grid grid-cols-1 gap-3 min-w-0">
+                        <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0">
                           <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1 flex items-center gap-1">
                             <Armchair size={11} /> Existing Furniture Dimensions
                           </p>
-                          <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed">
+                          <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
                             {lead.siteMeasurements.furnitureDimensions || 'No furniture dimensions recorded'}
                           </p>
                         </div>
 
-                        <div className="bg-rose-500/10 rounded-xl p-3 border border-rose-500/20">
+                        <div className="bg-rose-500/10 rounded-xl p-3 border border-rose-500/20 min-w-0">
                           <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                             <AlertTriangle size={11} /> Site Constraints & Limitations
                           </p>
-                          <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed">
+                          <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
                             {lead.siteMeasurements.siteConstraints || 'None reported'}
                           </p>
                         </div>
 
-                        <div className="bg-purple-500/10 rounded-xl p-3 border border-purple-500/20">
+                        <div className="bg-purple-500/10 rounded-xl p-3 border border-purple-500/20 min-w-0">
                           <p className="text-[10px] font-bold text-purple-600 uppercase tracking-wider mb-1 flex items-center gap-1">
                             <FileText size={11} /> Additional Site Notes
                           </p>
-                          <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed">
+                          <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
                             {lead.siteMeasurements.notes || 'No notes added'}
                           </p>
                         </div>
@@ -1834,27 +1839,27 @@ export default function Lead360View() {
 
                       {/* Requirement Handover Notes Box */}
                       {requirementsInfo.note && (
-                        <div className="bg-emerald-500/[0.07] border border-emerald-500/20 rounded-2xl p-4 sm:p-5 space-y-2.5">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                        <div className="bg-emerald-500/[0.07] border border-emerald-500/20 rounded-2xl p-4 sm:p-5 space-y-2.5 min-w-0 overflow-hidden">
+                          <div className="flex items-center justify-between gap-2 min-w-0">
+                            <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5 shrink-0">
                               <MessageSquare size={13} className="text-emerald-600" />
                               Requirement Handover & Scope Notes
                             </p>
                             {requirementsInfo.activity?.createdAt && (
-                              <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                              <span className="text-[10px] text-[hsl(var(--muted-foreground))] truncate">
                                 Recorded {new Date(requirementsInfo.activity.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                               </span>
                             )}
                           </div>
-                          <p className="text-xs sm:text-sm text-[hsl(var(--foreground))] font-medium leading-relaxed bg-[hsl(var(--card)/0.8)] border border-emerald-500/20 p-3 sm:p-3.5 rounded-xl whitespace-pre-wrap">
+                          <p className="text-xs sm:text-sm text-[hsl(var(--foreground))] font-medium leading-relaxed bg-[hsl(var(--card)/0.8)] border border-emerald-500/20 p-3 sm:p-3.5 rounded-xl whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                             {requirementsInfo.note}
                           </p>
                         </div>
                       )}
 
                       {/* 4 Metadata Badges Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
-                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1 min-w-0">
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
                             <Calendar size={11} className="text-emerald-500" /> Discussion Schedule
                           </p>
@@ -1871,7 +1876,7 @@ export default function Lead360View() {
                           </p>
                         </div>
 
-                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
                             <User size={11} className="text-blue-500" /> Assigned Consultant
                           </p>
@@ -1880,7 +1885,7 @@ export default function Lead360View() {
                           </p>
                         </div>
 
-                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
                             <DollarSign size={11} className="text-amber-500" /> Target Budget
                           </p>
@@ -1889,7 +1894,7 @@ export default function Lead360View() {
                           </p>
                         </div>
 
-                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
                             <Building size={11} className="text-purple-500" /> Property Scope
                           </p>
@@ -1977,28 +1982,28 @@ export default function Lead360View() {
                   </div>
 
                   {/* Room by Room Cards */}
-                  <div className="grid grid-cols-1 gap-6">
+                  <div className="grid grid-cols-1 gap-6 min-w-0">
                     {lead.requirements.map((req: any, index: number) => {
                       const hasFunctional = !!(req.roomUsage || req.furnitureRequirements || req.storage || req.electricalPoints || req.lightingRequirements || req.plumbingRequirements || req.circulation);
                       const hasAesthetic = !!(req.designStyle || req.colours || req.materials || req.flooring || req.ceiling || req.wallFinishes || req.furnitureStyle || req.theme);
 
                       return (
-                        <div key={index} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 space-y-5 hover:border-emerald-500/40 transition-colors">
+                        <div key={index} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 space-y-5 hover:border-emerald-500/40 transition-colors min-w-0 overflow-hidden">
                           {/* Room Header */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[hsl(var(--border))]">
-                            <div className="flex items-center gap-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[hsl(var(--border))] min-w-0">
+                            <div className="flex items-center gap-3 min-w-0">
                               <span className="w-8 h-8 rounded-xl bg-emerald-600 text-white font-black text-xs flex items-center justify-center shrink-0">
                                 {index + 1}
                               </span>
-                              <div>
-                                <h3 className="text-lg font-black text-[hsl(var(--foreground))]">{req.roomName}</h3>
+                              <div className="min-w-0">
+                                <h3 className="text-lg font-black text-[hsl(var(--foreground))] truncate">{req.roomName}</h3>
                                 {req.description && (
-                                  <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5 line-clamp-1">{req.description}</p>
+                                  <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5 line-clamp-1 break-words [overflow-wrap:anywhere]">{req.description}</p>
                                 )}
                               </div>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2 shrink-0">
                               {req.interiorType && (
                                 <span className="text-[10px] font-black uppercase tracking-wider bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] px-2.5 py-1 rounded-lg">
                                   {req.interiorType}
@@ -2013,9 +2018,9 @@ export default function Lead360View() {
                           </div>
 
                           {/* 2-Column Sections: Functional & Aesthetic */}
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 min-w-0">
                             {/* Functional Column */}
-                            <div className="bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))] rounded-2xl p-4 space-y-3.5">
+                            <div className="bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))] rounded-2xl p-4 space-y-3.5 min-w-0 overflow-hidden">
                               <div className="flex items-center justify-between pb-2 border-b border-[hsl(var(--border))]">
                                 <h4 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
                                   <Sliders size={14} className="text-emerald-500" /> Functional Requirements
@@ -2023,53 +2028,53 @@ export default function Lead360View() {
                                 <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600">Usage & MEP</span>
                               </div>
 
-                              <div className="space-y-2.5 text-xs">
+                              <div className="space-y-2.5 text-xs min-w-0">
                                 {req.roomUsage && (
-                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))]">
+                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))] min-w-0">
                                     <p className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Room Usage</p>
-                                    <p className="font-semibold text-[hsl(var(--foreground))] mt-0.5">{req.roomUsage}</p>
+                                    <p className="font-semibold text-[hsl(var(--foreground))] mt-0.5 break-words [overflow-wrap:anywhere]">{req.roomUsage}</p>
                                   </div>
                                 )}
                                 {req.furnitureRequirements && (
-                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))]">
+                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))] min-w-0">
                                     <p className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Furniture Requirements</p>
-                                    <p className="font-semibold text-[hsl(var(--foreground))] mt-0.5">{req.furnitureRequirements}</p>
+                                    <p className="font-semibold text-[hsl(var(--foreground))] mt-0.5 break-words [overflow-wrap:anywhere]">{req.furnitureRequirements}</p>
                                   </div>
                                 )}
                                 {req.storage && (
-                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))]">
+                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))] min-w-0">
                                     <p className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Storage Requirements</p>
-                                    <p className="font-semibold text-[hsl(var(--foreground))] mt-0.5">{req.storage}</p>
+                                    <p className="font-semibold text-[hsl(var(--foreground))] mt-0.5 break-words [overflow-wrap:anywhere]">{req.storage}</p>
                                   </div>
                                 )}
                                 {req.electricalPoints && (
-                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))]">
+                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))] min-w-0">
                                     <p className="text-[9px] font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1">
                                       <Zap size={10} /> Electrical Points
                                     </p>
-                                    <p className="font-medium text-[hsl(var(--foreground))] mt-0.5">{req.electricalPoints}</p>
+                                    <p className="font-medium text-[hsl(var(--foreground))] mt-0.5 break-words [overflow-wrap:anywhere]">{req.electricalPoints}</p>
                                   </div>
                                 )}
                                 {req.lightingRequirements && (
-                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))]">
+                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))] min-w-0">
                                     <p className="text-[9px] font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1">
                                       <Sun size={10} /> Lighting
                                     </p>
-                                    <p className="font-medium text-[hsl(var(--foreground))] mt-0.5">{req.lightingRequirements}</p>
+                                    <p className="font-medium text-[hsl(var(--foreground))] mt-0.5 break-words [overflow-wrap:anywhere]">{req.lightingRequirements}</p>
                                   </div>
                                 )}
                                 {req.plumbingRequirements && (
-                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))]">
+                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))] min-w-0">
                                     <p className="text-[9px] font-bold text-cyan-500 uppercase tracking-wider flex items-center gap-1">
                                       <Droplets size={10} /> Plumbing
                                     </p>
-                                    <p className="font-medium text-[hsl(var(--foreground))] mt-0.5">{req.plumbingRequirements}</p>
+                                    <p className="font-medium text-[hsl(var(--foreground))] mt-0.5 break-words [overflow-wrap:anywhere]">{req.plumbingRequirements}</p>
                                   </div>
                                 )}
                                 {req.circulation && (
-                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))]">
+                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))] min-w-0">
                                     <p className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Circulation & Clearance</p>
-                                    <p className="font-medium text-[hsl(var(--foreground))] mt-0.5">{req.circulation}</p>
+                                    <p className="font-medium text-[hsl(var(--foreground))] mt-0.5 break-words [overflow-wrap:anywhere]">{req.circulation}</p>
                                   </div>
                                 )}
                                 {!hasFunctional && (
@@ -2079,7 +2084,7 @@ export default function Lead360View() {
                             </div>
 
                             {/* Aesthetic Column */}
-                            <div className="bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))] rounded-2xl p-4 space-y-3.5">
+                            <div className="bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))] rounded-2xl p-4 space-y-3.5 min-w-0 overflow-hidden">
                               <div className="flex items-center justify-between pb-2 border-b border-[hsl(var(--border))]">
                                 <h4 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
                                   <Palette size={14} className="text-purple-500" /> Aesthetic Requirements
@@ -2087,47 +2092,47 @@ export default function Lead360View() {
                                 <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-purple-500/10 text-purple-600">Style & Finishes</span>
                               </div>
 
-                              <div className="space-y-2.5 text-xs">
+                              <div className="space-y-2.5 text-xs min-w-0">
                                 {(req.designStyle || req.theme) && (
-                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))]">
+                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))] min-w-0">
                                     <p className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Design Style</p>
-                                    <p className="font-semibold text-[hsl(var(--foreground))] mt-0.5">{req.designStyle || req.theme}</p>
+                                    <p className="font-semibold text-[hsl(var(--foreground))] mt-0.5 break-words [overflow-wrap:anywhere]">{req.designStyle || req.theme}</p>
                                   </div>
                                 )}
                                 {req.colours && (
-                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))]">
+                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))] min-w-0">
                                     <p className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Colours & Palette</p>
-                                    <p className="font-semibold text-[hsl(var(--foreground))] mt-0.5">{req.colours}</p>
+                                    <p className="font-semibold text-[hsl(var(--foreground))] mt-0.5 break-words [overflow-wrap:anywhere]">{req.colours}</p>
                                   </div>
                                 )}
                                 {req.materials && (
-                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))]">
+                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))] min-w-0">
                                     <p className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Materials & Finishes</p>
-                                    <p className="font-semibold text-[hsl(var(--foreground))] mt-0.5">{req.materials}</p>
+                                    <p className="font-semibold text-[hsl(var(--foreground))] mt-0.5 break-words [overflow-wrap:anywhere]">{req.materials}</p>
                                   </div>
                                 )}
                                 {req.flooring && (
-                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))]">
+                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))] min-w-0">
                                     <p className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Flooring</p>
-                                    <p className="font-medium text-[hsl(var(--foreground))] mt-0.5">{req.flooring}</p>
+                                    <p className="font-medium text-[hsl(var(--foreground))] mt-0.5 break-words [overflow-wrap:anywhere]">{req.flooring}</p>
                                   </div>
                                 )}
                                 {req.ceiling && (
-                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))]">
+                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))] min-w-0">
                                     <p className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Ceiling & False Ceiling</p>
-                                    <p className="font-medium text-[hsl(var(--foreground))] mt-0.5">{req.ceiling}</p>
+                                    <p className="font-medium text-[hsl(var(--foreground))] mt-0.5 break-words [overflow-wrap:anywhere]">{req.ceiling}</p>
                                   </div>
                                 )}
                                 {req.wallFinishes && (
-                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))]">
+                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))] min-w-0">
                                     <p className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Wall Finishes</p>
-                                    <p className="font-medium text-[hsl(var(--foreground))] mt-0.5">{req.wallFinishes}</p>
+                                    <p className="font-medium text-[hsl(var(--foreground))] mt-0.5 break-words [overflow-wrap:anywhere]">{req.wallFinishes}</p>
                                   </div>
                                 )}
                                 {req.furnitureStyle && (
-                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))]">
+                                  <div className="bg-[hsl(var(--card))] p-2.5 rounded-xl border border-[hsl(var(--border))] min-w-0">
                                     <p className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Furniture Style</p>
-                                    <p className="font-medium text-[hsl(var(--foreground))] mt-0.5">{req.furnitureStyle}</p>
+                                    <p className="font-medium text-[hsl(var(--foreground))] mt-0.5 break-words [overflow-wrap:anywhere]">{req.furnitureStyle}</p>
                                   </div>
                                 )}
                                 {!hasAesthetic && (
@@ -2139,11 +2144,11 @@ export default function Lead360View() {
 
                           {/* Specific Instructions / Description */}
                           {req.description && (
-                            <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4">
+                            <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 min-w-0 overflow-hidden">
                               <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 mb-1 flex items-center gap-1.5">
                                 <Sparkles size={13} /> Specific Room Instructions & Notes
                               </p>
-                              <p className="text-xs text-[hsl(var(--foreground))] font-medium leading-relaxed whitespace-pre-wrap">
+                              <p className="text-xs text-[hsl(var(--foreground))] font-medium leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                                 {req.description}
                               </p>
                             </div>
@@ -2638,16 +2643,16 @@ export default function Lead360View() {
                 return (
                   <div className="space-y-4 sm:space-y-6">
                     {/* Primary BOQ Header & Specifications Card */}
-                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-xs">
+                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-xs min-w-0 overflow-hidden">
                       {/* Header */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-[hsl(var(--border))]">
-                        <div className="flex items-center gap-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-[hsl(var(--border))] min-w-0">
+                        <div className="flex items-center gap-3 min-w-0">
                           <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border bg-indigo-500/10 border-indigo-500/20 text-indigo-600">
                             <Calculator size={20} />
                           </div>
-                          <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h2 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))]">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap min-w-0">
+                              <h2 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))] truncate">
                                 Bill of Quantities (BOQ) & Estimations
                               </h2>
                               <span className={cn(
@@ -2670,7 +2675,7 @@ export default function Lead360View() {
                         </div>
 
                         {!isReadOnly && (
-                          <div className="flex items-center gap-2 flex-wrap">
+                          <div className="flex items-center gap-2 flex-wrap shrink-0">
                             {isBoqLocked ? (
                               <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))] text-xs font-bold">
                                 <Lock size={13} /> {isLost ? 'Lead Lost (Locked)' : 'Quotation Approved (BOQ Locked)'}
@@ -2718,7 +2723,7 @@ export default function Lead360View() {
 
                       {/* Over Budget Warning Banner */}
                       {boqInfo.isOverBudget && hasBoqs && (
-                        <div className="bg-rose-500/[0.08] dark:bg-rose-500/15 border-2 border-rose-500/30 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 shadow-xs">
+                        <div className="bg-rose-500/[0.08] dark:bg-rose-500/15 border-2 border-rose-500/30 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 shadow-xs min-w-0 overflow-hidden">
                           <div className="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/30 mt-0.5">
                             <AlertTriangle size={18} />
                           </div>
@@ -2731,7 +2736,7 @@ export default function Lead360View() {
                                 +{boqInfo.budgetExcessPercentage.toFixed(1)}% Over Estimate
                               </span>
                             </div>
-                            <p className="text-xs text-rose-900/90 dark:text-rose-200/90 leading-relaxed font-medium">
+                            <p className="text-xs text-rose-900/90 dark:text-rose-200/90 leading-relaxed font-medium break-words [overflow-wrap:anywhere]">
                               Current BOQ total of <strong className="font-black text-[hsl(var(--foreground))]">₹{boqInfo.totalAmount.toLocaleString('en-IN')}</strong> exceeds the maximum estimated budget range of <strong className="font-black text-[hsl(var(--foreground))]">₹{boqInfo.maxBudget?.toLocaleString('en-IN')}</strong> ({lead.budgetRange || 'Estimate'}) by <strong className="font-black text-rose-600 dark:text-rose-400">₹{boqInfo.budgetExcessAmount.toLocaleString('en-IN')}</strong>.
                             </p>
                           </div>
@@ -2740,29 +2745,29 @@ export default function Lead360View() {
 
                       {/* Estimator Handover Notes Box */}
                       {boqInfo.note && (
-                        <div className="bg-indigo-500/[0.07] border border-indigo-500/20 rounded-2xl p-4 sm:p-5 space-y-2.5">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
+                        <div className="bg-indigo-500/[0.07] border border-indigo-500/20 rounded-2xl p-4 sm:p-5 space-y-2.5 min-w-0 overflow-hidden">
+                          <div className="flex items-center justify-between gap-2 min-w-0">
+                            <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5 shrink-0">
                               <MessageSquare size={13} className="text-indigo-600" />
                               Estimator Note & Scope Assumptions
                             </p>
                             {boqInfo.activity?.createdAt && (
-                              <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                              <span className="text-[10px] text-[hsl(var(--muted-foreground))] truncate">
                                 Recorded {new Date(boqInfo.activity.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                               </span>
                             )}
                           </div>
-                          <p className="text-xs sm:text-sm text-[hsl(var(--foreground))] font-medium leading-relaxed bg-[hsl(var(--card)/0.8)] border border-indigo-500/20 p-3 sm:p-3.5 rounded-xl whitespace-pre-wrap">
+                          <p className="text-xs sm:text-sm text-[hsl(var(--foreground))] font-medium leading-relaxed bg-[hsl(var(--card)/0.8)] border border-indigo-500/20 p-3 sm:p-3.5 rounded-xl whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                             {boqInfo.note}
                           </p>
                         </div>
                       )}
 
                       {/* 4 Metadata Badges Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1 min-w-0">
                         {/* 1. Total Estimated Amount */}
                         <div className={cn(
-                          "rounded-xl p-3 border transition-colors",
+                          "rounded-xl p-3 border transition-colors min-w-0 overflow-hidden",
                           boqInfo.isOverBudget && hasBoqs
                             ? "bg-rose-500/[0.08] border-rose-500/30"
                             : "bg-[hsl(var(--muted)/0.3)] border-[hsl(var(--border))]"
@@ -2786,7 +2791,7 @@ export default function Lead360View() {
                         </div>
 
                         {/* 2. Line Items & Categories */}
-                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
                             <Layers size={11} className="text-purple-500" /> Items & Categories
                           </p>
@@ -2797,7 +2802,7 @@ export default function Lead360View() {
 
                         {/* 3. Target Budget */}
                         <div className={cn(
-                          "rounded-xl p-3 border transition-colors",
+                          "rounded-xl p-3 border transition-colors min-w-0 overflow-hidden",
                           boqInfo.isOverBudget && hasBoqs
                             ? "bg-amber-500/[0.08] border-amber-500/30"
                             : "bg-[hsl(var(--muted)/0.3)] border-[hsl(var(--border))]"
@@ -2818,7 +2823,7 @@ export default function Lead360View() {
                         </div>
 
                         {/* 4. Property Scope */}
-                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
                             <Building size={11} className="text-blue-500" /> Property Scope
                           </p>
@@ -2929,16 +2934,16 @@ export default function Lead360View() {
                 return (
                   <div className="space-y-4 sm:space-y-6">
                     {/* Primary Quotation Header & Specifications Card */}
-                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-xs">
+                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-xs min-w-0 overflow-hidden">
                       {/* Header */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-[hsl(var(--border))]">
-                        <div className="flex items-center gap-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-[hsl(var(--border))] min-w-0">
+                        <div className="flex items-center gap-3 min-w-0">
                           <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border bg-rose-500/10 border-rose-500/20 text-rose-600">
                             <FileText size={20} />
                           </div>
-                          <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h2 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))]">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap min-w-0">
+                              <h2 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))] truncate">
                                 Commercial Quotations & Proposals
                               </h2>
                               <span className={cn(
@@ -2965,7 +2970,7 @@ export default function Lead360View() {
                         </div>
 
                         {!isReadOnly && (
-                          <div className="flex items-center gap-2 flex-wrap">
+                          <div className="flex items-center gap-2 flex-wrap shrink-0">
                             {hasQuotations ? (
                               <>
                                 {isLatestQuoteRejected ? (
@@ -3016,7 +3021,7 @@ export default function Lead360View() {
 
                       {/* Over Budget Warning Banner */}
                       {quotationInfo.isOverBudget && hasQuotations && (
-                        <div className="bg-rose-500/[0.08] dark:bg-rose-500/15 border-2 border-rose-500/30 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 shadow-xs">
+                        <div className="bg-rose-500/[0.08] dark:bg-rose-500/15 border-2 border-rose-500/30 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 shadow-xs min-w-0 overflow-hidden">
                           <div className="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/30 mt-0.5">
                             <AlertTriangle size={18} />
                           </div>
@@ -3029,7 +3034,7 @@ export default function Lead360View() {
                                 +{quotationInfo.budgetExcessPercentage.toFixed(1)}% Over Estimate
                               </span>
                             </div>
-                            <p className="text-xs text-rose-900/90 dark:text-rose-200/90 leading-relaxed font-medium">
+                            <p className="text-xs text-rose-900/90 dark:text-rose-200/90 leading-relaxed font-medium break-words [overflow-wrap:anywhere]">
                               Current Quotation Grand Total of <strong className="font-black text-[hsl(var(--foreground))]">₹{quotationInfo.grandTotal.toLocaleString('en-IN')}</strong> exceeds the client estimated budget range of <strong className="font-black text-[hsl(var(--foreground))]">₹{quotationInfo.maxBudget?.toLocaleString('en-IN')}</strong> ({lead.budgetRange || 'Estimate'}) by <strong className="font-black text-rose-600 dark:text-rose-400">₹{quotationInfo.budgetExcessAmount.toLocaleString('en-IN')}</strong>.
                             </p>
                           </div>
@@ -3038,29 +3043,29 @@ export default function Lead360View() {
 
                       {/* Handover & Commercial Strategy Notes Box */}
                       {quotationInfo.note && (
-                        <div className="bg-rose-500/[0.07] border border-rose-500/20 rounded-2xl p-4 sm:p-5 space-y-2.5">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
+                        <div className="bg-rose-500/[0.07] border border-rose-500/20 rounded-2xl p-4 sm:p-5 space-y-2.5 min-w-0 overflow-hidden">
+                          <div className="flex items-center justify-between gap-2 min-w-0">
+                            <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-rose-700 dark:text-rose-300 flex items-center gap-1.5 shrink-0">
                               <MessageSquare size={13} className="text-rose-600" />
                               Commercial Handover Notes & Assumptions
                             </p>
                             {quotationInfo.activity?.createdAt && (
-                              <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                              <span className="text-[10px] text-[hsl(var(--muted-foreground))] truncate">
                                 Recorded {new Date(quotationInfo.activity.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                               </span>
                             )}
                           </div>
-                          <p className="text-xs sm:text-sm text-[hsl(var(--foreground))] font-medium leading-relaxed bg-[hsl(var(--card)/0.8)] border border-rose-500/20 p-3 sm:p-3.5 rounded-xl whitespace-pre-wrap">
+                          <p className="text-xs sm:text-sm text-[hsl(var(--foreground))] font-medium leading-relaxed bg-[hsl(var(--card)/0.8)] border border-rose-500/20 p-3 sm:p-3.5 rounded-xl whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                             {quotationInfo.note}
                           </p>
                         </div>
                       )}
 
                       {/* 4 Metadata Badges Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1 min-w-0">
                         {/* 1. Grand Total */}
                         <div className={cn(
-                          "rounded-xl p-3 border transition-colors",
+                          "rounded-xl p-3 border transition-colors min-w-0 overflow-hidden",
                           quotationInfo.isOverBudget && hasQuotations
                             ? "bg-rose-500/[0.08] border-rose-500/30"
                             : "bg-[hsl(var(--muted)/0.3)] border-[hsl(var(--border))]"
@@ -3084,7 +3089,7 @@ export default function Lead360View() {
                         </div>
 
                         {/* 2. Commercial Adjustments */}
-                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
                             <Sliders size={11} className="text-purple-500" /> Commercial Breakdown
                           </p>
@@ -3096,13 +3101,13 @@ export default function Lead360View() {
                         </div>
 
                         {/* 3. Proposal Status */}
-                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
                             <CheckCircle2 size={11} className="text-emerald-500" /> Proposal Status
                           </p>
-                          <div className="mt-1 flex items-center gap-1.5">
+                          <div className="mt-1 flex items-center gap-1.5 min-w-0">
                             <span className={cn(
-                              "text-[10px] font-black uppercase px-2 py-0.5 rounded-full border",
+                              "text-[10px] font-black uppercase px-2 py-0.5 rounded-full border shrink-0",
                               quotationInfo.currentQuote?.status === 'Accepted'
                                 ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                                 : quotationInfo.currentQuote?.status === 'Rejected'
@@ -3121,7 +3126,7 @@ export default function Lead360View() {
 
                         {/* 4. Target Budget */}
                         <div className={cn(
-                          "rounded-xl p-3 border transition-colors",
+                          "rounded-xl p-3 border transition-colors min-w-0 overflow-hidden",
                           quotationInfo.isOverBudget && hasQuotations
                             ? "bg-amber-500/[0.08] border-amber-500/30"
                             : "bg-[hsl(var(--muted)/0.3)] border-[hsl(var(--border))]"

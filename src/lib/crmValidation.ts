@@ -125,3 +125,34 @@ export function validateRequiredDate(dateStr?: string, fieldName = 'Date'): stri
   }
   return null;
 }
+
+/**
+ * Returns local date-time string formatted for <input type="datetime-local" /> (YYYY-MM-DDTHH:mm).
+ */
+export function getMinDateTimeLocal(date = new Date()): string {
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+/**
+ * Validates a required date-time string and ensures it is in the future (not in the past).
+ * Allows a 1-minute margin for form completion.
+ */
+export function validateFutureDate(dateStr?: string, fieldName = 'Date', allowMarginMinutes = 1): string | null {
+  const reqErr = validateRequiredDate(dateStr, fieldName);
+  if (reqErr) return reqErr;
+  
+  const d = new Date(dateStr!);
+  const minAllowed = Date.now() - (allowMarginMinutes * 60 * 1000);
+  if (d.getTime() < minAllowed) {
+    return `${fieldName} cannot be in the past`;
+  }
+  return null;
+}
+

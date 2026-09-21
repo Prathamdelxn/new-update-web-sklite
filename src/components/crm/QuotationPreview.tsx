@@ -277,14 +277,14 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess, onAddVersion
             </div>
 
             {/* Meta Info */}
-            <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6 sm:mb-10">
-              <div>
+            <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6 sm:mb-10 min-w-0">
+              <div className="min-w-0 max-w-full sm:max-w-[50%]">
                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Prepared For</p>
-                <p className="text-base sm:text-lg font-bold text-slate-900">{lead.name}</p>
-                <p className="text-xs sm:text-sm text-slate-600">{lead.mobileNumber}</p>
-                {lead.email && <p className="text-xs sm:text-sm text-slate-600">{lead.email}</p>}
+                <p className="text-base sm:text-lg font-bold text-slate-900 break-words [overflow-wrap:anywhere]">{lead.name}</p>
+                <p className="text-xs sm:text-sm text-slate-600 break-words [overflow-wrap:anywhere]">{lead.mobileNumber}</p>
+                {lead.email && <p className="text-xs sm:text-sm text-slate-600 break-words [overflow-wrap:anywhere]">{lead.email}</p>}
               </div>
-              <div className="sm:text-right">
+              <div className="sm:text-right min-w-0">
                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Details</p>
                 <p className="text-xs sm:text-sm text-slate-600"><span className="font-semibold text-slate-900">Date:</span> {new Date(quote.createdAt).toLocaleDateString()}</p>
                 <p className="text-xs sm:text-sm text-slate-600"><span className="font-semibold text-slate-900">Lead ID:</span> {lead.leadNumber || 'LD-XXXX'}</p>
@@ -292,11 +292,11 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess, onAddVersion
             </div>
 
             {/* Table */}
-            <div className="flex-1 print:flex-none overflow-x-auto mb-6 sm:mb-8">
+            <div className="flex-1 print:flex-none overflow-x-auto mb-6 sm:mb-8 min-w-0">
               <table className="w-full text-left border-collapse min-w-[400px]">
                 <thead>
                   <tr className="border-b-2 border-slate-900">
-                    <th className="py-2.5 sm:py-3 text-[11px] sm:text-xs font-bold text-slate-900 uppercase tracking-wider">Description</th>
+                    <th className="py-2.5 sm:py-3 text-[11px] sm:text-xs font-bold text-slate-900 uppercase tracking-wider min-w-[150px]">Description</th>
                     <th className="py-2.5 sm:py-3 text-[11px] sm:text-xs font-bold text-slate-900 uppercase tracking-wider text-center w-16 sm:w-24">Qty</th>
                     <th className="py-2.5 sm:py-3 text-[11px] sm:text-xs font-bold text-slate-900 uppercase tracking-wider text-right w-24 sm:w-32">Unit Price</th>
                     <th className="py-2.5 sm:py-3 text-[11px] sm:text-xs font-bold text-slate-900 uppercase tracking-wider text-right w-24 sm:w-32">Total</th>
@@ -305,7 +305,7 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess, onAddVersion
                 <tbody className="divide-y divide-slate-100">
                   {quote.items.map((item: any, idx: number) => (
                     <tr key={idx} className="print:break-inside-avoid">
-                      <td className="py-3 sm:py-4 text-xs sm:text-sm font-medium text-slate-800">{item.description}</td>
+                      <td className="py-3 sm:py-4 text-xs sm:text-sm font-medium text-slate-800 break-words [overflow-wrap:anywhere] whitespace-pre-wrap max-w-xs">{item.description}</td>
                       <td className="py-3 sm:py-4 text-xs sm:text-sm text-slate-600 text-center">{item.quantity}</td>
                       <td className="py-3 sm:py-4 text-xs sm:text-sm text-slate-600 text-right">₹{item.unitPrice.toLocaleString('en-IN')}</td>
                       <td className="py-3 sm:py-4 text-xs sm:text-sm font-bold text-slate-900 text-right">₹{item.total.toLocaleString('en-IN')}</td>
@@ -340,9 +340,9 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess, onAddVersion
             </div>
 
             {/* Footer Notes */}
-            <div className="mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-slate-100 print:break-inside-avoid">
+            <div className="mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-slate-100 print:break-inside-avoid min-w-0 overflow-hidden">
               <p className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 sm:mb-2">Terms & Conditions</p>
-              <p className="text-[11px] sm:text-xs text-slate-500 whitespace-pre-wrap leading-relaxed">
+              <p className="text-[11px] sm:text-xs text-slate-500 whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
                 {quote.notes || '1. Quotation is valid for 15 days.\n2. 50% advance payment required to commence work.\n3. Goods once sold will not be taken back.'}
               </p>
             </div>

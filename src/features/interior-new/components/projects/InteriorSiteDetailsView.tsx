@@ -339,7 +339,7 @@ export default function InteriorSiteDetailsView() {
                   )}
                 </div>
                 {(customerData.remarks || customerData.siteMeasurements?.notes) && (
-                  <p className="text-xs font-semibold text-[hsl(var(--foreground))] leading-relaxed bg-[hsl(var(--background))] border border-purple-500/20 rounded-xl p-3">
+                  <p className="text-xs font-semibold text-[hsl(var(--foreground))] leading-relaxed bg-[hsl(var(--background))] border border-purple-500/20 rounded-xl p-3 break-words [overflow-wrap:anywhere]">
                     {customerData.remarks || customerData.siteMeasurements?.notes}
                   </p>
                 )}
@@ -347,9 +347,9 @@ export default function InteriorSiteDetailsView() {
             )}
 
             {hasMeasurements ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 min-w-0">
                 {/* Card 1: Room & Spatial Dimensions */}
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4 shadow-sm hover:border-purple-500/40 transition-all">
+                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4 shadow-sm hover:border-purple-500/40 transition-all min-w-0 overflow-hidden">
                   <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
                     <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
                       <Maximize2 size={16} className="text-purple-500" />
@@ -360,42 +360,42 @@ export default function InteriorSiteDetailsView() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                  <div className="grid grid-cols-2 gap-3 min-w-0">
+                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0">
                       <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">Carpet Area</p>
-                      <p className="font-black text-sm text-[hsl(var(--foreground))]">
+                      <p className="font-black text-sm text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
                         {siteMeasurements.carpetArea || '—'} <span className="text-[10px] font-medium text-[hsl(var(--muted-foreground))]">Sq.Ft</span>
                       </p>
                     </div>
 
-                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0">
                       <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">Ceiling Height</p>
-                      <p className="font-black text-sm text-[hsl(var(--foreground))]">
+                      <p className="font-black text-sm text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
                         {siteMeasurements.ceilingHeight || '—'} <span className="text-[10px] font-medium text-[hsl(var(--muted-foreground))]">Ft</span>
                       </p>
                     </div>
 
-                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] col-span-2">
+                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] col-span-2 min-w-0">
                       <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
                         <Maximize2 size={11} className="text-purple-500" /> Room Dimensions (Length × Width)
                       </p>
-                      <p className="font-bold text-xs text-[hsl(var(--foreground))]">
+                      <p className="font-bold text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
                         {siteMeasurements.roomDimensions || 'Not recorded'}
                       </p>
                     </div>
 
-                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] col-span-2">
+                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] col-span-2 min-w-0">
                       <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
                         <Layers size={11} className="text-indigo-500" /> Floor-to-Ceiling Height
                       </p>
-                      <p className="font-semibold text-xs text-[hsl(var(--foreground))]">
+                      <p className="font-semibold text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
                         {siteMeasurements.floorToCeilingHeight || 'Not recorded'}
                       </p>
                     </div>
 
-                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] col-span-2">
+                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] col-span-2 min-w-0">
                       <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">Rooms to Design</p>
-                      <p className="font-semibold text-xs text-[hsl(var(--foreground))]">
+                      <p className="font-semibold text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
                         {siteMeasurements.rooms || 'Not specified'}
                       </p>
                     </div>
@@ -403,7 +403,7 @@ export default function InteriorSiteDetailsView() {
                 </div>
 
                 {/* Card 2: Openings & Structural Elements */}
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4 shadow-sm hover:border-blue-500/40 transition-all">
+                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4 shadow-sm hover:border-blue-500/40 transition-all min-w-0 overflow-hidden">
                   <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
                     <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
                       <DoorOpen size={16} className="text-blue-500" />
@@ -414,39 +414,39 @@ export default function InteriorSiteDetailsView() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-3">
-                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                  <div className="grid grid-cols-1 gap-3 min-w-0">
+                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0">
                       <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
                         <DoorOpen size={11} className="text-blue-500" /> Door Dimensions
                       </p>
-                      <p className="font-semibold text-xs text-[hsl(var(--foreground))]">
+                      <p className="font-semibold text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
                         {siteMeasurements.doorDimensions || 'Not recorded'}
                       </p>
                     </div>
 
-                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0">
                       <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
                         <Maximize2 size={11} className="text-sky-500" /> Window Dimensions
                       </p>
-                      <p className="font-semibold text-xs text-[hsl(var(--foreground))]">
+                      <p className="font-semibold text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
                         {siteMeasurements.windowDimensions || 'Not recorded'}
                       </p>
                     </div>
 
-                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0">
                       <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
                         <Columns size={11} className="text-amber-500" /> Wall Thickness
                       </p>
-                      <p className="font-semibold text-xs text-[hsl(var(--foreground))]">
+                      <p className="font-semibold text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
                         {siteMeasurements.wallThickness || 'Not recorded'}
                       </p>
                     </div>
 
-                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0">
                       <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
                         <Columns size={11} className="text-orange-500" /> Column / Beam Dimensions
                       </p>
-                      <p className="font-semibold text-xs text-[hsl(var(--foreground))]">
+                      <p className="font-semibold text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
                         {siteMeasurements.columnBeamDimensions || 'Not recorded'}
                       </p>
                     </div>
@@ -454,7 +454,7 @@ export default function InteriorSiteDetailsView() {
                 </div>
 
                 {/* Card 3: MEP & Utility Services */}
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4 shadow-sm hover:border-amber-500/40 transition-all">
+                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4 shadow-sm hover:border-amber-500/40 transition-all min-w-0 overflow-hidden">
                   <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
                     <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
                       <Zap size={16} className="text-amber-500" />
@@ -465,30 +465,30 @@ export default function InteriorSiteDetailsView() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-3">
-                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                  <div className="grid grid-cols-1 gap-3 min-w-0">
+                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0">
                       <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                         <Zap size={11} /> Existing Electrical Points
                       </p>
-                      <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed">
+                      <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
                         {siteMeasurements.electricalPoints || 'No electrical notes recorded'}
                       </p>
                     </div>
 
-                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0">
                       <p className="text-[10px] font-bold text-cyan-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                         <Droplets size={11} /> Plumbing Points
                       </p>
-                      <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed">
+                      <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
                         {siteMeasurements.plumbingPoints || 'No plumbing points recorded'}
                       </p>
                     </div>
 
-                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0">
                       <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                         <Wind size={11} /> AC Locations & Piping
                       </p>
-                      <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed">
+                      <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
                         {siteMeasurements.acLocations || 'No AC locations recorded'}
                       </p>
                     </div>
@@ -496,7 +496,7 @@ export default function InteriorSiteDetailsView() {
                 </div>
 
                 {/* Card 4: Furniture, Constraints & Notes */}
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4 shadow-sm hover:border-emerald-500/40 transition-all">
+                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4 shadow-sm hover:border-emerald-500/40 transition-all min-w-0 overflow-hidden">
                   <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
                     <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
                       <Armchair size={16} className="text-emerald-500" />
@@ -507,30 +507,30 @@ export default function InteriorSiteDetailsView() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-3">
-                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))]">
+                  <div className="grid grid-cols-1 gap-3 min-w-0">
+                    <div className="bg-[hsl(var(--muted)/0.4)] rounded-xl p-3 border border-[hsl(var(--border))] min-w-0">
                       <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1 flex items-center gap-1">
                         <Armchair size={11} /> Existing Furniture Dimensions
                       </p>
-                      <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed">
+                      <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
                         {siteMeasurements.furnitureDimensions || 'No furniture dimensions recorded'}
                       </p>
                     </div>
 
-                    <div className="bg-rose-500/10 rounded-xl p-3 border border-rose-500/20">
+                    <div className="bg-rose-500/10 rounded-xl p-3 border border-rose-500/20 min-w-0">
                       <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                         <AlertTriangle size={11} /> Site Constraints & Limitations
                       </p>
-                      <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed">
+                      <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
                         {siteMeasurements.siteConstraints || 'None reported'}
                       </p>
                     </div>
 
-                    <div className="bg-purple-500/10 rounded-xl p-3 border border-purple-500/20">
+                    <div className="bg-purple-500/10 rounded-xl p-3 border border-purple-500/20 min-w-0">
                       <p className="text-[10px] font-bold text-purple-600 uppercase tracking-wider mb-1 flex items-center gap-1">
                         <FileText size={11} /> Additional Site Notes
                       </p>
-                      <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed">
+                      <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
                         {siteMeasurements.notes || 'No notes added'}
                       </p>
                     </div>
@@ -653,16 +653,16 @@ export default function InteriorSiteDetailsView() {
                     );
 
                     return (
-                      <div key={idx} className="bg-[hsl(var(--muted)/0.2)] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[hsl(var(--border))]">
-                          <div className="flex items-center gap-2.5">
-                            <span className="w-6 h-6 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center">
+                      <div key={idx} className="bg-[hsl(var(--muted)/0.2)] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4 min-w-0 overflow-hidden">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[hsl(var(--border))] min-w-0">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <span className="w-6 h-6 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
                               {idx + 1}
                             </span>
-                            <h4 className="font-black text-base text-[hsl(var(--foreground))]">{req.roomName || 'General Space'}</h4>
+                            <h4 className="font-black text-base text-[hsl(var(--foreground))] truncate min-w-0">{req.roomName || 'General Space'}</h4>
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2 shrink-0">
                             {req.interiorType && (
                               <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 bg-[hsl(var(--card))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-md">
                                 {req.interiorType}
@@ -676,108 +676,108 @@ export default function InteriorSiteDetailsView() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-w-0">
                           {/* Functional Specs */}
-                          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-2.5 text-xs">
+                          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-2.5 text-xs min-w-0 overflow-hidden">
                             <p className="text-[10px] font-black uppercase tracking-wider text-emerald-600 flex items-center gap-1.5 pb-1 border-b border-[hsl(var(--border))]">
                               <Sliders size={12} /> Functional Requirements
                             </p>
                             {req.roomUsage && (
-                              <div>
+                              <div className="min-w-0">
                                 <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase">Usage: </span>
-                                <span className="font-semibold text-[hsl(var(--foreground))]">{req.roomUsage}</span>
+                                <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">{req.roomUsage}</span>
                               </div>
                             )}
                             {req.furnitureRequirements && (
-                              <div>
+                              <div className="min-w-0">
                                 <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase">Furniture: </span>
-                                <span className="font-semibold text-[hsl(var(--foreground))]">{req.furnitureRequirements}</span>
+                                <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">{req.furnitureRequirements}</span>
                               </div>
                             )}
                             {req.storage && (
-                              <div>
+                              <div className="min-w-0">
                                 <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase">Storage: </span>
-                                <span className="font-semibold text-[hsl(var(--foreground))]">{req.storage}</span>
+                                <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">{req.storage}</span>
                               </div>
                             )}
                             {req.electricalPoints && (
-                              <div>
+                              <div className="min-w-0">
                                 <span className="text-[10px] font-bold text-amber-500 uppercase flex items-center gap-1">
                                   <Zap size={10} /> Electrical:
                                 </span>
-                                <span className="font-medium text-[hsl(var(--foreground))]">{req.electricalPoints}</span>
+                                <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">{req.electricalPoints}</span>
                               </div>
                             )}
                             {req.lightingRequirements && (
-                              <div>
+                              <div className="min-w-0">
                                 <span className="text-[10px] font-bold text-amber-500 uppercase flex items-center gap-1">
                                   <Sun size={10} /> Lighting:
                                 </span>
-                                <span className="font-medium text-[hsl(var(--foreground))]">{req.lightingRequirements}</span>
+                                <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">{req.lightingRequirements}</span>
                               </div>
                             )}
                             {req.plumbingRequirements && (
-                              <div>
+                              <div className="min-w-0">
                                 <span className="text-[10px] font-bold text-cyan-500 uppercase flex items-center gap-1">
                                   <Droplets size={10} /> Plumbing:
                                 </span>
-                                <span className="font-medium text-[hsl(var(--foreground))]">{req.plumbingRequirements}</span>
+                                <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">{req.plumbingRequirements}</span>
                               </div>
                             )}
                             {req.circulation && (
-                              <div>
+                              <div className="min-w-0">
                                 <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase">Circulation: </span>
-                                <span className="font-medium text-[hsl(var(--foreground))]">{req.circulation}</span>
+                                <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">{req.circulation}</span>
                               </div>
                             )}
                             {!hasFunctional && <p className="text-[11px] text-[hsl(var(--muted-foreground))] italic">No functional requirements recorded.</p>}
                           </div>
 
                           {/* Aesthetic Specs */}
-                          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-2.5 text-xs">
+                          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-2.5 text-xs min-w-0 overflow-hidden">
                             <p className="text-[10px] font-black uppercase tracking-wider text-purple-600 flex items-center gap-1.5 pb-1 border-b border-[hsl(var(--border))]">
                               <Palette size={12} /> Aesthetic Requirements
                             </p>
                             {(req.designStyle || req.theme) && (
-                              <div>
+                              <div className="min-w-0">
                                 <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase">Style: </span>
-                                <span className="font-semibold text-[hsl(var(--foreground))]">{req.designStyle || req.theme}</span>
+                                <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">{req.designStyle || req.theme}</span>
                               </div>
                             )}
                             {req.colours && (
-                              <div>
+                              <div className="min-w-0">
                                 <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase">Colours: </span>
-                                <span className="font-semibold text-[hsl(var(--foreground))]">{req.colours}</span>
+                                <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">{req.colours}</span>
                               </div>
                             )}
                             {req.materials && (
-                              <div>
+                              <div className="min-w-0">
                                 <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase">Materials: </span>
-                                <span className="font-semibold text-[hsl(var(--foreground))]">{req.materials}</span>
+                                <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">{req.materials}</span>
                               </div>
                             )}
                             {req.flooring && (
-                              <div>
+                              <div className="min-w-0">
                                 <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase">Flooring: </span>
-                                <span className="font-medium text-[hsl(var(--foreground))]">{req.flooring}</span>
+                                <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">{req.flooring}</span>
                               </div>
                             )}
                             {req.ceiling && (
-                              <div>
+                              <div className="min-w-0">
                                 <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase">Ceiling: </span>
-                                <span className="font-medium text-[hsl(var(--foreground))]">{req.ceiling}</span>
+                                <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">{req.ceiling}</span>
                               </div>
                             )}
                             {req.wallFinishes && (
-                              <div>
+                              <div className="min-w-0">
                                 <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase">Walls: </span>
-                                <span className="font-medium text-[hsl(var(--foreground))]">{req.wallFinishes}</span>
+                                <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">{req.wallFinishes}</span>
                               </div>
                             )}
                             {req.furnitureStyle && (
-                              <div>
+                              <div className="min-w-0">
                                 <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase">Furniture Style: </span>
-                                <span className="font-medium text-[hsl(var(--foreground))]">{req.furnitureStyle}</span>
+                                <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">{req.furnitureStyle}</span>
                               </div>
                             )}
                             {!hasAesthetic && <p className="text-[11px] text-[hsl(var(--muted-foreground))] italic">No aesthetic requirements recorded.</p>}
@@ -785,11 +785,11 @@ export default function InteriorSiteDetailsView() {
                         </div>
 
                         {req.description && (
-                          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3">
+                          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3 min-w-0 overflow-hidden">
                             <p className="text-[10px] font-bold text-emerald-600 uppercase flex items-center gap-1 mb-1">
                               <Sparkles size={11} /> Specific Notes
                             </p>
-                            <p className="text-xs text-[hsl(var(--foreground))] font-medium leading-relaxed whitespace-pre-wrap">
+                            <p className="text-xs text-[hsl(var(--foreground))] font-medium leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                               {req.description}
                             </p>
                           </div>

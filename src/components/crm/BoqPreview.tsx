@@ -78,14 +78,14 @@ export function BoqPreview({ lead, boqIndex, onEdit }: BoqPreviewProps) {
       )}
 
       {/* BOQ Render Container */}
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl overflow-hidden shadow-xs">
+      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl overflow-hidden shadow-xs min-w-0">
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
             <thead>
               <tr className="bg-[hsl(var(--muted)/0.5)] text-[hsl(var(--muted-foreground))] font-extrabold text-[11px] uppercase tracking-wider border-b border-[hsl(var(--border))]">
                 <th className="p-3.5 w-12 text-center">#</th>
-                <th className="p-3.5">Category</th>
-                <th className="p-3.5 min-w-[200px]">Item Description & Specs</th>
+                <th className="p-3.5 w-24 sm:w-28 max-w-[110px]">Category</th>
+                <th className="p-3.5 min-w-[180px]">Item Description & Specs</th>
                 <th className="p-3.5 text-right">Quantity</th>
                 <th className="p-3.5 text-center">Unit</th>
                 <th className="p-3.5 text-right">Rate (₹)</th>
@@ -96,18 +96,18 @@ export function BoqPreview({ lead, boqIndex, onEdit }: BoqPreviewProps) {
               {boq.items?.map((item: any, idx: number) => (
                 <tr key={item._id || idx} className="hover:bg-[hsl(var(--muted)/0.25)] transition-colors group">
                   <td className="p-3.5 text-center font-mono font-bold text-[hsl(var(--muted-foreground))]">{item.serialNumber || idx + 1}</td>
-                  <td className="p-3.5">
+                  <td className="p-3.5 w-24 sm:w-28 max-w-[250px] align-middle">
                     <span className={cn(
-                      "px-2.5 py-1 rounded-lg font-extrabold text-[10px] border tracking-wider uppercase inline-block",
+                      "px-2 py-0.5 rounded-lg font-extrabold text-[10px] border tracking-wider uppercase inline-block max-w-full whitespace-normal break-words [overflow-wrap:anywhere] leading-tight",
                       getCategoryBadgeClass(item.category)
                     )}>
                       {item.category || 'General'}
                     </span>
                   </td>
-                  <td className="p-3.5">
-                    <div className="font-bold text-xs text-[hsl(var(--foreground))] group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{item.itemName}</div>
+                  <td className="p-3.5 min-w-[180px] max-w-[320px]">
+                    <div className="font-bold text-xs text-[hsl(var(--foreground))] group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors break-words [overflow-wrap:anywhere]">{item.itemName}</div>
                     {item.description && (
-                      <div className="text-[11px] text-[hsl(var(--muted-foreground))] mt-0.5 leading-relaxed">{item.description}</div>
+                      <div className="text-[11px] text-[hsl(var(--muted-foreground))] mt-0.5 leading-relaxed break-words [overflow-wrap:anywhere] whitespace-pre-wrap">{item.description}</div>
                     )}
                   </td>
                   <td className="p-3.5 text-right font-bold text-xs">{item.quantity?.toLocaleString('en-IN')}</td>
@@ -130,10 +130,10 @@ export function BoqPreview({ lead, boqIndex, onEdit }: BoqPreviewProps) {
 
         {/* Totals & Notes Footer */}
         {isOverBudget && (
-          <div className="p-3 sm:p-4 bg-rose-500/[0.08] border-t border-rose-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs text-rose-700 dark:text-rose-300 font-medium">
-            <div className="flex items-center gap-2">
+          <div className="p-3 sm:p-4 bg-rose-500/[0.08] border-t border-rose-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs text-rose-700 dark:text-rose-300 font-medium min-w-0">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
               <AlertTriangle size={16} className="shrink-0 text-rose-600 dark:text-rose-400" />
-              <span>
+              <span className="break-words [overflow-wrap:anywhere]">
                 <strong>Over Target Budget Warning:</strong> Current BOQ total of ₹{totalBoqAmount.toLocaleString('en-IN')} exceeds estimated target budget of ₹{maxBudget?.toLocaleString('en-IN')} ({lead?.budgetRange || 'Estimate'}) by <strong className="font-extrabold text-rose-600 dark:text-rose-400">₹{excessAmount.toLocaleString('en-IN')}</strong>.
               </span>
             </div>
@@ -143,12 +143,12 @@ export function BoqPreview({ lead, boqIndex, onEdit }: BoqPreviewProps) {
           </div>
         )}
 
-        <div className="p-4 sm:p-5 bg-[hsl(var(--muted)/0.2)] border-t border-[hsl(var(--border))] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="space-y-1 max-w-md">
+        <div className="p-4 sm:p-5 bg-[hsl(var(--muted)/0.2)] border-t border-[hsl(var(--border))] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 min-w-0">
+          <div className="space-y-1 max-w-md min-w-0 flex-1">
             <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
               Estimator Remarks & Assumptions
             </p>
-            <p className="text-xs text-[hsl(var(--foreground))] font-medium whitespace-pre-wrap leading-relaxed">
+            <p className="text-xs text-[hsl(var(--foreground))] font-medium whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
               {boq.notes || 'Standard specifications applied based on 2D layouts and design requirements.'}
             </p>
           </div>

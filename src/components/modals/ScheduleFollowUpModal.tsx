@@ -14,7 +14,7 @@ interface ScheduleFollowUpModalProps {
   users?: any[]; // The list of organization users for assignment
 }
 
-import { validateRequiredDate, validateNonEmpty, ValidationErrors } from '@/lib/crmValidation';
+import { validateFutureDate, validateNonEmpty, ValidationErrors, getMinDateTimeLocal } from '@/lib/crmValidation';
 
 export function ScheduleFollowUpModal({ isOpen, onClose, customerId, customerName, onSuccess, users = [] }: ScheduleFollowUpModalProps) {
   const toast = useToast();
@@ -30,9 +30,11 @@ export function ScheduleFollowUpModal({ isOpen, onClose, customerId, customerNam
 
   if (!isOpen) return null;
 
+  const minDateTime = getMinDateTimeLocal();
+
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {
-      scheduledDate: validateRequiredDate(form.scheduledDate, 'Follow-up date & time'),
+      scheduledDate: validateFutureDate(form.scheduledDate, 'Follow-up date & time'),
       assignedSalesExecutive: validateNonEmpty(form.assignedSalesExecutive, 'Assign member'),
       remarks: validateNonEmpty(form.remarks, 'Follow-up goal / notes'),
     };
@@ -107,10 +109,17 @@ export function ScheduleFollowUpModal({ isOpen, onClose, customerId, customerNam
               <label className="text-xs font-bold text-slate-700">Date & Time *</label>
               <input 
                 type="datetime-local"
+                min={minDateTime}
                 value={form.scheduledDate}
                 onChange={e => {
-                  setForm({...form, scheduledDate: e.target.value});
-                  if (errors.scheduledDate) setErrors({...errors, scheduledDate: null});
+                  const val = e.target.value;
+                  setForm({...form, scheduledDate: val});
+                  if (val) {
+                    const err = validateFutureDate(val, 'Follow-up date & time');
+                    setErrors(prev => ({ ...prev, scheduledDate: err }));
+                  } else {
+                    setErrors(prev => ({ ...prev, scheduledDate: null }));
+                  }
                 }}
                 className={`w-full mt-1.5 px-4 py-2.5 rounded-xl border text-sm outline-none transition-all ${
                   errors.scheduledDate ? 'border-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-slate-200 focus:border-blue-500'

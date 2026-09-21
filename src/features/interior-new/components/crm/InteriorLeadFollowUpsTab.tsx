@@ -316,13 +316,13 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
       </div>
 
       {/* --- 2-COLUMN BALANCED DASHBOARD GRID --- */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 min-w-0">
         
         {/* LEFT COLUMN: ACTIVE FOLLOW-UP DETAILS (5 cols) */}
-        <div className="lg:col-span-5 space-y-4">
+        <div className="lg:col-span-5 space-y-4 min-w-0">
           
           {/* Main Brief & Goal Card */}
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 sm:p-5 shadow-xs space-y-3.5">
+          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 sm:p-5 shadow-xs space-y-3.5 min-w-0 overflow-hidden">
             <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
               <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                 <FileText size={14} className="text-blue-500" /> Touchpoint Objective & Goal
@@ -333,7 +333,7 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
             </div>
 
             <div className={cn(
-              "p-3.5 rounded-xl border text-xs sm:text-sm font-medium leading-relaxed whitespace-pre-wrap selection:bg-blue-500/20",
+              "p-3.5 rounded-xl border text-xs sm:text-sm font-medium leading-relaxed whitespace-pre-wrap selection:bg-blue-500/20 break-words [overflow-wrap:anywhere]",
               isOverdue ? "bg-rose-500/5 border-rose-500/20 text-[hsl(var(--foreground))]" : "bg-[hsl(var(--muted)/0.3)] border-[hsl(var(--border))] text-[hsl(var(--foreground))]"
             )}>
               {currentFollowUp.remarks || 'No notes or objectives recorded for this touchpoint.'}
@@ -341,33 +341,33 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
 
             {/* Quick Spec Matrix (2x2 Compact Grid) */}
             <div className="grid grid-cols-2 gap-2.5 pt-1">
-              <div className="bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))] rounded-xl p-2.5">
+              <div className="bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))] rounded-xl p-2.5 min-w-0">
                 <p className="text-[9px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-0.5">Channel</p>
-                <div className="flex items-center gap-1.5 font-bold text-xs text-[hsl(var(--foreground))]">
-                  {getTypeIcon(currentFollowUp.type, "w-3.5 h-3.5")}
+                <div className="flex items-center gap-1.5 font-bold text-xs text-[hsl(var(--foreground))] min-w-0">
+                  {getTypeIcon(currentFollowUp.type, "w-3.5 h-3.5 shrink-0")}
                   <span className="truncate">{currentFollowUp.type || 'Phone Call'}</span>
                 </div>
               </div>
 
-              <div className="bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))] rounded-xl p-2.5">
+              <div className="bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))] rounded-xl p-2.5 min-w-0">
                 <p className="text-[9px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-0.5">Assigned To</p>
-                <div className="flex items-center gap-1.5 font-bold text-xs text-[hsl(var(--foreground))]">
+                <div className="flex items-center gap-1.5 font-bold text-xs text-[hsl(var(--foreground))] min-w-0">
                   <User size={12} className="text-purple-500 shrink-0" />
                   <span className="truncate" title={assignedUserName}>{assignedUserName}</span>
                 </div>
               </div>
 
-              <div className="bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))] rounded-xl p-2.5">
+              <div className="bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))] rounded-xl p-2.5 min-w-0">
                 <p className="text-[9px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-0.5">Client Mobile</p>
-                <a href={`tel:${lead?.mobileNumber}`} className="flex items-center gap-1.5 font-bold text-xs text-blue-600 hover:underline">
+                <a href={`tel:${lead?.mobileNumber}`} className="flex items-center gap-1.5 font-bold text-xs text-blue-600 hover:underline min-w-0">
                   <Phone size={12} className="shrink-0" />
                   <span className="truncate">{lead?.mobileNumber || '—'}</span>
                 </a>
               </div>
 
-              <div className="bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))] rounded-xl p-2.5">
+              <div className="bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))] rounded-xl p-2.5 min-w-0">
                 <p className="text-[9px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-0.5">Project City</p>
-                <div className="flex items-center gap-1.5 font-bold text-xs text-[hsl(var(--foreground))]">
+                <div className="flex items-center gap-1.5 font-bold text-xs text-[hsl(var(--foreground))] min-w-0">
                   <MapPin size={12} className="text-amber-500 shrink-0" />
                   <span className="truncate">{lead?.city || lead?.projectLocation || 'Standard'}</span>
                 </div>
@@ -377,7 +377,7 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
         </div>
 
         {/* RIGHT COLUMN: TIMELINE & HISTORY LOG (7 cols) */}
-        <div className="lg:col-span-7 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 sm:p-6 shadow-xs">
+        <div className="lg:col-span-7 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 sm:p-6 shadow-xs min-w-0">
           <div className="flex items-center justify-between pb-3 mb-4 sm:mb-5 border-b border-[hsl(var(--border))]">
             <div className="flex items-center gap-2">
               <History size={16} className="text-blue-500" />
@@ -390,7 +390,7 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
             </span>
           </div>
 
-          <div className="relative border-l-2 border-[hsl(var(--border))] ml-2.5 sm:ml-4 pl-4 sm:pl-6 space-y-4 sm:space-y-5">
+          <div className="relative border-l-2 border-[hsl(var(--border))] ml-2.5 sm:ml-4 pl-4 sm:pl-6 space-y-4 sm:space-y-5 min-w-0">
             {allFollowUps.map((item: any, idx: number) => {
               const isItemActive = item._id === currentFollowUp?._id;
               const itemUser = getUserDisplayName(item.user);
@@ -398,7 +398,7 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
               const isItemOverdue = !isLeadProgressed && item.status === 'Pending' && item.scheduledDate && new Date(item.scheduledDate).getTime() < Date.now();
 
               return (
-                <div key={item._id || idx} className="relative group">
+                <div key={item._id || idx} className="relative group min-w-0">
                   {/* Bullet Node on Vertical Line */}
                   <div className={cn(
                     "absolute -left-[1.35rem] sm:-left-[1.85rem] top-1.5 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-2 border-[hsl(var(--card))] flex items-center justify-center",
@@ -409,7 +409,7 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
 
                   {/* Timeline Entry Card */}
                   <div className={cn(
-                    "border rounded-xl p-3.5 sm:p-4 transition-colors space-y-2",
+                    "border rounded-xl p-3.5 sm:p-4 transition-colors space-y-2 min-w-0 overflow-hidden",
                     isItemActive
                       ? isItemOverdue
                         ? "bg-rose-500/5 hover:bg-rose-500/10 border-rose-500/30"
@@ -456,16 +456,16 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
                       </span>
                     </div>
 
-                    <p className="text-xs text-[hsl(var(--foreground))] font-medium leading-relaxed whitespace-pre-wrap">
+                    <p className="text-xs text-[hsl(var(--foreground))] font-medium leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                       {item.remarks || 'No notes logged.'}
                     </p>
 
                     <div className="flex items-center justify-between text-[10px] text-[hsl(var(--muted-foreground))] pt-1 border-t border-[hsl(var(--border)/0.5)]">
-                      <span>
+                      <span className="truncate max-w-[200px] sm:max-w-xs">
                         Handled by: <strong className="text-[hsl(var(--foreground))]">{itemUser}</strong>
                       </span>
                       {item.createdAt && (
-                        <span>
+                        <span className="shrink-0">
                           Logged: {new Date(item.createdAt).toLocaleDateString()}
                         </span>
                       )}

@@ -21,39 +21,38 @@ import {
 } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
-import { validateNonEmpty, validateRequiredDate, ValidationErrors } from '@/lib/crmValidation';
+import { validateNonEmpty, validateFutureDate, ValidationErrors, getMinDateTimeLocal } from '@/lib/crmValidation';
 
-interface Props {
+interface SendToSiteVisitModalProps {
   isOpen: boolean;
   onClose: () => void;
   customerId: string;
   customerName?: string;
+  projectLocation?: string;
   currentStatus?: string;
   onSuccess: () => void;
   users?: any[];
   initialData?: {
     scheduledDate?: string | Date;
-    assignedSalesExecutive?: string;
     remarks?: string;
+    assignedSalesExecutive?: string;
   } | null;
 }
 
 function userLabel(u: any) {
-  const name = u.fullName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.name || 'Team Member';
-  const roleName = u.role?.name || u.role || 'Member';
-  return `${name} (${roleName})`;
+  const name = u.fullName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.name || 'User';
+  return `${name} (${u.role?.name || u.role || 'User'})`;
 }
 
 function formatForDateTimeLocal(dateVal?: string | Date | null): string {
   if (!dateVal) return '';
   const d = new Date(dateVal);
   if (isNaN(d.getTime())) return '';
-  const pad = (n: number) => n.toString().padStart(2, '0');
   const year = d.getFullYear();
-  const month = pad(d.getMonth() + 1);
-  const day = pad(d.getDate());
-  const hours = pad(d.getHours());
-  const minutes = pad(d.getMinutes());
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
@@ -62,11 +61,12 @@ export function InteriorSendToSiteVisitModal({
   onClose,
   customerId,
   customerName,
+  projectLocation,
   currentStatus,
   onSuccess,
   users = [],
   initialData = null,
-}: Props) {
+}: SendToSiteVisitModalProps) {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -77,8 +77,12 @@ export function InteriorSendToSiteVisitModal({
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
+        const isPast = initialData.scheduledDate
+          ? new Date(initialData.scheduledDate).getTime() < Date.now()
+          : false;
+
         setAssignedSalesExecutive(initialData.assignedSalesExecutive || '');
-        setScheduledDate(formatForDateTimeLocal(initialData.scheduledDate));
+        setScheduledDate(isPast ? '' : formatForDateTimeLocal(initialData.scheduledDate));
         setRemarks(initialData.remarks || '');
       } else {
         setAssignedSalesExecutive('');
@@ -91,17 +95,14 @@ export function InteriorSendToSiteVisitModal({
 
   if (!isOpen) return null;
 
+  const minDateTime = getMinDateTimeLocal();
   const isSiteVisitStage = ['Under Site Visit', 'Measurement Done'].includes(currentStatus || '');
   const isRescheduling = isSiteVisitStage && Boolean(initialData?.scheduledDate);
-
-  const isDateInPast = Boolean(
-    scheduledDate && new Date(scheduledDate).getTime() < Date.now()
-  );
 
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {
       assignedSalesExecutive: validateNonEmpty(assignedSalesExecutive, 'Assign team member'),
-      scheduledDate: validateRequiredDate(scheduledDate, 'Scheduled date & time'),
+      scheduledDate: validateFutureDate(scheduledDate, 'Scheduled date & time'),
     };
     setErrors(newErrors);
     return !Object.values(newErrors).some((err) => err !== null);
@@ -229,19 +230,19 @@ export function InteriorSendToSiteVisitModal({
           <form onSubmit={handleSubmit} className="p-5 sm:p-6 overflow-y-auto space-y-4 sm:space-y-5 custom-scrollbar">
             {/* Previous Session Details Box when rescheduling */}
             {isRescheduling && (
-              <div className="bg-purple-500/5 border border-purple-500/20 rounded-2xl p-4 space-y-2.5 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-purple-700 dark:text-purple-400 flex items-center gap-1.5">
+              <div className="bg-purple-500/5 border border-purple-500/20 rounded-2xl p-4 space-y-2.5 shadow-xs min-w-0 overflow-hidden">
+                <div className="flex items-center justify-between gap-2 min-w-0">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-purple-700 dark:text-purple-400 flex items-center gap-1.5 shrink-0">
                     <History size={13} /> Previous Schedule (Reference)
                   </span>
-                  <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20">
+                  <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20 shrink-0">
                     Site Survey
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 min-w-0">
                   {initialData?.scheduledDate && (
-                    <div className="flex items-center gap-2 bg-[hsl(var(--background))] px-3 py-2 rounded-xl border border-[hsl(var(--border))] text-xs font-semibold text-[hsl(var(--foreground))]">
+                    <div className="flex items-center gap-2 bg-[hsl(var(--background))] px-3 py-2 rounded-xl border border-[hsl(var(--border))] text-xs font-semibold text-[hsl(var(--foreground))] min-w-0 overflow-hidden">
                       <Clock size={13} className="text-purple-600 shrink-0" />
                       <span className="truncate">
                         {new Date(initialData.scheduledDate).toLocaleString('en-US', {
@@ -255,7 +256,7 @@ export function InteriorSendToSiteVisitModal({
                   )}
 
                   {previousAssignedUser && (
-                    <div className="flex items-center gap-2 bg-[hsl(var(--background))] px-3 py-2 rounded-xl border border-[hsl(var(--border))] text-xs text-[hsl(var(--muted-foreground))]">
+                    <div className="flex items-center gap-2 bg-[hsl(var(--background))] px-3 py-2 rounded-xl border border-[hsl(var(--border))] text-xs text-[hsl(var(--muted-foreground))] min-w-0 overflow-hidden">
                       <User size={13} className="text-blue-500 shrink-0" />
                       <span className="truncate">
                         <strong className="text-[hsl(var(--foreground))] font-semibold">{previousAssignedUser}</strong>
@@ -265,7 +266,7 @@ export function InteriorSendToSiteVisitModal({
                 </div>
 
                 {initialData?.remarks && (
-                  <div className="text-xs text-[hsl(var(--muted-foreground))] italic bg-[hsl(var(--background))] p-2.5 rounded-xl border border-[hsl(var(--border)/0.8)] leading-relaxed">
+                  <div className="text-xs text-[hsl(var(--muted-foreground))] italic bg-[hsl(var(--background))] p-2.5 rounded-xl border border-[hsl(var(--border)/0.8)] leading-relaxed break-words [overflow-wrap:anywhere] whitespace-pre-wrap min-w-0">
                     "{initialData.remarks}"
                   </div>
                 )}
@@ -323,20 +324,22 @@ export function InteriorSendToSiteVisitModal({
                   <Calendar size={13} className="text-purple-600" />
                   Scheduled Date & Time <span className="text-rose-500">*</span>
                 </label>
-                {isDateInPast && (
-                  <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-md border border-rose-500/20 flex items-center gap-1">
-                    <AlertTriangle size={11} /> Date is in the past
-                  </span>
-                )}
               </div>
 
               <div className="relative">
                 <input
                   type="datetime-local"
+                  min={minDateTime}
                   value={scheduledDate}
                   onChange={(e) => {
-                    setScheduledDate(e.target.value);
-                    if (errors.scheduledDate) setErrors((prev) => ({ ...prev, scheduledDate: null }));
+                    const val = e.target.value;
+                    setScheduledDate(val);
+                    if (val) {
+                      const err = validateFutureDate(val, 'Scheduled date & time');
+                      setErrors((prev) => ({ ...prev, scheduledDate: err }));
+                    } else {
+                      setErrors((prev) => ({ ...prev, scheduledDate: null }));
+                    }
                   }}
                   className={`w-full px-3.5 py-2.5 sm:py-3 rounded-xl border bg-[hsl(var(--background))] text-xs sm:text-sm font-medium text-[hsl(var(--foreground))] outline-none transition-all ${
                     errors.scheduledDate

@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
-import { validateNonEmpty, validateRequiredDate } from '@/lib/crmValidation';
+import { validateNonEmpty, validateFutureDate, getMinDateTimeLocal } from '@/lib/crmValidation';
 
 interface Props {
   isOpen: boolean;
@@ -76,8 +76,12 @@ export function InteriorSendToRequirementsModal({
 
   useEffect(() => {
     if (isOpen) {
+      const isPast = initialData?.scheduledDate
+        ? new Date(initialData.scheduledDate).getTime() < Date.now()
+        : false;
+
       setAssignedMember(initialData?.assignedMember || '');
-      setScheduledDate(formatForDateTimeLocal(initialData?.scheduledDate));
+      setScheduledDate(isPast ? '' : formatForDateTimeLocal(initialData?.scheduledDate));
       setRemarks(initialData?.remarks || '');
       setErrors({});
     } else {
@@ -90,6 +94,7 @@ export function InteriorSendToRequirementsModal({
 
   if (!isOpen) return null;
 
+  const minDateTime = getMinDateTimeLocal();
   const isRequirementStage = ['Under Requirement', 'Requirement Completed'].includes(currentStatus || '');
   const isRescheduling = isRequirementStage && Boolean(
     initialData?.scheduledDate || initialData?.assignedMember || initialData?.remarks
@@ -104,14 +109,10 @@ export function InteriorSendToRequirementsModal({
       })()
     : null;
 
-  const isPastDate = Boolean(
-    scheduledDate && new Date(scheduledDate).getTime() < Date.now()
-  );
-
   const validateForm = () => {
     const newErrors: { assignedMember?: string | null; scheduledDate?: string | null } = {
       assignedMember: validateNonEmpty(assignedMember, 'Assign team member'),
-      scheduledDate: validateRequiredDate(scheduledDate, 'Discussion date & time'),
+      scheduledDate: validateFutureDate(scheduledDate, 'Discussion date & time'),
     };
     setErrors(newErrors);
     return !newErrors.assignedMember && !newErrors.scheduledDate;
@@ -214,19 +215,19 @@ export function InteriorSendToRequirementsModal({
           <form onSubmit={handleSubmit} className="p-5 sm:p-6 overflow-y-auto space-y-4 sm:space-y-5 custom-scrollbar">
             {/* Previous Session Details Box when rescheduling */}
             {isRescheduling && (
-              <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 space-y-2.5 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+              <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 space-y-2.5 shadow-xs min-w-0 overflow-hidden">
+                <div className="flex items-center justify-between gap-2 min-w-0">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 shrink-0">
                     <History size={13} /> Previous Schedule (Reference)
                   </span>
-                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 shrink-0">
                     Requirements Phase
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 min-w-0">
                   {initialData?.scheduledDate && (
-                    <div className="flex items-center gap-2 bg-[hsl(var(--background))] px-3 py-2 rounded-xl border border-[hsl(var(--border))] text-xs font-semibold text-[hsl(var(--foreground))]">
+                    <div className="flex items-center gap-2 bg-[hsl(var(--background))] px-3 py-2 rounded-xl border border-[hsl(var(--border))] text-xs font-semibold text-[hsl(var(--foreground))] min-w-0 overflow-hidden">
                       <Clock size={13} className="text-emerald-600 shrink-0" />
                       <span className="truncate">
                         {new Date(initialData.scheduledDate).toLocaleString('en-US', {
@@ -240,7 +241,7 @@ export function InteriorSendToRequirementsModal({
                   )}
 
                   {previousAssignedUser && (
-                    <div className="flex items-center gap-2 bg-[hsl(var(--background))] px-3 py-2 rounded-xl border border-[hsl(var(--border))] text-xs text-[hsl(var(--muted-foreground))]">
+                    <div className="flex items-center gap-2 bg-[hsl(var(--background))] px-3 py-2 rounded-xl border border-[hsl(var(--border))] text-xs text-[hsl(var(--muted-foreground))] min-w-0 overflow-hidden">
                       <User size={13} className="text-blue-500 shrink-0" />
                       <span className="truncate">
                         <strong className="text-[hsl(var(--foreground))] font-semibold">{previousAssignedUser}</strong>
@@ -250,7 +251,7 @@ export function InteriorSendToRequirementsModal({
                 </div>
 
                 {initialData?.remarks && (
-                  <div className="text-xs text-[hsl(var(--muted-foreground))] italic bg-[hsl(var(--background))] p-2.5 rounded-xl border border-[hsl(var(--border)/0.8)] leading-relaxed">
+                  <div className="text-xs text-[hsl(var(--muted-foreground))] italic bg-[hsl(var(--background))] p-2.5 rounded-xl border border-[hsl(var(--border)/0.8)] leading-relaxed break-words [overflow-wrap:anywhere] whitespace-pre-wrap min-w-0">
                     "{initialData.remarks}"
                   </div>
                 )}
@@ -308,20 +309,22 @@ export function InteriorSendToRequirementsModal({
                   <Calendar size={13} className="text-emerald-600" />
                   Discussion / Meeting Date & Time <span className="text-rose-500">*</span>
                 </label>
-                {isPastDate && (
-                  <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-md border border-rose-500/20 flex items-center gap-1">
-                    <AlertTriangle size={11} /> Date is in the past
-                  </span>
-                )}
               </div>
 
               <div className="relative">
                 <input
                   type="datetime-local"
+                  min={minDateTime}
                   value={scheduledDate}
                   onChange={(e) => {
-                    setScheduledDate(e.target.value);
-                    if (errors.scheduledDate) setErrors((prev) => ({ ...prev, scheduledDate: null }));
+                    const val = e.target.value;
+                    setScheduledDate(val);
+                    if (val) {
+                      const err = validateFutureDate(val, 'Discussion date & time');
+                      setErrors((prev) => ({ ...prev, scheduledDate: err }));
+                    } else {
+                      setErrors((prev) => ({ ...prev, scheduledDate: null }));
+                    }
                   }}
                   className={`w-full px-3.5 py-2.5 sm:py-3 rounded-xl border bg-[hsl(var(--background))] text-xs sm:text-sm font-medium text-[hsl(var(--foreground))] outline-none transition-all ${
                     errors.scheduledDate

@@ -182,18 +182,18 @@ export function InteriorSendToDrawingModal({
           <form onSubmit={handleSubmit} className="p-5 sm:p-6 overflow-y-auto space-y-4 sm:space-y-5 custom-scrollbar">
             {/* Previous Session Details Box when rescheduling */}
             {isRescheduling && (
-              <div className="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-4 space-y-2.5 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1.5">
+              <div className="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-4 space-y-2.5 shadow-xs min-w-0 overflow-hidden">
+                <div className="flex items-center justify-between gap-2 min-w-0">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1.5 shrink-0">
                     <History size={13} /> Current Assignment
                   </span>
-                  <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20">
+                  <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20 shrink-0">
                     Drawing Phase
                   </span>
                 </div>
 
                 {previousAssignedUser && (
-                  <div className="flex items-center gap-2 bg-[hsl(var(--background))] px-3 py-2 rounded-xl border border-[hsl(var(--border))] text-xs text-[hsl(var(--muted-foreground))]">
+                  <div className="flex items-center gap-2 bg-[hsl(var(--background))] px-3 py-2 rounded-xl border border-[hsl(var(--border))] text-xs text-[hsl(var(--muted-foreground))] min-w-0 overflow-hidden">
                     <User size={13} className="text-blue-500 shrink-0" />
                     <span className="truncate">
                       Currently Assigned: <strong className="text-[hsl(var(--foreground))] font-semibold">{previousAssignedUser}</strong>
@@ -202,7 +202,7 @@ export function InteriorSendToDrawingModal({
                 )}
 
                 {initialData?.remarks && (
-                  <div className="text-xs text-[hsl(var(--muted-foreground))] italic bg-[hsl(var(--background))] p-2.5 rounded-xl border border-[hsl(var(--border)/0.8)] leading-relaxed">
+                  <div className="text-xs text-[hsl(var(--muted-foreground))] italic bg-[hsl(var(--background))] p-2.5 rounded-xl border border-[hsl(var(--border)/0.8)] leading-relaxed break-words [overflow-wrap:anywhere] whitespace-pre-wrap min-w-0">
                     "{initialData.remarks}"
                   </div>
                 )}

@@ -497,17 +497,17 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
                                     ? <span className="font-mono text-xs font-medium text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md">{item.itemNumber}</span>
                                     : <span className="text-slate-300 text-xs">—</span>}
                                 </td>
-                                <td className="px-4 py-3">
+                                <td className="px-4 py-3 min-w-[200px] max-w-md">
                                   <div className="flex items-center gap-2">
-                                    <p className="font-medium text-gray-900">{item.itemDescription}</p>
+                                    <p className="font-medium text-gray-900 break-words [overflow-wrap:anywhere]">{item.itemDescription}</p>
                                     {(item as any).version > 1 && (
-                                      <span className="text-[10px] font-medium bg-gray-100 border border-gray-200 text-gray-700 px-2 py-0.5 rounded-full whitespace-nowrap">
+                                      <span className="text-[10px] font-medium bg-gray-100 border border-gray-200 text-gray-700 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
                                         v{(item as any).version}
                                       </span>
                                     )}
                                   </div>
                                   {item.remark && (
-                                    <p className="text-xs text-slate-500 mt-0.5 truncate max-w-md">{item.remark}</p>
+                                    <p className="text-xs text-slate-500 mt-0.5 break-words [overflow-wrap:anywhere]">{item.remark}</p>
                                   )}
                                   {item.status === 'Pending' && (
                                     <p className="text-[11px] text-amber-700 font-medium mt-1">

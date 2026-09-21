@@ -214,7 +214,7 @@ export function InteriorSiteVisitHistoryModal({
                         <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1">
                           <MessageSquare size={11} className="text-purple-600" /> Instructions / Site Notes:
                         </p>
-                        <p className="text-xs text-[hsl(var(--foreground))] font-medium leading-relaxed whitespace-pre-wrap">
+                        <p className="text-xs text-[hsl(var(--foreground))] font-medium leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                           {item.remarks || 'No specific instructions entered.'}
                         </p>
                       </div>

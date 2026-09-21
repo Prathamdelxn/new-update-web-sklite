@@ -9,7 +9,7 @@ import { motion } from 'framer-motion';
 import { X, History, Calendar, Clock, User, FileText } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
-import { validateRequiredDate, validateNonEmpty, ValidationErrors } from '@/lib/crmValidation';
+import { validateFutureDate, validateNonEmpty, ValidationErrors, getMinDateTimeLocal } from '@/lib/crmValidation';
 
 interface ScheduleFollowUpModalProps {
   isOpen: boolean;
@@ -67,10 +67,14 @@ export function InteriorScheduleFollowUpModal({
   React.useEffect(() => {
     if (isOpen) {
       if (initialData) {
+        const isPast = initialData.scheduledDate
+          ? new Date(initialData.scheduledDate).getTime() < Date.now()
+          : false;
+
         setForm({
           type: initialData.type || 'Phone Call',
           status: 'Pending',
-          scheduledDate: formatForDateTimeLocal(initialData.scheduledDate),
+          scheduledDate: isPast ? '' : formatForDateTimeLocal(initialData.scheduledDate),
           remarks: initialData.remarks || '',
           assignedSalesExecutive: initialData.assignedSalesExecutive || '',
         });
@@ -89,13 +93,11 @@ export function InteriorScheduleFollowUpModal({
 
   if (!isOpen) return null;
 
-  const isDateInPast = Boolean(
-    form.scheduledDate && new Date(form.scheduledDate).getTime() < Date.now()
-  );
+  const minDateTime = getMinDateTimeLocal();
 
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {
-      scheduledDate: validateRequiredDate(form.scheduledDate, 'Follow-up date & time'),
+      scheduledDate: validateFutureDate(form.scheduledDate, 'Follow-up date & time'),
       assignedSalesExecutive: validateNonEmpty(form.assignedSalesExecutive, 'Assign member'),
       remarks: validateNonEmpty(form.remarks, 'Follow-up goal / notes'),
     };
@@ -170,19 +172,19 @@ export function InteriorScheduleFollowUpModal({
 
         {/* Previous follow-up reference box when rescheduling */}
         {initialData && initialData._id && (
-          <div className="mb-5 bg-blue-500/5 border border-blue-500/20 rounded-2xl p-3.5 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
+          <div className="mb-5 bg-blue-500/5 border border-blue-500/20 rounded-2xl p-3.5 space-y-1.5 min-w-0 overflow-hidden">
+            <div className="flex items-center justify-between gap-2 min-w-0">
+              <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1.5 shrink-0">
                 <History size={12} /> Previous Schedule (Reference)
               </span>
-              <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded-md border border-[hsl(var(--border))]">
+              <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded-md border border-[hsl(var(--border))] shrink-0">
                 {initialData.type || 'Follow-up'}
               </span>
             </div>
             {initialData.scheduledDate && (
-              <p className="text-xs font-semibold text-[hsl(var(--foreground))] flex items-center gap-1.5 pt-0.5">
+              <p className="text-xs font-semibold text-[hsl(var(--foreground))] flex items-center gap-1.5 pt-0.5 min-w-0 overflow-hidden">
                 <Clock size={12} className="text-blue-500 shrink-0" />
-                <span>
+                <span className="truncate">
                   {new Date(initialData.scheduledDate).toLocaleString('en-US', {
                     weekday: 'short',
                     month: 'short',
@@ -195,12 +197,12 @@ export function InteriorScheduleFollowUpModal({
               </p>
             )}
             {initialData.remarks && (
-              <p className="text-xs text-[hsl(var(--muted-foreground))] line-clamp-2 italic bg-[hsl(var(--muted)/0.4)] p-2 rounded-xl border border-[hsl(var(--border)/0.5)] mt-1">
+              <p className="text-xs text-[hsl(var(--muted-foreground))] italic bg-[hsl(var(--muted)/0.4)] p-2 rounded-xl border border-[hsl(var(--border)/0.5)] mt-1 break-words [overflow-wrap:anywhere] whitespace-pre-wrap min-w-0">
                 "{initialData.remarks}"
               </p>
             )}
             {assignedUserDisplayName && (
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
+              <p className="text-[11px] text-[hsl(var(--muted-foreground))] truncate">
                 Assigned: <strong className="text-[hsl(var(--foreground))]">{assignedUserDisplayName}</strong>
               </p>
             )}
@@ -223,24 +225,24 @@ export function InteriorScheduleFollowUpModal({
             <div>
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-[hsl(var(--foreground))]">Date & Time <span className="text-red-500">*</span></label>
-                {isDateInPast && (
-                  <span className="text-[10px] font-bold text-amber-600 bg-amber-500/10 px-1.5 py-0.2 rounded">
-                    Past date
-                  </span>
-                )}
               </div>
               <input
                 type="datetime-local"
+                min={minDateTime}
                 value={form.scheduledDate}
                 onChange={e => {
-                  setForm({...form, scheduledDate: e.target.value});
-                  if (errors.scheduledDate) setErrors({ ...errors, scheduledDate: null });
+                  const val = e.target.value;
+                  setForm({...form, scheduledDate: val});
+                  if (val) {
+                    const err = validateFutureDate(val, 'Follow-up date & time');
+                    setErrors(prev => ({ ...prev, scheduledDate: err }));
+                  } else {
+                    setErrors(prev => ({ ...prev, scheduledDate: null }));
+                  }
                 }}
                 className={`w-full mt-1.5 px-3 py-2.5 rounded-xl border ${
                   errors.scheduledDate
                     ? 'border-red-500 focus:border-red-500'
-                    : isDateInPast
-                    ? 'border-amber-500/60 focus:border-amber-500'
                     : 'border-[hsl(var(--border))] focus:border-[hsl(var(--ring))]'
                 } bg-[hsl(var(--background))] text-xs font-medium outline-none`}
               />
