@@ -6,11 +6,21 @@
 // =============================================================================
 
 import React, { useState, useEffect } from 'react';
-import { X, User, Phone, Mail, MapPin, Building, Activity } from 'lucide-react';
+import { X, User, Phone, Mail, MapPin, Building, Activity, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
-import { validateName, validateMobileNumber, validateEmail, ValidationErrors } from '@/lib/crmValidation';
+import {
+  validateName,
+  validateMobileNumber,
+  validateEmail,
+  validateLeadSource,
+  validatePropertyType,
+  validateProjectLocation,
+  LEAD_SOURCES,
+  PROPERTY_TYPES,
+  ValidationErrors,
+} from '@/lib/crmValidation';
 
 interface EditLeadModalProps {
   isOpen: boolean;
@@ -29,6 +39,7 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
+  const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
 
   const [formData, setFormData] = useState({
     name: '',
@@ -42,6 +53,7 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
   useEffect(() => {
     if (!isOpen) {
       setErrors({});
+      setTouched({});
     }
   }, [isOpen]);
 
@@ -56,15 +68,43 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
         projectLocation: lead.projectLocation || '',
       });
       setErrors({});
+      setTouched({});
     }
   }, [lead, isOpen]);
+
+  const validateField = (fieldName: string, value: string) => {
+    switch (fieldName) {
+      case 'name':
+        return validateName(value);
+      case 'mobileNumber':
+        return validateMobileNumber(value);
+      case 'email':
+        return validateEmail(value);
+      case 'leadSource':
+        return validateLeadSource(value);
+      case 'propertyType':
+        return validatePropertyType(value);
+      case 'projectLocation':
+        return validateProjectLocation(value, false); // optional on edit if pre-existing without location
+      default:
+        return null;
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: null }));
+    if (touched[name] || errors[name]) {
+      const err = validateField(name, value);
+      setErrors((prev) => ({ ...prev, [name]: err }));
     }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    const err = validateField(name, value);
+    setErrors((prev) => ({ ...prev, [name]: err }));
   };
 
   const validateForm = (): boolean => {
@@ -72,8 +112,19 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
       name: validateName(formData.name),
       mobileNumber: validateMobileNumber(formData.mobileNumber),
       email: validateEmail(formData.email),
+      leadSource: validateLeadSource(formData.leadSource),
+      propertyType: validatePropertyType(formData.propertyType),
+      projectLocation: validateProjectLocation(formData.projectLocation, false),
     };
     setErrors(newErrors);
+    setTouched({
+      name: true,
+      mobileNumber: true,
+      email: true,
+      leadSource: true,
+      propertyType: true,
+      projectLocation: true,
+    });
     return !Object.values(newErrors).some((err) => err !== null);
   };
 
@@ -81,7 +132,7 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
     e.preventDefault();
     if (!lead) return;
     if (!validateForm()) {
-      toast.error('Please fix the errors in the form');
+      toast.error('Please fix the validation errors before saving');
       return;
     }
 
@@ -152,18 +203,25 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
 
           {/* Body */}
           <div className="p-6 overflow-y-auto">
-            <form id="interior-edit-lead-form" onSubmit={handleSubmit} className="space-y-5">
+            <form id="interior-edit-lead-form" onSubmit={handleSubmit} className="space-y-5" noValidate>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {/* Name */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                    <User size={14} className="text-[hsl(var(--muted-foreground))]" /> Full Name *
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
+                      <User size={14} className="text-[hsl(var(--muted-foreground))]" /> Full Name *
+                    </label>
+                    <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                      {formData.name.length}/50
+                    </span>
+                  </div>
                   <input
                     type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
+                    onBlur={handleBlur}
+                    maxLength={50}
                     className={`w-full px-4 py-2.5 rounded-xl border bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 transition-all ${
                       errors.name
                         ? 'border-red-500 focus:ring-red-500/20'
@@ -172,42 +230,64 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                     placeholder="e.g., Rajesh Sharma"
                     required
                   />
-                  {errors.name && <p className="text-xs text-red-500 font-medium mt-1">{errors.name}</p>}
+                  {errors.name && (
+                    <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
+                      <AlertCircle size={12} className="shrink-0" />
+                      {errors.name}
+                    </p>
+                  )}
                 </div>
 
                 {/* Mobile */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                    <Phone size={14} className="text-[hsl(var(--muted-foreground))]" /> Mobile Number *
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
+                      <Phone size={14} className="text-[hsl(var(--muted-foreground))]" /> Mobile Number *
+                    </label>
+                    <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                      10-15 digits
+                    </span>
+                  </div>
                   <input
                     type="tel"
                     name="mobileNumber"
                     value={formData.mobileNumber}
                     onChange={handleChange}
+                    onBlur={handleBlur}
+                    maxLength={16}
                     className={`w-full px-4 py-2.5 rounded-xl border bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 transition-all ${
                       errors.mobileNumber
                         ? 'border-red-500 focus:ring-red-500/20'
                         : 'border-[hsl(var(--border))] focus:ring-indigo-500/20 focus:border-indigo-500'
                     }`}
-                    placeholder="e.g., 9876543210"
+                    placeholder="e.g., +91 9876543210"
                     required
                   />
                   {errors.mobileNumber && (
-                    <p className="text-xs text-red-500 font-medium mt-1">{errors.mobileNumber}</p>
+                    <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
+                      <AlertCircle size={12} className="shrink-0" />
+                      {errors.mobileNumber}
+                    </p>
                   )}
                 </div>
 
                 {/* Email */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                    <Mail size={14} className="text-[hsl(var(--muted-foreground))]" /> Email Address
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
+                      <Mail size={14} className="text-[hsl(var(--muted-foreground))]" /> Email Address
+                    </label>
+                    <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                      Optional (max 100)
+                    </span>
+                  </div>
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
+                    onBlur={handleBlur}
+                    maxLength={100}
                     className={`w-full px-4 py-2.5 rounded-xl border bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 transition-all ${
                       errors.email
                         ? 'border-red-500 focus:ring-red-500/20'
@@ -215,7 +295,12 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                     }`}
                     placeholder="e.g., client@example.com"
                   />
-                  {errors.email && <p className="text-xs text-red-500 font-medium mt-1">{errors.email}</p>}
+                  {errors.email && (
+                    <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
+                      <AlertCircle size={12} className="shrink-0" />
+                      {errors.email}
+                    </p>
+                  )}
                 </div>
 
                 {/* Lead Source */}
@@ -227,24 +312,21 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                     name="leadSource"
                     value={formData.leadSource}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                   >
-                    {[
-                      'Phone Call',
-                      'Walk-in',
-                      'Referral',
-                      'Existing Customer',
-                      'Builder Reference',
-                      'Architect Reference',
-                      'Society Reference',
-                      'Social Media',
-                      'Other',
-                    ].map((source) => (
+                    {LEAD_SOURCES.map((source) => (
                       <option key={source} value={source}>
                         {source}
                       </option>
                     ))}
                   </select>
+                  {errors.leadSource && (
+                    <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
+                      <AlertCircle size={12} className="shrink-0" />
+                      {errors.leadSource}
+                    </p>
+                  )}
                 </div>
 
                 {/* Property Type */}
@@ -256,29 +338,53 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                     name="propertyType"
                     value={formData.propertyType}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                   >
-                    {['Flat', 'Villa', 'Office', 'Shop', 'Other'].map((type) => (
+                    {PROPERTY_TYPES.map((type) => (
                       <option key={type} value={type}>
                         {type}
                       </option>
                     ))}
                   </select>
+                  {errors.propertyType && (
+                    <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
+                      <AlertCircle size={12} className="shrink-0" />
+                      {errors.propertyType}
+                    </p>
+                  )}
                 </div>
 
                 {/* Project Location */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                    <MapPin size={14} className="text-[hsl(var(--muted-foreground))]" /> Project Location
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
+                      <MapPin size={14} className="text-[hsl(var(--muted-foreground))]" /> Project Location
+                    </label>
+                    <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                      {formData.projectLocation.length}/150
+                    </span>
+                  </div>
                   <input
                     type="text"
                     name="projectLocation"
                     value={formData.projectLocation}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    onBlur={handleBlur}
+                    maxLength={150}
+                    className={`w-full px-4 py-2.5 rounded-xl border bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 transition-all ${
+                      errors.projectLocation
+                        ? 'border-red-500 focus:ring-red-500/20'
+                        : 'border-[hsl(var(--border))] focus:ring-indigo-500/20 focus:border-indigo-500'
+                    }`}
                     placeholder="e.g., Hiranandani Estate, Thane"
                   />
+                  {errors.projectLocation && (
+                    <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
+                      <AlertCircle size={12} className="shrink-0" />
+                      {errors.projectLocation}
+                    </p>
+                  )}
                 </div>
               </div>
             </form>
@@ -308,3 +414,4 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
     </AnimatePresence>
   );
 };
+

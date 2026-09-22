@@ -164,7 +164,7 @@ export function InteriorScheduleFollowUpModal({
               {initialData?._id ? 'Reschedule Follow-up' : 'Schedule Follow-up'}
             </h2>
             <p className="text-sm text-[hsl(var(--muted-foreground))] truncate max-w-full" title={customerName ? `with ${customerName}` : ''}>
-              {initialData?._id ? 'Update scheduled touchpoint date, time & notes' : 'Plan a future touchpoint'} {customerName ? `with ${customerName}` : ''}
+              {initialData?._id ? 'Update scheduled touchpoint date, time & notes' : 'Plan a future touchpoint'} 
             </p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-[hsl(var(--muted))] rounded-xl cursor-pointer"><X size={20} className="text-[hsl(var(--muted-foreground))]" /></button>

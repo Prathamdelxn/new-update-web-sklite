@@ -88,7 +88,7 @@ export function ScheduleFollowUpModal({ isOpen, onClose, customerId, customerNam
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-extrabold text-slate-900">Schedule Follow-up</h2>
-            <p className="text-sm text-slate-500 truncate max-w-full" title={customerName ? `Plan a future touchpoint with ${customerName}` : 'Plan a future touchpoint'}>Plan a future touchpoint {customerName ? `with ${customerName}` : ''}</p>
+            <p className="text-sm text-slate-500 truncate max-w-[200px]]" title={customerName ? `Plan a future touchpoint ` : 'Plan a future touchpoint'}>Plan a future touchpoint</p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl"><X size={20} className="text-slate-400" /></button>
         </div>
