@@ -7,7 +7,7 @@ import { useInteriorAuthGuard } from '@/lib/useInteriorAuthGuard';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
-import { ArrowLeft, ArrowRight, User, Phone, Mail, Building, DollarSign, Activity, Plus, MessageSquare, X, CheckCircle2, Calendar, MapPin, Ruler, PenTool, UploadCloud, File as FileIcon, Image as ImageIcon, Calculator, FileText, ChevronDown, Pencil, Trash2, DoorOpen, Maximize2, Columns, Zap, Droplets, Wind, Armchair, AlertTriangle, Layers, Palette, Sliders, Sun, Sparkles, Box, Archive, ExternalLink, Eye, Lock, Copy, Check, CalendarCheck, Clock, PhoneCall, Frown, History } from 'lucide-react';
+import { ArrowLeft, ArrowRight, User, Phone, Mail, Building, DollarSign, Activity, Plus, MessageSquare, X, CheckCircle2, XCircle, Calendar, MapPin, Ruler, PenTool, UploadCloud, File as FileIcon, Image as ImageIcon, Calculator, FileText, ChevronDown, Pencil, Trash2, DoorOpen, Maximize2, Columns, Zap, Droplets, Wind, Armchair, AlertTriangle, Layers, Palette, Sliders, Sun, Sparkles, Box, Archive, ExternalLink, Eye, Lock, Copy, Check, CalendarCheck, Clock, PhoneCall, Frown, History, Share2, Globe, MessageCircle, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn, parseMaxBudget } from '@/lib/utils';
 import { InteriorLogSiteVisitModal } from '@/features/interior-new/components/crm/modals/InteriorLogSiteVisitModal';
@@ -21,7 +21,11 @@ import { InteriorConvertToProjectModal } from '@/features/interior-new/component
 import { InteriorScheduleFollowUpModal } from '@/features/interior-new/components/crm/modals/InteriorScheduleFollowUpModal';
 import { InteriorLogRequirementsModal } from '@/features/interior-new/components/crm/modals/InteriorLogRequirementsModal';
 import { InteriorUploadDesignModal, detectFileType, getFileBadgeInfo } from '@/features/interior-new/components/crm/modals/InteriorUploadDesignModal';
+import { InteriorDrawingApprovalModal } from '@/features/interior-new/components/crm/modals/InteriorDrawingApprovalModal';
+import { InteriorUploadRevisionModal } from '@/features/interior-new/components/crm/modals/InteriorUploadRevisionModal';
+import { InteriorSendDrawingForApprovalModal } from '@/features/interior-new/components/crm/modals/InteriorSendDrawingForApprovalModal';
 import { Interior3DViewerModal } from '@/features/interior-new/components/crm/modals/Interior3DViewerModal';
+import { InteriorCrmShareModal } from '@/features/interior-new/components/crm/modals/InteriorCrmShareModal';
 import { InteriorQuotationBuilderModal } from '@/features/interior-new/components/crm/modals/InteriorQuotationBuilderModal';
 import { InteriorEditLeadModal } from '@/features/interior-new/components/crm/modals/InteriorEditLeadModal';
 import { InteriorDeleteLeadModal } from '@/features/interior-new/components/crm/modals/InteriorDeleteLeadModal';
@@ -60,7 +64,16 @@ export default function Lead360View() {
   const [isConvertToProjectOpen, setIsConvertToProjectOpen] = useState(false);
   const [isReqModalOpen, setIsReqModalOpen] = useState(false);
   const [isDesignModalOpen, setIsDesignModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [selected3DFile, setSelected3DFile] = useState<any | null>(null);
+  const [selectedDrawingForApproval, setSelectedDrawingForApproval] = useState<any | null>(null);
+  const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+  const [selectedDrawingForSendApproval, setSelectedDrawingForSendApproval] = useState<any | null>(null);
+  const [isSendApprovalModalOpen, setIsSendApprovalModalOpen] = useState(false);
+  const [selectedDrawingForRevision, setSelectedDrawingForRevision] = useState<any | null>(null);
+  const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
+  const [drawingToDelete, setDrawingToDelete] = useState<any | null>(null);
+  const [isDeletingDrawing, setIsDeletingDrawing] = useState(false);
   const [isBoqModalOpen, setIsBoqModalOpen] = useState(false);
   const [isQuotationModalOpen, setIsQuotationModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -70,6 +83,43 @@ export default function Lead360View() {
   const [activeQuotationIndex, setActiveQuotationIndex] = useState(0);
   const [activeBoqIndex, setActiveBoqIndex] = useState(0);
   const [editingBoqIndex, setEditingBoqIndex] = useState<number | null>(null);
+
+  const handleDeleteDrawing = async () => {
+    if (!drawingToDelete || !params.id) return;
+    const drawingId = drawingToDelete._id || drawingToDelete.id || drawingToDelete.title || drawingToDelete.name;
+    setIsDeletingDrawing(true);
+    try {
+      await interiorCrmService.deleteDrawing(params.id as string, drawingId);
+      toast.success(`Drawing "${drawingToDelete.title || drawingToDelete.name || 'Drawing'}" deleted successfully.`);
+      setDrawingToDelete(null);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || err.message || 'Failed to delete drawing');
+    } finally {
+      setIsDeletingDrawing(false);
+    }
+  };
+
+  const [approvingDrawingId, setApprovingDrawingId] = useState<string | null>(null);
+
+  const handleDirectApproveDrawing = async (file: any) => {
+    if (!params.id) return;
+    const drawingId = file._id || file.id || file.title || file.name;
+    const versionNumber = file.currentVersion || 1;
+    setApprovingDrawingId(drawingId);
+    try {
+      await interiorCrmService.approveDrawing(params.id as string, drawingId, {
+        action: 'approve',
+        versionNumber
+      });
+      toast.success(`Drawing "${file.title || file.name || 'Drawing'}" approved successfully! Live to client.`);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || err.message || 'Failed to approve drawing');
+    } finally {
+      setApprovingDrawingId(null);
+    }
+  };
   
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -260,18 +310,32 @@ export default function Lead360View() {
   }, [activities, lead, users]);
 
   const drawingInfo = React.useMemo(() => {
-    const drawingActivity = activities.find(
-      (a) => (a.type === '2D/3D Drawing' || a.type === 'Design Phase') && (a.status === 'Pending' || a.scheduledDate || a.remarks)
-    ) || activities.find((a) => a.type === '2D/3D Drawing' || a.type === 'Design Phase')
-      || activities.find((a) => a.type === 'Status Change' && (a.remarks?.toLowerCase().includes('drawing') || a.remarks?.toLowerCase().includes('design')));
+    // Find the specific stage handover activity when the lead was passed to the drawing phase
+    const handoverActivity = activities.find(
+      (a) => (a.type === '2D/3D Drawing' || a.type === 'Design Phase' || a.type === 'Stage Handover') &&
+             a.remarks &&
+             !a.remarks.toLowerCase().includes('sent for internal approval') &&
+             !a.remarks.toLowerCase().includes('approved') &&
+             !a.remarks.toLowerCase().includes('rejected') &&
+             !a.remarks.toLowerCase().includes('changes requested') &&
+             !a.remarks.toLowerCase().startsWith('lead passed to 2d/3d drawing phase')
+    ) || activities.find(
+      (a) => (a.type === '2D/3D Drawing' || a.type === 'Design Phase') &&
+             a.remarks &&
+             !a.remarks.toLowerCase().includes('sent for internal approval') &&
+             !a.remarks.toLowerCase().includes('approved') &&
+             !a.remarks.toLowerCase().includes('rejected')
+    );
 
-    const note = drawingActivity?.remarks || '';
+    const rawNote = lead?.drawingHandoverNotes || (lead as any)?.designBrief || handoverActivity?.remarks || '';
+    const isGenericSystemNote = !rawNote || rawNote.trim().toLowerCase().startsWith('lead passed to') || rawNote.trim().toLowerCase() === 'status changed to under drawing';
+    const note = isGenericSystemNote ? '' : rawNote.trim();
 
     const scheduledDate =
       lead?.drawingScheduledDate ||
       lead?.drawingDueDate ||
       lead?.designDueDate ||
-      drawingActivity?.scheduledDate ||
+      handoverActivity?.scheduledDate ||
       null;
 
     const assignedDesigner = users.find((u) => {
@@ -279,10 +343,7 @@ export default function Lead360View() {
       const leadDesigner = typeof lead?.designerAssigned === 'object' && lead?.designerAssigned !== null
         ? lead.designerAssigned._id || lead.designerAssigned.id
         : lead?.designerAssigned;
-      const actUser = typeof drawingActivity?.user === 'object' && drawingActivity?.user !== null
-        ? drawingActivity.user._id || drawingActivity.user.id
-        : drawingActivity?.user;
-      return uId === leadDesigner || uId === actUser;
+      return uId === leadDesigner;
     }) || (typeof lead?.designerAssigned === 'object' ? lead.designerAssigned : null);
 
     const assignedName = assignedDesigner?.fullName ||
@@ -290,13 +351,13 @@ export default function Lead360View() {
       assignedDesigner?.name ||
       (typeof lead?.designerAssigned === 'string' && lead?.designerAssigned ? 'Assigned Designer' : '2D/3D Designer');
 
-    const schedulerUser = drawingActivity?.user
-      ? users.find((u) => (u._id || u.id || u.clerkUserId) === (typeof drawingActivity.user === 'object' ? drawingActivity.user._id || drawingActivity.user.id : drawingActivity.user))
+    const schedulerUser = handoverActivity?.user
+      ? users.find((u) => (u._id || u.id || u.clerkUserId) === (typeof handoverActivity.user === 'object' ? handoverActivity.user._id || handoverActivity.user.id : handoverActivity.user))
       : null;
     const schedulerName = schedulerUser?.fullName || schedulerUser?.name || 'CRM Team';
 
     return {
-      activity: drawingActivity,
+      activity: handoverActivity,
       note,
       scheduledDate,
       assignedName,
@@ -2182,21 +2243,39 @@ export default function Lead360View() {
                   </p>
                 </div>
               ) : (() => {
-                const twoDFiles = (lead.designFiles || []).filter((f: any) => {
+                const designFilesList = lead.designFiles || [];
+                const twoDFiles = designFilesList.filter((f: any) => {
                   if (f.category === '2D') return true;
                   if (f.category === '3D') return false;
                   const type = detectFileType(f.name);
                   return type !== '3d-model';
                 });
 
-                const threeDFiles = (lead.designFiles || []).filter((f: any) => {
+                const threeDFiles = designFilesList.filter((f: any) => {
                   if (f.category === '3D') return true;
                   if (f.category === '2D') return false;
                   const type = detectFileType(f.name);
                   return type === '3d-model';
                 });
 
-                const hasDesignFiles = Boolean(lead.designFiles && lead.designFiles.length > 0);
+                const hasDesignFiles = Boolean(designFilesList && designFilesList.length > 0);
+
+                const draftDrawingsCount = designFilesList.filter((f: any) => {
+                  const s = f.approvalStatus || f.status || 'draft';
+                  return s === 'draft';
+                }).length;
+
+                const pendingDrawingsCount = designFilesList.filter((f: any) => {
+                  const s = f.approvalStatus || f.status || 'draft';
+                  return s === 'pending_internal_approval';
+                }).length;
+
+                const rejectedDrawingsCount = designFilesList.filter((f: any) => {
+                  const s = f.approvalStatus || f.status || 'draft';
+                  return s === 'internally_rejected' || f.clientStatus === 'client_changes_requested';
+                }).length;
+
+                const allDrawingsApproved = hasDesignFiles && draftDrawingsCount === 0 && pendingDrawingsCount === 0 && rejectedDrawingsCount === 0;
 
                 return (
                   <div className="space-y-4 sm:space-y-6">
@@ -2215,12 +2294,16 @@ export default function Lead360View() {
                               </h2>
                               <span className={cn(
                                 "text-[10px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 flex items-center gap-1.5",
-                                hasDesignFiles
-                                  ? "bg-blue-500/10 text-blue-600 border-blue-500/20 font-bold"
+                                allDrawingsApproved
+                                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-bold"
+                                  : hasDesignFiles
+                                  ? "bg-amber-500/10 text-amber-600 border-amber-500/20 font-bold"
                                   : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                               )}>
-                                {hasDesignFiles ? (
-                                  `Drawings Ready (${lead.designFiles.length} Total Files)`
+                                {allDrawingsApproved ? (
+                                  `✓ All Approved (${designFilesList.length} Files)`
+                                ) : hasDesignFiles ? (
+                                  `Pending Approvals (${designFilesList.length - pendingDrawingsCount - rejectedDrawingsCount}/${designFilesList.length} Approved)`
                                 ) : (
                                   "Upload Drawings Pending"
                                 )}
@@ -2244,8 +2327,25 @@ export default function Lead360View() {
                                 </button>
                                 {['Under Drawing', 'Design Approved'].includes(lead.status) && (
                                   <button
-                                    onClick={() => setIsSendToBoqOpen(true)}
-                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm"
+                                    onClick={() => {
+                                      const hasPending = pendingDrawingsCount > 0 || rejectedDrawingsCount > 0;
+                                      if (hasPending) {
+                                        toast.error('Cannot pass to BOQ: Drawing approval is still pending. Please ensure all drawings are approved first.');
+                                        return;
+                                      }
+                                      setIsSendToBoqOpen(true);
+                                    }}
+                                    className={cn(
+                                      "inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm",
+                                      (pendingDrawingsCount === 0 && rejectedDrawingsCount === 0)
+                                        ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                                        : "bg-slate-200 dark:bg-slate-800 text-slate-500 hover:bg-slate-300 dark:hover:bg-slate-700"
+                                    )}
+                                    title={
+                                      (pendingDrawingsCount > 0 || rejectedDrawingsCount > 0)
+                                        ? 'Cannot pass to BOQ: Drawing approval is pending'
+                                        : 'Pass drawings to BOQ creation phase'
+                                    }
                                   >
                                     Pass to BOQ Creation <ArrowRight size={13} />
                                   </button>
@@ -2262,6 +2362,54 @@ export default function Lead360View() {
                           </div>
                         )}
                       </div>
+
+                      {/* Public Share Ribbon (if files exist) */}
+                      {hasDesignFiles && (
+                        <div className="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-blue-500/10 border border-indigo-500/20 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-indigo-600/20 text-indigo-600 flex items-center justify-center shrink-0">
+                              <Globe size={18} />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h4 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">
+                                  Client View-Only Portal
+                                </h4>
+                                <span className={cn(
+                                  "text-[10px] font-bold px-2 py-0.5 rounded-full border",
+                                  lead.shareSettings?.isPublic
+                                    ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                                    : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                                )}>
+                                  {lead.shareSettings?.isPublic ? 'Link Active' : 'Link Not Generated'}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-0.5">
+                                Share 2D architectural blueprints, CAD plans, and 3D renders via a secure, unauthenticated URL.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                            {lead.shareSettings?.isPublic && lead.shareSettings?.shareToken && (
+                              <a
+                                href={`/share/drawing/${lead.shareSettings.shareToken}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all shadow-xs"
+                              >
+                                <ExternalLink size={13} /> Preview Portal
+                              </a>
+                            )}
+                            <button
+                              onClick={() => setIsShareModalOpen(true)}
+                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
+                            >
+                              <Share2 size={13} /> {lead.shareSettings?.isPublic ? 'Manage / Copy Link' : 'Generate Share Link'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Design Handover Notes Box */}
                       {drawingInfo.note && (
@@ -2421,19 +2569,36 @@ export default function Lead360View() {
                               {twoDFiles.map((file: any, index: number) => {
                                 const type = file.fileType || detectFileType(file.name);
                                 const badge = getFileBadgeInfo(file.name, file.category || '2D');
+                                const versions = file.versions || [];
+                                const latestVersion = versions.length > 0 ? versions[versions.length - 1] : null;
+                                const versionNum = file.currentVersion || latestVersion?.versionNumber || 1;
+                                const rawStatus = latestVersion?.approvalStatus || file.approvalStatus || file.status || 'draft';
+                                const approvalStatus = rawStatus === 'pending_internal_approval' ? 'pending_internal_approval'
+                                  : rawStatus === 'internally_approved' ? 'internally_approved'
+                                  : rawStatus === 'internally_rejected' ? 'internally_rejected'
+                                  : 'draft';
+                                const clientStatus = latestVersion?.clientStatus || file.clientStatus;
+                                const clientFeedback = latestVersion?.clientFeedback || file.clientFeedback;
+                                const isDraft = approvalStatus === 'draft';
+                                const isPendingApproval = approvalStatus === 'pending_internal_approval';
+                                const isApproved = approvalStatus === 'internally_approved';
+                                const isDrawingRejected = approvalStatus === 'internally_rejected' || clientStatus === 'client_changes_requested';
+                                const rejectionReason = isDrawingRejected ? (latestVersion?.rejectionReason || (approvalStatus === 'internally_rejected' ? (latestVersion?.internalNotes || file.rejectionReason || file.internalNotes) : null)) : null;
 
                                 return (
                                   <div
-                                    key={index}
-                                    onClick={() => setSelected3DFile(file)}
-                                    className="flex flex-col bg-[hsl(var(--muted)/0.3)] hover:bg-[hsl(var(--muted)/0.6)] border border-[hsl(var(--border))] hover:border-blue-500/50 rounded-2xl overflow-hidden transition-all group cursor-pointer"
+                                    key={file._id || index}
+                                    className="flex flex-col bg-[hsl(var(--card))] border border-[hsl(var(--border))] hover:border-blue-500/50 rounded-2xl overflow-hidden transition-all group shadow-xs hover:shadow-md"
                                   >
-                                    <div className={`h-36 sm:h-40 flex items-center justify-center relative overflow-hidden ${
-                                      type === 'pdf' ? 'bg-red-500/10 text-red-500' :
-                                      type === 'cad' ? 'bg-amber-500/10 text-amber-500' :
-                                      type === 'archive' ? 'bg-cyan-500/10 text-cyan-500' :
-                                      'bg-blue-500/5 text-blue-500'
-                                    }`}>
+                                    <div 
+                                      onClick={() => router.push(`/interior-new/crm/leads/${params.id}/drawings/${encodeURIComponent(file._id || file.id || file.title || file.name)}`)}
+                                      className={`h-36 sm:h-40 flex items-center justify-center relative overflow-hidden cursor-pointer ${
+                                        type === 'pdf' ? 'bg-red-500/10 text-red-500' :
+                                        type === 'cad' ? 'bg-amber-500/10 text-amber-500' :
+                                        type === 'archive' ? 'bg-cyan-500/10 text-cyan-500' :
+                                        'bg-blue-500/5 text-blue-500'
+                                      }`}
+                                    >
                                       {type === 'image' && file.url ? (
                                         <img src={file.url} alt={file.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                       ) : type === 'pdf' ? (
@@ -2446,44 +2611,178 @@ export default function Lead360View() {
                                       ) : (
                                         <FileIcon size={38} className="group-hover:scale-110 transition-transform" />
                                       )}
+
+                                      {/* Version & Badge Overlay */}
+                                      <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider backdrop-blur-md ${badge.color}`}>
+                                          {badge.label}
+                                        </span>
+                                        <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-white/90 dark:bg-slate-900/90 text-indigo-600 border border-indigo-200 dark:border-indigo-800 shadow-2xs">
+                                          v{versionNum}
+                                        </span>
+                                      </div>
+
+                                      {/* Approval Status Overlay */}
+                                      <div className="absolute top-2.5 right-2.5">
+                                        {isDraft ? (
+                                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-slate-600 text-white shadow-xs">
+                                            Draft
+                                          </span>
+                                        ) : isPendingApproval ? (
+                                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500 text-white shadow-xs">
+                                            Pending Approval
+                                          </span>
+                                        ) : isApproved ? (
+                                          clientStatus === 'client_approved' ? (
+                                            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500 text-white shadow-xs">
+                                              Client Approved
+                                            </span>
+                                          ) : clientStatus === 'client_changes_requested' ? (
+                                            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500 text-white shadow-xs">
+                                              Client Revision
+                                            </span>
+                                          ) : (
+                                            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-600 text-white shadow-xs">
+                                              Live to Client
+                                            </span>
+                                          )
+                                        ) : approvalStatus === 'internally_rejected' ? (
+                                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-rose-500 text-white shadow-xs">
+                                            Rejected Internally
+                                          </span>
+                                        ) : (
+                                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-slate-600 text-white shadow-xs">
+                                            Draft
+                                          </span>
+                                        )}
+                                      </div>
                                     </div>
 
-                                    <div className="p-3 sm:p-3.5 border-t border-[hsl(var(--border))] bg-[hsl(var(--card))] flex items-center justify-between gap-2">
-                                      <div className="overflow-hidden flex-1 min-w-0">
-                                        <p className="font-bold text-xs text-[hsl(var(--foreground))] truncate">{file.name}</p>
-                                        <div className="flex items-center gap-1.5 mt-1">
-                                          <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider ${badge.color}`}>
-                                            {badge.label}
-                                          </span>
-                                          {file.uploadedAt && (
-                                            <span className="text-[9px] font-medium text-[hsl(var(--muted-foreground))]">
-                                              {new Date(file.uploadedAt).toLocaleDateString()}
+                                    {/* Content & Actions */}
+                                    <div className="p-3 sm:p-3.5 flex flex-col flex-1 justify-between gap-2.5">
+                                      <div>
+                                        <p className="font-bold text-xs text-[hsl(var(--foreground))] truncate" title={file.title || file.name}>
+                                          {file.title || file.name}
+                                        </p>
+                                        <div className="flex items-center gap-1.5 mt-1 text-[9px] text-[hsl(var(--muted-foreground))] flex-wrap">
+                                          {file.roomTag && (
+                                            <span className="font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                                              {file.roomTag}
                                             </span>
                                           )}
+                                          {file.uploadedAt && (
+                                            <span>{new Date(file.uploadedAt).toLocaleDateString()}</span>
+                                          )}
                                         </div>
+
+                                        {/* Internal Rejection Reason Snippet */}
+                                        {approvalStatus === 'internally_rejected' && rejectionReason && (
+                                          <div className="mt-2 p-1.5 bg-rose-500/10 border border-rose-500/20 rounded-lg text-[10px] text-rose-700 dark:text-rose-300 line-clamp-2" title={rejectionReason}>
+                                            <strong>Rejection Reason:</strong> {rejectionReason}
+                                          </div>
+                                        )}
+
+                                        {/* Client Feedback Snippet (if any) */}
+                                        {clientFeedback && (
+                                          <div className="mt-2 p-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-[10px] text-amber-700 dark:text-amber-300 line-clamp-2">
+                                            <strong>Client:</strong> {clientFeedback}
+                                          </div>
+                                        )}
                                       </div>
-                                      <div className="flex items-center gap-1 shrink-0">
-                                        <button
-                                          type="button"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelected3DFile(file);
-                                          }}
-                                          className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 transition-colors"
-                                          title="View Drawing"
-                                        >
-                                          <Eye size={13} />
-                                        </button>
-                                        <a
-                                          href={file.url}
-                                          target="_blank"
-                                          rel="noreferrer"
-                                          onClick={(e) => e.stopPropagation()}
-                                          className="p-1.5 rounded-lg bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:text-blue-600 transition-colors"
-                                          title="Open in new tab"
-                                        >
-                                          <ExternalLink size={13} />
-                                        </a>
+
+                                      {/* Action Buttons Row */}
+                                      <div className="pt-2 border-t border-[hsl(var(--border))] flex items-center justify-between gap-1.5">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          {!isReadOnly && (
+                                            <>
+                                              {isDraft && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => {
+                                                    setSelectedDrawingForSendApproval(file);
+                                                    setIsSendApprovalModalOpen(true);
+                                                  }}
+                                                  className="px-2 py-1 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                                  title="Send for team member approval"
+                                                >
+                                                  <Send size={11} /> Send for Approval
+                                                </button>
+                                              )}
+
+                                              {isPendingApproval && file.assignedReviewerName && (
+                                                <div
+                                                  className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 border border-indigo-200  rounded-lg text-[10px] font-bold"
+                                                  title={`Assigned to ${file.assignedReviewerName}`}
+                                                >
+                                                  <User size={11} className="text-blue-600  shrink-0" />
+                                                  <span className="truncate max-w-[120px] text-blue-600">Assigned: {file.assignedReviewerName}</span>
+                                                </div>
+                                              )}
+
+                                              {isPendingApproval && (
+                                                <>
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => handleDirectApproveDrawing(file)}
+                                                    disabled={approvingDrawingId === (file._id || file.id || file.title || file.name)}
+                                                    className="px-2 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                                    title="Direct Approve & Publish to Client"
+                                                  >
+                                                    <CheckCircle2 size={11} /> {approvingDrawingId === (file._id || file.id || file.title || file.name) ? "Approving..." : "Approve"}
+                                                  </button>
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                      setSelectedDrawingForApproval({ ...file, initialAction: 'reject' });
+                                                      setIsApprovalModalOpen(true);
+                                                    }}
+                                                    className="px-2 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                                    title="Reject Drawing with feedback"
+                                                  >
+                                                    <XCircle size={11} /> Reject
+                                                  </button>
+                                                </>
+                                              )}
+
+
+                                              {isDrawingRejected && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => {
+                                                    setSelectedDrawingForRevision(file);
+                                                    setIsRevisionModalOpen(true);
+                                                  }}
+                                                  className="px-2 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                                  title="Upload next revision version (drawing rejected)"
+                                                >
+                                                  <UploadCloud size={11} /> + Rev
+                                                </button>
+                                              )}
+                                            </>
+                                          )}
+                                        </div>
+
+                                        <div className="flex items-center gap-1">
+                                          {!isReadOnly && (
+                                            <button
+                                              type="button"
+                                              onClick={() => setDrawingToDelete(file)}
+                                              className="p-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 transition-colors cursor-pointer"
+                                              title="Delete Drawing"
+                                            >
+                                              <Trash2 size={12} />
+                                            </button>
+                                          )}
+                                          <button
+                                            type="button"
+                                            onClick={() => router.push(`/interior-new/crm/leads/${params.id}/drawings/${encodeURIComponent(file._id || file.id || file.title || file.name)}`)}
+                                            className="p-1 px-2 rounded-lg bg-[hsl(var(--muted))] hover:bg-blue-500/10 text-[hsl(var(--muted-foreground))] hover:text-blue-600 transition-colors cursor-pointer flex items-center gap-1 text-[10px] font-bold"
+                                            title={`Open drawing page & all versions (v${versionNum})`}
+                                          >
+                                            <Eye size={12} />
+                                            <span>View</span>
+                                          </button>
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
@@ -2529,18 +2828,35 @@ export default function Lead360View() {
                               {threeDFiles.map((file: any, index: number) => {
                                 const type = file.fileType || detectFileType(file.name);
                                 const badge = getFileBadgeInfo(file.name, file.category || '3D');
+                                const versions = file.versions || [];
+                                const latestVersion = versions.length > 0 ? versions[versions.length - 1] : null;
+                                const versionNum = file.currentVersion || latestVersion?.versionNumber || 1;
+                                const rawStatus = latestVersion?.approvalStatus || file.approvalStatus || file.status || 'draft';
+                                const approvalStatus = rawStatus === 'pending_internal_approval' ? 'pending_internal_approval'
+                                  : rawStatus === 'internally_approved' ? 'internally_approved'
+                                  : rawStatus === 'internally_rejected' ? 'internally_rejected'
+                                  : 'draft';
+                                const clientStatus = latestVersion?.clientStatus || file.clientStatus;
+                                const clientFeedback = latestVersion?.clientFeedback || file.clientFeedback;
+                                const isDraft = approvalStatus === 'draft';
+                                const isPendingApproval = approvalStatus === 'pending_internal_approval';
+                                const isApproved = approvalStatus === 'internally_approved';
+                                const isDrawingRejected = approvalStatus === 'internally_rejected' || clientStatus === 'client_changes_requested';
+                                const rejectionReason = isDrawingRejected ? (latestVersion?.rejectionReason || (approvalStatus === 'internally_rejected' ? (latestVersion?.internalNotes || file.rejectionReason || file.internalNotes) : null)) : null;
 
                                 return (
                                   <div
-                                    key={index}
-                                    onClick={() => setSelected3DFile(file)}
-                                    className="flex flex-col bg-[hsl(var(--muted)/0.3)] hover:bg-[hsl(var(--muted)/0.6)] border border-[hsl(var(--border))] hover:border-purple-500/50 rounded-2xl overflow-hidden transition-all group cursor-pointer"
+                                    key={file._id || index}
+                                    className="flex flex-col bg-[hsl(var(--card))] border border-[hsl(var(--border))] hover:border-purple-500/50 rounded-2xl overflow-hidden transition-all group shadow-xs hover:shadow-md"
                                   >
-                                    <div className={`h-36 sm:h-40 flex items-center justify-center relative overflow-hidden ${
-                                      type === '3d-model' ? 'bg-purple-500/10 text-purple-500' :
-                                      type === 'archive' ? 'bg-cyan-500/10 text-cyan-500' :
-                                      'bg-purple-500/5 text-purple-500'
-                                    }`}>
+                                    <div 
+                                      onClick={() => router.push(`/interior-new/crm/leads/${params.id}/drawings/${encodeURIComponent(file._id || file.id || file.title || file.name)}`)}
+                                      className={`h-36 sm:h-40 flex items-center justify-center relative overflow-hidden cursor-pointer ${
+                                        type === '3d-model' ? 'bg-purple-500/10 text-purple-500' :
+                                        type === 'archive' ? 'bg-cyan-500/10 text-cyan-500' :
+                                        'bg-purple-500/5 text-purple-500'
+                                      }`}
+                                    >
                                       {type === 'image' && file.url ? (
                                         <img src={file.url} alt={file.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                       ) : type === '3d-model' ? (
@@ -2556,44 +2872,179 @@ export default function Lead360View() {
                                       ) : (
                                         <FileIcon size={42} className="group-hover:scale-110 transition-transform" />
                                       )}
+
+                                      {/* Version & Badge Overlay */}
+                                      <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider backdrop-blur-md ${badge.color}`}>
+                                          {badge.label}
+                                        </span>
+                                        <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-white/90 dark:bg-slate-900/90 text-purple-600 border border-purple-200 dark:border-purple-800 shadow-2xs">
+                                          v{versionNum}
+                                        </span>
+                                      </div>
+
+                                      {/* Approval Status Overlay */}
+                                      <div className="absolute top-2.5 right-2.5">
+                                        {isDraft ? (
+                                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-slate-600 text-white shadow-xs">
+                                            Draft
+                                          </span>
+                                        ) : isPendingApproval ? (
+                                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500 text-white shadow-xs">
+                                            Pending Approval
+                                          </span>
+                                        ) : isApproved ? (
+                                          clientStatus === 'client_approved' ? (
+                                            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500 text-white shadow-xs">
+                                              Client Approved
+                                            </span>
+                                          ) : clientStatus === 'client_changes_requested' ? (
+                                            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500 text-white shadow-xs">
+                                              Client Revision
+                                            </span>
+                                          ) : (
+                                            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-600 text-white shadow-xs">
+                                              Live to Client
+                                            </span>
+                                          )
+                                        ) : approvalStatus === 'internally_rejected' ? (
+                                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-rose-500 text-white shadow-xs">
+                                            Rejected Internally
+                                          </span>
+                                        ) : (
+                                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-slate-600 text-white shadow-xs">
+                                            Draft
+                                          </span>
+                                        )}
+                                      </div>
                                     </div>
 
-                                    <div className="p-3 sm:p-3.5 border-t border-[hsl(var(--border))] bg-[hsl(var(--card))] flex items-center justify-between gap-2">
-                                      <div className="overflow-hidden flex-1 min-w-0">
-                                        <p className="font-bold text-xs text-[hsl(var(--foreground))] truncate">{file.name}</p>
-                                        <div className="flex items-center gap-1.5 mt-1">
-                                          <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider ${badge.color}`}>
-                                            {badge.label}
-                                          </span>
-                                          {file.uploadedAt && (
-                                            <span className="text-[9px] font-medium text-[hsl(var(--muted-foreground))]">
-                                              {new Date(file.uploadedAt).toLocaleDateString()}
+                                    {/* Content & Actions */}
+                                    <div className="p-3 sm:p-3.5 flex flex-col flex-1 justify-between gap-2.5">
+                                      <div>
+                                        <p className="font-bold text-xs text-[hsl(var(--foreground))] truncate" title={file.title || file.name}>
+                                          {file.title || file.name}
+                                        </p>
+                                        <div className="flex items-center gap-1.5 mt-1 text-[9px] text-[hsl(var(--muted-foreground))] flex-wrap">
+                                          {file.roomTag && (
+                                            <span className="font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                                              {file.roomTag}
                                             </span>
                                           )}
+                                          {file.uploadedAt && (
+                                            <span>{new Date(file.uploadedAt).toLocaleDateString()}</span>
+                                          )}
                                         </div>
+
+                                        {/* Internal Rejection Reason Snippet */}
+                                        {approvalStatus === 'internally_rejected' && rejectionReason && (
+                                          <div className="mt-2 p-1.5 bg-rose-500/10 border border-rose-500/20 rounded-lg text-[10px] text-rose-700 dark:text-rose-300 line-clamp-2" title={rejectionReason}>
+                                            <strong>Rejection Reason:</strong> {rejectionReason}
+                                          </div>
+                                        )}
+
+                                        {/* Client Feedback Snippet (if any) */}
+                                        {clientFeedback && (
+                                          <div className="mt-2 p-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-[10px] text-amber-700 dark:text-amber-300 line-clamp-2">
+                                            <strong>Client:</strong> {clientFeedback}
+                                          </div>
+                                        )}
                                       </div>
-                                      <div className="flex items-center gap-1 shrink-0">
-                                        <button
-                                          type="button"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelected3DFile(file);
-                                          }}
-                                          className="p-1.5 rounded-lg bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 transition-colors"
-                                          title="Open in 3D Viewer"
-                                        >
-                                          <Eye size={13} />
-                                        </button>
-                                        <a
-                                          href={file.url}
-                                          target="_blank"
-                                          rel="noreferrer"
-                                          onClick={(e) => e.stopPropagation()}
-                                          className="p-1.5 rounded-lg bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] group-hover:text-purple-600 transition-colors"
-                                          title="Open or download file"
-                                        >
-                                          <ExternalLink size={13} />
-                                        </a>
+
+                                      {/* Action Buttons Row */}
+                                      <div className="pt-2 border-t border-[hsl(var(--border))] flex items-center justify-between gap-1.5">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          {!isReadOnly && (
+                                            <>
+                                              {isDraft && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => {
+                                                    setSelectedDrawingForSendApproval(file);
+                                                    setIsSendApprovalModalOpen(true);
+                                                  }}
+                                                  className="px-2 py-1 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                                  title="Send for team member approval"
+                                                >
+                                                  <Send size={11} /> Send for Approval
+                                                </button>
+                                              )}
+
+                                              {isPendingApproval && file.assignedReviewerName && (
+                                                <div
+                                                  className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50  border border-indigo-200  rounded-lg text-[10px] font-bold"
+                                                  title={`Assigned to ${file.assignedReviewerName}`}
+                                                >
+                                                  <User size={11} className="text-blue-600  shrink-0" />
+                                                  <span className="truncate max-w-[120px] text-blue-600">Assigned: {file.assignedReviewerName}</span>
+                                                </div>
+                                              )}
+
+                                              {isPendingApproval && (
+                                                <>
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => handleDirectApproveDrawing(file)}
+                                                    disabled={approvingDrawingId === (file._id || file.id || file.title || file.name)}
+                                                    className="px-2 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                                    title="Direct Approve & Publish to Client"
+                                                  >
+                                                    <CheckCircle2 size={11} /> {approvingDrawingId === (file._id || file.id || file.title || file.name) ? "Approving..." : "Approve"}
+                                                  </button>
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                      setSelectedDrawingForApproval({ ...file, initialAction: 'reject' });
+                                                      setIsApprovalModalOpen(true);
+                                                    }}
+                                                    className="px-2 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                                    title="Reject Drawing with feedback"
+                                                  >
+                                                    <XCircle size={11} /> Reject
+                                                  </button>
+                                                </>
+                                              )}
+
+
+                                              {isDrawingRejected && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => {
+                                                    setSelectedDrawingForRevision(file);
+                                                    setIsRevisionModalOpen(true);
+                                                  }}
+                                                  className="px-2 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                                  title="Upload next revision version (drawing rejected)"
+                                                >
+                                                  <UploadCloud size={11} /> + Rev
+                                                </button>
+                                              )}
+                                            </>
+                                          )}
+                                        </div>
+
+                                        <div className="flex items-center gap-1">
+                                          {!isReadOnly && (
+                                            <button
+                                              type="button"
+                                              onClick={() => setDrawingToDelete(file)}
+                                              className="p-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 transition-colors cursor-pointer"
+                                              title="Delete Drawing"
+                                            >
+                                              <Trash2 size={12} />
+                                            </button>
+                                          )}
+                                          <button
+                                            type="button"
+                                            onClick={() => router.push(`/interior-new/crm/leads/${params.id}/drawings/${encodeURIComponent(file._id || file.id || file.title || file.name)}`)}
+                                            className="p-1 px-2 rounded-lg bg-[hsl(var(--muted))] hover:bg-purple-500/10 text-[hsl(var(--muted-foreground))] hover:text-purple-600 transition-colors cursor-pointer flex items-center gap-1 text-[10px] font-bold"
+                                            title={`Open 3D Model page & all versions (v${versionNum})`}
+                                          >
+                                            <Eye size={12} />
+                                            <span>View</span>
+                                          </button>
+                                         
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
@@ -2603,8 +3054,8 @@ export default function Lead360View() {
                           ) : (
                             <div className="py-10 sm:py-12 flex flex-col items-center justify-center border-2 border-dashed border-[hsl(var(--border))] rounded-2xl bg-[hsl(var(--muted)/0.2)] text-center">
                               <Box className="w-8 h-8 sm:w-10 sm:h-10 text-[hsl(var(--muted-foreground))] mb-2 opacity-50" />
-                              <p className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">No 3D Models or Renders Uploaded</p>
-                              <p className="text-[11px] sm:text-xs text-[hsl(var(--muted-foreground))] mt-1 max-w-sm">Click upload drawings to add .DWG, .SKP, .FBX, .OBJ, or 3D realistic renders.</p>
+                              <p className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">No 3D Models / Renders Uploaded</p>
+                              <p className="text-[11px] sm:text-xs text-[hsl(var(--muted-foreground))] mt-1 max-w-sm">Click upload drawings to attach 3D DWG, SKP, FBX, OBJ or render images.</p>
                             </div>
                           )}
                         </motion.div>
@@ -3321,6 +3772,8 @@ export default function Lead360View() {
         customerId={params.id as string}
         onSuccess={fetchData}
         existingFiles={lead?.designFiles || []}
+        users={users}
+        requirements={lead?.requirements || []}
       />
       <Interior3DViewerModal
         isOpen={!!selected3DFile}
@@ -3369,6 +3822,9 @@ export default function Lead360View() {
         onSuccess={fetchData}
         users={users}
         initialData={(() => {
+          const isInitialPhase = ['New Lead', 'Contacted', 'Meeting Scheduled'].includes(lead?.status || '');
+          if (!isInitialPhase) return null;
+
           const pending = activities.find(
             (a) => a.status === 'Pending' && a.type !== 'Site Visit' && a.type !== 'Status Change'
           );
@@ -3491,6 +3947,7 @@ export default function Lead360View() {
         isOpen={isSendToBoqOpen}
         onClose={() => setIsSendToBoqOpen(false)}
         customerId={params.id as string}
+        lead={lead}
         onSuccess={fetchData}
         users={users}
       />
@@ -3514,6 +3971,98 @@ export default function Lead360View() {
         leadName={lead?.name}
         onSuccess={fetchData}
       />
+      <InteriorCrmShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        lead={lead}
+        onUpdated={fetchData}
+      />
+      <InteriorDrawingApprovalModal
+        isOpen={isApprovalModalOpen}
+        onClose={() => {
+          setIsApprovalModalOpen(false);
+          setSelectedDrawingForApproval(null);
+        }}
+        customerId={params.id as string}
+        drawing={selectedDrawingForApproval}
+        onSuccess={fetchData}
+        users={users}
+      />
+      <InteriorUploadRevisionModal
+        isOpen={isRevisionModalOpen}
+        onClose={() => {
+          setIsRevisionModalOpen(false);
+          setSelectedDrawingForRevision(null);
+        }}
+        customerId={params.id as string}
+        drawing={selectedDrawingForRevision}
+        onSuccess={fetchData}
+        users={users}
+      />
+      <InteriorSendDrawingForApprovalModal
+        isOpen={isSendApprovalModalOpen}
+        onClose={() => {
+          setIsSendApprovalModalOpen(false);
+          setSelectedDrawingForSendApproval(null);
+        }}
+        customerId={params.id as string}
+        drawing={selectedDrawingForSendApproval}
+        onSuccess={fetchData}
+        users={users}
+      />
+
+      {/* Delete Drawing Confirmation Modal */}
+      <AnimatePresence>
+        {drawingToDelete && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
+            onClick={() => !isDeletingDrawing && setDrawingToDelete(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              transition={{ duration: 0.16 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl p-6 space-y-4"
+            >
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0">
+                  <Trash2 className="w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-base font-bold text-slate-900">
+                    Delete Drawing
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Are you sure you want to delete drawing <strong className="text-slate-800">"{drawingToDelete.title || drawingToDelete.name || 'this drawing'}"</strong>? This will permanently remove all associated revision versions.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  disabled={isDeletingDrawing}
+                  onClick={() => setDrawingToDelete(null)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeletingDrawing}
+                  onClick={handleDeleteDrawing}
+                  className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:bg-rose-800 rounded-xl transition shadow-xs disabled:opacity-50 inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  {isDeletingDrawing ? 'Deleting...' : 'Delete Drawing'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </InteriorShell>
   );
 }

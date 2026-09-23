@@ -103,6 +103,7 @@ export function InteriorSendToDrawingModal({
       const updatePayload: any = {
         status: 'Under Drawing',
         designerAssigned: assignedDesigner.trim(),
+        drawingHandoverNotes: trimmedRemarks || undefined,
       };
 
       await interiorCrmService.updateCustomer(customerId, updatePayload);
@@ -112,7 +113,7 @@ export function InteriorSendToDrawingModal({
         type: '2D/3D Drawing',
         status: 'Pending',
         scheduledDate: new Date().toISOString(),
-        remarks: trimmedRemarks || 'Lead passed to 2D/3D Drawing phase and assigned to designer.',
+        remarks: trimmedRemarks || '',
         user: assignedDesigner.trim() || undefined,
       });
 

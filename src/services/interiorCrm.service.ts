@@ -25,6 +25,31 @@ export const interiorCrmService = {
   sendQuotationEmail: (customerId: string, data: { quotation: any; recipientEmail?: string }) =>
     interiorApiClient.post(`/crm/customers/${customerId}/send-quotation-email`, data).then((res) => res.data),
 
+  // Drawing Share Links & Workflows
+  generateShareLink: (
+    customerId: string,
+    data?: {
+      expiresDays?: number | null;
+      allowDownload?: boolean;
+      includeRequirements?: boolean;
+      regenerate?: boolean;
+    }
+  ) => interiorApiClient.post(`/crm/customers/${customerId}/share`, data).then((res) => res.data),
+  revokeShareLink: (customerId: string) =>
+    interiorApiClient.delete(`/crm/customers/${customerId}/share`, {}).then((res) => res.data),
+  getPublicDrawingData: (token: string) =>
+    interiorApiClient.get(`/public/crm/${token}`).then((res) => res.data),
+  submitClientFeedback: (token: string, data: { drawingId?: string; action: 'client_approved' | 'client_changes_requested'; clientFeedback?: string }) =>
+    interiorApiClient.post(`/public/crm/${token}/feedback`, data).then((res) => res.data),
+  approveDrawing: (customerId: string, drawingId: string, data: { action: 'approve' | 'reject'; versionNumber?: number; internalNotes?: string; assignedReviewer?: string }) =>
+    interiorApiClient.post(`/crm/customers/${customerId}/drawings/${drawingId}/approve`, data).then((res) => res.data),
+  sendDrawingForApproval: (customerId: string, drawingId: string, data: { assignedReviewer?: string; assignedReviewerName?: string; notes?: string; versionNumber?: number }) =>
+    interiorApiClient.post(`/crm/customers/${customerId}/drawings/${drawingId}/send-for-approval`, data).then((res) => res.data),
+  uploadDrawingVersion: (customerId: string, drawingId: string, data: { name: string; url: string; fileType?: string; category?: string; internalNotes?: string; assignedReviewer?: string; assignedReviewerName?: string }) =>
+    interiorApiClient.post(`/crm/customers/${customerId}/drawings/${drawingId}/version`, data).then((res) => res.data),
+  deleteDrawing: (customerId: string, drawingId: string) =>
+    interiorApiClient.delete(`/crm/customers/${customerId}/drawings/${drawingId}`).then((res) => res.data),
+
   // Activities
   getActivities: (params?: string | Record<string, any>) => {
     const query = typeof params === 'string' ? { customerId: params } : params;

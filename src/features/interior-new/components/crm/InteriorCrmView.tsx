@@ -277,6 +277,17 @@ export default function InteriorCrmView() {
 
   const openSendToBoqModal = (leadId: string) => {
     const lead = leads.find(l => l._id === leadId);
+    const designFiles = lead?.designFiles || [];
+    const hasPending = designFiles.some((f: any) => {
+      const s = f.approvalStatus || f.status || 'draft';
+      return s === 'draft' || s === 'pending_internal_approval' || s === 'internally_rejected' || f.clientStatus === 'client_changes_requested';
+    });
+
+    if (hasPending) {
+      toast.error('Cannot pass to BOQ: Drawing approval is still pending. Please ensure all drawings are approved first.');
+      return;
+    }
+
     setActionLeadId(leadId);
     setActionLeadName(lead?.name || '');
     setIsSendToBoqOpen(true);
@@ -591,6 +602,7 @@ export default function InteriorCrmView() {
         isOpen={isSendToBoqOpen}
         onClose={() => setIsSendToBoqOpen(false)}
         customerId={actionLeadId || ''}
+        lead={leads.find(l => l._id === actionLeadId)}
         onSuccess={fetchLeads}
         users={users}
       />

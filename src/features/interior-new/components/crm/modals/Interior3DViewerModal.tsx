@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import {
   X,
   Box,
@@ -10,14 +10,21 @@ import {
   Download,
   Maximize2,
   Minimize2,
-  ExternalLink,
   Layers,
-  Sparkles,
-  Info,
   Loader2,
-  Sun,
   Eye,
-  FileText
+  FileText,
+  History,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  User,
+  Calendar,
+  MessageSquare,
+  AlertCircle,
+  Archive,
+  ChevronRight,
+  Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
@@ -29,12 +36,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  file: {
-    name: string;
-    url: string;
-    fileType?: string;
-    category?: string;
-  } | null;
+  file: any;
 }
 
 export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
@@ -46,6 +48,8 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
   const [isWireframe, setIsWireframe] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [bgColor, setBgColor] = useState('#0f172a'); // default slate-900
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
+  const [selectedVersionNum, setSelectedVersionNum] = useState<number>(1);
 
   // Three.js References
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -60,13 +64,74 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
     const parts = clean.split('.');
     return parts.length > 1 ? parts.pop()!.toLowerCase() : '';
   };
-  const fileExt = getExt(file?.url) || getExt(file?.name) || '';
+
+  // Compile all versions
+  const allVersions = useMemo(() => {
+    if (!file) return [];
+    const versionsList: any[] = Array.isArray(file.versions) && file.versions.length > 0
+      ? [...file.versions]
+      : [];
+
+    if (versionsList.length === 0) {
+      versionsList.push({
+        versionNumber: file.currentVersion || 1,
+        name: file.title || file.name || 'Drawing Blueprint',
+        url: file.url,
+        fileType: file.fileType,
+        category: file.category,
+        uploadedAt: file.uploadedAt,
+        approvalStatus: file.approvalStatus || file.status || 'draft',
+        clientStatus: file.clientStatus,
+        internalNotes: file.internalNotes,
+        rejectionReason: file.rejectionReason,
+        assignedReviewerName: file.assignedReviewerName
+      });
+    }
+
+    // Sort ascending by versionNumber
+    return versionsList.sort((a, b) => (a.versionNumber || 1) - (b.versionNumber || 1));
+  }, [file]);
+
+  // Set default selected version to current/highest version
+  useEffect(() => {
+    if (file && isOpen) {
+      const highestVersion = file.currentVersion || (allVersions.length > 0
+        ? Math.max(...allVersions.map((v: any) => v.versionNumber || 1))
+        : 1);
+      setSelectedVersionNum(highestVersion);
+      setShowHistoryPanel(false);
+    }
+  }, [file, isOpen, allVersions]);
+
+  // Active version object
+  const activeVersion = useMemo(() => {
+    return allVersions.find((v) => v.versionNumber === selectedVersionNum) || allVersions[allVersions.length - 1] || file;
+  }, [allVersions, selectedVersionNum, file]);
+
+  const activeUrl = activeVersion?.url || file?.url || '';
+  const activeName = activeVersion?.name || file?.title || file?.name || 'Drawing Blueprint';
+  const activeVersionNum = activeVersion?.versionNumber || 1;
+  const activeStatus = activeVersion?.approvalStatus || activeVersion?.status || (activeVersion === file ? (file?.approvalStatus || file?.status) : 'draft') || 'draft';
+  const activeClientStatus = activeVersion?.clientStatus;
+  const activeUploadedAt = activeVersion?.uploadedAt || file?.uploadedAt;
+  const activeReviewerName = activeVersion?.assignedReviewerName || file?.assignedReviewerName;
+
+  // Rejection reason ONLY applies if this specific version is rejected
+  const isVersionRejected = activeStatus === 'internally_rejected' || activeVersion?.approvalStatus === 'internally_rejected';
+  const activeRejectionReason = isVersionRejected ? (activeVersion?.rejectionReason || activeVersion?.internalNotes) : undefined;
+  
+  // Revision notes (when uploaded as revision and not rejected)
+  const activeInternalNotes = !isVersionRejected ? activeVersion?.internalNotes : undefined;
+  const activeClientFeedback = activeVersion?.clientFeedback;
+
+  const fileExt = getExt(activeUrl) || getExt(activeName) || '';
   const isDirect3DFormat = ['fbx', 'obj', 'gltf', 'glb'].includes(fileExt);
-  const isImageFormat = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'bmp'].includes(fileExt);
+  const isImageFormat = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'bmp', 'tiff'].includes(fileExt);
   const isPdfFormat = fileExt === 'pdf';
 
+  // 3D Rendering Effect
   useEffect(() => {
-    if (!isOpen || !file || !isDirect3DFormat || !mountRef.current) return;
+    if (!isOpen || !activeUrl || !isDirect3DFormat || !mountRef.current) return;
 
     setLoading(true);
     setLoadingProgress(0);
@@ -123,7 +188,7 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
     dirLight2.position.set(-100, -100, -100);
     scene.add(dirLight2);
 
-    // 6. Grid Helper & Shadow Plane
+    // 6. Grid Helper
     const gridHelper = new THREE.GridHelper(200, 20, 0x475569, 0x334155);
     gridHelper.position.y = 0;
     scene.add(gridHelper);
@@ -139,7 +204,7 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
 
       // Center model
       object.position.x += object.position.x - center.x;
-      object.position.y += object.position.y - box.min.y; // Sit on ground grid
+      object.position.y += object.position.y - box.min.y;
       object.position.z += object.position.z - center.z;
 
       // Auto Scale
@@ -188,14 +253,14 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
     try {
       if (fileExt === 'fbx') {
         const fbxLoader = new FBXLoader();
-        fbxLoader.load(file.url, handleLoadedObject, onProgress, onError);
+        fbxLoader.load(activeUrl, handleLoadedObject, onProgress, onError);
       } else if (fileExt === 'obj') {
         const objLoader = new OBJLoader();
-        objLoader.load(file.url, handleLoadedObject, onProgress, onError);
+        objLoader.load(activeUrl, handleLoadedObject, onProgress, onError);
       } else if (fileExt === 'gltf' || fileExt === 'glb') {
         const gltfLoader = new GLTFLoader();
         gltfLoader.load(
-          file.url,
+          activeUrl,
           (gltf) => handleLoadedObject(gltf.scene),
           onProgress,
           onError
@@ -233,7 +298,7 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
       }
       container.innerHTML = '';
     };
-  }, [isOpen, file, fileExt, isDirect3DFormat]);
+  }, [isOpen, activeUrl, fileExt, isDirect3DFormat]);
 
   // Update Auto-Rotate
   useEffect(() => {
@@ -271,59 +336,121 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
     }
   };
 
+  const getStatusPill = (status: string) => {
+    if (status === 'internally_approved' || status === 'client_approved') {
+      return {
+        label: 'Approved',
+        bg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+        dot: 'bg-emerald-500',
+        icon: CheckCircle2
+      };
+    }
+    if (status === 'internally_rejected' || status === 'client_changes_requested') {
+      return {
+        label: 'Rejected',
+        bg: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
+        dot: 'bg-rose-500',
+        icon: XCircle
+      };
+    }
+    if (status === 'pending_internal_approval') {
+      return {
+        label: 'Pending Approval',
+        bg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+        dot: 'bg-amber-500',
+        icon: Clock
+      };
+    }
+    return {
+      label: 'Draft',
+      bg: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20',
+      dot: 'bg-slate-400',
+      icon: Layers
+    };
+  };
+
   if (!isOpen || !file) return null;
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-4 overflow-hidden"
+        onClick={onClose}
+      >
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className={`bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl overflow-hidden flex flex-col transition-all duration-300 ${
-            isFullscreen ? 'w-full h-full max-w-none max-h-none rounded-none' : 'w-full max-w-5xl h-[85vh]'
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+          onClick={(e) => e.stopPropagation()}
+          className={`bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl overflow-hidden flex flex-col transition-all duration-300 shadow-2xl ${
+            isFullscreen ? 'w-full h-full max-w-none max-h-none rounded-none' : 'w-full max-w-6xl h-[90vh]'
           }`}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 px-6 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.4)]">
-            <div className="flex items-center gap-3 overflow-hidden">
-              <div className="w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0">
-                <Box size={20} />
+          {/* Main Top Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 sm:p-4 px-4 sm:px-6 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.4)] gap-3">
+            <div className="flex items-center gap-3 overflow-hidden min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-500/20">
+                {isDirect3DFormat ? <Box size={20} /> : <FileText size={20} />}
               </div>
-              <div className="overflow-hidden">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-black text-[hsl(var(--foreground))] truncate max-w-md">
-                    {file.name}
+              <div className="overflow-hidden min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-sm sm:text-base font-bold text-[hsl(var(--foreground))] truncate max-w-xs sm:max-w-md" title={activeName}>
+                    {activeName}
                   </h2>
-                  <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 border border-purple-500/20">
-                    {fileExt.toUpperCase()} {isDirect3DFormat ? '3D Interactive Model' : 'Drawing File'}
+                  <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 border border-indigo-500/20 shrink-0">
+                    {fileExt.toUpperCase()} {isDirect3DFormat ? '3D Model' : 'Drawing'}
                   </span>
+                  {file.roomTag && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+                      {file.roomTag}
+                    </span>
+                  )}
                 </div>
-                <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                  {isDirect3DFormat
-                    ? 'Left-click to Rotate • Right-click to Pan • Scroll wheel to Zoom'
-                    : 'High resolution visual preview'}
-                </p>
+                <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[hsl(var(--muted-foreground))] flex-wrap">
+                  <span>Viewing <strong className="text-indigo-600 font-bold">Version v{activeVersionNum}</strong></span>
+                  {activeUploadedAt && (
+                    <span>• Uploaded {new Date(activeUploadedAt).toLocaleDateString()}</span>
+                  )}
+                  {activeReviewerName && (
+                    <span>• Reviewer: <strong className="text-[hsl(var(--foreground))]">{activeReviewerName}</strong></span>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Action Bar */}
-            <div className="flex items-center gap-2">
+            {/* Version Switcher Bar & Action Tools */}
+            <div className="flex items-center gap-2 shrink-0 flex-wrap justify-between sm:justify-end">
+              {/* Version History Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setShowHistoryPanel(!showHistoryPanel)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all border cursor-pointer ${
+                  showHistoryPanel
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                    : 'bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]'
+                }`}
+                title="View all version changes & logs"
+              >
+                <History size={14} />
+                <span>Versions ({allVersions.length})</span>
+              </button>
+
               <a
-                href={file.url}
+                href={activeUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                download={file.name}
+                download={activeName}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] text-xs font-bold rounded-xl transition-all border border-[hsl(var(--border))]"
-                title="Download 3D Model"
+                title={`Download v${activeVersionNum} File`}
               >
-                <Download size={14} /> Download
+                <Download size={14} /> Download v{activeVersionNum}
               </a>
 
               <button
                 type="button"
                 onClick={() => setIsFullscreen(!isFullscreen)}
-                className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] rounded-xl transition-colors"
+                className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] rounded-xl transition-colors cursor-pointer"
                 title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
               >
                 {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
@@ -332,158 +459,349 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
               <button
                 type="button"
                 onClick={onClose}
-                className="p-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-full transition-colors ml-1"
+                className="p-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-full transition-colors cursor-pointer"
+                title="Close"
               >
                 <X size={18} />
               </button>
             </div>
           </div>
 
-          {/* Viewer Container */}
-          <div className="relative flex-1 bg-slate-950 flex items-center justify-center overflow-hidden">
-            {isDirect3DFormat ? (
-              <>
-                {/* Three.js Canvas Mount */}
-                <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
+          {/* Quick Version Navigation Bar (Tabs) */}
+          <div className="flex items-center justify-between px-4 sm:px-6 py-2 bg-slate-900 border-b border-slate-800 text-white text-xs overflow-x-auto scrollbar-none gap-3">
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1 flex items-center gap-1">
+                <History size={12} className="text-indigo-400" /> Select Version:
+              </span>
+              {allVersions.map((ver: any) => {
+                const isSelected = ver.versionNumber === activeVersionNum;
+                const statusPill = getStatusPill(ver.approvalStatus || ver.status);
+                const StatusIcon = statusPill.icon;
 
-                {/* Loading State */}
-                {loading && (
-                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-sm text-white">
-                    <Loader2 className="w-10 h-10 text-purple-500 animate-spin mb-3" />
-                    <p className="font-bold text-sm">Loading 3D Model...</p>
-                    {loadingProgress > 0 && (
-                      <p className="text-xs text-purple-300 mt-1">{loadingProgress}% downloaded</p>
+                return (
+                  <button
+                    key={ver.versionNumber}
+                    type="button"
+                    onClick={() => setSelectedVersionNum(ver.versionNumber)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 ring-1 ring-white/20'
+                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+                    }`}
+                  >
+                    <span>v{ver.versionNumber}</span>
+                    <StatusIcon size={11} className={isSelected ? 'text-white' : statusPill.dot.replace('bg-', 'text-')} />
+                    {ver.versionNumber === allVersions[allVersions.length - 1]?.versionNumber && (
+                      <span className="text-[9px] px-1 py-0.2 bg-white/20 rounded font-extrabold text-white">Latest</span>
                     )}
-                  </div>
-                )}
+                  </button>
+                );
+              })}
+            </div>
 
-                {/* Error Fallback */}
-                {loadError && (
-                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950/95 p-8 text-center text-white">
-                    <div className="w-16 h-16 rounded-3xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-4">
-                      <Box size={32} />
+            {/* Current Selected Version Status Pill */}
+            <div className="flex items-center gap-2 shrink-0">
+              {(() => {
+                const statusPill = getStatusPill(activeStatus);
+                const StatusIcon = statusPill.icon;
+                return (
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${statusPill.bg}`}>
+                    <StatusIcon size={12} />
+                    <span>v{activeVersionNum} Status: {statusPill.label}</span>
+                  </span>
+                );
+              })()}
+            </div>
+          </div>
+
+          {/* Main Viewer Body with Side History Drawer */}
+          <div className="relative flex-1 flex overflow-hidden">
+            {/* Viewer Canvas */}
+            <div className="relative flex-1 bg-slate-950 flex items-center justify-center overflow-hidden">
+              {isDirect3DFormat ? (
+                <>
+                  {/* Three.js Canvas Mount */}
+                  <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
+
+                  {/* Loading State */}
+                  {loading && (
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-sm text-white">
+                      <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-3" />
+                      <p className="font-bold text-sm">Loading 3D Model (v{activeVersionNum})...</p>
+                      {loadingProgress > 0 && (
+                        <p className="text-xs text-indigo-300 mt-1">{loadingProgress}% downloaded</p>
+                      )}
                     </div>
-                    <h3 className="text-lg font-black mb-1">3D File Ready for Download</h3>
-                    <p className="text-xs text-slate-400 max-w-md mb-6">{loadError}</p>
+                  )}
+
+                  {/* Error Fallback */}
+                  {loadError && (
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950/95 p-8 text-center text-white">
+                      <div className="w-16 h-16 rounded-3xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-4">
+                        <Box size={32} />
+                      </div>
+                      <h3 className="text-lg font-black mb-1">3D File (v{activeVersionNum}) Ready for Download</h3>
+                      <p className="text-xs text-slate-400 max-w-md mb-6">{loadError}</p>
+                      <a
+                        href={activeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-2"
+                      >
+                        <Download size={15} /> Download {fileExt.toUpperCase()} File
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Floating Interactive 3D Toolbar */}
+                  {!loading && !loadError && (
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-slate-900/90 border border-slate-700/80 rounded-2xl p-2 px-3 backdrop-blur-md">
+                      {/* Auto Rotate */}
+                      <button
+                        type="button"
+                        onClick={() => setIsAutoRotating(!isAutoRotating)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                          isAutoRotating
+                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                            : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                        }`}
+                        title="Toggle Auto Rotation"
+                      >
+                        {isAutoRotating ? <Pause size={14} /> : <Play size={14} />}
+                        <span>Orbit</span>
+                      </button>
+
+                      {/* Wireframe */}
+                      <button
+                        type="button"
+                        onClick={() => setIsWireframe(!isWireframe)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                          isWireframe
+                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                            : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                        }`}
+                        title="Toggle Wireframe"
+                      >
+                        <Layers size={14} />
+                        <span>Wireframe</span>
+                      </button>
+
+                      {/* Reset Camera */}
+                      <button
+                        type="button"
+                        onClick={resetCamera}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                        title="Reset View"
+                      >
+                        <RotateCcw size={14} />
+                        <span>Reset</span>
+                      </button>
+
+                      <div className="w-[1px] h-5 bg-slate-700 mx-1" />
+
+                      {/* Background Color Toggles */}
+                      <div className="flex items-center gap-1">
+                        {[
+                          { color: '#0f172a', label: 'Dark Slate' },
+                          { color: '#000000', label: 'Pure Black' },
+                          { color: '#1e293b', label: 'Studio Grey' },
+                          { color: '#0c4a6e', label: 'Blueprint' }
+                        ].map((bg, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => setBgColor(bg.color)}
+                            className={`w-5 h-5 rounded-full border-2 transition-all cursor-pointer ${
+                              bgColor === bg.color ? 'border-indigo-400 scale-110' : 'border-slate-600 hover:scale-105'
+                            }`}
+                            style={{ backgroundColor: bg.color }}
+                            title={bg.label}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : isImageFormat ? (
+                <div className="w-full h-full flex flex-col items-center justify-center p-4 sm:p-6 overflow-auto">
+                  <img
+                    src={activeUrl}
+                    alt={activeName}
+                    className="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-2xl bg-white/5"
+                  />
+                </div>
+              ) : isPdfFormat ? (
+                <div className="w-full h-full flex flex-col p-2 bg-slate-950">
+                  <iframe
+                    src={`${activeUrl}#toolbar=1&navpanes=0`}
+                    title={activeName}
+                    className="w-full h-full rounded-2xl bg-white border-0"
+                  />
+                </div>
+              ) : (
+                /* CAD DWG / DXF / SKP / RVT / Archive Format Card */
+                <div className="w-full h-full flex flex-col items-center justify-center p-8 sm:p-12 text-center text-white">
+                  <div className="w-20 h-20 rounded-3xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-5 shadow-2xs">
+                    <Box size={40} />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">{activeName}</h3>
+                  <p className="text-xs text-slate-400 max-w-md mb-6 leading-relaxed">
+                    This <strong>.{fileExt.toUpperCase()}</strong> architectural format for <strong>v{activeVersionNum}</strong> is optimized for native CAD & modeling engines (AutoCAD, SketchUp, Revit, 3ds Max).
+                  </p>
+                  <div className="flex items-center gap-3">
                     <a
-                      href={file.url}
+                      href={activeUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-2"
+                      download={activeName}
+                      className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold flex items-center gap-2 transition-all active:scale-95 shadow-md shadow-indigo-600/30 cursor-pointer"
                     >
-                      <Download size={15} /> Download {fileExt.toUpperCase()} File
+                      <Download size={16} /> Download v{activeVersionNum} ({fileExt.toUpperCase()})
                     </a>
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* Floating Interactive 3D Toolbar */}
-                {!loading && !loadError && (
-                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-slate-900/90 border border-slate-700/80 rounded-2xl p-2 px-3 backdrop-blur-md">
-                    {/* Auto Rotate */}
-                    <button
-                      type="button"
-                      onClick={() => setIsAutoRotating(!isAutoRotating)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                        isAutoRotating
-                          ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                      }`}
-                      title="Toggle Auto Rotation"
-                    >
-                      {isAutoRotating ? <Pause size={14} /> : <Play size={14} />}
-                      <span>Orbit</span>
-                    </button>
-
-                    {/* Wireframe */}
-                    <button
-                      type="button"
-                      onClick={() => setIsWireframe(!isWireframe)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                        isWireframe
-                          ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                      }`}
-                      title="Toggle Wireframe"
-                    >
-                      <Layers size={14} />
-                      <span>Wireframe</span>
-                    </button>
-
-                    {/* Reset Camera */}
-                    <button
-                      type="button"
-                      onClick={resetCamera}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-                      title="Reset View"
-                    >
-                      <RotateCcw size={14} />
-                      <span>Reset</span>
-                    </button>
-
-                    <div className="w-[1px] h-5 bg-slate-700 mx-1" />
-
-                    {/* Background Color Toggles */}
-                    <div className="flex items-center gap-1">
-                      {[
-                        { color: '#0f172a', label: 'Dark Slate' },
-                        { color: '#000000', label: 'Pure Black' },
-                        { color: '#1e293b', label: 'Studio Grey' },
-                        { color: '#0c4a6e', label: 'Blueprint' }
-                      ].map((bg, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => setBgColor(bg.color)}
-                          className={`w-5 h-5 rounded-full border-2 transition-all ${
-                            bgColor === bg.color ? 'border-purple-400 scale-110' : 'border-slate-600 hover:scale-105'
-                          }`}
-                          style={{ backgroundColor: bg.color }}
-                          title={bg.label}
-                        />
-                      ))}
-                    </div>
+              {/* Version Reason / Feedback Overlay Notice on Canvas */}
+              {(activeRejectionReason || activeInternalNotes || activeClientFeedback) && (
+                <div className="absolute top-4 left-4 right-4 z-20 pointer-events-none">
+                  <div className="max-w-xl mx-auto space-y-2 pointer-events-auto">
+                    {activeRejectionReason && (
+                      <div className="p-3 bg-rose-950/90 border border-rose-800/80 rounded-xl text-xs text-rose-200 backdrop-blur-md shadow-lg flex items-start gap-2.5">
+                        <XCircle size={15} className="text-rose-400 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-bold text-rose-300">Rejection Reason for v{activeVersionNum}:</p>
+                          <p className="text-[11px] text-rose-100 mt-0.5 font-medium">{activeRejectionReason}</p>
+                        </div>
+                      </div>
+                    )}
+                    {activeInternalNotes && !activeRejectionReason && (
+                      <div className="p-3 bg-slate-900/90 border border-slate-700/80 rounded-xl text-xs text-slate-200 backdrop-blur-md shadow-lg flex items-start gap-2.5">
+                        <AlertCircle size={15} className="text-indigo-400 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-bold text-indigo-300">Version v{activeVersionNum} Notes:</p>
+                          <p className="text-[11px] text-slate-300 mt-0.5 font-medium">{activeInternalNotes}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </>
-            ) : isImageFormat ? (
-              <div className="w-full h-full flex items-center justify-center p-6">
-                <img
-                  src={file.url}
-                  alt={file.name}
-                  className="max-w-full max-h-full object-contain rounded-2xl"
-                />
-              </div>
-            ) : isPdfFormat ? (
-              <div className="w-full h-full flex flex-col p-2 bg-slate-950">
-                <iframe
-                  src={`${file.url}#toolbar=1&navpanes=0`}
-                  title={file.name}
-                  className="w-full h-full rounded-2xl bg-white border-0"
-                />
-              </div>
-            ) : (
-              /* CAD DWG / SKP / RVT / Archive Format Card */
-              <div className="w-full h-full flex flex-col items-center justify-center p-12 text-center text-white">
-                <div className="w-20 h-20 rounded-3xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center mb-5">
-                  <Box size={40} />
                 </div>
-                <h3 className="text-xl font-black mb-2">{file.name}</h3>
-                <p className="text-xs text-slate-400 max-w-md mb-6 leading-relaxed">
-                  This <strong>.{fileExt.toUpperCase()}</strong> architectural format is optimized for native CAD and 3D modeling tools (AutoCAD, SketchUp, Revit, 3ds Max).
-                </p>
-                <div className="flex items-center gap-3">
-                  <a
-                    href={file.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    download={file.name}
-                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs font-bold flex items-center gap-2 transition-all active:scale-95"
-                  >
-                    <Download size={16} /> Download {fileExt.toUpperCase()} Model
-                  </a>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
+
+            {/* Side Version History & Details Panel */}
+            <AnimatePresence>
+              {showHistoryPanel && (
+                <motion.div
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: 340, opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="w-[340px] bg-[hsl(var(--card))] border-l border-[hsl(var(--border))] flex flex-col shrink-0 overflow-hidden shadow-2xl z-30"
+                >
+                  <div className="p-4 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--muted)/0.4)]">
+                    <div className="flex items-center gap-2">
+                      <History size={16} className="text-indigo-600" />
+                      <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">Version History</h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowHistoryPanel(false)}
+                      className="p-1 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                    {allVersions.map((ver: any) => {
+                      const isSelected = ver.versionNumber === activeVersionNum;
+                      const statusPill = getStatusPill(ver.approvalStatus || ver.status);
+                      const StatusIcon = statusPill.icon;
+
+                      return (
+                        <div
+                          key={ver.versionNumber}
+                          onClick={() => setSelectedVersionNum(ver.versionNumber)}
+                          className={`p-3.5 rounded-xl border transition-all cursor-pointer space-y-2 ${
+                            isSelected
+                              ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30 shadow-xs'
+                              : 'border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted)/0.5)]'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-black text-[hsl(var(--foreground))]">
+                                Version v{ver.versionNumber}
+                              </span>
+                              {ver.versionNumber === allVersions[allVersions.length - 1]?.versionNumber && (
+                                <span className="text-[9px] px-1.5 py-0.2 bg-indigo-600 text-white rounded-md font-bold">
+                                  Current
+                                </span>
+                              )}
+                            </div>
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold border ${statusPill.bg}`}>
+                              <StatusIcon size={10} />
+                              {statusPill.label}
+                            </span>
+                          </div>
+
+                          <p className="text-xs font-medium text-[hsl(var(--foreground))] line-clamp-1" title={ver.name}>
+                            {ver.name || activeName}
+                          </p>
+
+                          <div className="text-[10px] text-[hsl(var(--muted-foreground))] space-y-1 pt-1 border-t border-[hsl(var(--border))]">
+                            {ver.uploadedAt && (
+                              <div className="flex items-center gap-1">
+                                <Calendar size={11} className="text-slate-400" />
+                                <span>{new Date(ver.uploadedAt).toLocaleString()}</span>
+                              </div>
+                            )}
+                            {ver.assignedReviewerName && (
+                              <div className="flex items-center gap-1">
+                                <User size={11} className="text-slate-400" />
+                                <span>Reviewer: {ver.assignedReviewerName}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Version Specific Notes */}
+                          {(ver.approvalStatus === 'internally_rejected' || ver.status === 'internally_rejected') && (ver.rejectionReason || ver.internalNotes) && (
+                            <div className="p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 rounded-lg text-[10px] text-rose-800 dark:text-rose-300">
+                              <strong>Rejection Reason (v{ver.versionNumber}):</strong> {ver.rejectionReason || ver.internalNotes}
+                            </div>
+                          )}
+
+                          {ver.approvalStatus !== 'internally_rejected' && ver.status !== 'internally_rejected' && ver.internalNotes && (
+                            <div className="p-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] text-slate-700 dark:text-slate-300">
+                              <strong>Revision Changelog:</strong> {ver.internalNotes}
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between pt-1">
+                            <span className="text-[10px] text-indigo-600 font-bold flex items-center gap-1">
+                              {isSelected ? 'Currently Viewing' : 'Click to View'}
+                              <ChevronRight size={11} />
+                            </span>
+                            <a
+                              href={ver.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              download={ver.name || `drawing-v${ver.versionNumber}`}
+                              className="p-1 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] rounded transition"
+                              title="Download this version"
+                            >
+                              <Download size={12} />
+                            </a>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
       </div>

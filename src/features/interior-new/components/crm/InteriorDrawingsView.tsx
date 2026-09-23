@@ -17,10 +17,12 @@ import {
   Palette,
   UploadCloud,
   XCircle,
+  Share2,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { InteriorCrmShareModal } from './modals/InteriorCrmShareModal';
 
 interface Props {
   leads: any[];
@@ -43,6 +45,7 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
   const [filterState, setFilterState] = useState<'all' | 'pending' | 'completed'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [shareLead, setShareLead] = useState<any | null>(null);
 
   const pendingCount = useMemo(
     () => leads.filter((l) => !l.designFiles || l.designFiles.length === 0).length,
@@ -237,17 +240,29 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
 
                     {/* Actions Ribbon */}
                     <div className="flex items-center justify-between gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => onUploadDesign(lead._id)}
-                        className={cn(
-                          'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
-                          hasDrawings
-                            ? 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
-                            : 'bg-indigo-600 text-white'
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => onUploadDesign(lead._id)}
+                          className={cn(
+                            'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
+                            hasDrawings
+                              ? 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
+                              : 'bg-indigo-600 text-white'
+                          )}
+                        >
+                          <UploadCloud size={11} /> {hasDrawings ? 'Manage Files' : 'Upload'}
+                        </button>
+
+                        {hasDrawings && (
+                          <button
+                            onClick={() => setShareLead(lead)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-500/10 text-indigo-600 border border-indigo-500/20 active:scale-95 shadow-sm cursor-pointer"
+                            title="Share Drawings with Client"
+                          >
+                            <Share2 size={11} /> Share
+                          </button>
                         )}
-                      >
-                        <UploadCloud size={11} /> {hasDrawings ? 'Manage Files' : 'Upload'}
-                      </button>
+                      </div>
 
                       {hasDrawings &&
                         onPassToBoq &&
@@ -392,6 +407,17 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                             {hasDrawings ? 'Edit Drawings' : 'Upload Drawing'}
                           </button>
 
+                          {hasDrawings && (
+                            <button
+                              onClick={() => setShareLead(lead)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 rounded-lg text-xs font-bold transition-all border border-indigo-500/20 cursor-pointer"
+                              title="Share Drawings with Client via Link"
+                            >
+                              <Share2 size={13} className="text-indigo-600" />
+                              Share Link
+                            </button>
+                          )}
+
                           {hasDrawings &&
                             onPassToBoq &&
                             (isPassedToNext ? (
@@ -501,6 +527,15 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
           </div>
         )}
       </div>
+
+      {/* Share Drawings Modal */}
+      {shareLead && (
+        <InteriorCrmShareModal
+          isOpen={Boolean(shareLead)}
+          onClose={() => setShareLead(null)}
+          lead={shareLead}
+        />
+      )}
     </div>
   );
 };
