@@ -281,8 +281,8 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
             </div>
 
             {/* DESKTOP TABLE VIEW (>= md) - Senior Enterprise CRM Table */}
-            <div className="hidden md:block w-full">
-              <table className="w-full text-left text-xs border-collapse">
+            <div className="hidden md:block w-full overflow-hidden">
+              <table className="w-full text-left text-xs border-collapse table-fixed">
                 <thead className="bg-[hsl(var(--muted)/0.45)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] text-[11px] font-bold uppercase tracking-wider">
                   <tr>
                     <th className="px-4.5 py-3 rounded-tl-2xl w-[28%]">Lead / Customer</th>
@@ -300,7 +300,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
                       className="hover:bg-[hsl(var(--muted)/0.35)] transition-colors group cursor-pointer"
                     >
                       {/* 1. Lead / Customer */}
-                      <td className="px-4.5 py-3">
+                      <td className="px-4.5 py-3 max-w-0">
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-600 font-black text-xs shrink-0 shadow-xs">
                             {act.customer?.name?.charAt(0).toUpperCase() || '?'}
@@ -318,14 +318,14 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
                               </span>
                             </div>
                             <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[hsl(var(--muted-foreground))]">
-                              <span className="font-medium text-[hsl(var(--foreground))]">{act.customer?.mobileNumber || '-'}</span>
+                              <span className="font-medium text-[hsl(var(--foreground))] truncate">{act.customer?.mobileNumber || '-'}</span>
                             </div>
                           </div>
                         </div>
                       </td>
 
                       {/* 2. Assigned Rep */}
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 max-w-0">
                         {act.customer?.assignedSalesExecutive ? (
                           <div 
                             className="inline-flex items-center gap-1.5 text-xs font-medium text-[hsl(var(--foreground))] bg-[hsl(var(--muted)/0.5)] px-2 py-1 rounded-lg border border-[hsl(var(--border))] max-w-[130px] truncate"
@@ -342,7 +342,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
                       </td>
 
                       {/* 3. Activity & Notes */}
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 max-w-0">
                         <div className="min-w-0 space-y-1">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-bold tracking-tight uppercase bg-blue-500/10 text-blue-600 border border-blue-500/20">

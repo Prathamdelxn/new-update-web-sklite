@@ -283,12 +283,12 @@ export function InteriorQuotationsView({
             </div>
 
             {/* DESKTOP TABLE VIEW (>= md) - Senior Enterprise CRM Table */}
-            <div className="hidden md:block w-full">
-              <table className="w-full text-left text-xs border-collapse">
+            <div className="hidden md:block w-full overflow-hidden">
+              <table className="w-full text-left text-xs border-collapse table-fixed">
                 <thead className="bg-[hsl(var(--muted)/0.45)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] text-[11px] font-bold uppercase tracking-wider">
                   <tr>
-                    <th className="px-4.5 py-3 rounded-tl-2xl w-[30%]">Lead & Contact</th>
-                    <th className="px-4 py-3 w-[20%]">Property & Location</th>
+                    <th className="px-4.5 py-3 rounded-tl-2xl w-[28%]">Lead & Contact</th>
+                    <th className="px-4 py-3 w-[22%]">Property & Location</th>
                     <th className="px-4 py-3 w-[20%]">Quotation Value</th>
                     <th className="px-4 py-3 w-[14%]">Stage Status</th>
                     <th className="px-4.5 py-3 text-right rounded-tr-2xl w-[16%]">Actions</th>
@@ -308,7 +308,7 @@ export function InteriorQuotationsView({
                         className="hover:bg-[hsl(var(--muted)/0.35)] transition-colors group cursor-pointer"
                       >
                         {/* 1. Lead & Contact */}
-                        <td className="px-4.5 py-3">
+                        <td className="px-4.5 py-3 max-w-0">
                           <div className="flex items-center gap-2.5 min-w-0">
                             <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/25 flex items-center justify-center text-indigo-600 font-black text-xs shrink-0 shadow-xs">
                               {lead.name.charAt(0).toUpperCase()}
@@ -326,22 +326,22 @@ export function InteriorQuotationsView({
                                 </span>
                               </div>
                               <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[hsl(var(--muted-foreground))]">
-                                <span className="font-medium text-[hsl(var(--foreground))]">{lead.mobileNumber}</span>
+                                <span className="font-medium text-[hsl(var(--foreground))] truncate">{lead.mobileNumber}</span>
                               </div>
                             </div>
                           </div>
                         </td>
 
                         {/* 2. Property & Location */}
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 max-w-0">
                           <div className="min-w-0 space-y-0.5">
-                            <div className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--foreground))] truncate" title={lead.propertyType || 'Residential'}>
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--foreground))] min-w-0" title={lead.propertyType || 'Residential'}>
                               <Home size={12} className="text-amber-500 shrink-0" />
-                              <span className="truncate">{lead.propertyType || 'Residential'}</span>
+                              <span className="truncate block">{lead.propertyType || 'Residential'}</span>
                             </div>
-                            <div className="flex items-center gap-1 text-[11px] text-[hsl(var(--muted-foreground))] truncate" title={lead.projectLocation || (lead as any).city || 'Location Pending'}>
+                            <div className="flex items-center gap-1 text-[11px] text-[hsl(var(--muted-foreground))] min-w-0" title={lead.projectLocation || (lead as any).city || 'Location Pending'}>
                               <MapPin size={11} className="shrink-0 text-indigo-500" />
-                              <span className="truncate">{lead.projectLocation || (lead as any).city || 'Location Pending'}</span>
+                              <span className="truncate block">{lead.projectLocation || (lead as any).city || 'Location Pending'}</span>
                             </div>
                           </div>
                         </td>

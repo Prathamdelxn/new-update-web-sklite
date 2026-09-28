@@ -248,15 +248,15 @@ export const InteriorRequirementDesignView = ({
             </div>
 
             {/* DESKTOP TABLE VIEW (>= md) - Senior Enterprise CRM Table */}
-            <div className="hidden md:block w-full">
-              <table className="w-full text-left text-xs border-collapse">
+            <div className="hidden md:block w-full overflow-hidden">
+              <table className="w-full text-left text-xs border-collapse table-fixed">
                 <thead className="bg-[hsl(var(--muted)/0.45)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] text-[11px] font-bold uppercase tracking-wider">
                   <tr>
-                    <th className="px-4.5 py-3 rounded-tl-2xl w-[30%]">Lead & Contact</th>
+                    <th className="px-4.5 py-3 rounded-tl-2xl w-[28%]">Lead & Contact</th>
                     <th className="px-4 py-3 w-[22%]">Property & Location</th>
                     <th className="px-4 py-3 w-[20%]">Scope & Rooms</th>
-                    <th className="px-4 py-3 w-[14%]">Requirement Status</th>
-                    <th className="px-4.5 py-3 text-right rounded-tr-2xl w-[14%]">Actions</th>
+                    <th className="px-4 py-3 w-[15%]">Requirement Status</th>
+                    <th className="px-4.5 py-3 text-right rounded-tr-2xl w-[15%]">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border)/0.7)]">
@@ -267,7 +267,7 @@ export const InteriorRequirementDesignView = ({
                       className="hover:bg-[hsl(var(--muted)/0.35)] transition-colors group cursor-pointer"
                     >
                       {/* 1. Lead & Contact */}
-                      <td className="px-4.5 py-3">
+                      <td className="px-4.5 py-3 max-w-0">
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-600 font-black text-xs shrink-0 shadow-xs">
                             {lead.name.charAt(0).toUpperCase()}
@@ -285,20 +285,20 @@ export const InteriorRequirementDesignView = ({
                               </span>
                             </div>
                             <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[hsl(var(--muted-foreground))]">
-                              <span className="font-medium text-[hsl(var(--foreground))]">{lead.mobileNumber}</span>
+                              <span className="font-medium text-[hsl(var(--foreground))] truncate">{lead.mobileNumber}</span>
                             </div>
                           </div>
                         </div>
                       </td>
 
                       {/* 2. Property Info */}
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 max-w-0">
                         <div className="min-w-0 space-y-0.5">
                           <div className="font-semibold text-xs text-[hsl(var(--foreground))] truncate" title={lead.propertyType || 'Residential'}>
                             {lead.propertyType || 'Residential'}
                           </div>
-                          <div className="text-[11px] text-[hsl(var(--muted-foreground))] truncate" title={lead.projectLocation || lead.city || 'Location Pending'}>
-                            {lead.projectLocation || lead.city || 'Location Pending'}
+                          <div className="text-[11px] text-[hsl(var(--muted-foreground))] min-w-0" title={lead.projectLocation || lead.city || 'Location Pending'}>
+                            <span className="truncate block">{lead.projectLocation || lead.city || 'Location Pending'}</span>
                           </div>
                         </div>
                       </td>
