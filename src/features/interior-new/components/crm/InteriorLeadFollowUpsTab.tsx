@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
+import { useQuery } from '@tanstack/react-query';
+import { interiorCrmService } from '@/services/interiorCrm.service';
 
 interface InteriorLeadFollowUpsTabProps {
   lead: any;
@@ -40,14 +42,29 @@ interface InteriorLeadFollowUpsTabProps {
 
 export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> = ({
   lead,
-  activities,
-  users,
+  activities = [],
+  users = [],
   onRefresh,
   onScheduleFollowUp,
   onSendToSiteVisit,
   isConverted = false,
 }) => {
   const toast = useToast();
+  const leadId = lead?._id || lead?.id;
+
+  const { data: queryActivities } = useQuery({
+    queryKey: ['crm-follow-ups', leadId],
+    queryFn: async () => {
+      if (!leadId) return [];
+      const res = await interiorCrmService.getActivities(leadId);
+      return res?.success && res?.data ? res.data : Array.isArray(res) ? res : [];
+    },
+    enabled: Boolean(leadId),
+    initialData: activities,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const effectiveActivities = queryActivities || activities || [];
 
   // Helper to calculate overdue human-readable text
   const getOverdueText = (dateStr?: string | Date) => {
@@ -208,7 +225,7 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
   }
 
   return (
-    <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-300">
+    <div className="space-y-4 sm:space-y-5">
       
       {/* --- UNIFIED HEADER & ACTION BAR --- */}
       <div className={cn(
@@ -241,10 +258,7 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
                   {isPending ? (
                     isOverdue ? (
                       <>
-                        <span className="relative flex h-1.5 w-1.5">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
-                        </span>
+                        <span className="inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
                         Overdue ({getOverdueText(currentFollowUp.scheduledDate)})
                       </>
                     ) : 'Pending Touchpoint'

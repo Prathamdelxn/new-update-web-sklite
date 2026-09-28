@@ -6,8 +6,9 @@
 // and comprehensive change diff inspection modal.
 // =============================================================================
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import {
   ShieldCheck,
   Search,
@@ -155,17 +156,78 @@ export default function InteriorAuditManagementView() {
   const toast = useToast();
   const { isOrgAdmin, currentUser } = usePermissions();
 
-  // State
-  const [logs, setLogs] = useState<AuditLogItem[]>([]);
-  const [stats, setStats] = useState<AuditStats | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [refreshing, setRefreshing] = useState<boolean>(false);
-
   // Pagination & Filters
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(15);
-  const [totalPages, setTotalPages] = useState<number>(1);
-  const [totalCount, setTotalCount] = useState<number>(0);
+
+  const [activeSegment, setActiveSegment] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedAction, setSelectedAction] = useState<string>('all');
+  const [selectedEntity, setSelectedEntity] = useState<string>('All Modules');
+  const [dateRange, setDateRange] = useState<string>('all');
+
+  // Modal State
+  const [selectedLog, setSelectedLog] = useState<AuditLogItem | null>(null);
+  const [modalTab, setModalTab] = useState<'overview' | 'diff' | 'security' | 'json'>('overview');
+  const [copiedPayload, setCopiedPayload] = useState<boolean>(false);
+
+  const queryParams = useMemo(() => {
+    const params: Record<string, any> = {
+      page,
+      limit,
+    };
+
+    if (searchTerm.trim()) params.search = searchTerm.trim();
+    if (selectedAction !== 'all') params.action = selectedAction;
+    if (selectedEntity !== 'All Modules') params.entity = selectedEntity;
+
+    if (dateRange === 'today') {
+      const today = new Date().toISOString().split('T')[0];
+      params.startDate = today;
+    } else if (dateRange === '7days') {
+      const d = new Date();
+      d.setDate(d.getDate() - 7);
+      params.startDate = d.toISOString().split('T')[0];
+    } else if (dateRange === '30days') {
+      const d = new Date();
+      d.setDate(d.getDate() - 30);
+      params.startDate = d.toISOString().split('T')[0];
+    }
+
+    return params;
+  }, [page, limit, searchTerm, selectedAction, selectedEntity, dateRange]);
+
+  const {
+    data: auditResult,
+    isLoading: loading,
+    isRefetching: refreshing,
+    refetch,
+  } = useQuery({
+    queryKey: ['crm-audit-logs', queryParams],
+    queryFn: async () => {
+      if (currentUser && !isOrgAdmin) {
+        return { logs: [], stats: null, meta: { total: 0, totalPages: 1 } };
+      }
+      try {
+        const res = await interiorAuditService.getAuditLogs(queryParams);
+        if (res.success && res.data) {
+          return res.data;
+        }
+        return { logs: [], stats: null, meta: { total: 0, totalPages: 1 } };
+      } catch (err: any) {
+        console.error('Failed to fetch audit logs:', err);
+        toast.error('Unable to load audit logs. Please check connection.');
+        return { logs: [], stats: null, meta: { total: 0, totalPages: 1 } };
+      }
+    },
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const logs = auditResult?.logs || [];
+  const stats = auditResult?.stats || null;
+  const totalCount = auditResult?.meta?.total || 0;
+  const totalPages = auditResult?.meta?.totalPages || 1;
 
   // Helper to generate smart pagination range with ellipsis
   const paginationRange = useMemo<(number | string)[]>(() => {
@@ -180,74 +242,6 @@ export default function InteriorAuditManagementView() {
     }
     return [1, '...', page - 1, page, page + 1, '...', totalPages];
   }, [page, totalPages]);
-
-  const [activeSegment, setActiveSegment] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [selectedAction, setSelectedAction] = useState<string>('all');
-  const [selectedEntity, setSelectedEntity] = useState<string>('All Modules');
-  const [dateRange, setDateRange] = useState<string>('all');
-
-  // Modal State
-  const [selectedLog, setSelectedLog] = useState<AuditLogItem | null>(null);
-  const [modalTab, setModalTab] = useState<'overview' | 'diff' | 'security' | 'json'>('overview');
-  const [copiedPayload, setCopiedPayload] = useState<boolean>(false);
-
-  // Fetch audit logs
-  const fetchAuditLogs = useCallback(
-    async (isManualRefresh = false) => {
-      if (currentUser && !isOrgAdmin) {
-        setLoading(false);
-        setRefreshing(false);
-        return;
-      }
-      try {
-        if (isManualRefresh) setRefreshing(true);
-        else setLoading(true);
-
-        const params: Record<string, any> = {
-          page,
-          limit,
-        };
-
-        if (searchTerm.trim()) params.search = searchTerm.trim();
-        if (selectedAction !== 'all') params.action = selectedAction;
-        if (selectedEntity !== 'All Modules') params.entity = selectedEntity;
-
-        if (dateRange === 'today') {
-          const today = new Date().toISOString().split('T')[0];
-          params.startDate = today;
-        } else if (dateRange === '7days') {
-          const d = new Date();
-          d.setDate(d.getDate() - 7);
-          params.startDate = d.toISOString().split('T')[0];
-        } else if (dateRange === '30days') {
-          const d = new Date();
-          d.setDate(d.getDate() - 30);
-          params.startDate = d.toISOString().split('T')[0];
-        }
-
-        const res = await interiorAuditService.getAuditLogs(params);
-
-        if (res.success && res.data) {
-          setLogs(res.data.logs || []);
-          setStats(res.data.stats || null);
-          setTotalCount(res.data.meta?.total || 0);
-          setTotalPages(res.data.meta?.totalPages || 1);
-        }
-      } catch (err: any) {
-        console.error('Failed to fetch audit logs:', err);
-        toast.error('Unable to load audit logs. Please check connection.');
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
-    },
-    [currentUser, isOrgAdmin, page, limit, searchTerm, selectedAction, selectedEntity, dateRange, toast]
-  );
-
-  useEffect(() => {
-    fetchAuditLogs();
-  }, [fetchAuditLogs]);
 
   if (currentUser && !isOrgAdmin) {
     return (
@@ -346,7 +340,7 @@ export default function InteriorAuditManagementView() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => fetchAuditLogs(true)}
+            onClick={() => refetch()}
             disabled={refreshing || loading}
             className="gap-1.5 h-8.5 text-xs bg-[hsl(var(--card))] shadow-xs"
           >

@@ -5,9 +5,9 @@
 // Live dashboard backed by interior-os backend via interiorApiClient.
 // =============================================================================
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 import {
   FolderKanban,
   Bug,
@@ -58,19 +58,6 @@ interface DashboardData {
   recentActivities: { action: string; project: string; time: string; type: 'info' | 'success' | 'warning' | 'error' }[];
 }
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.05 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-};
-
 function getGreeting() {
   const hour = new Date().getHours();
   if (hour < 12) return 'morning';
@@ -81,33 +68,30 @@ function getGreeting() {
 export default function InteriorNewDashboardView() {
   const user = getInteriorUser();
 
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const loadDashboard = useCallback(async () => {
-    try {
-      const res = await interiorApiClient.get('/dashboard');
-      if (res.data?.success && res.data?.data) {
-        setData(res.data.data);
-      } else {
-        setData(null);
+  const {
+    data: data = null,
+    isLoading: loading,
+    isRefetching: refreshing,
+    refetch,
+  } = useQuery<DashboardData | null>({
+    queryKey: ['crm-stats-dashboard'],
+    queryFn: async () => {
+      try {
+        const res = await interiorApiClient.get('/dashboard');
+        if (res.data?.success && res.data?.data) {
+          return res.data.data;
+        }
+        return null;
+      } catch (err) {
+        console.error('Failed to load interior-os dashboard', err);
+        return null;
       }
-    } catch (err) {
-      console.error('Failed to load interior-os dashboard', err);
-      setData(null);
-    }
-  }, []);
-
-  useEffect(() => {
-    setLoading(true);
-    loadDashboard().finally(() => setLoading(false));
-  }, [loadDashboard]);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const handleManualRefresh = async () => {
-    setRefreshing(true);
-    await loadDashboard();
-    setRefreshing(false);
+    await refetch();
   };
 
   if (loading) {
@@ -148,11 +132,11 @@ export default function InteriorNewDashboardView() {
         </div>
       </div>
 
-      <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-8">
+      <div className="space-y-8">
         {/* KPI Cards Row */}
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
           {kpiCards.map((kpi) => (
-            <motion.div key={kpi.title} variants={itemVariants}>
+            <div key={kpi.title}>
               <Card className="hover:shadow-md transition-shadow duration-200">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-3">
@@ -164,13 +148,13 @@ export default function InteriorNewDashboardView() {
                   <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{kpi.title}</p>
                 </CardContent>
               </Card>
-            </motion.div>
+            </div>
           ))}
         </div>
 
         {/* Progress & Health Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <motion.div variants={itemVariants} className="lg:col-span-2">
+          <div className="lg:col-span-2">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-base font-semibold">Progress Trend</CardTitle>
@@ -218,9 +202,9 @@ export default function InteriorNewDashboardView() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
 
-          <motion.div variants={itemVariants}>
+          <div>
             <Card className="h-full">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base font-semibold">Project Health</CardTitle>
@@ -273,12 +257,12 @@ export default function InteriorNewDashboardView() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         </div>
 
         {/* Pipeline, Procurement, Top Projects, Activity Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <motion.div variants={itemVariants}>
+          <div>
             <Card className="h-full">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
@@ -307,9 +291,9 @@ export default function InteriorNewDashboardView() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
 
-          <motion.div variants={itemVariants}>
+          <div>
             <Card className="h-full">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
@@ -338,9 +322,9 @@ export default function InteriorNewDashboardView() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
 
-          <motion.div variants={itemVariants}>
+          <div>
             <Card className="h-full">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base font-semibold">Top Projects</CardTitle>
@@ -381,9 +365,9 @@ export default function InteriorNewDashboardView() {
                 )}
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
 
-          <motion.div variants={itemVariants} className="lg:col-span-3">
+          <div className="lg:col-span-3">
             <Card className="h-full">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
@@ -420,9 +404,9 @@ export default function InteriorNewDashboardView() {
                 )}
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

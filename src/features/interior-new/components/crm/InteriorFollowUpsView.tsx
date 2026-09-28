@@ -2,12 +2,13 @@
 
 // Enhanced Follow-ups View with Status Tabs (All, Pending, Completed), Search, and Direct Site Visit Actions
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { Clock, Phone, UserCircle, MapPin, CheckCircle2, Search, CheckCircle, XCircle, MessageSquare } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/providers/ToastContext';
 import { cn } from '@/lib/utils';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface Props {
   onPassToSiteVisit: (leadId: string) => void;
@@ -26,15 +27,18 @@ function displayUserName(u?: any) {
 export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMarkAsLost }: Props) => {
   const router = useRouter();
   const toast = useToast();
-  const [allActivities, setAllActivities] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'completed'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [completingId, setCompletingId] = useState<string | null>(null);
 
-  const fetchActivities = async () => {
-    try {
-      setIsLoading(true);
+  const {
+    data: allActivities = [],
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['crm-follow-ups-all'],
+    queryFn: async () => {
       const res = await interiorCrmService.getActivities();
       const list = res?.success && res?.data ? res.data : Array.isArray(res) ? res : [];
 
@@ -54,18 +58,10 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
           deduped.push(act);
         }
       }
-
-      setAllActivities(deduped);
-    } catch (error) {
-      console.error('Failed to fetch follow-ups:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchActivities();
-  }, [refreshTrigger]);
+      return deduped;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const handleCompleteActivity = async (activityId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -76,7 +72,8 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
         completedDate: new Date(),
       });
       toast.success('Follow-up marked as completed! You can now send to Site Visit.');
-      fetchActivities();
+      queryClient.invalidateQueries({ queryKey: ['crm-follow-ups-all'] });
+      await refetch();
     } catch (err: any) {
       toast.error('Failed to complete follow-up');
     } finally {

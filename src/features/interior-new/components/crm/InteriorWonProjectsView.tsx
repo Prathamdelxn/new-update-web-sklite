@@ -3,36 +3,29 @@
 // Port of src/components/crm/WonProjectsView.tsx, rewired to interiorProjectService
 // (interior-os backend's /projects list) instead of sky-lite's own /projects.
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Trophy, ArrowRight, User } from 'lucide-react';
 import { interiorProjectService } from '@/services/interiorProject.service';
-import { useToast } from '@/providers/ToastContext';
+import { useQuery } from '@tanstack/react-query';
 
 export function InteriorWonProjectsView() {
   const router = useRouter();
-  const toast = useToast();
-  const [projects, setProjects] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchProjects();
-  }, []);
-
-  const fetchProjects = async () => {
-    try {
+  const {
+    data: projects = [],
+    isLoading,
+  } = useQuery({
+    queryKey: ['crm-won-projects'],
+    queryFn: async () => {
       const res = await interiorProjectService.getProjects();
-      const list = res?.success && res?.data ? res.data : Array.isArray(res) ? res : [];
-      setProjects(list);
-    } catch (error) {
-      toast.error('Failed to load projects');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return res?.success && res?.data ? res.data : Array.isArray(res) ? res : [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   if (isLoading) {
-    return <div className="p-12 text-center text-[hsl(var(--muted-foreground))] animate-pulse">Loading converted projects...</div>;
+    return <div className="p-12 text-center text-[hsl(var(--muted-foreground))]">Loading converted projects...</div>;
   }
 
   if (!projects || projects.length === 0) {
@@ -51,7 +44,7 @@ export function InteriorWonProjectsView() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {projects.map((project) => (
+      {projects.map((project: any) => (
         <div key={project.id || project._id} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 transition-all group flex flex-col">
 
           <div className="flex justify-between items-start mb-4">

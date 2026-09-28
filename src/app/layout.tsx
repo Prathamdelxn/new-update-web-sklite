@@ -5,6 +5,7 @@ import { AuthProvider } from "@/providers/AuthContext";
 import { ToastProvider } from "@/providers/ToastContext";
 import { ConfirmProvider } from "@/providers/ConfirmContext";
 import { SocketProvider } from "@/providers/SocketContext";
+import { QueryProvider } from "@/providers/QueryProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -31,18 +32,21 @@ export default function RootLayout({
           <div className="absolute bottom-[-5%] left-[-5%] w-[40%] h-[40%] rounded-full bg-indigo-100/30 blur-[120px]" />
         </div>
 
-        <AuthProvider>
-          <ToastProvider>
-            <ConfirmProvider>
-              <SocketProvider>
-                <main className="relative z-0">
-                  {children}
-                </main>
-              </SocketProvider>
-            </ConfirmProvider>
-          </ToastProvider>
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <ToastProvider>
+              <ConfirmProvider>
+                <SocketProvider>
+                  <main className="relative z-0">
+                    {children}
+                  </main>
+                </SocketProvider>
+              </ConfirmProvider>
+            </ToastProvider>
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );
 }
+

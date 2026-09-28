@@ -150,7 +150,7 @@ export default function ClientDrawingSharePage() {
     });
   }, [portalData?.designFiles]);
 
-  const permissions = portalData?.permissions || { allowDownload: true };
+  const permissions = portalData?.permissions || { allowDownload: false };
   const lead = portalData?.lead || {};
   const org = portalData?.organization || {};
 

@@ -41,6 +41,7 @@ import { Button, Input, Card } from '@/components/interior/ui';
 import { cn } from '@/lib/utils';
 import interiorApiClient from '@/services/interiorApi.client';
 import { useToast } from '@/providers/ToastContext';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const healthConfig = {
   'on-track': {
@@ -104,9 +105,30 @@ type FilterStatus = 'all' | 'on-track' | 'at-risk' | 'delayed' | 'completed';
 export default function InteriorNewProjectsView() {
   const toast = useToast();
   const router = useRouter();
-  const [projects, setProjects] = useState<any[]>([]);
-  const [templates, setTemplates] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  const {
+    data: projects = [],
+    isLoading: loading,
+    refetch: refetchProjects,
+  } = useQuery({
+    queryKey: ['interior-projects-list'],
+    queryFn: async () => {
+      const res = await interiorApiClient.get('/projects');
+      return res.data?.success && res.data?.data ? res.data.data : [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: templates = [] } = useQuery({
+    queryKey: ['interior-templates'],
+    queryFn: async () => {
+      const res = await interiorApiClient.get('/templates');
+      return res.data?.success && res.data?.data?.templates ? res.data.data.templates : [];
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
   // Filters & Sorting
@@ -211,25 +233,9 @@ export default function InteriorNewProjectsView() {
   };
 
   const loadProjects = useCallback(async () => {
-    try {
-      const res = await interiorApiClient.get('/projects');
-      setProjects(res.data?.success && res.data?.data ? res.data.data : []);
-    } catch (err) {
-      console.error('Failed to load interior-os projects', err);
-      setProjects([]);
-    }
-  }, []);
-
-  useEffect(() => {
-    setLoading(true);
-    Promise.all([
-      loadProjects(),
-      interiorApiClient
-        .get('/templates')
-        .then((res) => setTemplates(res.data?.success && res.data?.data?.templates ? res.data.data.templates : []))
-        .catch(() => setTemplates([])),
-    ]).finally(() => setLoading(false));
-  }, [loadProjects]);
+    queryClient.invalidateQueries({ queryKey: ['interior-projects-list'] });
+    await refetchProjects();
+  }, [queryClient, refetchProjects]);
 
   const handleEditProject = (project: any) => {
     setEditingProjectId(project.id || project._id);
@@ -398,12 +404,12 @@ export default function InteriorNewProjectsView() {
   // Executive KPI Metrics
   const stats = useMemo(() => {
     const total = projects.length;
-    const totalPipelineValue = projects.reduce((sum, p) => sum + getProjectBudget(p), 0);
-    const onTrackCount = projects.filter((p) => p.health === 'on-track' || (!p.health && p.status === 'active')).length;
-    const atRiskCount = projects.filter((p) => p.health === 'at-risk' || p.health === 'delayed').length;
-    const completedCount = projects.filter((p) => p.status === 'completed' || p.progress === 100).length;
-    const avgProgress = total > 0 ? Math.round(projects.reduce((sum, p) => sum + (p.progress || 0), 0) / total) : 0;
-    const totalSnags = projects.reduce((sum, p) => sum + (p.openSnags || 0), 0);
+    const totalPipelineValue = projects.reduce((sum: number, p: any) => sum + getProjectBudget(p), 0);
+    const onTrackCount = projects.filter((p: any) => p.health === 'on-track' || (!p.health && p.status === 'active')).length;
+    const atRiskCount = projects.filter((p: any) => p.health === 'at-risk' || p.health === 'delayed').length;
+    const completedCount = projects.filter((p: any) => p.status === 'completed' || p.progress === 100).length;
+    const avgProgress = total > 0 ? Math.round(projects.reduce((sum: number, p: any) => sum + (p.progress || 0), 0) / total) : 0;
+    const totalSnags = projects.reduce((sum: number, p: any) => sum + (p.openSnags || 0), 0);
 
     return {
       total,
@@ -428,7 +434,7 @@ export default function InteriorNewProjectsView() {
 
   const projectTypes = useMemo(() => {
     const set = new Set<string>();
-    projects.forEach((p) => {
+    projects.forEach((p: any) => {
       if (p.type) set.add(p.type);
     });
     return Array.from(set);

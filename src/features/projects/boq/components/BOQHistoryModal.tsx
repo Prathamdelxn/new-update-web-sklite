@@ -9,6 +9,8 @@ import { cn, formatCurrency } from '@/lib/utils';
 import api from '@/services/api.client';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
 
+import { useQuery } from '@tanstack/react-query';
+
 interface BOQHistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -27,22 +29,20 @@ const getStatusStyle = (status: string) => {
 
 export const BOQHistoryModal: React.FC<BOQHistoryModalProps> = ({ isOpen, onClose, item, projectId }) => {
   const { project } = useProjectContext();
-  // `versions` holds all historical versions of this BOQ item chain (newest first)
-  const [versions, setVersions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const historyId = item?.historyId || item?._id;
 
-  useEffect(() => {
-    if (!isOpen || !item) return;
-    setLoading(true);
-    // Correct endpoint: GET /projects/:id/boq/history/:historyId
-    // historyId is set when the item was first created (version 1).
-    // For v1 items historyId === _id, so the fallback is safe.
-    const historyId = item.historyId || item._id;
-    api.get(`/projects/${projectId}/boq/history/${historyId}`)
-      .then(res => setVersions(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setVersions([]))
-      .finally(() => setLoading(false));
-  }, [isOpen, item, projectId]);
+  const {
+    data: versions = [],
+    isLoading: loading,
+  } = useQuery({
+    queryKey: ['boq-history', projectId, historyId],
+    queryFn: async () => {
+      const res = await api.get(`/projects/${projectId}/boq/history/${historyId}`);
+      return Array.isArray(res.data) ? res.data : [];
+    },
+    enabled: Boolean(isOpen && item && projectId && historyId),
+    staleTime: 5 * 60 * 1000,
+  });
 
   if (!item) return null;
 

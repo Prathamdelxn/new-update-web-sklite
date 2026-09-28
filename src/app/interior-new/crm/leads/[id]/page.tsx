@@ -34,12 +34,14 @@ import { QuotationPreview } from '@/components/crm/QuotationPreview';
 import { BoqPreview } from '@/components/crm/BoqPreview';
 import { InteriorBoqBuilderModal } from '@/features/interior-new/components/crm/modals/InteriorBoqBuilderModal';
 import { InteriorLeadFollowUpsTab } from '@/features/interior-new/components/crm/InteriorLeadFollowUpsTab';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 export default function Lead360View() {
   const checked = useInteriorAuthGuard();
   const params = useParams();
   const router = useRouter();
   const toast = useToast();
+  const queryClient = useQueryClient();
   
   const [lead, setLead] = useState<any>(null);
   const [activities, setActivities] = useState<any[]>([]);
@@ -132,8 +134,12 @@ export default function Lead360View() {
   const [isFollowUpModalOpen, setIsFollowUpModalOpen] = useState(false);
   const [designSubTab, setDesignSubTab] = useState<'2d' | '3d'>('2d');
 
-  const fetchData = async () => {
-    try {
+  const {
+    data: leadData,
+    refetch: refetchLead,
+  } = useQuery({
+    queryKey: ['crm-lead', params.id],
+    queryFn: async () => {
       const [leadRes, actRes, userRes] = await Promise.all([
         interiorCrmService.getCustomerById(params.id as string),
         interiorCrmService.getActivities(params.id as string),
@@ -141,25 +147,27 @@ export default function Lead360View() {
       ]);
 
       const singleLead = leadRes?.success && leadRes?.data ? leadRes.data : leadRes;
-      if (singleLead) setLead(singleLead);
-
       const activityList = actRes?.success && actRes?.data ? actRes.data : Array.isArray(actRes) ? actRes : [];
-      setActivities(activityList);
-
       const userList = userRes?.success && userRes?.data ? userRes.data : Array.isArray(userRes) ? userRes : [];
-      setUsers(userList);
-    } catch (error) {
-      toast.error('Failed to load data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return { lead: singleLead, activities: activityList, users: userList };
+    },
+    enabled: Boolean(checked && params.id),
+    staleTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
-    if (checked && params.id) {
-      fetchData();
+    if (leadData) {
+      if (leadData.lead) setLead(leadData.lead);
+      if (leadData.activities) setActivities(leadData.activities);
+      if (leadData.users) setUsers(leadData.users);
+      setIsLoading(false);
     }
-  }, [checked, params.id]);
+  }, [leadData]);
+
+  const fetchData = async () => {
+    queryClient.invalidateQueries({ queryKey: ['crm-lead', params.id] });
+    await refetchLead();
+  };
 
   const handleActivitySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -3878,6 +3886,7 @@ export default function Lead360View() {
       <InteriorSiteVisitHistoryModal
         isOpen={isSiteVisitHistoryOpen}
         onClose={() => setIsSiteVisitHistoryOpen(false)}
+        leadId={params.id as string}
         activities={activities}
         users={users}
         leadName={lead?.name}

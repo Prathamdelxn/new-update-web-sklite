@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { FileText, ArrowRight, Phone, Trophy, Search, ChevronLeft, ChevronRight, Edit3, XCircle, Building2, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { InteriorLead } from './InteriorLeadsTable';
-import { motion } from 'framer-motion';
 
 export function InteriorQuotationsView({
   leads,
@@ -303,12 +302,9 @@ export function InteriorQuotationsView({
                         : null;
 
                     return (
-                      <motion.tr
+                      <tr
                         key={lead._id}
                         onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=quotation`)}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.15, delay: idx * 0.02 }}
                         className="hover:bg-[hsl(var(--accent))] transition-colors group cursor-pointer"
                       >
                         {/* Lead Info */}
@@ -466,7 +462,7 @@ export function InteriorQuotationsView({
                             </button>
                           )}
                         </td>
-                      </motion.tr>
+                      </tr>
                     );
                   })}
                 </tbody>

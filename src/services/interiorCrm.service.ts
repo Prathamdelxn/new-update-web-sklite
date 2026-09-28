@@ -29,6 +29,7 @@ export const interiorCrmService = {
   generateShareLink: (
     customerId: string,
     data?: {
+      expiresHours?: number | null;
       expiresDays?: number | null;
       allowDownload?: boolean;
       includeRequirements?: boolean;

@@ -4,12 +4,12 @@
 // minus permission gating and the 3D .glb model viewer/upload (external
 // three.js component not ported — everything else is wired to real data).
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { CheckSquare, AlertTriangle, Clock, TrendingUp, Activity, DollarSign, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
+import { useQuery } from '@tanstack/react-query';
 
 interface InteriorProjectOverviewViewProps {
   projectId: string;
@@ -24,21 +24,25 @@ const getMockMetrics = () => ({
 
 export default function InteriorProjectOverviewView({ projectId }: InteriorProjectOverviewViewProps) {
   const router = useRouter();
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!projectId) return;
-    setLoading(true);
-    interiorProjectService
-      .getDashboardMetrics(projectId)
-      .then((res) => setData(res?.success && res?.data ? res.data : getMockMetrics()))
-      .catch((err) => {
+  const {
+    data: metricsData = null,
+    isLoading: loading,
+  } = useQuery({
+    queryKey: ['interior-project-metrics', projectId],
+    queryFn: async () => {
+      if (!projectId) return getMockMetrics();
+      try {
+        const res = await interiorProjectService.getDashboardMetrics(projectId);
+        return res?.success && res?.data ? res.data : getMockMetrics();
+      } catch (err) {
         console.warn('Failed to load project dashboard metrics', err);
-        setData(getMockMetrics());
-      })
-      .finally(() => setLoading(false));
-  }, [projectId]);
+        return getMockMetrics();
+      }
+    },
+    enabled: Boolean(projectId),
+    staleTime: 5 * 60 * 1000,
+  });
 
   const formatBudget = (amount: any) => {
     const num = typeof amount === 'number' ? amount : Number(amount) || 0;
@@ -48,7 +52,7 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
     return `₹ ${num.toLocaleString('en-IN')}`;
   };
 
-  if (loading) {
+  if (loading && !metricsData) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <Loader2 className="w-8 h-8 animate-spin text-[hsl(var(--primary))]" />
@@ -56,8 +60,8 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
     );
   }
 
+  const data = metricsData || getMockMetrics();
   const { project, taskStats, milestones, quality } = data;
-  const cardVariants = { hidden: { opacity: 0, y: 15 }, visible: { opacity: 1, y: 0 } };
 
   const breakdownRows = [
     { label: 'Backlog', value: taskStats?.breakdown?.backlog, color: 'bg-slate-400' },
@@ -70,7 +74,7 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
   return (
     <div className="p-3.5 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 overflow-x-hidden">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
-        <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ duration: 0.3 }} className="h-full">
+        <div className="h-full">
           <Card className="h-full flex flex-col border border-[hsl(var(--border))]">
             <CardContent className="p-3.5 sm:p-5 flex-1 flex flex-col justify-between">
               <div className="flex items-center justify-between">
@@ -85,9 +89,9 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
               </div>
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
 
-        <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ duration: 0.3, delay: 0.05 }} className="h-full">
+        <div className="h-full">
           <Card onClick={() => router.push(`/interior-new/projects/${projectId}/tasks`)} className="cursor-pointer hover:border-[hsl(var(--primary)/0.3)] h-full flex flex-col border border-[hsl(var(--border))]">
             <CardContent className="p-3.5 sm:p-5 flex-1 flex flex-col justify-between">
               <div className="flex items-center justify-between">
@@ -103,9 +107,9 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
               <p className="text-[10px] sm:text-[11px] text-[hsl(var(--muted-foreground))] mt-auto">Completed Tasks scope</p>
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
 
-        <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ duration: 0.3, delay: 0.1 }} className="h-full">
+        <div className="h-full">
           <Card onClick={() => router.push(`/interior-new/projects/${projectId}/milestones`)} className="cursor-pointer hover:border-[hsl(var(--primary)/0.3)] h-full flex flex-col border border-[hsl(var(--border))]">
             <CardContent className="p-3.5 sm:p-5 flex-1 flex flex-col justify-between">
               <div className="flex items-center justify-between">
@@ -121,9 +125,9 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
               <p className="text-[10px] sm:text-[11px] text-[hsl(var(--muted-foreground))] mt-auto">Checkpoints achieved</p>
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
 
-        <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ duration: 0.3, delay: 0.15 }} className="h-full">
+        <div className="h-full">
           <Card className="h-full flex flex-col border border-[hsl(var(--border))]">
             <CardContent className="p-3.5 sm:p-5 flex-1 flex flex-col justify-between">
               <div className="flex items-center justify-between">
@@ -136,7 +140,7 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
               <p className="text-[10px] sm:text-[11px] text-[hsl(var(--muted-foreground))] mt-auto">Allocated value</p>
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">

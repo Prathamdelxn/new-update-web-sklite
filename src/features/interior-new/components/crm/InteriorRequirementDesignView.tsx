@@ -6,7 +6,6 @@ import React, { useState, useMemo } from 'react';
 import { ArrowRight, User, FileText, PenTool, Search, ChevronLeft, ChevronRight, Sparkles, XCircle, Home, Layers } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
 
 interface Props {
   leads: any[];
@@ -228,7 +227,9 @@ export const InteriorRequirementDesignView = ({
                     </button>
 
                     {lead.requirements && lead.requirements.length > 0 && handlePassToNext && (
-                      ['Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Won', 'Converted'].includes(lead.status) ? (
+                      (Boolean(Array.isArray(lead.quotations) && lead.quotations.some((q: any) => ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase()))) ||
+                       ['Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) ||
+                       Boolean((lead as any).linkedProject)) ? (
                         <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
                           Passed 
                         </span>
@@ -260,12 +261,9 @@ export const InteriorRequirementDesignView = ({
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border))]">
                   {paginatedLeads.map((lead, idx) => (
-                    <motion.tr
+                    <tr
                       key={lead._id}
                       onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=requirements`)}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.15, delay: idx * 0.02 }}
                       className="hover:bg-[hsl(var(--accent))] transition-colors group cursor-pointer"
                     >
                       {/* Lead Info */}
@@ -360,15 +358,9 @@ export const InteriorRequirementDesignView = ({
                         {lead.requirements &&
                           lead.requirements.length > 0 &&
                           handlePassToNext &&
-                          ([
-                            'Under Drawing',
-                            'Design Approved',
-                            'Under BOQ Creation',
-                            'Under Quotation',
-                            'Negotiation',
-                            'Won',
-                            'Converted',
-                          ].includes(lead.status) ? (
+                          ((Boolean(Array.isArray(lead.quotations) && lead.quotations.some((q: any) => ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase()))) ||
+                            ['Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) ||
+                            Boolean((lead as any).linkedProject)) ? (
                             <span
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-xs font-bold"
                               title="Lead has already been passed to Drawings"
@@ -395,7 +387,7 @@ export const InteriorRequirementDesignView = ({
                           </button>
                         )}
                       </td>
-                    </motion.tr>
+                    </tr>
                   ))}
                 </tbody>
               </table>

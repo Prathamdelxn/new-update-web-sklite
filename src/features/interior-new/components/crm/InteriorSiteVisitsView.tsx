@@ -2,7 +2,7 @@
 
 // Enhanced Site Visits View with Search, Pagination, and Stage Handlers
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   MapPin,
   Calendar as CalendarIcon,
@@ -19,7 +19,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 
 interface Props {
   leads: any[];
@@ -30,24 +30,19 @@ interface Props {
 
 export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirements, onMarkAsLost }: Props) => {
   const router = useRouter();
-  const [pendingActivities, setPendingActivities] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        const res = await interiorCrmService.getPendingActivities();
-        const list = res?.success && res?.data ? res.data : Array.isArray(res) ? res : [];
-        setPendingActivities(list);
-      } catch (error) {
-        console.error('Failed to fetch pending activities:', error);
-      }
-    };
-    fetchActivities();
-  }, []);
+  const { data: pendingActivities = [] } = useQuery({
+    queryKey: ['crm-pending-activities'],
+    queryFn: async () => {
+      const res = await interiorCrmService.getPendingActivities();
+      return res?.success && res?.data ? res.data : Array.isArray(res) ? res : [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const pendingCount = useMemo(() => leads.filter((l) => !l.siteMeasurements).length, [leads]);
   const completedCount = useMemo(() => leads.filter((l) => !!l.siteMeasurements).length, [leads]);
@@ -174,9 +169,9 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
             {/* MOBILE CARD VIEW (< md) */}
             <div className="block md:hidden divide-y divide-[hsl(var(--border))]">
               {paginatedLeads.map((lead, idx) => {
-                const pendingSiteVisit = pendingActivities.find(
-                  (act) => ((act.customer?._id || act.customer) === lead._id) && act.type === 'Site Visit'
-                );
+                    const pendingSiteVisit = pendingActivities.find(
+                      (act: any) => ((act.customer?._id || act.customer) === lead._id) && act.type === 'Site Visit'
+                    );
                 const resolvedScheduledDate = lead.siteVisitScheduledDate || pendingSiteVisit?.scheduledDate;
 
                 return (
@@ -280,20 +275,21 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                         <Ruler size={11} /> {lead.siteMeasurements ? 'Edit Specs' : 'Log Survey'}
                       </button>
 
-                      {lead.siteMeasurements ? (
-                        <button
-                          onClick={() => onPassToRequirements(lead._id)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
-                        >
-                          Pass <ArrowRight size={11} />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => onPassToRequirements(lead._id)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
-                        >
-                          Pass <ArrowRight size={11} />
-                        </button>
+                      {lead.siteMeasurements && (
+                        (Boolean(Array.isArray(lead.quotations) && lead.quotations.some((q: any) => ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase()))) ||
+                         ['Under Requirement', 'Requirement Completed', 'Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) ||
+                         Boolean((lead as any).linkedProject)) ? (
+                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
+                            Passed 
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => onPassToRequirements(lead._id)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                          >
+                            Pass <ArrowRight size={11} />
+                          </button>
+                        )
                       )}
                     </div>
                   </div>
@@ -316,7 +312,7 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                 <tbody className="divide-y divide-[hsl(var(--border))] text-xs">
                   {paginatedLeads.map((lead) => {
                     const pendingSiteVisit = pendingActivities.find(
-                      (act) => ((act.customer?._id || act.customer) === lead._id) && act.type === 'Site Visit'
+                      (act: any) => ((act.customer?._id || act.customer) === lead._id) && act.type === 'Site Visit'
                     );
                     const resolvedScheduledDate = lead.siteVisitScheduledDate || pendingSiteVisit?.scheduledDate;
 
@@ -434,16 +430,9 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                             </button>
                           )}
                           {lead.siteMeasurements &&
-                            ([
-                              'Under Requirement',
-                              'Requirement Completed',
-                              'Under Drawing',
-                              'Under BOQ Creation',
-                              'Under Quotation',
-                              'Negotiation',
-                              'Won',
-                              'Converted',
-                            ].includes(lead.status) ? (
+                            ((Boolean(Array.isArray(lead.quotations) && lead.quotations.some((q: any) => ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase()))) ||
+                             ['Under Requirement', 'Requirement Completed', 'Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) ||
+                             Boolean((lead as any).linkedProject)) ? (
                               <span
                                 className="inline-flex items-center gap-1 px-2.5 py-1.5 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-xs font-bold"
                                 title="Lead has already been passed to Requirements & Design"

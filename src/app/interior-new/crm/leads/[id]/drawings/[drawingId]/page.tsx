@@ -51,6 +51,7 @@ import { cn } from '@/lib/utils';
 import { InteriorDrawingApprovalModal } from '@/features/interior-new/components/crm/modals/InteriorDrawingApprovalModal';
 import { InteriorUploadRevisionModal } from '@/features/interior-new/components/crm/modals/InteriorUploadRevisionModal';
 import { InteriorSendDrawingForApprovalModal } from '@/features/interior-new/components/crm/modals/InteriorSendDrawingForApprovalModal';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
@@ -184,10 +185,14 @@ export default function DrawingViewerPage() {
   const [isSendApprovalModalOpen, setIsSendApprovalModalOpen] = useState(false);
   const [approvingDirect, setApprovingDirect] = useState(false);
 
-  // Fetch Lead & Users Data
-  const loadDrawingData = async () => {
-    try {
-      setLoading(true);
+  const queryClient = useQueryClient();
+
+  const {
+    data: drawingLeadData,
+    refetch: refetchDrawingData,
+  } = useQuery({
+    queryKey: ['crm-lead', customerId],
+    queryFn: async () => {
       const [leadRes, usersRes, actRes] = await Promise.all([
         interiorCrmService.getCustomerById(customerId),
         interiorCrmService.getUsers().catch(() => ({ data: [] })),
@@ -195,10 +200,20 @@ export default function DrawingViewerPage() {
       ]);
 
       const customerData = leadRes?.data || leadRes;
-      setLead(customerData);
-      setUsers(usersRes?.data || []);
+      const usersData = usersRes?.data || [];
       const actData = actRes?.success && actRes?.data ? actRes.data : Array.isArray(actRes) ? actRes : [];
-      setActivities(actData);
+      return { lead: customerData, users: usersData, activities: actData };
+    },
+    enabled: Boolean(customerId && drawingId),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (drawingLeadData) {
+      const customerData = drawingLeadData.lead;
+      setLead(customerData);
+      setUsers(drawingLeadData.users);
+      setActivities(drawingLeadData.activities);
 
       const allFiles = customerData?.designFiles || (customerData as any)?.designs || [];
       const found = allFiles.find(
@@ -218,22 +233,15 @@ export default function DrawingViewerPage() {
         const versions = found.versions || [];
         const highest = found.currentVersion || (versions.length > 0 ? Math.max(...versions.map((v: any) => v.versionNumber || 1)) : 1);
         setSelectedVersionNum(highest);
-      } else {
-        toast.error('Drawing not found in this lead');
       }
-    } catch (err: any) {
-      console.error('Failed to fetch drawing data', err);
-      toast.error('Failed to load drawing. Please check your connection.');
-    } finally {
       setLoading(false);
     }
-  };
+  }, [drawingLeadData, drawingId]);
 
-  useEffect(() => {
-    if (customerId && drawingId) {
-      loadDrawingData();
-    }
-  }, [customerId, drawingId]);
+  const loadDrawingData = async () => {
+    queryClient.invalidateQueries({ queryKey: ['crm-lead', customerId] });
+    await refetchDrawingData();
+  };
 
   // Compile Normalized Versions List
   const allVersions = useMemo(() => {

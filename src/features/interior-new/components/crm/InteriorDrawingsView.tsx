@@ -21,7 +21,6 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
 import { InteriorCrmShareModal } from './modals/InteriorCrmShareModal';
 
 interface Props {
@@ -180,10 +179,15 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
             <div className="block md:hidden divide-y divide-[hsl(var(--border))]">
               {paginatedLeads.map((lead, idx) => {
                 const hasDrawings = lead.designFiles && lead.designFiles.length > 0;
-                const isPassedToNext = [
+                const hasAcceptedQuote = Array.isArray(lead.quotations) && lead.quotations.some((q: any) => 
+                  ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase())
+                );
+                const isQuotationApproved = hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(lead.status) || Boolean((lead as any).linkedProject);
+                const isPassedToNext = isQuotationApproved || [
                   'Under BOQ Creation',
                   'Under Quotation',
                   'Negotiation',
+                  'Booking Pending',
                   'Won',
                   'Converted',
                 ].includes(lead.status);
@@ -266,7 +270,7 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
 
                       {hasDrawings &&
                         onPassToBoq &&
-                        (['Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Won', 'Converted'].includes(lead.status) ? (
+                        (isPassedToNext ? (
                           <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
                             Passed 
                           </span>
@@ -299,21 +303,23 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                 <tbody className="divide-y divide-[hsl(var(--border))]">
                   {paginatedLeads.map((lead, idx) => {
                     const hasDrawings = lead.designFiles && lead.designFiles.length > 0;
-                    const isPassedToNext = [
+                    const hasAcceptedQuote = Array.isArray(lead.quotations) && lead.quotations.some((q: any) => 
+                      ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase())
+                    );
+                    const isQuotationApproved = hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(lead.status) || Boolean((lead as any).linkedProject);
+                    const isPassedToNext = isQuotationApproved || [
                       'Under BOQ Creation',
                       'Under Quotation',
                       'Negotiation',
+                      'Booking Pending',
                       'Won',
                       'Converted',
                     ].includes(lead.status);
 
                     return (
-                      <motion.tr
+                      <tr
                         key={lead._id}
                         onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=designs`)}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.15, delay: idx * 0.02 }}
                         className="hover:bg-[hsl(var(--accent))] transition-colors group cursor-pointer"
                       >
                         {/* Lead Info */}
@@ -447,7 +453,7 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                             </button>
                           )}
                         </td>
-                      </motion.tr>
+                      </tr>
                     );
                   })}
                 </tbody>

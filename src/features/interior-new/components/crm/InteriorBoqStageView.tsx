@@ -20,7 +20,6 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
 
 interface Props {
   leads: any[];
@@ -170,15 +169,17 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
               {paginatedLeads.map((lead, idx) => {
                 const hasBoqs = lead.boqs && lead.boqs.length > 0;
                 const latestBoq = hasBoqs ? lead.boqs[lead.boqs.length - 1] : null;
-                const isPassedToNext = [
+                const hasAcceptedQuote = Array.isArray(lead.quotations) && lead.quotations.some((q: any) => 
+                  ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase())
+                );
+                const isQuotationApproved = hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(lead.status) || Boolean(lead.linkedProject);
+                const isPassedToNext = isQuotationApproved || [
                   'Under Quotation',
                   'Negotiation',
+                  'Booking Pending',
                   'Won',
                   'Converted',
                 ].includes(lead.status);
-
-                const hasAcceptedQuote = lead.quotations && lead.quotations.some((q: any) => q.status === 'Accepted');
-                const isQuotationApproved = hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(lead.status) || Boolean(lead.linkedProject);
 
                 return (
                   <div
@@ -237,33 +238,35 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                           <Lock size={11} /> Locked (Quote Approved)
                         </span>
                       ) : (
-                        <button
-                          onClick={() => onAddBoq(lead._id, hasBoqs ? (lead.boqs.length - 1) : undefined)}
-                          className={cn(
-                            'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
-                            hasBoqs
-                              ? 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
-                              : 'bg-blue-600 text-white'
-                          )}
-                        >
-                          <FileSpreadsheet size={11} /> {hasBoqs ? 'Edit BOQ' : 'Create BOQ'}
-                        </button>
-                      )}
-
-                      {hasBoqs &&
-                        onPassToQuotations &&
-                        (['Under Quotation', 'Negotiation', 'Won', 'Converted'].includes(lead.status) ? (
-                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
-                            Passed 
-                          </span>
-                        ) : (
+                        <>
                           <button
-                            onClick={() => onPassToQuotations(lead._id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                            onClick={() => onAddBoq(lead._id, hasBoqs ? (lead.boqs.length - 1) : undefined)}
+                            className={cn(
+                              'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
+                              hasBoqs
+                                ? 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
+                                : 'bg-blue-600 text-white'
+                            )}
                           >
-                            Pass to Quotation <ArrowRight size={11} />
+                            <FileSpreadsheet size={11} /> {hasBoqs ? 'Edit BOQ' : 'Create BOQ'}
                           </button>
-                        ))}
+
+                          {hasBoqs &&
+                            onPassToQuotations &&
+                            (isPassedToNext ? (
+                              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
+                                Passed 
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => onPassToQuotations(lead._id)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                              >
+                                Pass to Quotation <ArrowRight size={11} />
+                              </button>
+                            ))}
+                        </>
+                      )}
                     </div>
                   </div>
                 );
@@ -286,20 +289,22 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                   {paginatedLeads.map((lead, idx) => {
                     const hasBoqs = lead.boqs && lead.boqs.length > 0;
                     const latestBoq = hasBoqs ? lead.boqs[lead.boqs.length - 1] : null;
-                    const isPassedToNext = [
+                    const hasAcceptedQuote = Array.isArray(lead.quotations) && lead.quotations.some((q: any) => 
+                      ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase())
+                    );
+                    const isQuotationApproved = hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(lead.status) || Boolean(lead.linkedProject);
+                    const isPassedToNext = isQuotationApproved || [
                       'Under Quotation',
                       'Negotiation',
+                      'Booking Pending',
                       'Won',
                       'Converted',
                     ].includes(lead.status);
 
                     return (
-                      <motion.tr
+                      <tr
                         key={lead._id}
                         onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=boq`)}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.15, delay: idx * 0.02 }}
                         className="hover:bg-[hsl(var(--accent))] transition-colors group cursor-pointer"
                       >
                         {/* Lead Info */}
@@ -379,22 +384,15 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
 
                         {/* Actions */}
                         <td className="px-6 py-4 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
-                          {(() => {
-                            const hasAcceptedQuote = lead.quotations && lead.quotations.some((q: any) => q.status === 'Accepted');
-                            const isQuotationApproved = hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(lead.status) || Boolean(lead.linkedProject);
-
-                            if (isQuotationApproved) {
-                              return (
-                                <span
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-lg text-xs font-bold"
-                                  title="Quotation is approved, BOQ cannot be edited"
-                                >
-                                  <Lock size={12} /> Quotation Approved (Locked)
-                                </span>
-                              );
-                            }
-
-                            return (
+                          {isQuotationApproved ? (
+                            <span
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-lg text-xs font-bold"
+                              title="Quotation is approved, BOQ cannot be edited"
+                            >
+                              <Lock size={12} /> Quotation Approved (Locked)
+                            </span>
+                          ) : (
+                            <>
                               <button
                                 onClick={() => onAddBoq(lead._id, hasBoqs ? (lead.boqs.length - 1) : undefined)}
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] rounded-lg text-xs font-bold transition-all border border-[hsl(var(--border))] cursor-pointer"
@@ -402,27 +400,27 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                                 <Calculator size={13} className="text-blue-600" />
                                 {hasBoqs ? 'Edit BOQ' : 'Create BOQ'}
                               </button>
-                            );
-                          })()}
 
-                          {hasBoqs &&
-                            onPassToQuotations &&
-                            (isPassedToNext ? (
-                              <span
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-xs font-bold"
-                                title="Lead has already been passed to Quotations"
-                              >
-                                Passed to Quotation 
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => onPassToQuotations(lead._id)}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
-                                title="Pass to Quotation Phase"
-                              >
-                                Pass to Quotation <ArrowRight size={13} />
-                              </button>
-                            ))}
+                              {hasBoqs &&
+                                onPassToQuotations &&
+                                (isPassedToNext ? (
+                                  <span
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-xs font-bold"
+                                    title="Lead has already been passed to Quotations"
+                                  >
+                                    Passed to Quotation 
+                                  </span>
+                                ) : (
+                                  <button
+                                    onClick={() => onPassToQuotations(lead._id)}
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
+                                    title="Pass to Quotation Phase"
+                                  >
+                                    Pass to Quotation <ArrowRight size={13} />
+                                  </button>
+                                ))}
+                            </>
+                          )}
                           
                           {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
                             <button
@@ -434,7 +432,7 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                             </button>
                           )}
                         </td>
-                      </motion.tr>
+                      </tr>
                     );
                   })}
                 </tbody>

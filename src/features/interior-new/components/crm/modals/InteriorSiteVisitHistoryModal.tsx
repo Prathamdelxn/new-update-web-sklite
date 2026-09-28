@@ -4,12 +4,15 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { X, History, Calendar, Clock, User, MapPin, MessageSquare, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { interiorCrmService } from '@/services/interiorCrm.service';
 
 interface InteriorSiteVisitHistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  activities: any[];
+  activities?: any[];
   users: any[];
+  leadId?: string;
   leadName?: string;
   leadLocation?: string;
   onReschedule?: () => void;
@@ -21,11 +24,25 @@ export function InteriorSiteVisitHistoryModal({
   onClose,
   activities = [],
   users = [],
+  leadId,
   leadName,
   leadLocation,
   onReschedule,
   isReadOnly = false,
 }: InteriorSiteVisitHistoryModalProps) {
+  const { data: queryActivities } = useQuery({
+    queryKey: ['site-visits', leadId],
+    queryFn: async () => {
+      if (!leadId) return [];
+      const res = await interiorCrmService.getActivities(leadId);
+      return Array.isArray(res) ? res : res?.activities || [];
+    },
+    enabled: Boolean(isOpen && leadId),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const effectiveActivities = (queryActivities && queryActivities.length > 0) ? queryActivities : activities;
+
   if (!isOpen) return null;
 
   // Helper to resolve user names
@@ -44,16 +61,16 @@ export function InteriorSiteVisitHistoryModal({
 
   // Filter and sort all true site visit schedule appointments
   const siteVisits = React.useMemo(() => {
-    const list = (activities || [])
+    const list = (effectiveActivities || [])
       .filter(
-        (a) =>
+        (a: any) =>
           a.type === 'Site Visit' &&
           a.scheduledDate &&
           !a.remarks?.toLowerCase().includes('recorded full measurements') &&
           !a.remarks?.toLowerCase().includes('updated site measurements') &&
           !a.remarks?.toLowerCase().includes('completed site visit survey')
       )
-      .sort((a, b) => {
+      .sort((a: any, b: any) => {
         const timeA = new Date(a.scheduledDate || a.createdAt).getTime();
         const timeB = new Date(b.scheduledDate || b.createdAt).getTime();
         return timeB - timeA;
@@ -69,7 +86,7 @@ export function InteriorSiteVisitHistoryModal({
       }
     }
     return distinct;
-  }, [activities]);
+  }, [effectiveActivities]);
 
   return (
     <div className="fixed inset-0 z-[65] flex items-center justify-center p-4">

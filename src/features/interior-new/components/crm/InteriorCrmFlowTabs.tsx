@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
   Users,
@@ -68,7 +67,7 @@ export const InteriorCrmFlowTabs: React.FC<InteriorCrmFlowTabsProps> = ({
               key={stage.id}
               onClick={() => onChange(stage.id)}
               className={cn(
-                'relative flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-all outline-none cursor-pointer shrink-0 active:scale-95',
+                'relative flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-colors outline-none cursor-pointer shrink-0',
                 isActive
                   ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
                   : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.7)]'

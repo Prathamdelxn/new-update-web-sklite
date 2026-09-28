@@ -28,6 +28,7 @@ import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { cn } from '@/lib/utils';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface InteriorBoqViewProps {
   projectId: string;
@@ -36,12 +37,11 @@ interface InteriorBoqViewProps {
 export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
   const toast = useToast();
   const { confirm } = useConfirm();
+  const queryClient = useQueryClient();
 
   // Core state
   const [activeTab, setActiveTab] = useState<'items' | 'actual'>('items');
-  const [boqs, setBoqs] = useState<any[]>([]);
-  const [selectedBoq, setSelectedBoq] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [selectedBoqId, setSelectedBoqId] = useState<string | null>(null);
 
   // Create / Import modals
   const [isImportOpen, setIsImportOpen] = useState(false);
@@ -55,72 +55,77 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
     { serialNumber: 1, category: 'Flooring', itemName: '', description: '', quantity: 1, unit: 'sqft', rate: 0 },
   ]);
 
-  // BOQ vs Actual
-  const [actualData, setActualData] = useState<any>(null);
-  const [loadingActual, setLoadingActual] = useState(false);
-
   // Rejection modal
   const [isRejectOpen, setIsRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [submittingAction, setSubmittingAction] = useState(false);
 
-  const fetchBoqs = async (selectLatest = true) => {
-    try {
-      setLoading(true);
+  // 1. BOQs list query
+  const {
+    data: boqs = [],
+    isLoading: loadingBoqs,
+    refetch: refetchBoqs,
+  } = useQuery({
+    queryKey: ['project-boq', projectId],
+    queryFn: async () => {
       const res = await interiorProjectService.getBoqList(projectId);
-      if (res.success && res.data) {
-        setBoqs(res.data);
-        if (selectLatest && res.data.length > 0) {
-          fetchBoqDetail(res.data[0]._id);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to load BOQs', err);
-      toast.error('Failed to fetch BOQ versions list');
-    } finally {
-      setLoading(false);
-    }
-  };
+      return res.success && res.data ? res.data : [];
+    },
+    enabled: Boolean(projectId),
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const fetchBoqDetail = async (boqId: string) => {
-    try {
-      setLoading(true);
-      const res = await interiorProjectService.getBoqDetail(projectId, boqId);
-      if (res.success && res.data) {
-        setSelectedBoq(res.data);
-      }
-    } catch (err) {
-      console.error('Failed to load BOQ details', err);
-      toast.error('Failed to fetch BOQ details');
-    } finally {
-      setLoading(false);
+  // Automatically select the first BOQ if none selected
+  useEffect(() => {
+    if (boqs.length > 0 && (!selectedBoqId || !boqs.some((b: any) => b._id === selectedBoqId))) {
+      setSelectedBoqId(boqs[0]._id);
     }
-  };
+  }, [boqs, selectedBoqId]);
 
-  const fetchActual = async () => {
-    try {
-      setLoadingActual(true);
+  // 2. Active BOQ detail query
+  const activeBoqId = selectedBoqId || (boqs.length > 0 ? boqs[0]._id : null);
+  const {
+    data: selectedBoq = null,
+    isLoading: loadingDetail,
+    refetch: refetchDetail,
+  } = useQuery({
+    queryKey: ['project-boq-detail', projectId, activeBoqId],
+    queryFn: async () => {
+      if (!activeBoqId) return null;
+      const res = await interiorProjectService.getBoqDetail(projectId, activeBoqId);
+      return res.success && res.data ? res.data : null;
+    },
+    enabled: Boolean(projectId && activeBoqId),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // 3. BOQ vs Actual query
+  const {
+    data: actualData = null,
+    isLoading: loadingActual,
+  } = useQuery({
+    queryKey: ['project-boq-actual', projectId],
+    queryFn: async () => {
       const res = await interiorProjectService.getBoqVsActual(projectId);
-      if (res.success && res.data) {
-        setActualData(res.data);
-      }
-    } catch (err) {
-      console.error('Failed to load actual tracking data', err);
-      setActualData(null);
-    } finally {
-      setLoadingActual(false);
+      return res.success && res.data ? res.data : null;
+    },
+    enabled: Boolean(projectId && activeTab === 'actual'),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const loading = loadingBoqs || loadingDetail;
+
+  const fetchBoqs = async (selectLatest = true) => {
+    queryClient.invalidateQueries({ queryKey: ['project-boq', projectId] });
+    const res = await refetchBoqs();
+    if (selectLatest && res.data && res.data.length > 0) {
+      setSelectedBoqId(res.data[0]._id);
     }
   };
 
-  useEffect(() => {
-    if (projectId) fetchBoqs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectId]);
-
-  useEffect(() => {
-    if (activeTab === 'actual' && projectId) fetchActual();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  const fetchBoqDetail = (boqId: string) => {
+    setSelectedBoqId(boqId);
+  };
 
   const handleApprovalAction = async (action: 'submit' | 'approve' | 'reject', reason?: string) => {
     if (!selectedBoq) return;
@@ -131,8 +136,10 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
         toast.success(`BOQ successfully ${action}ed`);
         setIsRejectOpen(false);
         setRejectReason('');
-        fetchBoqs(false);
-        fetchBoqDetail(selectedBoq._id);
+        queryClient.invalidateQueries({ queryKey: ['project-boq', projectId] });
+        queryClient.invalidateQueries({ queryKey: ['project-boq-detail', projectId, selectedBoq._id] });
+        await refetchBoqs();
+        await refetchDetail();
       }
     } catch (err: any) {
       console.error(err);
@@ -145,7 +152,6 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
   const handleCreateRevision = async () => {
     if (!selectedBoq) return;
     try {
-      setLoading(true);
       const res = await interiorProjectService.reviseBoq(projectId, selectedBoq._id);
       if (res.success && res.data) {
         toast.success(`New draft revision created: ${res.data.versionLabel}`);
@@ -154,8 +160,6 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
     } catch (err: any) {
       console.error(err);
       toast.error(err.response?.data?.error || 'Failed to create BOQ revision');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -169,7 +173,6 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
     });
     if (!ok) return;
     try {
-      setLoading(true);
       const res = await interiorProjectService.deleteBoq(projectId, selectedBoq._id);
       if (res.success) {
         toast.success('Draft deleted successfully');
@@ -178,8 +181,6 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
     } catch (err: any) {
       console.error(err);
       toast.error(err.response?.data?.error || 'Failed to delete BOQ');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -211,7 +212,6 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
   const handleManualCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setLoading(true);
       const res = await interiorProjectService.createBoq(projectId, {
         notes: newBoqNotes,
         items: newItems,
@@ -226,8 +226,6 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
     } catch (err: any) {
       console.error(err);
       toast.error(err.response?.data?.error || 'Failed to create BOQ');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -307,7 +305,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                 </div>
               ) : (
                 <div className="space-y-1">
-                  {boqs.map((boq) => (
+                  {boqs.map((boq: any) => (
                     <button
                       key={boq._id}
                       onClick={() => fetchBoqDetail(boq._id)}

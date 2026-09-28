@@ -4,7 +4,8 @@
 // Uses window.confirm instead of the source app's useConfirm dialog context
 // (not present in sky-lite-web).
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingCart,
@@ -50,13 +51,37 @@ interface InteriorProcurementViewProps {
 export default function InteriorProcurementView({ projectId }: InteriorProcurementViewProps) {
   const toast = useToast();
   const { confirm } = useConfirm();
+  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<'procurement' | 'inventory'>('procurement');
   const [activePipeline, setActivePipeline] = useState('requested');
-  const [pos, setPos] = useState<any[]>([]);
-  const [inventory, setInventory] = useState<any[]>([]);
-  const [vendors, setVendors] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // TanStack Query for Procurement, Inventory, Vendors, and Payments
+  const { data: procurementData, isLoading: loading } = useQuery({
+    queryKey: ['project-materials', projectId],
+    queryFn: async () => {
+      const [posRes, invRes, vendorsRes, payRes] = await Promise.allSettled([
+        interiorProjectService.getPurchaseOrders(projectId),
+        interiorProjectService.getInventory(projectId),
+        interiorApiClient.get('/vendors'),
+        interiorProjectService.getPayments(projectId),
+      ]);
+
+      return {
+        pos: posRes.status === 'fulfilled' && posRes.value?.success && posRes.value?.data ? posRes.value.data : [],
+        inventory: invRes.status === 'fulfilled' && invRes.value?.success && invRes.value?.data ? invRes.value.data : [],
+        vendors: vendorsRes.status === 'fulfilled' && vendorsRes.value?.data?.data ? vendorsRes.value.data.data : [],
+        payments: payRes.status === 'fulfilled' ? (payRes.value?.data || payRes.value || []) : [],
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!projectId,
+  });
+
+  const pos = useMemo(() => procurementData?.pos || [], [procurementData?.pos]);
+  const inventory = useMemo(() => procurementData?.inventory || [], [procurementData?.inventory]);
+  const vendors = useMemo(() => procurementData?.vendors || [], [procurementData?.vendors]);
+  const payments = useMemo(() => procurementData?.payments || [], [procurementData?.payments]);
 
   const [isAddPoOpen, setIsAddPoOpen] = useState(false);
   const [creatingPo, setCreatingPo] = useState(false);
@@ -66,7 +91,6 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   const [newItem, setNewItem] = useState<POItemInput>({ name: '', quantity: 1, unit: 'nos', unitPrice: 0 });
 
   // Payments Integration State
-  const [payments, setPayments] = useState<any[]>([]);
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [payingPo, setPayingPo] = useState<any>(null);
   const [paymentForm, setPaymentForm] = useState({
@@ -100,50 +124,8 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   const [editingMaterialId, setEditingMaterialId] = useState<string | null>(null);
   const [viewingImages, setViewingImages] = useState<{proofUrl?: string, invoiceUrl?: string} | null>(null);
 
-  const fetchPOs = async () => {
-    try {
-      const res = await interiorProjectService.getPurchaseOrders(projectId);
-      if (res.success && res.data) {
-        setPos(res.data);
-      }
-    } catch (err) {
-      console.error('Failed to load POs', err);
-    }
-  };
-
-  const fetchInventory = async () => {
-    try {
-      const res = await interiorProjectService.getInventory(projectId);
-      if (res.success && res.data) {
-        setInventory(res.data);
-      }
-    } catch (err) {
-      console.error('Failed to load inventory', err);
-    }
-  };
-
-  const fetchVendors = async () => {
-    try {
-      const res = await interiorApiClient.get('/vendors');
-      setVendors(res.data?.data || []);
-    } catch (err) {
-      console.error('Failed to load vendors', err);
-    }
-  };
-
-  const fetchPayments = async () => {
-    try {
-      const res = await interiorProjectService.getPayments(projectId);
-      setPayments(res?.data || res || []);
-    } catch (err) {
-      console.error('Failed to load payments', err);
-    }
-  };
-
-  const loadAllData = async () => {
-    setLoading(true);
-    await Promise.all([fetchPOs(), fetchInventory(), fetchVendors(), fetchPayments()]);
-    setLoading(false);
+  const invalidateProcurementData = () => {
+    queryClient.invalidateQueries({ queryKey: ['project-materials', projectId] });
   };
 
   const handleRecordPaymentSubmit = async (e: React.FormEvent) => {
@@ -172,7 +154,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       });
       toast.success('Vendor payment recorded successfully in Payments Outflow!');
       setIsPayModalOpen(false);
-      await Promise.all([fetchPOs(), fetchPayments()]);
+      invalidateProcurementData();
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Failed to record payment');
     } finally {
@@ -184,13 +166,6 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
     // Automatic payment creation is disabled so POs don't default to "Paid"
     return;
   };
-
-  useEffect(() => {
-    if (projectId) {
-      loadAllData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectId]);
 
   const handleAddItem = () => {
     if (!newItem.name.trim()) {
@@ -210,7 +185,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   };
 
   const handleMaterialChange = (materialName: string) => {
-    const selectedItem = inventory.find(i => i.productName === materialName);
+    const selectedItem = inventory.find((i: any) => i.productName === materialName);
     if (selectedItem) {
       setNewItem({ ...newItem, name: materialName, unit: selectedItem.unit });
     } else {
@@ -242,7 +217,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       setNewMaterialStock(0);
       setEditingMaterialId(null);
       setIsCreateMaterialOpen(false);
-      fetchInventory();
+      invalidateProcurementData();
     } catch (err: any) {
       console.error('Failed to create/update material', err);
       toast.error(err.response?.data?.error || err.response?.data?.message || 'Failed to save material');
@@ -262,7 +237,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
     try {
       await interiorProjectService.deleteInventoryMaterial(projectId, item._id);
       toast.success('Material deleted successfully');
-      fetchInventory();
+      invalidateProcurementData();
     } catch (err: any) {
       toast.error('Failed to delete material');
       console.error(err);
@@ -292,7 +267,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       setVendorName('');
       setDeliveryDate('');
       setPoItems([]);
-      loadAllData();
+      invalidateProcurementData();
     } catch (err: any) {
       console.error('Failed to create PO', err);
       toast.error(err.response?.data?.error || err.response?.data?.message || 'Failed to create Purchase Order');
@@ -305,16 +280,15 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
     if (!selectedPo) return;
     try {
       setUpdatingPo(true);
-      setPos((prev) => prev.map((po) => (po._id === selectedPo._id ? { ...po, status } : po)));
       const res = await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { status });
       if (res.success) {
         setSelectedPo(res.data);
       }
-      loadAllData();
+      invalidateProcurementData();
     } catch (err) {
       console.error('Failed to update status', err);
       toast.error('Failed to update PO status');
-      loadAllData();
+      invalidateProcurementData();
     } finally {
       setUpdatingPo(false);
     }
@@ -324,17 +298,16 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
     if (!selectedPo) return;
     try {
       setUpdatingPo(true);
-      setPos((prev) => prev.map((po) => (po._id === selectedPo._id ? { ...po, vendorName, status: 'approved' } : po)));
       setSelectedPo({ ...selectedPo, vendorName, status: 'approved' });
       await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { vendorName, status: 'approved' });
       toast.success('Vendor selected and PO approved!');
       setIsDetailOpen(false);
       await autoCreatePaymentForPo({ ...selectedPo, vendorName, status: 'approved' });
-      loadAllData();
+      invalidateProcurementData();
     } catch (err) {
       console.error('Failed to update vendor', err);
       toast.error('Failed to update vendor');
-      loadAllData();
+      invalidateProcurementData();
     } finally {
       setUpdatingPo(false);
     }
@@ -382,9 +355,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       });
 
       const newStatus = fullyDelivered ? 'delivered' : 'partially_delivered';
-      
       const updatedPo = { ...selectedPo, status: newStatus, grns: updatedGrns, grnData: { allGrns: JSON.stringify(updatedGrns) } };
-      setPos(prev => prev.map(p => p._id === updatedPo._id ? updatedPo : p));
       
       await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { 
         status: newStatus,
@@ -394,7 +365,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       
       setSelectedPo(updatedPo);
       await autoCreatePaymentForPo(updatedPo);
-      loadAllData();
+      invalidateProcurementData();
     } catch (err) {
       console.error('Failed to submit GRN', err);
       throw err;
@@ -425,12 +396,11 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
         items: selectedPo.items, 
         amount: selectedPo.amount 
       });
-      setPos(prev => prev.map(p => p._id === selectedPo._id ? selectedPo : p));
       if (selectedPo.status === 'approved') {
         await autoCreatePaymentForPo(selectedPo);
       }
       toast.success('PO Details saved successfully');
-      loadAllData();
+      invalidateProcurementData();
     } catch (err) {
       console.error('Failed to save PO details', err);
       toast.error('Failed to save details');
@@ -454,7 +424,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       toast.success('Purchase Order deleted successfully');
       setIsDetailOpen(false);
       setSelectedPo(null);
-      loadAllData();
+      invalidateProcurementData();
     } catch (err) {
       toast.error('Failed to delete Purchase Order');
       console.error('Failed to delete PO', err);
@@ -486,7 +456,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       setIsInstallOpen(false);
       setInstallQty('');
       setInstallNotes('');
-      loadAllData();
+      invalidateProcurementData();
     } catch (err: any) {
       console.error('Failed to log material usage', err);
       setInstallError(err.response?.data?.message || 'Failed to log material usage');
@@ -531,7 +501,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
         <Card className="p-4 flex items-center justify-between border-l-4 border-l-blue-500">
           <div>
             <p className="text-xs text-[hsl(var(--muted-foreground))]">Total Procurement Budget</p>
-            <p className="text-xl font-bold mt-1">{formatCost(pos.reduce((acc, c) => acc + (c.amount || 0), 0))}</p>
+            <p className="text-xl font-bold mt-1">{formatCost(pos.reduce((acc: number, c: any) => acc + (c.amount || 0), 0))}</p>
           </div>
           <ShoppingCart className="w-8 h-8 text-blue-500/20" />
         </Card>
@@ -539,7 +509,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
           <div>
             <p className="text-xs text-[hsl(var(--muted-foreground))]">Active Purchase Orders</p>
             <p className="text-xl font-bold mt-1">
-              {pos.filter((po) => ['approved', 'dispatched'].includes(po.status)).length} POs
+              {pos.filter((po: any) => ['approved', 'dispatched'].includes(po.status)).length} POs
             </p>
           </div>
           <Truck className="w-8 h-8 text-amber-500/20" />
@@ -547,7 +517,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
         <Card className="p-4 flex items-center justify-between border-l-4 border-l-emerald-500">
           <div>
             <p className="text-xs text-[hsl(var(--muted-foreground))]">POs Received / Delivered</p>
-            <p className="text-xl font-bold mt-1">{pos.filter((po) => po.status === 'delivered').length} POs</p>
+            <p className="text-xl font-bold mt-1">{pos.filter((po: any) => po.status === 'delivered').length} POs</p>
           </div>
           <Package className="w-8 h-8 text-emerald-500/20" />
         </Card>
@@ -618,7 +588,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
             <div className="w-full relative bg-[hsl(var(--card))] border-b border-[hsl(var(--border))] overflow-x-auto scrollbar-hide rounded-t-2xl">
               <div className="flex items-center w-full min-w-max">
                 {pipelines.map((pipe) => {
-                  const items = pos.filter((po) => po.status === pipe.key);
+                  const items = pos.filter((po: any) => po.status === pipe.key);
                   const isActive = activePipeline === pipe.key;
                   return (
                     <button
@@ -658,7 +628,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {pos.filter((po) => po.status === activePipeline).map((item) => {
+              {pos.filter((po: any) => po.status === activePipeline).map((item: any) => {
                 const poPaidAmount = payments
                   .filter((p: any) => p.type === 'outgoing' && p.poNo === item.poNumber)
                   .reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
@@ -789,7 +759,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
               })}
             </div>
 
-            {pos.filter((po) => po.status === activePipeline).length === 0 && (
+            {pos.filter((po: any) => po.status === activePipeline).length === 0 && (
               <div className="text-center py-16">
                 <Package className="w-12 h-12 text-[hsl(var(--muted-foreground))] opacity-20 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">No Purchase Orders</h3>
@@ -811,7 +781,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {inventory.map((item) => {
+              {inventory.map((item: any) => {
                 const available = item.totalReceived - item.installedQuantity;
                 const percentInstalled = Math.round((item.installedQuantity / item.totalReceived) * 100) || 0;
 
@@ -1538,7 +1508,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
               className="w-full max-w-4xl border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] shadow-2xl overflow-hidden"
             >
               <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--border))]">

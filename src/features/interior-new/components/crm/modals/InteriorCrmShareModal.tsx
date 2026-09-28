@@ -47,8 +47,9 @@ export function InteriorCrmShareModal({
 
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [expiresDays, setExpiresDays] = useState<number | null>(null);
-  const [allowDownload, setAllowDownload] = useState(true);
+  const [expiresHours, setExpiresHours] = useState<number | null>(1);
+  const [expiresAt, setExpiresAt] = useState<string | null>(null);
+  const [allowDownload, setAllowDownload] = useState(false);
   const [shareToken, setShareToken] = useState<string>('');
   const [isPublic, setIsPublic] = useState(false);
   const [viewCount, setViewCount] = useState(0);
@@ -60,12 +61,31 @@ export function InteriorCrmShareModal({
       if (currentShare.shareToken && currentShare.isPublic) {
         setShareToken(currentShare.shareToken);
         setIsPublic(true);
-        setAllowDownload(currentShare.allowDownload !== false);
+        setAllowDownload(currentShare.allowDownload === true);
         setViewCount(currentShare.viewCount || 0);
         setLastViewedAt(currentShare.lastViewedAt || null);
+        setExpiresAt(currentShare.expiresAt || null);
+
+        if (currentShare.expiresAt) {
+          const diffMs = new Date(currentShare.expiresAt).getTime() - Date.now();
+          const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+          const presets = [1, 12, 24, 168, 720];
+          const closest = presets.find((p) => Math.abs(p - diffHours) <= 1 || (p === 168 && Math.abs(p - diffHours) <= 24) || (p === 720 && Math.abs(p - diffHours) <= 48));
+          if (closest && diffMs > 0) {
+            setExpiresHours(closest);
+          } else if (diffMs > 0) {
+            setExpiresHours(Math.max(1, diffHours));
+          } else {
+            setExpiresHours(1);
+          }
+        } else if (currentShare.expiresAt === null) {
+          setExpiresHours(null);
+        } else {
+          setExpiresHours(1);
+        }
       } else {
-        // Automatically generate/activate token if not already active
-        handleGenerateOrUpdate(false);
+        // Automatically generate/activate token if not already active with default 1 hour & no download
+        handleGenerateOrUpdate(false, 1, false);
       }
     }
   }, [lead?._id, isOpen]);
@@ -75,13 +95,20 @@ export function InteriorCrmShareModal({
     (typeof window !== 'undefined' ? window.location.origin : '');
   const shareUrl = shareToken ? `${origin}/share/drawing/${shareToken}` : '';
 
-  const handleGenerateOrUpdate = async (regenerate = false) => {
+  const handleGenerateOrUpdate = async (
+    regenerate = false,
+    customHours?: number | null,
+    customDownload?: boolean
+  ) => {
     if (!lead?._id) return;
     try {
       setLoading(true);
+      const targetHours = customHours !== undefined ? customHours : expiresHours;
+      const targetDownload = customDownload !== undefined ? customDownload : allowDownload;
+
       const res = await interiorCrmService.generateShareLink(lead._id, {
-        expiresDays,
-        allowDownload,
+        expiresHours: targetHours,
+        allowDownload: targetDownload,
         includeRequirements: false,
         regenerate,
       });
@@ -89,6 +116,7 @@ export function InteriorCrmShareModal({
       if (res.success && res.data) {
         setShareToken(res.data.shareToken);
         setIsPublic(true);
+        setExpiresAt(res.data.shareSettings?.expiresAt || null);
         if (regenerate) {
           toast.success('New link generated successfully');
         }
@@ -191,6 +219,30 @@ export function InteriorCrmShareModal({
   });
   const approvedCount = approvedDrawings.length;
 
+  const EXPIRATION_OPTIONS = [
+    { label: '1 Hr', fullLabel: '1 Hour', val: 1 },
+    { label: '12 Hrs', fullLabel: '12 Hours', val: 12 },
+    { label: '24 Hrs', fullLabel: '24 Hours', val: 24 },
+    { label: '7 Days', fullLabel: '7 Days', val: 168 },
+    { label: '30 Days', fullLabel: '30 Days', val: 720 },
+    { label: 'Never', fullLabel: 'Never', val: null },
+  ];
+
+  const getExpiryDisplay = () => {
+    if (expiresHours === 1) return 'Expires in 1 hour';
+    if (expiresHours === 12) return 'Expires in 12 hours';
+    if (expiresHours === 24) return 'Expires in 24 hours (1 day)';
+    if (expiresHours === 168) return 'Expires in 7 days';
+    if (expiresHours === 720) return 'Expires in 30 days';
+    if (expiresHours === null && !expiresAt) return 'Never expires';
+    if (expiresAt) {
+      const isPast = new Date(expiresAt).getTime() < Date.now();
+      if (isPast) return 'Link expired';
+      return `Active until ${new Date(expiresAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
+    }
+    return 'Never expires';
+  };
+
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
@@ -246,7 +298,7 @@ export function InteriorCrmShareModal({
               <div className="flex items-center gap-2.5">
                 <div
                   className={cn(
-                    'w-3 h-3 rounded-full animate-pulse',
+                    'w-3 h-3 rounded-full',
                     isPublic ? 'bg-emerald-500 ring-4 ring-emerald-500/20' : 'bg-slate-400'
                   )}
                 />
@@ -367,8 +419,9 @@ export function InteriorCrmShareModal({
                   type="checkbox"
                   checked={allowDownload}
                   onChange={(e) => {
-                    setAllowDownload(e.target.checked);
-                    if (isPublic) handleGenerateOrUpdate(false);
+                    const newDownload = e.target.checked;
+                    setAllowDownload(newDownload);
+                    if (isPublic) handleGenerateOrUpdate(false, expiresHours, newDownload);
                   }}
                   className="rounded accent-indigo-600 w-4 h-4 cursor-pointer shrink-0 ml-2"
                 />
@@ -381,27 +434,23 @@ export function InteriorCrmShareModal({
                     <Clock size={15} className="text-amber-500 shrink-0" />
                     <span className="text-xs font-bold text-[hsl(var(--foreground))]">Link Expiration</span>
                   </div>
-                  <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                    {expiresDays ? `Expires in ${expiresDays} days` : 'Never expires'}
+                  <span className="text-[10px] font-medium text-[hsl(var(--muted-foreground))]">
+                    {getExpiryDisplay()}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-1.5">
-                  {[
-                    { label: '7 Days', val: 7 },
-                    { label: '30 Days', val: 30 },
-                    { label: 'Never', val: null },
-                  ].map((opt) => (
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                  {EXPIRATION_OPTIONS.map((opt) => (
                     <button
                       key={opt.label}
                       type="button"
                       onClick={() => {
-                        setExpiresDays(opt.val);
-                        if (isPublic) handleGenerateOrUpdate(false);
+                        setExpiresHours(opt.val);
+                        if (isPublic) handleGenerateOrUpdate(false, opt.val, allowDownload);
                       }}
                       className={cn(
                         'py-1.5 px-2 rounded-lg text-xs font-bold transition-all border text-center cursor-pointer',
-                        expiresDays === opt.val
+                        expiresHours === opt.val
                           ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                           : 'bg-[hsl(var(--muted)/0.5)] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] hover:text-[hsl(var(--foreground))]'
                       )}
@@ -433,3 +482,4 @@ export function InteriorCrmShareModal({
     </AnimatePresence>
   );
 }
+

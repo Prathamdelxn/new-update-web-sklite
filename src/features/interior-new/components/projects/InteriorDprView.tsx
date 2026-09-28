@@ -6,6 +6,7 @@
 // =============================================================================
 
 import React, { useEffect, useState, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileText,
@@ -40,10 +41,8 @@ interface InteriorDprViewProps {
 export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
   const toast = useToast();
   const { confirm } = useConfirm();
+  const queryClient = useQueryClient();
 
-  const [project, setProject] = useState<any>(null);
-  const [dprs, setDprs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
@@ -60,10 +59,35 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
   const [dprDate, setDprDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [weather, setWeather] = useState('Sunny');
 
-  // Live Data States
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [projectMembers, setProjectMembers] = useState<any[]>([]);
-  const [moms, setMoms] = useState<any[]>([]);
+  // TanStack Query for Project DPR data, Live tasks, MOMs, and Project info
+  const { data: siteLogsData, isLoading: loading } = useQuery({
+    queryKey: ['project-site-logs', projectId],
+    queryFn: async () => {
+      const [projRes, dprRes, taskRes, memberRes, momRes] = await Promise.allSettled([
+        interiorProjectService.getProjectDetails(projectId),
+        interiorProjectService.getDprs(projectId),
+        interiorProjectService.getTasks(projectId),
+        interiorProjectService.getProjectMembers(projectId),
+        interiorProjectService.getMoms(projectId),
+      ]);
+
+      return {
+        project: projRes.status === 'fulfilled' && projRes.value?.data ? projRes.value.data : null,
+        dprs: dprRes.status === 'fulfilled' && dprRes.value?.data ? dprRes.value.data : [],
+        tasks: taskRes.status === 'fulfilled' && taskRes.value?.data ? taskRes.value.data : [],
+        members: memberRes.status === 'fulfilled' && memberRes.value?.data ? memberRes.value.data : [],
+        moms: momRes.status === 'fulfilled' && momRes.value?.data ? momRes.value.data : [],
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!projectId,
+  });
+
+  const project = siteLogsData?.project || null;
+  const dprs = useMemo(() => siteLogsData?.dprs || [], [siteLogsData?.dprs]);
+  const tasks = useMemo(() => siteLogsData?.tasks || [], [siteLogsData?.tasks]);
+  const moms = useMemo(() => siteLogsData?.moms || [], [siteLogsData?.moms]);
+  const projectMembers = useMemo(() => siteLogsData?.members || [], [siteLogsData?.members]);
 
   // 1. Labour Report & Ongoing Work Status
   const [labourReports, setLabourReports] = useState<any[]>([
@@ -142,55 +166,6 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
       setSiteInstructions(momText);
     }
   };
-
-  // Fetch Project details, Tasks, DPRs & MOMs
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [projRes, dprRes, taskRes, memberRes, momRes] = await Promise.allSettled([
-        interiorProjectService.getProjectDetails(projectId),
-        interiorProjectService.getDprs(projectId),
-        interiorProjectService.getTasks(projectId),
-        interiorProjectService.getProjectMembers(projectId),
-        interiorProjectService.getMoms(projectId),
-      ]);
-
-      let fetchedTasks: any[] = [];
-      let fetchedMoms: any[] = [];
-
-      if (taskRes.status === 'fulfilled' && taskRes.value?.data) {
-        fetchedTasks = taskRes.value.data || [];
-        setTasks(fetchedTasks);
-      }
-      if (momRes.status === 'fulfilled' && momRes.value?.data) {
-        fetchedMoms = momRes.value.data || [];
-        setMoms(fetchedMoms);
-      }
-      if (projRes.status === 'fulfilled' && projRes.value?.data) {
-        setProject(projRes.value.data);
-      }
-      if (dprRes.status === 'fulfilled' && dprRes.value?.data) {
-        setDprs(dprRes.value.data);
-      }
-      if (memberRes.status === 'fulfilled' && memberRes.value?.data) {
-        setProjectMembers(memberRes.value.data);
-      }
-
-      // Pre-fill DPR state with live tasks & MOMs
-      if (fetchedTasks.length > 0 || fetchedMoms.length > 0) {
-        populateFromLiveProject(fetchedTasks, fetchedMoms);
-      }
-    } catch (err) {
-      console.error('Failed to load DPRs:', err);
-      toast.error('Failed to load Daily Progress Reports');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (projectId) loadData();
-  }, [projectId]);
 
   const handleOpenCreateForm = () => {
     populateFromLiveProject();
@@ -316,8 +291,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
       if (res?.success) {
         toast.success('Daily Progress Report submitted successfully');
         setIsFormOpen(false);
-        // Refresh list
-        loadData();
+        queryClient.invalidateQueries({ queryKey: ['project-site-logs', projectId] });
       }
     } catch (err: any) {
       toast.error(err?.response?.data?.error || err?.message || 'Submission failed');
@@ -370,7 +344,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
       setDeletingId(dpr._id);
       await interiorProjectService.deleteDpr(projectId, dpr._id);
       toast.success('DPR report deleted successfully');
-      setDprs((prev) => prev.filter((item) => item._id !== dpr._id));
+      queryClient.invalidateQueries({ queryKey: ['project-site-logs', projectId] });
     } catch (err: any) {
       console.error('Failed to delete DPR:', err);
       toast.error(err?.response?.data?.error || 'Failed to delete DPR report');
@@ -448,7 +422,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-5">
-          {dprs.map((dpr) => {
+          {dprs.map((dpr: any) => {
             const dateFormatted = new Date(dpr.date).toLocaleDateString('en-IN', {
               weekday: 'short',
               day: 'numeric',
@@ -1119,7 +1093,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                             <select
                               className="text-[11px] px-2.5 py-1 border border-blue-200 rounded-lg bg-blue-50/50 text-blue-900 focus:outline-none cursor-pointer"
                               onChange={(e) => {
-                                const selectedMom = moms.find((m) => m._id === e.target.value);
+                                const selectedMom = moms.find((m: any) => m._id === e.target.value);
                                 if (selectedMom) {
                                   const text = `Meeting: ${selectedMom.title} (${new Date(selectedMom.date).toLocaleDateString('en-IN')})\nAgenda: ${selectedMom.agenda || 'Site Coordination'}\nDirectives & Notes: ${selectedMom.notes || 'Execution as per drawings.'}${
                                     selectedMom.actionItems?.length ? '\nAction Items: ' + selectedMom.actionItems.map((a: any) => `• ${a.description} [${a.status || 'open'}]`).join('; ') : ''
@@ -1131,7 +1105,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                               defaultValue=""
                             >
                               <option value="" disabled>Insert from Project MOMs...</option>
-                              {moms.map((m) => (
+                              {moms.map((m: any) => (
                                 <option key={m._id} value={m._id}>
                                   {m.title} ({new Date(m.date).toLocaleDateString('en-IN')})
                                 </option>

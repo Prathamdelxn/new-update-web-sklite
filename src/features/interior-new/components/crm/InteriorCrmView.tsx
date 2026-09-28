@@ -34,14 +34,15 @@ import { InteriorQuotationBuilderModal } from './modals/InteriorQuotationBuilder
 import { InteriorDeleteLeadModal } from './modals/InteriorDeleteLeadModal';
 import { InteriorMarkAsLostModal } from './modals/InteriorMarkAsLostModal';
 import { Calendar, Lightbulb, Users, MapPin, FileText, Trophy, Plus, TrendingUp } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 export default function InteriorCrmView() {
   const toast = useToast();
   const { hasPermission } = usePermissions();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<InteriorCrmStage>('leads');
   const [leads, setLeads] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
@@ -74,29 +75,38 @@ export default function InteriorCrmView() {
 
   const [serverStats, setServerStats] = useState<any>(null);
 
-  const fetchLeads = useCallback(async () => {
-    setIsLoading(true);
-    try {
+  const {
+    data: leadsData,
+    refetch: refetchLeads,
+  } = useQuery({
+    queryKey: ['crm-leads-list'],
+    queryFn: async () => {
       const [res, userRes, statsRes] = await Promise.all([
         interiorCrmService.getCustomers({ all: true }),
         interiorCrmService.getUsers(),
         interiorCrmService.getCustomerStats().catch(() => null),
       ]);
-      setLeads(res?.success && res?.data ? res.data : Array.isArray(res) ? res : []);
-      setUsers(userRes?.success && userRes?.data ? userRes.data : Array.isArray(userRes) ? userRes : []);
-      if (statsRes?.success && statsRes?.data) {
-        setServerStats(statsRes.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch leads:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+      const leadsList = res?.success && res?.data ? res.data : Array.isArray(res) ? res : [];
+      const userList = userRes?.success && userRes?.data ? userRes.data : Array.isArray(userRes) ? userRes : [];
+      const stats = statsRes?.success && statsRes?.data ? statsRes.data : null;
+      return { leads: leadsList, users: userList, serverStats: stats };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
-    fetchLeads();
-  }, [fetchLeads]);
+    if (leadsData) {
+      setLeads(leadsData.leads);
+      setUsers(leadsData.users);
+      if (leadsData.serverStats) setServerStats(leadsData.serverStats);
+      setIsLoading(false);
+    }
+  }, [leadsData]);
+
+  const fetchLeads = useCallback(async () => {
+    queryClient.invalidateQueries({ queryKey: ['crm-leads-list'] });
+    await refetchLeads();
+  }, [queryClient, refetchLeads]);
 
   // Dynamic stage counts backed by high-speed MongoDB aggregation with local fallback
   const stageCounts = React.useMemo(() => {
@@ -368,106 +378,77 @@ export default function InteriorCrmView() {
       </div>
 
       {/* Tab Content */}
-      <AnimatePresence mode="wait">
+      <div className="w-full">
         {activeTab === 'follow_ups' ? (
-          <motion.div key="followups-view" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
-            <InteriorFollowUpsView onPassToSiteVisit={openSendToSiteVisitModal} refreshTrigger={leads} onMarkAsLost={openMarkAsLostModal} />
-          </motion.div>
+          <InteriorFollowUpsView onPassToSiteVisit={openSendToSiteVisitModal} refreshTrigger={leads} onMarkAsLost={openMarkAsLostModal} />
         ) : activeTab === 'site_visits' ? (
-          <motion.div key="sitevisits-view" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
-            <InteriorSiteVisitsView
-              leads={getFilteredLeads()}
-              onLogSiteVisit={openSiteVisitModal}
-              onPassToRequirements={openSendToRequirementsModal}
-              onMarkAsLost={openMarkAsLostModal}
-            />
-          </motion.div>
+          <InteriorSiteVisitsView
+            leads={getFilteredLeads()}
+            onLogSiteVisit={openSiteVisitModal}
+            onPassToRequirements={openSendToRequirementsModal}
+            onMarkAsLost={openMarkAsLostModal}
+          />
         ) : activeTab === 'requirement_design' ? (
-          <motion.div key="req-design-view" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
-            <InteriorRequirementDesignView
-              leads={getFilteredLeads()}
-              onLogRequirements={openRequirementsModal}
-              onUploadDesign={() => {}} // Not used anymore
-              onPassToQuotations={openSendToDrawingModal} // Flow changes to pass to drawing
-              onMarkAsLost={openMarkAsLostModal}
-            />
-          </motion.div>
+          <InteriorRequirementDesignView
+            leads={getFilteredLeads()}
+            onLogRequirements={openRequirementsModal}
+            onUploadDesign={() => {}} // Not used anymore
+            onPassToQuotations={openSendToDrawingModal} // Flow changes to pass to drawing
+            onMarkAsLost={openMarkAsLostModal}
+          />
         ) : activeTab === 'drawing' ? (
-          <motion.div key="drawing-view" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
-            <InteriorDrawingsView
-              leads={getFilteredLeads()}
-              onUploadDesign={openUploadDesignModal}
-              onPassToBoq={openSendToBoqModal}
-              onMarkAsLost={openMarkAsLostModal}
-            />
-          </motion.div>
+          <InteriorDrawingsView
+            leads={getFilteredLeads()}
+            onUploadDesign={openUploadDesignModal}
+            onPassToBoq={openSendToBoqModal}
+            onMarkAsLost={openMarkAsLostModal}
+          />
         ) : activeTab === 'boq' ? (
-          <motion.div key="boq-view" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
-            <InteriorBoqStageView
-              leads={getFilteredLeads()}
-              onAddBoq={openAddBoqModal}
-              onPassToQuotations={openSendToQuotationsModal}
-              onMarkAsLost={openMarkAsLostModal}
-            />
-          </motion.div>
+          <InteriorBoqStageView
+            leads={getFilteredLeads()}
+            onAddBoq={openAddBoqModal}
+            onPassToQuotations={openSendToQuotationsModal}
+            onMarkAsLost={openMarkAsLostModal}
+          />
         ) : activeTab === 'quotations' ? (
-          <motion.div key="quotations-view" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
-            <InteriorQuotationsView
-              leads={getFilteredLeads()}
-              onConvertToProject={openConvertToProjectModal}
-              onCreateQuotation={openQuotationBuilderModal}
-              onMarkAsLost={openMarkAsLostModal}
-            />
-          </motion.div>
+          <InteriorQuotationsView
+            leads={getFilteredLeads()}
+            onConvertToProject={openConvertToProjectModal}
+            onCreateQuotation={openQuotationBuilderModal}
+            onMarkAsLost={openMarkAsLostModal}
+          />
         ) : activeTab === 'won_projects' ? (
-          <motion.div key="won-projects-view" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
-            <InteriorWonProjectsView />
-          </motion.div>
+          <InteriorWonProjectsView />
         ) : (activeTab === 'leads' || activeTab === 'lost_leads') ? (
-          <motion.div
-            key="table-view"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-          >
-            <InteriorLeadsTable
-              leads={getFilteredLeads()}
-              isLoading={isLoading}
-              activeTab={activeTab}
-              onEdit={openEditModal}
-              onDelete={handleOpenDeleteModal}
-              onPassToFollowUp={openFollowUpModal}
-              onPassToSiteVisit={openSendToSiteVisitModal}
-              onPassToRequirements={openSendToRequirementsModal}
-              onPassToDrawing={openSendToDrawingModal}
-              onPassToBoq={openSendToBoqModal}
-              onAddBoq={openAddBoqModal}
-              onPassToQuotations={openSendToQuotationsModal}
-              onMarkAsLost={openMarkAsLostModal}
-            />
-          </motion.div>
+          <InteriorLeadsTable
+            leads={getFilteredLeads()}
+            isLoading={isLoading}
+            activeTab={activeTab}
+            onEdit={openEditModal}
+            onDelete={handleOpenDeleteModal}
+            onPassToFollowUp={openFollowUpModal}
+            onPassToSiteVisit={openSendToSiteVisitModal}
+            onPassToRequirements={openSendToRequirementsModal}
+            onPassToDrawing={openSendToDrawingModal}
+            onPassToBoq={openSendToBoqModal}
+            onAddBoq={openAddBoqModal}
+            onPassToQuotations={openSendToQuotationsModal}
+            onMarkAsLost={openMarkAsLostModal}
+          />
         ) : (
-          <motion.div
-            key="placeholder"
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.3 }}
-            className="py-24 flex flex-col items-center justify-center text-center bg-[hsl(var(--card))] border border-dashed border-[hsl(var(--border))] rounded-3xl"
-          >
+          <div className="py-24 flex flex-col items-center justify-center text-center bg-[hsl(var(--card))] border border-dashed border-[hsl(var(--border))] rounded-3xl">
             <div className="w-16 h-16 bg-[hsl(var(--muted))] rounded-full flex items-center justify-center text-[hsl(var(--muted-foreground))] mb-4">
               <Lightbulb size={32} />
             </div>
             <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))] tracking-tight">
-              {activeTab.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} Pipeline
+              {activeTab.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())} Pipeline
             </h2>
             <p className="text-sm text-[hsl(var(--muted-foreground))] mt-2 max-w-sm">
               This dedicated stage view is currently being implemented. You'll soon be able to manage all data specific to this flow phase right here in a tabular format!
             </p>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </div>
 
       <InteriorCreateLeadModal
         isOpen={isCreateModalOpen}
