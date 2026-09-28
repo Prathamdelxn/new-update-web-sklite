@@ -667,174 +667,156 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
               })}
             </div>
 
-            {/* DESKTOP TABLE VIEW (>= md) */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] text-[10px] font-black uppercase tracking-wider">
+            {/* DESKTOP TABLE VIEW (>= md) - Senior Enterprise CRM Table */}
+            <div className="hidden md:block w-full">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-[hsl(var(--muted)/0.45)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] text-[11px] font-bold uppercase tracking-wider">
                   <tr>
-                    <th className="px-6 py-3.5 rounded-tl-2xl">Lead Info</th>
-                    <th className="px-6 py-3.5">Contact & Actions</th>
-                    <th className="px-6 py-3.5">Source</th>
-                    <th className="px-6 py-3.5">Assigned To</th>
-                    <th className="px-6 py-3.5">Property Info</th>
-                    <th className="px-6 py-3.5">Status</th>
-                    <th className="px-6 py-3.5 text-right rounded-tr-2xl">Actions</th>
+                    <th className="px-4.5 py-3 rounded-tl-2xl w-[30%]">Lead & Contact</th>
+                    <th className="px-4 py-3 w-[22%]">Property & Location</th>
+                    <th className="px-4 py-3 w-[18%]">Stage & Source</th>
+                    <th className="px-4 py-3 w-[15%]">Assigned Rep</th>
+                    <th className="px-4.5 py-3 text-right rounded-tr-2xl w-[15%]">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[hsl(var(--border))]">
+                <tbody className="divide-y divide-[hsl(var(--border)/0.7)]">
                   {paginatedLeads.map((lead, idx) => {
                     const rawDigits = (lead.mobileNumber || '').replace(/\D/g, '');
                     const whatsappPhone = rawDigits.startsWith('91') ? rawDigits : `91${rawDigits}`;
+                    const statusInfo = getLeadStatusInfo(lead);
+                    const assignedName = displayUserName(lead.assignedSalesExecutive);
 
                     return (
                       <motion.tr
                         key={lead._id}
                         onClick={() => router.push(`/interior-new/crm/leads/${lead._id}`)}
-                        initial={{ opacity: 0, y: 8 }}
+                        initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.15, delay: idx * 0.02 }}
-                        className="hover:bg-[hsl(var(--accent))] transition-colors group cursor-pointer"
+                        transition={{ duration: 0.12, delay: idx * 0.015 }}
+                        className="hover:bg-[hsl(var(--muted)/0.35)] transition-colors group cursor-pointer"
                       >
-                        {/* Lead Info */}
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 font-extrabold text-xs shrink-0">
+                        {/* 1. Lead & Contact */}
+                        <td className="px-4.5 py-3">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500/15 to-purple-500/15 border border-indigo-500/25 flex items-center justify-center text-indigo-600 font-black text-xs shrink-0 shadow-xs">
                               {lead.name.charAt(0).toUpperCase()}
                             </div>
-                            <div>
-                              <div 
-                                className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-indigo-600 transition-colors flex items-center gap-2 truncate max-w-[150px] sm:max-w-[250px]"
-                                title={lead.name}
-                              >
-                                {lead.name}
-                              </div>
-                              <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="text-[10px] font-mono font-bold text-indigo-600 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span 
+                                  className="font-bold text-xs text-[hsl(var(--foreground))] group-hover:text-indigo-600 transition-colors truncate max-w-[160px] lg:max-w-[220px]"
+                                  title={lead.name}
+                                >
+                                  {lead.name}
+                                </span>
+                                <span className="text-[10px] font-mono font-bold text-indigo-600 bg-indigo-500/10 px-1.5 py-0.2 rounded border border-indigo-500/20 shrink-0">
                                   {lead.leadNumber || 'LD-XXXX'}
                                 </span>
-                                <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                                  {new Date(lead.createdAt).toLocaleDateString()}
-                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[hsl(var(--muted-foreground))]" onClick={(e) => e.stopPropagation()}>
+                                <span className="font-medium text-[hsl(var(--foreground))]">{lead.mobileNumber}</span>
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <a
+                                    href={`tel:${lead.mobileNumber}`}
+                                    className="p-0.5 rounded text-[hsl(var(--muted-foreground))] hover:text-emerald-600 transition-colors"
+                                    title="Call Lead"
+                                  >
+                                    <Phone size={11} />
+                                  </a>
+                                  {rawDigits.length >= 10 && (
+                                    <a
+                                      href={`https://wa.me/${whatsappPhone}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="p-0.5 rounded text-[hsl(var(--muted-foreground))] hover:text-emerald-600 transition-colors"
+                                      title="WhatsApp"
+                                    >
+                                      <MessageCircle size={11} />
+                                    </a>
+                                  )}
+                                </div>
+                                {lead.email && (
+                                  <span className="hidden xl:inline-block truncate max-w-[130px] text-[10px]" title={lead.email}>
+                                    • {lead.email}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>
                         </td>
 
-                        {/* Contact & Quick Communication */}
-                        <td className="px-6 py-4 space-y-1.5" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-[hsl(var(--foreground))]">
-                              {lead.mobileNumber}
-                            </span>
-                            <a
-                              href={`tel:${lead.mobileNumber}`}
-                              className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:text-emerald-600 hover:bg-emerald-500/10 transition-colors"
-                              title="Call Lead"
-                            >
-                              <Phone size={13} />
-                            </a>
-                            {rawDigits.length >= 10 && (
-                              <a
-                                href={`https://wa.me/${whatsappPhone}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:text-emerald-600 hover:bg-emerald-500/10 transition-colors"
-                                title="Chat on WhatsApp"
-                              >
-                                <MessageCircle size={13} />
-                              </a>
-                            )}
-                          </div>
-                          {lead.email && (
-                            <div className="flex items-center gap-1.5 text-[11px] text-[hsl(var(--muted-foreground))]">
-                              <Mail size={11} className="shrink-0" />
-                              <a
-                                href={`mailto:${lead.email}`}
-                                className="truncate max-w-[150px] hover:underline hover:text-[hsl(var(--foreground))]"
-                                title={lead.email}
-                              >
-                                {lead.email}
-                              </a>
+                        {/* 2. Property & Location */}
+                        <td className="px-4 py-3">
+                          <div className="min-w-0 space-y-0.5">
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--foreground))] truncate" title={lead.propertyType || 'Interior Project'}>
+                              <Building size={12} className="text-amber-500 shrink-0" />
+                              <span className="truncate">{lead.propertyType || 'Interior Project'}</span>
                             </div>
-                          )}
-                        </td>
-
-                        {/* Source */}
-                        <td className="px-6 py-4">
-                          <span 
-                            className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[hsl(var(--muted))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] text-[11px] font-semibold truncate max-w-[120px]"
-                            title={lead.leadSource || 'Direct'}
-                          >
-                            {lead.leadSource || 'Direct'}
-                          </span>
-                        </td>
-
-                        {/* Assigned To */}
-                        <td className="px-6 py-4">
-                          {lead.assignedSalesExecutive ? (
-                            <div 
-                              className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--foreground))] bg-[hsl(var(--muted)/0.6)] px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] max-w-[140px] sm:max-w-[180px]"
-                              title={displayUserName(lead.assignedSalesExecutive)}
-                            >
-                              <UserCircle size={14} className="text-indigo-600 shrink-0" />
-                              <span className="truncate">{displayUserName(lead.assignedSalesExecutive)}</span>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-[hsl(var(--muted-foreground))] italic">Unassigned</span>
-                          )}
-                        </td>
-
-                        {/* Property Info */}
-                        <td className="px-6 py-4 space-y-1 text-xs">
-                          <div className="flex items-center gap-1.5 text-[hsl(var(--foreground))] font-semibold" title={lead.propertyType || 'Interior Project'}>
-                            <Building size={13} className="text-[hsl(var(--muted-foreground))] shrink-0" />
-                            <span className="truncate max-w-[140px]">{lead.propertyType || 'Interior Project'}</span>
-                          </div>
-                          {lead.projectLocation ? (
-                            <div className="text-[11px] text-[hsl(var(--muted-foreground))] max-w-[160px] lg:max-w-[200px] flex items-center gap-1" title={lead.projectLocation}>
+                            <div className="flex items-center gap-1 text-[11px] text-[hsl(var(--muted-foreground))] truncate" title={lead.projectLocation || 'Location pending'}>
                               <MapPin size={11} className="shrink-0 text-purple-500" />
-                              <span className="truncate">{lead.projectLocation}</span>
+                              <span className="truncate">{lead.projectLocation || 'Location pending'}</span>
                             </div>
-                          ) : (
-                            <span className="text-[11px] text-[hsl(var(--muted-foreground))] italic">Location pending</span>
-                          )}
+                          </div>
                         </td>
 
-                        {/* Status */}
-                        <td className="px-6 py-4">
-                          {(() => {
-                            const statusInfo = getLeadStatusInfo(lead);
-                            return (
+                        {/* 3. Stage & Source */}
+                        <td className="px-4 py-3">
+                          <div className="min-w-0 space-y-1">
+                            <div>
                               <span
                                 className={cn(
-                                  'inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border',
+                                  'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-tight uppercase border',
                                   statusInfo.style
                                 )}
                               >
                                 {statusInfo.label}
                               </span>
-                            );
-                          })()}
+                            </div>
+                            <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-[hsl(var(--muted-foreground))]">
+                              <span className="bg-[hsl(var(--muted))] px-1.5 py-0.2 rounded border border-[hsl(var(--border))] font-medium truncate max-w-[110px]" title={lead.leadSource || 'Direct'}>
+                                {lead.leadSource || 'Direct'}
+                              </span>
+                              <span>{new Date(lead.createdAt).toLocaleDateString()}</span>
+                            </div>
+                          </div>
                         </td>
 
-                        {/* Actions */}
-                        <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                        {/* 4. Assigned Rep */}
+                        <td className="px-4 py-3">
+                          {assignedName ? (
+                            <div 
+                              className="inline-flex items-center gap-1.5 text-xs font-medium text-[hsl(var(--foreground))] bg-[hsl(var(--muted)/0.5)] px-2 py-1 rounded-lg border border-[hsl(var(--border))] max-w-[140px] truncate"
+                              title={assignedName}
+                            >
+                              <UserCircle size={13} className="text-indigo-600 shrink-0" />
+                              <span className="truncate">{assignedName}</span>
+                            </div>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] text-[hsl(var(--muted-foreground))] italic">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> Unassigned
+                            </span>
+                          )}
+                        </td>
+
+                        {/* 5. Actions */}
+                        <td className="px-4.5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-1.5">
+                            {/* Tab Specific Stage Actions */}
                             {activeTab === 'drawing' && onUploadDesign && (
                               <button
                                 onClick={() => onUploadDesign(lead._id)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
                               >
-                                Upload Drawing
+                                Upload
                               </button>
                             )}
 
                             {activeTab === 'drawing' && onPassToBoq && lead.designFiles && lead.designFiles.length > 0 && (
                               <button
                                 onClick={() => onPassToBoq(lead._id)}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-cyan-600 text-white hover:bg-cyan-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-cyan-600 text-white hover:bg-cyan-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
                               >
-                                Pass <ArrowRight size={13} />
+                                Pass <ArrowRight size={11} />
                               </button>
                             )}
 
@@ -845,8 +827,8 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
 
                                 if (isQuotationApproved) {
                                   return (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-lg text-xs font-bold" title="Quotation is approved, BOQ cannot be edited">
-                                      <Lock size={11} /> Locked
+                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-lg text-[11px] font-bold" title="Quotation is approved, BOQ locked">
+                                      <Lock size={10} /> Locked
                                     </span>
                                   );
                                 }
@@ -854,9 +836,9 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                                 return (
                                   <button
                                     onClick={() => onAddBoq(lead._id, (lead.boqs && lead.boqs.length > 0) ? lead.boqs.length - 1 : undefined)}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 text-white hover:bg-teal-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-teal-600 text-white hover:bg-teal-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
                                   >
-                                    {(!lead.boqs || lead.boqs.length === 0) ? 'Add BOQ' : 'View/Edit'}
+                                    {(!lead.boqs || lead.boqs.length === 0) ? '+ BOQ' : 'Edit BOQ'}
                                   </button>
                                 );
                               })()
@@ -865,22 +847,22 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                             {activeTab === 'boq' && onPassToQuotations && lead.boqs && lead.boqs.length > 0 && (
                               <button
                                 onClick={() => onPassToQuotations(lead._id)}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-600 hover:text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-600 hover:text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
                               >
-                                Pass <ArrowRight size={13} />
+                                Pass <ArrowRight size={11} />
                               </button>
                             )}
 
-                            {/* Master Leads & Lost Leads Action Buttons */}
+                            {/* Master Leads Actions */}
                             {(activeTab === 'leads' || activeTab === 'lost_leads') && (
                               <>
                                 {lead.status === 'New Lead' && onPassToFollowUp && (
                                   <button
                                     onClick={() => onPassToFollowUp(lead._id)}
-                                    className="p-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 rounded-xl transition-all border border-blue-500/20 cursor-pointer"
+                                    className="p-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 rounded-lg transition-all border border-blue-500/20 cursor-pointer"
                                     title="Schedule Follow-up"
                                   >
-                                    <Calendar size={14} />
+                                    <Calendar size={13} />
                                   </button>
                                 )}
 
@@ -889,36 +871,36 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                                     {hasPermission('crm_leads', 'update') && (
                                       <button
                                         onClick={() => onEdit(lead)}
-                                        className="p-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-xl transition-all border border-[hsl(var(--border))] cursor-pointer"
+                                        className="p-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] rounded-lg transition-all border border-[hsl(var(--border))] cursor-pointer"
                                         title="Edit Lead"
                                       >
-                                        <Pencil size={14} />
+                                        <Pencil size={13} />
                                       </button>
                                     )}
 
                                     {onDelete && hasPermission('crm_leads', 'delete') && (
                                       <button
                                         onClick={() => onDelete(lead)}
-                                        className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded-xl transition-all border border-rose-500/20 cursor-pointer"
+                                        className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded-lg transition-all border border-rose-500/20 cursor-pointer"
                                         title="Delete Lead"
                                       >
-                                        <Trash2 size={14} />
+                                        <Trash2 size={13} />
                                       </button>
                                     )}
 
                                     {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
                                       <button
                                         onClick={() => onMarkAsLost(lead._id)}
-                                        className="p-2 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-xl transition-all border border-orange-500/20 cursor-pointer"
+                                        className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg transition-all border border-orange-500/20 cursor-pointer"
                                         title="Mark as Lost"
                                       >
-                                        <XCircle size={14} />
+                                        <XCircle size={13} />
                                       </button>
                                     )}
                                   </>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-xl" title="Converted to Project (Locked)">
-                                    <Lock size={11} /> Locked
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-lg" title="Converted to Project (Locked)">
+                                    <Lock size={10} /> Locked
                                   </span>
                                 )}
                               </>

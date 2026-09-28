@@ -273,19 +273,19 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
               })}
             </div>
 
-            {/* DESKTOP TABLE VIEW (>= md) */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] uppercase text-[10px] font-black tracking-widest">
+            {/* DESKTOP TABLE VIEW (>= md) - Senior Enterprise CRM Table */}
+            <div className="hidden md:block w-full">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-[hsl(var(--muted)/0.45)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] text-[11px] font-bold uppercase tracking-wider">
                   <tr>
-                    <th className="px-6 py-3.5 rounded-tl-2xl">Lead Info</th>
-                    <th className="px-6 py-3.5">Property & Location</th>
-                    <th className="px-6 py-3.5">Latest BOQ Value</th>
-                    <th className="px-6 py-3.5">BOQ Status</th>
-                    <th className="px-6 py-3.5 text-right rounded-tr-2xl">Actions</th>
+                    <th className="px-4.5 py-3 rounded-tl-2xl w-[30%]">Lead & Contact</th>
+                    <th className="px-4 py-3 w-[22%]">Property & Location</th>
+                    <th className="px-4 py-3 w-[20%]">BOQ Value & Version</th>
+                    <th className="px-4 py-3 w-[14%]">Stage Status</th>
+                    <th className="px-4.5 py-3 text-right rounded-tr-2xl w-[14%]">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[hsl(var(--border))]">
+                <tbody className="divide-y divide-[hsl(var(--border)/0.7)]">
                   {paginatedLeads.map((lead, idx) => {
                     const hasBoqs = lead.boqs && lead.boqs.length > 0;
                     const latestBoq = hasBoqs ? lead.boqs[lead.boqs.length - 1] : null;
@@ -305,74 +305,76 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                       <tr
                         key={lead._id}
                         onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=boq`)}
-                        className="hover:bg-[hsl(var(--accent))] transition-colors group cursor-pointer"
+                        className="hover:bg-[hsl(var(--muted)/0.35)] transition-colors group cursor-pointer"
                       >
-                        {/* Lead Info */}
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-9 h-9 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 font-extrabold text-xs shrink-0">
+                        {/* 1. Lead & Contact */}
+                        <td className="px-4.5 py-3">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/25 flex items-center justify-center text-blue-600 font-black text-xs shrink-0 shadow-xs">
                               {lead.name.charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div 
-                                className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-blue-600 transition-colors truncate max-w-[140px] sm:max-w-[200px] lg:max-w-[280px]"
-                                title={lead.name}
-                              >
-                                {lead.name}
-                              </div>
-                              <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="text-[10px] font-mono font-bold text-blue-600 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20 shrink-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span 
+                                  className="font-bold text-xs text-[hsl(var(--foreground))] group-hover:text-blue-600 transition-colors truncate max-w-[160px] lg:max-w-[220px]"
+                                  title={lead.name}
+                                >
+                                  {lead.name}
+                                </span>
+                                <span className="text-[10px] font-mono font-bold text-blue-600 bg-blue-500/10 px-1.5 py-0.2 rounded border border-blue-500/20 shrink-0">
                                   {lead.leadNumber || 'LD-XXXX'}
                                 </span>
-                                <span className="text-[11px] text-[hsl(var(--muted-foreground))] truncate">
-                                  {lead.mobileNumber}
-                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[hsl(var(--muted-foreground))]">
+                                <span className="font-medium text-[hsl(var(--foreground))]">{lead.mobileNumber}</span>
                               </div>
                             </div>
                           </div>
                         </td>
 
-                        {/* Location */}
-                        <td className="px-6 py-4 space-y-0.5 text-xs">
-                          <div className="flex items-center gap-1.5 text-[hsl(var(--foreground))] font-semibold" title={lead.propertyType || 'Residential'}>
-                            <Home size={13} className="text-[hsl(var(--muted-foreground))] shrink-0" />
-                            <span className="truncate max-w-[140px] sm:max-w-[180px]">{lead.propertyType || 'Residential'}</span>
-                          </div>
-                          <div className="text-[11px] text-[hsl(var(--muted-foreground))] flex items-center gap-1 truncate max-w-[160px] lg:max-w-[220px]" title={lead.projectLocation || lead.city || 'Location Pending'}>
-                            <MapPin size={11} className="shrink-0 text-blue-500" />
-                            <span className="truncate">{lead.projectLocation || lead.city || 'Location Pending'}</span>
+                        {/* 2. Property & Location */}
+                        <td className="px-4 py-3">
+                          <div className="min-w-0 space-y-0.5">
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--foreground))] truncate" title={lead.propertyType || 'Residential'}>
+                              <Home size={12} className="text-amber-500 shrink-0" />
+                              <span className="truncate">{lead.propertyType || 'Residential'}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-[11px] text-[hsl(var(--muted-foreground))] truncate" title={lead.projectLocation || lead.city || 'Location Pending'}>
+                              <MapPin size={11} className="shrink-0 text-blue-500" />
+                              <span className="truncate">{lead.projectLocation || lead.city || 'Location Pending'}</span>
+                            </div>
                           </div>
                         </td>
 
-                        {/* BOQ Summary */}
-                        <td className="px-6 py-4">
+                        {/* 3. BOQ Summary & Value */}
+                        <td className="px-4 py-3">
                           {hasBoqs ? (
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
+                            <div className="space-y-0.5 min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
                                 <span 
-                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-500/10 text-blue-700 text-xs font-bold border border-blue-500/20 max-w-[160px] sm:max-w-[220px] truncate"
+                                  className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-700 text-[10px] font-bold border border-blue-500/20 max-w-[150px] truncate"
                                   title={latestBoq?.title || `BOQ v${lead.boqs.length}`}
                                 >
-                                  <FileSpreadsheet size={12} className="shrink-0" />
-                                  <span className="truncate">v{lead.boqs.length} ({latestBoq?.title || 'Main BOQ'})</span>
+                                  <FileSpreadsheet size={10} className="shrink-0" />
+                                  <span className="truncate">v{lead.boqs.length} ({latestBoq?.title || 'Main'})</span>
                                 </span>
                               </div>
                               {latestBoq?.totalAmount ? (
                                 <div className="text-xs font-extrabold text-emerald-600">
-                                  Total: ₹{latestBoq.totalAmount.toLocaleString('en-IN')}
+                                  ₹{latestBoq.totalAmount.toLocaleString('en-IN')}
                                 </div>
                               ) : null}
                             </div>
                           ) : (
-                            <span className="text-xs text-[hsl(var(--muted-foreground))] italic">No BOQ generated</span>
+                            <span className="text-[11px] text-[hsl(var(--muted-foreground))] italic">No BOQ generated</span>
                           )}
                         </td>
 
-                        {/* Status */}
-                        <td className="px-6 py-4">
+                        {/* 4. Status */}
+                        <td className="px-4 py-3">
                           <span
                             className={cn(
-'inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border',
+                              'inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold tracking-tight uppercase border',
                               hasBoqs
                                 ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                                 : 'bg-blue-500/10 text-blue-600 border-blue-500/20'
@@ -382,55 +384,57 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                           </span>
                         </td>
 
-                        {/* Actions */}
-                        <td className="px-6 py-4 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
-                          {isQuotationApproved ? (
-                            <span
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-lg text-xs font-bold"
-                              title="Quotation is approved, BOQ cannot be edited"
-                            >
-                              <Lock size={12} /> Quotation Approved (Locked)
-                            </span>
-                          ) : (
-                            <>
-                              <button
-                                onClick={() => onAddBoq(lead._id, hasBoqs ? (lead.boqs.length - 1) : undefined)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] rounded-lg text-xs font-bold transition-all border border-[hsl(var(--border))] cursor-pointer"
+                        {/* 5. Actions */}
+                        <td className="px-4.5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-end gap-1.5">
+                            {isQuotationApproved ? (
+                              <span
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-lg text-[11px] font-bold"
+                                title="Quotation is approved, BOQ locked"
                               >
-                                <Calculator size={13} className="text-blue-600" />
-                                {hasBoqs ? 'Edit BOQ' : 'Create BOQ'}
-                              </button>
+                                <Lock size={10} /> Locked
+                              </span>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => onAddBoq(lead._id, hasBoqs ? (lead.boqs.length - 1) : undefined)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] rounded-lg text-xs font-bold transition-all border border-[hsl(var(--border))] cursor-pointer shadow-xs"
+                                >
+                                  <Calculator size={11} className="text-blue-600" />
+                                  {hasBoqs ? 'Edit' : '+ BOQ'}
+                                </button>
 
-                              {hasBoqs &&
-                                onPassToQuotations &&
-                                (isPassedToNext ? (
-                                  <span
-                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-xs font-bold"
-                                    title="Lead has already been passed to Quotations"
-                                  >
-                                    Passed to Quotation 
-                                  </span>
-                                ) : (
-                                  <button
-                                    onClick={() => onPassToQuotations(lead._id)}
-                                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
-                                    title="Pass to Quotation Phase"
-                                  >
-                                    Pass to Quotation <ArrowRight size={13} />
-                                  </button>
-                                ))}
-                            </>
-                          )}
-                          
-                          {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 ml-2 cursor-pointer"
-                              title="Mark as Lost"
-                            >
-                              <XCircle size={14} />
-                            </button>
-                          )}
+                                {hasBoqs &&
+                                  onPassToQuotations &&
+                                  (isPassedToNext ? (
+                                    <span
+                                      className="inline-flex items-center gap-1 px-2 py-1 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[11px] font-bold"
+                                      title="Passed to Quotations"
+                                    >
+                                      Passed 
+                                    </span>
+                                  ) : (
+                                    <button
+                                      onClick={() => onPassToQuotations(lead._id)}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                      title="Pass to Quotation Phase"
+                                    >
+                                      Pass <ArrowRight size={11} />
+                                    </button>
+                                  ))}
+                              </>
+                            )}
+                            
+                            {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
+                                className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
+                                title="Mark as Lost"
+                              >
+                                <XCircle size={13} />
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );

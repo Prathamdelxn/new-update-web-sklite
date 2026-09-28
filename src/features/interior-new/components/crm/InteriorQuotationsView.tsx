@@ -4,7 +4,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { FileText, ArrowRight, Phone, Trophy, Search, ChevronLeft, ChevronRight, Edit3, XCircle, Building2, Eye } from 'lucide-react';
+import { FileText, ArrowRight, Phone, Trophy, Search, ChevronLeft, ChevronRight, Edit3, XCircle, Building2, Eye, Home, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { InteriorLead } from './InteriorLeadsTable';
 
@@ -282,19 +282,19 @@ export function InteriorQuotationsView({
               })}
             </div>
 
-            {/* DESKTOP TABLE VIEW (>= md) */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] uppercase text-[10px] font-black tracking-widest">
+            {/* DESKTOP TABLE VIEW (>= md) - Senior Enterprise CRM Table */}
+            <div className="hidden md:block w-full">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-[hsl(var(--muted)/0.45)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] text-[11px] font-bold uppercase tracking-wider">
                   <tr>
-                    <th className="px-6 py-3.5 rounded-tl-2xl">Lead Info</th>
-                    <th className="px-6 py-3.5">Contact</th>
-                    <th className="px-6 py-3.5">Quotation Info</th>
-                    <th className="px-6 py-3.5">Status</th>
-                    <th className="px-6 py-3.5 text-right rounded-tr-2xl">Actions</th>
+                    <th className="px-4.5 py-3 rounded-tl-2xl w-[30%]">Lead & Contact</th>
+                    <th className="px-4 py-3 w-[20%]">Property & Location</th>
+                    <th className="px-4 py-3 w-[20%]">Quotation Value</th>
+                    <th className="px-4 py-3 w-[14%]">Stage Status</th>
+                    <th className="px-4.5 py-3 text-right rounded-tr-2xl w-[16%]">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[hsl(var(--border))]">
+                <tbody className="divide-y divide-[hsl(var(--border)/0.7)]">
                   {paginatedLeads.map((lead, idx) => {
                     const latestQuote =
                       lead.quotations && lead.quotations.length > 0
@@ -305,52 +305,63 @@ export function InteriorQuotationsView({
                       <tr
                         key={lead._id}
                         onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=quotation`)}
-                        className="hover:bg-[hsl(var(--accent))] transition-colors group cursor-pointer"
+                        className="hover:bg-[hsl(var(--muted)/0.35)] transition-colors group cursor-pointer"
                       >
-                        {/* Lead Info */}
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-9 h-9 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 font-extrabold text-xs shrink-0">
+                        {/* 1. Lead & Contact */}
+                        <td className="px-4.5 py-3">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/25 flex items-center justify-center text-indigo-600 font-black text-xs shrink-0 shadow-xs">
                               {lead.name.charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div 
-                                className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-indigo-600 transition-colors truncate max-w-[140px] sm:max-w-[200px] lg:max-w-[280px]"
-                                title={lead.name}
-                              >
-                                {lead.name}
-                              </div>
-                              <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="text-[10px] font-mono font-bold text-indigo-600 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20 shrink-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span 
+                                  className="font-bold text-xs text-[hsl(var(--foreground))] group-hover:text-indigo-600 transition-colors truncate max-w-[160px] lg:max-w-[220px]"
+                                  title={lead.name}
+                                >
+                                  {lead.name}
+                                </span>
+                                <span className="text-[10px] font-mono font-bold text-indigo-600 bg-indigo-500/10 px-1.5 py-0.2 rounded border border-indigo-500/20 shrink-0">
                                   {lead.leadNumber || 'LD-XXXX'}
                                 </span>
+                              </div>
+                              <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[hsl(var(--muted-foreground))]">
+                                <span className="font-medium text-[hsl(var(--foreground))]">{lead.mobileNumber}</span>
                               </div>
                             </div>
                           </div>
                         </td>
 
-                        {/* Contact */}
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--foreground))] font-semibold" title={lead.mobileNumber || ''}>
-                            <Phone size={13} className="text-[hsl(var(--muted-foreground))] shrink-0" />
-                            <span className="truncate max-w-[130px]">{lead.mobileNumber || '-'}</span>
+                        {/* 2. Property & Location */}
+                        <td className="px-4 py-3">
+                          <div className="min-w-0 space-y-0.5">
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--foreground))] truncate" title={lead.propertyType || 'Residential'}>
+                              <Home size={12} className="text-amber-500 shrink-0" />
+                              <span className="truncate">{lead.propertyType || 'Residential'}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-[11px] text-[hsl(var(--muted-foreground))] truncate" title={lead.projectLocation || (lead as any).city || 'Location Pending'}>
+                              <MapPin size={11} className="shrink-0 text-indigo-500" />
+                              <span className="truncate">{lead.projectLocation || (lead as any).city || 'Location Pending'}</span>
+                            </div>
                           </div>
                         </td>
 
-                        {/* Quotation Info */}
-                        <td className="px-6 py-4">
+                        {/* 3. Quotation Info */}
+                        <td className="px-4 py-3">
                           {latestQuote ? (
-                            <div className="flex flex-col gap-0.5">
-                              <div className="flex items-center gap-2">
+                            <div className="space-y-0.5 min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className="text-xs font-black text-[hsl(var(--foreground))]">
                                   ₹{latestQuote.grandTotal?.toLocaleString('en-IN') || 0}
                                 </span>
                                 <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-0.5">
-                                  <FileText size={10} /> V{latestQuote.version}
+                                  <FileText size={9} /> V{latestQuote.version}
                                 </span>
+                              </div>
+                              <div>
                                 <span
                                   className={cn(
-'text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase border',
+                                    'text-[9px] font-bold px-1.5 py-0.2 rounded uppercase border',
                                     latestQuote.status === 'Accepted'
                                       ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                                       : latestQuote.status === 'Rejected'
@@ -363,17 +374,17 @@ export function InteriorQuotationsView({
                               </div>
                             </div>
                           ) : (
-                            <span className="text-xs text-[hsl(var(--muted-foreground))] italic">
-                              Quotation pending...
+                            <span className="text-[11px] text-[hsl(var(--muted-foreground))] italic">
+                              Pending quote
                             </span>
                           )}
                         </td>
 
-                        {/* Status */}
-                        <td className="px-6 py-4">
+                        {/* 4. Status */}
+                        <td className="px-4 py-3">
                           <span
                             className={cn(
-'inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border',
+                              'inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold tracking-tight uppercase border',
                               lead.status === 'Converted'
                                 ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                                 : (latestQuote?.status === 'Accepted' || lead.status === 'Booking Pending')
@@ -386,81 +397,83 @@ export function InteriorQuotationsView({
                             {lead.status === 'Converted'
                               ? 'Converted'
                               : (latestQuote?.status === 'Accepted' || lead.status === 'Booking Pending')
-                              ? 'Quotation Approved '
+                              ? 'Approved '
                               : latestQuote?.status === 'Rejected'
-                              ? 'Quotation Rejected'
-                              : 'Under Quotation'}
+                              ? 'Rejected'
+                              : 'Under Quote'}
                           </span>
                         </td>
 
-                        {/* Actions */}
+                        {/* 5. Actions */}
                         <td
-                          className="px-6 py-4 text-right space-x-2 flex items-center justify-end"
+                          className="px-4.5 py-3 text-right"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          {!latestQuote ? (
-                            <button
-                              onClick={() => onCreateQuotation(lead._id)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                            >
-                              <FileText size={13} /> Create Quote
-                            </button>
-                          ) : (
-                            <>
-                              {latestQuote.status === 'Rejected' ? (
-                                <button
-                                  onClick={() => onCreateQuotation(lead._id)}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                  title="Create next quotation version (v{(lead.quotations?.length || 1) + 1})"
-                                >
-                                  <Edit3 size={12} /> New Version
-                                </button>
-                              ) : latestQuote.status === 'Draft' ? (
-                                <button
-                                  onClick={() => onCreateQuotation(lead._id)}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all cursor-pointer"
-                                  title="Edit draft quotation"
-                                >
-                                  <Edit3 size={12} /> Edit Draft
-                                </button>
-                              ) : null}
+                          <div className="flex items-center justify-end gap-1.5">
+                            {!latestQuote ? (
                               <button
-                                onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=quotation`)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                                onClick={() => onCreateQuotation(lead._id)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
                               >
-                                View <ArrowRight size={12} />
+                                <FileText size={11} /> + Quote
                               </button>
-                            </>
-                          )}
-
-                          {onConvertToProject &&
-                            latestQuote?.status === 'Accepted' &&
-                            (lead.status === 'Won' || lead.status === 'Converted' ? (
-                              <span
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 rounded-lg text-xs font-bold"
-                                title="Lead converted into Active Project"
-                              >
-                                <Trophy size={13} /> Converted 
-                              </span>
                             ) : (
+                              <>
+                                {latestQuote.status === 'Rejected' ? (
+                                  <button
+                                    onClick={() => onCreateQuotation(lead._id)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                    title="Create next quotation version"
+                                  >
+                                    <Edit3 size={11} /> + Rev
+                                  </button>
+                                ) : latestQuote.status === 'Draft' ? (
+                                  <button
+                                    onClick={() => onCreateQuotation(lead._id)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                    title="Edit draft quotation"
+                                  >
+                                    <Edit3 size={11} /> Edit
+                                  </button>
+                                ) : null}
+                                <button
+                                  onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=quotation`)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                >
+                                  View <ArrowRight size={11} />
+                                </button>
+                              </>
+                            )}
+
+                            {onConvertToProject &&
+                              latestQuote?.status === 'Accepted' &&
+                              (lead.status === 'Won' || lead.status === 'Converted' ? (
+                                <span
+                                  className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 rounded-lg text-[11px] font-bold"
+                                  title="Lead converted into Active Project"
+                                >
+                                  <Trophy size={11} /> Converted 
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => onConvertToProject(lead._id)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-500 text-white hover:bg-amber-600 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                  title="Convert to Project"
+                                >
+                                  <Trophy size={11} /> Convert
+                                </button>
+                              ))}
+                            
+                            {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
                               <button
-                                onClick={() => onConvertToProject(lead._id)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 text-white hover:bg-amber-600 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                                title="Convert to Project"
+                                onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
+                                className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
+                                title="Mark as Lost"
                               >
-                                <Trophy size={13} /> Convert Project
+                                <XCircle size={13} />
                               </button>
-                            ))}
-                          
-                          {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 ml-1.5 cursor-pointer"
-                              title="Mark as Lost"
-                            >
-                              <XCircle size={14} />
-                            </button>
-                          )}
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );

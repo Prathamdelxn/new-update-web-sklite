@@ -297,19 +297,19 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
               })}
             </div>
 
-            {/* DESKTOP TABLE VIEW (>= md) */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] uppercase text-[10px] font-black tracking-widest">
+            {/* DESKTOP TABLE VIEW (>= md) - Senior Enterprise CRM Table */}
+            <div className="hidden md:block w-full">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-[hsl(var(--muted)/0.45)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] text-[11px] font-bold uppercase tracking-wider">
                   <tr>
-                    <th className="px-6 py-3.5 rounded-tl-2xl">Lead Info</th>
-                    <th className="px-6 py-3.5">Location</th>
-                    <th className="px-6 py-3.5">Scheduled Date</th>
-                    <th className="px-6 py-3.5 text-center">Site Survey Status</th>
-                    <th className="px-6 py-3.5 text-right rounded-tr-2xl">Actions</th>
+                    <th className="px-4.5 py-3 rounded-tl-2xl w-[30%]">Lead & Contact</th>
+                    <th className="px-4 py-3 w-[22%]">Property & Location</th>
+                    <th className="px-4 py-3 w-[20%]">Scheduled Date & Note</th>
+                    <th className="px-4 py-3 w-[14%]">Survey Status</th>
+                    <th className="px-4.5 py-3 text-right rounded-tr-2xl w-[14%]">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[hsl(var(--border))] text-xs">
+                <tbody className="divide-y divide-[hsl(var(--border)/0.7)] text-xs">
                   {paginatedLeads.map((lead) => {
                     const pendingSiteVisit = pendingActivities.find(
                       (act: any) => ((act.customer?._id || act.customer) === lead._id) && act.type === 'Site Visit'
@@ -320,143 +320,149 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                       <tr
                         key={lead._id}
                         onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=site`)}
-                        className="hover:bg-[hsl(var(--accent))] transition-colors group cursor-pointer"
+                        className="hover:bg-[hsl(var(--muted)/0.35)] transition-colors group cursor-pointer"
                       >
-                        {/* Lead Info */}
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-9 h-9 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 font-extrabold text-xs shrink-0">
+                        {/* 1. Lead & Contact */}
+                        <td className="px-4.5 py-3">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/25 flex items-center justify-center text-purple-600 font-black text-xs shrink-0 shadow-xs">
                               {lead.name.charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div 
-                                className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-purple-600 transition-colors truncate max-w-[140px] sm:max-w-[200px] lg:max-w-[280px]"
-                                title={lead.name}
-                              >
-                                {lead.name}
-                              </div>
-                              <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="text-[10px] font-mono font-bold text-purple-600 bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20 shrink-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span 
+                                  className="font-bold text-xs text-[hsl(var(--foreground))] group-hover:text-purple-600 transition-colors truncate max-w-[160px] lg:max-w-[220px]"
+                                  title={lead.name}
+                                >
+                                  {lead.name}
+                                </span>
+                                <span className="text-[10px] font-mono font-bold text-purple-600 bg-purple-500/10 px-1.5 py-0.2 rounded border border-purple-500/20 shrink-0">
                                   {lead.leadNumber || 'LD-XXXX'}
                                 </span>
-                                <span className="text-[11px] text-[hsl(var(--muted-foreground))] truncate">
-                                  {lead.mobileNumber}
-                                </span>
                               </div>
-                              {(pendingSiteVisit?.remarks || lead.remarks) && (
-                                <div className="flex items-center gap-1.5 mt-1.5 text-[10px] text-purple-700 dark:text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20 max-w-[260px] truncate" title={`Site Visit Note: ${pendingSiteVisit?.remarks || lead.remarks}`}>
-                                  <MessageSquare size={10} className="shrink-0 text-purple-600" />
-                                  <span className="truncate font-medium">{pendingSiteVisit?.remarks || lead.remarks}</span>
-                                </div>
-                              )}
+                              <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[hsl(var(--muted-foreground))]">
+                                <span className="font-medium text-[hsl(var(--foreground))]">{lead.mobileNumber}</span>
+                              </div>
                             </div>
                           </div>
                         </td>
 
-                        {/* Location */}
-                        <td className="px-6 py-4 space-y-0.5 text-xs">
-                          <div className="flex items-center gap-1.5 text-[hsl(var(--foreground))] font-semibold" title={lead.propertyType || 'Residential'}>
-                            <Home size={13} className="text-[hsl(var(--muted-foreground))] shrink-0" />
-                            <span className="truncate max-w-[140px] sm:max-w-[180px]">{lead.propertyType || 'Residential'}</span>
-                          </div>
-                          <div className="text-[11px] text-[hsl(var(--muted-foreground))] flex items-center gap-1 truncate max-w-[160px] lg:max-w-[220px]" title={lead.projectLocation || lead.city || 'Location Pending'}>
-                            <MapPin size={11} className="shrink-0 text-purple-500" />
-                            <span className="truncate">{lead.projectLocation || lead.city || 'Location Pending'}</span>
+                        {/* 2. Location */}
+                        <td className="px-4 py-3">
+                          <div className="min-w-0 space-y-0.5">
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--foreground))] truncate" title={lead.propertyType || 'Residential'}>
+                              <Home size={12} className="text-amber-500 shrink-0" />
+                              <span className="truncate">{lead.propertyType || 'Residential'}</span>
+                            </div>
+                            <div className="text-[11px] text-[hsl(var(--muted-foreground))] flex items-center gap-1 truncate" title={lead.projectLocation || lead.city || 'Location Pending'}>
+                              <MapPin size={11} className="shrink-0 text-purple-500" />
+                              <span className="truncate">{lead.projectLocation || lead.city || 'Location Pending'}</span>
+                            </div>
                           </div>
                         </td>
 
-                        {/* Scheduled Date */}
-                        <td className="px-6 py-4">
-                          {resolvedScheduledDate ? (() => {
-                            const isOverdue = !lead.siteMeasurements && new Date(resolvedScheduledDate).getTime() < Date.now();
-                            return (
-                              <div className={cn(
-                                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-bold",
-                                isOverdue
-                                  ? "bg-rose-500/10 border-rose-500/30 text-rose-600"
-                                  : "bg-purple-500/10 border-purple-500/20 text-purple-700"
-                              )}>
-                                <CalendarIcon size={12} className={isOverdue ? "text-rose-600" : "text-purple-600"} />
-                                <span>
-                                  {new Date(resolvedScheduledDate).toLocaleString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    hour: 'numeric',
-                                    minute: '2-digit',
-                                  })}
-                                </span>
-                                {isOverdue && (
-                                  <span className="ml-1 text-[9px] font-black uppercase text-rose-600 bg-rose-500/20 px-1 py-0.2 rounded">
-                                    Overdue
+                        {/* 3. Scheduled Date & Notes */}
+                        <td className="px-4 py-3">
+                          <div className="min-w-0 space-y-1">
+                            {resolvedScheduledDate ? (() => {
+                              const isOverdue = !lead.siteMeasurements && new Date(resolvedScheduledDate).getTime() < Date.now();
+                              return (
+                                <div className={cn(
+                                  "inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-bold",
+                                  isOverdue
+                                    ? "bg-rose-500/10 border-rose-500/30 text-rose-600"
+                                    : "bg-purple-500/10 border-purple-500/20 text-purple-700"
+                                )}>
+                                  <CalendarIcon size={10} className={isOverdue ? "text-rose-600" : "text-purple-600"} />
+                                  <span>
+                                    {new Date(resolvedScheduledDate).toLocaleString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: 'numeric',
+                                      minute: '2-digit',
+                                    })}
                                   </span>
-                                )}
+                                  {isOverdue && (
+                                    <span className="ml-0.5 text-[8px] font-black uppercase text-rose-600 bg-rose-500/20 px-1 py-0.2 rounded">
+                                      Late
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })() : (
+                              <span className="text-[11px] text-[hsl(var(--muted-foreground))] italic">Not scheduled</span>
+                            )}
+                            {(pendingSiteVisit?.remarks || lead.remarks) && (
+                              <div className="flex items-center gap-1 text-[10px] text-purple-700 dark:text-purple-300 max-w-[200px] truncate" title={`Note: ${pendingSiteVisit?.remarks || lead.remarks}`}>
+                                <MessageSquare size={9} className="shrink-0 text-purple-600" />
+                                <span className="truncate font-medium">{pendingSiteVisit?.remarks || lead.remarks}</span>
                               </div>
-                            );
-                          })() : (
-                            <span className="text-xs text-[hsl(var(--muted-foreground))] italic">Not scheduled</span>
-                          )}
+                            )}
+                          </div>
                         </td>
 
-                        {/* Status */}
-                        <td className="px-6 py-4 text-center">
+                        {/* 4. Status */}
+                        <td className="px-4 py-3">
                           <span
                             className={cn(
-'inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border',
+                              'inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold tracking-tight uppercase border',
                               lead.siteMeasurements
                                 ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                                 : 'bg-purple-500/10 text-purple-600 border-purple-500/20'
                             )}
                           >
-                            {lead.siteMeasurements ? 'Measurement Done ' : lead.status}
+                            {lead.siteMeasurements ? 'Done ' : lead.status}
                           </span>
                         </td>
 
-                        {/* Actions */}
-                        <td className="px-6 py-4 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
-                          {lead.siteMeasurements ? (
-                            <button
-                              onClick={() => onLogSiteVisit(lead._id)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all cursor-pointer"
-                              title="Edit Site Visit Measurements & Photos"
-                            >
-                              <Ruler size={13} /> Edit Measurements
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => onLogSiteVisit(lead._id)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white hover:bg-purple-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                            >
-                              <Ruler size={13} /> Log Measurements
-                            </button>
-                          )}
-                          {lead.siteMeasurements &&
-                            ((Boolean(Array.isArray(lead.quotations) && lead.quotations.some((q: any) => ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase()))) ||
-                             ['Under Requirement', 'Requirement Completed', 'Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) ||
-                             Boolean((lead as any).linkedProject)) ? (
-                              <span
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-xs font-bold"
-                                title="Lead has already been passed to Requirements & Design"
+                        {/* 5. Actions */}
+                        <td className="px-4.5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-end gap-1.5">
+                            {lead.siteMeasurements ? (
+                              <button
+                                onClick={() => onLogSiteVisit(lead._id)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                title="Edit Site Visit Measurements & Photos"
                               >
-                                Passed to Req 
-                              </span>
+                                <Ruler size={11} /> Edit
+                              </button>
                             ) : (
                               <button
-                                onClick={() => onPassToRequirements(lead._id)}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                                title="Pass to Requirements & Design"
+                                onClick={() => onLogSiteVisit(lead._id)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 text-white hover:bg-purple-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
                               >
-                                Pass to Req <ArrowRight size={13} />
+                                <Ruler size={11} /> + Log
                               </button>
-                            ))}
-                          {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
-                              title="Mark as Lost"
-                            >
-                              <XCircle size={14} />
-                            </button>
-                          )}
+                            )}
+                            {lead.siteMeasurements &&
+                              ((Boolean(Array.isArray(lead.quotations) && lead.quotations.some((q: any) => ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase()))) ||
+                               ['Under Requirement', 'Requirement Completed', 'Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) ||
+                               Boolean((lead as any).linkedProject)) ? (
+                                <span
+                                  className="inline-flex items-center gap-1 px-2 py-1 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[11px] font-bold"
+                                  title="Passed to Requirements"
+                                >
+                                  Passed 
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => onPassToRequirements(lead._id)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                  title="Pass to Requirements & Design"
+                                >
+                                  Pass <ArrowRight size={11} />
+                                </button>
+                              ))}
+                            {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
+                                className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
+                                title="Mark as Lost"
+                              >
+                                <XCircle size={13} />
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );

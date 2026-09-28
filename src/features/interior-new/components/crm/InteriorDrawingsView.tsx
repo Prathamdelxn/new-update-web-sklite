@@ -288,19 +288,19 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
               })}
             </div>
 
-            {/* DESKTOP TABLE VIEW (>= md) */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] uppercase text-[10px] font-black tracking-widest">
+            {/* DESKTOP TABLE VIEW (>= md) - Senior Enterprise CRM Table */}
+            <div className="hidden md:block w-full">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-[hsl(var(--muted)/0.45)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] text-[11px] font-bold uppercase tracking-wider">
                   <tr>
-                    <th className="px-6 py-3.5 rounded-tl-2xl">Lead Info</th>
-                    <th className="px-6 py-3.5">Property & Location</th>
-                    <th className="px-6 py-3.5">Drawing Files Attached</th>
-                    <th className="px-6 py-3.5">Drawing Status</th>
-                    <th className="px-6 py-3.5 text-right rounded-tr-2xl">Actions</th>
+                    <th className="px-4.5 py-3 rounded-tl-2xl w-[30%]">Lead & Contact</th>
+                    <th className="px-4 py-3 w-[22%]">Property & Location</th>
+                    <th className="px-4 py-3 w-[20%]">Drawings & Status</th>
+                    <th className="px-4 py-3 w-[14%]">Assigned Rep</th>
+                    <th className="px-4.5 py-3 text-right rounded-tr-2xl w-[14%]">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[hsl(var(--border))]">
+                <tbody className="divide-y divide-[hsl(var(--border)/0.7)]">
                   {paginatedLeads.map((lead, idx) => {
                     const hasDrawings = lead.designFiles && lead.designFiles.length > 0;
                     const hasAcceptedQuote = Array.isArray(lead.quotations) && lead.quotations.some((q: any) => 
@@ -315,143 +315,150 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                       'Won',
                       'Converted',
                     ].includes(lead.status);
+                    const assignedName = displayUserName(lead.assignedSalesExecutive);
 
                     return (
                       <tr
                         key={lead._id}
                         onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=designs`)}
-                        className="hover:bg-[hsl(var(--accent))] transition-colors group cursor-pointer"
+                        className="hover:bg-[hsl(var(--muted)/0.35)] transition-colors group cursor-pointer"
                       >
-                        {/* Lead Info */}
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-9 h-9 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 font-extrabold text-xs shrink-0">
+                        {/* 1. Lead & Contact */}
+                        <td className="px-4.5 py-3">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/25 flex items-center justify-center text-indigo-600 font-black text-xs shrink-0 shadow-xs">
                               {lead.name.charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div 
-                                className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-indigo-600 transition-colors truncate max-w-[140px] sm:max-w-[200px] lg:max-w-[280px]"
-                                title={lead.name}
-                              >
-                                {lead.name}
-                              </div>
-                              <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="text-[10px] font-mono font-bold text-indigo-600 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20 shrink-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span 
+                                  className="font-bold text-xs text-[hsl(var(--foreground))] group-hover:text-indigo-600 transition-colors truncate max-w-[160px] lg:max-w-[220px]"
+                                  title={lead.name}
+                                >
+                                  {lead.name}
+                                </span>
+                                <span className="text-[10px] font-mono font-bold text-indigo-600 bg-indigo-500/10 px-1.5 py-0.2 rounded border border-indigo-500/20 shrink-0">
                                   {lead.leadNumber || 'LD-XXXX'}
                                 </span>
-                                <span className="text-[11px] text-[hsl(var(--muted-foreground))] truncate">
-                                  {lead.mobileNumber}
-                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[hsl(var(--muted-foreground))]">
+                                <span className="font-medium text-[hsl(var(--foreground))]">{lead.mobileNumber}</span>
                               </div>
                             </div>
                           </div>
                         </td>
 
-                        {/* Location */}
-                        <td className="px-6 py-4 space-y-0.5 text-xs">
-                          <div className="flex items-center gap-1.5 text-[hsl(var(--foreground))] font-semibold" title={lead.propertyType || 'Residential'}>
-                            <Home size={13} className="text-[hsl(var(--muted-foreground))] shrink-0" />
-                            <span className="truncate max-w-[140px] sm:max-w-[180px]">{lead.propertyType || 'Residential'}</span>
+                        {/* 2. Property & Location */}
+                        <td className="px-4 py-3">
+                          <div className="min-w-0 space-y-0.5">
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--foreground))] truncate" title={lead.propertyType || 'Residential'}>
+                              <Home size={12} className="text-amber-500 shrink-0" />
+                              <span className="truncate">{lead.propertyType || 'Residential'}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-[11px] text-[hsl(var(--muted-foreground))] truncate" title={lead.projectLocation || lead.city || 'Location Pending'}>
+                              <MapPin size={11} className="shrink-0 text-indigo-500" />
+                              <span className="truncate">{lead.projectLocation || lead.city || 'Location Pending'}</span>
+                            </div>
                           </div>
-                          <div className="text-[11px] text-[hsl(var(--muted-foreground))] flex items-center gap-1 truncate max-w-[160px] lg:max-w-[220px]" title={lead.projectLocation || lead.city || 'Location Pending'}>
-                            <MapPin size={11} className="shrink-0 text-indigo-500" />
-                            <span className="truncate">{lead.projectLocation || lead.city || 'Location Pending'}</span>
-                          </div>
                         </td>
 
-                        {/* Assigned To */}
-                        <td className="px-6 py-4">
-                          {lead.assignedSalesExecutive ? (
-                            <div 
-                              className="flex items-center gap-1.5 text-xs font-bold text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] max-w-[140px] sm:max-w-[180px]"
-                              title={displayUserName(lead.assignedSalesExecutive)}
-                            >
-                              <User size={13} className="text-indigo-600 shrink-0" />
-                              <span className="truncate">{displayUserName(lead.assignedSalesExecutive)}</span>
+                        {/* 3. Drawings & Status */}
+                        <td className="px-4 py-3">
+                          <div className="min-w-0 space-y-1">
+                            <div>
+                              {hasDrawings ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 text-[10px] font-bold">
+                                  <FileText size={10} />
+                                  {lead.designFiles.length} file{lead.designFiles.length === 1 ? '' : 's'}
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-700 text-[10px] font-bold">
+                                  <Upload size={10} /> Pending
+                                </span>
+                              )}
                             </div>
-                          ) : (
-                            <span className="text-xs text-[hsl(var(--muted-foreground))] italic">Unassigned</span>
-                          )}
-                        </td>
-
-                        {/* Drawings / Files */}
-                        <td className="px-6 py-4">
-                          {hasDrawings ? (
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 text-xs font-bold">
-                              <FileText size={12} />
-                              {lead.designFiles.length} file{lead.designFiles.length === 1 ? '' : 's'} uploaded
-                            </div>
-                          ) : (
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-700 text-xs font-bold">
-                              <Upload size={12} />
-                              Drawings Pending
-                            </div>
-                          )}
-                        </td>
-
-                        {/* Status */}
-                        <td className="px-6 py-4">
-                          <span
-                            className={cn(
-'inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border',
-                              hasDrawings
-                                ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
-                                : 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20'
-                            )}
-                          >
-                            {lead.status}
-                          </span>
-                        </td>
-
-                        {/* Actions */}
-                        <td className="px-6 py-4 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            onClick={() => onUploadDesign(lead._id)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] rounded-lg text-xs font-bold transition-all border border-[hsl(var(--border))] cursor-pointer"
-                          >
-                            <Upload size={13} className="text-indigo-600" />
-                            {hasDrawings ? 'Edit Drawings' : 'Upload Drawing'}
-                          </button>
-
-                          {hasDrawings && (
-                            <button
-                              onClick={() => setShareLead(lead)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 rounded-lg text-xs font-bold transition-all border border-indigo-500/20 cursor-pointer"
-                              title="Share Drawings with Client via Link"
-                            >
-                              <Share2 size={13} className="text-indigo-600" />
-                              Share Link
-                            </button>
-                          )}
-
-                          {hasDrawings &&
-                            onPassToBoq &&
-                            (isPassedToNext ? (
+                            <div>
                               <span
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-xs font-bold"
-                                title="Lead has already been passed to BOQ"
+                                className={cn(
+                                  'inline-flex items-center px-2 py-0.2 rounded-full text-[9px] font-bold tracking-tight uppercase border',
+                                  hasDrawings
+                                    ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                                    : 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20'
+                                )}
                               >
-                                Passed to BOQ 
+                                {lead.status}
                               </span>
-                            ) : (
-                              <button
-                                onClick={() => onPassToBoq(lead._id)}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
-                                title="Pass to BOQ Estimation"
-                              >
-                                Pass to BOQ <ArrowRight size={13} />
-                              </button>
-                            ))}
+                            </div>
+                          </div>
+                        </td>
 
-                          {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 ml-2 cursor-pointer"
-                              title="Mark as Lost"
+                        {/* 4. Assigned Rep */}
+                        <td className="px-4 py-3">
+                          {assignedName ? (
+                            <div 
+                              className="inline-flex items-center gap-1.5 text-xs font-medium text-[hsl(var(--foreground))] bg-[hsl(var(--muted)/0.5)] px-2 py-1 rounded-lg border border-[hsl(var(--border))] max-w-[130px] truncate"
+                              title={assignedName}
                             >
-                              <XCircle size={14} />
-                            </button>
+                              <User size={12} className="text-indigo-600 shrink-0" />
+                              <span className="truncate">{assignedName}</span>
+                            </div>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] text-[hsl(var(--muted-foreground))] italic">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> Unassigned
+                            </span>
                           )}
+                        </td>
+
+                        {/* 5. Actions */}
+                        <td className="px-4.5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => onUploadDesign(lead._id)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] rounded-lg text-xs font-bold transition-all border border-[hsl(var(--border))] cursor-pointer shadow-xs"
+                            >
+                              <Upload size={11} className="text-indigo-600" />
+                              {hasDrawings ? 'Edit' : 'Upload'}
+                            </button>
+
+                            {hasDrawings && (
+                              <button
+                                onClick={() => setShareLead(lead)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 rounded-lg text-xs font-bold transition-all border border-indigo-500/20 cursor-pointer shadow-xs"
+                                title="Share Drawings Link"
+                              >
+                                <Share2 size={11} /> Share
+                              </button>
+                            )}
+
+                            {hasDrawings &&
+                              onPassToBoq &&
+                              (isPassedToNext ? (
+                                <span
+                                  className="inline-flex items-center gap-1 px-2 py-1 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[11px] font-bold"
+                                  title="Passed to BOQ"
+                                >
+                                  Passed 
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => onPassToBoq(lead._id)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                  title="Pass to BOQ Estimation"
+                                >
+                                  Pass <ArrowRight size={11} />
+                                </button>
+                              ))}
+
+                            {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
+                                className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
+                                title="Mark as Lost"
+                              >
+                                <XCircle size={13} />
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );

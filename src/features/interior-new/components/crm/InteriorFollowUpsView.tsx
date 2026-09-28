@@ -280,107 +280,123 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
               ))}
             </div>
 
-            {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left border-collapse whitespace-nowrap">
-                <thead>
-                  <tr className="border-b border-[hsl(var(--border))] text-[11px] font-black uppercase tracking-wider text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.3)]">
-                    <th className="px-6 py-4">Lead / Customer</th>
-                    <th className="px-6 py-4">Assigned Member</th>
-                    <th className="px-6 py-4">Follow-up Type</th>
-                    <th className="px-6 py-4">Scheduled Date</th>
-                    <th className="px-6 py-4">Remarks / Notes</th>
-                    <th className="px-6 py-4 text-center">Status</th>
-                    <th className="px-6 py-4 text-right">Action</th>
+            {/* DESKTOP TABLE VIEW (>= md) - Senior Enterprise CRM Table */}
+            <div className="hidden md:block w-full">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-[hsl(var(--muted)/0.45)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] text-[11px] font-bold uppercase tracking-wider">
+                  <tr>
+                    <th className="px-4.5 py-3 rounded-tl-2xl w-[28%]">Lead / Customer</th>
+                    <th className="px-4 py-3 w-[16%]">Assigned Rep</th>
+                    <th className="px-4 py-3 w-[28%]">Activity & Notes</th>
+                    <th className="px-4 py-3 w-[14%]">Status</th>
+                    <th className="px-4.5 py-3 text-right rounded-tr-2xl w-[14%]">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[hsl(var(--border))] text-xs">
+                <tbody className="divide-y divide-[hsl(var(--border)/0.7)] text-xs">
                   {filteredFollowUps.map((act) => (
                     <tr
                       key={act._id}
                       onClick={() => router.push(`/interior-new/crm/leads/${act.customer?._id}`)}
-                      className="hover:bg-[hsl(var(--accent))] transition-colors group cursor-pointer"
+                      className="hover:bg-[hsl(var(--muted)/0.35)] transition-colors group cursor-pointer"
                     >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-9 h-9 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 font-extrabold text-xs shrink-0">
+                      {/* 1. Lead / Customer */}
+                      <td className="px-4.5 py-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-600 font-black text-xs shrink-0 shadow-xs">
                             {act.customer?.name?.charAt(0).toUpperCase() || '?'}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div 
-                              className="font-extrabold text-xs text-[hsl(var(--foreground))] group-hover:text-amber-600 transition-colors truncate max-w-[120px] sm:max-w-[180px] lg:max-w-[240px]"
-                              title={act.customer?.name || 'Unknown'}
-                            >
-                              {act.customer?.name || 'Unknown'}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span 
+                                className="font-bold text-xs text-[hsl(var(--foreground))] group-hover:text-amber-600 transition-colors truncate max-w-[150px] lg:max-w-[200px]"
+                                title={act.customer?.name || 'Unknown'}
+                              >
+                                {act.customer?.name || 'Unknown'}
+                              </span>
+                              <span className="text-[10px] font-mono font-bold text-purple-600 bg-purple-500/10 px-1.5 py-0.2 rounded border border-purple-500/20 shrink-0">
+                                {act.customer?.leadNumber || 'LD-XXXX'}
+                              </span>
                             </div>
-                            <div className="flex items-center gap-1.5 text-[10px]">
-                              <span className="font-mono text-purple-600 bg-purple-500/10 px-1 py-0.2 rounded font-bold shrink-0">{act.customer?.leadNumber || 'LD-XXXX'}</span>
-                              {act.customer?.mobileNumber && (
-                                <>
-                                  <span className="text-[hsl(var(--muted-foreground))]">•</span>
-                                  <span className="text-[hsl(var(--muted-foreground))] truncate">{act.customer.mobileNumber}</span>
-                                </>
-                              )}
+                            <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[hsl(var(--muted-foreground))]">
+                              <span className="font-medium text-[hsl(var(--foreground))]">{act.customer?.mobileNumber || '-'}</span>
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+
+                      {/* 2. Assigned Rep */}
+                      <td className="px-4 py-3">
                         {act.customer?.assignedSalesExecutive ? (
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] w-max">
-                            <UserCircle size={13} className="text-amber-600" />
-                            {displayUserName(act.customer.assignedSalesExecutive)}
+                          <div 
+                            className="inline-flex items-center gap-1.5 text-xs font-medium text-[hsl(var(--foreground))] bg-[hsl(var(--muted)/0.5)] px-2 py-1 rounded-lg border border-[hsl(var(--border))] max-w-[130px] truncate"
+                            title={displayUserName(act.customer.assignedSalesExecutive)}
+                          >
+                            <UserCircle size={13} className="text-amber-600 shrink-0" />
+                            <span className="truncate">{displayUserName(act.customer.assignedSalesExecutive)}</span>
                           </div>
                         ) : (
-                          <span className="text-xs text-[hsl(var(--muted-foreground))] italic">Unassigned</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-black tracking-wider uppercase bg-blue-500/10 text-blue-600 border border-blue-500/20">
-                          {act.type || 'Phone Call'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        {act.status === 'Completed' ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 text-xs font-bold">
-                            <CheckCircle size={12} /> {new Date(act.completedDate || act.updatedAt || act.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-700 text-xs font-bold">
-                            <Clock size={12} /> {new Date(act.scheduledDate || act.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                          <span className="inline-flex items-center gap-1 text-[11px] text-[hsl(var(--muted-foreground))] italic">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> Unassigned
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-xs text-[hsl(var(--muted-foreground))] max-w-[200px] truncate" title={act.remarks || ''}>
-                        {act.remarks || <span className="italic text-[hsl(var(--muted-foreground)/0.6)]">No remarks</span>}
+
+                      {/* 3. Activity & Notes */}
+                      <td className="px-4 py-3">
+                        <div className="min-w-0 space-y-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-bold tracking-tight uppercase bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                              {act.type || 'Phone Call'}
+                            </span>
+                            {act.status === 'Completed' ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600">
+                                <CheckCircle size={10} /> {new Date(act.completedDate || act.updatedAt || act.createdAt).toLocaleDateString()}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600">
+                                <Clock size={10} /> {new Date(act.scheduledDate || act.createdAt).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                          {act.remarks ? (
+                            <div className="text-[11px] text-[hsl(var(--muted-foreground))] max-w-[220px] truncate" title={act.remarks}>
+                              {act.remarks}
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-[hsl(var(--muted-foreground)/0.6)] italic">No remarks</span>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase border', act.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border-amber-500/20')}>
+
+                      {/* 4. Status */}
+                      <td className="px-4 py-3">
+                        <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold tracking-tight uppercase border', act.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border-amber-500/20')}>
                           {act.status === 'Completed' ? 'Completed ' : 'Pending'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-2">
+
+                      {/* 5. Actions */}
+                      <td className="px-4.5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-1.5">
                           {act.status === 'Pending' && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onPassToSiteVisit(act.customer?._id || act.customer?.id);
                               }}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm"
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
                               title="Complete Follow-up and Send to Site Visit"
                             >
-                              <CheckCircle2 size={13} />
-                            
+                              <CheckCircle2 size={12} /> Complete
                             </button>
                           )}
                           {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(act.customer?.status) && (
                             <button
                               onClick={(e) => { e.stopPropagation(); onMarkAsLost(act.customer?._id); }}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
+                              className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
                               title="Mark as Lost"
                             >
-                              <XCircle size={14} />
+                              <XCircle size={13} />
                             </button>
                           )}
                         </div>
