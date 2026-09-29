@@ -247,10 +247,10 @@ export function InteriorQuotationsView({
                           ) : latestQuote.status === 'Draft' ? (
                             <button
                               onClick={() => onCreateQuotation(lead._id)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                              className="p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold active:scale-95 cursor-pointer inline-flex items-center justify-center"
                               title="Edit draft quotation"
                             >
-                              <Edit3 size={11} /> Edit Draft
+                              <Edit3 size={13} className="text-indigo-600" />
                             </button>
                           ) : null}
                           <button
@@ -430,10 +430,10 @@ export function InteriorQuotationsView({
                                 ) : latestQuote.status === 'Draft' ? (
                                   <button
                                     onClick={() => onCreateQuotation(lead._id)}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                    className="p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs inline-flex items-center justify-center"
                                     title="Edit draft quotation"
                                   >
-                                    <Edit3 size={11} /> Edit
+                                    <Edit3 size={13} className="text-indigo-600" />
                                   </button>
                                 ) : null}
                                 <button

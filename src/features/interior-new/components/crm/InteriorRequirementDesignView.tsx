@@ -3,7 +3,7 @@
 // Enhanced Requirement & Design View with Search, Pagination, and Flow Handlers
 
 import React, { useState, useMemo } from 'react';
-import { ArrowRight, User, FileText, PenTool, Search, ChevronLeft, ChevronRight, Sparkles, XCircle, Home, Layers } from 'lucide-react';
+import { ArrowRight, User, FileText, PenTool, Pencil, Search, ChevronLeft, ChevronRight, XCircle, Home, Layers } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
@@ -217,13 +217,20 @@ export const InteriorRequirementDesignView = ({
                     <button
                       onClick={() => onLogRequirements(lead._id)}
                       className={cn(
-                        'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
+                        'inline-flex items-center justify-center rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
                         lead.requirements && lead.requirements.length > 0
-                          ? 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
-                          : 'bg-emerald-600 text-white'
+                          ? 'p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
+                          : 'gap-1 px-2.5 py-1.5 bg-emerald-600 text-white'
                       )}
+                      title="Configure Rooms & Scope"
                     >
-                      <Layers size={11} /> {lead.requirements && lead.requirements.length > 0 ? 'Edit Scope' : 'Log Scope'}
+                      {lead.requirements && lead.requirements.length > 0 ? (
+                        <Pencil size={13} className="text-emerald-600" />
+                      ) : (
+                        <>
+                          <Layers size={11} /> Log Scope
+                        </>
+                      )}
                     </button>
 
                     {lead.requirements && lead.requirements.length > 0 && handlePassToNext && (
@@ -347,13 +354,16 @@ export const InteriorRequirementDesignView = ({
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => onLogRequirements(lead._id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                            className={cn(
+                              "inline-flex items-center justify-center rounded-lg text-xs font-bold transition-all border cursor-pointer shadow-xs",
+                              lead.requirements && lead.requirements.length > 0
+                                ? "p-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
+                                : "gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
+                            )}
                             title="Configure Rooms & Scope"
                           >
                             {lead.requirements && lead.requirements.length > 0 ? (
-                              <>
-                                <Sparkles size={11} className="text-emerald-600" /> Edit
-                              </>
+                              <Pencil size={13} className="text-emerald-600" />
                             ) : (
                               '+ Rooms'
                             )}

@@ -628,9 +628,15 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                         {activeTab === 'boq' && onAddBoq && (
                           <button
                             onClick={() => onAddBoq(lead._id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-teal-600 text-white rounded-xl text-xs font-bold active:scale-95"
+                            className={cn(
+                              "inline-flex items-center justify-center rounded-xl text-xs font-bold active:scale-95",
+                              (!lead.boqs || lead.boqs.length === 0)
+                                ? "gap-1 px-2.5 py-1.5 bg-teal-600 text-white"
+                                : "p-2 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]"
+                            )}
+                            title={(!lead.boqs || lead.boqs.length === 0) ? 'Create BOQ' : 'Edit BOQ'}
                           >
-                            {(!lead.boqs || lead.boqs.length === 0) ? '+ BOQ' : 'Edit'}
+                            {(!lead.boqs || lead.boqs.length === 0) ? '+ BOQ' : <Pencil size={13} />}
                           </button>
                         )}
 
@@ -836,9 +842,15 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                                 return (
                                   <button
                                     onClick={() => onAddBoq(lead._id, (lead.boqs && lead.boqs.length > 0) ? lead.boqs.length - 1 : undefined)}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-teal-600 text-white hover:bg-teal-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                    className={cn(
+                                      "inline-flex items-center justify-center rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs",
+                                      (!lead.boqs || lead.boqs.length === 0)
+                                        ? "gap-1 px-2.5 py-1.5 bg-teal-600 text-white hover:bg-teal-700"
+                                        : "p-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]"
+                                    )}
+                                    title={(!lead.boqs || lead.boqs.length === 0) ? 'Create BOQ' : 'Edit BOQ'}
                                   >
-                                    {(!lead.boqs || lead.boqs.length === 0) ? '+ BOQ' : 'Edit BOQ'}
+                                    {(!lead.boqs || lead.boqs.length === 0) ? '+ BOQ' : <Pencil size={13} className="text-teal-600" />}
                                   </button>
                                 );
                               })()

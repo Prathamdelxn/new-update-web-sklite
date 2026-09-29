@@ -17,6 +17,8 @@ import {
   Building2,
   XCircle,
   Lock,
+  Pencil,
+  Plus,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -242,13 +244,20 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                           <button
                             onClick={() => onAddBoq(lead._id, hasBoqs ? (lead.boqs.length - 1) : undefined)}
                             className={cn(
-                              'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
+                              'inline-flex items-center justify-center rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
                               hasBoqs
-                                ? 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
-                                : 'bg-blue-600 text-white'
+                                ? 'p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
+                                : 'gap-1 px-2.5 py-1.5 bg-blue-600 text-white'
                             )}
+                            title={hasBoqs ? 'Edit BOQ' : 'Create BOQ'}
                           >
-                            <FileSpreadsheet size={11} /> {hasBoqs ? 'Edit BOQ' : 'Create BOQ'}
+                          {hasBoqs ? (
+                            <Pencil size={13} className="text-blue-600" />
+                          ) : (
+                            <>
+                              <Plus size={11} /> Create BOQ
+                            </>
+                          )}
                           </button>
 
                           {hasBoqs &&
@@ -398,10 +407,21 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                               <>
                                 <button
                                   onClick={() => onAddBoq(lead._id, hasBoqs ? (lead.boqs.length - 1) : undefined)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] rounded-lg text-xs font-bold transition-all border border-[hsl(var(--border))] cursor-pointer shadow-xs"
+                                  className={cn(
+                                    "inline-flex items-center justify-center rounded-lg text-xs font-bold transition-all border cursor-pointer shadow-xs",
+                                    hasBoqs
+                                      ? "p-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
+                                      : "gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
+                                  )}
+                                  title={hasBoqs ? 'Edit BOQ' : 'Create BOQ'}
                                 >
-                                  <Calculator size={11} className="text-blue-600" />
-                                  {hasBoqs ? 'Edit' : '+ BOQ'}
+                                  {hasBoqs ? (
+                                    <Pencil size={13} className="text-blue-600" />
+                                  ) : (
+                                    <>
+                                      <Plus size={11} className="text-blue-600" /> BOQ
+                                    </>
+                                  )}
                                 </button>
 
                                 {hasBoqs &&

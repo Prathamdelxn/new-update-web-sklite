@@ -10,6 +10,7 @@ import { X, History, Calendar, Clock, User, Phone, FileText, AlertCircle } from 
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
 import { validateFutureDate, validateNonEmpty, ValidationErrors, getMinDateTimeLocal } from '@/lib/crmValidation';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ScheduleFollowUpModalProps {
   isOpen: boolean;
@@ -54,6 +55,7 @@ export function InteriorScheduleFollowUpModal({
   initialData = null,
 }: ScheduleFollowUpModalProps) {
   const toast = useToast();
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
 
@@ -146,6 +148,9 @@ export function InteriorScheduleFollowUpModal({
       }
 
       toast.success(initialData?._id ? 'Follow-up rescheduled successfully!' : 'Follow-up scheduled successfully!');
+      queryClient.invalidateQueries({ queryKey: ['crm-follow-ups-all'] });
+      queryClient.invalidateQueries({ queryKey: ['crm-leads-list'] });
+      queryClient.invalidateQueries({ queryKey: ['crm-follow-ups'] });
       onSuccess();
       onClose();
       setErrors({});

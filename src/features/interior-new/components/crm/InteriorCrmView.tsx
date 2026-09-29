@@ -105,6 +105,10 @@ export default function InteriorCrmView() {
 
   const fetchLeads = useCallback(async () => {
     queryClient.invalidateQueries({ queryKey: ['crm-leads-list'] });
+    queryClient.invalidateQueries({ queryKey: ['crm-follow-ups-all'] });
+    queryClient.invalidateQueries({ queryKey: ['crm-follow-ups'] });
+    queryClient.invalidateQueries({ queryKey: ['crm-pending-activities'] });
+    queryClient.invalidateQueries({ queryKey: ['crm-won-projects'] });
     await refetchLeads();
   }, [queryClient, refetchLeads]);
 

@@ -60,8 +60,13 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
       }
       return deduped;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
+
+  React.useEffect(() => {
+    refetch();
+  }, [refreshTrigger, refetch]);
 
   const handleCompleteActivity = async (activityId: string, e: React.MouseEvent) => {
     e.stopPropagation();

@@ -18,6 +18,7 @@ import {
   UploadCloud,
   XCircle,
   Share2,
+  Pencil,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -248,13 +249,20 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                         <button
                           onClick={() => onUploadDesign(lead._id)}
                           className={cn(
-                            'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
+                            'inline-flex items-center justify-center rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
                             hasDrawings
-                              ? 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
-                              : 'bg-indigo-600 text-white'
+                              ? 'p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
+                              : 'gap-1 px-2.5 py-1.5 bg-indigo-600 text-white'
                           )}
+                          title={hasDrawings ? 'Edit Drawing Files' : 'Upload Drawings'}
                         >
-                          <UploadCloud size={11} /> {hasDrawings ? 'Manage Files' : 'Upload'}
+                          {hasDrawings ? (
+                            <Pencil size={13} className="text-indigo-600" />
+                          ) : (
+                            <>
+                              <UploadCloud size={11} /> Upload
+                            </>
+                          )}
                         </button>
 
                         {hasDrawings && (
@@ -268,20 +276,14 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                         )}
                       </div>
 
-                      {hasDrawings &&
-                        onPassToBoq &&
-                        (isPassedToNext ? (
-                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
-                            Passed 
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => onPassToBoq(lead._id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
-                          >
-                            Pass to BOQ <ArrowRight size={11} />
-                          </button>
-                        ))}
+                      {hasDrawings && onPassToBoq && !isPassedToNext && (
+                        <button
+                          onClick={() => onPassToBoq(lead._id)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                        >
+                          Pass to BOQ <ArrowRight size={11} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -414,10 +416,21 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                           <div className="flex items-center justify-end gap-1.5">
                             <button
                               onClick={() => onUploadDesign(lead._id)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] rounded-lg text-xs font-bold transition-all border border-[hsl(var(--border))] cursor-pointer shadow-xs"
+                              className={cn(
+                                "inline-flex items-center justify-center rounded-lg text-xs font-bold transition-all border cursor-pointer shadow-xs",
+                                hasDrawings
+                                  ? "p-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
+                                  : "gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
+                              )}
+                              title={hasDrawings ? 'Edit Drawing Files' : 'Upload Drawings'}
                             >
-                              <Upload size={11} className="text-indigo-600" />
-                              {hasDrawings ? 'Edit' : 'Upload'}
+                              {hasDrawings ? (
+                                <Pencil size={13} className="text-indigo-600" />
+                              ) : (
+                                <>
+                                  <Upload size={11} className="text-indigo-600" /> Upload
+                                </>
+                              )}
                             </button>
 
                             {hasDrawings && (
@@ -430,24 +443,15 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                               </button>
                             )}
 
-                            {hasDrawings &&
-                              onPassToBoq &&
-                              (isPassedToNext ? (
-                                <span
-                                  className="inline-flex items-center gap-1 px-2 py-1 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[11px] font-bold"
-                                  title="Passed to BOQ"
-                                >
-                                  Passed 
-                                </span>
-                              ) : (
-                                <button
-                                  onClick={() => onPassToBoq(lead._id)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                  title="Pass to BOQ Estimation"
-                                >
-                                  Pass <ArrowRight size={11} />
-                                </button>
-                              ))}
+                            {hasDrawings && onPassToBoq && !isPassedToNext && (
+                              <button
+                                onClick={() => onPassToBoq(lead._id)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                title="Pass to BOQ Estimation"
+                              >
+                                Pass <ArrowRight size={11} />
+                              </button>
+                            )}
 
                             {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
                               <button

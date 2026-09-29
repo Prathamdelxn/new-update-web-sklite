@@ -15,6 +15,7 @@ import {
   Ruler,
   XCircle,
   MessageSquare,
+  Pencil,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { interiorCrmService } from '@/services/interiorCrm.service';
@@ -266,13 +267,20 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                       <button
                         onClick={() => onLogSiteVisit(lead._id)}
                         className={cn(
-                          'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
+                          'inline-flex items-center justify-center rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
                           lead.siteMeasurements
-                            ? 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
-                            : 'bg-purple-600 text-white'
+                            ? 'p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
+                            : 'gap-1 px-2.5 py-1.5 bg-purple-600 text-white'
                         )}
+                        title="Edit Site Visit Measurements & Photos"
                       >
-                        <Ruler size={11} /> {lead.siteMeasurements ? 'Edit Specs' : 'Log Survey'}
+                        {lead.siteMeasurements ? (
+                          <Pencil size={13} className="text-purple-600" />
+                        ) : (
+                          <>
+                            <Ruler size={11} /> Log Survey
+                          </>
+                        )}
                       </button>
 
                       {lead.siteMeasurements && (
@@ -421,10 +429,10 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                             {lead.siteMeasurements ? (
                               <button
                                 onClick={() => onLogSiteVisit(lead._id)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                className="p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs inline-flex items-center justify-center"
                                 title="Edit Site Visit Measurements & Photos"
                               >
-                                <Ruler size={11} /> Edit
+                                <Pencil size={13} className="text-purple-600" />
                               </button>
                             ) : (
                               <button
