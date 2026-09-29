@@ -292,13 +292,25 @@ export default function InteriorCrmView() {
   const openSendToBoqModal = (leadId: string) => {
     const lead = leads.find(l => l._id === leadId);
     const designFiles = lead?.designFiles || [];
-    const hasPending = designFiles.some((f: any) => {
-      const s = f.approvalStatus || f.status || 'draft';
-      return s === 'draft' || s === 'pending_internal_approval' || s === 'internally_rejected' || f.clientStatus === 'client_changes_requested';
+    
+    if (designFiles.length === 0) {
+      toast.error('Cannot pass to BOQ: No drawings found. Please upload drawings first.');
+      return;
+    }
+
+    const unapproved = designFiles.filter((f: any) => {
+      const latestVersion = Array.isArray(f.versions) && f.versions.length > 0 
+        ? f.versions[f.versions.length - 1] 
+        : null;
+      const rawStatus = f.status || f.approvalStatus || latestVersion?.approvalStatus || 'draft';
+      const s = String(rawStatus).toLowerCase().trim();
+      const isApproved = s === 'internally_approved' || s === 'client_approved' || s === 'approved';
+      const isClientRejected = f.clientStatus === 'client_changes_requested' || latestVersion?.clientStatus === 'client_changes_requested';
+      return !isApproved || isClientRejected;
     });
 
-    if (hasPending) {
-      toast.error('Cannot pass to BOQ: Drawing approval is still pending. Please ensure all drawings are approved first.');
+    if (unapproved.length > 0) {
+      toast.error(`Cannot pass to BOQ: ${unapproved.length} of ${designFiles.length} drawing(s) are still drafted or pending approval. Please approve all drawings first.`);
       return;
     }
 

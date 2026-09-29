@@ -38,16 +38,27 @@ export function InteriorSendToBoqModal({ isOpen, onClose, customerId, onSuccess,
 
   const designFiles = lead?.designFiles || [];
   const pendingDrawings = designFiles.filter((f: any) => {
-    const s = f.approvalStatus || f.status || 'draft';
-    return s === 'draft' || s === 'pending_internal_approval' || s === 'internally_rejected' || f.clientStatus === 'client_changes_requested';
+    const latestVersion = Array.isArray(f.versions) && f.versions.length > 0 
+      ? f.versions[f.versions.length - 1] 
+      : null;
+    const rawStatus = f.status || f.approvalStatus || latestVersion?.approvalStatus || 'draft';
+    const s = String(rawStatus).toLowerCase().trim();
+    const isApproved = s === 'internally_approved' || s === 'client_approved' || s === 'approved';
+    const isClientRejected = f.clientStatus === 'client_changes_requested' || latestVersion?.clientStatus === 'client_changes_requested';
+    return !isApproved || isClientRejected;
   });
-  const hasPendingDrawings = pendingDrawings.length > 0;
+  const hasPendingDrawings = designFiles.length === 0 || pendingDrawings.length > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (hasPendingDrawings) {
-      toast.error('Cannot pass to BOQ: Drawing approval is still pending. Please approve all drawings first.');
+    if (designFiles.length === 0) {
+      toast.error('Cannot pass to BOQ: No drawings found. Please upload and approve drawings first.');
+      return;
+    }
+
+    if (pendingDrawings.length > 0) {
+      toast.error(`Cannot pass to BOQ: ${pendingDrawings.length} drawing(s) are still drafted/pending approval. Please approve all drawings first.`);
       return;
     }
 
@@ -128,16 +139,31 @@ export function InteriorSendToBoqModal({ isOpen, onClose, customerId, onSuccess,
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-4 bg-white">
-            {/* Drawing Status Alert (if any drawing is pending approval) */}
-            {hasPendingDrawings && (
+            {/* Drawing Status Alerts */}
+            {designFiles.length === 0 ? (
               <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl space-y-1">
                 <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
                   <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>Cannot Pass to BOQ — {pendingDrawings.length} Drawing(s) Pending Approval</span>
+                  <span>Cannot Pass to BOQ — No Drawings Uploaded</span>
                 </div>
                 <p className="text-[11px] text-amber-800 pl-6 leading-relaxed">
-                  Make sure all 2D layouts and 3D models are approved before passing this lead to the BOQ team.
+                  Please upload and approve drawings first before passing this lead to the BOQ team.
                 </p>
+              </div>
+            ) : pendingDrawings.length > 0 ? (
+              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl space-y-1">
+                <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>Cannot Pass to BOQ — {pendingDrawings.length} of {designFiles.length} Drawing(s) Not Approved</span>
+                </div>
+                <p className="text-[11px] text-amber-800 pl-6 leading-relaxed">
+                  All drafted 2D layouts and 3D models must be internally approved before passing this lead to estimation.
+                </p>
+              </div>
+            ) : (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-emerald-800 text-xs font-semibold">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>All {designFiles.length} drawing(s) are approved and ready for BOQ estimation.</span>
               </div>
             )}
 

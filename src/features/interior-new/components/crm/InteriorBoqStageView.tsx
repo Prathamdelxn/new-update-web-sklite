@@ -419,7 +419,7 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                                     <Pencil size={13} className="text-blue-600" />
                                   ) : (
                                     <>
-                                      <Plus size={11} className="text-blue-600" /> BOQ
+                                      <Plus size={11} className="text-blue-600" />BOQ
                                     </>
                                   )}
                                 </button>

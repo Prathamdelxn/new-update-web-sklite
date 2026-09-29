@@ -19,6 +19,9 @@ import {
   XCircle,
   Share2,
   Pencil,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -179,7 +182,20 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
             {/* MOBILE CARD VIEW (< md) */}
             <div className="block md:hidden divide-y divide-[hsl(var(--border))]">
               {paginatedLeads.map((lead, idx) => {
-                const hasDrawings = lead.designFiles && lead.designFiles.length > 0;
+                const designFiles = lead.designFiles || [];
+                const hasDrawings = designFiles.length > 0;
+                const pendingDrawings = designFiles.filter((f: any) => {
+                  const latestVersion = Array.isArray(f.versions) && f.versions.length > 0 
+                    ? f.versions[f.versions.length - 1] 
+                    : null;
+                  const rawStatus = f.status || f.approvalStatus || latestVersion?.approvalStatus || 'draft';
+                  const s = String(rawStatus).toLowerCase().trim();
+                  const isApproved = s === 'internally_approved' || s === 'client_approved' || s === 'approved';
+                  const isClientRejected = f.clientStatus === 'client_changes_requested' || latestVersion?.clientStatus === 'client_changes_requested';
+                  return !isApproved || isClientRejected;
+                });
+                const areAllDrawingsApproved = hasDrawings && pendingDrawings.length === 0;
+
                 const hasAcceptedQuote = Array.isArray(lead.quotations) && lead.quotations.some((q: any) => 
                   ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase())
                 );
@@ -225,11 +241,17 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                         className={cn(
                           'shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border',
                           hasDrawings
-                            ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
-                            : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                            ? areAllDrawingsApproved
+                              ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                              : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                            : 'bg-slate-500/10 text-slate-600 border-slate-500/20'
                         )}
                       >
-                        {hasDrawings ? `${lead.designFiles.length} Designs ` : 'Pending Design'}
+                        {hasDrawings 
+                          ? areAllDrawingsApproved 
+                            ? `✓ All ${designFiles.length} Approved` 
+                            : `${pendingDrawings.length} Pending Approval`
+                          : 'No Drawings'}
                       </span>
                     </div>
 
@@ -239,7 +261,7 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                         <span className="truncate text-[hsl(var(--foreground))]">{lead.propertyType || 'Residential'}</span>
                       </div>
                       <div className="text-[10px] text-[hsl(var(--muted-foreground))] shrink-0 font-medium">
-                        {hasDrawings ? `${lead.designFiles.length} files attached` : 'No drawings yet'}
+                        {hasDrawings ? `${designFiles.length} files attached` : 'No drawings yet'}
                       </div>
                     </div>
 
@@ -279,9 +301,19 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                       {hasDrawings && onPassToBoq && !isPassedToNext && (
                         <button
                           onClick={() => onPassToBoq(lead._id)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                          className={cn(
+                            "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all",
+                            areAllDrawingsApproved
+                              ? "bg-indigo-600 hover:bg-indigo-700 text-white active:scale-95 cursor-pointer"
+                              : "bg-amber-500/10 text-amber-700 border border-amber-500/20 hover:bg-amber-500/20 cursor-pointer"
+                          )}
+                          title={
+                            areAllDrawingsApproved 
+                              ? "Pass to BOQ Estimation" 
+                              : `Cannot pass to BOQ: ${pendingDrawings.length} drawing(s) still pending approval`
+                          }
                         >
-                          Pass to BOQ <ArrowRight size={11} />
+                          Pass to BOQ {areAllDrawingsApproved ? <ArrowRight size={11} /> : <AlertTriangle size={11} className="text-amber-600" />}
                         </button>
                       )}
                     </div>
@@ -304,7 +336,20 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border)/0.7)]">
                   {paginatedLeads.map((lead, idx) => {
-                    const hasDrawings = lead.designFiles && lead.designFiles.length > 0;
+                    const designFiles = lead.designFiles || [];
+                    const hasDrawings = designFiles.length > 0;
+                    const pendingDrawings = designFiles.filter((f: any) => {
+                      const latestVersion = Array.isArray(f.versions) && f.versions.length > 0 
+                        ? f.versions[f.versions.length - 1] 
+                        : null;
+                      const rawStatus = f.status || f.approvalStatus || latestVersion?.approvalStatus || 'draft';
+                      const s = String(rawStatus).toLowerCase().trim();
+                      const isApproved = s === 'internally_approved' || s === 'client_approved' || s === 'approved';
+                      const isClientRejected = f.clientStatus === 'client_changes_requested' || latestVersion?.clientStatus === 'client_changes_requested';
+                      return !isApproved || isClientRejected;
+                    });
+                    const areAllDrawingsApproved = hasDrawings && pendingDrawings.length === 0;
+
                     const hasAcceptedQuote = Array.isArray(lead.quotations) && lead.quotations.some((q: any) => 
                       ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase())
                     );
@@ -369,13 +414,20 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                           <div className="min-w-0 space-y-1">
                             <div>
                               {hasDrawings ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 text-[10px] font-bold">
-                                  <FileText size={10} />
-                                  {lead.designFiles.length} file{lead.designFiles.length === 1 ? '' : 's'}
-                                </span>
+                                areAllDrawingsApproved ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 text-[10px] font-bold" title="All drawings approved">
+                                    <CheckCircle2 size={10} />
+                                    {designFiles.length} Approved
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-700 text-[10px] font-bold" title={`${pendingDrawings.length} drawing(s) pending approval`}>
+                                    <Clock size={10} />
+                                    {pendingDrawings.length} Pending
+                                  </span>
+                                )
                               ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-700 text-[10px] font-bold">
-                                  <Upload size={10} /> Pending
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-500/10 border border-slate-500/20 text-slate-700 text-[10px] font-bold">
+                                  <Upload size={10} /> No Drawings
                                 </span>
                               )}
                             </div>
@@ -384,7 +436,9 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                                 className={cn(
                                   'inline-flex items-center px-2 py-0.2 rounded-full text-[9px] font-bold tracking-tight uppercase border',
                                   hasDrawings
-                                    ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                                    ? areAllDrawingsApproved
+                                      ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                                      : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
                                     : 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20'
                                 )}
                               >
@@ -446,10 +500,19 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                             {hasDrawings && onPassToBoq && !isPassedToNext && (
                               <button
                                 onClick={() => onPassToBoq(lead._id)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                title="Pass to BOQ Estimation"
+                                className={cn(
+                                  "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs",
+                                  areAllDrawingsApproved
+                                    ? "bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer active:scale-95"
+                                    : "bg-amber-500/10 text-amber-700 border border-amber-500/20 hover:bg-amber-500/20 cursor-pointer"
+                                )}
+                                title={
+                                  areAllDrawingsApproved 
+                                    ? "Pass to BOQ Estimation" 
+                                    : `Cannot pass to BOQ: ${pendingDrawings.length} drawing(s) still pending approval`
+                                }
                               >
-                                Pass <ArrowRight size={11} />
+                                Pass {areAllDrawingsApproved ? <ArrowRight size={11} /> : <AlertTriangle size={11} className="text-amber-600" />}
                               </button>
                             )}
 
