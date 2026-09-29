@@ -50,6 +50,48 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
   const [bgColor, setBgColor] = useState('#0f172a'); // default slate-900
   const [showHistoryPanel, setShowHistoryPanel] = useState(false);
   const [selectedVersionNum, setSelectedVersionNum] = useState<number>(1);
+  const [isDownloading, setIsDownloading] = useState<string | null>(null);
+
+  const handleDownloadFile = async (e: React.MouseEvent, url: string, name: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!url) return;
+    try {
+      setIsDownloading(url);
+      const response = await fetch(url, { mode: 'cors' });
+      if (!response.ok) throw new Error('Fetch failed');
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      let filename = name || 'drawing-model';
+      if (!filename.includes('.')) {
+        const cleanUrl = url.split('?')[0];
+        const ext = cleanUrl.split('.').pop();
+        if (ext && ext.length <= 5 && !ext.includes('/')) {
+          filename = `${filename}.${ext}`;
+        }
+      }
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+    } catch (err) {
+      console.warn('Fallback download:', err);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name || 'drawing-model';
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } finally {
+      setIsDownloading(null);
+    }
+  };
 
   // Three.js References
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -436,16 +478,20 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                 <span>Versions ({allVersions.length})</span>
               </button>
 
-              <a
-                href={activeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                download={activeName}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] text-xs font-bold rounded-xl transition-all border border-[hsl(var(--border))]"
+              <button
+                type="button"
+                onClick={(e) => handleDownloadFile(e, activeUrl, activeName)}
+                disabled={isDownloading === activeUrl}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] text-xs font-bold rounded-xl transition-all border border-[hsl(var(--border))] cursor-pointer disabled:opacity-50"
                 title={`Download v${activeVersionNum} File`}
               >
-                <Download size={14} /> Download v{activeVersionNum}
-              </a>
+                {isDownloading === activeUrl ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Download size={14} />
+                )}
+                <span>Download v{activeVersionNum}</span>
+              </button>
 
               <button
                 type="button"
@@ -542,14 +588,19 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                       </div>
                       <h3 className="text-lg font-black mb-1">3D File (v{activeVersionNum}) Ready for Download</h3>
                       <p className="text-xs text-slate-400 max-w-md mb-6">{loadError}</p>
-                      <a
-                        href={activeUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-2"
+                      <button
+                        type="button"
+                        onClick={(e) => handleDownloadFile(e, activeUrl, activeName)}
+                        disabled={isDownloading === activeUrl}
+                        className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer disabled:opacity-50"
                       >
-                        <Download size={15} /> Download {fileExt.toUpperCase()} File
-                      </a>
+                        {isDownloading === activeUrl ? (
+                          <Loader2 size={15} className="animate-spin" />
+                        ) : (
+                          <Download size={15} />
+                        )}
+                        <span>Download {fileExt.toUpperCase()} File</span>
+                      </button>
                     </div>
                   )}
 
@@ -649,15 +700,19 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                     This <strong>.{fileExt.toUpperCase()}</strong> architectural format for <strong>v{activeVersionNum}</strong> is optimized for native CAD & modeling engines (AutoCAD, SketchUp, Revit, 3ds Max).
                   </p>
                   <div className="flex items-center gap-3">
-                    <a
-                      href={activeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download={activeName}
-                      className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold flex items-center gap-2 transition-all active:scale-95 shadow-md shadow-indigo-600/30 cursor-pointer"
+                    <button
+                      type="button"
+                      onClick={(e) => handleDownloadFile(e, activeUrl, activeName)}
+                      disabled={isDownloading === activeUrl}
+                      className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold flex items-center gap-2 transition-all active:scale-95 shadow-md shadow-indigo-600/30 cursor-pointer disabled:opacity-50"
                     >
-                      <Download size={16} /> Download v{activeVersionNum} ({fileExt.toUpperCase()})
-                    </a>
+                      {isDownloading === activeUrl ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <Download size={16} />
+                      )}
+                      <span>Download v{activeVersionNum} ({fileExt.toUpperCase()})</span>
+                    </button>
                   </div>
                 </div>
               )}
@@ -783,17 +838,19 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                               {isSelected ? 'Currently Viewing' : 'Click to View'}
                               <ChevronRight size={11} />
                             </span>
-                            <a
-                              href={ver.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              download={ver.name || `drawing-v${ver.versionNumber}`}
-                              className="p-1 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] rounded transition"
+                            <button
+                              type="button"
+                              onClick={(e) => handleDownloadFile(e, ver.url, ver.name || `drawing-v${ver.versionNumber}`)}
+                              disabled={isDownloading === ver.url}
+                              className="p-1 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] rounded transition cursor-pointer disabled:opacity-50"
                               title="Download this version"
                             >
-                              <Download size={12} />
-                            </a>
+                              {isDownloading === ver.url ? (
+                                <Loader2 size={12} className="animate-spin" />
+                              ) : (
+                                <Download size={12} />
+                              )}
+                            </button>
                           </div>
                         </div>
                       );

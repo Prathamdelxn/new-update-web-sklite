@@ -15,6 +15,7 @@ import {
   Image as ImageIcon,
   FileText,
   Download,
+  Loader2,
   Eye,
   ZoomIn,
   ZoomOut,
@@ -109,6 +110,7 @@ export default function ClientDrawingSharePage() {
 
   // 3D Model Viewer Modal State
   const [active3DFile, setActive3DFile] = useState<any | null>(null);
+  const [downloadingUrl, setDownloadingUrl] = useState<string | null>(null);
 
   const fetchPublicData = async () => {
     try {
@@ -195,16 +197,51 @@ export default function ClientDrawingSharePage() {
     }
   };
 
-  const handleDownload = (e: React.MouseEvent, url: string, name: string) => {
+  const handleDownload = async (e: React.MouseEvent, url: string, name: string) => {
     e.stopPropagation();
-    if (!permissions.allowDownload) return;
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = name || 'drawing-file';
-    a.target = '_blank';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    if (!permissions.allowDownload || !url) return;
+
+    try {
+      setDownloadingUrl(url);
+      const response = await fetch(url, { mode: 'cors' });
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      // Determine proper file name with extension
+      let filename = name || 'drawing-file';
+      if (!filename.includes('.')) {
+        const cleanUrl = url.split('?')[0];
+        const ext = cleanUrl.split('.').pop();
+        if (ext && ext.length <= 5 && !ext.includes('/')) {
+          filename = `${filename}.${ext}`;
+        }
+      }
+
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      setTimeout(() => {
+        window.URL.revokeObjectURL(blobUrl);
+      }, 1000);
+    } catch (err) {
+      console.warn('Direct blob download failed, falling back to direct link trigger:', err);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name || 'drawing-file';
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } finally {
+      setDownloadingUrl(null);
+    }
   };
 
   // Loading Screen (Flat, Clean, Modern)
@@ -492,11 +529,16 @@ export default function ClientDrawingSharePage() {
                       </span>
                       {permissions.allowDownload && (
                         <button
+                          disabled={downloadingUrl === file.url}
                           onClick={(e) => handleDownload(e, file.url, file.name)}
-                          className="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                          className="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer disabled:opacity-50"
                           title="Download Plan"
                         >
-                          <Download size={12} />
+                          {downloadingUrl === file.url ? (
+                            <Loader2 size={12} className="animate-spin text-slate-900" />
+                          ) : (
+                            <Download size={12} />
+                          )}
                         </button>
                       )}
                     </div>
@@ -566,11 +608,16 @@ export default function ClientDrawingSharePage() {
 
                 {permissions.allowDownload && (
                   <button
+                    disabled={downloadingUrl === activeLightboxFile.url}
                     onClick={(e) => handleDownload(e, activeLightboxFile.url, activeLightboxFile.name)}
-                    className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer ml-1"
+                    className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer ml-1 disabled:opacity-50"
                     title="Download"
                   >
-                    <Download size={14} />
+                    {downloadingUrl === activeLightboxFile.url ? (
+                      <Loader2 size={14} className="animate-spin text-white" />
+                    ) : (
+                      <Download size={14} />
+                    )}
                   </button>
                 )}
 
