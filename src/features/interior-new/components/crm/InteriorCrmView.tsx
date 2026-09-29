@@ -29,6 +29,9 @@ import { InteriorUploadDesignModal } from './modals/InteriorUploadDesignModal';
 import { InteriorSendToDrawingModal } from './modals/InteriorSendToDrawingModal';
 import { InteriorSendToBoqModal } from './modals/InteriorSendToBoqModal';
 import { InteriorBoqBuilderModal } from './modals/InteriorBoqBuilderModal';
+import { InteriorDeleteBoqModal } from './modals/InteriorDeleteBoqModal';
+import { InteriorSendBoqForApprovalModal } from './modals/InteriorSendBoqForApprovalModal';
+import { InteriorBoqApprovalModal } from './modals/InteriorBoqApprovalModal';
 import { InteriorSendToQuotationsModal } from './modals/InteriorSendToQuotationsModal';
 import { InteriorQuotationBuilderModal } from './modals/InteriorQuotationBuilderModal';
 import { InteriorDeleteLeadModal } from './modals/InteriorDeleteLeadModal';
@@ -64,6 +67,11 @@ export default function InteriorCrmView() {
   const [isSendToDrawingOpen, setIsSendToDrawingOpen] = useState(false);
   const [isSendToBoqOpen, setIsSendToBoqOpen] = useState(false);
   const [isAddBoqOpen, setIsAddBoqOpen] = useState(false);
+  const [isDeleteBoqOpen, setIsDeleteBoqOpen] = useState(false);
+  const [isSendBoqApprovalOpen, setIsSendBoqApprovalOpen] = useState(false);
+  const [isBoqApprovalOpen, setIsBoqApprovalOpen] = useState(false);
+  const [boqApprovalAction, setBoqApprovalAction] = useState<'approve' | 'reject' | null>(null);
+  const [boqIndexForAction, setBoqIndexForAction] = useState<number | null>(null);
   const [editingBoqIndex, setEditingBoqIndex] = useState<number | null>(null);
   const [isSendToQuotationsOpen, setIsSendToQuotationsOpen] = useState(false);
   const [isQuotationBuilderOpen, setIsQuotationBuilderOpen] = useState(false);
@@ -331,6 +339,39 @@ export default function InteriorCrmView() {
     setIsAddBoqOpen(true);
   };
 
+  const openDeleteBoqModal = (leadId: string) => {
+    const lead = leads.find(l => l._id === leadId);
+    setActionLeadId(leadId);
+    setActionLeadName(lead?.name || '');
+    setIsDeleteBoqOpen(true);
+  };
+
+  const openSendBoqApprovalModal = (leadId: string, boqIndex?: number) => {
+    const lead = leads.find(l => l._id === leadId);
+    setActionLeadId(leadId);
+    setActionLeadName(lead?.name || '');
+    setBoqIndexForAction(boqIndex !== undefined ? boqIndex : null);
+    setIsSendBoqApprovalOpen(true);
+  };
+
+  const openApproveBoqModal = (leadId: string, boqIndex?: number) => {
+    const lead = leads.find(l => l._id === leadId);
+    setActionLeadId(leadId);
+    setActionLeadName(lead?.name || '');
+    setBoqIndexForAction(boqIndex !== undefined ? boqIndex : null);
+    setBoqApprovalAction('approve');
+    setIsBoqApprovalOpen(true);
+  };
+
+  const openRejectBoqModal = (leadId: string, boqIndex?: number) => {
+    const lead = leads.find(l => l._id === leadId);
+    setActionLeadId(leadId);
+    setActionLeadName(lead?.name || '');
+    setBoqIndexForAction(boqIndex !== undefined ? boqIndex : null);
+    setBoqApprovalAction('reject');
+    setIsBoqApprovalOpen(true);
+  };
+
   const openSendToQuotationsModal = (leadId: string) => {
     const lead = leads.find(l => l._id === leadId);
     setActionLeadId(leadId);
@@ -434,6 +475,10 @@ export default function InteriorCrmView() {
             onAddBoq={openAddBoqModal}
             onPassToQuotations={openSendToQuotationsModal}
             onMarkAsLost={openMarkAsLostModal}
+            onDeleteBoq={openDeleteBoqModal}
+            onSendForApproval={openSendBoqApprovalModal}
+            onApproveBoq={openApproveBoqModal}
+            onRejectBoq={openRejectBoqModal}
           />
         ) : activeTab === 'quotations' ? (
           <InteriorQuotationsView
@@ -632,6 +677,45 @@ export default function InteriorCrmView() {
           })()
         )}
         budgetRange={leads.find(l => l._id === actionLeadId)?.budgetRange || ''}
+        onSuccess={fetchLeads}
+      />
+
+      <InteriorDeleteBoqModal
+        isOpen={isDeleteBoqOpen}
+        onClose={() => setIsDeleteBoqOpen(false)}
+        customerId={actionLeadId || ''}
+        customerName={actionLeadName}
+        existingBoqs={leads.find(l => l._id === actionLeadId)?.boqs || []}
+        onSuccess={fetchLeads}
+      />
+
+      <InteriorSendBoqForApprovalModal
+        isOpen={isSendBoqApprovalOpen}
+        onClose={() => {
+          setIsSendBoqApprovalOpen(false);
+          setBoqIndexForAction(null);
+        }}
+        customerId={actionLeadId || ''}
+        customerName={actionLeadName}
+        existingBoqs={leads.find(l => l._id === actionLeadId)?.boqs || []}
+        boqIndex={boqIndexForAction}
+        users={users}
+        onSuccess={fetchLeads}
+      />
+
+      <InteriorBoqApprovalModal
+        isOpen={isBoqApprovalOpen}
+        onClose={() => {
+          setIsBoqApprovalOpen(false);
+          setBoqApprovalAction(null);
+          setBoqIndexForAction(null);
+        }}
+        customerId={actionLeadId || ''}
+        customerName={actionLeadName}
+        budgetRange={leads.find(l => l._id === actionLeadId)?.budgetRange || ''}
+        existingBoqs={leads.find(l => l._id === actionLeadId)?.boqs || []}
+        boqIndex={boqIndexForAction}
+        initialAction={boqApprovalAction}
         onSuccess={fetchLeads}
       />
 

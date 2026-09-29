@@ -29,6 +29,7 @@ import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { BOQ_UNITS } from '@/features/interior-new/components/crm/modals/InteriorBoqBuilderModal';
 
 interface InteriorBoqViewProps {
   projectId: string;
@@ -728,8 +729,22 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                               <td className="p-2">
                                 <Input type="number" required min={0.01} step="any" value={item.quantity} onChange={(e) => updateNewItemField(idx, 'quantity', parseFloat(e.target.value) || 0)} className="h-8 py-1 text-right" />
                               </td>
-                              <td className="p-2">
-                                <Input required placeholder="sqft" value={item.unit} onChange={(e) => updateNewItemField(idx, 'unit', e.target.value)} className="h-8 py-1 text-center" />
+                              <td className="p-2 min-w-[120px]">
+                                <select
+                                  value={(item.unit || 'sqft').toLowerCase()}
+                                  onChange={(e) => updateNewItemField(idx, 'unit', e.target.value)}
+                                  className="h-8 w-full rounded-md border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-2 text-xs font-semibold uppercase text-[hsl(var(--foreground))] focus:border-[hsl(var(--ring))] focus:outline-none cursor-pointer"
+                                >
+                                  {BOQ_UNITS.map((u) => (
+                                    <option key={u.value} value={u.value}>
+                                      {u.label}
+                                    </option>
+                                  ))}
+                                  {item.unit &&
+                                    !BOQ_UNITS.some((u) => u.value.toLowerCase() === item.unit.toLowerCase()) && (
+                                      <option value={item.unit}>{item.unit.toUpperCase()}</option>
+                                    )}
+                                </select>
                               </td>
                               <td className="p-2">
                                 <Input type="number" required min={0} step="any" value={item.rate} onChange={(e) => updateNewItemField(idx, 'rate', parseFloat(e.target.value) || 0)} className="h-8 py-1 text-right" />

@@ -120,7 +120,7 @@ export default function ClientDrawingSharePage() {
       if (res?.success && res?.data) {
         setPortalData(res.data);
         if (typeof document !== 'undefined' && res.data.lead?.name) {
-          document.title = `${res.data.lead.name} — Architectural Design Portfolio`;
+          document.title = `${res.data.lead.name} — Drawings Portfolio | SkyStruct Lite`;
         }
       } else {
         setError(res?.message || 'Drawing portfolio not found or link has expired.');
@@ -253,6 +253,10 @@ export default function ClientDrawingSharePage() {
         </div>
         <h2 className="text-sm font-semibold tracking-tight text-slate-900">Loading Drawing Portfolio</h2>
         <p className="text-xs text-slate-500 mt-1">Preparing verified architectural blueprints & renders...</p>
+        <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-400 mt-4 bg-white px-3 py-1 rounded-full border border-slate-200">
+          <span>Powered by</span>
+          <span className="text-slate-700 font-bold">SkyStruct Lite</span>
+        </div>
       </div>
     );
   }
@@ -270,7 +274,7 @@ export default function ClientDrawingSharePage() {
         </p>
         <div className="flex items-center gap-2 text-xs font-medium text-slate-600 bg-white px-3.5 py-2 rounded-lg border border-slate-200">
           <ShieldCheck size={14} className="text-slate-800" />
-          <span>Secure Architectural Client Portal</span>
+          <span>SkyStruct Lite Architectural Portal</span>
         </div>
       </div>
     );
@@ -310,8 +314,17 @@ export default function ClientDrawingSharePage() {
             </div>
           </div>
 
-          {/* Right: Verified Badge & Contact */}
+          {/* Right: SkyStruct Lite Badge, Verified Badge & Contact */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* SkyStruct Lite Software Badge */}
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-[11px] font-semibold bg-slate-900 text-white shadow-2xs">
+              <span className="w-3.5 h-3.5 rounded bg-blue-400 text-slate-950 font-black text-[9px] flex items-center justify-center">
+                S
+              </span>
+              <span className="">SkyStruct</span>
+              <span className="text-blue-400 font-extrabold">Lite</span>
+            </div>
+
             {org.phone && (
               <a
                 href={`tel:${org.phone}`}
@@ -323,7 +336,7 @@ export default function ClientDrawingSharePage() {
             )}
             <div className="inline-flex items-center gap-1.5 px-2 py-0.5 sm:py-1 rounded-md text-[10px] sm:text-[11px] font-medium bg-emerald-50 border border-emerald-200 text-emerald-700">
               <ShieldCheck size={12} className="text-emerald-600" />
-              <span>Verified Link</span>
+              <span className="hidden sm:inline">Verified Link</span>
             </div>
           </div>
         </div>
@@ -664,17 +677,28 @@ export default function ClientDrawingSharePage() {
         />
       )}
 
-      {/* Studio Footer (Compact) */}
-      <footer className="border-t border-slate-200 bg-white py-3 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-1.5">
-          <div className="flex items-center gap-1 font-medium text-slate-700 text-[11px]">
-            <span>{org.name || 'Studio'}</span>
-            <span className="text-slate-400">•</span>
-            <span className="text-slate-500">Client Design Portfolio</span>
+      {/* Studio & Software Footer */}
+      <footer className="border-t border-slate-200 bg-white py-3.5 text-center text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 font-medium text-slate-700 text-[11px]">
+            <span className="font-bold text-slate-900">{org.name || 'Interior Design Studio'}</span>
+            <span className="text-slate-300">•</span>
+            <span className="text-slate-500">Client Design & Blueprint Portfolio</span>
           </div>
-          <p className="text-[10px] text-slate-400">
-            © {new Date().getFullYear()} Protected Client Link
-          </p>
+
+          <div className="flex items-center gap-2 text-[11px] text-slate-500">
+            <span>Powered by</span>
+            <span className="inline-flex items-center gap-1 font-bold text-slate-900">
+              <span className="w-3.5 h-3.5 rounded bg-slate-900 text-cyan-300 flex items-center justify-center text-[9px] font-black">
+                S
+              </span>
+              <span>SkyStruct <strong className="text-indigo-600 font-black">Lite</strong></span>
+            </span>
+            <span className="text-slate-300 hidden sm:inline">•</span>
+            <span className="text-[10px] text-slate-400">
+              © {new Date().getFullYear()} Protected Architectural Link
+            </span>
+          </div>
         </div>
       </footer>
     </div>

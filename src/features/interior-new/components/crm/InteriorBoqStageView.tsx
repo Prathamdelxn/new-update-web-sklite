@@ -19,6 +19,11 @@ import {
   Lock,
   Pencil,
   Plus,
+  Trash2,
+  Send,
+  CheckCircle2,
+  ShieldCheck,
+  Clock,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -28,9 +33,22 @@ interface Props {
   onAddBoq: (leadId: string, boqIndex?: number) => void;
   onPassToQuotations?: (leadId: string) => void;
   onMarkAsLost?: (leadId: string) => void;
+  onDeleteBoq?: (leadId: string) => void;
+  onSendForApproval?: (leadId: string, boqIndex?: number) => void;
+  onApproveBoq?: (leadId: string, boqIndex?: number) => void;
+  onRejectBoq?: (leadId: string, boqIndex?: number) => void;
 }
 
-export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMarkAsLost }: Props) => {
+export const InteriorBoqStageView = ({
+  leads,
+  onAddBoq,
+  onPassToQuotations,
+  onMarkAsLost,
+  onDeleteBoq,
+  onSendForApproval,
+  onApproveBoq,
+  onRejectBoq,
+}: Props) => {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterState, setFilterState] = useState<'all' | 'pending' | 'completed'>('all');
@@ -213,13 +231,27 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
 
                       <span
                         className={cn(
-'shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border',
-                          hasBoqs
+                          'shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border',
+                          latestBoq?.status === 'approved'
                             ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                            : latestBoq?.status === 'pending_approval'
+                            ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                            : latestBoq?.status === 'rejected'
+                            ? 'bg-rose-500/10 text-rose-600 border-rose-500/20'
+                            : hasBoqs
+                            ? 'bg-blue-500/10 text-blue-600 border-blue-500/20'
                             : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
                         )}
                       >
-                        {hasBoqs ? `${lead.boqs.length} BOQ Estimation${lead.boqs.length === 1 ? '' : 's'} ` : 'Pending BOQ'}
+                        {latestBoq?.status === 'approved'
+                          ? '✓ BOQ Approved'
+                          : latestBoq?.status === 'pending_approval'
+                          ? '⏳ Review Pending'
+                          : latestBoq?.status === 'rejected'
+                          ? '✕ Rejected'
+                          : hasBoqs
+                          ? 'Draft BOQ'
+                          : 'Pending BOQ'}
                       </span>
                     </div>
 
@@ -229,7 +261,7 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                         <span className="truncate text-[hsl(var(--foreground))]">{lead.propertyType || 'Residential'}</span>
                       </div>
                       <div className="text-[10px] text-emerald-600 font-bold shrink-0">
-                        {hasBoqs ? `₹${(lead.boqs[lead.boqs.length - 1]?.totalAmount || 0).toLocaleString('en-IN')}` : 'No estimate'}
+                        {hasBoqs ? `₹${(latestBoq?.totalAmount || 0).toLocaleString('en-IN')}` : 'No estimate'}
                       </div>
                     </div>
 
@@ -240,25 +272,73 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                           <Lock size={11} /> Locked (Quote Approved)
                         </span>
                       ) : (
-                        <>
-                          <button
-                            onClick={() => onAddBoq(lead._id, hasBoqs ? (lead.boqs.length - 1) : undefined)}
-                            className={cn(
-                              'inline-flex items-center justify-center rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
-                              hasBoqs
-                                ? 'p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
-                                : 'gap-1 px-2.5 py-1.5 bg-blue-600 text-white'
+                        <div className="flex items-center gap-1.5 flex-wrap w-full justify-between">
+                          <div className="flex items-center gap-1.5">
+                            {/* 1. Approval Actions First */}
+                            {hasBoqs && latestBoq?.status === 'pending_approval' && (
+                              <>
+                                {onApproveBoq && (
+                                  <button
+                                    onClick={() => onApproveBoq(lead._id)}
+                                    className="inline-flex items-center gap-0.5 px-2 py-1.5 bg-emerald-600 text-white rounded-lg text-[11px] font-bold active:scale-95 cursor-pointer"
+                                    title="Approve BOQ"
+                                  >
+                                    <CheckCircle2 size={10} /> Approve
+                                  </button>
+                                )}
+                                {onRejectBoq && (
+                                  <button
+                                    onClick={() => onRejectBoq(lead._id)}
+                                    className="inline-flex items-center gap-0.5 px-2 py-1.5 bg-rose-600 text-white rounded-lg text-[11px] font-bold active:scale-95 cursor-pointer"
+                                    title="Reject / Request Changes"
+                                  >
+                                    <XCircle size={10} /> Reject
+                                  </button>
+                                )}
+                              </>
                             )}
-                            title={hasBoqs ? 'Edit BOQ' : 'Create BOQ'}
-                          >
-                          {hasBoqs ? (
-                            <Pencil size={13} className="text-blue-600" />
-                          ) : (
-                            <>
-                              <Plus size={11} /> Create BOQ
-                            </>
-                          )}
-                          </button>
+
+                            {hasBoqs && (!latestBoq?.status || latestBoq?.status === 'draft' || latestBoq?.status === 'rejected') && onSendForApproval && (
+                              <button
+                                onClick={() => onSendForApproval(lead._id)}
+                                className="inline-flex items-center gap-1 px-2 py-1.5 bg-indigo-600 text-white rounded-lg text-[11px] font-bold active:scale-95 cursor-pointer"
+                                title="Send BOQ for Approval"
+                              >
+                                <Send size={10} /> Send Approval
+                              </button>
+                            )}
+
+                            {/* 2. Edit BOQ */}
+                            <button
+                              onClick={() => onAddBoq(lead._id, hasBoqs ? (lead.boqs.length - 1) : undefined)}
+                              className={cn(
+                                'inline-flex items-center justify-center rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
+                                hasBoqs
+                                  ? 'p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
+                                  : 'gap-1 px-2.5 py-1.5 bg-blue-600 text-white'
+                              )}
+                              title={hasBoqs ? 'Edit BOQ' : 'Create BOQ'}
+                            >
+                            {hasBoqs ? (
+                              <Pencil size={13} className="text-blue-600" />
+                            ) : (
+                              <>
+                                <Plus size={11} /> Create BOQ
+                              </>
+                            )}
+                            </button>
+
+                            {/* 3. Delete BOQ */}
+                            {hasBoqs && onDeleteBoq && !isQuotationApproved && (
+                              <button
+                                onClick={() => onDeleteBoq(lead._id)}
+                                className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                                title="Delete BOQ"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
+                          </div>
 
                           {hasBoqs &&
                             onPassToQuotations &&
@@ -266,15 +346,16 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                               <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
                                 Passed 
                               </span>
-                            ) : (
+                            ) : latestBoq?.status === 'approved' ? (
                               <button
                                 onClick={() => onPassToQuotations(lead._id)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition-all bg-blue-600 text-white cursor-pointer shadow-xs"
+                                title="Pass to Quotation"
                               >
-                                Pass to Quotation <ArrowRight size={11} />
+                                Pass <ArrowRight size={11} />
                               </button>
-                            ))}
-                        </>
+                            ) : null)}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -287,11 +368,11 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
               <table className="w-full text-left text-xs border-collapse table-fixed">
                 <thead className="bg-[hsl(var(--muted)/0.45)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] text-[11px] font-bold uppercase tracking-wider">
                   <tr>
-                    <th className="px-4.5 py-3 rounded-tl-2xl w-[28%]">Lead & Contact</th>
-                    <th className="px-4 py-3 w-[22%]">Property & Location</th>
-                    <th className="px-4 py-3 w-[20%]">BOQ Value & Version</th>
-                    <th className="px-4 py-3 w-[15%]">Stage Status</th>
-                    <th className="px-4.5 py-3 text-right rounded-tr-2xl w-[15%]">Actions</th>
+                    <th className="px-4.5 py-3 rounded-tl-2xl w-[26%]">Lead & Contact</th>
+                    <th className="px-4 py-3 w-[20%]">Property & Location</th>
+                    <th className="px-4 py-3 w-[22%]">BOQ Value & Status</th>
+                    <th className="px-4 py-3 w-[12%]">Pipeline</th>
+                    <th className="px-4.5 py-3 text-right rounded-tr-2xl w-[20%]">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border)/0.7)]">
@@ -309,6 +390,12 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                       'Won',
                       'Converted',
                     ].includes(lead.status);
+
+                    const boqStatus = latestBoq?.status || 'draft';
+                    const isBoqApproved = boqStatus === 'approved';
+                    const isBoqPending = boqStatus === 'pending_approval';
+                    const isBoqRejected = boqStatus === 'rejected';
+                    const isBoqDraft = boqStatus === 'draft';
 
                     return (
                       <tr
@@ -355,17 +442,29 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                           </div>
                         </td>
 
-                        {/* 3. BOQ Summary & Value */}
+                        {/* 3. BOQ Summary & Value & Status */}
                         <td className="px-4 py-3">
                           {hasBoqs ? (
-                            <div className="space-y-0.5 min-w-0">
+                            <div className="space-y-1 min-w-0">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span 
-                                  className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-700 text-[10px] font-bold border border-blue-500/20 max-w-[150px] truncate"
+                                  className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-700 text-[10px] font-bold border border-blue-500/20 max-w-[140px] truncate"
                                   title={latestBoq?.title || `BOQ v${lead.boqs.length}`}
                                 >
                                   <FileSpreadsheet size={10} className="shrink-0" />
                                   <span className="truncate">v{lead.boqs.length} ({latestBoq?.title || 'Main'})</span>
+                                </span>
+                                <span className={cn(
+                                  "inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-extrabold border tracking-wider uppercase",
+                                  isBoqApproved
+                                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                                    : isBoqPending
+                                    ? "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30 animate-pulse"
+                                    : isBoqRejected
+                                    ? "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30"
+                                    : "bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/30"
+                                )}>
+                                  {isBoqApproved ? "Approved" : isBoqPending ? "Pending Review" : isBoqRejected ? "Rejected" : "Draft"}
                                 </span>
                               </div>
                               {latestBoq?.totalAmount ? (
@@ -395,7 +494,7 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
 
                         {/* 5. Actions */}
                         <td className="px-4.5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-end gap-1.5">
+                          <div className="flex items-center justify-end gap-1.5 flex-wrap">
                             {isQuotationApproved ? (
                               <span
                                 className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-lg text-[11px] font-bold"
@@ -405,6 +504,41 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                               </span>
                             ) : (
                               <>
+                                {/* 1. Approval Actions First */}
+                                {hasBoqs && isBoqPending && (
+                                  <>
+                                    {onApproveBoq && (
+                                      <button
+                                        onClick={() => onApproveBoq(lead._id)}
+                                        className="p-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                        title="Approve BOQ"
+                                      >
+                                        <CheckCircle2 size={13} />
+                                      </button>
+                                    )}
+                                    {onRejectBoq && (
+                                      <button
+                                        onClick={() => onRejectBoq(lead._id)}
+                                        className="p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                        title="Reject / Request Changes"
+                                      >
+                                        <XCircle size={13} />
+                                      </button>
+                                    )}
+                                  </>
+                                )}
+
+                                {hasBoqs && (isBoqDraft || isBoqRejected) && onSendForApproval && (
+                                  <button
+                                    onClick={() => onSendForApproval(lead._id)}
+                                    className="inline-flex items-center gap-1 px-2 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                    title="Send BOQ for Approval"
+                                  >
+                                    <Send size={11} /> Approval
+                                  </button>
+                                )}
+
+                                {/* 2. Edit BOQ */}
                                 <button
                                   onClick={() => onAddBoq(lead._id, hasBoqs ? (lead.boqs.length - 1) : undefined)}
                                   className={cn(
@@ -424,6 +558,17 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                                   )}
                                 </button>
 
+                                {/* 3. Delete BOQ */}
+                                {hasBoqs && onDeleteBoq && !isQuotationApproved && (
+                                  <button
+                                    onClick={() => onDeleteBoq(lead._id)}
+                                    className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                    title="Delete BOQ"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                )}
+
                                 {hasBoqs &&
                                   onPassToQuotations &&
                                   (isPassedToNext ? (
@@ -433,15 +578,15 @@ export const InteriorBoqStageView = ({ leads, onAddBoq, onPassToQuotations, onMa
                                     >
                                       Passed 
                                     </span>
-                                  ) : (
+                                  ) : isBoqApproved ? (
                                     <button
                                       onClick={() => onPassToQuotations(lead._id)}
-                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
                                       title="Pass to Quotation Phase"
                                     >
                                       Pass <ArrowRight size={11} />
                                     </button>
-                                  ))}
+                                  ) : null)}
                               </>
                             )}
                             

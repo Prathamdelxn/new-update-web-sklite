@@ -8,6 +8,25 @@ import { useToast } from '@/providers/ToastContext';
 import { Input } from '@/components/interior/ui'; // Since I'll use the Input component from UI
 import { parseMaxBudget } from '@/lib/utils';
 
+export const BOQ_UNITS = [
+  { value: 'sqft', label: 'SQFT' },
+  { value: 'sqm', label: 'SQM' },
+  { value: 'rft', label: 'RFT' },
+  { value: 'rmt', label: 'RMT' },
+  { value: 'nos', label: 'NOS' },
+  { value: 'pcs', label: 'PCS' },
+  { value: 'set', label: 'SET' },
+  { value: 'ls', label: 'LS' },
+  { value: 'cft', label: 'CFT' },
+  { value: 'cum', label: 'CUM' },
+  { value: 'kg', label: 'KG' },
+  { value: 'ton', label: 'TON' },
+  { value: 'ltr', label: 'LTR' },
+  { value: 'bags', label: 'BAGS' },
+  { value: 'box', label: 'BOX' },
+  { value: 'bundle', label: 'BUNDLE' },
+];
+
 interface BoqItem {
   serialNumber: number;
   category: string;
@@ -240,7 +259,7 @@ export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingB
                           <th className="p-3 w-40">Category</th>
                           <th className="p-3">Item Name</th>
                           <th className="p-3 w-24 text-right">Quantity</th>
-                          <th className="p-3 w-20 text-center">Unit</th>
+                          <th className="p-3 w-28 text-center">Unit</th>
                           <th className="p-3 w-28 text-right">Unit Rate (₹)</th>
                           <th className="p-3 w-32 text-right">Amount (₹)</th>
                           {!isReadOnly && <th className="p-3 w-12 text-center" />}
@@ -304,14 +323,22 @@ export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingB
                               />
                             </td>
                             <td className="p-2">
-                              <Input 
-                                required 
-                                placeholder="sqft" 
+                              <select
                                 disabled={isReadOnly}
-                                value={item.unit} 
-                                onChange={(e) => updateItemField(idx, 'unit', e.target.value)} 
-                                className="h-9 text-center uppercase" 
-                              />
+                                value={(item.unit || 'sqft').toLowerCase()}
+                                onChange={(e) => updateItemField(idx, 'unit', e.target.value)}
+                                className="h-9 w-full rounded-md border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-2 text-xs font-semibold uppercase tracking-wider text-[hsl(var(--foreground))] focus:border-[hsl(var(--ring))] focus:outline-none cursor-pointer"
+                              >
+                                {BOQ_UNITS.map((u) => (
+                                  <option key={u.value} value={u.value}>
+                                    {u.label}
+                                  </option>
+                                ))}
+                                {item.unit &&
+                                  !BOQ_UNITS.some((u) => u.value.toLowerCase() === item.unit.toLowerCase()) && (
+                                    <option value={item.unit}>{item.unit.toUpperCase()}</option>
+                                  )}
+                              </select>
                             </td>
                             <td className="p-2">
                               <Input 

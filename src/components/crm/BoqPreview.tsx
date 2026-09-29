@@ -1,7 +1,23 @@
 'use client';
 
 import React from 'react';
-import { Printer, Pencil, Lock, Layers, CheckCircle2, FileText, Tag, Calculator, AlertTriangle } from 'lucide-react';
+import {
+  Printer,
+  Pencil,
+  Lock,
+  Layers,
+  CheckCircle2,
+  FileText,
+  Tag,
+  Calculator,
+  AlertTriangle,
+  Trash2,
+  Send,
+  ShieldCheck,
+  XCircle,
+  Clock,
+  User,
+} from 'lucide-react';
 import { cn, parseMaxBudget } from '@/lib/utils';
 
 interface BoqPreviewProps {
@@ -9,6 +25,10 @@ interface BoqPreviewProps {
   boqIndex: number;
   onSuccess?: () => void;
   onEdit?: () => void;
+  onDelete?: (boqIndex: number) => void;
+  onSendForApproval?: (boqIndex: number) => void;
+  onApprove?: (boqIndex: number) => void;
+  onReject?: (boqIndex: number) => void;
 }
 
 const getCategoryBadgeClass = (category?: string) => {
@@ -24,11 +44,25 @@ const getCategoryBadgeClass = (category?: string) => {
   return 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20';
 };
 
-export function BoqPreview({ lead, boqIndex, onEdit }: BoqPreviewProps) {
+export function BoqPreview({
+  lead,
+  boqIndex,
+  onEdit,
+  onDelete,
+  onSendForApproval,
+  onApprove,
+  onReject,
+}: BoqPreviewProps) {
   const boq = lead?.boqs?.[boqIndex];
   const hasAcceptedQuote = lead?.quotations && lead.quotations.some((q: any) => q.status === 'Accepted');
   const isQuotationApproved = hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(lead?.status || '') || Boolean(lead?.linkedProject);
   const isLocked = isQuotationApproved;
+
+  const rawStatus = boq?.status || 'draft';
+  const isApproved = rawStatus === 'approved';
+  const isPendingApproval = rawStatus === 'pending_approval';
+  const isRejected = rawStatus === 'rejected';
+  const isDraft = rawStatus === 'draft';
 
   const maxBudget = parseMaxBudget(lead?.budgetRange || lead?.estimatedBudget || lead?.budget);
   const totalBoqAmount = boq?.totalAmount || 0;
@@ -57,6 +91,105 @@ export function BoqPreview({ lead, boqIndex, onEdit }: BoqPreviewProps) {
 
   return (
     <div className="space-y-4">
+      {/* Approval Status Ribbon */}
+      <div className={cn(
+        "rounded-2xl p-3 sm:p-3.5 border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors",
+        isApproved
+          ? "bg-emerald-500/[0.06] border-emerald-500/25"
+          : isPendingApproval
+          ? "bg-amber-500/[0.06] border-amber-500/30"
+          : isRejected
+          ? "bg-rose-500/[0.06] border-rose-500/30"
+          : "bg-slate-500/[0.06] border-[hsl(var(--border))]"
+      )}>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className={cn(
+            "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-bold border",
+            isApproved
+              ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
+              : isPendingApproval
+              ? "bg-amber-500/15 text-amber-600 border-amber-500/30"
+              : isRejected
+              ? "bg-rose-500/15 text-rose-600 border-rose-500/30"
+              : "bg-slate-500/15 text-slate-600 border-slate-500/30"
+          )}>
+            {isApproved ? <ShieldCheck size={16} /> : isPendingApproval ? <Clock size={16} /> : isRejected ? <XCircle size={16} /> : <FileText size={16} />}
+          </div>
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-extrabold text-slate-900">
+                {isApproved ? "Internal Approval: Approved" : isPendingApproval ? "Internal Approval: Pending Review" : isRejected ? "Internal Approval: Changes Requested" : "Internal Approval: Draft"}
+              </span>
+              <span className={cn(
+                "text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                isApproved
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                  : isPendingApproval
+                  ? "bg-amber-50 text-amber-800 border-amber-300 animate-pulse"
+                  : isRejected
+                  ? "bg-rose-50 text-rose-700 border-rose-300"
+                  : "bg-slate-100 text-slate-700 border-slate-300"
+              )}>
+                {isApproved ? "Approved" : isPendingApproval ? "Pending Review" : isRejected ? "Rejected" : "Draft"}
+              </span>
+            </div>
+            <p className="text-xs text-slate-600 mt-0.5">
+              {isApproved
+                ? `BOQ estimation approved${boq.approvedByName ? ` by ${boq.approvedByName}` : ''}. Ready for Quotations.`
+                : isPendingApproval
+                ? `Submitted to ${boq.assignedReviewerName || 'Manager'} for review.`
+                : isRejected
+                ? `Revisions required: "${boq.rejectionReason || 'Please review items'}"`
+                : "This estimation is in draft mode and requires manager approval before quotation."}
+            </p>
+            {boq.submissionNotes && (
+              <div className="mt-2 text-xs bg-white border border-amber-200 text-slate-800 px-3 py-1.5 rounded-xl flex items-start gap-2 max-w-xl shadow-xs">
+                <span className="font-extrabold text-amber-800 shrink-0 text-[11px]">Review Focus / Note:</span>
+                <span className="font-medium leading-relaxed break-words text-slate-900 italic text-[11px]">"{boq.submissionNotes}"</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Quick Review Actions */}
+        {!isLocked && (
+          <div className="flex items-center gap-1.5 shrink-0">
+            {(isDraft || isRejected) && onSendForApproval && (
+              <button
+                type="button"
+                onClick={() => onSendForApproval(boqIndex)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
+              >
+                <Send size={13} /> {isRejected ? "Resubmit for Approval" : "Send for Approval"}
+              </button>
+            )}
+
+            {isPendingApproval && (
+              <>
+                {onApprove && (
+                  <button
+                    type="button"
+                    onClick={() => onApprove(boqIndex)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
+                  >
+                    <CheckCircle2 size={13} /> Approve
+                  </button>
+                )}
+                {onReject && (
+                  <button
+                    type="button"
+                    onClick={() => onReject(boqIndex)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
+                  >
+                    <XCircle size={13} /> Reject
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </div>
       {/* Category Breakdown Chips */}
       {categorySubtotals.length > 0 && (
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none touch-pan-x print:hidden">
@@ -144,13 +277,25 @@ export function BoqPreview({ lead, boqIndex, onEdit }: BoqPreviewProps) {
         )}
 
         <div className="p-4 sm:p-5 bg-[hsl(var(--muted)/0.2)] border-t border-[hsl(var(--border))] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 min-w-0">
-          <div className="space-y-1 max-w-md min-w-0 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
-              Estimator Remarks & Assumptions
-            </p>
-            <p className="text-xs text-[hsl(var(--foreground))] font-medium whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
-              {boq.notes || 'Standard specifications applied based on 2D layouts and design requirements.'}
-            </p>
+          <div className="space-y-2.5 max-w-md min-w-0 flex-1">
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                Estimator Remarks & Assumptions
+              </p>
+              <p className="text-xs text-slate-900 font-medium whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere] mt-0.5">
+                {boq.notes || 'Standard specifications applied based on 2D layouts and design requirements.'}
+              </p>
+            </div>
+            {boq.submissionNotes && (
+              <div className="p-3 rounded-xl bg-amber-50/80 border border-amber-200 text-xs shadow-xs">
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-amber-800">
+                  Review Focus / Handover Note
+                </p>
+                <p className="text-slate-950 font-semibold italic mt-1 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                  "{boq.submissionNotes}"
+                </p>
+              </div>
+            )}
           </div>
 
           <div className={cn(
@@ -177,13 +322,24 @@ export function BoqPreview({ lead, boqIndex, onEdit }: BoqPreviewProps) {
                 ₹{(boq.totalAmount || 0).toLocaleString('en-IN')}
               </span>
             </div>
-            <button
-              onClick={handlePrint}
-              className="p-2.5 rounded-xl bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] transition-all active:scale-95 cursor-pointer print:hidden"
-              title="Print BOQ Document"
-            >
-              <Printer size={16} />
-            </button>
+            <div className="flex items-center gap-1.5 print:hidden">
+              <button
+                onClick={handlePrint}
+                className="p-2.5 rounded-xl bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] transition-all active:scale-95 cursor-pointer"
+                title="Print BOQ Document"
+              >
+                <Printer size={16} />
+              </button>
+              {onDelete && !isLocked && (
+                <button
+                  onClick={() => onDelete(boqIndex)}
+                  className="p-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 transition-all active:scale-95 cursor-pointer"
+                  title={`Delete Version ${boq.version || boqIndex + 1}`}
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

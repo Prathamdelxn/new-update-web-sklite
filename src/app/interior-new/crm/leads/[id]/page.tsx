@@ -89,6 +89,9 @@ import { InteriorMarkAsLostModal } from '@/features/interior-new/components/crm/
 import { QuotationPreview } from '@/components/crm/QuotationPreview';
 import { BoqPreview } from '@/components/crm/BoqPreview';
 import { InteriorBoqBuilderModal } from '@/features/interior-new/components/crm/modals/InteriorBoqBuilderModal';
+import { InteriorDeleteBoqModal } from '@/features/interior-new/components/crm/modals/InteriorDeleteBoqModal';
+import { InteriorSendBoqForApprovalModal } from '@/features/interior-new/components/crm/modals/InteriorSendBoqForApprovalModal';
+import { InteriorBoqApprovalModal } from '@/features/interior-new/components/crm/modals/InteriorBoqApprovalModal';
 import { InteriorLeadFollowUpsTab } from '@/features/interior-new/components/crm/InteriorLeadFollowUpsTab';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -134,6 +137,11 @@ export default function Lead360View() {
   const [drawingToDelete, setDrawingToDelete] = useState<any | null>(null);
   const [isDeletingDrawing, setIsDeletingDrawing] = useState(false);
   const [isBoqModalOpen, setIsBoqModalOpen] = useState(false);
+  const [isDeleteBoqModalOpen, setIsDeleteBoqModalOpen] = useState(false);
+  const [isSendBoqApprovalOpen, setIsSendBoqApprovalOpen] = useState(false);
+  const [isBoqApprovalOpen, setIsBoqApprovalOpen] = useState(false);
+  const [boqApprovalAction, setBoqApprovalAction] = useState<'approve' | 'reject' | null>(null);
+  const [boqIndexToDelete, setBoqIndexToDelete] = useState<number | null>(null);
   const [isQuotationModalOpen, setIsQuotationModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -2770,6 +2778,12 @@ export default function Lead360View() {
                 const isQuotationApproved = hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(lead.status) || Boolean(lead.linkedProject);
                 const isBoqLocked = isReadOnly || isQuotationApproved;
 
+                const activeBoq = hasBoqs ? lead.boqs[activeBoqIndex] : null;
+                const isBoqApproved = activeBoq?.status === 'approved';
+                const isBoqPending = activeBoq?.status === 'pending_approval';
+                const isBoqDraft = !activeBoq?.status || activeBoq?.status === 'draft';
+                const isBoqRejected = activeBoq?.status === 'rejected';
+
                 return (
                   <div className="space-y-3.5 sm:space-y-4">
                     {/* Header Card */}
@@ -2786,9 +2800,25 @@ export default function Lead360View() {
                               </h2>
                               <span className={cn(
                                 "text-[10px] font-bold px-2 py-0.5 rounded border shrink-0",
-                                hasBoqs ? "bg-indigo-500/10 text-indigo-600 border-indigo-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                                isBoqApproved
+                                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                                  : isBoqPending
+                                  ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                                  : isBoqRejected
+                                  ? "bg-rose-500/10 text-rose-600 border-rose-500/20"
+                                  : hasBoqs
+                                  ? "bg-indigo-500/10 text-indigo-600 border-indigo-500/20"
+                                  : "bg-amber-500/10 text-amber-600 border-amber-500/20"
                               )}>
-                                {hasBoqs ? `BOQ Ready (${lead.boqs.length} ${lead.boqs.length === 1 ? 'Version' : 'Versions'})` : "Pending"}
+                                {isBoqApproved
+                                  ? "✓ BOQ Approved"
+                                  : isBoqPending
+                                  ? "⏳ Approval Pending"
+                                  : isBoqRejected
+                                  ? "✕ Changes Requested"
+                                  : hasBoqs
+                                  ? `BOQ Draft (v${activeBoq?.version || activeBoqIndex + 1})`
+                                  : "Pending"}
                               </span>
                             </div>
                           </div>
@@ -2811,19 +2841,66 @@ export default function Lead360View() {
                                 >
                                   <Pencil size={12} /> Edit BOQ
                                 </button>
+                                {isBoqApproved && (
+                                  <button
+                                    onClick={() => {
+                                      setEditingBoqIndex(null);
+                                      setIsBoqModalOpen(true);
+                                    }}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
+                                  >
+                                    <Plus size={13} /> New Version
+                                  </button>
+                                )}
                                 <button
                                   onClick={() => {
-                                    setEditingBoqIndex(null);
-                                    setIsBoqModalOpen(true);
+                                    setBoqIndexToDelete(activeBoqIndex);
+                                    setIsDeleteBoqModalOpen(true);
                                   }}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold transition-all active:scale-95"
+                                  title="Delete Active BOQ Version"
                                 >
-                                  <Plus size={13} /> New Version
+                                  <Trash2 size={12} /> Delete
                                 </button>
-                                {['Under BOQ Creation', 'Design Approved', 'Under Drawing'].includes(lead.status) && (
+
+                                {/* Approval Actions in Header */}
+                                {(isBoqDraft || isBoqRejected) && (
+                                  <button
+                                    onClick={() => setIsSendBoqApprovalOpen(true)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-xs"
+                                  >
+                                    <Send size={11} /> {isBoqRejected ? 'Resubmit' : 'Send for Approval'}
+                                  </button>
+                                )}
+
+                                {isBoqPending && (
+                                  <>
+                                    <button
+                                      onClick={() => {
+                                        setBoqApprovalAction('approve');
+                                        setIsBoqApprovalOpen(true);
+                                      }}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-xs"
+                                    >
+                                      <CheckCircle2 size={11} /> Approve
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setBoqApprovalAction('reject');
+                                        setIsBoqApprovalOpen(true);
+                                      }}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-xs"
+                                    >
+                                      <XCircle size={11} /> Reject
+                                    </button>
+                                  </>
+                                )}
+
+                                {['Under BOQ Creation', 'Design Approved', 'Under Drawing'].includes(lead.status) && isBoqApproved && (
                                   <button
                                     onClick={() => setIsSendToQuotationsOpen(true)}
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                                    className="inline-flex items-center gap-1 px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
+                                    title="Pass to Quotation Phase"
                                   >
                                     Pass to Quotation <ArrowRight size={12} />
                                   </button>
@@ -2917,6 +2994,24 @@ export default function Lead360View() {
                           onEdit={isBoqLocked ? undefined : () => {
                             setEditingBoqIndex(activeBoqIndex);
                             setIsBoqModalOpen(true);
+                          }}
+                          onDelete={isBoqLocked ? undefined : (idx) => {
+                            setBoqIndexToDelete(idx);
+                            setIsDeleteBoqModalOpen(true);
+                          }}
+                          onSendForApproval={isBoqLocked ? undefined : (idx) => {
+                            setActiveBoqIndex(idx);
+                            setIsSendBoqApprovalOpen(true);
+                          }}
+                          onApprove={isBoqLocked ? undefined : (idx) => {
+                            setActiveBoqIndex(idx);
+                            setBoqApprovalAction('approve');
+                            setIsBoqApprovalOpen(true);
+                          }}
+                          onReject={isBoqLocked ? undefined : (idx) => {
+                            setActiveBoqIndex(idx);
+                            setBoqApprovalAction('reject');
+                            setIsBoqApprovalOpen(true);
                           }}
                         />
                       </div>
@@ -3245,6 +3340,45 @@ export default function Lead360View() {
           Boolean(lead?.linkedProject)
         )}
         budgetRange={lead?.budgetRange || ''}
+        onSuccess={fetchData}
+      />
+      <InteriorDeleteBoqModal
+        isOpen={isDeleteBoqModalOpen}
+        onClose={() => {
+          setIsDeleteBoqModalOpen(false);
+          setBoqIndexToDelete(null);
+        }}
+        customerId={lead?._id || ''}
+        customerName={lead?.name}
+        existingBoqs={lead?.boqs || []}
+        boqIndexToDelete={boqIndexToDelete}
+        onSuccess={() => {
+          setActiveBoqIndex(0);
+          fetchData();
+        }}
+      />
+      <InteriorSendBoqForApprovalModal
+        isOpen={isSendBoqApprovalOpen}
+        onClose={() => setIsSendBoqApprovalOpen(false)}
+        customerId={lead?._id || ''}
+        customerName={lead?.name}
+        existingBoqs={lead?.boqs || []}
+        boqIndex={activeBoqIndex}
+        users={users}
+        onSuccess={fetchData}
+      />
+      <InteriorBoqApprovalModal
+        isOpen={isBoqApprovalOpen}
+        onClose={() => {
+          setIsBoqApprovalOpen(false);
+          setBoqApprovalAction(null);
+        }}
+        customerId={lead?._id || ''}
+        customerName={lead?.name}
+        budgetRange={lead?.budgetRange || ''}
+        existingBoqs={lead?.boqs || []}
+        boqIndex={activeBoqIndex}
+        initialAction={boqApprovalAction}
         onSuccess={fetchData}
       />
       <InteriorScheduleFollowUpModal
