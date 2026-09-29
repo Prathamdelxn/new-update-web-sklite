@@ -33,6 +33,7 @@ import { InteriorSendToQuotationsModal } from './modals/InteriorSendToQuotations
 import { InteriorQuotationBuilderModal } from './modals/InteriorQuotationBuilderModal';
 import { InteriorDeleteLeadModal } from './modals/InteriorDeleteLeadModal';
 import { InteriorMarkAsLostModal } from './modals/InteriorMarkAsLostModal';
+import { InteriorReopenLeadModal } from './modals/InteriorReopenLeadModal';
 import { Calendar, Lightbulb, Users, MapPin, FileText, Trophy, Plus, TrendingUp } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
@@ -68,6 +69,7 @@ export default function InteriorCrmView() {
   const [isQuotationBuilderOpen, setIsQuotationBuilderOpen] = useState(false);
   const [isConvertToProjectOpen, setIsConvertToProjectOpen] = useState(false);
   const [isMarkAsLostOpen, setIsMarkAsLostOpen] = useState(false);
+  const [isReopenLeadOpen, setIsReopenLeadOpen] = useState(false);
 
   // Delete Lead Modal State
   const [deletingLead, setDeletingLead] = useState<{ id: string; name: string } | null>(null);
@@ -357,6 +359,13 @@ export default function InteriorCrmView() {
     setIsMarkAsLostOpen(true);
   };
 
+  const openReopenLeadModal = (leadId: string) => {
+    const lead = leads.find(l => l._id === leadId);
+    setActionLeadId(leadId);
+    setActionLeadName(lead?.name || '');
+    setIsReopenLeadOpen(true);
+  };
+
   const wonLeadsCount = leads.filter((l) => ['Won', 'Converted'].includes(l.status)).length;
 
   return (
@@ -450,6 +459,7 @@ export default function InteriorCrmView() {
             onAddBoq={openAddBoqModal}
             onPassToQuotations={openSendToQuotationsModal}
             onMarkAsLost={openMarkAsLostModal}
+            onReopenLead={openReopenLeadModal}
           />
         ) : (
           <div className="py-24 flex flex-col items-center justify-center text-center bg-[hsl(var(--card))] border border-dashed border-[hsl(var(--border))] rounded-3xl">
@@ -662,6 +672,16 @@ export default function InteriorCrmView() {
         onClose={() => setIsMarkAsLostOpen(false)}
         customerId={actionLeadId || ''}
         leadName={actionLeadName}
+        onSuccess={fetchLeads}
+      />
+
+      <InteriorReopenLeadModal
+        isOpen={isReopenLeadOpen}
+        onClose={() => setIsReopenLeadOpen(false)}
+        customerId={actionLeadId || ''}
+        leadName={actionLeadName}
+        leadData={leads.find((l) => l._id === actionLeadId)}
+        users={users}
         onSuccess={fetchLeads}
       />
     </div>

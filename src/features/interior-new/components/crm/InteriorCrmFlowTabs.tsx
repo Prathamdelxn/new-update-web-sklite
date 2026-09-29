@@ -60,7 +60,6 @@ export const InteriorCrmFlowTabs: React.FC<InteriorCrmFlowTabsProps> = ({
         {visibleStages.map((stage) => {
           const isActive = activeTab === stage.id;
           const Icon = stage.icon;
-          const count = stageCounts[stage.id];
 
           return (
             <button
@@ -81,21 +80,6 @@ export const InteriorCrmFlowTabs: React.FC<InteriorCrmFlowTabsProps> = ({
               />
 
               <span className="whitespace-nowrap tracking-tight">{stage.label}</span>
-
-              {typeof count === 'number' && (
-                <span
-                  className={cn(
-                    'inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black leading-none transition-colors',
-                    isActive
-                      ? 'bg-white/20 text-[hsl(var(--primary-foreground))]'
-                      : count > 0
-                      ? 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
-                      : 'bg-transparent text-[hsl(var(--muted-foreground))]'
-                  )}
-                >
-                  {count}
-                </span>
-              )}
             </button>
           );
         })}

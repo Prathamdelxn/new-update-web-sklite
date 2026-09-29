@@ -69,6 +69,7 @@ interface InteriorLeadsTableProps {
   onLogRequirements?: (leadId: string) => void;
   onConvertToProject?: (leadId: string) => void;
   onMarkAsLost?: (leadId: string) => void;
+  onReopenLead?: (leadId: string) => void;
   activeTab?: string;
 }
 
@@ -133,6 +134,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
   onPassToQuotations,
   onUploadDesign,
   onMarkAsLost,
+  onReopenLead,
   activeTab = 'leads',
 }) => {
   const router = useRouter();
@@ -897,6 +899,17 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                                         title="Delete Lead"
                                       >
                                         <Trash2 size={13} />
+                                      </button>
+                                    )}
+
+                                    {onReopenLead && lead.status === 'Lost' && (
+                                      <button
+                                        onClick={() => onReopenLead(lead._id)}
+                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 rounded-lg transition-all border border-emerald-500/20 cursor-pointer font-bold text-xs"
+                                        title="Reopen Lost Lead"
+                                      >
+                                        <RotateCcw size={12} />
+                                        <span>Reopen</span>
                                       </button>
                                     )}
 
