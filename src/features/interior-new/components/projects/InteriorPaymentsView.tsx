@@ -9,6 +9,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, Button, Input } from '@/components/interior/ui';
 import { useToast } from '@/providers/ToastContext';
+import { useCurrency } from '@/hooks/useCurrency';
 import { useConfirm } from '@/providers/ConfirmContext';
 import {
   ArrowDownLeft,
@@ -79,6 +80,7 @@ function genRef(prefix: string): string {
 // ---------------------------------------------------------------------------
 export default function InteriorPaymentsView({ projectId }: InteriorPaymentsViewProps) {
   const toast = useToast();
+  const { currencySymbol, formatExactCurrency } = useCurrency();
   const { confirm } = useConfirm();
   const [activeCategory, setActiveCategory] = useState<'incoming' | 'outgoing' | 'debitNote'>('incoming');
   const [searchQuery, setSearchQuery] = useState('');
@@ -495,7 +497,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
             <div className="h-7 w-24 rounded bg-[hsl(var(--muted))] animate-pulse" />
           ) : (
             <p className="text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
-              +₹{incomingPayments.reduce((s, p) => s + p.amount, 0).toLocaleString('en-IN')}
+              +{currencySymbol} {incomingPayments.reduce((s, p) => s + p.amount, 0).toLocaleString()}
             </p>
           )}
           <p className="text-xs text-[hsl(var(--muted-foreground))]">{incomingPayments.length} client receipt{incomingPayments.length !== 1 ? 's' : ''}</p>
@@ -516,7 +518,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
             <div className="h-7 w-24 rounded bg-[hsl(var(--muted))] animate-pulse" />
           ) : (
             <p className="text-xl font-bold tracking-tight text-rose-600 dark:text-rose-400">
-              -₹{outgoingPayments.reduce((s, p) => s + p.amount, 0).toLocaleString('en-IN')}
+              -{currencySymbol} {outgoingPayments.reduce((s, p) => s + p.amount, 0).toLocaleString()}
             </p>
           )}
           <p className="text-xs text-[hsl(var(--muted-foreground))]">{outgoingPayments.length} vendor payout{outgoingPayments.length !== 1 ? 's' : ''}</p>
@@ -537,7 +539,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
             <div className="h-7 w-24 rounded bg-[hsl(var(--muted))] animate-pulse" />
           ) : (
             <p className="text-xl font-bold tracking-tight text-amber-600 dark:text-amber-400">
-              ₹{debitNotes.reduce((s, p) => s + p.amount, 0).toLocaleString('en-IN')}
+              {currencySymbol} {debitNotes.reduce((s, p) => s + p.amount, 0).toLocaleString()}
             </p>
           )}
           <p className="text-xs text-[hsl(var(--muted-foreground))]">{debitNotes.length} debit note{debitNotes.length !== 1 ? 's' : ''} issued</p>
@@ -685,7 +687,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                         <span className="text-xs font-mono text-[hsl(var(--muted-foreground))]">Ref: {tx.referenceNo}</span>
                       </td>
                       <td className="px-5 py-3.5 font-bold text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm">
-                        +₹{tx.amount.toLocaleString('en-IN')}
+                        +{currencySymbol} {tx.amount.toLocaleString()}
                       </td>
                       <td className="px-5 py-3.5 text-center">
                         <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400">
@@ -751,7 +753,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                         <span className="text-xs text-[hsl(var(--muted-foreground))]">{tx.paymentMethod} • {tx.referenceNo}</span>
                       </td>
                       <td className="px-5 py-3.5 font-bold text-rose-600 dark:text-rose-400 text-xs sm:text-sm">
-                        -₹{tx.amount.toLocaleString('en-IN')}
+                        -{currencySymbol} {tx.amount.toLocaleString()}
                       </td>
                       <td className="px-5 py-3.5 text-center">
                         <span
@@ -820,7 +822,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                         {formatDate(dn.issueDate)}
                       </td>
                       <td className="px-5 py-3.5 font-bold text-amber-600 dark:text-amber-400 text-xs sm:text-sm">
-                        ₹{dn.amount.toLocaleString('en-IN')}
+                        {currencySymbol} {dn.amount.toLocaleString()}
                       </td>
                       <td className="px-5 py-3.5 text-center">
                         <span
@@ -904,7 +906,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Amount (₹) *</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Amount ({currencySymbol}) *</label>
                     <input
                       type="number"
                       value={incomingForm.amount}
@@ -954,7 +956,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Ref / UTR Number *</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Ref / Transaction Number *</label>
                     <input
                       type="text"
                       value={incomingForm.referenceNo}
@@ -962,7 +964,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                         setIncomingForm({ ...incomingForm, referenceNo: e.target.value });
                         if (incomingErrors.referenceNo) setIncomingErrors({ ...incomingErrors, referenceNo: null });
                       }}
-                      placeholder="e.g. HDFC10928301"
+                      placeholder="e.g. WIRE-89210928 / CHQ-4401"
                       className={`w-full px-3 py-2 rounded-lg border bg-[hsl(var(--background))] text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] ${
                         incomingErrors.referenceNo ? 'border-[hsl(var(--destructive))]' : 'border-[hsl(var(--border))]'
                       }`}
@@ -1059,7 +1061,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                         const remaining = Math.max(0, (po.amount || 0) - paidForPo);
                         return (
                           <option key={po._id} value={po._id}>
-                            {po.poNumber} - {po.materialName} ({po.vendorName || 'Vendor'}) • Total: ₹{(po.amount || 0).toLocaleString('en-IN')}{remaining < (po.amount || 0) ? ` (Bal: ₹${remaining.toLocaleString('en-IN')})` : ''}
+                            {po.poNumber} - {po.materialName} ({po.vendorName || 'Vendor'}) • Total: {currencySymbol} {(po.amount || 0).toLocaleString()}{remaining < (po.amount || 0) ? ` (Bal: ${currencySymbol} ${remaining.toLocaleString()})` : ''}
                           </option>
                         );
                       })}
@@ -1076,7 +1078,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                       setOutgoingForm({ ...outgoingForm, vendorName: e.target.value });
                       if (outgoingErrors.vendorName) setOutgoingErrors({ ...outgoingErrors, vendorName: null });
                     }}
-                    placeholder="e.g. Royal Wood Suppliers"
+                    placeholder="e.g. Apex Timber & Woodworks"
                     className={`w-full px-3 py-2 rounded-lg border bg-[hsl(var(--background))] text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] ${
                       outgoingErrors.vendorName ? 'border-[hsl(var(--destructive))]' : 'border-[hsl(var(--border))]'
                     }`}
@@ -1102,7 +1104,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Amount (₹) *</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Amount ({currencySymbol}) *</label>
                     <input
                       type="number"
                       value={outgoingForm.amount}
@@ -1137,7 +1139,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Ref / UTR Number *</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Ref / Transaction Number *</label>
                     <input
                       type="text"
                       value={outgoingForm.referenceNo}
@@ -1145,7 +1147,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                         setOutgoingForm({ ...outgoingForm, referenceNo: e.target.value });
                         if (outgoingErrors.referenceNo) setOutgoingErrors({ ...outgoingErrors, referenceNo: null });
                       }}
-                      placeholder="e.g. UTR-9812401"
+                      placeholder="e.g. TXN-9812401"
                       className={`w-full px-3 py-2 rounded-lg border bg-[hsl(var(--background))] text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] ${
                         outgoingErrors.referenceNo ? 'border-[hsl(var(--destructive))]' : 'border-[hsl(var(--border))]'
                       }`}
@@ -1222,7 +1224,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                       setDebitNoteForm({ ...debitNoteForm, vendorName: e.target.value });
                       if (debitNoteErrors.vendorName) setDebitNoteErrors({ ...debitNoteErrors, vendorName: null });
                     }}
-                    placeholder="e.g. Royal Wood Suppliers"
+                    placeholder="e.g. Apex Timber & Woodworks"
                     className={`w-full px-3 py-2 rounded-lg border bg-[hsl(var(--background))] text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] ${
                       debitNoteErrors.vendorName ? 'border-[hsl(var(--destructive))]' : 'border-[hsl(var(--border))]'
                     }`}
@@ -1239,7 +1241,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                       setDebitNoteForm({ ...debitNoteForm, reason: e.target.value });
                       if (debitNoteErrors.reason) setDebitNoteErrors({ ...debitNoteErrors, reason: null });
                     }}
-                    placeholder="e.g. Damaged Plywood Sheets Returned (5 sheets)"
+                    placeholder="e.g. Damaged Acoustic Panels Returned (5 sheets)"
                     className={`w-full px-3 py-2 rounded-lg border bg-[hsl(var(--background))] text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] resize-none ${
                       debitNoteErrors.reason ? 'border-[hsl(var(--destructive))]' : 'border-[hsl(var(--border))]'
                     }`}
@@ -1249,7 +1251,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Amount (₹) *</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Amount ({currencySymbol}) *</label>
                     <input
                       type="number"
                       value={debitNoteForm.amount}

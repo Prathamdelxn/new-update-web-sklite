@@ -31,7 +31,7 @@ interface Props {
   leadName?: string;
   leadData?: any;
   users?: any[];
-  onSuccess: () => void;
+  onSuccess?: (updatedData?: any) => void;
 }
 
 function userLabel(u: any) {
@@ -232,40 +232,45 @@ export function InteriorReopenLeadModal({
         stageSummary = `Moved to ${customStatus}`;
       }
 
-      // 1. Update customer: reactivate from Lost & restore status
-      await interiorCrmService.updateCustomer(customerId, {
+      const updatePayload: Record<string, any> = {
         status: resolvedStatus,
-        lostReason: undefined,
-        assignedSalesExecutive: assignedSalesExecutive || undefined,
+        lostReason: null,
         futureFollowUpDate: mode === 'follow_up' && scheduledDate ? new Date(scheduledDate) : undefined,
         remarks: `Lead Reopened [${stageSummary}]: ${trimmedNotes}`,
-      });
-
-      // 2. Create CRM Activity record for historical audit trail
-      if (mode === 'follow_up') {
-        await interiorCrmService.createActivity({
-          customer: customerId,
-          type: followUpType,
-          status: 'Pending',
-          scheduledDate: new Date(scheduledDate),
-          assignedTo: assignedSalesExecutive || undefined,
-          remarks: `Lead reopened from Lost. ${stageSummary} — ${trimmedNotes}`,
-        });
-      } else {
-        await interiorCrmService.createActivity({
-          customer: customerId,
-          type: 'Status Change',
-          status: 'Completed',
-          remarks: `Lead reopened from Lost state. ${stageSummary} — ${trimmedNotes}`,
-        });
+      };
+      if (assignedSalesExecutive) {
+        updatePayload.assignedSalesExecutive = assignedSalesExecutive;
       }
+
+      const activityPayload = mode === 'follow_up'
+        ? {
+            customer: customerId,
+            type: followUpType,
+            status: 'Pending',
+            scheduledDate: new Date(scheduledDate),
+            assignedTo: assignedSalesExecutive || undefined,
+            remarks: `Lead reopened from Lost. ${stageSummary} — ${trimmedNotes}`,
+          }
+        : {
+            customer: customerId,
+            type: 'Status Change',
+            status: 'Completed',
+            remarks: `Lead reopened from Lost state. ${stageSummary} — ${trimmedNotes}`,
+          };
+
+      await Promise.all([
+        interiorCrmService.updateCustomer(customerId, updatePayload),
+        interiorCrmService.createActivity(activityPayload),
+      ]);
 
       toast.success(`Lead restored to ${resolvedStatus}! All previous data preserved.`);
       queryClient.invalidateQueries({ queryKey: ['crm-leads-list'] });
       queryClient.invalidateQueries({ queryKey: ['crm-follow-ups-all'] });
       queryClient.invalidateQueries({ queryKey: ['crm-pending-activities'] });
       queryClient.invalidateQueries({ queryKey: ['crm-customers'] });
-      onSuccess();
+      if (onSuccess) {
+        onSuccess({ _id: customerId, ...updatePayload });
+      }
       onClose();
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Failed to reopen lead');

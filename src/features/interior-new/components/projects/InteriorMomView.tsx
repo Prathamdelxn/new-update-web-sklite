@@ -216,7 +216,7 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-semibold">Attendees (comma-separated)</label>
-                    <Input placeholder="e.g. Sameer PM, Consultant A, Client Rep" value={attendees} onChange={(e) => setAttendees(e.target.value)} />
+                    <Input placeholder="e.g. Alex Morgan (PM), Sarah Jenkins (Designer), Client Rep" value={attendees} onChange={(e) => setAttendees(e.target.value)} />
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-semibold">Meeting Agenda</label>

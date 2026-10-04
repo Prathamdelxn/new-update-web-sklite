@@ -6,6 +6,7 @@ import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { FileText, ArrowRight, Phone, Trophy, Search, ChevronLeft, ChevronRight, Edit3, XCircle, Building2, Eye, Home, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useCurrency } from '@/hooks/useCurrency';
 import { InteriorLead } from './InteriorLeadsTable';
 
 export function InteriorQuotationsView({
@@ -20,6 +21,7 @@ export function InteriorQuotationsView({
   onMarkAsLost?: (leadId: string) => void;
 }) {
   const router = useRouter();
+  const { currencySymbol } = useCurrency();
   const [searchTerm, setSearchTerm] = useState('');
   const [quoteFilter, setQuoteFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -214,7 +216,7 @@ export function InteriorQuotationsView({
                       {latestQuote ? (
                         <>
                           <span className="font-bold text-emerald-600">
-                            Grand Total: ₹{latestQuote.grandTotal?.toLocaleString('en-IN') || 0}
+                            Grand Total: {currencySymbol} {latestQuote.grandTotal?.toLocaleString() || 0}
                           </span>
                           <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))]">
                             v{latestQuote.version}
@@ -352,7 +354,7 @@ export function InteriorQuotationsView({
                             <div className="space-y-0.5 min-w-0">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className="text-xs font-black text-[hsl(var(--foreground))]">
-                                  ₹{latestQuote.grandTotal?.toLocaleString('en-IN') || 0}
+                                  {currencySymbol} {latestQuote.grandTotal?.toLocaleString() || 0}
                                 </span>
                                 <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-0.5">
                                   <FileText size={9} /> V{latestQuote.version}

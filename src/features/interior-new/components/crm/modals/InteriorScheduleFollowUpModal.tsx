@@ -17,7 +17,7 @@ interface ScheduleFollowUpModalProps {
   onClose: () => void;
   customerId: string;
   customerName?: string;
-  onSuccess: () => void;
+  onSuccess?: (updatedData?: any) => void;
   users?: any[];
   initialData?: {
     _id?: string;
@@ -95,7 +95,7 @@ export function InteriorScheduleFollowUpModal({
       }
       setErrors({});
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, customerId]);
 
   if (!isOpen) return null;
 
@@ -129,29 +129,33 @@ export function InteriorScheduleFollowUpModal({
 
     setIsSubmitting(true);
     try {
-      await interiorCrmService.createActivity({
-        type: form.type,
-        status: 'Pending',
-        scheduledDate: form.scheduledDate,
-        remarks: form.remarks.trim(),
-        customer: customerId,
-        user: form.assignedSalesExecutive || undefined,
-      });
-
+      const customerUpdates: Record<string, any> = {
+        status: 'Contacted',
+        futureFollowUpDate: form.scheduledDate ? new Date(form.scheduledDate) : undefined,
+      };
       if (form.assignedSalesExecutive) {
-        await interiorCrmService.updateCustomer(customerId, {
-          assignedSalesExecutive: form.assignedSalesExecutive,
-          status: 'Contacted',
-        });
-      } else {
-        await interiorCrmService.updateCustomer(customerId, { status: 'Contacted' });
+        customerUpdates.assignedSalesExecutive = form.assignedSalesExecutive;
       }
+
+      await Promise.all([
+        interiorCrmService.createActivity({
+          type: form.type,
+          status: 'Pending',
+          scheduledDate: form.scheduledDate,
+          remarks: form.remarks.trim(),
+          customer: customerId,
+          user: form.assignedSalesExecutive || undefined,
+        }),
+        interiorCrmService.updateCustomer(customerId, customerUpdates),
+      ]);
 
       toast.success(initialData?._id ? 'Follow-up rescheduled successfully!' : 'Follow-up scheduled successfully!');
       queryClient.invalidateQueries({ queryKey: ['crm-follow-ups-all'] });
       queryClient.invalidateQueries({ queryKey: ['crm-leads-list'] });
       queryClient.invalidateQueries({ queryKey: ['crm-follow-ups'] });
-      onSuccess();
+      if (onSuccess) {
+        onSuccess({ _id: customerId, ...customerUpdates });
+      }
       onClose();
       setErrors({});
     } catch (error: any) {

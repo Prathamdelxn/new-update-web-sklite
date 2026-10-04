@@ -11,7 +11,7 @@ interface Props {
   onClose: () => void;
   customerId: string;
   leadName?: string;
-  onSuccess: () => void;
+  onSuccess?: (updatedData?: any) => void;
 }
 
 const LOST_REASON_CATEGORIES = [
@@ -55,21 +55,26 @@ export function InteriorMarkAsLostModal({ isOpen, onClose, customerId, leadName,
 
     setIsSubmitting(true);
     try {
-      await interiorCrmService.updateCustomer(customerId, {
+      const updatePayload = {
         status: 'Lost',
         lostReason: reasonCategory,
         remarks: trimmed,
-      });
+      };
 
-      await interiorCrmService.createActivity({
-        customer: customerId,
-        type: 'Status Change',
-        status: 'Completed',
-        remarks: `Lead marked as Lost (${reasonCategory}): ${trimmed}`,
-      });
+      await Promise.all([
+        interiorCrmService.updateCustomer(customerId, updatePayload),
+        interiorCrmService.createActivity({
+          customer: customerId,
+          type: 'Status Change',
+          status: 'Completed',
+          remarks: `Lead marked as Lost (${reasonCategory}): ${trimmed}`,
+        }),
+      ]);
 
       toast.success('Lead has been marked as Lost.');
-      onSuccess();
+      if (onSuccess) {
+        onSuccess({ _id: customerId, ...updatePayload });
+      }
       onClose();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to mark lead as lost');

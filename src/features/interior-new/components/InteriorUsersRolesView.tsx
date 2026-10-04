@@ -652,7 +652,7 @@ function EditUserModal({
             <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Phone</label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
-              <input value={form.phone} onChange={set('phone')} placeholder="+91 98765 43210" className={`${fieldCls} pl-9`} />
+              <input value={form.phone} onChange={set('phone')} placeholder="+1 (555) 234-5678" className={`${fieldCls} pl-9`} />
             </div>
           </div>
 

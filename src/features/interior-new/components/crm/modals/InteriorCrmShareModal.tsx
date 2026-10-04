@@ -2,7 +2,7 @@
 
 // =============================================================================
 // Sky-Lite Web — Interior CRM Drawing Share Link Modal
-// Generates a pluggable, view-only client link for CRM Drawings & Design Portfolio
+// Compact, Professional Light-Theme Sharing Modal
 // =============================================================================
 
 import React, { useState, useEffect } from 'react';
@@ -13,18 +13,14 @@ import {
   Copy,
   Check,
   ExternalLink,
-  Globe,
   Clock,
   Download,
-  ShieldCheck,
-  ShieldAlert,
   Loader2,
   RefreshCw,
-  Layers,
-  Sparkles,
   MessageCircle,
-  FileText,
-  AlertCircle,
+  Mail,
+  Link2,
+  AlertTriangle,
 } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
@@ -48,23 +44,34 @@ export function InteriorCrmShareModal({
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [expiresHours, setExpiresHours] = useState<number | null>(1);
-  const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [allowDownload, setAllowDownload] = useState(false);
   const [shareToken, setShareToken] = useState<string>('');
   const [isPublic, setIsPublic] = useState(false);
-  const [viewCount, setViewCount] = useState(0);
-  const [lastViewedAt, setLastViewedAt] = useState<string | null>(null);
+
+  const approvedDrawings = (lead?.designFiles || []).filter((d: any) => {
+    const versions = d.versions || [];
+    const latestVersion = versions.length > 0 ? versions[versions.length - 1] : null;
+    const status = d.status || d.approvalStatus || latestVersion?.approvalStatus;
+    const isStatusApproved = ['internally_approved', 'client_approved', 'approved'].includes(status);
+    const hasApprovedVersion = versions.some((v: any) => v.approvalStatus === 'internally_approved' || v.approvalStatus === 'approved');
+    const isChangesRequested = d.clientStatus === 'client_changes_requested' || latestVersion?.clientStatus === 'client_changes_requested';
+    return (isStatusApproved || hasApprovedVersion) && !isChangesRequested;
+  });
+  const approvedCount = approvedDrawings.length;
 
   useEffect(() => {
     if (lead && isOpen) {
+      if (approvedCount === 0) {
+        setShareToken('');
+        setIsPublic(false);
+        return;
+      }
+
       const currentShare = lead.shareSettings || {};
       if (currentShare.shareToken && currentShare.isPublic) {
         setShareToken(currentShare.shareToken);
         setIsPublic(true);
         setAllowDownload(currentShare.allowDownload === true);
-        setViewCount(currentShare.viewCount || 0);
-        setLastViewedAt(currentShare.lastViewedAt || null);
-        setExpiresAt(currentShare.expiresAt || null);
 
         if (currentShare.expiresAt) {
           const diffMs = new Date(currentShare.expiresAt).getTime() - Date.now();
@@ -84,7 +91,6 @@ export function InteriorCrmShareModal({
           setExpiresHours(1);
         }
       } else {
-        // Automatically generate/activate token if not already active with default 1 hour & no download
         handleGenerateOrUpdate(false, 1, false);
       }
     }
@@ -101,6 +107,11 @@ export function InteriorCrmShareModal({
     customDownload?: boolean
   ) => {
     if (!lead?._id) return;
+    if (approvedCount === 0) {
+      toast.error('Cannot create share link: At least one drawing must be approved before sharing with client.');
+      return;
+    }
+
     try {
       setLoading(true);
       const targetHours = customHours !== undefined ? customHours : expiresHours;
@@ -116,9 +127,8 @@ export function InteriorCrmShareModal({
       if (res.success && res.data) {
         setShareToken(res.data.shareToken);
         setIsPublic(true);
-        setExpiresAt(res.data.shareSettings?.expiresAt || null);
         if (regenerate) {
-          toast.success('New link generated successfully');
+          toast.success('New share link generated successfully');
         }
         if (onUpdated) onUpdated();
       } else {
@@ -139,7 +149,7 @@ export function InteriorCrmShareModal({
       const res = await interiorCrmService.revokeShareLink(lead._id);
       if (res.success) {
         setIsPublic(false);
-        toast.success('Public share link deactivated');
+        toast.success('Share link deactivated');
         if (onUpdated) onUpdated();
       } else {
         toast.error(res.message || 'Failed to revoke link');
@@ -182,6 +192,10 @@ export function InteriorCrmShareModal({
   };
 
   const handleCopy = async () => {
+    if (approvedCount === 0) {
+      toast.error('Sharing is not allowed until at least one drawing is approved');
+      return;
+    }
     if (!shareUrl) {
       toast.error('Please wait for share link to generate');
       return;
@@ -189,14 +203,18 @@ export function InteriorCrmShareModal({
     const success = await copyToClipboard(shareUrl);
     if (success) {
       setCopied(true);
-      toast.success('Link copied: ' + shareUrl);
-      setTimeout(() => setCopied(false), 2500);
+      toast.success('Link copied to clipboard');
+      setTimeout(() => setCopied(false), 2200);
     } else {
-      toast.error('Failed to copy. Please manually select and copy the text.');
+      toast.error('Failed to copy. Please select and copy manually.');
     }
   };
 
   const handleWhatsAppShare = () => {
+    if (approvedCount === 0) {
+      toast.error('Sharing is not allowed until at least one drawing is approved');
+      return;
+    }
     if (!shareUrl) return;
     const clientName = lead?.name || 'Client';
     const text = encodeURIComponent(
@@ -207,274 +225,244 @@ export function InteriorCrmShareModal({
     window.open(waUrl, '_blank');
   };
 
-  if (!isOpen || !lead) return null;
-
-  const approvedDrawings = (lead.designFiles || []).filter((d: any) => {
-    const versions = d.versions || [];
-    const latestVersion = versions.length > 0 ? versions[versions.length - 1] : null;
-    const status = d.status || d.approvalStatus || latestVersion?.approvalStatus;
-    const isStatusApproved = ['internally_approved', 'client_approved', 'client_changes_requested'].includes(status);
-    const hasApprovedVersion = versions.some((v: any) => v.approvalStatus === 'internally_approved');
-    return isStatusApproved || hasApprovedVersion;
-  });
-  const approvedCount = approvedDrawings.length;
-
-  const EXPIRATION_OPTIONS = [
-    { label: '1 Hr', fullLabel: '1 Hour', val: 1 },
-    { label: '12 Hrs', fullLabel: '12 Hours', val: 12 },
-    { label: '24 Hrs', fullLabel: '24 Hours', val: 24 },
-    { label: '7 Days', fullLabel: '7 Days', val: 168 },
-    { label: '30 Days', fullLabel: '30 Days', val: 720 },
-    { label: 'Never', fullLabel: 'Never', val: null },
-  ];
-
-  const getExpiryDisplay = () => {
-    if (expiresHours === 1) return 'Expires in 1 hour';
-    if (expiresHours === 12) return 'Expires in 12 hours';
-    if (expiresHours === 24) return 'Expires in 24 hours (1 day)';
-    if (expiresHours === 168) return 'Expires in 7 days';
-    if (expiresHours === 720) return 'Expires in 30 days';
-    if (expiresHours === null && !expiresAt) return 'Never expires';
-    if (expiresAt) {
-      const isPast = new Date(expiresAt).getTime() < Date.now();
-      if (isPast) return 'Link expired';
-      return `Active until ${new Date(expiresAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
+  const handleEmailShare = () => {
+    if (approvedCount === 0) {
+      toast.error('Sharing is not allowed until at least one drawing is approved');
+      return;
     }
-    return 'Never expires';
+    if (!shareUrl) return;
+    const clientName = lead?.name || 'Client';
+    const email = lead?.email || lead?.emailAddress || '';
+    const subject = encodeURIComponent(`Interior Design & Drawings for Review - ${lead?.name || 'Project'}`);
+    const body = encodeURIComponent(
+      `Hello ${clientName},\n\nPlease review your interior design drawings, 2D floor plans, and 3D renders using the secure review link below:\n\n${shareUrl}\n\nThank you,\nSkyStruct Interior Design Team`
+    );
+    const mailtoUrl = email ? `mailto:${email}?subject=${subject}&body=${body}` : `mailto:?subject=${subject}&body=${body}`;
+    window.location.href = mailtoUrl;
   };
+
+  if (!isOpen || !lead) return null;
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto"
+        onClick={onClose}
+      >
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 15 }}
+          initial={{ opacity: 0, scale: 0.97, y: 6 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          transition={{ duration: 0.2 }}
-          className="relative w-full max-w-lg bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden my-auto"
+          exit={{ opacity: 0, scale: 0.97, y: 6 }}
+          transition={{ duration: 0.15, ease: 'easeOut' }}
+          onClick={(e) => e.stopPropagation()}
+          className="relative w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden my-auto"
         >
-          {/* Header Banner */}
-          <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 p-4 sm:p-6 text-white relative">
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-slate-50/70">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0 shadow-2xs">
+                <Share2 className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-sm font-bold text-slate-900 leading-none">
+                  Share Drawings Link
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-1 truncate">
+                  {lead.name} • {lead.propertyType || 'Residential'} • <span className={approvedCount > 0 ? "text-emerald-600 font-semibold" : "text-amber-600 font-semibold"}>{approvedCount} Approved</span>
+                </p>
+              </div>
+            </div>
+
             <button
+              type="button"
               onClick={onClose}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+              className="p-1 text-slate-400 hover:text-slate-700 rounded-md hover:bg-slate-200/60 transition cursor-pointer"
+              title="Close modal"
             >
-              <X size={16} />
+              <X className="w-4 h-4" />
             </button>
-
-            <div className="flex items-center gap-2.5 mb-1.5">
-              <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner">
-                <Share2 size={18} className="text-white" />
-              </div>
-              <div>
-                <h3 className="text-base sm:text-lg font-black tracking-tight">Share Drawings Link</h3>
-                <p className="text-xs text-indigo-100 font-medium">Public view-only portal for client review</p>
-              </div>
-            </div>
-
-            <div className="mt-3 flex items-center gap-2 text-xs bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/15 w-max">
-              <span className="font-bold">{lead.name}</span>
-              <span className="text-indigo-200">•</span>
-              <span className="text-indigo-200">{lead.propertyType || 'Residential'}</span>
-              <span className="text-indigo-200">•</span>
-              <span className="font-bold text-emerald-300">{approvedCount} Approved {approvedCount === 1 ? 'Drawing' : 'Drawings'}</span>
-            </div>
           </div>
 
-          {/* Body Content */}
-          <div className="p-4 sm:p-6 space-y-5">
-            {/* Warning if no drawings are approved yet */}
-            {approvedCount === 0 && (
-              <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-start gap-2.5 text-xs text-amber-800 dark:text-amber-200">
-                <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
-                <div>
-                  <strong className="block font-bold">No Approved Drawings Yet</strong>
-                  <span>Clients will only see drawings after they are approved internally. Draft or pending drawings are automatically hidden from this link.</span>
-                </div>
+          {/* Body */}
+          {approvedCount === 0 ? (
+            <div className="p-6 text-center space-y-4 bg-white">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto shadow-2xs">
+                <AlertTriangle className="w-6 h-6" />
               </div>
-            )}
-            {/* Status & Toggle */}
-            <div className="flex items-center justify-between p-3.5 bg-[hsl(var(--muted)/0.5)] border border-[hsl(var(--border))] rounded-2xl">
-              <div className="flex items-center gap-2.5">
-                <div
-                  className={cn(
-                    'w-3 h-3 rounded-full',
-                    isPublic ? 'bg-emerald-500 ring-4 ring-emerald-500/20' : 'bg-slate-400'
-                  )}
-                />
-                <div>
-                  <div className="text-xs font-bold text-[hsl(var(--foreground))]">
-                    {isPublic ? 'Public Link Active' : 'Public Link Inactive'}
-                  </div>
-                  <div className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                    {isPublic
-                      ? `${viewCount} client ${viewCount === 1 ? 'view' : 'views'}`
-                      : 'Anyone with this link can view if enabled'}
-                  </div>
-                </div>
+              <div className="space-y-1.5 max-w-xs mx-auto">
+                <h4 className="text-sm font-bold text-slate-900">Sharing Not Allowed</h4>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  No drawings are currently approved for <strong className="text-slate-700">{lead.name}</strong>. At least one drawing must be approved before you can create and share a client link.
+                </p>
               </div>
-
-              {!isPublic ? (
-                <button
-                  onClick={() => handleGenerateOrUpdate(false)}
-                  disabled={loading}
-                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-extrabold shadow-sm active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                >
-                  {loading && <Loader2 size={12} className="animate-spin" />}
-                  <Globe size={13} /> Enable Link
-                </button>
-              ) : (
-                <button
-                  onClick={handleRevoke}
-                  disabled={loading}
-                  className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                >
-                  {loading && <Loader2 size={12} className="animate-spin" />}
-                  Revoke Link
-                </button>
-              )}
             </div>
+          ) : (
+            <div className="p-5 space-y-3.5 bg-white">
+              {/* Primary Link & Actions */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5 text-xs">
+                  <span className="font-semibold text-slate-700">Client Access URL</span>
+                  <button
+                    type="button"
+                    onClick={() => handleGenerateOrUpdate(true)}
+                    disabled={loading}
+                    className="text-[11px] text-slate-500 hover:text-slate-800 inline-flex items-center gap-1 hover:underline cursor-pointer disabled:opacity-50"
+                    title="Generate fresh URL token"
+                  >
+                    <RefreshCw className={cn("w-3 h-3", loading && "animate-spin")} />
+                    <span>Reset Link</span>
+                  </button>
+                </div>
 
-            {/* Generated Link Box (if active) */}
-            {isPublic && shareUrl && (
-              <div className="space-y-2.5">
-                <label className="text-[11px] font-bold text-[hsl(var(--foreground))] flex items-center justify-between">
-                  <span>Client URL (No Login Required)</span>
-                  <span className="text-[10px] text-emerald-600 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                    Live
-                  </span>
-                </label>
-
-                <div className="flex items-center gap-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] p-1.5 rounded-xl">
+                <div className="flex items-center gap-1.5 p-1 bg-slate-50 border border-slate-200 rounded-xl focus-within:border-slate-400 focus-within:bg-white transition-all">
+                  <div className="pl-2 text-slate-400">
+                    <Link2 className="w-3.5 h-3.5" />
+                  </div>
                   <input
                     type="text"
                     readOnly
-                    value={shareUrl}
+                    value={shareUrl || 'Generating link...'}
                     onClick={(e) => (e.target as HTMLInputElement).select()}
-                    onFocus={(e) => (e.target as HTMLInputElement).select()}
-                    className="flex-1 bg-transparent px-2.5 py-1 text-xs font-mono text-[hsl(var(--foreground))] outline-none truncate cursor-pointer select-all"
+                    className="flex-1 bg-transparent px-1.5 py-1 text-xs font-mono text-slate-700 outline-none truncate select-all cursor-pointer"
                   />
 
                   <button
+                    type="button"
                     onClick={handleCopy}
                     className={cn(
-                      'px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 active:scale-95',
-                      copied
-                        ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm'
+                      "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 shadow-2xs",
+                      copied ? "bg-emerald-600 text-white" : "bg-slate-900 hover:bg-slate-800 text-white"
                     )}
                   >
-                    {copied ? <Check size={13} /> : <Copy size={13} />}
-                    {copied ? 'Copied' : 'Copy'}
+                    {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copied ? 'Copied' : 'Copy'}</span>
                   </button>
 
-                  <a
-                    href={shareUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="p-1.5 hover:bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-lg transition-colors shrink-0"
-                    title="Open live preview"
-                  >
-                    <ExternalLink size={15} />
-                  </a>
-                </div>
-
-                {/* Quick Share Buttons */}
-                <div className="flex items-center gap-2 pt-1">
-                  <button
-                    onClick={handleWhatsAppShare}
-                    className="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
-                  >
-                    <MessageCircle size={14} /> Send to WhatsApp
-                  </button>
-
-                  <button
-                    onClick={() => handleGenerateOrUpdate(true)}
-                    disabled={loading}
-                    className="py-2 px-3 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--muted)/0.8)] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-                    title="Generate a new fresh URL token (invalidates old URL)"
-                  >
-                    <RefreshCw size={13} className={cn(loading && 'animate-spin')} /> Reset Token
-                  </button>
+                  {shareUrl && (
+                    <a
+                      href={shareUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-lg transition shrink-0"
+                      title="Open live preview in new tab"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
                 </div>
               </div>
-            )}
 
-            {/* Sharing Permissions & Customization */}
-            <div className="space-y-3 pt-2 border-t border-[hsl(var(--border))]">
-              <h4 className="text-xs font-extrabold text-[hsl(var(--foreground))] uppercase tracking-wider text-[10px] text-[hsl(var(--muted-foreground))]">
-                Client Permissions & View Settings
-              </h4>
+              {/* Fast Sharing Channels */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={handleWhatsAppShare}
+                  className="flex items-center justify-center gap-2 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-semibold text-slate-700 shadow-2xs transition cursor-pointer active:scale-[0.99]"
+                >
+                  <MessageCircle className="w-4 h-4 text-emerald-600" />
+                  <span>WhatsApp</span>
+                </button>
 
-              {/* Allow Downloads Toggle */}
-              <label className="flex items-center justify-between p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted)/0.3)] transition-colors cursor-pointer">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <Download size={16} className="text-indigo-600 shrink-0" />
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold text-[hsl(var(--foreground))] truncate">Allow Drawing Downloads</div>
-                    <div className="text-[10px] text-[hsl(var(--muted-foreground))]">Client can download CAD files, PDF blueprints, and 3D renders</div>
-                  </div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={allowDownload}
-                  onChange={(e) => {
-                    const newDownload = e.target.checked;
+                <button
+                  type="button"
+                  onClick={handleEmailShare}
+                  className="flex items-center justify-center gap-2 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-semibold text-slate-700 shadow-2xs transition cursor-pointer active:scale-[0.99]"
+                >
+                  <Mail className="w-4 h-4 text-blue-600" />
+                  <span>Email</span>
+                </button>
+              </div>
+
+              {/* Compact Settings Controls */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
+                {/* Download toggle row */}
+                <div
+                  onClick={() => {
+                    const newDownload = !allowDownload;
                     setAllowDownload(newDownload);
                     if (isPublic) handleGenerateOrUpdate(false, expiresHours, newDownload);
                   }}
-                  className="rounded accent-indigo-600 w-4 h-4 cursor-pointer shrink-0 ml-2"
-                />
-              </label>
-
-              {/* Expiry Selector */}
-              <div className="p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] space-y-2">
-                <div className="flex items-center justify-between">
+                  className="flex items-center justify-between cursor-pointer"
+                >
                   <div className="flex items-center gap-2">
-                    <Clock size={15} className="text-amber-500 shrink-0" />
-                    <span className="text-xs font-bold text-[hsl(var(--foreground))]">Link Expiration</span>
+                    <Download className="w-3.5 h-3.5 text-slate-600" />
+                    <span className="text-xs font-semibold text-slate-800">Allow File Downloads</span>
                   </div>
-                  <span className="text-[10px] font-medium text-[hsl(var(--muted-foreground))]">
-                    {getExpiryDisplay()}
-                  </span>
+                  <div
+                    className={cn(
+                      'w-8 h-4.5 rounded-full transition-colors relative flex items-center px-0.5 shrink-0',
+                      allowDownload ? 'bg-blue-600' : 'bg-slate-300'
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'w-3.5 h-3.5 rounded-full bg-white shadow-xs transition-all',
+                        allowDownload ? 'ml-auto' : 'ml-0'
+                      )}
+                    />
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-                  {EXPIRATION_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.label}
-                      type="button"
-                      onClick={() => {
-                        setExpiresHours(opt.val);
-                        if (isPublic) handleGenerateOrUpdate(false, opt.val, allowDownload);
-                      }}
-                      className={cn(
-                        'py-1.5 px-2 rounded-lg text-xs font-bold transition-all border text-center cursor-pointer',
-                        expiresHours === opt.val
-                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                          : 'bg-[hsl(var(--muted)/0.5)] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] hover:text-[hsl(var(--foreground))]'
-                      )}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+                {/* Expiration row */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-200/80">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-slate-800">
+                    <Clock className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Link Expiration:</span>
+                  </div>
+
+                  <select
+                    value={expiresHours === null ? 'never' : expiresHours}
+                    onChange={(e) => {
+                      const val = e.target.value === 'never' ? null : Number(e.target.value);
+                      setExpiresHours(val);
+                      if (isPublic) handleGenerateOrUpdate(false, val, allowDownload);
+                    }}
+                    className="text-xs font-semibold text-slate-800 bg-white border border-slate-200 rounded-lg px-2 py-1 outline-none cursor-pointer focus:border-blue-500"
+                  >
+                    <option value={1}>1 Hour</option>
+                    <option value={12}>12 Hours</option>
+                    <option value={24}>24 Hours (1 Day)</option>
+                    <option value={168}>7 Days</option>
+                    <option value={720}>30 Days</option>
+                    <option value="never">Never</option>
+                  </select>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Footer */}
-          <div className="p-4 bg-[hsl(var(--muted)/0.4)] border-t border-[hsl(var(--border))] flex items-center justify-between">
-            <div className="text-[11px] text-[hsl(var(--muted-foreground))] flex items-center gap-1.5">
-              <ShieldCheck size={14} className="text-emerald-500 shrink-0" />
-              <span>Pluggable tokenized sharing</span>
+          {/* Compact Footer */}
+          <div className="px-5 py-3 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
+            <div>
+              {approvedCount > 0 && (
+                isPublic ? (
+                  <button
+                    type="button"
+                    onClick={handleRevoke}
+                    disabled={loading}
+                    className="text-xs font-semibold text-rose-600 hover:text-rose-800 hover:underline cursor-pointer disabled:opacity-50"
+                  >
+                    Deactivate Link
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleGenerateOrUpdate(false)}
+                    disabled={loading}
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer disabled:opacity-50"
+                  >
+                    Activate Link
+                  </button>
+                )
+              )}
             </div>
 
             <button
+              type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+              className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow-2xs ml-auto"
             >
-              Done
+              {approvedCount === 0 ? 'Close' : 'Done'}
             </button>
           </div>
         </motion.div>

@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { InteriorShell } from '@/components/interior/InteriorShell';
 import { useInteriorAuthGuard } from '@/lib/useInteriorAuthGuard';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
+import { useCurrency } from '@/hooks/useCurrency';
+import { useConfirm } from '@/providers/ConfirmContext';
 import {
   ArrowLeft,
   ArrowRight,
@@ -50,6 +52,7 @@ import {
   Archive,
   ExternalLink,
   Eye,
+  EyeOff,
   Lock,
   Copy,
   Check,
@@ -60,10 +63,12 @@ import {
   History,
   Share2,
   Globe,
-  MessageCircle,
   Send,
   CheckCircle,
+  FileSpreadsheet,
+  Download,
 } from 'lucide-react';
+import { exportBoqToExcel } from '@/lib/exportBoqExcel';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn, parseMaxBudget } from '@/lib/utils';
 import { InteriorLogSiteVisitModal } from '@/features/interior-new/components/crm/modals/InteriorLogSiteVisitModal';
@@ -78,11 +83,14 @@ import { InteriorScheduleFollowUpModal } from '@/features/interior-new/component
 import { InteriorLogRequirementsModal } from '@/features/interior-new/components/crm/modals/InteriorLogRequirementsModal';
 import { InteriorUploadDesignModal, detectFileType, getFileBadgeInfo } from '@/features/interior-new/components/crm/modals/InteriorUploadDesignModal';
 import { InteriorDrawingApprovalModal } from '@/features/interior-new/components/crm/modals/InteriorDrawingApprovalModal';
+import { InteriorDrawingConfirmApproveModal } from '@/features/interior-new/components/crm/modals/InteriorDrawingConfirmApproveModal';
 import { InteriorUploadRevisionModal } from '@/features/interior-new/components/crm/modals/InteriorUploadRevisionModal';
 import { InteriorSendDrawingForApprovalModal } from '@/features/interior-new/components/crm/modals/InteriorSendDrawingForApprovalModal';
 import { Interior3DViewerModal } from '@/features/interior-new/components/crm/modals/Interior3DViewerModal';
 import { InteriorCrmShareModal } from '@/features/interior-new/components/crm/modals/InteriorCrmShareModal';
 import { InteriorQuotationBuilderModal } from '@/features/interior-new/components/crm/modals/InteriorQuotationBuilderModal';
+import { InteriorQuotationPreviewModal } from '@/features/interior-new/components/crm/modals/InteriorQuotationPreviewModal';
+import { InteriorSendQuotationModal } from '@/features/interior-new/components/crm/modals/InteriorSendQuotationModal';
 import { InteriorEditLeadModal } from '@/features/interior-new/components/crm/modals/InteriorEditLeadModal';
 import { InteriorDeleteLeadModal } from '@/features/interior-new/components/crm/modals/InteriorDeleteLeadModal';
 import { InteriorMarkAsLostModal } from '@/features/interior-new/components/crm/modals/InteriorMarkAsLostModal';
@@ -96,16 +104,15 @@ import { InteriorLeadFollowUpsTab } from '@/features/interior-new/components/crm
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 export default function Lead360View() {
+  const { currencySymbol, currencyCode, formatExactCurrency, formatCurrency } = useCurrency();
   const checked = useInteriorAuthGuard();
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
+  const { confirm, prompt } = useConfirm();
   const queryClient = useQueryClient();
 
-  const [lead, setLead] = useState<any>(null);
-  const [activities, setActivities] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [copiedLocation, setCopiedLocation] = useState(false);
 
   const handleCopyLocation = (text: string) => {
@@ -143,11 +150,13 @@ export default function Lead360View() {
   const [boqApprovalAction, setBoqApprovalAction] = useState<'approve' | 'reject' | null>(null);
   const [boqIndexToDelete, setBoqIndexToDelete] = useState<number | null>(null);
   const [isQuotationModalOpen, setIsQuotationModalOpen] = useState(false);
+  const [editingQuotationIndex, setEditingQuotationIndex] = useState<number | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isMarkAsLostOpen, setIsMarkAsLostOpen] = useState(false);
   const [isDeletingLead, setIsDeletingLead] = useState(false);
-  const [activeQuotationIndex, setActiveQuotationIndex] = useState(0);
+  const [activeQuotationIndex, setActiveQuotationIndex] = useState<number | null>(null);
+  const [sendQuotationModalIndex, setSendQuotationModalIndex] = useState<number | null>(null);
   const [activeBoqIndex, setActiveBoqIndex] = useState(0);
   const [editingBoqIndex, setEditingBoqIndex] = useState<number | null>(null);
 
@@ -168,6 +177,8 @@ export default function Lead360View() {
   };
 
   const [approvingDrawingId, setApprovingDrawingId] = useState<string | null>(null);
+  const [selectedDrawingForConfirmApprove, setSelectedDrawingForConfirmApprove] = useState<any | null>(null);
+  const [isConfirmApproveModalOpen, setIsConfirmApproveModalOpen] = useState(false);
 
   const handleDirectApproveDrawing = async (file: any) => {
     if (!params.id) return;
@@ -180,6 +191,8 @@ export default function Lead360View() {
         versionNumber
       });
       toast.success(`Drawing "${file.title || file.name || 'Drawing'}" approved successfully! Live to client.`);
+      setIsConfirmApproveModalOpen(false);
+      setSelectedDrawingForConfirmApprove(null);
       fetchData();
     } catch (err: any) {
       toast.error(err.response?.data?.error || err.message || 'Failed to approve drawing');
@@ -199,39 +212,60 @@ export default function Lead360View() {
   const [isFollowUpModalOpen, setIsFollowUpModalOpen] = useState(false);
   const [designSubTab, setDesignSubTab] = useState<'2d' | '3d'>('2d');
 
+  // 1. Lead Query with instant placeholder from CRM Leads List cache
   const {
     data: leadData,
+    isLoading: isLeadQueryLoading,
     refetch: refetchLead,
   } = useQuery({
     queryKey: ['crm-lead', params.id],
     queryFn: async () => {
-      const [leadRes, actRes, userRes] = await Promise.all([
-        interiorCrmService.getCustomerById(params.id as string),
-        interiorCrmService.getActivities(params.id as string),
-        interiorCrmService.getUsers(),
-      ]);
-
-      const singleLead = leadRes?.success && leadRes?.data ? leadRes.data : leadRes;
-      const activityList = actRes?.success && actRes?.data ? actRes.data : Array.isArray(actRes) ? actRes : [];
-      const userList = userRes?.success && userRes?.data ? userRes.data : Array.isArray(userRes) ? userRes : [];
-      return { lead: singleLead, activities: activityList, users: userList };
+      const res = await interiorCrmService.getCustomerById(params.id as string);
+      return res?.success && res?.data ? res.data : res;
+    },
+    placeholderData: () => {
+      const listData: any = queryClient.getQueryData(['crm-leads-list']);
+      const leads = listData?.leads || (Array.isArray(listData) ? listData : []);
+      return leads.find((c: any) => (c._id || c.id) === params.id);
     },
     enabled: Boolean(checked && params.id),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
   });
 
-  useEffect(() => {
-    if (leadData) {
-      if (leadData.lead) setLead(leadData.lead);
-      if (leadData.activities) setActivities(leadData.activities);
-      if (leadData.users) setUsers(leadData.users);
-      setIsLoading(false);
-    }
-  }, [leadData]);
+  // 2. Activities Query
+  const {
+    data: activitiesData,
+    refetch: refetchActivities,
+  } = useQuery({
+    queryKey: ['crm-lead-activities', params.id],
+    queryFn: async () => {
+      const res = await interiorCrmService.getActivities(params.id as string);
+      return res?.success && res?.data ? res.data : Array.isArray(res) ? res : [];
+    },
+    enabled: Boolean(checked && params.id),
+    staleTime: 60 * 1000,
+  });
+
+  // 3. Global Users Query (shared across entire CRM)
+  const { data: usersData } = useQuery({
+    queryKey: ['interior-users'],
+    queryFn: async () => {
+      const res = await interiorCrmService.getUsers();
+      return res?.success && res?.data ? res.data : Array.isArray(res) ? res : [];
+    },
+    enabled: Boolean(checked),
+    staleTime: 30 * 60 * 1000,
+  });
+
+  const lead: any = leadData || null;
+  const activities: any[] = (activitiesData as any[]) || [];
+  const users: any[] = (usersData as any[]) || [];
+  const isLoading = !lead && isLeadQueryLoading;
 
   const fetchData = async () => {
     queryClient.invalidateQueries({ queryKey: ['crm-lead', params.id] });
-    await refetchLead();
+    queryClient.invalidateQueries({ queryKey: ['crm-lead-activities', params.id] });
+    await Promise.all([refetchLead(), refetchActivities()]);
   };
 
   const handleActivitySubmit = async (e: React.FormEvent) => {
@@ -257,7 +291,88 @@ export default function Lead360View() {
     }
   };
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'followups' | 'site' | 'requirements' | 'designs' | 'boq' | 'quotations'>('overview');
+  const handleDeleteQuotationByIndex = async (idxToDelete: number) => {
+    if (!lead || !params.id) return;
+    const q = lead?.quotations?.[idxToDelete];
+    const quoteTitle = q?.title || `Quotation ${idxToDelete + 1}`;
+    const quoteAmount = q?.grandTotal || 0;
+
+    const ok = await confirm({
+      title: `Delete ${quoteTitle}`,
+      message: `Are you sure you want to delete "${quoteTitle}" (${currencySymbol} ${quoteAmount.toLocaleString()})? This action cannot be undone.`,
+      confirmText: 'Delete Quotation',
+      type: 'danger',
+    });
+    if (!ok) return;
+
+    try {
+      const updatedQuotations = (lead.quotations || []).filter((_: any, i: number) => i !== idxToDelete);
+      await interiorCrmService.updateCustomer(lead._id, {
+        quotations: updatedQuotations,
+      });
+
+      await interiorCrmService.createActivity({
+        customer: lead._id,
+        type: 'Status Change',
+        status: 'Completed',
+        remarks: `Deleted Quotation: ${quoteTitle}`,
+      });
+
+      toast.success(`${quoteTitle} deleted successfully.`);
+      fetchData();
+      setActiveQuotationIndex((prev) => {
+        if (prev === null) return null;
+        if (prev === idxToDelete) return null;
+        if (prev > idxToDelete) return prev - 1;
+        if (prev >= updatedQuotations.length) {
+          return updatedQuotations.length > 0 ? updatedQuotations.length - 1 : null;
+        }
+        return prev;
+      });
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || err.message || 'Failed to delete quotation');
+    }
+  };
+
+
+  const [activeTab, setActiveTab] = useState<'overview' | 'followups' | 'site' | 'requirements' | 'designs' | 'boq' | 'quotations'>(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get('tab');
+      if (tabParam) {
+        const normalized = tabParam.toLowerCase().trim();
+        if (['designs', 'design', 'drawing', 'drawings'].includes(normalized)) return 'designs';
+        if (['site', 'sitevisit', 'site-visit'].includes(normalized)) return 'site';
+        if (['requirements', 'req', 'requirement'].includes(normalized)) return 'requirements';
+        if (['boq', 'estimation'].includes(normalized)) return 'boq';
+        if (['quotations', 'quotes', 'quotation'].includes(normalized)) return 'quotations';
+        if (['followups', 'followup', 'follow-up'].includes(normalized)) return 'followups';
+      }
+    }
+    return 'overview';
+  });
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam) {
+      const normalized = tabParam.toLowerCase().trim();
+      if (['designs', 'design', 'drawing', 'drawings'].includes(normalized)) {
+        setActiveTab('designs');
+      } else if (['site', 'sitevisit', 'site-visit'].includes(normalized)) {
+        setActiveTab('site');
+      } else if (['requirements', 'req', 'requirement'].includes(normalized)) {
+        setActiveTab('requirements');
+      } else if (['boq', 'estimation'].includes(normalized)) {
+        setActiveTab('boq');
+      } else if (['quotations', 'quotes', 'quotation'].includes(normalized)) {
+        setActiveTab('quotations');
+      } else if (['followups', 'followup', 'follow-up'].includes(normalized)) {
+        setActiveTab('followups');
+      } else if (normalized === 'overview') {
+        setActiveTab('overview');
+      }
+    }
+  }, [searchParams]);
 
   const siteVisitInfo = React.useMemo(() => {
     const siteVisitActivity = activities.find(
@@ -530,7 +645,12 @@ export default function Lead360View() {
     const currentBoq = lead?.boqs?.[activeBoqIndex] || lead?.boqs?.[0];
     const totalAmount = currentBoq?.totalAmount || (currentBoq?.items || []).reduce((acc: number, it: any) => acc + (Number(it.amount) || (Number(it.quantity) * Number(it.rate)) || 0), 0);
     const itemsCount = currentBoq?.items?.length || 0;
-    const categories = Array.from(new Set((currentBoq?.items || []).map((it: any) => it.category || 'General')));
+    const rawCategories: string[] = Array.from(new Set<string>((currentBoq?.items || []).map((it: any) => (it.category || 'General') as string)));
+    const sections = currentBoq?.sections && Array.isArray(currentBoq.sections) && currentBoq.sections.length > 0
+      ? currentBoq.sections
+      : rawCategories.map((c: any) => ({ sectionTitle: String(c) }));
+    const categoriesCount = sections.length;
+    const categorySummary = `${categoriesCount} ${categoriesCount === 1 ? 'Category' : 'Categories'}`;
 
     const maxBudget = parseMaxBudget(lead?.budgetRange || lead?.estimatedBudget || lead?.budget);
     const isOverBudget = Boolean(maxBudget && maxBudget > 0 && totalAmount > maxBudget);
@@ -543,7 +663,8 @@ export default function Lead360View() {
       currentBoq,
       totalAmount,
       itemsCount,
-      categoriesCount: categories.length,
+      categoriesCount,
+      categorySummary,
       maxBudget,
       isOverBudget,
       budgetExcessAmount,
@@ -552,7 +673,7 @@ export default function Lead360View() {
   }, [activities, lead, activeBoqIndex]);
 
   const quotationInfo = React.useMemo(() => {
-    const currentQuote = lead?.quotations?.[activeQuotationIndex] || lead?.quotations?.[0];
+    const currentQuote = (activeQuotationIndex !== null ? lead?.quotations?.[activeQuotationIndex] : null) || lead?.quotations?.[0];
 
     const quoteActivity = activities.find(
       (a) => a.type === 'Quotation Phase' || a.type === 'Quotation Handover'
@@ -629,8 +750,113 @@ export default function Lead360View() {
   if (isLoading) {
     return (
       <InteriorShell>
-        <div className="p-8 flex items-center justify-center text-[hsl(var(--muted-foreground))] min-h-[60vh] text-sm font-semibold animate-pulse">
-          Loading Lead Details...
+        <div className="w-full max-w-7xl mx-auto space-y-3 sm:space-y-4 pb-12 p-3 sm:p-4 md:p-6 overflow-x-hidden animate-pulse">
+          {/* --- 1. HEADER SKELETON --- */}
+          <div className="bg-[hsl(var(--card))] rounded-xl p-3 sm:p-4 border border-[hsl(var(--border))] flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+              <div className="w-8 h-8 rounded-lg bg-[hsl(var(--muted))] shrink-0" />
+              <div className="space-y-2 flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="h-6 w-48 bg-[hsl(var(--muted))] rounded-md" />
+                  <div className="h-4 w-16 bg-[hsl(var(--muted))] rounded" />
+                  <div className="h-4 w-20 bg-[hsl(var(--muted))] rounded" />
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="h-4 w-28 bg-[hsl(var(--muted))] rounded" />
+                  <div className="h-4 w-36 bg-[hsl(var(--muted))] rounded" />
+                  <div className="h-4 w-40 bg-[hsl(var(--muted))] rounded" />
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-[hsl(var(--border)/0.6)]">
+              <div className="h-6 w-24 bg-[hsl(var(--muted))] rounded-full" />
+              <div className="h-8 w-28 bg-[hsl(var(--muted))] rounded-lg" />
+            </div>
+          </div>
+
+          {/* --- 2. TABS SKELETON --- */}
+          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-1 flex items-center gap-1 overflow-x-hidden">
+            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+              <div key={i} className="h-8 w-24 bg-[hsl(var(--muted))] rounded-lg shrink-0" />
+            ))}
+          </div>
+
+          {/* --- 3. DASHBOARD CONTENT SKELETON --- */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Main 2-column area */}
+            <div className="lg:col-span-2 space-y-4">
+              {/* Quick Metrics */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3 space-y-2">
+                    <div className="h-3 w-16 bg-[hsl(var(--muted))] rounded" />
+                    <div className="h-6 w-20 bg-[hsl(var(--muted))] rounded" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Stage / Progress Card */}
+              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <div className="h-4 w-32 bg-[hsl(var(--muted))] rounded" />
+                  <div className="h-4 w-20 bg-[hsl(var(--muted))] rounded" />
+                </div>
+                <div className="h-2 w-full bg-[hsl(var(--muted))] rounded-full" />
+                <div className="grid grid-cols-3 gap-2 pt-2">
+                  <div className="h-12 bg-[hsl(var(--muted))] rounded-lg" />
+                  <div className="h-12 bg-[hsl(var(--muted))] rounded-lg" />
+                  <div className="h-12 bg-[hsl(var(--muted))] rounded-lg" />
+                </div>
+              </div>
+
+              {/* Main Stage Panel (Drawings / Requirements / BOQ) */}
+              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <div className="h-4 w-40 bg-[hsl(var(--muted))] rounded" />
+                  <div className="h-8 w-24 bg-[hsl(var(--muted))] rounded-lg" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <div className="h-36 bg-[hsl(var(--muted))] rounded-xl" />
+                  <div className="h-36 bg-[hsl(var(--muted))] rounded-xl" />
+                </div>
+              </div>
+            </div>
+
+            {/* Right sidebar area */}
+            <div className="space-y-4">
+              {/* Lead Metadata Card */}
+              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-4 space-y-3">
+                <div className="h-4 w-28 bg-[hsl(var(--muted))] rounded" />
+                <div className="space-y-2.5 pt-1">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="flex justify-between items-center py-1 border-b border-[hsl(var(--border)/0.5)]">
+                      <div className="h-3 w-20 bg-[hsl(var(--muted))] rounded" />
+                      <div className="h-3 w-28 bg-[hsl(var(--muted))] rounded" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Activities Card */}
+              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <div className="h-4 w-24 bg-[hsl(var(--muted))] rounded" />
+                  <div className="h-4 w-12 bg-[hsl(var(--muted))] rounded" />
+                </div>
+                <div className="space-y-3 pt-1">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-start gap-2.5">
+                      <div className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] shrink-0 mt-0.5" />
+                      <div className="space-y-1.5 flex-1">
+                        <div className="h-3 w-3/4 bg-[hsl(var(--muted))] rounded" />
+                        <div className="h-2.5 w-1/2 bg-[hsl(var(--muted))] rounded" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </InteriorShell>
     );
@@ -996,7 +1222,14 @@ export default function Lead360View() {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => {
+                  setActiveTab(tab.id as any);
+                  if (typeof window !== 'undefined') {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('tab', tab.id);
+                    window.history.replaceState(null, '', url.toString());
+                  }
+                }}
                 className={cn(
                   "px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap outline-none flex items-center gap-1.5 cursor-pointer shrink-0",
                   isActive
@@ -1053,7 +1286,7 @@ export default function Lead360View() {
                     <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider truncate">Est. Budget</p>
                     <p className="font-bold text-xs truncate mt-0.5 text-emerald-600 dark:text-emerald-400">
                       {lead.quotations?.[lead.quotations.length - 1]?.grandTotal
-                        ? `₹${lead.quotations[lead.quotations.length - 1].grandTotal.toLocaleString('en-IN')}`
+                        ? `${currencySymbol} ${lead.quotations[lead.quotations.length - 1].grandTotal.toLocaleString()}`
                         : lead.budgetRange || 'Pending'}
                     </p>
                   </div>
@@ -1199,7 +1432,7 @@ export default function Lead360View() {
                         </span>
                         <span className="font-bold text-emerald-600 dark:text-emerald-400 break-words min-w-0">
                           {lead.quotations?.[lead.quotations.length - 1]?.grandTotal
-                            ? `₹${lead.quotations[lead.quotations.length - 1].grandTotal.toLocaleString('en-IN')}`
+                            ? `${currencySymbol} ${lead.quotations[lead.quotations.length - 1].grandTotal.toLocaleString()}`
                             : lead.budgetRange || 'Pending'}
                         </span>
                       </div>
@@ -1964,7 +2197,7 @@ export default function Lead360View() {
                             <DollarSign size={11} className="text-amber-500" /> Target Budget
                           </p>
                           <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
-                            {lead.budgetRange || (lead.budget ? `₹${Number(lead.budget).toLocaleString('en-IN')}` : 'Not specified')}
+                            {lead.budgetRange || (lead.budget ? `${currencySymbol} ${Number(lead.budget).toLocaleString()}` : 'Not specified')}
                           </p>
                         </div>
 
@@ -1989,7 +2222,7 @@ export default function Lead360View() {
                           <div className="overflow-hidden min-w-0">
                             <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Estimated Budget</p>
                             <p className="text-xs font-bold text-[hsl(var(--foreground))] truncate mt-0.5">
-                              {lead.budgetRange || (lead.budget ? `₹${Number(lead.budget).toLocaleString('en-IN')}` : 'Not specified')}
+                              {lead.budgetRange || (lead.budget ? `${currencySymbol} ${Number(lead.budget).toLocaleString()}` : 'Not specified')}
                             </p>
                           </div>
                         </div>
@@ -2365,22 +2598,68 @@ export default function Lead360View() {
 
                 const hasDesignFiles = Boolean(designFilesList && designFilesList.length > 0);
 
-                const draftDrawingsCount = designFilesList.filter((f: any) => {
-                  const s = f.approvalStatus || f.status || 'draft';
-                  return s === 'draft';
-                }).length;
+                const fileStatuses = designFilesList.map((f: any) => {
+                  const versions = f.versions || [];
+                  const latestVersion = versions.length > 0 ? versions[versions.length - 1] : null;
+                  const rawStatus = latestVersion?.approvalStatus || f.approvalStatus || f.status || 'draft';
+                  const approvalStatus = rawStatus === 'pending_internal_approval'
+                    ? 'pending_internal_approval'
+                    : rawStatus === 'internally_approved'
+                    ? 'internally_approved'
+                    : rawStatus === 'internally_rejected'
+                    ? 'internally_rejected'
+                    : 'draft';
+                  const clientStatus = latestVersion?.clientStatus || f.clientStatus;
+                  const isRejected = approvalStatus === 'internally_rejected' || clientStatus === 'client_changes_requested';
+                  const isApproved = approvalStatus === 'internally_approved' && !isRejected;
+                  const isPending = approvalStatus === 'pending_internal_approval' && !isRejected;
+                  const isDraft = !isApproved && !isPending && !isRejected;
+                  return { approvalStatus, clientStatus, isApproved, isPending, isRejected, isDraft };
+                });
 
-                const pendingDrawingsCount = designFilesList.filter((f: any) => {
-                  const s = f.approvalStatus || f.status || 'draft';
-                  return s === 'pending_internal_approval';
-                }).length;
+                const approvedDrawingsCount = fileStatuses.filter((s: any) => s.isApproved).length;
+                const pendingDrawingsCount = fileStatuses.filter((s: any) => s.isPending).length;
+                const rejectedDrawingsCount = fileStatuses.filter((s: any) => s.isRejected).length;
+                const draftDrawingsCount = fileStatuses.filter((s: any) => s.isDraft).length;
 
-                const rejectedDrawingsCount = designFilesList.filter((f: any) => {
-                  const s = f.approvalStatus || f.status || 'draft';
-                  return s === 'internally_rejected' || f.clientStatus === 'client_changes_requested';
-                }).length;
+                const allDrawingsApproved = hasDesignFiles && approvedDrawingsCount === designFilesList.length;
 
-                const allDrawingsApproved = hasDesignFiles && draftDrawingsCount === 0 && pendingDrawingsCount === 0 && rejectedDrawingsCount === 0;
+                const headerBadge = (() => {
+                  if (!hasDesignFiles) {
+                    return {
+                      text: "Upload Pending",
+                      className: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+                    };
+                  }
+                  if (allDrawingsApproved) {
+                    return {
+                      text: `✓ All Approved (${approvedDrawingsCount}/${designFilesList.length})`,
+                      className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+                    };
+                  }
+                  if (approvedDrawingsCount > 0) {
+                    return {
+                      text: `${approvedDrawingsCount}/${designFilesList.length} Approved`,
+                      className: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+                    };
+                  }
+                  if (pendingDrawingsCount > 0) {
+                    return {
+                      text: `${pendingDrawingsCount}/${designFilesList.length} Pending Approval`,
+                      className: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+                    };
+                  }
+                  if (rejectedDrawingsCount > 0) {
+                    return {
+                      text: `${rejectedDrawingsCount}/${designFilesList.length} Rejected`,
+                      className: "bg-rose-500/10 text-rose-600 border-rose-500/20",
+                    };
+                  }
+                  return {
+                    text: `${draftDrawingsCount} Draft${draftDrawingsCount > 1 ? 's' : ''}`,
+                    className: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20",
+                  };
+                })();
 
                 return (
                   <div className="space-y-3.5 sm:space-y-4">
@@ -2398,13 +2677,9 @@ export default function Lead360View() {
                               </h2>
                               <span className={cn(
                                 "text-[10px] font-bold px-2 py-0.5 rounded border shrink-0",
-                                allDrawingsApproved
-                                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                                  : hasDesignFiles
-                                  ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                                  : "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                                headerBadge.className
                               )}>
-                                {allDrawingsApproved ? "✓ All Approved" : hasDesignFiles ? `${designFilesList.length - pendingDrawingsCount - rejectedDrawingsCount}/${designFilesList.length} Approved` : "Upload Pending"}
+                                {headerBadge.text}
                               </span>
                             </div>
                           </div>
@@ -2423,16 +2698,23 @@ export default function Lead360View() {
                                 {['Under Drawing', 'Design Approved'].includes(lead.status) && (
                                   <button
                                     onClick={() => {
-                                      const hasPending = pendingDrawingsCount > 0 || rejectedDrawingsCount > 0;
-                                      if (hasPending) {
-                                        toast.error('Cannot pass to BOQ: Drawing approval is still pending.');
+                                      if (!allDrawingsApproved) {
+                                        if (draftDrawingsCount > 0) {
+                                          toast.error('Cannot pass to BOQ: Drawing is in Draft and requires internal approval.');
+                                        } else if (pendingDrawingsCount > 0) {
+                                          toast.error('Cannot pass to BOQ: Drawing approval is still pending.');
+                                        } else if (rejectedDrawingsCount > 0) {
+                                          toast.error('Cannot pass to BOQ: Some drawings are rejected.');
+                                        } else {
+                                          toast.error('Cannot pass to BOQ: All drawings must be approved first.');
+                                        }
                                         return;
                                       }
                                       setIsSendToBoqOpen(true);
                                     }}
                                     className={cn(
                                       "inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold transition-all active:scale-95",
-                                      (pendingDrawingsCount === 0 && rejectedDrawingsCount === 0)
+                                      allDrawingsApproved
                                         ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                                         : "bg-slate-200 dark:bg-slate-800 text-slate-500"
                                     )}
@@ -2681,16 +2963,19 @@ export default function Lead360View() {
                                               }}
                                               className="px-1.5 py-0.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 rounded text-[9px] font-bold"
                                             >
-                                              <Send size={9} className="inline mr-0.5" /> Approval
+                                              <Send size={9} className="inline mr-0.5" /> Send to Approval
                                             </button>
                                           )}
                                           {isPendingApproval && (
                                             <>
                                               <button
                                                 type="button"
-                                                onClick={() => handleDirectApproveDrawing(file)}
+                                                onClick={() => {
+                                                  setSelectedDrawingForConfirmApprove(file);
+                                                  setIsConfirmApproveModalOpen(true);
+                                                }}
                                                 disabled={approvingDrawingId === (file._id || file.id || file.title || file.name)}
-                                                className="px-1.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 rounded text-[9px] font-bold"
+                                                className="px-1.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 rounded text-[9px] font-bold cursor-pointer"
                                               >
                                                 Approve
                                               </button>
@@ -2736,7 +3021,7 @@ export default function Lead360View() {
                                       <button
                                         type="button"
                                         onClick={() => router.push(`/interior-new/crm/leads/${params.id}/drawings/${encodeURIComponent(file._id || file.id || file.title || file.name)}`)}
-                                        className="p-1 px-1.5 rounded bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] flex items-center gap-0.5 text-[9px] font-bold"
+                                        className="p-1 px-1.5 rounded bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] flex items-center gap-0.5 text-[9px] font-bold"
                                       >
                                         <Eye size={11} />
                                         <span>View</span>
@@ -2857,44 +3142,30 @@ export default function Lead360View() {
                                     setBoqIndexToDelete(activeBoqIndex);
                                     setIsDeleteBoqModalOpen(true);
                                   }}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold transition-all active:scale-95"
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold transition-all active:scale-95 cursor-pointer"
                                   title="Delete Active BOQ Version"
                                 >
                                   <Trash2 size={12} /> Delete
                                 </button>
 
-                                {/* Approval Actions in Header */}
-                                {(isBoqDraft || isBoqRejected) && (
-                                  <button
-                                    onClick={() => setIsSendBoqApprovalOpen(true)}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-xs"
-                                  >
-                                    <Send size={11} /> {isBoqRejected ? 'Resubmit' : 'Send for Approval'}
-                                  </button>
-                                )}
+                                <button
+                                  onClick={() =>
+                                    exportBoqToExcel({
+                                      lead,
+                                      boqIndex: activeBoqIndex,
+                                      currencySymbol,
+                                      currencyCode,
+                                    })
+                                  }
+                                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-2xs cursor-pointer"
+                                  title="Export Bill of Quantities to Excel (.xlsx)"
+                                >
+                                  <FileSpreadsheet size={13} /> Export Excel
+                                </button>
 
-                                {isBoqPending && (
-                                  <>
-                                    <button
-                                      onClick={() => {
-                                        setBoqApprovalAction('approve');
-                                        setIsBoqApprovalOpen(true);
-                                      }}
-                                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-xs"
-                                    >
-                                      <CheckCircle2 size={11} /> Approve
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        setBoqApprovalAction('reject');
-                                        setIsBoqApprovalOpen(true);
-                                      }}
-                                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-xs"
-                                    >
-                                      <XCircle size={11} /> Reject
-                                    </button>
-                                  </>
-                                )}
+                              
+
+                              
 
                                 {['Under BOQ Creation', 'Design Approved', 'Under Drawing'].includes(lead.status) && isBoqApproved && (
                                   <button
@@ -2923,12 +3194,14 @@ export default function Lead360View() {
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Total Amount</p>
                           <p className="font-bold text-xs text-indigo-600 dark:text-indigo-400 mt-0.5">
-                            {hasBoqs ? `₹${boqInfo.totalAmount.toLocaleString('en-IN')}` : '₹0'}
+                            {hasBoqs ? `${currencySymbol} ${boqInfo.totalAmount.toLocaleString()}` : `${currencySymbol} 0`}
                           </p>
                         </div>
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Line Items</p>
-                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5">{boqInfo.itemsCount} items</p>
+                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Scope Categories</p>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate" title={hasBoqs ? boqInfo.categorySummary : '0 Categories'}>
+                            {hasBoqs ? boqInfo.categorySummary : '0 Categories'}
+                          </p>
                         </div>
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Target Budget</p>
@@ -3047,21 +3320,21 @@ export default function Lead360View() {
                 const isQuoteLocked = isReadOnly || isQuotationApproved;
 
                 return (
-                  <div className="space-y-3.5 sm:space-y-4">
-                    {/* Header Card */}
-                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 sm:p-4 space-y-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-[hsl(var(--border))]">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border bg-rose-500/10 border-rose-500/20 text-rose-600">
-                            <FileText size={16} />
+                  <div className="space-y-4">
+                    {/* Header Summary Card */}
+                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-[hsl(var(--border))]">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400">
+                            <FileText size={20} />
                           </div>
                           <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h2 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">
+                            <div className="flex items-center gap-2.5 flex-wrap">
+                              <h2 className="text-sm sm:text-base font-bold text-[hsl(var(--foreground))]">
                                 Commercial Quotations & Proposals
                               </h2>
                               <span className={cn(
-                                "text-[10px] font-bold px-2 py-0.5 rounded border shrink-0",
+                                "text-[11px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 flex items-center gap-1.5",
                                 hasQuotations
                                   ? isLatestQuoteRejected
                                     ? "bg-rose-500/10 text-rose-600 border-rose-500/20"
@@ -3070,139 +3343,285 @@ export default function Lead360View() {
                                     : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                                   : "bg-amber-500/10 text-amber-600 border-amber-500/20"
                               )}>
-                                {hasQuotations ? `Quote Ready (${lead.quotations.length} ${lead.quotations.length === 1 ? 'Version' : 'Versions'})` : "Pending"}
+                                <span className={cn(
+                                  "w-1.5 h-1.5 rounded-full shrink-0",
+                                  hasQuotations
+                                    ? isLatestQuoteRejected
+                                      ? "bg-rose-500"
+                                      : hasAcceptedQuote
+                                      ? "bg-emerald-500"
+                                      : "bg-blue-500"
+                                    : "bg-amber-500"
+                                )} />
+                                {hasQuotations ? `${lead.quotations.length} ${lead.quotations.length === 1 ? 'Proposal' : 'Proposals'} Generated` : "Pending Creation"}
                               </span>
                             </div>
+                            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                              Generate commercial proposals, apply taxes, discounts and manage client approvals.
+                            </p>
                           </div>
                         </div>
 
                         {!isReadOnly && (
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            {hasQuotations ? (
-                              <>
-                                {isLatestQuoteRejected ? (
-                                  <button
-                                    onClick={() => setIsQuotationModalOpen(true)}
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
-                                  >
-                                    <Plus size={13} /> Add Version (v{(lead.quotations.length || 1) + 1})
-                                  </button>
-                                ) : latestQuote?.status === 'Draft' ? (
-                                  <button
-                                    onClick={() => setIsQuotationModalOpen(true)}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
-                                  >
-                                    <Plus size={13} /> Edit Draft Quote
-                                  </button>
-                                ) : (
-                                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-bold">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                                    <span>Version {latestQuote?.version || 1} {latestQuote?.status || 'Sent'}</span>
-                                  </div>
-                                )}
-
-                                {(hasAcceptedQuote || lead.status === 'Booking Pending') && !['Won', 'Converted'].includes(lead.status) && (
-                                  <button
-                                    onClick={() => setIsConvertToProjectOpen(true)}
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
-                                  >
-                                    <CheckCircle2 size={13} /> Convert to Project
-                                  </button>
-                                )}
-                              </>
-                            ) : (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {hasQuotations && (hasAcceptedQuote || lead.status === 'Booking Pending') && !['Won', 'Converted'].includes(lead.status) && (
                               <button
-                                onClick={() => setIsQuotationModalOpen(true)}
-                                className="inline-flex items-center gap-1 px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                                onClick={() => setIsConvertToProjectOpen(true)}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs"
                               >
-                                <Plus size={13} /> Create Quotation
+                                <CheckCircle2 size={14} /> Convert to Project
                               </button>
                             )}
+
+                            <button
+                              onClick={() => {
+                                setEditingQuotationIndex(null);
+                                setIsQuotationModalOpen(true);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
+                            >
+                              <Plus size={14} /> Create Quotation
+                            </button>
                           </div>
                         )}
                       </div>
 
                       {/* Summary Metrics */}
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Grand Total</p>
-                          <p className="font-bold text-xs text-rose-600 dark:text-rose-400 mt-0.5">
-                            {hasQuotations ? `₹${quotationInfo.grandTotal.toLocaleString('en-IN')}` : 'Pending'}
+                          <p className="font-extrabold text-sm sm:text-base text-blue-600 dark:text-blue-400 mt-1">
+                            {hasQuotations ? `${currencySymbol} ${quotationInfo.grandTotal.toLocaleString()}` : '—'}
                           </p>
                         </div>
-                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
+                        <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Breakdown</p>
-                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
+                          <p className="font-bold text-xs sm:text-sm text-[hsl(var(--foreground))] mt-1 truncate">
                             {hasQuotations ? `${quotationInfo.taxPercentage}% Tax • ${quotationInfo.itemsCount} Items` : 'No items'}
                           </p>
                         </div>
-                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Status</p>
-                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5">{quotationInfo.currentQuote?.status || 'Draft'}</p>
+                        <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors">
+                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Latest Status</p>
+                          <p className="font-bold text-xs sm:text-sm text-[hsl(var(--foreground))] mt-1">{quotationInfo.currentQuote?.status || 'Generated'}</p>
                         </div>
-                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
+                        <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Target Budget</p>
-                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5">{lead.budgetRange || 'Not specified'}</p>
+                          <p className="font-bold text-xs sm:text-sm text-[hsl(var(--foreground))] mt-1">{lead.budgetRange || 'Not specified'}</p>
                         </div>
                       </div>
                     </div>
 
                     {!hasQuotations ? (
-                      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-6 text-center flex flex-col items-center space-y-3">
-                        <div className="w-12 h-12 bg-rose-500/10 rounded-xl flex items-center justify-center text-rose-600">
-                          <FileText size={24} />
+                      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-8 sm:p-12 text-center flex flex-col items-center space-y-3.5 shadow-2xs">
+                        <div className="w-14 h-14 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-blue-600">
+                          <FileText size={26} />
                         </div>
-                        <div className="max-w-md space-y-0.5">
-                          <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">
-                            Ready for Commercial Quotation
+                        <div className="max-w-md space-y-1">
+                          <h3 className="text-base font-bold text-[hsl(var(--foreground))]">
+                            No Quotations Created Yet
                           </h3>
                           <p className="text-[hsl(var(--muted-foreground))] text-xs">
-                            Generate itemized pricing proposals, apply taxes, and discounts.
+                            Generate itemized pricing proposals directly from the finalized BOQ, apply custom discounts and taxes.
                           </p>
                         </div>
                         {!isReadOnly && (
                           <button
-                            onClick={() => setIsQuotationModalOpen(true)}
-                            className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                            onClick={() => {
+                              setEditingQuotationIndex(null);
+                              setIsQuotationModalOpen(true);
+                            }}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer shadow-sm"
                           >
-                            <Plus size={14} /> Create Initial Quotation
+                            <Plus size={15} /> Create First Quotation
                           </button>
                         )}
                       </div>
                     ) : (
-                      <div className="space-y-3">
-                        {lead.quotations.length > 1 && (
-                          <div className="flex items-center justify-between gap-2 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-2 sm:p-2.5">
-                            <span className="text-xs font-bold text-[hsl(var(--muted-foreground))]">Versions:</span>
-                            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
-                              {lead.quotations.map((q: any, idx: number) => (
-                                <button
-                                  key={idx}
-                                  onClick={() => setActiveQuotationIndex(idx)}
-                                  className={cn(
-                                    "px-2.5 py-1 rounded text-xs font-bold transition-all whitespace-nowrap cursor-pointer",
-                                    activeQuotationIndex === idx
-                                      ? "bg-rose-600 text-white"
-                                      : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))]"
-                                  )}
-                                >
-                                  Version {q.version || idx + 1}
-                                </button>
-                              ))}
+                      <div className="space-y-4">
+                        {/* Table Card */}
+                        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl overflow-hidden shadow-xs">
+                          <div className="px-4 py-3 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.25)] flex items-center justify-between gap-3">
+                            <div>
+                              <h3 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
+                                <span>Quotation Versions & Options</span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                                  {lead.quotations.length}
+                                </span>
+                              </h3>
                             </div>
+                            <p className="text-[11px] text-[hsl(var(--muted-foreground))] hidden sm:block">
+                              Click &quot;View&quot; to inspect document preview or send to client
+                            </p>
                           </div>
-                        )}
 
-                        <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] overflow-hidden overflow-x-auto">
-                          <QuotationPreview
-                            lead={lead}
-                            quotationIndex={Math.min(activeQuotationIndex, Math.max(0, (lead.quotations?.length || 1) - 1))}
-                            onAddVersion={() => setIsQuotationModalOpen(true)}
-                            onSuccess={() => {
-                              fetchData();
-                              setActiveQuotationIndex((prev) => Math.max(0, Math.min(prev, (lead.quotations?.length || 1) - 2)));
-                            }}
-                          />
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left text-xs border-collapse">
+                              <thead>
+                                <tr className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.4)] text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wider text-[10px]">
+                                  <th className="py-3 px-4 w-12 text-center">#</th>
+                                  <th className="py-3 px-4">Quotation Title</th>
+                                  <th className="py-3 px-4">Scope / Items</th>
+                                  <th className="py-3 px-4">Subtotal & Tax</th>
+                                  <th className="py-3 px-4">Grand Total</th>
+                                  <th className="py-3 px-4 text-center">Status</th>
+                                  <th className="py-3 px-4 text-right">Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-[hsl(var(--border))]">
+                                {lead.quotations.map((q: any, idx: number) => {
+                                  const isSelected = activeQuotationIndex === idx;
+                                  const quoteTitle = q.title || `Quotation ${idx + 1}`;
+                                  const itemCount = q.items?.length || 0;
+                                  const status = q.status || 'Generated';
+
+                                  const getStatusBadge = (st: string) => {
+                                    switch (st) {
+                                      case 'Accepted':
+                                      case 'Approved':
+                                        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                                      case 'Rejected':
+                                        return 'bg-rose-50 text-rose-700 border-rose-200';
+                                      case 'Sent':
+                                        return 'bg-blue-50 text-blue-700 border-blue-200';
+                                      case 'Generated':
+                                        return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+                                      default:
+                                        return 'bg-slate-100 text-slate-700 border-slate-200';
+                                    }
+                                  };
+
+                                  return (
+                                    <tr
+                                      key={idx}
+                                      onClick={() => setActiveQuotationIndex(idx)}
+                                      className="group cursor-pointer transition-all hover:bg-[hsl(var(--muted)/0.4)]"
+                                    >
+                                      {/* Index */}
+                                      <td className="py-3.5 px-4 text-center font-mono text-[11px] text-[hsl(var(--muted-foreground))]">
+                                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-md font-semibold text-xs bg-slate-100 dark:bg-[hsl(var(--muted))] text-slate-600 dark:text-[hsl(var(--muted-foreground))]">
+                                          {idx + 1}
+                                        </span>
+                                      </td>
+
+                                      {/* Quotation Title */}
+                                      <td className="py-3.5 px-4 font-bold text-[hsl(var(--foreground))]">
+                                        <div className="flex items-center gap-3">
+                                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-all bg-blue-50 text-blue-600 border-blue-200 group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-500/10 dark:border-blue-500/20">
+                                            <FileText size={14} />
+                                          </div>
+                                          <div>
+                                            <span className="text-xs font-bold text-[hsl(var(--foreground))] block">
+                                              {quoteTitle}
+                                            </span>
+                                            <p className="text-[10px] text-[hsl(var(--muted-foreground))] font-normal">
+                                              Version {q.version || idx + 1}
+                                              {q.sourceBoqVersion && ` • BOQ v${q.sourceBoqVersion}`}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      </td>
+
+                                      {/* Items / Scope */}
+                                      <td className="py-3.5 px-4 text-[11px] text-[hsl(var(--muted-foreground))] whitespace-nowrap">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="font-semibold text-slate-700 dark:text-[hsl(var(--foreground))] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-[hsl(var(--muted))] border border-slate-200/80 dark:border-[hsl(var(--border))]">
+                                            {itemCount} {itemCount === 1 ? 'item' : 'items'}
+                                          </span>
+                                        </div>
+                                      </td>
+
+                                      {/* Subtotal & Tax */}
+                                      <td className="py-3.5 px-4 text-[11px] text-[hsl(var(--muted-foreground))] whitespace-nowrap">
+                                        <div className="font-medium text-[hsl(var(--foreground))]">{currencySymbol} {(q.subtotal || 0).toLocaleString()}</div>
+                                        <div className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                                          Tax: {q.taxPercentage || 0}%
+                                          {Number(q.discountAmount || 0) > 0 && (
+                                            <span className="ml-1 text-emerald-600 font-semibold">
+                                              • Disc: {currencySymbol} {Number(q.discountAmount).toLocaleString()}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </td>
+
+                                      {/* Grand Total */}
+                                      <td className="py-3.5 px-4 whitespace-nowrap">
+                                        <span className="text-xs font-extrabold text-blue-600 dark:text-blue-400">
+                                          {currencySymbol} {(q.grandTotal || 0).toLocaleString()}
+                                        </span>
+                                      </td>
+
+                                      {/* Status */}
+                                      <td className="py-3.5 px-4 whitespace-nowrap text-center">
+                                        <span className={cn(
+                                          "text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wider inline-flex items-center gap-1",
+                                          getStatusBadge(status)
+                                        )}>
+                                          <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
+                                          {status}
+                                        </span>
+                                      </td>
+
+                                      {/* Actions */}
+                                      <td className="py-3.5 px-4 whitespace-nowrap text-right">
+                                        <div className="inline-flex items-center gap-1.5 justify-end" onClick={(e) => e.stopPropagation()}>
+                                          <button
+                                            type="button"
+                                            onClick={() => setActiveQuotationIndex(idx)}
+                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs bg-white hover:bg-blue-50 text-blue-700 border border-blue-500 dark:bg-[hsl(var(--card))] dark:text-blue-400"
+                                            title="View Quotation Modal"
+                                          >
+                                            <Eye size={13} /> View
+                                          </button>
+
+                                          {!isReadOnly && !isQuotationApproved && (
+                                            <button
+                                              type="button"
+                                              onClick={() => setSendQuotationModalIndex(idx)}
+                                              className={cn(
+                                                "inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs",
+                                                status === 'Sent'
+                                                  ? "bg-white hover:bg-slate-50 text-slate-700 hover:text-blue-600 border border-slate-200 hover:border-slate-300"
+                                                  : "bg-white hover:bg-blue-50 text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 dark:bg-[hsl(var(--card))] dark:text-blue-400"
+                                              )}
+                                              title={status === 'Sent' ? "Resend / Dispatch Quotation" : "Send Quotation to Lead or Vendor"}
+                                            >
+                                              <Send size={12} />
+                                              {status === 'Sent' ? 'Resend' : 'Send'}
+                                            </button>
+                                          )}
+
+                                          {!isReadOnly && !isQuoteLocked && (
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                setEditingQuotationIndex(idx);
+                                                setIsQuotationModalOpen(true);
+                                              }}
+                                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-200 transition-colors cursor-pointer shadow-xs dark:bg-[hsl(var(--card))] dark:border-[hsl(var(--border))] dark:text-[hsl(var(--foreground))]"
+                                              title="Edit Quotation"
+                                            >
+                                              <Pencil size={12} /> Edit
+                                            </button>
+                                          )}
+
+                                          {!isReadOnly && !isQuoteLocked && (
+                                            <button
+                                              type="button"
+                                              onClick={() => handleDeleteQuotationByIndex(idx)}
+                                              className="inline-flex items-center justify-center p-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors cursor-pointer shadow-xs dark:bg-[hsl(var(--card))] dark:border-[hsl(var(--border))] dark:text-[hsl(var(--muted-foreground))]"
+                                              title="Delete Quotation"
+                                            >
+                                              <Trash2 size={13} />
+                                            </button>
+                                          )}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -3310,12 +3729,42 @@ export default function Lead360View() {
       />
       <InteriorQuotationBuilderModal
         isOpen={isQuotationModalOpen}
-        onClose={() => setIsQuotationModalOpen(false)}
+        onClose={() => {
+          setIsQuotationModalOpen(false);
+          setEditingQuotationIndex(null);
+        }}
         customerId={params.id as string}
         customerEmail={lead?.email || ''}
         existingQuotations={lead?.quotations || []}
+        existingBoqs={lead?.boqs || []}
+        lead={lead}
+        editingQuotationIndex={editingQuotationIndex}
+        onSuccess={() => {
+          fetchData();
+          setEditingQuotationIndex(null);
+          setActiveQuotationIndex(null);
+        }}
+      />
+      <InteriorQuotationPreviewModal
+        isOpen={activeQuotationIndex !== null}
+        onClose={() => setActiveQuotationIndex(null)}
+        lead={lead}
+        quotationIndex={activeQuotationIndex}
         onSuccess={fetchData}
       />
+      {sendQuotationModalIndex !== null && lead?.quotations?.[sendQuotationModalIndex] && (
+        <InteriorSendQuotationModal
+          isOpen={sendQuotationModalIndex !== null}
+          onClose={() => setSendQuotationModalIndex(null)}
+          customerId={params.id as string}
+          customerName={lead?.name}
+          customerEmail={lead?.email}
+          customerPhone={lead?.phone}
+          quotation={lead.quotations[sendQuotationModalIndex]}
+          quotationIndex={sendQuotationModalIndex}
+          onSuccess={fetchData}
+        />
+      )}
       <InteriorDeleteLeadModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
@@ -3340,6 +3789,7 @@ export default function Lead360View() {
           Boolean(lead?.linkedProject)
         )}
         budgetRange={lead?.budgetRange || ''}
+        designFiles={lead?.designFiles || []}
         onSuccess={fetchData}
       />
       <InteriorDeleteBoqModal
@@ -3555,6 +4005,23 @@ export default function Lead360View() {
         drawing={selectedDrawingForApproval}
         onSuccess={fetchData}
         users={users}
+      />
+      <InteriorDrawingConfirmApproveModal
+        isOpen={isConfirmApproveModalOpen}
+        onClose={() => {
+          if (!approvingDrawingId) {
+            setIsConfirmApproveModalOpen(false);
+            setSelectedDrawingForConfirmApprove(null);
+          }
+        }}
+        onConfirm={() => {
+          if (selectedDrawingForConfirmApprove) {
+            handleDirectApproveDrawing(selectedDrawingForConfirmApprove);
+          }
+        }}
+        drawing={selectedDrawingForConfirmApprove}
+        isSubmitting={Boolean(approvingDrawingId)}
+        leadName={lead?.name}
       />
       <InteriorUploadRevisionModal
         isOpen={isRevisionModalOpen}

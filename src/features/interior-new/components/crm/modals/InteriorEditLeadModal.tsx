@@ -27,7 +27,7 @@ interface EditLeadModalProps {
   onClose: () => void;
   lead: any;
   users?: any[];
-  onSuccess: () => void;
+  onSuccess?: (updatedLead?: any) => void;
 }
 
 export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
@@ -155,7 +155,9 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
 
       await interiorCrmService.updateCustomer(leadId, payload);
       toast.success('Lead updated successfully!');
-      onSuccess();
+      if (onSuccess) {
+        onSuccess({ _id: leadId, ...payload });
+      }
       onClose();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to update lead');
@@ -227,7 +229,7 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                         ? 'border-red-500 focus:ring-red-500/20'
                         : 'border-[hsl(var(--border))] focus:ring-indigo-500/20 focus:border-indigo-500'
                     }`}
-                    placeholder="e.g., Rajesh Sharma"
+                    placeholder="e.g., Alexander Wright"
                     required
                   />
                   {errors.name && (
@@ -260,7 +262,7 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                         ? 'border-red-500 focus:ring-red-500/20'
                         : 'border-[hsl(var(--border))] focus:ring-indigo-500/20 focus:border-indigo-500'
                     }`}
-                    placeholder="e.g., +91 9876543210"
+                    placeholder="e.g., +1 (555) 234-5678"
                     required
                   />
                   {errors.mobileNumber && (
@@ -377,7 +379,7 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                         ? 'border-red-500 focus:ring-red-500/20'
                         : 'border-[hsl(var(--border))] focus:ring-indigo-500/20 focus:border-indigo-500'
                     }`}
-                    placeholder="e.g., Hiranandani Estate, Thane"
+                    placeholder="e.g., West End Avenue, Suite 400"
                   />
                   {errors.projectLocation && (
                     <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">

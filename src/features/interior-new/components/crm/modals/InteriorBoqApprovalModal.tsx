@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
+import { useCurrency } from '@/hooks/useCurrency';
 import { cn, parseMaxBudget } from '@/lib/utils';
 
 interface Props {
@@ -42,6 +43,7 @@ export function InteriorBoqApprovalModal({
   onSuccess,
 }: Props) {
   const toast = useToast();
+  const { currencySymbol } = useCurrency();
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(initialAction);
   const [rejectionReason, setRejectionReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,6 +70,16 @@ export function InteriorBoqApprovalModal({
   const isOverBudget = Boolean(maxBudget && maxBudget > 0 && totalBoqAmount > maxBudget);
   const excessAmount = isOverBudget ? totalBoqAmount - (maxBudget || 0) : 0;
 
+  const rawCategories: string[] = Array.from(
+    new Set<string>((targetBoq?.items || []).map((it: any) => (it.category || 'General') as string))
+  );
+  const sections =
+    targetBoq?.sections && Array.isArray(targetBoq.sections) && targetBoq.sections.length > 0
+      ? targetBoq.sections
+      : rawCategories.map((c: any) => ({ sectionTitle: String(c) }));
+  const categoriesCount = sections.length || (targetBoq?.items?.length ? 1 : 0);
+  const categoryLabel = `${categoriesCount} ${categoriesCount === 1 ? 'Category' : 'Categories'}`;
+
   const handleApprove = async () => {
     if (!customerId || !targetBoq) return;
     setIsSubmitting(true);
@@ -90,7 +102,7 @@ export function InteriorBoqApprovalModal({
         customer: customerId,
         type: 'Status Change',
         status: 'Completed',
-        remarks: `BOQ Version ${versionNumber} (₹${totalBoqAmount.toLocaleString('en-IN')}) was approved internally.`,
+        remarks: `BOQ Version ${versionNumber} (${currencySymbol} ${totalBoqAmount.toLocaleString()}) was approved internally.`,
         completedDate: new Date(),
       });
 
@@ -218,7 +230,7 @@ export function InteriorBoqApprovalModal({
               <CheckCircle2 size={18} className="shrink-0 mt-0.5 text-emerald-600" />
               <div className="leading-relaxed font-medium text-emerald-950">
                 You are approving <strong className="font-extrabold text-slate-950">BOQ Version {versionNumber}</strong> valued at{' '}
-                <strong className="font-black text-emerald-700">₹{totalBoqAmount.toLocaleString('en-IN')}</strong>. 
+                <strong className="font-black text-emerald-700">{currencySymbol} {totalBoqAmount.toLocaleString()}</strong>. 
                 Once confirmed, this estimation is approved and unlocks the <strong className="font-bold text-slate-950">Quotation phase</strong>.
               </div>
             </div>
@@ -279,13 +291,13 @@ export function InteriorBoqApprovalModal({
                   <Calculator size={13} className="text-emerald-600" /> Total Value
                 </span>
                 <span className="font-black text-emerald-700 text-sm">
-                  ₹{totalBoqAmount.toLocaleString('en-IN')}
+                  {currencySymbol} {totalBoqAmount.toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-600 font-semibold">Line Items Count</span>
+                <span className="text-slate-600 font-semibold">Scope Categories</span>
                 <span className="font-bold text-slate-900">
-                  {targetBoq.items?.length || 0} items
+                  {categoryLabel}
                 </span>
               </div>
               {targetBoq.assignedReviewerName && (
@@ -312,9 +324,9 @@ export function InteriorBoqApprovalModal({
             <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-2.5 text-xs text-amber-950">
               <AlertTriangle size={16} className="shrink-0 mt-0.5 text-amber-600" />
               <div className="leading-relaxed">
-                <strong className="font-bold text-amber-900">Over Target Budget:</strong> BOQ total of ₹{totalBoqAmount.toLocaleString('en-IN')}{' '}
-                exceeds client's target budget of ₹{maxBudget?.toLocaleString('en-IN')} by{' '}
-                <strong className="font-black text-amber-950">₹{excessAmount.toLocaleString('en-IN')}</strong>.
+                <strong className="font-bold text-amber-900">Over Target Budget:</strong> BOQ total of {currencySymbol} {totalBoqAmount.toLocaleString()}{' '}
+                exceeds client's target budget of {currencySymbol} {maxBudget?.toLocaleString()} by{' '}
+                <strong className="font-black text-amber-950">{currencySymbol} {excessAmount.toLocaleString()}</strong>.
               </div>
             </div>
           )}

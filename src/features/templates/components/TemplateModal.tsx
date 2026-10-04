@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -230,7 +230,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({ isOpen, onClose, o
                         <input
                           type="number" value={formData.maxBudget}
                           onChange={e => setFormData(f => ({ ...f, maxBudget: e.target.value }))}
-                          className={`${inputCls} pl-12`} placeholder="10,00,000"
+                          className={`${inputCls} pl-12`} placeholder="1,000,000"
                         />
                       </div>
                     </div>

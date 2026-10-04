@@ -26,6 +26,7 @@ import {
 import { Button, Input, Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
+import { useCurrency } from '@/hooks/useCurrency';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -37,6 +38,7 @@ interface InteriorBoqViewProps {
 
 export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
   const toast = useToast();
+  const { currencySymbol } = useCurrency();
   const { confirm } = useConfirm();
   const queryClient = useQueryClient();
 
@@ -324,7 +326,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                         </span>
                       </div>
                       <div className="flex items-center justify-between text-[10px] text-[hsl(var(--muted-foreground))] font-medium pt-1">
-                        <span>₹{boq.totalAmount?.toLocaleString('en-IN')}</span>
+                        <span>{currencySymbol} {boq.totalAmount?.toLocaleString()}</span>
                         <span>{new Date(boq.createdAt).toLocaleDateString('en-IN')}</span>
                       </div>
                     </button>
@@ -341,7 +343,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                 <div className="space-y-2">
                   <div className="flex justify-between border-b pb-1.5">
                     <span className="text-[hsl(var(--muted-foreground))]">Total Cost:</span>
-                    <span className="font-bold text-[hsl(var(--foreground))]">₹{selectedBoq.totalAmount?.toLocaleString('en-IN')}</span>
+                    <span className="font-bold text-[hsl(var(--foreground))]">{currencySymbol} {selectedBoq.totalAmount?.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between border-b pb-1.5">
                     <span className="text-[hsl(var(--muted-foreground))]">Created By:</span>
@@ -426,8 +428,8 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                           <th className="p-3">Item Description</th>
                           <th className="p-3 text-right">Quantity</th>
                           <th className="p-3 text-center">Unit</th>
-                          <th className="p-3 text-right">Rate (₹)</th>
-                          <th className="p-3 text-right">Amount (₹)</th>
+                          <th className="p-3 text-right">Rate ({currencySymbol})</th>
+                          <th className="p-3 text-right">Amount ({currencySymbol})</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -444,7 +446,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                             <td className="p-3 text-right font-semibold">{item.quantity?.toLocaleString('en-IN')}</td>
                             <td className="p-3 text-center uppercase text-[hsl(var(--muted-foreground))]">{item.unit}</td>
                             <td className="p-3 text-right font-medium">{item.rate?.toLocaleString('en-IN')}</td>
-                            <td className="p-3 text-right font-bold text-[hsl(var(--foreground))]">₹{item.amount?.toLocaleString('en-IN')}</td>
+                            <td className="p-3 text-right font-bold text-[hsl(var(--foreground))]">{currencySymbol} {item.amount?.toLocaleString()}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -475,14 +477,14 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                         <Card className="bg-blue-50/20 border-blue-100">
                           <CardContent className="p-4 space-y-1">
                             <span className="text-[10px] uppercase font-bold text-blue-600 tracking-wider">Total Planned Budget</span>
-                            <div className="text-xl font-black">₹{actualData.summary?.totalPlannedAmount?.toLocaleString('en-IN')}</div>
+                            <div className="text-xl font-black">{currencySymbol} {actualData.summary?.totalPlannedAmount?.toLocaleString()}</div>
                             <p className="text-[9px] text-[hsl(var(--muted-foreground))]">Approved BOQ Master Value</p>
                           </CardContent>
                         </Card>
                         <Card className="bg-amber-50/20 border-amber-100">
                           <CardContent className="p-4 space-y-1">
                             <span className="text-[10px] uppercase font-bold text-amber-600 tracking-wider">Consumed Cost</span>
-                            <div className="text-xl font-black">₹{actualData.summary?.totalConsumedAmount?.toLocaleString('en-IN')}</div>
+                            <div className="text-xl font-black">{currencySymbol} {actualData.summary?.totalConsumedAmount?.toLocaleString()}</div>
                             <p className="text-[9px] text-[hsl(var(--muted-foreground))]">Calculated via site installation logs</p>
                           </CardContent>
                         </Card>
@@ -536,17 +538,17 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                                   </td>
                                   <td className="p-3 text-right font-medium">
                                     <div>{item.plannedQuantity?.toLocaleString('en-IN')}</div>
-                                    <div className="text-[9px] text-[hsl(var(--muted-foreground))] mt-0.5">₹{item.plannedAmount?.toLocaleString('en-IN')}</div>
+                                    <div className="text-[9px] text-[hsl(var(--muted-foreground))] mt-0.5">{currencySymbol} {item.plannedAmount?.toLocaleString()}</div>
                                   </td>
                                   <td className="p-3 text-right font-medium">
                                     <div className="font-bold text-[hsl(var(--foreground))]">{item.consumedQuantity?.toLocaleString('en-IN')}</div>
-                                    <div className="text-[9px] text-[hsl(var(--muted-foreground))] mt-0.5">₹{item.consumedAmount?.toLocaleString('en-IN')}</div>
+                                    <div className="text-[9px] text-[hsl(var(--muted-foreground))] mt-0.5">{currencySymbol} {item.consumedAmount?.toLocaleString()}</div>
                                   </td>
                                   <td className="p-3 text-right">
                                     <div className={cn('font-medium', item.remainingQuantity < 0 ? 'text-red-500 font-bold' : 'text-[hsl(var(--muted-foreground))]')}>
                                       {item.remainingQuantity?.toLocaleString('en-IN')}
                                     </div>
-                                    <div className="text-[9px] text-[hsl(var(--muted-foreground))] mt-0.5">₹{item.remainingAmount?.toLocaleString('en-IN')}</div>
+                                    <div className="text-[9px] text-[hsl(var(--muted-foreground))] mt-0.5">{currencySymbol} {item.remainingAmount?.toLocaleString()}</div>
                                   </td>
                                   <td className="p-3 text-right font-mono font-bold">
                                     {item.variancePercentage > 0 ? (
@@ -681,7 +683,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                             <th className="p-2">Item Name</th>
                             <th className="p-2 w-20 text-right">Quantity</th>
                             <th className="p-2 w-20 text-center">Unit</th>
-                            <th className="p-2 w-28 text-right">Unit Rate (₹)</th>
+                            <th className="p-2 w-28 text-right">Unit Rate ({currencySymbol})</th>
                             <th className="p-2 w-12 text-center" />
                           </tr>
                         </thead>

@@ -12,7 +12,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   customerId: string;
-  onSuccess: () => void;
+  onSuccess?: (updatedData?: any) => void;
 }
 
 export function InteriorConvertToProjectModal({ isOpen, onClose, customerId, onSuccess }: Props) {
@@ -43,7 +43,9 @@ export function InteriorConvertToProjectModal({ isOpen, onClose, customerId, onS
       });
 
       toast.success('Congratulations! Lead converted to an Active Project!');
-      onSuccess();
+      if (onSuccess) {
+        onSuccess({ _id: customerId, status: 'Converted' });
+      }
       onClose();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to convert lead to project');

@@ -628,7 +628,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                           <input type="text" value={form.siteLocationAddress}
                             onChange={e => setForm(f => ({ ...f, siteLocationAddress: e.target.value }))}
-                            className={`${inputCls} pl-10`} placeholder="e.g. 123 Luxury Ave, Mumbai"
+                            className={`${inputCls} pl-10`} placeholder="e.g. 742 Evergreen Terrace, Suite 100"
                           />
                         </div>
                       </div>

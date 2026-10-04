@@ -31,6 +31,10 @@ export interface InteriorSignupPayload {
   lastName: string;
   email: string;
   password: string;
+  phone?: string;
+  country?: string;
+  currency?: string;
+  timezone?: string;
 }
 
 export async function signupInterior(payload: InteriorSignupPayload) {

@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/providers/ToastContext';
 import { interiorCrmService } from '@/services/interiorCrm.service';
+import { useCurrency } from '@/hooks/useCurrency';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export interface RoomRequirement {
@@ -60,7 +61,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   customerId: string;
-  onSuccess: () => void;
+  onSuccess?: (updatedData?: any) => void;
   users?: any[];
   initialRequirements?: RoomRequirement[];
   initialBudget?: string;
@@ -120,6 +121,22 @@ export const InteriorLogRequirementsModal = ({
   currentStatus
 }: Props) => {
   const toast = useToast();
+  const { currencyCode, currencySymbol } = useCurrency();
+  const isINR = currencyCode === 'INR';
+  const quickPresets = isINR
+    ? ['₹3L - ₹5L', '₹5L - ₹10L', '₹10L - ₹15L', '₹15L - ₹25L', '₹25L - ₹50L', '₹50L+']
+    : [
+        `${currencySymbol} 25k - 50k`,
+        `${currencySymbol} 50k - 100k`,
+        `${currencySymbol} 100k - 250k`,
+        `${currencySymbol} 250k - 500k`,
+        `${currencySymbol} 500k - 1M`,
+        `${currencySymbol} 1M+`,
+      ];
+  const budgetPlaceholder = isINR
+    ? 'e.g. ₹5L - ₹10L or ₹15,00,000'
+    : `e.g. ${currencySymbol} 50,000 - ${currencySymbol} 150,000 or ${currencySymbol} 250,000`;
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [budgetRange, setBudgetRange] = useState(initialBudget || '');
   const [budgetError, setBudgetError] = useState<string | null>(null);
@@ -150,7 +167,7 @@ export const InteriorLogRequirementsModal = ({
       setActiveSubTab({});
       setCollapsedRooms({});
     }
-  }, [isOpen, initialRequirements, initialBudget]);
+  }, [isOpen, customerId]);
 
   const addRoom = () => {
     setRequirements((prev) => [...prev, { ...DEFAULT_ROOM, roomName: '' }]);
@@ -281,7 +298,9 @@ export const InteriorLogRequirementsModal = ({
       }
 
       toast.success('Design requirements saved successfully!');
-      onSuccess();
+      if (onSuccess) {
+        onSuccess({ _id: customerId, ...updatePayload });
+      }
       onClose();
     } catch (error: any) {
       console.error('Failed to save requirements:', error);
@@ -355,7 +374,7 @@ export const InteriorLogRequirementsModal = ({
                     setBudgetRange(e.target.value);
                     if (budgetError) setBudgetError(null);
                   }}
-                  placeholder="e.g. ₹5L - ₹10L or ₹15,00,000"
+                  placeholder={budgetPlaceholder}
                   className={`w-full bg-[hsl(var(--background))] border rounded-2xl pl-9 pr-4 py-2.5 text-xs font-bold text-[hsl(var(--foreground))] outline-none transition-all ${
                     budgetError
                       ? 'border-red-500 focus:ring-2 focus:ring-red-500/20'
@@ -370,7 +389,7 @@ export const InteriorLogRequirementsModal = ({
               {!isReadOnly && (
                 <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
                   <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] mr-1">Quick Presets:</span>
-                  {['₹3L - ₹5L', '₹5L - ₹10L', '₹10L - ₹15L', '₹15L - ₹25L', '₹25L - ₹50L', '₹50L+'].map((chip) => (
+                  {quickPresets.map((chip) => (
                     <button
                       key={chip}
                       type="button"

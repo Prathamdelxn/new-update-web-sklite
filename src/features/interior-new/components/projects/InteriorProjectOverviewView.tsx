@@ -11,6 +11,8 @@ import { Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useQuery } from '@tanstack/react-query';
 
+import { useCurrency } from '@/hooks/useCurrency';
+
 interface InteriorProjectOverviewViewProps {
   projectId: string;
 }
@@ -24,6 +26,7 @@ const getMockMetrics = () => ({
 
 export default function InteriorProjectOverviewView({ projectId }: InteriorProjectOverviewViewProps) {
   const router = useRouter();
+  const { currencySymbol, formatCurrency } = useCurrency();
 
   const {
     data: metricsData = null,
@@ -46,10 +49,7 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
 
   const formatBudget = (amount: any) => {
     const num = typeof amount === 'number' ? amount : Number(amount) || 0;
-    if (!num || num <= 0) return '₹ 0';
-    if (num >= 10000000) return `₹ ${(num / 10000000).toFixed(2)} Cr`;
-    if (num >= 100000) return `₹ ${(num / 100000).toFixed(2)} Lakh`;
-    return `₹ ${num.toLocaleString('en-IN')}`;
+    return formatCurrency(num);
   };
 
   if (loading && !metricsData) {

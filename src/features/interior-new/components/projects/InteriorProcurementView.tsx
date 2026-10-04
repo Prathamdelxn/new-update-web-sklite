@@ -36,6 +36,7 @@ import interiorApiClient from '@/services/interiorApi.client';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface POItemInput {
   name: string;
@@ -51,6 +52,7 @@ interface InteriorProcurementViewProps {
 export default function InteriorProcurementView({ projectId }: InteriorProcurementViewProps) {
   const toast = useToast();
   const { confirm } = useConfirm();
+  const { currencySymbol, formatExactCurrency } = useCurrency();
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<'procurement' | 'inventory'>('procurement');
@@ -378,7 +380,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
     if (!selectedPo) return;
     
     if (selectedPo.status === 'approved') {
-      const formattedAmount = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(selectedPo.amount || 0);
+      const formattedAmount = formatCost(selectedPo.amount || 0);
       const ok = await confirm({
         title: 'Approve & Lock PO',
         message: `You are about to assign this PO to ${selectedPo.vendorName || 'the vendor'} and lock in the final rates at ${formattedAmount}. This cannot be easily undone. Do you want to proceed?`,
@@ -475,7 +477,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   ];
 
   const formatCost = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount || 0);
+    return formatExactCurrency(amount || 0);
   };
 
   if (loading) {
@@ -681,7 +683,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                             </span>
                           ) : isPartiallyPaid ? (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                              Part Paid (₹{poPaidAmount})
+                              Part Paid ({currencySymbol} {poPaidAmount})
                             </span>
                           ) : (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
@@ -751,7 +753,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         className="w-full mt-2 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 cursor-pointer flex items-center justify-center gap-1.5"
                       >
                         <CreditCard className="w-3.5 h-3.5" />
-                        Pay Vendor (₹{suggestedPayment.toLocaleString('en-IN')})
+                        Pay Vendor ({currencySymbol} {suggestedPayment.toLocaleString()})
                       </Button>
                     )}
                   </motion.div>
@@ -952,7 +954,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         <Input
                           type="number"
                           min="0"
-                          placeholder="Rate (₹)"
+                          placeholder={`Rate (${currencySymbol})`}
                           value={newItem.unitPrice || ''}
                           onChange={(e) => setNewItem({ ...newItem, unitPrice: parseFloat(e.target.value) || 0 })}
                         />
@@ -1196,10 +1198,10 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                   <div className="flex items-center gap-1 mt-1 text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
                                     <span>{item.quantity} {item.unit} @ </span>
                                     {isApprovedOrLocked ? (
-                                      <span className="font-bold text-[hsl(var(--foreground))]">₹{item.unitPrice || 0}</span>
+                                      <span className="font-bold text-[hsl(var(--foreground))]">{currencySymbol} {item.unitPrice || 0}</span>
                                     ) : (
                                       <>
-                                        <span>₹</span>
+                                        <span>{currencySymbol}</span>
                                         <input 
                                           type="number" 
                                           min="0" 
@@ -1222,10 +1224,10 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                 <div className="flex items-center gap-1 mt-1 text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
                                   <span>1 unit @ </span>
                                   {isApprovedOrLocked ? (
-                                    <span className="font-bold text-[hsl(var(--foreground))]">₹{selectedPo.amount || 0}</span>
+                                    <span className="font-bold text-[hsl(var(--foreground))]">{currencySymbol} {selectedPo.amount || 0}</span>
                                   ) : (
                                     <>
-                                      <span>₹</span>
+                                      <span>{currencySymbol}</span>
                                       <input 
                                         type="number" 
                                         min="0" 
@@ -1422,12 +1424,12 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                   <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-lg text-xs space-y-1">
                     <p className="font-bold text-emerald-800 dark:text-emerald-400">Material: {payingPo.materialName}</p>
                     <p className="text-emerald-700 dark:text-emerald-500">
-                      Total PO Amount: <span className="font-bold">₹{(payingPo.amount || 0).toLocaleString('en-IN')}</span>
+                      Total PO Amount: <span className="font-bold">{currencySymbol} {(payingPo.amount || 0).toLocaleString()}</span>
                     </p>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Payment Amount (₹) *</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Payment Amount ({currencySymbol}) *</label>
                     <Input
                       required
                       type="number"
@@ -1466,10 +1468,10 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Ref / UTR / Cheque No. *</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Ref / Transaction / Cheque No. *</label>
                     <Input
                       required
-                      placeholder="e.g. UTR-982109283"
+                      placeholder="e.g. TXN-982109283"
                       value={paymentForm.referenceNo}
                       onChange={(e) => setPaymentForm({ ...paymentForm, referenceNo: e.target.value })}
                     />
@@ -1478,7 +1480,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Remarks / Notes</label>
                     <Input
-                      placeholder="e.g. 50% advance for plywood delivery"
+                      placeholder="e.g. 50% advance for material delivery"
                       value={paymentForm.remarks}
                       onChange={(e) => setPaymentForm({ ...paymentForm, remarks: e.target.value })}
                     />

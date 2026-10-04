@@ -41,6 +41,7 @@ import { Button, Input, Card } from '@/components/interior/ui';
 import { cn } from '@/lib/utils';
 import interiorApiClient from '@/services/interiorApi.client';
 import { useToast } from '@/providers/ToastContext';
+import { useCurrency } from '@/hooks/useCurrency';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const healthConfig = {
@@ -104,6 +105,7 @@ type FilterStatus = 'all' | 'on-track' | 'at-risk' | 'delayed' | 'completed';
 
 export default function InteriorNewProjectsView() {
   const toast = useToast();
+  const { currencySymbol, formatCurrency } = useCurrency();
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -336,10 +338,7 @@ export default function InteriorNewProjectsView() {
 
   const formatBudget = useCallback((amount: any) => {
     const num = typeof amount === 'number' ? amount : Number(amount) || 0;
-    if (!num || num <= 0) return '₹ 0';
-    if (num >= 10000000) return `₹ ${(num / 10000000).toFixed(2)} Cr`;
-    if (num >= 100000) return `₹ ${(num / 100000).toFixed(2)} Lakh`;
-    return `₹ ${num.toLocaleString('en-IN')}`;
+    return formatCurrency(num || 0);
   }, []);
 
   // Format date helper
@@ -1097,7 +1096,7 @@ export default function InteriorNewProjectsView() {
                       <Input
                         required
                         maxLength={80}
-                        placeholder="e.g. DLF Cyber Park Tower C — 4th Floor"
+                        placeholder="e.g. Skyline Tower C — 4th Floor"
                         value={formData.name}
                         onChange={(e) => updateFormField('name', e.target.value)}
                         className={cn(formErrors.name && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
@@ -1117,7 +1116,7 @@ export default function InteriorNewProjectsView() {
                       <Input
                         required
                         maxLength={60}
-                        placeholder="e.g. DLF Limited"
+                        placeholder="e.g. Horizon Commercial Ltd"
                         value={formData.client}
                         onChange={(e) => updateFormField('client', e.target.value)}
                         className={cn(formErrors.client && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
@@ -1192,14 +1191,14 @@ export default function InteriorNewProjectsView() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4 pt-2 border-t border-[hsl(var(--border)/0.5)]">
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1">
-                        <Wallet className="w-3.5 h-3.5 text-emerald-600" /> Contract Budget (INR) <span className="text-rose-500">*</span>
+                        <Wallet className="w-3.5 h-3.5 text-emerald-600" /> Contract Budget ({currencySymbol}) <span className="text-rose-500">*</span>
                       </label>
                       <Input
                         required
                         type="number"
                         min="1"
                         step="any"
-                        placeholder="e.g. 1500000"
+                        placeholder="e.g. 250000"
                         value={formData.budgetAmount}
                         onChange={(e) => updateFormField('budgetAmount', e.target.value)}
                         className={cn(formErrors.budgetAmount && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
@@ -1217,7 +1216,7 @@ export default function InteriorNewProjectsView() {
                       </label>
                       <Input
                         maxLength={50}
-                        placeholder="e.g. Gurugram"
+                        placeholder="e.g. New York"
                         value={formData.city}
                         onChange={(e) => updateFormField('city', e.target.value)}
                         className={cn(formErrors.city && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
@@ -1237,7 +1236,7 @@ export default function InteriorNewProjectsView() {
                     </label>
                     <Input
                       maxLength={120}
-                      placeholder="e.g. Cyber City, Building 10, Sector 24"
+                      placeholder="e.g. 100 Madison Ave, Floor 14"
                       value={formData.address}
                       onChange={(e) => updateFormField('address', e.target.value)}
                       className={cn(formErrors.address && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}

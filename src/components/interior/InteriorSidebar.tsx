@@ -6,7 +6,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, FolderKanban, Users, Bell, Settings, ChevronLeft, ChevronRight, Building2, UsersRound, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Users, Bell, Settings, ChevronLeft, ChevronRight, Building2, UsersRound, ShieldCheck, Truck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
@@ -23,6 +23,7 @@ const navigation: NavItem[] = [
   { label: 'Dashboard', href: '/interior-new', icon: LayoutDashboard, wired: true },
   { label: 'CRM', href: '/interior-new/crm', icon: Users, wired: true },
   { label: 'Projects', href: '/interior-new/projects', icon: FolderKanban, wired: true },
+  { label: 'Vendor Management', href: '/interior-new/vendors', icon: Truck, wired: true },
   { label: 'Users & Roles', href: '/interior-new/users-roles', icon: UsersRound, wired: true },
   { label: 'Audit Management', href: '/interior-new/audit', icon: ShieldCheck, wired: true },
 ];

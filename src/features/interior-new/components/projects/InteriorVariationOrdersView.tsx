@@ -24,6 +24,7 @@ import {
 import { cn } from '@/lib/utils';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface InteriorVariationOrdersViewProps {
   projectId: string;
@@ -31,6 +32,7 @@ interface InteriorVariationOrdersViewProps {
 
 export default function InteriorVariationOrdersView({ projectId }: InteriorVariationOrdersViewProps) {
   const toast = useToast();
+  const { currencySymbol, formatExactCurrency } = useCurrency();
 
   const [variationOrders, setVariationOrders] = useState<any[]>([]);
   const [selectedVo, setSelectedVo] = useState<any>(null);
@@ -264,7 +266,7 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
             Additional Revenue
           </span>
           <span className="text-2xl font-black text-emerald-500 mt-2">
-            ₹{metrics.additionalRevenueGenerated.toLocaleString('en-IN')}
+            {currencySymbol} {metrics.additionalRevenueGenerated.toLocaleString()}
           </span>
         </div>
 
@@ -311,7 +313,7 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
                     {vo.type?.replace('_', ' ')}
                   </span>
                   <span className="font-extrabold text-[hsl(var(--foreground))]">
-                    ₹{(vo.financialSummary?.netDifference || 0).toLocaleString('en-IN')}
+                    {currencySymbol} {(vo.financialSummary?.netDifference || 0).toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -364,21 +366,21 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
                     <div className="p-4 bg-[hsl(var(--muted)/0.2)] border border-[hsl(var(--border))] rounded-lg">
                       <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Original Approved Cost</span>
                       <span className="text-base font-extrabold text-[hsl(var(--foreground))]">
-                        ₹{(selectedVo.financialSummary?.originalCost || 0).toLocaleString('en-IN')}
+                        {currencySymbol} {(selectedVo.financialSummary?.originalCost || 0).toLocaleString()}
                       </span>
                     </div>
 
                     <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-lg">
                       <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-wider block mb-1">Variation Cost (Net Diff)</span>
                       <span className="text-base font-extrabold text-emerald-500">
-                        ₹{(selectedVo.financialSummary?.netDifference || 0).toLocaleString('en-IN')}
+                        {currencySymbol} {(selectedVo.financialSummary?.netDifference || 0).toLocaleString()}
                       </span>
                     </div>
 
                     <div className="p-4 bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.2)] rounded-lg">
                       <span className="text-[9px] font-bold text-[hsl(var(--primary))] uppercase tracking-wider block mb-1">Revised Project Cost</span>
                       <span className="text-base font-extrabold text-[hsl(var(--primary))]">
-                        ₹{(selectedVo.financialSummary?.revisedProjectCost || 0).toLocaleString('en-IN')}
+                        {currencySymbol} {(selectedVo.financialSummary?.revisedProjectCost || 0).toLocaleString()}
                       </span>
                     </div>
                   </div>
@@ -393,7 +395,7 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
                       </div>
                       <div>
                         <span className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Material</span>
-                        <span className="text-xs font-bold">₹{(selectedVo.impactAnalysis?.materialCost || 0).toLocaleString('en-IN')}</span>
+                        <span className="text-xs font-bold">{currencySymbol} {(selectedVo.impactAnalysis?.materialCost || 0).toLocaleString()}</span>
                       </div>
                     </div>
 
@@ -403,7 +405,7 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
                       </div>
                       <div>
                         <span className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Labor Cost</span>
-                        <span className="text-xs font-bold">₹{(selectedVo.impactAnalysis?.laborCost || 0).toLocaleString('en-IN')}</span>
+                        <span className="text-xs font-bold">{currencySymbol} {(selectedVo.impactAnalysis?.laborCost || 0).toLocaleString()}</span>
                       </div>
                     </div>
 
@@ -413,7 +415,7 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
                       </div>
                       <div>
                         <span className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Vendor cost</span>
-                        <span className="text-xs font-bold">₹{(selectedVo.impactAnalysis?.vendorCost || 0).toLocaleString('en-IN')}</span>
+                        <span className="text-xs font-bold">{currencySymbol} {(selectedVo.impactAnalysis?.vendorCost || 0).toLocaleString()}</span>
                       </div>
                     </div>
 
@@ -423,7 +425,7 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
                       </div>
                       <div>
                         <span className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Overhead</span>
-                        <span className="text-xs font-bold">₹{(selectedVo.impactAnalysis?.overheadCost || 0).toLocaleString('en-IN')}</span>
+                        <span className="text-xs font-bold">{currencySymbol} {(selectedVo.impactAnalysis?.overheadCost || 0).toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
@@ -626,7 +628,7 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
-                    Material Cost Impact (₹)
+                    Material Cost Impact ({currencySymbol})
                   </label>
                   <input
                     type="number"
@@ -639,7 +641,7 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
-                    Labor Cost Impact (₹)
+                    Labor Cost Impact ({currencySymbol})
                   </label>
                   <input
                     type="number"
@@ -652,7 +654,7 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
-                    Vendor Cost Impact (₹)
+                    Vendor Cost Impact ({currencySymbol})
                   </label>
                   <input
                     type="number"
@@ -665,7 +667,7 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
-                    Overhead Cost Impact (₹)
+                    Overhead Cost Impact ({currencySymbol})
                   </label>
                   <input
                     type="number"

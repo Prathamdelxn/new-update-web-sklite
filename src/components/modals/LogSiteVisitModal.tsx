@@ -179,7 +179,7 @@ export const LogSiteVisitModal = ({
       }
       case 'rooms': {
         if (!value || !value.trim()) {
-          return 'Rooms to Design is required (e.g. 3BHK or Living, Kitchen, Bed)';
+          return 'Rooms to Design is required (e.g. 3-Bed Apartment or Living, Kitchen, Bed)';
         }
         if (value.trim().length < 2) {
           return 'Rooms to Design must be at least 2 characters';
@@ -376,7 +376,7 @@ export const LogSiteVisitModal = ({
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1.5">
                   <Columns size={13} className="text-blue-600" />
-                  Rooms to Design (e.g. 3BHK) <span className="text-red-500">*</span>
+                  Rooms to Design (e.g. 3-Bed Apartment) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"

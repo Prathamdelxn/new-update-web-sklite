@@ -147,7 +147,7 @@ export const MaterialReceiptModal: React.FC<MaterialReceiptModalProps> = ({
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Challan #</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Delivery Slip / Ref #</label>
                     <div className="relative group">
                       <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                       <input
@@ -156,7 +156,7 @@ export const MaterialReceiptModal: React.FC<MaterialReceiptModalProps> = ({
                         value={formData.challanNumber}
                         onChange={(e) => setFormData({ ...formData, challanNumber: e.target.value })}
                         className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 pl-10 pr-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
-                        placeholder="Challan #"
+                        placeholder="Delivery Slip / Ref #"
                       />
                     </div>
                   </div>

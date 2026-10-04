@@ -42,7 +42,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   customerId: string;
-  onSuccess: () => void;
+  onSuccess?: (updatedData?: any) => void;
   existingFiles?: any[];
   users?: any[];
   requirements?: any[];
@@ -352,7 +352,9 @@ export const InteriorUploadDesignModal = ({
       });
 
       toast.success(`${uploadedNewFiles.length} drawing(s) uploaded successfully!`);
-      onSuccess();
+      if (onSuccess) {
+        onSuccess({ _id: customerId, designFiles: [...existingFiles, ...uploadedNewFiles] });
+      }
       onClose();
     } catch (error) {
       console.error('Upload design files error:', error);

@@ -28,7 +28,7 @@ interface Props {
     assignedDesigner?: string;
     remarks?: string;
   } | null;
-  onSuccess: () => void;
+  onSuccess?: (updatedData?: any) => void;
   users?: any[];
 }
 
@@ -64,7 +64,7 @@ export function InteriorSendToDrawingModal({
       setRemarks('');
       setErrors({});
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, customerId]);
 
   if (!isOpen) return null;
 
@@ -106,23 +106,26 @@ export function InteriorSendToDrawingModal({
         drawingHandoverNotes: trimmedRemarks || undefined,
       };
 
-      await interiorCrmService.updateCustomer(customerId, updatePayload);
-
-      await interiorCrmService.createActivity({
-        customer: customerId,
-        type: '2D/3D Drawing',
-        status: 'Pending',
-        scheduledDate: new Date().toISOString(),
-        remarks: trimmedRemarks || '',
-        user: assignedDesigner.trim() || undefined,
-      });
+      await Promise.all([
+        interiorCrmService.updateCustomer(customerId, updatePayload),
+        interiorCrmService.createActivity({
+          customer: customerId,
+          type: '2D/3D Drawing',
+          status: 'Pending',
+          scheduledDate: new Date().toISOString(),
+          remarks: trimmedRemarks || '',
+          user: assignedDesigner.trim() || undefined,
+        }),
+      ]);
 
       toast.success(
         isRescheduling
           ? 'Drawing designer updated successfully!'
           : 'Successfully passed to 2D & 3D Drawing phase!'
       );
-      onSuccess();
+      if (onSuccess) {
+        onSuccess({ _id: customerId, ...updatePayload });
+      }
       onClose();
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to send to drawing');

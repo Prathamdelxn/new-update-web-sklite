@@ -27,6 +27,8 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useCurrency } from '@/hooks/useCurrency';
+import { exportBoqToExcel } from '@/lib/exportBoqExcel';
 
 interface Props {
   leads: any[];
@@ -50,6 +52,7 @@ export const InteriorBoqStageView = ({
   onRejectBoq,
 }: Props) => {
   const router = useRouter();
+  const { currencySymbol, currencyCode } = useCurrency();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterState, setFilterState] = useState<'all' | 'pending' | 'completed'>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -261,7 +264,7 @@ export const InteriorBoqStageView = ({
                         <span className="truncate text-[hsl(var(--foreground))]">{lead.propertyType || 'Residential'}</span>
                       </div>
                       <div className="text-[10px] text-emerald-600 font-bold shrink-0">
-                        {hasBoqs ? `₹${(latestBoq?.totalAmount || 0).toLocaleString('en-IN')}` : 'No estimate'}
+                        {hasBoqs ? `${currencySymbol} ${(latestBoq?.totalAmount || 0).toLocaleString()}` : 'No estimate'}
                       </div>
                     </div>
 
@@ -328,7 +331,25 @@ export const InteriorBoqStageView = ({
                             )}
                             </button>
 
-                            {/* 3. Delete BOQ */}
+                            {/* 3. Export Excel */}
+                            {hasBoqs && (
+                              <button
+                                onClick={() =>
+                                  exportBoqToExcel({
+                                    lead,
+                                    boqIndex: lead.boqs.length - 1,
+                                    currencySymbol,
+                                    currencyCode,
+                                  })
+                                }
+                                className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 border border-emerald-500/20 rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                                title="Export BOQ to Excel (.xlsx)"
+                              >
+                                <FileSpreadsheet size={13} />
+                              </button>
+                            )}
+
+                            {/* 4. Delete BOQ */}
                             {hasBoqs && onDeleteBoq && !isQuotationApproved && (
                               <button
                                 onClick={() => onDeleteBoq(lead._id)}
@@ -469,7 +490,7 @@ export const InteriorBoqStageView = ({
                               </div>
                               {latestBoq?.totalAmount ? (
                                 <div className="text-xs font-extrabold text-emerald-600">
-                                  ₹{latestBoq.totalAmount.toLocaleString('en-IN')}
+                                  {currencySymbol} {latestBoq.totalAmount.toLocaleString()}
                                 </div>
                               ) : null}
                             </div>
@@ -558,7 +579,25 @@ export const InteriorBoqStageView = ({
                                   )}
                                 </button>
 
-                                {/* 3. Delete BOQ */}
+                                {/* 3. Export Excel */}
+                                {hasBoqs && (
+                                  <button
+                                    onClick={() =>
+                                      exportBoqToExcel({
+                                        lead,
+                                        boqIndex: lead.boqs.length - 1,
+                                        currencySymbol,
+                                        currencyCode,
+                                      })
+                                    }
+                                    className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 border border-emerald-500/20 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                    title="Export BOQ to Excel (.xlsx)"
+                                  >
+                                    <FileSpreadsheet size={13} />
+                                  </button>
+                                )}
+
+                                {/* 4. Delete BOQ */}
                                 {hasBoqs && onDeleteBoq && !isQuotationApproved && (
                                   <button
                                     onClick={() => onDeleteBoq(lead._id)}

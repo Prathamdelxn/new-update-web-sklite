@@ -20,7 +20,7 @@ export function useInteriorAuthGuard() {
       }
       return;
     }
-    Promise.resolve().then(() => setChecked(true));
+    setChecked(true);
   }, [router]);
 
   return checked;

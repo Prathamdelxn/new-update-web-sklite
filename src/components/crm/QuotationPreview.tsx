@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Printer, Download, CheckCircle2, XCircle, Rocket, Mail, AlertTriangle, Trash2, Plus } from 'lucide-react';
+import { Printer, Download, CheckCircle2, XCircle, Rocket, Mail, AlertTriangle, Trash2, Plus, Tag, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
+import { useCurrency } from '@/hooks/useCurrency';
 import { cn, parseMaxBudget } from '@/lib/utils';
 import { useConfirm } from '@/providers/ConfirmContext';
 
@@ -13,10 +14,13 @@ interface QuotationPreviewProps {
   quotationIndex: number;
   onSuccess: () => void;
   onAddVersion?: () => void;
+  onClosePreview?: () => void;
+  hideToolbar?: boolean;
 }
 
-export function QuotationPreview({ lead, quotationIndex, onSuccess, onAddVersion }: QuotationPreviewProps) {
+export function QuotationPreview({ lead, quotationIndex, onSuccess, onAddVersion, onClosePreview, hideToolbar = false }: QuotationPreviewProps) {
   const toast = useToast();
+  const { currencySymbol } = useCurrency();
   const { confirm, prompt } = useConfirm();
   const router = useRouter();
   const [isConverting, setIsConverting] = useState(false);
@@ -47,7 +51,7 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess, onAddVersion
         quotation: quote,
         recipientEmail: emailToUse,
       });
-      toast.success(`Proforma Invoice & Quotation emailed to ${emailToUse}!`);
+      toast.success(`Quotation emailed to ${emailToUse}!`);
       onSuccess();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to send email');
@@ -78,10 +82,10 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess, onAddVersion
         customer: lead._id,
         type: 'Status Change',
         status: 'Completed',
-        remarks: `Quotation v${quote.version} was marked as ${status}`
+        remarks: `Quotation v${quote.version} (${quote.title || 'Option ' + quote.version}) was marked as ${status}`
       });
 
-      toast.success(`Quotation marked as ${status}. You can now add a new quotation version.`);
+      toast.success(`Quotation marked as ${status}.`);
       onSuccess();
     } catch (error: any) {
       toast.error('Failed to update quotation status');
@@ -102,7 +106,6 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess, onAddVersion
       await interiorCrmService.convertCustomer(lead._id, { quotationIndex });
       
       toast.success('🎉 Successfully converted to Project!');
-      // Navigate to the interior-new crm workspace
       router.push('/interior-new/crm');
     } catch (error: any) {
       toast.error(error.response?.data?.message || error.message || 'Failed to convert to project');
@@ -112,8 +115,8 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess, onAddVersion
 
   const handleDeleteQuotation = async () => {
     const ok = await confirm({
-      title: `Delete Quotation Version ${quote?.version || quotationIndex + 1}`,
-      message: `Are you sure you want to delete Quotation Version ${quote?.version || quotationIndex + 1} (Total: ₹${grandTotal.toLocaleString('en-IN')})? This action cannot be undone.`,
+      title: `Delete Quotation Option ${quote?.version || quotationIndex + 1}`,
+      message: `Are you sure you want to delete "${quote?.title || `Quotation Option ${quote?.version || quotationIndex + 1}`}" (${currencySymbol} ${grandTotal.toLocaleString()})? This action cannot be undone.`,
       confirmText: 'Delete Quotation',
       type: 'danger',
     });
@@ -133,10 +136,10 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess, onAddVersion
         customer: lead._id,
         type: 'Status Change',
         status: 'Completed',
-        remarks: `Deleted Quotation Version ${quote?.version || quotationIndex + 1}`
+        remarks: `Deleted Quotation Option ${quote?.version || quotationIndex + 1}`
       });
 
-      toast.success(`Quotation Version ${quote?.version || quotationIndex + 1} deleted successfully!`);
+      toast.success(`Quotation Option ${quote?.version || quotationIndex + 1} deleted successfully!`);
       onSuccess();
     } catch (err: any) {
       toast.error(err.response?.data?.message || err.message || 'Failed to delete quotation');
@@ -155,99 +158,105 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess, onAddVersion
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Actions Bar (Hidden on print) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[hsl(var(--card))] p-3.5 sm:p-4 rounded-2xl border border-[hsl(var(--border))] shadow-xs print:hidden">
-        <div className="flex items-center gap-3">
-          <h3 className="font-bold text-[hsl(var(--foreground))] text-sm sm:text-base">Version {quote.version}</h3>
-          <span className={cn(
-            "text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full border uppercase tracking-wider",
-            quote.status === 'Accepted' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
-            quote.status === 'Rejected' ? 'bg-rose-500/10 text-rose-600 border-rose-500/20' :
-            'bg-amber-500/10 text-amber-600 border-amber-500/20'
-          )}>
-            {quote.status || 'Draft'}
-          </span>
-          {isOverBudget && (
-            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 border border-rose-500/30 flex items-center gap-1">
-              <AlertTriangle size={11} /> Over Budget by ₹{excessAmount.toLocaleString('en-IN')}
+      {/* Actions Bar (Hidden on print or if hideToolbar is true) */}
+      {!hideToolbar && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[hsl(var(--card))] p-3.5 sm:p-4 rounded-2xl border border-[hsl(var(--border))] shadow-xs print:hidden">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="flex items-center gap-2">
+              <h3 className="font-extrabold text-[hsl(var(--foreground))] text-sm sm:text-base">
+                {quote.title || `Quotation #${quotationIndex + 1}`}
+              </h3>
+            </div>
+            <span className={cn(
+              "text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full border uppercase tracking-wider",
+              quote.status === 'Accepted' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
+              quote.status === 'Rejected' ? 'bg-rose-500/10 text-rose-600 border-rose-500/20' :
+              'bg-amber-500/10 text-amber-600 border-amber-500/20'
+            )}>
+              {quote.status || 'Draft'}
             </span>
-          )}
-        </div>
-        
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap w-full sm:w-auto">
-          {!isConverted && quote.status === 'Sent' && (
-            <>
-              <button 
-                onClick={() => handleStatusUpdate('Accepted')}
-                className="text-xs font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-3 py-2 rounded-xl hover:bg-emerald-500/20 transition flex items-center gap-1.5 active:scale-95 cursor-pointer"
-              >
-                <CheckCircle2 size={15} /> Mark Accepted
-              </button>
-              <button 
-                onClick={() => handleStatusUpdate('Rejected')}
-                className="text-xs font-bold bg-rose-500/10 text-rose-600 border border-rose-500/20 px-3 py-2 rounded-xl hover:bg-rose-500/20 transition flex items-center gap-1.5 active:scale-95 cursor-pointer"
-              >
-                <XCircle size={15} /> Mark Rejected
-              </button>
-              <div className="hidden sm:block w-px h-6 bg-[hsl(var(--border))] mx-1"></div>
-            </>
-          )}
-
-          {!isConverted && quote.status === 'Rejected' && onAddVersion && (
-            <>
-              <button 
-                onClick={onAddVersion}
-                className="text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95 shadow-sm shadow-rose-600/20 cursor-pointer"
-                title="Create next quotation version"
-              >
-                <Plus size={15} /> Add Quotation Version
-              </button>
-              <div className="hidden sm:block w-px h-6 bg-[hsl(var(--border))] mx-1"></div>
-            </>
-          )}
-
-          {!isConverted && quote.status === 'Accepted' && (
-            <>
-              <button 
-                onClick={handleConvertToProject}
-                disabled={isConverting}
-                className="text-xs font-bold bg-emerald-600 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition flex items-center gap-1.5 disabled:opacity-50 active:scale-95 shadow-sm cursor-pointer"
-              >
-                <Rocket size={15} /> 
-                {isConverting ? 'Converting...' : '🎉 Convert to Project'}
-              </button>
-              <div className="hidden sm:block w-px h-6 bg-[hsl(var(--border))] mx-1"></div>
-            </>
-          )}
+            {isOverBudget && (
+              <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 border border-rose-500/30 flex items-center gap-1">
+                <AlertTriangle size={11} /> Over Budget by {currencySymbol} {excessAmount.toLocaleString()}
+              </span>
+            )}
+          </div>
           
-          <button 
-            onClick={handleSendEmail}
-            disabled={isSendingEmail}
-            className="text-xs font-bold bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 disabled:opacity-50 active:scale-95 cursor-pointer"
-            title="Email Proforma Invoice & Quotation to lead"
-          >
-            <Mail size={15} /> {isSendingEmail ? 'Sending...' : 'Send Email'}
-          </button>
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap w-full sm:w-auto">
+            {!isConverted && quote.status === 'Sent' && (
+              <>
+                <button 
+                  onClick={() => handleStatusUpdate('Accepted')}
+                  className="text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95 shadow-xs cursor-pointer"
+                >
+                  <CheckCircle2 size={15} /> Mark Accepted
+                </button>
+                <button 
+                  onClick={() => handleStatusUpdate('Rejected')}
+                  className="text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95 shadow-xs cursor-pointer"
+                >
+                  <XCircle size={15} /> Mark Rejected
+                </button>
+                <div className="hidden sm:block w-px h-6 bg-[hsl(var(--border))] mx-1"></div>
+              </>
+            )}
 
-          <button 
-            onClick={handlePrint}
-            className="text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95 shadow-sm cursor-pointer"
-          >
-            <Printer size={15} /> Print / PDF
-          </button>
-
-          {!isConverted && (
+            {!isConverted && quote.status === 'Accepted' && (
+              <>
+                <button 
+                  onClick={handleConvertToProject}
+                  disabled={isConverting}
+                  className="text-xs font-bold bg-emerald-600 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition flex items-center gap-1.5 disabled:opacity-50 active:scale-95 shadow-sm cursor-pointer"
+                >
+                  <Rocket size={15} /> 
+                  {isConverting ? 'Converting...' : '🎉 Convert to Project'}
+                </button>
+                <div className="hidden sm:block w-px h-6 bg-[hsl(var(--border))] mx-1"></div>
+              </>
+            )}
+            
             <button 
-              onClick={handleDeleteQuotation}
-              disabled={isDeleting}
-              className="text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 px-3 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95 cursor-pointer disabled:opacity-50"
-              title="Delete this quotation version"
+              onClick={handleSendEmail}
+              disabled={isSendingEmail}
+              className="text-xs font-bold bg-white hover:bg-blue-50 text-blue-600 border border-blue-200 hover:border-blue-300 px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 disabled:opacity-50 active:scale-95 shadow-xs cursor-pointer"
+              title="Email Quotation to client"
             >
-              <Trash2 size={15} /> {isDeleting ? 'Deleting...' : 'Delete'}
+              <Mail size={15} /> {isSendingEmail ? 'Sending...' : 'Send Email'}
             </button>
-          )}
+
+            <button 
+              onClick={handlePrint}
+              className="text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95 shadow-xs cursor-pointer"
+            >
+              <Printer size={15} /> Print / PDF
+            </button>
+
+            {!isConverted && (
+              <button 
+                onClick={handleDeleteQuotation}
+                disabled={isDeleting}
+                className="text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95 shadow-xs cursor-pointer disabled:opacity-50"
+                title="Delete this quotation"
+              >
+                <Trash2 size={15} /> {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+            )}
+
+            {onClosePreview && (
+              <>
+                <div className="hidden sm:block w-px h-6 bg-[hsl(var(--border))] mx-1"></div>
+                <button
+                  onClick={onClosePreview}
+                  className="text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 px-3 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95 shadow-xs cursor-pointer"
+                  title="Close Preview"
+                >
+                  <X size={15} /> Close Preview
+                </button>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* A4 Printable Area */}
       <div className="overflow-x-auto w-full">
@@ -265,14 +274,18 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess, onAddVersion
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start border-b-2 border-indigo-100 pb-6 sm:pb-8 mb-6 sm:mb-8 gap-4">
               <div>
-                <h1 className="text-2xl sm:text-4xl font-black text-indigo-900 tracking-tight">QUOTATION</h1>
-                <p className="text-xs sm:text-sm font-bold text-slate-500 mt-1 uppercase tracking-widest">Version {quote.version}</p>
+                <h1 className="text-2xl sm:text-3xl font-black text-indigo-900 tracking-tight">
+                  {quote.title ? quote.title.toUpperCase() : 'COMMERCIAL QUOTATION'}
+                </h1>
+                <p className="text-xs sm:text-sm font-bold text-slate-500 mt-1 uppercase tracking-widest">
+                  {quote.title || `Quotation #${quotationIndex + 1}`}
+                </p>
               </div>
               <div className="sm:text-right">
                 <h2 className="text-lg sm:text-2xl font-black text-slate-900">SKY INTERIOR</h2>
                 <p className="text-xs sm:text-sm text-slate-500 mt-0.5">123 Design Avenue, Tech Park</p>
                 <p className="text-xs sm:text-sm text-slate-500">contact@skyinterior.com</p>
-                <p className="text-xs sm:text-sm text-slate-500">+91 98765 43210</p>
+                <p className="text-xs sm:text-sm text-slate-500">+1 (555) 234-5678</p>
               </div>
             </div>
 
@@ -298,19 +311,22 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess, onAddVersion
                   <tr className="border-b-2 border-slate-900">
                     <th className="py-2.5 sm:py-3 text-[11px] sm:text-xs font-bold text-slate-900 uppercase tracking-wider min-w-[150px]">Description</th>
                     <th className="py-2.5 sm:py-3 text-[11px] sm:text-xs font-bold text-slate-900 uppercase tracking-wider text-center w-16 sm:w-24">Qty</th>
-                    <th className="py-2.5 sm:py-3 text-[11px] sm:text-xs font-bold text-slate-900 uppercase tracking-wider text-right w-24 sm:w-32">Unit Price</th>
-                    <th className="py-2.5 sm:py-3 text-[11px] sm:text-xs font-bold text-slate-900 uppercase tracking-wider text-right w-24 sm:w-32">Total</th>
+                    <th className="py-2.5 sm:py-3 text-[11px] sm:text-xs font-bold text-slate-900 uppercase tracking-wider text-right w-24 sm:w-32">Unit Price ({currencySymbol})</th>
+                    <th className="py-2.5 sm:py-3 text-[11px] sm:text-xs font-bold text-slate-900 uppercase tracking-wider text-right w-24 sm:w-32">Total ({currencySymbol})</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {quote.items.map((item: any, idx: number) => (
-                    <tr key={idx} className="print:break-inside-avoid">
-                      <td className="py-3 sm:py-4 text-xs sm:text-sm font-medium text-slate-800 break-words [overflow-wrap:anywhere] whitespace-pre-wrap max-w-xs">{item.description}</td>
-                      <td className="py-3 sm:py-4 text-xs sm:text-sm text-slate-600 text-center">{item.quantity}</td>
-                      <td className="py-3 sm:py-4 text-xs sm:text-sm text-slate-600 text-right">₹{item.unitPrice.toLocaleString('en-IN')}</td>
-                      <td className="py-3 sm:py-4 text-xs sm:text-sm font-bold text-slate-900 text-right">₹{item.total.toLocaleString('en-IN')}</td>
-                    </tr>
-                  ))}
+                  {quote.items.map((item: any, idx: number) => {
+                    const itemTitle = typeof item.description === 'string' ? item.description.split('\n')[0] : item.description || 'Item';
+                    return (
+                      <tr key={idx} className="print:break-inside-avoid">
+                        <td className="py-3 sm:py-4 text-xs sm:text-sm font-medium text-slate-800 break-words [overflow-wrap:anywhere] max-w-xs">{itemTitle}</td>
+                        <td className="py-3 sm:py-4 text-xs sm:text-sm text-slate-600 text-center">{item.quantity} {item.unit || ''}</td>
+                        <td className="py-3 sm:py-4 text-xs sm:text-sm text-slate-600 text-right">{currencySymbol} {Number(item.unitPrice || 0).toLocaleString()}</td>
+                        <td className="py-3 sm:py-4 text-xs sm:text-sm font-bold text-slate-900 text-right">{currencySymbol} {Number(item.total || 0).toLocaleString()}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -320,21 +336,21 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess, onAddVersion
               <div className="w-full sm:w-72 space-y-2 sm:space-y-3">
                 <div className="flex justify-between text-xs sm:text-sm text-slate-600">
                   <span>Subtotal</span>
-                  <span className="font-semibold text-slate-900">₹{quote.subtotal.toLocaleString('en-IN')}</span>
+                  <span className="font-semibold text-slate-900">{currencySymbol} {Number(quote.subtotal || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-xs sm:text-sm text-slate-600">
-                  <span>Tax ({quote.taxPercentage}%)</span>
-                  <span className="font-semibold text-slate-900">₹{quote.tax.toLocaleString('en-IN')}</span>
+                  <span>Tax ({quote.taxPercentage || 0}%)</span>
+                  <span className="font-semibold text-slate-900">{currencySymbol} {Number(quote.tax || 0).toLocaleString()}</span>
                 </div>
-                {quote.discount > 0 && (
+                {Number(quote.discount || 0) > 0 && (
                   <div className="flex justify-between text-xs sm:text-sm text-emerald-600">
                     <span>Discount</span>
-                    <span className="font-semibold">- ₹{quote.discount.toLocaleString('en-IN')}</span>
+                    <span className="font-semibold">- {currencySymbol} {Number(quote.discount).toLocaleString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-base sm:text-xl font-black text-indigo-900 pt-2 sm:pt-3 border-t-2 border-indigo-100">
                   <span>Grand Total</span>
-                  <span>₹{quote.grandTotal.toLocaleString('en-IN')}</span>
+                  <span>{currencySymbol} {Number(quote.grandTotal || 0).toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -343,7 +359,7 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess, onAddVersion
             <div className="mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-slate-100 print:break-inside-avoid min-w-0 overflow-hidden">
               <p className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 sm:mb-2">Terms & Conditions</p>
               <p className="text-[11px] sm:text-xs text-slate-500 whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
-                {quote.notes || '1. Quotation is valid for 15 days.\n2. 50% advance payment required to commence work.\n3. Goods once sold will not be taken back.'}
+                {quote.notes || '1. Quotation is valid for 30 days.\n2. 50% advance payment required to commence work.\n3. Goods once delivered and approved will not be returned.'}
               </p>
             </div>
             

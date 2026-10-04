@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, User, MessageSquare, AlertCircle, FileSpreadsheet, Calculator } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface Props {
   isOpen: boolean;
@@ -33,6 +34,7 @@ export function InteriorSendBoqForApprovalModal({
   users = [],
   onSuccess,
 }: Props) {
+  const { formatExactCurrency } = useCurrency();
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [assignedReviewer, setAssignedReviewer] = useState('');
@@ -56,6 +58,15 @@ export function InteriorSendBoqForApprovalModal({
 
   const targetBoq = existingBoqs[targetIdx];
   const versionNumber = targetBoq?.version || targetIdx + 1;
+  const rawCategories: string[] = Array.from(
+    new Set<string>((targetBoq?.items || []).map((it: any) => (it.category || 'General') as string))
+  );
+  const sections =
+    targetBoq?.sections && Array.isArray(targetBoq.sections) && targetBoq.sections.length > 0
+      ? targetBoq.sections
+      : rawCategories.map((c: any) => ({ sectionTitle: String(c) }));
+  const categoriesCount = sections.length || (targetBoq?.items?.length ? 1 : 0);
+  const categoryLabel = `${categoriesCount} ${categoriesCount === 1 ? 'Category' : 'Categories'}`;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,8 +107,8 @@ export function InteriorSendBoqForApprovalModal({
         customer: customerId,
         type: 'Status Change',
         status: 'Completed',
-        remarks: `BOQ Version ${versionNumber} (₹${(targetBoq.totalAmount || 0).toLocaleString(
-          'en-IN'
+        remarks: `BOQ Version ${versionNumber} (${formatExactCurrency(
+          targetBoq.totalAmount || 0
         )}) submitted for internal review to ${reviewerName}.${remarks.trim() ? ` Notes: "${remarks.trim()}"` : ''}`,
         completedDate: new Date(),
       });
@@ -166,13 +177,13 @@ export function InteriorSendBoqForApprovalModal({
                   <Calculator size={13} className="text-emerald-500" /> Total Valuation
                 </span>
                 <span className="font-extrabold text-emerald-600">
-                  ₹{(targetBoq.totalAmount || 0).toLocaleString('en-IN')}
+                  {formatExactCurrency(targetBoq.totalAmount || 0)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[hsl(var(--muted-foreground))] font-medium">Line Items Count</span>
+                <span className="text-[hsl(var(--muted-foreground))] font-medium">Scope Categories</span>
                 <span className="font-bold text-[hsl(var(--foreground))]">
-                  {targetBoq.items?.length || 0} items
+                  {categoryLabel}
                 </span>
               </div>
             </div>

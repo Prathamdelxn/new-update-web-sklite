@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trash2, AlertTriangle, Calculator, FileSpreadsheet } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface Props {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export function InteriorDeleteBoqModal({
   onSuccess,
 }: Props) {
   const toast = useToast();
+  const { currencySymbol } = useCurrency();
   const [isDeleting, setIsDeleting] = useState(false);
 
   if (!isOpen) return null;
@@ -40,6 +42,16 @@ export function InteriorDeleteBoqModal({
   const targetVersionNumber = isDeletingSpecificVersion
     ? targetBoq?.version || boqIndexToDelete! + 1
     : existingBoqs.length;
+
+  const rawCategories: string[] = Array.from(
+    new Set<string>((targetBoq?.items || []).map((it: any) => (it.category || 'General') as string))
+  );
+  const sections =
+    targetBoq?.sections && Array.isArray(targetBoq.sections) && targetBoq.sections.length > 0
+      ? targetBoq.sections
+      : rawCategories.map((c: any) => ({ sectionTitle: String(c) }));
+  const categoriesCount = sections.length || (targetBoq?.items?.length ? 1 : 0);
+  const categoryLabel = `${categoriesCount} ${categoriesCount === 1 ? 'Category' : 'Categories'}`;
 
   const isOnlyVersion = existingBoqs.length <= 1;
 
@@ -142,7 +154,7 @@ export function InteriorDeleteBoqModal({
               {isDeletingSpecificVersion && !isOnlyVersion ? (
                 <>
                   You are about to permanently delete <strong>Version {targetVersionNumber}</strong> (
-                  ₹{(targetBoq?.totalAmount || 0).toLocaleString('en-IN')}). Other BOQ versions will be preserved and
+                  {currencySymbol} {(targetBoq?.totalAmount || 0).toLocaleString()}). Other BOQ versions will be preserved and
                   re-sequenced.
                 </>
               ) : (
@@ -169,13 +181,13 @@ export function InteriorDeleteBoqModal({
                   <Calculator size={13} className="text-emerald-500" /> Total Valuation
                 </span>
                 <span className="font-extrabold text-emerald-600">
-                  ₹{(targetBoq.totalAmount || 0).toLocaleString('en-IN')}
+                  {currencySymbol} {(targetBoq.totalAmount || 0).toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[hsl(var(--muted-foreground))] font-medium">Line Items Count</span>
+                <span className="text-[hsl(var(--muted-foreground))] font-medium">Scope Categories</span>
                 <span className="font-bold text-[hsl(var(--foreground))]">
-                  {targetBoq.items?.length || 0} items
+                  {categoryLabel}
                 </span>
               </div>
             </div>

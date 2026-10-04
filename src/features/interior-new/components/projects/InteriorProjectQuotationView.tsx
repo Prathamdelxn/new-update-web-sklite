@@ -5,12 +5,14 @@ import { useParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/interior/ui';
 import interiorApiClient from '@/services/interiorApi.client';
 import { useToast } from '@/providers/ToastContext';
+import { useCurrency } from '@/hooks/useCurrency';
 import { Loader2, FileText, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function InteriorProjectQuotationView() {
   const { projectId } = useParams() as { projectId: string };
   const toast = useToast();
+  const { currencySymbol } = useCurrency();
   const [loading, setLoading] = useState(true);
   const [quotations, setQuotations] = useState<any[]>([]);
 
@@ -119,19 +121,19 @@ export default function InteriorProjectQuotationView() {
               <div className="pt-4 border-t border-[hsl(var(--border))]">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm text-[hsl(var(--muted-foreground))]">Subtotal</p>
-                  <p className="text-sm font-medium text-[hsl(var(--foreground))]">₹{(quote.subtotal || quote.subTotal || 0).toLocaleString('en-IN')}</p>
+                  <p className="text-sm font-medium text-[hsl(var(--foreground))]">{currencySymbol} {(quote.subtotal || quote.subTotal || 0).toLocaleString()}</p>
                 </div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm text-[hsl(var(--muted-foreground))]">Tax/Discount</p>
                   <p className="text-sm font-medium text-[hsl(var(--foreground))]">
                     {quote.tax > 0 ? `+₹${quote.tax.toLocaleString('en-IN')}` : ''}
                     {quote.discount > 0 ? ` -₹${quote.discount.toLocaleString('en-IN')}` : ''}
-                    {!quote.tax && !quote.discount && '₹0'}
+                    {!quote.tax && !quote.discount && `${currencySymbol} 0`}
                   </p>
                 </div>
                 <div className="flex items-center justify-between pt-3 border-t border-[hsl(var(--border))]">
                   <p className="text-base font-bold text-[hsl(var(--foreground))]">Grand Total</p>
-                  <p className="text-lg font-black text-[hsl(var(--primary))]">₹{quote.grandTotal?.toLocaleString('en-IN') || 0}</p>
+                  <p className="text-lg font-black text-[hsl(var(--primary))]">{currencySymbol} {(quote.grandTotal || 0).toLocaleString()}</p>
                 </div>
               </div>
             </CardContent>

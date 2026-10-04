@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Building2, CheckCircle2, Eye, EyeOff, KeyRound, Loader2, Lock, Mail, User, Phone } from 'lucide-react';
+import { ArrowLeft, Building2, CheckCircle2, Eye, EyeOff, KeyRound, Loader2, Lock, Mail, User, Phone, Globe, DollarSign } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthContext';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
 import { signupInterior, verifyInteriorEmail } from '@/lib/interiorAuth';
+import { CountryCodeSelect } from '@/components/ui/CountryCodeSelect';
+import { fetchGlobalCountries, getLocalCountries, CountryInfo } from '@/services/country.service';
 import 'react-phone-number-input/style.css';
 import PhoneInput from 'react-phone-number-input';
 
@@ -22,15 +24,43 @@ export default function RegisterPage() {
   const [organizationName, setOrganizationName] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [interiorPhone, setInteriorPhone] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
   const [otp, setOtp] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
+
+  // Country & Currency Selection derived from Country Code
+  const [countries, setCountries] = useState<CountryInfo[]>(() => getLocalCountries());
+  const [selectedCountryCode, setSelectedCountryCode] = useState('IN');
+  const [selectedCurrency, setSelectedCurrency] = useState('INR');
+  const [selectedTimezone, setSelectedTimezone] = useState('Asia/Kolkata');
+
   const { register, login } = useAuth();
   const toast = useToast();
   const router = useRouter();
+
+  useEffect(() => {
+    // Load fresh countries from API if online
+    fetchGlobalCountries().then((list) => {
+      if (list && list.length > 0) setCountries(list);
+    });
+  }, []);
+
+  const currentCountry = useMemo(() => {
+    return countries.find((c) => c.cca2 === selectedCountryCode) || countries.find((c) => c.cca2 === 'IN') || countries[0];
+  }, [countries, selectedCountryCode]);
+
+  const handleCountryChange = (cca2: string) => {
+    setSelectedCountryCode(cca2);
+    const country = countries.find((c) => c.cca2 === cca2);
+    if (country) {
+      setSelectedCurrency(country.currencyCode);
+      setSelectedTimezone(country.primaryTimezone);
+    }
+  };
 
   const isInterior = industryType === 'interior';
 
@@ -46,8 +76,20 @@ export default function RegisterPage() {
         return toast.error('Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number');
       }
       setIsLoading(true);
+      const fullPhone = interiorPhone.trim() ? `${currentCountry?.phoneCode || '+91'} ${interiorPhone.trim()}` : '';
+
       try {
-        await signupInterior({ organizationName, firstName, lastName, email, password });
+        await signupInterior({
+          organizationName,
+          firstName,
+          lastName,
+          email,
+          password,
+          phone: fullPhone,
+          country: currentCountry?.name || 'India',
+          currency: selectedCurrency || currentCountry?.currencyCode || 'INR',
+          timezone: selectedTimezone || currentCountry?.primaryTimezone || 'Asia/Kolkata',
+        });
         toast.success('Registration code sent to your email!');
         setShowOtp(true);
       } catch (error: unknown) {
@@ -196,11 +238,44 @@ export default function RegisterPage() {
               {isInterior ? (
                 <>
                   <div><label className="text-xs font-semibold text-slate-700">Company / Organization</label><div className="relative mt-1"><Building2 className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" /><input type="text" value={organizationName} onChange={(event) => setOrganizationName(event.target.value)} className={inputClass} placeholder="Acme Interior Solutions" required /></div></div>
+
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div><label className="text-xs font-semibold text-slate-700">First name</label><div className="relative mt-1"><User className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" /><input type="text" value={firstName} onChange={(event) => setFirstName(event.target.value)} className={inputClass} placeholder="John" required /></div></div>
                     <div><label className="text-xs font-semibold text-slate-700">Last name</label><div className="relative mt-1"><input type="text" value={lastName} onChange={(event) => setLastName(event.target.value)} className={`${inputClass} pl-3`} placeholder="Doe" required /></div></div>
                   </div>
+
                   <div><label className="text-xs font-semibold text-slate-700">Work email</label><div className="relative mt-1"><Mail className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" /><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className={inputClass} placeholder="john@acme.com" required /></div></div>
+
+                  {/* Contact Number with Country Code & Auto-Currency Mapping */}
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-slate-700">Contact Number</label>
+                      <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                        Currency: {currentCountry?.currencySymbol} {selectedCurrency}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex gap-2">
+                      {/* Country Code Picker with Instant Search */}
+                      <CountryCodeSelect
+                        countries={countries}
+                        value={selectedCountryCode}
+                        onChange={handleCountryChange}
+                        className="w-28 shrink-0"
+                      />
+
+                      {/* Phone Input */}
+                      <div className="relative flex-1">
+                        <Phone className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="tel"
+                          value={interiorPhone}
+                          onChange={(e) => setInteriorPhone(e.target.value.replace(/[^\d\s-]/g, ''))}
+                          className={`${inputClass} pl-8.5`}
+                          placeholder="555 019 2834"
+                        />
+                      </div>
+                    </div>
+                  </div>
                   <div>
                     <label className="text-xs font-semibold text-slate-700">Password</label>
                     <div className="relative mt-1">
