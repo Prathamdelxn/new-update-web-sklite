@@ -22,6 +22,11 @@ import {
   X,
   CheckCircle2,
   XCircle,
+  ShieldCheck,
+  ShoppingBag,
+  Receipt,
+  Paperclip,
+  CheckCheck,
   Calendar,
   MapPin,
   Ruler,
@@ -100,6 +105,8 @@ import { InteriorBoqBuilderModal } from '@/features/interior-new/components/crm/
 import { InteriorDeleteBoqModal } from '@/features/interior-new/components/crm/modals/InteriorDeleteBoqModal';
 import { InteriorSendBoqForApprovalModal } from '@/features/interior-new/components/crm/modals/InteriorSendBoqForApprovalModal';
 import { InteriorBoqApprovalModal } from '@/features/interior-new/components/crm/modals/InteriorBoqApprovalModal';
+import { InteriorCreateConfirmOrderModal } from '@/features/interior-new/components/crm/modals/InteriorCreateConfirmOrderModal';
+import { InteriorConfirmedOrderStageView } from '@/features/interior-new/components/crm/InteriorConfirmedOrderStageView';
 import { InteriorLeadFollowUpsTab } from '@/features/interior-new/components/crm/InteriorLeadFollowUpsTab';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -159,6 +166,7 @@ export default function Lead360View() {
   const [sendQuotationModalIndex, setSendQuotationModalIndex] = useState<number | null>(null);
   const [activeBoqIndex, setActiveBoqIndex] = useState(0);
   const [editingBoqIndex, setEditingBoqIndex] = useState<number | null>(null);
+  const [isConfirmOrderModalOpen, setIsConfirmOrderModalOpen] = useState(false);
 
   const handleDeleteDrawing = async () => {
     if (!drawingToDelete || !params.id) return;
@@ -335,7 +343,7 @@ export default function Lead360View() {
   };
 
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'followups' | 'site' | 'requirements' | 'designs' | 'boq' | 'quotations'>(() => {
+  const [activeTab, setActiveTab] = useState<'overview' | 'followups' | 'site' | 'requirements' | 'designs' | 'boq' | 'quotations' | 'confirm_order'>(() => {
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
@@ -346,6 +354,7 @@ export default function Lead360View() {
         if (['requirements', 'req', 'requirement'].includes(normalized)) return 'requirements';
         if (['boq', 'estimation'].includes(normalized)) return 'boq';
         if (['quotations', 'quotes', 'quotation'].includes(normalized)) return 'quotations';
+        if (['confirm_order', 'confirm-order', 'confirmorder', 'confirmed_order', 'order', 'orders', 'booking'].includes(normalized)) return 'confirm_order';
         if (['followups', 'followup', 'follow-up'].includes(normalized)) return 'followups';
       }
     }
@@ -366,6 +375,8 @@ export default function Lead360View() {
         setActiveTab('boq');
       } else if (['quotations', 'quotes', 'quotation'].includes(normalized)) {
         setActiveTab('quotations');
+      } else if (['confirm_order', 'confirm-order', 'confirmorder', 'confirmed_order', 'order', 'orders', 'booking'].includes(normalized)) {
+        setActiveTab('confirm_order');
       } else if (['followups', 'followup', 'follow-up'].includes(normalized)) {
         setActiveTab('followups');
       } else if (normalized === 'overview') {
@@ -939,10 +950,17 @@ export default function Lead360View() {
         const isUnlocked = currentStage >= 5 || (lead?.quotations && lead.quotations.length > 0);
         return { isLocked: !isUnlocked, requiredStage: 'Under Quotation', stageTitle: 'Quotations' };
       }
+      case 'confirm_order': {
+        const hasAcceptedQuote = Boolean(lead?.quotations && lead.quotations.some((q: any) => q.status === 'Accepted' || q.status === 'Approved'));
+        const isUnlocked = currentStage >= 5 || hasAcceptedQuote || isConverted || (lead?.quotations && lead.quotations.length > 0);
+        return { isLocked: !isUnlocked, requiredStage: 'Quotation Approved', stageTitle: 'Confirm Order' };
+      }
       default:
         return { isLocked: false, requiredStage: '', stageTitle: '' };
     }
   };
+
+  const hasAcceptedQuoteForTab = Boolean(lead?.quotations && lead.quotations.some((q: any) => q.status === 'Accepted' || q.status === 'Approved'));
 
   const TABS = [
     { id: 'overview', label: 'Overview' },
@@ -952,6 +970,7 @@ export default function Lead360View() {
     { id: 'designs', label: '2D/3D Drawing', count: lead?.designFiles?.length || 0 },
     { id: 'boq', label: 'BOQ', count: lead?.boqs?.length || 0 },
     { id: 'quotations', label: 'Quotations', count: lead?.quotations?.length || 0 },
+    { id: 'confirm_order', label: 'Confirm Order', count: hasAcceptedQuoteForTab || isConverted ? 1 : 0 },
   ];
 
   return (
@@ -3516,6 +3535,11 @@ export default function Lead360View() {
                                             <p className="text-[10px] text-[hsl(var(--muted-foreground))] font-normal">
                                               Version {q.version || idx + 1}
                                               {q.sourceBoqVersion && ` • BOQ v${q.sourceBoqVersion}`}
+                                              {Array.isArray(q.vendorQuotes) && q.vendorQuotes.length > 0 && (
+                                                <span className="text-indigo-600 dark:text-indigo-400 font-semibold ml-1.5">
+                                                  • {q.vendorQuotes.length} Vendor {q.vendorQuotes.length === 1 ? 'Quote' : 'Quotes'}
+                                                </span>
+                                              )}
                                             </p>
                                           </div>
                                         </div>
@@ -3573,24 +3597,8 @@ export default function Lead360View() {
                                             <Eye size={13} /> View
                                           </button>
 
-                                          {!isReadOnly && !isQuotationApproved && (
-                                            <button
-                                              type="button"
-                                              onClick={() => setSendQuotationModalIndex(idx)}
-                                              className={cn(
-                                                "inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs",
-                                                status === 'Sent'
-                                                  ? "bg-white hover:bg-slate-50 text-slate-700 hover:text-blue-600 border border-slate-200 hover:border-slate-300"
-                                                  : "bg-white hover:bg-blue-50 text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 dark:bg-[hsl(var(--card))] dark:text-blue-400"
-                                              )}
-                                              title={status === 'Sent' ? "Resend / Dispatch Quotation" : "Send Quotation to Lead or Vendor"}
-                                            >
-                                              <Send size={12} />
-                                              {status === 'Sent' ? 'Resend' : 'Send'}
-                                            </button>
-                                          )}
 
-                                          {!isReadOnly && !isQuoteLocked && (
+                                          {!isReadOnly && !isConverted && (
                                             <button
                                               type="button"
                                               onClick={() => {
@@ -3604,7 +3612,7 @@ export default function Lead360View() {
                                             </button>
                                           )}
 
-                                          {!isReadOnly && !isQuoteLocked && (
+                                          {!isReadOnly && !isConverted && (
                                             <button
                                               type="button"
                                               onClick={() => handleDeleteQuotationByIndex(idx)}
@@ -3628,6 +3636,51 @@ export default function Lead360View() {
                   </div>
                 );
               })()}
+            </motion.div>
+          )}
+
+          {activeTab === 'confirm_order' && (
+            <motion.div
+              key="confirm_order"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.15 }}
+              className="space-y-3.5 sm:space-y-4"
+            >
+              {getTabLockState('confirm_order').isLocked ? (
+                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-8 sm:p-12 text-center flex flex-col items-center shadow-xs">
+                  <div className="w-14 h-14 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 mb-3.5 border border-amber-500/20">
+                    <Lock size={24} />
+                  </div>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-xs font-bold uppercase tracking-wider mb-2">
+                    Phase Locked
+                  </div>
+                  <h3 className="text-base sm:text-lg font-bold text-[hsl(var(--foreground))]">Order Confirmation Stage is Locked</h3>
+                  <p className="text-[hsl(var(--muted-foreground))] text-xs sm:text-sm mt-1 max-w-md">
+                    Create and finalize a commercial proposal in the Quotations tab first to unlock the confirmed order workflow.
+                  </p>
+                  <button
+                    onClick={() => setActiveTab('quotations')}
+                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
+                  >
+                    <FileText size={14} /> Go to Quotations Tab
+                  </button>
+                </div>
+              ) : (
+                <InteriorConfirmedOrderStageView
+                  lead={lead}
+                  currencySymbol={currencySymbol}
+                  isReadOnly={isReadOnly}
+                  onRefresh={fetchData}
+                  onOpenConfirmModal={() => setIsConfirmOrderModalOpen(true)}
+                  onOpenQuotationModal={() => {
+                    setActiveTab('quotations');
+                    setEditingQuotationIndex(null);
+                    setIsQuotationModalOpen(true);
+                  }}
+                />
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -4098,6 +4151,14 @@ export default function Lead360View() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Confirm Order Modal */}
+      <InteriorCreateConfirmOrderModal
+        isOpen={isConfirmOrderModalOpen}
+        onClose={() => setIsConfirmOrderModalOpen(false)}
+        lead={lead}
+        onSuccess={fetchData}
+      />
     </InteriorShell>
   );
 }

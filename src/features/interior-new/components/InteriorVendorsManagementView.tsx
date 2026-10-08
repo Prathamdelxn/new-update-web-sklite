@@ -14,9 +14,7 @@ import {
   Trash2,
   Mail,
   Phone,
-  Landmark,
   ShieldCheck,
-  CreditCard,
   Loader2,
   RefreshCw,
   AlertTriangle,
@@ -28,6 +26,66 @@ import { interiorProjectService } from '@/services/interiorProject.service';
 import { CreateVendorModal } from '@/components/modals/CreateVendorModal';
 import { useToast } from '@/providers/ToastContext';
 import { motion, AnimatePresence } from 'framer-motion';
+
+function VendorCardSkeleton() {
+  return (
+    <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-xs flex flex-col justify-between space-y-4 animate-pulse">
+      {/* Top Row Skeleton */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200/60 shrink-0" />
+          <div className="space-y-2 flex-1 min-w-0">
+            <div className="h-4 w-32 bg-slate-200/90 rounded-md" />
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-16 bg-slate-200/60 rounded-md" />
+              <div className="h-3.5 w-20 bg-slate-100 border border-slate-200/60 rounded" />
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          <div className="w-7 h-7 rounded-lg bg-slate-100" />
+          <div className="w-7 h-7 rounded-lg bg-slate-100" />
+        </div>
+      </div>
+
+      {/* Details Row Skeleton */}
+      <div className="space-y-2 border-t border-slate-100 pt-3 mt-2">
+        <div className="flex items-center gap-2">
+          <div className="h-3 w-14 bg-slate-200/50 rounded" />
+          <div className="h-3.5 w-28 bg-slate-200/80 rounded" />
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="h-3 w-14 bg-slate-200/50 rounded" />
+          <div className="h-3.5 w-36 bg-slate-200/80 rounded" />
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="h-3 w-14 bg-slate-200/50 rounded" />
+          <div className="h-3.5 w-24 bg-slate-200/80 rounded" />
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="h-3 w-14 bg-slate-200/50 rounded" />
+          <div className="h-3.5 w-44 bg-slate-200/80 rounded" />
+        </div>
+      </div>
+
+      {/* Bottom Category/Status Skeleton */}
+      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+        <div className="h-5 w-20 bg-slate-100 rounded-full" />
+        <div className="h-5 w-16 bg-slate-100 rounded-full" />
+      </div>
+    </div>
+  );
+}
+
+function InteriorVendorsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {Array.from({ length: 6 }).map((_, idx) => (
+        <VendorCardSkeleton key={idx} />
+      ))}
+    </div>
+  );
+}
 
 export default function InteriorVendorsManagementView() {
   const toast = useToast();
@@ -132,7 +190,7 @@ export default function InteriorVendorsManagementView() {
             </span>
           </div>
           <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-            Manage organization-wide trade partners, material suppliers, contact details & bank accounts.
+            Manage organization-wide trade partners, material suppliers, and contact details.
           </p>
         </div>
 
@@ -194,9 +252,7 @@ export default function InteriorVendorsManagementView() {
 
       {/* Vendors Content */}
       {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-7 h-7 animate-spin text-[hsl(var(--primary))]" />
-        </div>
+        <InteriorVendorsSkeleton />
       ) : filteredVendors.length === 0 ? (
         <Card className="p-12 text-center text-sm text-[hsl(var(--muted-foreground))]">
           <Truck className="w-10 h-10 text-[hsl(var(--muted-foreground))] opacity-40 mx-auto mb-3" />
@@ -319,24 +375,6 @@ export default function InteriorVendorsManagementView() {
                         </span>
                       </div>
                     )}
-                  </div>
-
-                  {/* Bottom Banking & Payment Terms */}
-                  <div className="grid grid-cols-2 gap-2 text-xs border-t border-[hsl(var(--border))] pt-3 mt-2">
-                    <div>
-                      <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Payment Terms</p>
-                      <p className="font-semibold text-[hsl(var(--foreground))] mt-0.5">
-                        {vendor.paymentTerms || 'Standard'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Bank Account</p>
-                      <p className="font-semibold text-[hsl(var(--primary))] mt-0.5 truncate">
-                        {vendor.bankDetails?.accountNumber
-                          ? `${vendor.bankDetails.bankName || 'Bank'} (••${vendor.bankDetails.accountNumber.slice(-4)})`
-                          : 'Not Provided'}
-                      </p>
-                    </div>
                   </div>
                 </CardContent>
               </Card>

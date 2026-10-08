@@ -24,6 +24,53 @@ const getMockMetrics = () => ({
   quality: { openSnags: 0, openRFIs: 0, criticalRisks: 0 },
 });
 
+function InteriorProjectOverviewSkeleton() {
+  return (
+    <div className="p-3.5 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 overflow-x-hidden animate-pulse font-sans">
+      {/* 4 KPI Cards Skeleton */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+        {Array.from({ length: 4 }).map((_, idx) => (
+          <div key={idx} className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="h-3 w-20 bg-slate-200/60 rounded" />
+              <div className="w-4 h-4 rounded bg-slate-100" />
+            </div>
+            <div className="h-7 w-24 bg-slate-200/90 rounded-md" />
+            <div className="h-1.5 w-full bg-slate-100 rounded-full" />
+          </div>
+        ))}
+      </div>
+
+      {/* 2 Big Cards Row Skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-xs space-y-4">
+          <div className="h-5 w-32 bg-slate-200/90 rounded-md" />
+          <div className="space-y-2.5">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between">
+                <div className="h-3.5 w-24 bg-slate-200/60 rounded" />
+                <div className="h-3.5 w-8 bg-slate-200/80 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-xs space-y-4">
+          <div className="h-5 w-36 bg-slate-200/90 rounded-md" />
+          <div className="space-y-2.5">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100">
+                <div className="h-4 w-32 bg-slate-200/70 rounded" />
+                <div className="h-4 w-12 bg-slate-200/90 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function InteriorProjectOverviewView({ projectId }: InteriorProjectOverviewViewProps) {
   const router = useRouter();
   const { currencySymbol, formatCurrency } = useCurrency();
@@ -53,11 +100,7 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
   };
 
   if (loading && !metricsData) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-[hsl(var(--primary))]" />
-      </div>
-    );
+    return <InteriorProjectOverviewSkeleton />;
   }
 
   const data = metricsData || getMockMetrics();

@@ -488,7 +488,27 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
 
       {/* Leads Container */}
       <div className="w-full bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">
-        {filteredLeads.length === 0 ? (
+        {isLoading ? (
+          <div className="p-4 space-y-3 animate-pulse bg-white">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50/80 border border-slate-100 gap-4"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-2xl bg-slate-200/90 shrink-0" />
+                  <div className="space-y-1.5 min-w-0">
+                    <div className="h-4 w-36 bg-slate-200/90 rounded-md" />
+                    <div className="h-3 w-24 bg-slate-200/60 rounded-md" />
+                  </div>
+                </div>
+                <div className="h-6 w-24 bg-slate-200/80 rounded-full hidden md:block" />
+                <div className="h-4 w-28 bg-slate-200/60 rounded-md hidden lg:block" />
+                <div className="h-8 w-20 bg-slate-200/80 rounded-lg shrink-0" />
+              </div>
+            ))}
+          </div>
+        ) : filteredLeads.length === 0 ? (
           <div className="w-full p-8 sm:p-12 flex flex-col items-center justify-center text-center">
             <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[hsl(var(--muted))] rounded-2xl flex items-center justify-center text-[hsl(var(--muted-foreground))] mb-3">
               <User size={24} />

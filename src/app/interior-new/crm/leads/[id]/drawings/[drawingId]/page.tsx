@@ -577,29 +577,39 @@ export default function DrawingViewerPage() {
 
   const viewport2DRef = useRef<HTMLDivElement>(null);
 
-  // Professional Smooth Wheel Zoom toward mouse focal point (Figma / Miro style)
-  const handleWheel = (e: React.WheelEvent) => {
-    if (!isImageFormat) return;
-    
-    // Zoom factor based on wheel direction
-    const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
-    const newZoom = Math.min(10, Math.max(0.1, Number((zoomLevel * zoomFactor).toFixed(3))));
+  // Professional Smooth Wheel Zoom toward mouse focal point with non-passive preventDefault (prevents webpage zoom)
+  useEffect(() => {
+    const el = viewport2DRef.current;
+    if (!el) return;
 
-    if (viewport2DRef.current) {
-      const rect = viewport2DRef.current.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left - rect.width / 2;
-      const mouseY = e.clientY - rect.top - rect.height / 2;
+    const handleNativeWheel = (e: WheelEvent) => {
+      if (!isImageFormat) return;
+      e.preventDefault();
+      e.stopPropagation();
 
-      // Keep the point under the mouse cursor stable during zoom
-      const scaleChange = newZoom / zoomLevel;
-      const newPanX = mouseX - (mouseX - panPosition.x) * scaleChange;
-      const newPanY = mouseY - (mouseY - panPosition.y) * scaleChange;
+      const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
 
-      setPanPosition({ x: newPanX, y: newPanY });
-    }
+      setZoomLevel((prevZoom) => {
+        const newZoom = Math.min(10, Math.max(0.1, Number((prevZoom * zoomFactor).toFixed(3))));
+        const rect = el.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left - rect.width / 2;
+        const mouseY = e.clientY - rect.top - rect.height / 2;
 
-    setZoomLevel(newZoom);
-  };
+        const scaleChange = newZoom / prevZoom;
+        setPanPosition((prevPan) => ({
+          x: mouseX - (mouseX - prevPan.x) * scaleChange,
+          y: mouseY - (mouseY - prevPan.y) * scaleChange,
+        }));
+
+        return newZoom;
+      });
+    };
+
+    el.addEventListener('wheel', handleNativeWheel, { passive: false });
+    return () => {
+      el.removeEventListener('wheel', handleNativeWheel);
+    };
+  }, [isImageFormat]);
 
   // Professional Smooth Drag & Pan Handlers (Any zoom level / middle click / left click)
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -895,18 +905,22 @@ export default function DrawingViewerPage() {
                 </div>
               </div>
 
-              {/* Viewport Canvas Body (Slight Greyish Studio Theme - Pro Interactive Zoom & Pan) */}
+              {/* Viewport Canvas Body (Clean Drafting Studio Workspace - Pro Interactive Zoom & Pan) */}
               <div
                 ref={viewport2DRef}
-                onWheel={handleWheel}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
                 onDoubleClick={handleDoubleClick}
-                className={`w-full h-full flex items-center justify-center relative bg-[radial-gradient(#cbd5e1_1.5px,transparent_1.5px)] [background-size:24px_24px] bg-slate-100 select-none overflow-hidden touch-none ${
+                className={`w-full h-full flex items-center justify-center relative bg-slate-100 select-none overflow-hidden touch-none ${
                   isImageFormat ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'
                 }`}
+                style={{
+                  backgroundColor: '#f8fafc',
+                  backgroundImage: 'radial-gradient(#cbd5e1 1.5px, transparent 1.5px)',
+                  backgroundSize: '24px 24px',
+                }}
               >
                 {isDirect3DFormat ? (
                   <>
@@ -933,7 +947,7 @@ export default function DrawingViewerPage() {
                     )}
                   </>
                 ) : isImageFormat ? (
-                  <div className="w-full h-full flex items-center justify-center p-8 sm:p-12 overflow-hidden relative pointer-events-none">
+                  <div className="w-full h-full flex items-center justify-center p-4 overflow-hidden relative pointer-events-none">
                     <img
                       src={activeUrl}
                       alt={activeTitle}
@@ -943,7 +957,7 @@ export default function DrawingViewerPage() {
                         transformOrigin: 'center center',
                         transition: isDragging ? 'none' : 'transform 0.08s cubic-bezier(0.2, 0, 0, 1)'
                       }}
-                      className="max-w-[75%] max-h-[65vh] object-contain select-none pointer-events-none will-change-transform"
+                      className="max-w-full max-h-[85vh] object-contain select-none pointer-events-none will-change-transform border border-slate-300/80 bg-white"
                     />
                   </div>
                 ) : isPdfFormat ? (

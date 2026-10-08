@@ -64,7 +64,6 @@ const CATEGORIES = (projectId: string) => [
       { label: 'Bills of Quantity (BOQ)', href: `/interior-new/projects/${projectId}/boq` },
       { label: 'Variation Orders', href: `/interior-new/projects/${projectId}/variation-orders` },
       { label: 'Procurement', href: `/interior-new/projects/${projectId}/procurement` },
-      { label: 'Vendors', href: `/interior-new/projects/${projectId}/vendors` },
       { label: 'Payments', href: `/interior-new/projects/${projectId}/payments` },
     ],
   },

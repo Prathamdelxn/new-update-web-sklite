@@ -193,7 +193,16 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
   const isOverdue = Boolean(
     isPending &&
       currentFollowUp?.scheduledDate &&
-      new Date(currentFollowUp.scheduledDate).getTime() < Date.now()
+      (() => {
+        const sched = new Date(currentFollowUp.scheduledDate);
+        if (isNaN(sched.getTime())) return false;
+        // If midnight/date-only, compare against end-of-day (23:59:59) so tasks for today aren't flagged overdue prematurely
+        const isMidnight = sched.getHours() === 0 && sched.getMinutes() === 0 && sched.getSeconds() === 0;
+        const compareTime = isMidnight
+          ? new Date(sched.getFullYear(), sched.getMonth(), sched.getDate(), 23, 59, 59, 999).getTime()
+          : sched.getTime();
+        return compareTime < Date.now();
+      })()
   );
 
   const canSendToSiteVisit = !isConverted && !hasSiteVisitStarted && (!lead?.quotations || lead.quotations.length === 0);

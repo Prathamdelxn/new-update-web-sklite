@@ -103,6 +103,101 @@ const emptyFormData = {
 type SortOption = 'newest' | 'budget-high' | 'budget-low' | 'progress-high' | 'progress-low' | 'name';
 type FilterStatus = 'all' | 'on-track' | 'at-risk' | 'delayed' | 'completed';
 
+function InteriorNewProjectsSkeleton() {
+  return (
+    <div className="interior-os-theme min-h-screen p-3 sm:p-4 lg:p-6 space-y-4 max-w-[1600px] mx-auto overflow-x-hidden animate-pulse font-sans">
+      {/* 1. Page Header Skeleton */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/80">
+        <div className="flex items-center gap-2.5">
+          <div className="w-10 h-10 rounded-xl bg-slate-200/90 shrink-0" />
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="h-7 w-48 bg-slate-200/90 rounded-lg" />
+              <div className="h-5 w-16 bg-slate-200/60 rounded-full" />
+            </div>
+            <div className="h-3.5 w-72 max-w-full bg-slate-200/60 rounded-md" />
+          </div>
+        </div>
+        <div className="h-9 w-32 bg-slate-200/80 rounded-xl shrink-0" />
+      </div>
+
+      {/* 2. Controls & Filter Bar Skeleton */}
+      <div className="p-3 sm:p-4 rounded-2xl bg-white border border-slate-200/90 space-y-3 shadow-xs">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5">
+          <div className="h-9 flex-1 bg-slate-100 rounded-xl border border-slate-200/60" />
+          <div className="flex items-center gap-2 overflow-hidden">
+            <div className="flex items-center gap-1.5">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-8 w-20 bg-slate-100 rounded-xl border border-slate-200/60" />
+              ))}
+            </div>
+            <div className="h-8 w-20 bg-slate-100 rounded-xl border border-slate-200/60" />
+            <div className="h-8 w-16 bg-slate-100 rounded-xl border border-slate-200/60" />
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Projects Grid Skeleton (6 cards) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {Array.from({ length: 6 }).map((_, idx) => (
+          <div
+            key={idx}
+            className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4"
+          >
+            {/* Top row */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-2 flex-1">
+                <div className="flex items-center gap-2">
+                  <div className="h-5 w-24 bg-slate-100 rounded-full" />
+                  <div className="h-5 w-20 bg-slate-100 rounded-full" />
+                </div>
+                <div className="h-5 w-3/4 bg-slate-200/90 rounded-md" />
+                <div className="h-3.5 w-1/2 bg-slate-200/60 rounded-md" />
+              </div>
+              <div className="w-8 h-8 rounded-xl bg-slate-100 shrink-0" />
+            </div>
+
+            {/* Middle Stats Grid */}
+            <div className="grid grid-cols-2 gap-3 py-3 border-y border-slate-100">
+              <div className="space-y-1.5">
+                <div className="h-3 w-16 bg-slate-200/50 rounded" />
+                <div className="h-4.5 w-24 bg-slate-200/80 rounded" />
+              </div>
+              <div className="space-y-1.5">
+                <div className="h-3 w-16 bg-slate-200/50 rounded" />
+                <div className="h-4.5 w-20 bg-slate-200/80 rounded" />
+              </div>
+            </div>
+
+            {/* Progress Bar Skeleton */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="h-3 w-20 bg-slate-200/50 rounded" />
+                <div className="h-3 w-10 bg-slate-200/70 rounded" />
+              </div>
+              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-slate-200/90 rounded-full"
+                  style={{ width: `${35 + ((idx * 17) % 50)}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Bottom Footer Row */}
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-slate-100" />
+                <div className="h-3.5 w-24 bg-slate-200/60 rounded" />
+              </div>
+              <div className="h-7 w-20 bg-slate-100 rounded-lg" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function InteriorNewProjectsView() {
   const toast = useToast();
   const { currencySymbol, formatCurrency } = useCurrency();
@@ -440,15 +535,7 @@ export default function InteriorNewProjectsView() {
   }, [projects]);
 
   if (loading) {
-    return (
-      <div className="interior-os-theme flex flex-col items-center justify-center min-h-[65vh] gap-3">
-        <div className="relative flex items-center justify-center">
-          <div className="w-12 h-12 rounded-full border-4 border-[hsl(var(--primary)/0.2)] border-t-[hsl(var(--primary))] animate-spin" />
-          <Building2 className="w-5 h-5 text-[hsl(var(--primary))] absolute animate-pulse" />
-        </div>
-        <p className="text-xs font-semibold tracking-wider uppercase text-[hsl(var(--muted-foreground))]">Loading Project Portfolio...</p>
-      </div>
-    );
+    return <InteriorNewProjectsSkeleton />;
   }
 
   return (
