@@ -218,6 +218,9 @@ export const MilestoneDetailModal: React.FC<Props> = ({
           items: validMaterials.map(r => ({ materialId: r.materialId, quantity: Number(r.quantity) })),
           locationOrTask: tasks[taskIndex]?.title || '',
           commonNote: form.note || '',
+          source: 'task',
+          milestoneId: milestone._id,
+          taskId: tasks[taskIndex]?._id,
         });
       }
 

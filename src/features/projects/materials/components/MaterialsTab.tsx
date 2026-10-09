@@ -1241,7 +1241,15 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        {canDelete && (
+                        {/* Logs created by a milestone task submission belong to that task — no delete here */}
+                        {log.source === 'task' ? (
+                          <span
+                            title="Logged from a milestone task — cannot be deleted here"
+                            className="inline-block px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider"
+                          >
+                            From task
+                          </span>
+                        ) : canDelete && (
                         <button
                           onClick={() => handleDeleteUsageLog(log._id)}
                           disabled={deletingId === log._id}

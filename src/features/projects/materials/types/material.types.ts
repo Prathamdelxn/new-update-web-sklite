@@ -103,6 +103,9 @@ export interface MaterialUsage {
   items: UsageItem[];
   location?: string;
   task?: string;
+  source?: "manual" | "task";
+  milestone?: string;
+  taskId?: string;
   usedBy: string | User;
   usedByName: string;
   status: "Pending" | "Verified" | "Rejected";

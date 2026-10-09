@@ -257,6 +257,9 @@ export default function MilestoneDetailPage() {
           items: validMaterials.map(r => ({ materialId: r.materialId, quantity: Number(r.quantity) })),
           locationOrTask: tasks[taskIndex]?.title || '',
           commonNote: form.note || '',
+          source: 'task',
+          milestoneId,
+          taskId: tasks[taskIndex]?._id,
         });
       }
 
