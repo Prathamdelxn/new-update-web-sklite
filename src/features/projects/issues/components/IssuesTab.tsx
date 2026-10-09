@@ -67,6 +67,22 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
   const { user } = useAuth();
   const { project, fetchProject } = useProjectContext();
 
+  const handleQuickStatusUpdate = async (issueId: string, newStatus: string, e?: React.MouseEvent | React.ChangeEvent) => {
+    if (e) e.stopPropagation();
+    if (isLocked) {
+      toast.error('This project is locked and cannot be modified.');
+      return;
+    }
+    try {
+      const endpoint = activeType === 'Snag' ? `/snags/${issueId}` : `/issues/${issueId}`;
+      await api.patch(endpoint, { status: newStatus });
+      setIssues(prev => prev.map(i => i._id === issueId ? { ...i, status: newStatus } : i));
+      toast.success(`Status updated to "${newStatus}"`);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update status');
+    }
+  };
+
   const fetchIssues = async () => {
     setLoading(true);
     try {
@@ -98,6 +114,10 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
       setEscalationMatrix(null);
     }
   };
+
+  useEffect(() => {
+    setActiveType(initialType);
+  }, [initialType]);
 
   useEffect(() => {
     if (activeType === 'Snag' && statusFilter === 'Escalated') {
@@ -314,8 +334,8 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h3 className="text-lg font-bold text-slate-900">{activeType === 'Snag' ? 'Snag Tracker' : 'Issue Tracker'}</h3>
-          <p className="text-xs text-slate-500 mt-0.5">{activeType === 'Snag' ? 'Track defects and snagging items on site.' : 'Report and track site issues and field problems.'}</p>
+          <h3 className="text-base font-bold text-slate-900">Snags Tracker</h3>
+          <p className="text-xs text-slate-500 mt-0.5">Report and track site Snags and field problems.</p>
         </div>
 
         <div className="flex items-center space-x-3">
@@ -366,7 +386,8 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
               className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Report {activeType}</span>
+              {/* <span>Report {activeType}</span> */}
+              <span>Report Snag</span>
             </button>
           )}
         </div>
@@ -518,14 +539,14 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                           <h4 className="text-sm font-bold text-slate-900 truncate flex-1 leading-snug">
                             {item.title}
                           </h4>
-                          <span className={cn('px-2.5 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider shrink-0', getPriorityColor(item.priority))}>
-                            {item.priority}
-                          </span>
                         </div>
 
                         {/* Status Badge */}
-                        <div className="mb-3">
-                          <span className={cn('px-2.5 py-0.5 rounded-lg text-[9px] font-extrabold uppercase tracking-wider', getSnagStatusBadgeClass(item.status))}>
+                        <div className="mb-3 flex items-center justify-between gap-2">
+                          <span className={cn(
+                            'px-2.5 py-1 rounded-xl text-[10px] font-extrabold uppercase tracking-wider border',
+                            getSnagStatusBadgeClass(item.status)
+                          )}>
                             {item.status}
                           </span>
                         </div>
@@ -629,21 +650,13 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                         <AlertTriangle className="w-5 h-5" />
                       </div>
                       <div>
-                        <div className="flex items-center space-x-3 mb-1">
-                          <span className={cn('px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border', getPriorityColor(issue.priority))}>
-                            {issue.priority}
-                          </span>
-                          {issue.category && (
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                              {issue.category}
-                            </span>
-                          )}
-                          {issue.status === 'Escalated' && issue.escalationLevel > 0 && (
+                        {issue.status === 'Escalated' && issue.escalationLevel > 0 && (
+                          <div className="flex items-center space-x-3 mb-1">
                             <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border bg-purple-100 border-purple-200 text-purple-700">
                               Level {issue.escalationLevel}
                             </span>
-                          )}
-                        </div>
+                          </div>
+                        )}
                         <h4 className="text-base font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{issue.title}</h4>
                         <div className="flex items-center space-x-4 mt-2">
                           <div className="flex items-center space-x-1 text-[10px] text-slate-500 font-bold">
@@ -658,10 +671,15 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between md:justify-end space-x-2 border-t md:border-t-0 border-gray-100 pt-4 md:pt-0">
-                      <span className={cn('px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border', getStatusColor(issue.status))}>
-                        {issue.status}
-                      </span>
+                    <div className="flex items-center justify-between md:justify-end space-x-3 border-t md:border-t-0 border-gray-100 pt-4 md:pt-0" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center space-x-1.5">
+                        <span className={cn(
+                          'px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border',
+                          getStatusColor(issue.status)
+                        )}>
+                          {issue.status}
+                        </span>
+                      </div>
                       <div className="flex items-center space-x-1" onClick={e => e.stopPropagation()}>
                         {canUpdate && (
                           <button

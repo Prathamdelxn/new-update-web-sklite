@@ -381,7 +381,7 @@ export function ProjectDetailsTab() {
             </div>
             
             <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-4">
-              {formatCurrency(project.budgetHistory?.[project.budgetHistory.length - 1]?.amount || 0, project.currency || '$')}
+              {formatCurrency(project.budgetHistory?.[project.budgetHistory.length - 1]?.amount ?? (project as any).budget ?? (project as any).totalBudget ?? 0, project.currency || '$')}
             </h3>
             <p className="text-[11px] text-slate-500 mt-1 font-medium">Latest Approved Base Budget</p>
           </div>
@@ -592,7 +592,23 @@ export function ProjectDetailsTab() {
                   </div>
                 );
               })}
-              {(!project.budgetHistory || project.budgetHistory.length === 0) && (
+              {(!project.budgetHistory || project.budgetHistory.length === 0) && ((project as any).budget || (project as any).totalBudget) ? (
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-base font-extrabold text-blue-600">
+                      {formatCurrency((project as any).budget || (project as any).totalBudget, project.currency || '$')}
+                    </span>
+                    <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border bg-emerald-50 text-emerald-600 border-emerald-100">
+                      Approved
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed font-semibold">Initial Base Budget</p>
+                  <div className="border-t border-slate-200/50 pt-2 flex items-center justify-between text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                    <span>By: System</span>
+                    <span>{new Date(project.createdAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              ) : (!project.budgetHistory || project.budgetHistory.length === 0) && (
                 <div className="text-center py-8 text-slate-400 text-xs font-medium">
                   No budget lifecycle updates recorded.
                 </div>

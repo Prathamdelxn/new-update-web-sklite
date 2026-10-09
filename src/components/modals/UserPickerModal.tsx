@@ -136,7 +136,7 @@ export const UserPickerModal: React.FC<UserPickerModalProps> = ({
                             {isSelected ? <Check className="w-4 h-4" /> : user.name?.[0]?.toUpperCase() || 'U'}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
+                            <p className="text-sm font-semibold text-gray-900 truncate">{user.name || user.email?.split('@')[0] || user.roleName || 'Admin'}</p>
                             <p className="text-[10px] text-slate-500 truncate">{user.email}</p>
                           </div>
                           {(user.role?.name || user.roleName) && (

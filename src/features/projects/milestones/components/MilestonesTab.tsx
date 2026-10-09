@@ -472,9 +472,9 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
             <button onClick={() => setView('list')} className={cn('p-1.5 rounded-lg transition-all', view === 'list' ? 'bg-white shadow-2xs text-blue-700 border border-slate-200/60' : 'text-slate-400 hover:text-slate-700')}>
               <List className="w-4 h-4" />
             </button>
-            <button onClick={() => setView('gantt')} className={cn('p-1.5 rounded-lg transition-all', view === 'gantt' ? 'bg-white shadow-2xs text-blue-700 border border-slate-200/60' : 'text-slate-400 hover:text-slate-700')}>
+            {/* <button onClick={() => setView('gantt')} className={cn('p-1.5 rounded-lg transition-all', view === 'gantt' ? 'bg-white shadow-2xs text-blue-700 border border-slate-200/60' : 'text-slate-400 hover:text-slate-700')}>
               <AlignLeft className="w-4 h-4" />
-            </button>
+            </button> */}
           </div>
           {canCreate && (
             <button
@@ -495,8 +495,8 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
         </div>
       </div>
 
-      {/* ── Gantt view ── */}
-      {view === 'gantt' && (() => {
+      {/* ── Gantt view (commented out) ── */}
+      {/* {view === 'gantt' && (() => {
         const withDates = milestones.filter(m => m.dueDate);
         if (withDates.length === 0) return (
           <div className="py-16 text-center border-2 border-dashed border-gray-200 rounded-xl">
@@ -550,7 +550,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
             </div></div>
           </GlassCard>
         );
-      })()}
+      })()} */}
 
       {/* ── List view ── */}
       {view === 'list' && (
@@ -874,7 +874,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
 
                   {/* Description */}
                   {milestone.description && (
-                    <p className="text-xs text-slate-500 mt-2.5 line-clamp-2 cursor-pointer flex-1 leading-relaxed" onClick={() => router.push(`/construction-dashboard/projects/${projectId}/milestones/${milestone._id}`)}>
+                    <p className="text-xs text-slate-500 mt-2.5 line-clamp-2 cursor-pointer flex-1 leading-relaxed break-words [overflow-wrap:anywhere] [word-break:break-word] min-w-0" onClick={() => router.push(`/construction-dashboard/projects/${projectId}/milestones/${milestone._id}`)}>
                       {milestone.description}
                     </p>
                   )}

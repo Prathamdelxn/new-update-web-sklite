@@ -19,24 +19,24 @@ import {
 
 // ── All tab definitions ────────────────────────────────────────
 const ALL_TABS = [
-  { id: 'details',      name: 'Details',        icon: Info },
-  { id: 'site-survey',  name: 'Survey',         icon: ClipboardList },
-  { id: 'plans',        name: 'Design',         icon: Map },
-  { id: 'documents',    name: 'Documents',      icon: Files },
-  { id: 'boq',          name: 'BOQ',            icon: FileText },
-  { id: 'rooms',        name: 'Rooms',          icon: LayoutGrid },
-  { id: 'ffe',          name: 'FFE',            icon: Sofa },
-  { id: 'milestones',   name: 'Milestone',      icon: Calendar },
-  { id: 'materials',    name: 'Material',       icon: Package },
-  { id: 'attendance',   name: 'Attendance',     icon: Clock },
-  { id: 'issues',       name: 'Snags',          icon: AlertCircle },
-  { id: 'risks',        name: 'Risk',           icon: ShieldAlert },
-  { id: 'transactions', name: 'Transactions',   icon: CreditCard },
-  { id: 'payments',     name: 'Payments',       icon: CreditCard },
-  { id: 'reports',      name: 'Reports',        icon: TrendingUp },
-  { id: 'audit',        name: 'Audit',          icon: History },
-  { id: 'handover',     name: 'Handover',       icon: ClipboardCheck },
-  { id: 'chat',         name: 'Chat',           icon: MessageSquare },
+  { id: 'details', name: 'Details', icon: Info },
+  { id: 'site-survey', name: 'Survey', icon: ClipboardList },
+  { id: 'plans', name: 'Design', icon: Map },
+  { id: 'documents', name: 'Documents', icon: Files },
+  { id: 'boq', name: 'BOQ', icon: FileText },
+  { id: 'rooms', name: 'Rooms', icon: LayoutGrid },
+  { id: 'ffe', name: 'FFE', icon: Sofa },
+  { id: 'milestones', name: 'Milestone', icon: Calendar },
+  { id: 'materials', name: 'Material', icon: Package },
+  { id: 'attendance', name: 'Attendance', icon: Clock },
+  { id: 'issues', name: 'Snags', icon: AlertCircle },
+  { id: 'risks', name: 'Risk', icon: ShieldAlert },
+  { id: 'transactions', name: 'Transactions', icon: CreditCard },
+  // { id: 'payments', name: 'Payments', icon: CreditCard },
+  { id: 'reports', name: 'Reports', icon: TrendingUp },
+  { id: 'audit', name: 'Audit', icon: History },
+  { id: 'handover', name: 'Handover', icon: ClipboardCheck },
+  { id: 'chat', name: 'Chat', icon: MessageSquare },
 ] as const;
 
 type TabId = typeof ALL_TABS[number]['id'];
@@ -50,13 +50,13 @@ type TabGroup = {
 
 // ── Group definitions (order matters — first tab in group = default landing) ──
 const TAB_GROUPS: TabGroup[] = [
-  { id: 'overview',  label: 'Overview',  icon: LayoutDashboard, tabIds: [ 'details'] },
-  { id: 'work',      label: 'Work',      icon: Calendar,        tabIds: ['boq', 'milestones', 'reports'] },
-  { id: 'finance',   label: 'Finance',   icon: DollarSign,      tabIds: ['transactions', 'payments'] },
-  { id: 'site',      label: 'Site',      icon: Map,             tabIds: ['plans', 'documents', 'materials', 'site-survey', 'attendance'] },
-  { id: 'quality',   label: 'Quality',   icon: ShieldAlert,     tabIds: ['issues', 'risks', 'handover', 'audit'] },
-  { id: 'chat',      label: 'Chat',      icon: MessageSquare,   tabIds: ['chat'] },
-  { id: 'interior',  label: 'Interior',  icon: Sofa,            tabIds: ['rooms', 'ffe'] },
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard, tabIds: ['details'] },
+  { id: 'work', label: 'Work', icon: Calendar, tabIds: ['boq', 'milestones', 'reports'] },
+  { id: 'finance', label: 'Finance', icon: DollarSign, tabIds: ['transactions'] },
+  { id: 'site', label: 'Site', icon: Map, tabIds: ['plans', 'documents', 'materials', 'site-survey', 'attendance'] },
+  { id: 'quality', label: 'Quality', icon: ShieldAlert, tabIds: ['issues', 'risks', 'handover', 'audit'] },
+  { id: 'chat', label: 'Chat', icon: MessageSquare, tabIds: ['chat'] },
+  { id: 'interior', label: 'Interior', icon: Sofa, tabIds: ['rooms', 'ffe'] },
 ];
 
 // ── Builds visible tabs respecting project type & surveyor & admin role ──
@@ -69,18 +69,18 @@ function getVisibleTabs(projectType?: string, siteSurveyor?: any, isAdmin: boole
 
 // ── Status badge colors ────────────────────────────────────────
 const statusBadgeColor: Record<string, string> = {
-  'Initialized':         'bg-blue-50/80 text-blue-700 border-blue-200/60 shadow-[0_1px_2px_rgba(59,130,246,0.02)]',
-  'Planning':            'bg-purple-50/80 text-purple-700 border-purple-200/60 shadow-[0_1px_2px_rgba(168,85,247,0.02)]',
-  'Site Survey':         'bg-cyan-50/80 text-cyan-700 border-cyan-200/60 shadow-[0_1px_2px_rgba(6,182,212,0.02)]',
-  'Ongoing':             'bg-emerald-50/80 text-emerald-700 border-emerald-200/60 shadow-[0_1px_2px_rgba(16,185,129,0.02)]',
-  'Under Snagging':      'bg-amber-50/80 text-amber-700 border-amber-200/60 shadow-[0_1px_2px_rgba(245,158,11,0.02)]',
-  'Snagging Completed':  'bg-orange-50/80 text-orange-700 border-orange-200/60 shadow-[0_1px_2px_rgba(249,115,22,0.02)]',
-  'Completed':           'bg-green-50/80 text-green-700 border-green-200/60 shadow-[0_1px_2px_rgba(34,197,94,0.02)]',
-  'Pending Handover':    'bg-violet-50/80 text-violet-700 border-violet-200/60 shadow-[0_1px_2px_rgba(139,92,246,0.02)]',
-  'Handover Rejected':   'bg-rose-50/80 text-rose-700 border-rose-200/60 shadow-[0_1px_2px_rgba(244,63,94,0.02)]',
-  'Handover Completed':  'bg-teal-50/80 text-teal-700 border-teal-200/60 shadow-[0_1px_2px_rgba(20,184,166,0.02)]',
-  'On Hold':             'bg-slate-50 text-slate-600 border-slate-200/60 shadow-[0_1px_2px_rgba(100,116,139,0.02)]',
-  'Cancelled':           'bg-red-50/80 text-red-700 border-red-200/60 shadow-[0_1px_2px_rgba(239,68,68,0.02)]',
+  'Initialized': 'bg-blue-50/80 text-blue-700 border-blue-200/60 shadow-[0_1px_2px_rgba(59,130,246,0.02)]',
+  'Planning': 'bg-purple-50/80 text-purple-700 border-purple-200/60 shadow-[0_1px_2px_rgba(168,85,247,0.02)]',
+  'Site Survey': 'bg-cyan-50/80 text-cyan-700 border-cyan-200/60 shadow-[0_1px_2px_rgba(6,182,212,0.02)]',
+  'Ongoing': 'bg-emerald-50/80 text-emerald-700 border-emerald-200/60 shadow-[0_1px_2px_rgba(16,185,129,0.02)]',
+  'Under Snagging': 'bg-amber-50/80 text-amber-700 border-amber-200/60 shadow-[0_1px_2px_rgba(245,158,11,0.02)]',
+  'Snagging Completed': 'bg-orange-50/80 text-orange-700 border-orange-200/60 shadow-[0_1px_2px_rgba(249,115,22,0.02)]',
+  'Completed': 'bg-green-50/80 text-green-700 border-green-200/60 shadow-[0_1px_2px_rgba(34,197,94,0.02)]',
+  'Pending Handover': 'bg-violet-50/80 text-violet-700 border-violet-200/60 shadow-[0_1px_2px_rgba(139,92,246,0.02)]',
+  'Handover Rejected': 'bg-rose-50/80 text-rose-700 border-rose-200/60 shadow-[0_1px_2px_rgba(244,63,94,0.02)]',
+  'Handover Completed': 'bg-teal-50/80 text-teal-700 border-teal-200/60 shadow-[0_1px_2px_rgba(20,184,166,0.02)]',
+  'On Hold': 'bg-slate-50 text-slate-600 border-slate-200/60 shadow-[0_1px_2px_rgba(100,116,139,0.02)]',
+  'Cancelled': 'bg-red-50/80 text-red-700 border-red-200/60 shadow-[0_1px_2px_rgba(239,68,68,0.02)]',
 };
 
 const RESTRICTED_TABS = [

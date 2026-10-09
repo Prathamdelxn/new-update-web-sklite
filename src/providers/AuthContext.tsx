@@ -29,7 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const savedInteriorUser = localStorage.getItem('interiorUser');
     const token = Cookies.get('token') || localStorage.getItem('token') || localStorage.getItem('interiorAccessToken');
     const saToken = Cookies.get('saToken') || localStorage.getItem('saToken');
-    
+
     let isTokenExpired = false;
     if (token) {
       try {

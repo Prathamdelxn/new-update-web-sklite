@@ -330,9 +330,9 @@ export default function MilestoneDetailPage() {
                 <Flag className="w-6 h-6 text-blue-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl font-semibold text-gray-900 leading-tight truncate">{milestone.name}</h1>
+                <h1 className="text-xl font-semibold text-gray-900 leading-tight break-words [overflow-wrap:anywhere] [word-break:break-word]">{milestone.name}</h1>
                 {milestone.description && (
-                  <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">{milestone.description}</p>
+                  <p className="text-sm text-slate-500 mt-1.5 leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] [word-break:break-word] min-w-0">{milestone.description}</p>
                 )}
                 <div className="flex flex-wrap items-center gap-3 mt-4">
                   <div className="flex items-center gap-2">
