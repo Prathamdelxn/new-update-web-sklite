@@ -127,6 +127,17 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
       toast.error('Please enter at least a name and email.');
       return;
     }
+
+    const cleanPhone = formData.mobile.trim().replace(/[\s-]/g, '');
+    if (!cleanPhone) {
+      toast.error('Please enter a mobile number.');
+      return;
+    }
+    if (!/^\+?[0-9]{7,15}$/.test(cleanPhone)) {
+      toast.error('Please enter a valid mobile number (digits only, e.g. +91 9876543210).');
+      return;
+    }
+
     setIsLoading(true);
     try {
       const payload: any = {
@@ -139,17 +150,17 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
           role: projectRoles[p._id] || undefined
         })),
       };
-      if (formData.password) payload.password = formData.password;
-
       if (isEditing) {
+        if (formData.password?.trim()) payload.password = formData.password.trim();
         await api.patch(`/users/${initialData._id}`, payload);
         toast.success('Member updated successfully!');
         onSuccess();
         onClose();
       } else {
-        payload.password = formData.password;
+        const finalPassword = formData.password?.trim() || 'welcome123';
+        payload.password = finalPassword;
         await api.post('/users', payload);
-        setCreatedCreds({ name: formData.name, email: formData.email, password: formData.password });
+        setCreatedCreds({ name: formData.name, email: formData.email, password: finalPassword });
         onSuccess();
       }
     } catch (error: any) {
@@ -228,10 +239,17 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
                     <div>
                       <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px] mb-3">Mobile Number</label>
                       <input
-                        type="tel" required value={formData.mobile}
-                        onChange={e => setFormData(f => ({ ...f, mobile: e.target.value }))}
+                        type="tel"
+                        required
+                        value={formData.mobile}
+                        onChange={e => {
+                          const val = e.target.value.replace(/[^0-9+\s-]/g, '');
+                          setFormData(f => ({ ...f, mobile: val }));
+                        }}
+                        pattern="^\+?[0-9\s-]{7,15}$"
+                        title="Please enter a valid mobile number with digits only (e.g. +91 9876543210)"
                         className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl px-4 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
-                        placeholder="Enter mobile number"
+                        placeholder="Enter mobile number (e.g. +91 9876543210)"
                       />
                     </div>
 
@@ -241,7 +259,8 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
                         <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px] mb-3">Password</label>
                         <div className="relative">
                           <input
-                            type={showCredsPassword ? "text" : "password"} required={!isEditing} value={formData.password}
+                            type={showCredsPassword ? "text" : "password"}
+                            value={formData.password}
                             onChange={e => setFormData(f => ({ ...f, password: e.target.value }))}
                             className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl pl-4 pr-12 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
                             placeholder="Leave blank for default"
@@ -250,6 +269,9 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
                             {showCredsPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                           </button>
                         </div>
+                        <p className="text-[12px] text-slate-500 mt-2 font-medium">
+                          * Default password will be <span className="font-semibold text-slate-800">welcome123</span>
+                        </p>
                       </div>
                     )}
 

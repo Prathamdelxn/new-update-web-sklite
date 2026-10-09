@@ -98,10 +98,53 @@ export function ProjectDetailsTab() {
     setShowRequestModal(true);
   };
 
+  // Helper to get latest approved base budget (so pending requests never overwrite the current budget)
+  const currentBaseBudget = useMemo(() => {
+    if (!project) return 0;
+    const history = project.budgetHistory || [];
+    for (let i = history.length - 1; i >= 0; i--) {
+      const entry = history[i];
+      if (entry.approvalStatus === 'Approved') {
+        return Number(entry.amount) || 0;
+      }
+    }
+    for (let i = history.length - 1; i >= 0; i--) {
+      const entry = history[i];
+      if (entry.approvalStatus !== 'Pending' && entry.approvalStatus !== 'Rejected') {
+        return Number(entry.amount) || 0;
+      }
+    }
+    return Number(project.budget ?? project.totalBudget ?? 0);
+  }, [project]);
+
+  // Find any pending change request in history
+  const pendingBh = useMemo(() => {
+    return project?.budgetHistory?.find((bh: any) => bh.approvalStatus === 'Pending');
+  }, [project]);
+
+  // Derive the added change request amount and the proposed new total budget
+  const { pendingAddedAmount, pendingTotalBudget } = useMemo(() => {
+    if (!pendingBh) return { pendingAddedAmount: 0, pendingTotalBudget: currentBaseBudget };
+    const rawPending = Number(pendingBh.amount) || 0;
+    // If rawPending >= currentBaseBudget, then rawPending was stored as the proposed total
+    if (rawPending >= currentBaseBudget && currentBaseBudget > 0) {
+      return {
+        pendingAddedAmount: rawPending - currentBaseBudget,
+        pendingTotalBudget: rawPending,
+      };
+    }
+    // If rawPending < currentBaseBudget, it was entered as just the incremental addition
+    return {
+      pendingAddedAmount: rawPending,
+      pendingTotalBudget: currentBaseBudget + rawPending,
+    };
+  }, [pendingBh, currentBaseBudget]);
+
   const handleRequestBudgetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!requestAmount || isNaN(Number(requestAmount)) || Number(requestAmount) <= 0) {
-      toast.error('Please enter a valid budget amount');
+    const addedAmount = Number(requestAmount);
+    if (!requestAmount || isNaN(addedAmount) || addedAmount <= 0) {
+      toast.error('Please enter a valid change request budget amount');
       return;
     }
     if (!requestReason.trim()) {
@@ -109,16 +152,22 @@ export function ProjectDetailsTab() {
       return;
     }
 
+    // Change request cycle: New Total Budget = Current Budget + Added Change Req Budget
+    const calculatedTotalBudget = currentBaseBudget + addedAmount;
+
     try {
       setIsSubmittingRequest(true);
       const res = await api.post(`/projects/${projectId}/budget-request`, {
-        amount: Number(requestAmount),
+        amount: calculatedTotalBudget, // New proposed total budget (current + added)
+        addedAmount: addedAmount,       // Explicit added change request amount
+        changeRequestAmount: addedAmount,
+        currentBudget: currentBaseBudget,
         reason: requestReason.trim(),
         approverId: selectedApproverId || undefined,
       });
 
       if (res.status === 200 || res.status === 201) {
-        toast.success('Budget change request submitted successfully!');
+        toast.success(`Change request submitted: +${formatCurrency(addedAmount, project.currency || '$')} (New Total: ${formatCurrency(calculatedTotalBudget, project.currency || '$')})`);
         setShowRequestModal(false);
         setRequestAmount('');
         setRequestReason('');
@@ -165,10 +214,24 @@ export function ProjectDetailsTab() {
   };
 
   const handleBudgetAction = (budgetId: string, action: 'Approved' | 'Rejected') => {
+    const targetBh = project?.budgetHistory?.find((bh: any) => bh._id === budgetId);
+    let resolvedTotal = targetBh ? Number(targetBh.amount) : 0;
+    let addedDisplay = 0;
+    if (targetBh) {
+      if (resolvedTotal >= currentBaseBudget && currentBaseBudget > 0) {
+        addedDisplay = resolvedTotal - currentBaseBudget;
+      } else {
+        addedDisplay = resolvedTotal;
+        resolvedTotal = currentBaseBudget + resolvedTotal;
+      }
+    }
+
     setConfirmModal({
       visible: true,
-      title: `${action === 'Approved' ? 'Approve' : 'Reject'} Budget Request`,
-      message: `Are you sure you want to mark this budget request as ${action.toLowerCase()}?`,
+      title: `${action === 'Approved' ? 'Approve' : 'Reject'} Budget Change Request`,
+      message: action === 'Approved'
+        ? `Are you sure you want to approve this change request of +${formatCurrency(addedDisplay, project.currency || '$')}? The new total budget will become ${formatCurrency(resolvedTotal, project.currency || '$')}.`
+        : `Are you sure you want to reject this budget change request?`,
       confirmText: action,
       type: action === 'Approved' ? 'success' : 'destructive',
       onConfirm: async () => {
@@ -177,6 +240,8 @@ export function ProjectDetailsTab() {
           const res = await api.patch(`/projects/${project._id}/budget-action`, {
             budgetId,
             action,
+            newBudget: resolvedTotal,
+            amount: resolvedTotal,
           });
 
           if (res.status === 200 || res.status === 204) {
@@ -365,50 +430,49 @@ export function ProjectDetailsTab() {
       })()}
 
       {/* ── Pending Budget Change Request Banner ── */}
-      {(() => {
-        const pendingBh = project.budgetHistory?.find((bh: any) => bh.approvalStatus === 'Pending');
-        if (!pendingBh) return null;
-        return (
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 md:p-5 bg-amber-50/90 border border-amber-200 rounded-2xl shadow-xs">
-            <div className="flex items-center space-x-3.5">
-              <div className="p-2.5 rounded-xl bg-amber-100 border border-amber-200 text-amber-700 shadow-2xs shrink-0">
-                <Clock className="w-5 h-5 animate-pulse" />
-              </div>
-              <div>
-                <div className="flex items-center space-x-2">
-                  <h4 className="text-xs font-black text-amber-900 uppercase tracking-wider">Budget Change Request Pending</h4>
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-200/80 text-amber-800 border border-amber-300/60">
-                    {formatCurrency(pendingBh.amount, project.currency || '$')}
-                  </span>
-                </div>
-                <p className="text-[11px] text-amber-800 mt-0.5 font-medium">
-                  {pendingBh.reason || 'A budget modification request has been submitted for review.'}
-                </p>
-              </div>
+      {pendingBh && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 md:p-5 bg-amber-50/90 border border-amber-200 rounded-2xl shadow-xs">
+          <div className="flex items-center space-x-3.5">
+            <div className="p-2.5 rounded-xl bg-amber-100 border border-amber-200 text-amber-700 shadow-2xs shrink-0">
+              <Clock className="w-5 h-5 animate-pulse" />
             </div>
-
-            {canApproveBudget && (
-              <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
-                <button
-                  disabled={isProcessing}
-                  onClick={() => handleBudgetAction(pendingBh._id, 'Rejected')}
-                  className="flex-1 sm:flex-initial px-4 py-2 rounded-xl border border-amber-300 text-amber-900 bg-white hover:bg-amber-100/50 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
-                >
-                  Reject
-                </button>
-                <button
-                  disabled={isProcessing}
-                  onClick={() => handleBudgetAction(pendingBh._id, 'Approved')}
-                  className="flex-1 sm:flex-initial px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center space-x-1.5 disabled:opacity-50 cursor-pointer"
-                >
-                  {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                  <span>Approve Budget</span>
-                </button>
+            <div>
+              <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                <h4 className="text-xs font-black text-amber-900 uppercase tracking-wider">Budget Change Request Pending</h4>
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-200/80 text-amber-800 border border-amber-300/60">
+                  +{formatCurrency(pendingAddedAmount, project.currency || '$')} Added
+                </span>
+                <span className="text-[11px] font-bold text-amber-900">
+                  New Proposed Total: {formatCurrency(pendingTotalBudget, project.currency || '$')} <span className="font-normal text-amber-700">(Current Base: {formatCurrency(currentBaseBudget, project.currency || '$')})</span>
+                </span>
               </div>
-            )}
+              <p className="text-[11px] text-amber-800 mt-1 font-medium">
+                {pendingBh.reason || 'A budget modification request has been submitted for review.'}
+              </p>
+            </div>
           </div>
-        );
-      })()}
+
+          {canApproveBudget && (
+            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+              <button
+                disabled={isProcessing}
+                onClick={() => handleBudgetAction(pendingBh._id, 'Rejected')}
+                className="flex-1 sm:flex-initial px-4 py-2 rounded-xl border border-amber-300 text-amber-900 bg-white hover:bg-amber-100/50 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
+              >
+                Reject
+              </button>
+              <button
+                disabled={isProcessing}
+                onClick={() => handleBudgetAction(pendingBh._id, 'Approved')}
+                className="flex-1 sm:flex-initial px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center space-x-1.5 disabled:opacity-50 cursor-pointer"
+              >
+                {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                <span>Approve (+{formatCurrency(pendingAddedAmount, project.currency || '$')})</span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Under Snagging Banner ── */}
       {project.status === 'Under Snagging' && (
@@ -485,60 +549,60 @@ export function ProjectDetailsTab() {
         </div>
 
         {/* Bento Card 2: Total Budget */}
-        {(() => {
-          const pendingBh = project.budgetHistory?.find((bh: any) => bh.approvalStatus === 'Pending');
-          const currentBudgetAmt = project.budgetHistory?.[project.budgetHistory.length - 1]?.amount ?? (project as any).budget ?? (project as any).totalBudget ?? 0;
-          return (
-            <div
-              onClick={() => setShowBudgetHist(true)}
-              className={cn(
-                "p-5 md:p-6 rounded-2xl bg-white/90 backdrop-blur-md border shadow-xs flex flex-col justify-between hover:shadow-card-hover cursor-pointer transition-all duration-200 group relative",
-                pendingBh ? "border-amber-300 bg-amber-50/20" : "border-slate-200/80 hover:border-blue-300"
-              )}
-            >
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Budget</span>
-                  <div className={cn("w-7 h-7 rounded-lg border flex items-center justify-center transition-transform group-hover:scale-105", pendingBh ? "bg-amber-100 border-amber-200 text-amber-600" : "bg-blue-50 border-blue-100 text-blue-600")}>
-                    <History className="w-3.5 h-3.5" />
-                  </div>
-                </div>
-                
-                <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-4">
-                  {formatCurrency(currentBudgetAmt, project.currency || '$')}
-                </h3>
-                <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  <p className="text-[11px] text-slate-500 font-medium">Latest Approved Base Budget</p>
-                  {pendingBh && (
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-100 border border-amber-200 text-amber-800">
-                      Change Request Pending
-                    </span>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between pt-3 border-t border-slate-100 mt-4">
-                <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider group-hover:translate-x-1 transition-transform flex items-center space-x-1">
-                  <span>Lifecycle Log</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </span>
-                {!isProjectLocked(project) && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleOpenRequestModal();
-                    }}
-                    className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1 shadow-2xs"
-                  >
-                    <Plus className="w-3 h-3" />
-                    <span>Change Req</span>
-                  </button>
-                )}
+        <div
+          onClick={() => setShowBudgetHist(true)}
+          className={cn(
+            "p-5 md:p-6 rounded-2xl bg-white/90 backdrop-blur-md border shadow-xs flex flex-col justify-between hover:shadow-card-hover cursor-pointer transition-all duration-200 group relative",
+            pendingBh ? "border-amber-300 bg-amber-50/20" : "border-slate-200/80 hover:border-blue-300"
+          )}
+        >
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Budget</span>
+              <div className={cn("w-7 h-7 rounded-lg border flex items-center justify-center transition-transform group-hover:scale-105", pendingBh ? "bg-amber-100 border-amber-200 text-amber-600" : "bg-blue-50 border-blue-100 text-blue-600")}>
+                <History className="w-3.5 h-3.5" />
               </div>
             </div>
-          );
-        })()}
+            
+            <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-4">
+              {formatCurrency(currentBaseBudget, project.currency || '$')}
+            </h3>
+            <div className="flex flex-col gap-1 mt-1">
+              <p className="text-[11px] text-slate-500 font-medium">Latest Approved Base Budget</p>
+              {pendingBh && (
+                <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-100 border border-amber-200 text-amber-800 flex items-center gap-1">
+                    <Clock className="w-2.5 h-2.5 animate-pulse" />
+                    <span>+{formatCurrency(pendingAddedAmount, project.currency || '$')} Change Req</span>
+                  </span>
+                  <span className="text-[10px] font-semibold text-amber-700">
+                    (Proposed Total: {formatCurrency(pendingTotalBudget, project.currency || '$')})
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100 mt-4">
+            <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider group-hover:translate-x-1 transition-transform flex items-center space-x-1">
+              <span>Lifecycle Log</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </span>
+            {!isProjectLocked(project) && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenRequestModal();
+                }}
+                className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1 shadow-2xs"
+              >
+                <Plus className="w-3 h-3" />
+                <span>Change Req</span>
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* Bento Card 3: Days Remaining */}
         <div className="p-5 md:p-6 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
@@ -672,14 +736,20 @@ export function ProjectDetailsTab() {
             <Wallet className="w-5 h-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h4 className="text-sm font-bold text-slate-900">Project Budget & Changes</h4>
               <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                {formatCurrency(project.budgetHistory?.[project.budgetHistory.length - 1]?.amount ?? (project as any).budget ?? (project as any).totalBudget ?? 0, project.currency || '$')}
+                Base: {formatCurrency(currentBaseBudget, project.currency || '$')}
               </span>
+              {pendingBh && (
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  +{formatCurrency(pendingAddedAmount, project.currency || '$')} Pending → {formatCurrency(pendingTotalBudget, project.currency || '$')}
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              Submit change requests for review or inspect historical financial lifecycle logs.
+              Submit change requests to add to base budget (Current Budget + Added Change Req) or inspect lifecycle logs.
             </p>
           </div>
         </div>
@@ -742,6 +812,26 @@ export function ProjectDetailsTab() {
               </div>
             </div>
 
+            {/* Current Active Base Budget Banner */}
+            <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200/80 flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-2xs">
+                  <Wallet className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Current Active Base Budget</p>
+                  <p className="text-base font-extrabold text-slate-900">
+                    {formatCurrency(currentBaseBudget, project.currency || '$')}
+                  </p>
+                </div>
+              </div>
+              {pendingRequests.length > 0 && (
+                <span className="text-[10px] font-extrabold text-red-600 bg-red-100/80 px-2 py-0.5 rounded-md border border-red-200">
+                  +{formatCurrency(pendingAddedAmount, project.currency || '$')} PENDING
+                </span>
+              )}
+            </div>
+
             {/* List */}
             <div className="flex-1 overflow-y-auto space-y-4 pr-1">
               {project.budgetHistory?.slice().reverse().map((bh: any, i: number) => {
@@ -752,12 +842,34 @@ export function ProjectDetailsTab() {
                     ? 'bg-amber-50 text-amber-600 border-amber-100'
                     : 'bg-red-50 text-red-600 border-red-100';
 
+                const isPending = bh.approvalStatus === 'Pending';
+                const rawAmount = Number(bh.amount) || 0;
+                let displayTotal = rawAmount;
+                let displayAdded: number | null = null;
+
+                if (isPending) {
+                  if (rawAmount >= currentBaseBudget && currentBaseBudget > 0) {
+                    displayTotal = rawAmount;
+                    displayAdded = rawAmount - currentBaseBudget;
+                  } else {
+                    displayAdded = rawAmount;
+                    displayTotal = currentBaseBudget + rawAmount;
+                  }
+                }
+
                 return (
                   <div key={i} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-base font-extrabold text-blue-600">
-                        {formatCurrency(bh.amount, project.currency || '$')}
-                      </span>
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        <span className="text-base font-extrabold text-blue-600">
+                          {formatCurrency(displayTotal, project.currency || '$')}
+                        </span>
+                        {displayAdded !== null && displayAdded > 0 && (
+                          <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                            +{formatCurrency(displayAdded, project.currency || '$')} Change Req
+                          </span>
+                        )}
+                      </div>
                       <span className={cn('text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border', badgeColor)}>
                         {bh.approvalStatus || 'Approved'}
                       </span>
@@ -782,7 +894,7 @@ export function ProjectDetailsTab() {
                           {isProcessing ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
                           ) : (
-                            <span>Approve</span>
+                            <span>Approve (+{formatCurrency(displayAdded ?? pendingAddedAmount, project.currency || '$')})</span>
                           )}
                         </button>
                       </div>
@@ -830,11 +942,16 @@ export function ProjectDetailsTab() {
             className="bg-white rounded-3xl border border-gray-200 max-w-lg w-full p-6 shadow-2xl relative space-y-4"
           >
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900">Request Budget Change</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Current Base: <span className="font-bold text-slate-800">{formatCurrency(project.budgetHistory?.[project.budgetHistory.length - 1]?.amount ?? (project as any).budget ?? (project as any).totalBudget ?? 0, project.currency || '$')}</span>
-                </p>
+              <div className="flex items-center space-x-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600 shrink-0">
+                  <GitPullRequest className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Request Budget Change</h3>
+                  <p className="text-xs text-slate-500">
+                    Cycle: <span className="font-semibold text-slate-700">Current Budget + Added Change Req Budget</span>
+                  </p>
+                </div>
               </div>
               <button
                 onClick={() => setShowRequestModal(false)}
@@ -844,10 +961,43 @@ export function ProjectDetailsTab() {
               </button>
             </div>
 
+            {/* Live Calculation Preview Card */}
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-blue-50/40 border border-blue-100/80 space-y-2.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                Budget Addition Preview
+              </span>
+              <div className="grid grid-cols-3 gap-2 items-center text-center">
+                <div className="p-2.5 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Current Budget</span>
+                  <span className="text-xs sm:text-sm font-black text-slate-800 mt-0.5 block truncate">
+                    {formatCurrency(currentBaseBudget, project.currency || '$')}
+                  </span>
+                </div>
+                <div className="flex flex-col items-center justify-center">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-black text-xs">
+                    +
+                  </div>
+                  <span className="text-[9px] font-bold text-blue-600 mt-0.5 uppercase tracking-wider truncate">Change Req</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200/80 shadow-2xs">
+                  <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-wider block">New Proposed</span>
+                  <span className="text-xs sm:text-sm font-black text-emerald-700 mt-0.5 block truncate">
+                    {formatCurrency(currentBaseBudget + (Number(requestAmount) > 0 ? Number(requestAmount) : 0), project.currency || '$')}
+                  </span>
+                </div>
+              </div>
+              {Number(requestAmount) > 0 && (
+                <div className="pt-2 border-t border-blue-100/60 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-600 font-medium">Added to project:</span>
+                  <span className="font-bold text-blue-700">+{formatCurrency(Number(requestAmount), project.currency || '$')}</span>
+                </div>
+              )}
+            </div>
+
             <form onSubmit={handleRequestBudgetSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  New Proposed Budget ({project.currency || '$'})
+                  Added Change Request Budget ({project.currency || '$'})
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 font-bold text-sm">
@@ -856,13 +1006,17 @@ export function ProjectDetailsTab() {
                   <input
                     type="number"
                     step="any"
+                    min="1"
                     required
-                    placeholder="e.g. 500000"
+                    placeholder="e.g. 50000 (amount to add to current budget)"
                     value={requestAmount}
                     onChange={(e) => setRequestAmount(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   />
                 </div>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Enter the additional funds required for this change request. This amount is added to the current base budget.
+                </p>
               </div>
 
               <div>
@@ -872,7 +1026,7 @@ export function ProjectDetailsTab() {
                 <textarea
                   required
                   rows={3}
-                  placeholder="Describe why the budget change is required..."
+                  placeholder="Describe why the additional budget is required (e.g. additional client requirements, scope addition)..."
                   value={requestReason}
                   onChange={(e) => setRequestReason(e.target.value)}
                   className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
@@ -943,7 +1097,7 @@ export function ProjectDetailsTab() {
                   ) : (
                     <Send className="w-3.5 h-3.5" />
                   )}
-                  <span>Submit Request</span>
+                  <span>Submit Change Request {Number(requestAmount) > 0 ? `(+${formatCurrency(Number(requestAmount), project.currency || '$')})` : ''}</span>
                 </button>
               </div>
             </form>

@@ -75,6 +75,7 @@ export const MilestoneDetailModal: React.FC<Props> = ({
   const [submitting, setSubmitting]       = useState<number | null>(null);
   const [submitForms, setSubmitForms]     = useState<Record<number, SubmitForm>>({});
   const [materials, setMaterials]         = useState<MaterialOption[]>([]);
+  const [materialUsages, setMaterialUsages] = useState<any[]>([]);
   const fileRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const toast = useToast();
 
@@ -85,6 +86,12 @@ export const MilestoneDetailModal: React.FC<Props> = ({
       .then(res => {
         const list = Array.isArray(res.data) ? res.data : res.data?.materials ?? [];
         setMaterials(list);
+      })
+      .catch(() => {});
+    api.get(`/projects/${projectId}/material-usage`)
+      .then(res => {
+        const list = Array.isArray(res.data) ? res.data : [];
+        setMaterialUsages(list);
       })
       .catch(() => {});
     // Reset form state
@@ -104,6 +111,34 @@ export const MilestoneDetailModal: React.FC<Props> = ({
     if (!assignedTo) return null;
     const id = assignedTo?._id || assignedTo;
     return members.find(m => m._id === id)?.name || assignedTo?.name || null;
+  };
+
+  const getTaskMaterials = (task: any) => {
+    if (!task) return [];
+    if (Array.isArray(task.materialsUsed) && task.materialsUsed.length > 0) {
+      return task.materialsUsed;
+    }
+    const matched = materialUsages.filter((u: any) => {
+      const locMatch = u.locationOrTask && task.title && u.locationOrTask.trim().toLowerCase() === task.title.trim().toLowerCase();
+      const noteMatch = task.completionNote && u.commonNote && u.commonNote.trim() === task.completionNote.trim();
+      return locMatch || (noteMatch && Boolean(u.commonNote));
+    });
+
+    const items: any[] = [];
+    matched.forEach((u: any) => {
+      (u.items || []).forEach((it: any) => {
+        const mat = materials.find((m: any) => m._id === (it.materialId?._id || it.materialId));
+        const name = it.materialId?.name || it.name || mat?.name || 'Material';
+        const unit = it.unit || it.materialId?.unit || mat?.unit || '';
+        items.push({
+          materialId: it.materialId?._id || it.materialId,
+          name,
+          quantity: it.quantity,
+          unit,
+        });
+      });
+    });
+    return items;
   };
 
   // ── Helpers to update a submit form ────────────────────────────────────────
@@ -186,6 +221,16 @@ export const MilestoneDetailModal: React.FC<Props> = ({
         });
       }
 
+      const usedMaterialsForTask = validMaterials.map(r => {
+        const mat = materials.find(m => m._id === r.materialId);
+        return {
+          materialId: r.materialId,
+          name: mat?.name || 'Material',
+          quantity: Number(r.quantity),
+          unit: mat?.unit || '',
+        };
+      });
+
       // 3. Patch milestone task
       const allDone = tasks.every((t: any, i: number) =>
         i === taskIndex ? true : t.isCompleted
@@ -198,6 +243,7 @@ export const MilestoneDetailModal: React.FC<Props> = ({
           isCompleted:    true,
           completedAt:    new Date().toISOString(),
           completionNote: form.note || t.completionNote || '',
+          ...(usedMaterialsForTask.length > 0 ? { materialsUsed: usedMaterialsForTask } : {}),
           ...(proofImage ? { proofImage } : {}),
         };
       });
@@ -210,6 +256,16 @@ export const MilestoneDetailModal: React.FC<Props> = ({
 
       // Clean up form
       setSubmitForms(prev => { const n = { ...prev }; delete n[taskIndex]; return n; });
+
+      // Refresh stock & usages
+      api.get(`/projects/${projectId}/materials`).then(r => {
+        const list = Array.isArray(r?.data) ? r.data : r?.data?.materials ?? [];
+        setMaterials(list);
+      }).catch(() => {});
+      api.get(`/projects/${projectId}/material-usage`).then(r => {
+        const list = Array.isArray(r?.data) ? r.data : [];
+        setMaterialUsages(list);
+      }).catch(() => {});
 
       if (payload.status === 'Completed') toast.success('All tasks done — milestone marked Completed!');
       else toast.success('Task submitted successfully');
@@ -442,6 +498,36 @@ export const MilestoneDetailModal: React.FC<Props> = ({
                                     </p>
                                   </div>
                                 )}
+                                {/* Materials Used */}
+                                {(() => {
+                                  const taskMats = getTaskMaterials(task);
+                                  if (!taskMats || taskMats.length === 0) return null;
+                                  return (
+                                    <div className="col-span-2">
+                                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                        <Package className="w-3.5 h-3.5 text-blue-500" /> Materials Used
+                                      </p>
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        {taskMats.map((mat: any, mi: number) => (
+                                          <div
+                                            key={mi}
+                                            className="flex items-center justify-between p-2.5 rounded-xl bg-blue-50/50 border border-blue-100 text-xs"
+                                          >
+                                            <div className="flex items-center gap-2 min-w-0">
+                                              <div className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                                                <Package className="w-3.5 h-3.5" />
+                                              </div>
+                                              <span className="font-semibold text-slate-800 truncate">{mat.name}</span>
+                                            </div>
+                                            <span className="font-bold text-blue-700 shrink-0 ml-2">
+                                              {mat.quantity} <span className="font-normal text-slate-500">{mat.unit}</span>
+                                            </span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
                                 {task.proofImage?.url && (
                                   <div className="col-span-2">
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Proof Photo</p>

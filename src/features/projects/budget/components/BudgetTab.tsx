@@ -86,7 +86,18 @@ export const BudgetTab: React.FC<BudgetTabProps> = ({ project, onUpdate }) => {
     }
   };
 
-  const currentBudget = project.budgetHistory?.[project.budgetHistory.length - 1]?.amount ?? (project as any).budget ?? (project as any).totalBudget ?? 0;
+  const currentBudget = (() => {
+    const history = project.budgetHistory || [];
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].approvalStatus === 'Approved') return Number(history[i].amount) || 0;
+    }
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].approvalStatus !== 'Pending' && history[i].approvalStatus !== 'Rejected') {
+        return Number(history[i].amount) || 0;
+      }
+    }
+    return Number((project as any).budget ?? (project as any).totalBudget ?? 0);
+  })();
   const previousBudget = project.budgetHistory?.[project.budgetHistory.length - 2]?.amount || 0;
   const budgetChange = currentBudget - previousBudget;
   const percentChange = previousBudget !== 0 ? (budgetChange / previousBudget) * 100 : 0;

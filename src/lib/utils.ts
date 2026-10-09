@@ -10,9 +10,32 @@ export function cn(...inputs: ClassValue[]) {
 // enough to break number formatting and layout (e.g. 1e21+).
 export const MAX_INPUT_VALUE = 999_999_999_999;
 
+const UNITS = [
+  { value: 1.0e12, suffix: 'T' },
+  { value: 1.0e9, suffix: 'B' },
+  { value: 1.0e6, suffix: 'M' },
+  { value: 1.0e3, suffix: 'K' },
+];
+
 export function formatCompact(num: number): string {
   if (num == null || isNaN(num)) return '0';
-  return Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short' }).format(num);
+  if (num === 0) return '0';
+
+  const sign = num < 0 ? '-' : '';
+  const absNum = Math.abs(num);
+  if (absNum < 1000) return num.toString();
+
+  for (const { value, suffix } of UNITS) {
+    if (absNum >= value) {
+      const quotient = absNum / value;
+      if (quotient >= 1000) {
+        return `${sign}999${suffix}+`;
+      }
+      return sign + quotient.toFixed(2).replace(/\.00$/, '') + suffix;
+    }
+  }
+
+  return num.toString();
 }
 
 export function formatCurrency(num: number, currency: string = '$'): string {
