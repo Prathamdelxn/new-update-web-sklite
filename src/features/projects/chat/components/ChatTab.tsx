@@ -289,7 +289,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
             const time = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
             return (
-              <div key={msg._id} className={cn('flex w-full group min-w-0', isMe ? 'justify-end' : 'justify-start')}>
+              <div key={msg._id} className={cn('flex w-full group', isMe ? 'justify-end' : 'justify-start')}>
                 {!isMe && (
                   <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mr-3 mt-1 shadow-sm border border-blue-200/50">
                     <span className="text-xs font-bold text-blue-700">
@@ -298,21 +298,21 @@ export function ChatTab({ projectId }: ChatTabProps) {
                   </div>
                 )}
 
-                <div className={cn('flex flex-col max-w-[85%] sm:max-w-[75%] min-w-0', isMe ? 'items-end' : 'items-start')}>
+                <div className={cn('flex flex-col max-w-[75%]', isMe ? 'items-end' : 'items-start')}>
                   {!isMe && (
-                    <span className="text-xs font-semibold text-slate-500 mb-1 ml-1 truncate max-w-full">{msg.senderName}</span>
+                    <span className="text-xs font-semibold text-slate-500 mb-1 ml-1">{msg.senderName}</span>
                   )}
 
-                  <div className="relative group/bubble min-w-0 max-w-full" data-chat-menu>
+                  <div className="relative group/bubble" data-chat-menu>
                     <div className={cn(
-                      'px-4 py-2.5 rounded-2xl shadow-sm border relative z-10 min-w-0 max-w-full overflow-hidden break-words [overflow-wrap:anywhere] [word-break:break-word]',
+                      'px-4 py-2.5 rounded-2xl shadow-sm border relative z-10',
                       isMe
                         ? 'bg-blue-600 text-white border-blue-700 rounded-br-sm'
                         : 'bg-white text-gray-800 border-gray-200 rounded-bl-sm'
                     )}>
                       {msg.replyTo && (
                         <div className={cn(
-                          'mb-2 p-2 rounded-lg border-l-2 text-xs min-w-0',
+                          'mb-2 p-2 rounded-lg border-l-2 text-xs',
                           isMe ? 'bg-blue-700/50 border-white text-blue-50' : 'bg-gray-50 border-blue-500 text-gray-500'
                         )}>
                           <span className={cn('font-bold block mb-0.5', isMe ? 'text-white' : 'text-blue-600')}>
@@ -333,7 +333,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
                       ))}
 
                       {msg.content && (
-                        <p className={cn('text-[14px] leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] [word-break:break-word] min-w-0', isMe ? 'text-blue-50' : 'text-gray-700')}>
+                        <p className={cn('text-[14px] leading-relaxed whitespace-pre-wrap break-words', isMe ? 'text-blue-50' : 'text-gray-700')}>
                           {msg.content}
                         </p>
                       )}

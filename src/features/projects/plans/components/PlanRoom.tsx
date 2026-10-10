@@ -30,71 +30,6 @@ const STATUS_STYLES: Record<string, string> = {
   Draft: 'text-slate-500  bg-gray-100     border-gray-200',
 };
 
-// Helper to sanitize and resolve any raw encrypted/ObjectId names
-function resolveApproverName(
-  rawName?: string,
-  userRef?: any,
-  project?: any,
-  fallback = 'Admin'
-): string {
-  const isInvalid = (str?: string) => {
-    if (!str || typeof str !== 'string') return true;
-    const t = str.trim();
-    return (
-      t.includes(':') ||
-      /^[a-f0-9]{24}$/i.test(t) ||
-      /^[a-f0-9]{16,}:[a-f0-9]{16,}$/i.test(t)
-    );
-  };
-
-  // 1. If rawName is already clean
-  if (!isInvalid(rawName)) {
-    let clean = (rawName as string).trim();
-    if (clean.includes('.')) {
-      clean = clean.split('.').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
-    }
-    return clean;
-  }
-
-  // 2. If userRef is populated user object
-  if (userRef && typeof userRef === 'object') {
-    if (!isInvalid(userRef.name)) {
-      return userRef.name;
-    }
-    if (userRef.email) {
-      const emailName = userRef.email.split('@')[0];
-      return emailName.includes('.')
-        ? emailName.split('.').map((p: string) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')
-        : emailName;
-    }
-  }
-
-  // 3. Look up userRef in project members or project createdBy
-  const userIdStr = typeof userRef === 'string' ? userRef : (userRef?._id || rawName);
-  if (userIdStr && project) {
-    const member = (project.members || []).find((m: any) => {
-      const mId = m.user?._id || m.user || m._id;
-      return mId && mId.toString() === userIdStr.toString();
-    });
-    if (member) {
-      const mName = member.user?.name || member.name;
-      if (!isInvalid(mName)) return mName;
-      const mEmail = member.user?.email || member.email;
-      if (mEmail) return mEmail.split('@')[0];
-    }
-
-    const creatorId = project.createdBy?._id || project.createdBy;
-    if (creatorId && creatorId.toString() === userIdStr.toString()) {
-      const cName = project.createdBy?.name;
-      if (!isInvalid(cName)) return cName;
-      const cEmail = project.createdBy?.email;
-      if (cEmail) return cEmail.split('@')[0];
-    }
-  }
-
-  return fallback;
-}
-
 export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, onUpdate }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -174,10 +109,6 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
       uploadedAt: v?.uploadedAt || doc.uploadedAt || new Date(),
       size: v?.size || doc.size || 0,
       approvalStatus: v?.approvalStatus || doc.approvalStatus || 'Draft',
-      approvedByName: v?.approvedByName || doc.approvedByName,
-      rejectedByName: v?.rejectedByName || doc.rejectedByName,
-      approvedBy: v?.approvedBy || doc.approvedBy,
-      rejectedBy: v?.rejectedBy || doc.rejectedBy,
       approvals: v?.approvals || doc.approvals || [],
       versionId: v?._id,
       versionNumber: v?.versionNumber,
@@ -354,63 +285,25 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
               </div>
 
               {/* Approvals row */}
-              {doc.approvals?.length > 0 ? (
-                <div className="flex items-center gap-2 px-4 pb-3 pt-0 flex-wrap">
-                  {doc.approvals.map((app: any, i: number) => {
-                    const isApp = app.status === 'Approved';
-                    const isRej = app.status === 'Rejected';
-                    const rawName = app.userName || (isApp ? doc.approvedByName : isRej ? doc.rejectedByName : '') || app.userRole;
-                    const approverName = resolveApproverName(rawName, app.user, project, app.userRole || 'Admin');
-                    return (
-                      <div
-                        key={i}
-                        className={cn(
-                          'flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium',
-                          isApp ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                          isRej ? 'bg-red-50 text-red-700 border-red-200' :
-                          'bg-amber-50 text-amber-700 border-amber-200'
-                        )}
-                      >
-                        {isApp ? (
-                          <>
-                            <UserCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                            <span>Approved by <strong className="font-semibold text-emerald-900">{approverName}</strong></span>
-                          </>
-                        ) : isRej ? (
-                          <>
-                            <XCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                            <span>Rejected by <strong className="font-semibold text-red-900">{approverName}</strong></span>
-                          </>
-                        ) : (
-                          <>
-                            <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                            <span>Assigned to <strong className="font-semibold text-amber-900">{approverName}</strong></span>
-                          </>
-                        )}
+              {doc.approvals?.length > 0 && (
+                <div className="flex items-center gap-4 px-4 pb-3 pt-0 flex-wrap">
+                  {doc.approvals.map((app: any, i: number) => (
+                    <div key={i} className="flex items-center gap-1.5">
+                      <div className={cn(
+                        'w-5 h-5 rounded-md flex items-center justify-center',
+                        app.status === 'Approved' ? 'bg-emerald-100 text-emerald-600' :
+                          app.status === 'Rejected' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
+                      )}>
+                        {app.status === 'Approved' ? <UserCheck className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
                       </div>
-                    );
-                  })}
-                </div>
-              ) : (doc.approvalStatus === 'Approved' || doc.approvalStatus === 'Rejected') && (
-                <div className="flex items-center gap-2 px-4 pb-3 pt-0 flex-wrap">
-                  <div
-                    className={cn(
-                      'flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium',
-                      doc.approvalStatus === 'Approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'
-                    )}
-                  >
-                    {doc.approvalStatus === 'Approved' ? (
-                      <>
-                        <UserCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>Approved by <strong className="font-semibold text-emerald-900">{resolveApproverName(doc.approvedByName, doc.approvedBy, project, 'Admin')}</strong></span>
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                        <span>Rejected by <strong className="font-semibold text-red-900">{resolveApproverName(doc.rejectedByName, doc.rejectedBy, project, 'Admin')}</strong></span>
-                      </>
-                    )}
-                  </div>
+                      <span className="text-[11px] font-medium text-slate-400">{app.userName}</span>
+                      <span className={cn(
+                        'text-[10px] font-medium',
+                        app.status === 'Approved' ? 'text-emerald-600' :
+                          app.status === 'Rejected' ? 'text-red-600' : 'text-amber-600'
+                      )}>{app.status}</span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

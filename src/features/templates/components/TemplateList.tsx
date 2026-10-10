@@ -137,35 +137,33 @@ export const TemplateList = () => {
             return (
               <div
                 key={template._id}
-                className="group relative bg-white rounded-2xl border border-gray-200 hover:border-blue-300 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 cursor-pointer flex flex-col"
+                className="group relative bg-white rounded-2xl border border-gray-200 hover:border-blue-300 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col"
                 onClick={() => setViewTemplateId(template._id)}
               >
                 {/* Cover */}
-                <div className="relative h-36 w-full shrink-0">
-                  <div className="absolute inset-0 rounded-t-2xl overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-50">
-                    {coverImage ? (
-                      <img
-                        src={coverImage}
-                        alt={template.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Layers className="w-10 h-10 text-blue-300" />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/0 to-black/0" />
-                  </div>
+                <div className="relative h-36 w-full overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-50 shrink-0">
+                  {coverImage ? (
+                    <img
+                      src={coverImage}
+                      alt={template.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Layers className="w-10 h-10 text-blue-300" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/0 to-black/0" />
 
                   {/* Category badge */}
-                  <span className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/95 backdrop-blur-sm text-blue-700 text-[11px] font-bold rounded-lg shadow-sm">
+                  <span className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/95 backdrop-blur-sm text-blue-700 text-[11px] font-bold rounded-lg shadow-sm">
                     <FolderOpen className="w-3 h-3" />
                     {template.category?.name || 'General'}
                   </span>
 
                   {/* Menu Button */}
                   <div
-                    className="absolute top-3 right-3 z-30"
+                    className="absolute top-3 right-3 z-10"
                     ref={templateMenuId === template._id ? templateMenuRef : null}
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -180,10 +178,10 @@ export const TemplateList = () => {
                     </button>
 
                     {templateMenuId === template._id && (
-                      <div className="absolute right-0 top-full mt-1.5 w-44 bg-white rounded-xl border border-gray-200 shadow-xl z-50 py-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="absolute right-0 top-full mt-1.5 w-40 bg-white rounded-xl border border-gray-200 shadow-xl z-50 py-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
                         <button
                           onClick={(e) => { e.stopPropagation(); setTemplateMenuId(null); setViewTemplateId(template._id); }}
-                          className="w-full px-3.5 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 transition-colors font-medium"
+                          className="w-full px-3.5 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 transition-colors"
                         >
                           <Eye className="w-4 h-4 text-gray-400" />
                           View Details
@@ -191,7 +189,7 @@ export const TemplateList = () => {
                         {canUpdate && (
                         <button
                           onClick={(e) => { e.stopPropagation(); openEdit(template); }}
-                          className="w-full px-3.5 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 transition-colors font-medium"
+                          className="w-full px-3.5 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 transition-colors"
                         >
                           <Pencil className="w-4 h-4 text-gray-400" />
                           Edit Template
@@ -202,10 +200,10 @@ export const TemplateList = () => {
                         <div className="border-t border-gray-100 my-1 mx-3" />
                         <button
                           onClick={(e) => handleDelete(e, template._id, template.name)}
-                          className="w-full px-3.5 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 transition-colors font-semibold"
+                          className="w-full px-3.5 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2.5 transition-colors"
                         >
-                          <Trash2 className="w-4 h-4 text-rose-500" />
-                          Delete Template
+                          <Trash2 className="w-4 h-4" />
+                          Delete
                         </button>
                         </>
                         )}
@@ -214,7 +212,7 @@ export const TemplateList = () => {
                   </div>
 
                   {/* Title, over the image for a tighter card */}
-                  <h4 className="absolute bottom-2.5 left-3.5 right-3.5 z-10 text-[15px] capitalize font-bold text-white line-clamp-1 tracking-tight drop-shadow-sm">
+                  <h4 className="absolute bottom-2.5 left-3.5 right-3.5 text-[15px] capitalize font-bold text-white line-clamp-1 tracking-tight drop-shadow-sm">
                     {template.name}
                   </h4>
                 </div>

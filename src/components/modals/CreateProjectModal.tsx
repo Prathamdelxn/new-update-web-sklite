@@ -105,7 +105,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     setDateErrors({});
     if (isEditing) {
       setStep('configure');
-      const initialBudget = initialData.budget ?? initialData.budgetHistory?.[initialData.budgetHistory.length - 1]?.amount ?? '';
       setForm({
         name: initialData.name || '',
         siteLocationAddress: initialData.siteLocation?.address || '',
@@ -114,7 +113,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         attendanceRadius: initialData.attendanceRadius ?? 100,
         area: initialData.area || '',
         areaUnit: initialData.areaUnit || 'sqft',
-        budget: initialBudget ? initialBudget.toString() : '',
+        budget: '',
         currency: initialData.currency || 'AED',
         description: initialData.description || '',
         startDate: initialData.startDate ? initialData.startDate.split('T')[0] : '',
@@ -349,7 +348,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
           attendanceRadius: form.attendanceRadius ? Number(form.attendanceRadius) : 100,
         };
         if (form.area) payload.area = Number(form.area);
-        if (form.budget !== '') payload.budget = Number(form.budget);
         payload.areaUnit = form.areaUnit;
         payload.currency = form.currency;
         await api.patch(`/projects/${projectId}`, payload);
@@ -364,7 +362,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
           endDate: form.endDate || undefined,
           needSiteSurvey: form.needSiteSurvey,
           projectType: form.projectType,
-          budget: form.budget ? Number(form.budget) : undefined,
+          budget: form.budget ? form.budget : undefined,
           currency: form.currency,
           areaUnit: form.areaUnit,
           documents: documents.length > 0 ? documents : undefined,
@@ -667,19 +665,21 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                         <div>
                           <label className={labelCls}>Est Budget</label>
                           <div className="flex border border-gray-200 rounded-xl relative focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 bg-white shadow-sm">
-                            <div className="relative flex items-center gap-2 pl-3.5 pr-4 py-3 bg-gray-100 border-r border-gray-200 cursor-pointer shrink-0 rounded-l-xl hover:bg-gray-200 transition-colors text-sm font-semibold text-slate-600 select-none" onClick={() => setIsCurrencyDropdownOpen(!isCurrencyDropdownOpen)}>
-                              <span className="flex items-center gap-1.5">
-                                <span className="flex items-center justify-center w-5 h-5 shrink-0">
-                                  {(() => {
-                                    const match = currencies.find(c => c.currencyCode === form.currency);
-                                    return match ? (
-                                      <img src={`https://flagcdn.com/w20/${match.cca2.toLowerCase()}.png`} alt={match.cca2} className="w-5 h-auto shadow-sm rounded-[2px]" />
-                                    ) : '🌍';
-                                  })()}
+                            <div className="relative flex items-center bg-gray-100 border-r border-gray-200 cursor-pointer min-w-[80px] rounded-l-xl hover:bg-gray-200 transition-colors" onClick={() => setIsCurrencyDropdownOpen(!isCurrencyDropdownOpen)}>
+                              <div className="flex-1 px-3 py-3 text-sm font-semibold text-slate-600 flex items-center justify-between">
+                                <span className="flex items-center gap-1.5">
+                                  <span className="flex items-center justify-center w-5 h-5 shrink-0">
+                                    {(() => {
+                                      const match = currencies.find(c => c.currencyCode === form.currency);
+                                      return match ? (
+                                        <img src={`https://flagcdn.com/w20/${match.cca2.toLowerCase()}.png`} alt={match.cca2} className="w-5 h-auto shadow-sm rounded-[2px]" />
+                                      ) : '🌍';
+                                    })()}
+                                  </span>
+                                  {form.currency}
                                 </span>
-                                {form.currency}
-                              </span>
-                              <ChevronDown className="w-3.5 h-3.5 opacity-50 shrink-0 ml-1" />
+                                <ChevronDown className="w-3.5 h-3.5 ml-1 opacity-50" />
+                              </div>
                               {isCurrencyDropdownOpen && (
                                 <>
                                   <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setIsCurrencyDropdownOpen(false); }} />
@@ -1006,7 +1006,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
               }))}
               initialLat={form.siteLocationLatitude ? Number(form.siteLocationLatitude) : undefined}
               initialLng={form.siteLocationLongitude ? Number(form.siteLocationLongitude) : undefined}
-              radius={form.attendanceRadius ? Number(form.attendanceRadius) : 100}
             />
 
             <AnimatePresence>

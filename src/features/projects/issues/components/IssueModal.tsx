@@ -114,7 +114,7 @@ export const IssueModal: React.FC<IssueModalProps> = ({
           toast.success(`Issue updated successfully!`);
         } else {
           await api.post(`/projects/${projectId}/issues`, issuePayload);
-          toast.success(`Snag reported successfully!`);
+          toast.success(`Issue reported successfully!`);
         }
       }
       onSuccess();
@@ -147,7 +147,7 @@ export const IssueModal: React.FC<IssueModalProps> = ({
             className="w-full max-w-lg relative z-10 max-h-[90vh] flex flex-col"
           >
             <GlassCard className="border-gray-200 flex flex-col overflow-hidden h-full" gradient>
-
+              
               {/* Header */}
               <div className="p-4 sm:p-6 border-b border-gray-100/50 flex items-center justify-between shrink-0">
                 <div className="flex items-center space-x-3">
@@ -155,7 +155,7 @@ export const IssueModal: React.FC<IssueModalProps> = ({
                     <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
                   </div>
                   <div>
-                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 leading-none">{isEdit ? `Edit ${type}` : `Report New Snag`}</h2>
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 leading-none">{isEdit ? `Edit ${type}` : `Report New ${type}`}</h2>
                     <p className="text-[10px] sm:text-xs text-slate-500 mt-1">Project Tracking & Accountability</p>
                   </div>
                 </div>
@@ -204,7 +204,7 @@ export const IssueModal: React.FC<IssueModalProps> = ({
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all resize-none"
-                      placeholder="Detail the Snag and impact..."
+                      placeholder="Detail the issue and impact..."
                     />
                   </div>
 
@@ -250,7 +250,7 @@ export const IssueModal: React.FC<IssueModalProps> = ({
                       <span>{isEdit ? 'Saving...' : 'Reporting...'}</span>
                     </>
                   ) : (
-                    <span>{isEdit ? `Save ${type}` : `Report Snag`}</span>
+                    <span>{isEdit ? `Save ${type}` : `Report ${type}`}</span>
                   )}
                 </button>
               </div>

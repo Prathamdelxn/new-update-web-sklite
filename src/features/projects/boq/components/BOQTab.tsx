@@ -65,18 +65,14 @@ const StatusBadge = ({ status, size = 'sm' }: { status: string; size?: 'xs' | 's
 const StatCard = ({
   label, value, icon: Icon, accent, bg, sub,
 }: { label: string; value: string | number; icon: React.ElementType; accent: string; bg: string; sub?: string }) => (
-  <div className="bg-white rounded-xl border border-gray-200 p-3.5 sm:p-4 flex items-center gap-3 min-w-0 transition-colors duration-200 hover:border-blue-200 shadow-2xs">
-    <div className={cn('w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0', bg)}>
-      <Icon className={cn('w-4.5 h-4.5 sm:w-5 sm:h-5', accent)} />
+  <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 flex items-center gap-3 sm:gap-4 min-w-0 transition-colors duration-200 hover:border-blue-200">
+    <div className={cn('w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0', bg)}>
+      <Icon className={cn('w-5 h-5', accent)} />
     </div>
     <div className="min-w-0 flex-1">
-      <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider leading-snug break-words" title={label}>
-        {label}
-      </p>
-      <p className="text-lg sm:text-xl xl:text-2xl font-black text-gray-900 mt-0.5 leading-tight truncate" title={String(value)}>
-        {value}
-      </p>
-      {sub && <p className="text-[10px] font-medium text-slate-400 mt-0.5 truncate">{sub}</p>}
+      <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">{label}</p>
+      <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-0.5 leading-none truncate">{value}</p>
+      {sub && <p className="text-[10px] text-slate-400 mt-0.5">{sub}</p>}
     </div>
   </div>
 );
@@ -311,7 +307,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
       <div className="space-y-5 sm:space-y-6 pb-20 sm:pb-6">
 
         {/* ── Stat cards ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             label="Approved Grand Total"
             value={formatCurrency(totalBOQAmount, project?.currency || '$')}

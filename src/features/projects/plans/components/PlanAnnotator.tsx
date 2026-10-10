@@ -572,33 +572,6 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
                   )}
                 </div>
 
-                {/* Video Attach */}
-                <div>
-                  <label className="flex items-center justify-between text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
-                    <div className="flex items-center gap-2"><Video className="w-3.5 h-3.5" /> Video</div>
-                    {canAnnotate && !videoUri && (
-                      <label className="text-[10px] text-blue-600 cursor-pointer hover:underline">
-                        Upload
-                        <input type="file" accept="video/*" className="hidden" onChange={(e) => handleFileUpload(e, 'video')} />
-                      </label>
-                    )}
-                  </label>
-                  {videoUri ? (
-                    <div className="relative group rounded-xl overflow-hidden border border-gray-200 bg-black">
-                      <video controls src={videoUri} className="w-full h-40 object-contain rounded-xl" />
-                      {canAnnotate && (
-                        <button onClick={() => setVideoUri('')} className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="h-20 rounded-xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-xs text-gray-400 font-medium">
-                      {isUploading ? 'Uploading...' : 'No video attached'}
-                    </div>
-                  )}
-                </div>
-
               </div>
 
               {/* Sidebar Footer */}

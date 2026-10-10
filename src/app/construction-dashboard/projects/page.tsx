@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
-import { ProjectCard, STATUS_PROGRESS } from '@/components/ui/ProjectCard';
+import { ProjectCard } from '@/components/ui/ProjectCard';
 import { CreateProjectModal } from '@/components/modals/CreateProjectModal';
 import { ConfirmModal } from '@/components/modals/ConfirmModal';
 import { SendForSurveyModal } from '@/features/projects/site-survey/components/SendForSurveyModal';
@@ -127,9 +127,7 @@ export default function ProjectsPage() {
           return (a.name || '').localeCompare(b.name || '');
         }
         if (sortBy === 'progress') {
-          const progA = STATUS_PROGRESS[a.status] ?? (a as any).progress ?? 10;
-          const progB = STATUS_PROGRESS[b.status] ?? (b as any).progress ?? 10;
-          return progB - progA;
+          return ((b as any).progress || 0) - ((a as any).progress || 0);
         }
         // Default: newest date
         const dateA = a.startDate ? new Date(a.startDate).getTime() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
@@ -345,8 +343,8 @@ export default function ProjectsPage() {
       <SkeletonLoader loading={loading} preset="card-grid">
         {filteredProjects.length > 0 && !loading ? (
           viewMode === 'grid' ? (
-            /* Grid View (Responsive 1 to 4 cols) */
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-5">
+            /* Grid View (4 in a row on desktop) */
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredProjects.map((project) => (
                 <ProjectCard
                   key={project._id}
@@ -365,10 +363,10 @@ export default function ProjectsPage() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-slate-100 bg-slate-50/70 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      <th className="py-3 px-5 max-w-[220px] sm:max-w-[280px] md:max-w-[340px]">Project</th>
-                      <th className="py-3 px-4 max-w-[150px]">Category</th>
+                      <th className="py-3 px-5">Project</th>
+                      <th className="py-3 px-4">Category</th>
                       <th className="py-3 px-4">Status</th>
-                      <th className="py-3 px-4 max-w-[180px] sm:max-w-[220px]">Location</th>
+                      <th className="py-3 px-4">Location</th>
                       <th className="py-3 px-4">Progress</th>
                       <th className="py-3 px-4">Start Date</th>
                       <th className="py-3 px-5 text-right">Actions</th>
@@ -377,7 +375,7 @@ export default function ProjectsPage() {
                   <tbody className="divide-y divide-slate-100 text-xs">
                     {filteredProjects.map((project) => {
                       const initial = project.name?.charAt(0)?.toUpperCase() || 'P';
-                      const progressVal = Math.round(STATUS_PROGRESS[project.status] ?? (project as any).progress ?? 10);
+                      const progressVal = (project as any).progress || 15;
                       const catName =
                         (typeof project.category === 'object' && project.category ? (project.category as any).name : null) ||
                         (typeof (project as any).templateCategory === 'object' && (project as any).templateCategory ? (project as any).templateCategory.name : null) ||
@@ -392,16 +390,16 @@ export default function ProjectsPage() {
                       return (
                         <tr key={project._id} className="hover:bg-blue-50/30 transition-colors group">
                           {/* Project Name & Code */}
-                          <td className="py-3.5 px-5 max-w-[220px] sm:max-w-[280px] md:max-w-[340px]">
-                            <Link href={`/construction-dashboard/projects/${project._id}`} className="flex items-center gap-3 min-w-0">
-                              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-50 to-blue-50 border border-slate-300 flex items-center justify-center text-blue-700 font-extrabold shrink-0 ">
+                          <td className="py-3.5 px-5">
+                            <Link href={`/construction-dashboard/projects/${project._id}`} className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-slate-300 flex items-center justify-center text-indigo-700 font-extrabold shrink-0 ">
                                 {initial}
                               </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate" title={project.name}>
+                              <div className="min-w-0">
+                                <p className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">
                                   {project.name}
                                 </p>
-                                <p className="text-[11px] font-semibold text-slate-400 truncate" title={project.clientName || 'General Client'}>
+                                <p className="text-[11px] font-semibold text-slate-400 truncate">
                                   {project.clientName || 'General Client'}
                                 </p>
                               </div>
@@ -409,34 +407,26 @@ export default function ProjectsPage() {
                           </td>
 
                           {/* Category */}
-                          <td className="py-3.5 px-4 max-w-[150px]">
-                            <span className="inline-flex items-center gap-1 bg-blue-50/90 border border-blue-200/80 text-blue-700 px-2 py-0.5 rounded-md text-[10.5px] font-bold tracking-wide max-w-full">
-                              <Layers className="w-3 h-3 text-blue-500 shrink-0" />
-                              <span className="truncate max-w-[130px]" title={catName}>{catName}</span>
+                          <td className="py-3.5 px-4">
+                            <span className="inline-flex items-center gap-1 bg-indigo-50/90 border border-indigo-200/80 text-indigo-700 px-2 py-0.5 rounded-md text-[10.5px] font-bold tracking-wide">
+                              <Layers className="w-3 h-3 text-indigo-500 shrink-0" />
+                              <span className="truncate max-w-[130px]">{catName}</span>
                             </span>
                           </td>
 
                           {/* Status */}
                           <td className="py-3.5 px-4">
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200/60 whitespace-nowrap">
-                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
                               <span>{project.status}</span>
                             </span>
                           </td>
 
                           {/* Location */}
-                          <td className="py-3.5 px-4 text-slate-500 font-medium max-w-[180px] sm:max-w-[220px]">
-                            <div className="flex items-center gap-1.5 min-w-0">
+                          <td className="py-3.5 px-4 text-slate-500 font-medium">
+                            <div className="flex items-center gap-1.5 truncate max-w-[200px]">
                               <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                              <span className="truncate" title={
-                                (project.siteLocation && typeof project.siteLocation === 'object' && project.siteLocation.address?.trim() ? project.siteLocation.address : null) ||
-                                (typeof project.siteLocation === 'string' && (project.siteLocation as string).trim() ? project.siteLocation : null) ||
-                                (project as any).siteAddress ||
-                                (project as any).location ||
-                                (project as any).address ||
-                                (project.description && project.description.trim() ? project.description : null) ||
-                                'Location not specified'
-                              }>
+                              <span className="truncate">
                                 {(project.siteLocation && typeof project.siteLocation === 'object' && project.siteLocation.address?.trim() ? project.siteLocation.address : null) ||
                                   (typeof project.siteLocation === 'string' && (project.siteLocation as string).trim() ? project.siteLocation : null) ||
                                   (project as any).siteAddress ||

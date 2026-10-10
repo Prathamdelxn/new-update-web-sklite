@@ -488,13 +488,13 @@ export const OverviewDashboard = () => {
             TOP SECTION: KPI Counter | Calendar | Progress Bars | Dual Waves
         ========================================================================== */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-
+          
           {/* 1. Dual KPI Metric Counter (cols 1-3) */}
           <div className="lg:col-span-3 bg-white rounded-3xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between min-w-0 gap-2">
-                <span className="text-xs font-bold text-slate-400 tracking-wider uppercase truncate">Portfolio Summary</span>
-                <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 bg-slate-100/80 px-2.5 py-0.5 rounded-full shrink-0 whitespace-nowrap">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">Portfolio Summary</span>
+                <span className="text-[11px] font-semibold text-slate-400 bg-slate-100/80 px-2.5 py-0.5 rounded-full">
                   Week {portfolioSummary?.currentWeek || 36}
                 </span>
               </div>
@@ -652,14 +652,14 @@ export const OverviewDashboard = () => {
                         m.status === 'Completed'
                           ? 'from-emerald-400 to-emerald-600'
                           : m.progress > 50
-                            ? 'from-blue-500 to-blue-700'
-                            : 'from-amber-400 to-orange-500';
+                          ? 'from-indigo-500 to-indigo-700'
+                          : 'from-amber-400 to-orange-500';
                       const textCol =
                         m.status === 'Completed'
                           ? 'text-emerald-600'
                           : m.progress > 50
-                            ? 'text-blue-600'
-                            : 'text-orange-500';
+                          ? 'text-indigo-600'
+                          : 'text-orange-500';
 
                       return (
                         <Link
@@ -732,9 +732,9 @@ export const OverviewDashboard = () => {
           {/* 4. Dual Wave / Spline Area Chart (cols 10-12) */}
           <div className="lg:col-span-3 bg-white rounded-3xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between min-w-0 gap-2 mb-2">
-                <h3 className="text-xs sm:text-sm font-bold text-slate-800 truncate">Execution Velocity</h3>
-                <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-bold text-slate-800">Execution Velocity</h3>
+                <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
                   Real-time
                 </span>
               </div>
@@ -786,7 +786,7 @@ export const OverviewDashboard = () => {
             MIDDLE SECTION: Main Multi-Curve Wave Chart (2/3) + Radial Gauge (1/3)
         ========================================================================== */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-
+          
           {/* Main Multi-Curve Wave Chart (cols 1-8) */}
           <div className="lg:col-span-8 bg-white rounded-3xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-4 flex flex-col justify-between">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
@@ -962,7 +962,7 @@ export const OverviewDashboard = () => {
             BOTTOM SECTION: Stacked Horizontal Bars | Clustered Daily Bars | Split Donut
         ========================================================================== */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-
+          
           {/* 1. Monthly Transaction Allocation Horizontal Bars (cols 1-4) */}
           <div className="lg:col-span-4 bg-white rounded-3xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between">
             <div>

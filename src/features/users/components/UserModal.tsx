@@ -70,7 +70,7 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
         setSelectedRole(
           typeof initialData.role === 'object' ? initialData.role : null
         );
-
+        
         const pRoles: Record<string, string> = {};
         const projArr: any[] = [];
         // Entries with no linked project (project: null) are orphaned
@@ -190,166 +190,155 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="w-full max-w-lg relative z-10"
             >
-              <GlassCard className="border-gray-200" gradient>
-                <div className="p-8 max-h-[90vh] overflow-y-auto custom-scrollbar">
-                  {/* Header */}
-                  <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-3 rounded-2xl bg-blue-50 border border-blue-200">
-                        {isEditing ? <UserCog className="w-6 h-6 text-blue-600" /> : <UserPlus className="w-6 h-6 text-blue-600" />}
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-900">
-                          {isEditing ? 'Update Team Member' : 'Onboard New Member'}
-                        </h2>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          {isEditing ? 'Update team member details.' : 'Invite a team member to the platform.'}
-                        </p>
-                      </div>
+            <GlassCard className="border-gray-200" gradient>
+              <div className="p-8 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 rounded-2xl bg-blue-50 border border-blue-200">
+                      {isEditing ? <UserCog className="w-6 h-6 text-blue-600" /> : <UserPlus className="w-6 h-6 text-blue-600" />}
                     </div>
-                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
-                      <X className="w-5 h-5" />
-                    </button>
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900">
+                        {isEditing ? 'Update Team Member' : 'Onboard New Member'}
+                      </h2>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {isEditing ? 'Update team member details.' : 'Invite a team member to the platform.'}
+                      </p>
+                    </div>
+                  </div>
+                  <button onClick={onClose} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Full Name */}
+                  <div>
+                    <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px] mb-3">Full Name</label>
+                    <input
+                      type="text" required value={formData.name}
+                      onChange={e => setFormData(f => ({ ...f, name: e.target.value }))}
+                      className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl px-4 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
+                      placeholder="e.g. Robert Fox"
+                    />
                   </div>
 
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Full Name */}
-                    <div>
-                      <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px] mb-3">Full Name</label>
-                      <input
-                        type="text" required value={formData.name}
-                        onChange={e => setFormData(f => ({ ...f, name: e.target.value }))}
-                        className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl px-4 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
-                        placeholder="e.g. Robert Fox"
-                      />
-                    </div>
+                  {/* Email */}
+                  <div>
+                    <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px] mb-3">Email Address</label>
+                    <input
+                      type="email" required value={formData.email}
+                      onChange={e => setFormData(f => ({ ...f, email: e.target.value }))}
+                      className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl px-4 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
+                      placeholder="name@example.com"
+                    />
+                  </div>
 
-                    {/* Email */}
-                    <div>
-                      <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px] mb-3">Email Address</label>
-                      <input
-                        type="email" required value={formData.email}
-                        onChange={e => setFormData(f => ({ ...f, email: e.target.value }))}
-                        className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl px-4 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
-                        placeholder="name@example.com"
-                      />
-                    </div>
+                  {/* Mobile Number */}
+                  <div>
+                    <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px] mb-3">Mobile Number</label>
+                    <input
+                      type="tel" required value={formData.mobile}
+                      onChange={e => setFormData(f => ({ ...f, mobile: e.target.value }))}
+                      className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl px-4 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
+                      placeholder="Enter mobile number"
+                    />
+                  </div>
 
-                    {/* Mobile Number */}
+                  {/* Password */}
+                  {!isEditing && (
                     <div>
-                      <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px] mb-3">Mobile Number</label>
-                      <input
-                        type="tel"
-                        required
-                        value={formData.mobile}
-                        onChange={e => {
-                          const val = e.target.value.replace(/[^0-9+\s-]/g, '');
-                          setFormData(f => ({ ...f, mobile: val }));
-                        }}
-                        pattern="^\+?[0-9\s-]{7,15}$"
-                        title="Please enter a valid mobile number with digits only (e.g. +91 9876543210)"
-                        className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl px-4 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
-                        placeholder="Enter mobile number (e.g. +91 9876543210)"
-                      />
-                    </div>
-
-                    {/* Password */}
-                    {!isEditing && (
-                      <div>
-                        <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px] mb-3">Password</label>
-                        <div className="relative">
-                          <input
-                            type={showCredsPassword ? "text" : "password"}
-                            value={formData.password}
-                            onChange={e => setFormData(f => ({ ...f, password: e.target.value }))}
-                            className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl pl-4 pr-12 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
-                            placeholder="Leave blank for default"
-                          />
-                          <button type="button" onClick={() => setShowCredsPassword(v => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600">
-                            {showCredsPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                          </button>
-                        </div>
-                        <p className="text-[12px] text-slate-500 mt-2 font-medium">
-                          * Default password will be <span className="font-semibold text-slate-800">welcome123</span>
-                        </p>
+                      <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px] mb-3">Password</label>
+                      <div className="relative">
+                        <input
+                          type={showCredsPassword ? "text" : "password"} required={!isEditing} value={formData.password}
+                          onChange={e => setFormData(f => ({ ...f, password: e.target.value }))}
+                          className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl pl-4 pr-12 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
+                          placeholder="Leave blank for default"
+                        />
+                        <button type="button" onClick={() => setShowCredsPassword(v => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600">
+                          {showCredsPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
                       </div>
-                    )}
+                    </div>
+                  )}
 
-                    {/* Global Role — org-wide default role, required for actions that
+                  {/* Global Role — org-wide default role, required for actions that
                       aren't scoped to any single project (e.g. creating a new
                       project in the first place). Project-specific roles below
                       are additive on top of this, not a substitute for it. */}
-                    <div>
-                      <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px] mb-3">Global Role</label>
-                      <select
-                        value={selectedRole?._id || ''}
-                        onChange={e => setSelectedRole(roles.find(r => r._id === e.target.value) || null)}
-                        className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl px-4 text-[15px] font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
-                      >
-                        <option value="">No global role (project-scoped access only)</option>
-                        {roles.map(role => (
-                          <option key={role._id} value={role._id}>{role.name}</option>
-                        ))}
-                      </select>
-                    </div>
+                  <div>
+                    <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px] mb-3">Global Role</label>
+                    <select
+                      value={selectedRole?._id || ''}
+                      onChange={e => setSelectedRole(roles.find(r => r._id === e.target.value) || null)}
+                      className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl px-4 text-[15px] font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
+                    >
+                      <option value="">No global role (project-scoped access only)</option>
+                      {roles.map(role => (
+                        <option key={role._id} value={role._id}>{role.name}</option>
+                      ))}
+                    </select>
+                  </div>
 
-                    {/* Project Assignments */}
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px]">Project Assignments</label>
-                        <button
-                          type="button"
-                          onClick={() => setIsProjectPickerOpen(true)}
-                          className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700"
-                        >
-                          <FolderOpen className="w-3.5 h-3.5" />
-                          {selectedProjects.length > 0 ? 'Edit Projects' : 'Assign Projects'}
-                        </button>
-                      </div>
-
-                      {selectedProjects.length === 0 ? (
-                        <p className="text-xs text-slate-400 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
-                          No projects assigned yet.
-                        </p>
-                      ) : (
-                        <div className="space-y-2">
-                          {selectedProjects.map(project => (
-                            <div key={project._id} className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl">
-                              <span className="text-sm font-semibold text-gray-900 truncate flex-1">{project.name}</span>
-                              <select
-                                value={projectRoles[project._id] || ''}
-                                onChange={e => setProjectRoles(prev => ({ ...prev, [project._id]: e.target.value }))}
-                                className="text-xs font-semibold bg-white border border-gray-200 rounded-lg py-1.5 px-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                              >
-                                <option value="">Use global role</option>
-                                {roles.map(role => (
-                                  <option key={role._id} value={role._id}>{role.name}</option>
-                                ))}
-                              </select>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Footer */}
-                    <div className="pt-2">
+                  {/* Project Assignments */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px]">Project Assignments</label>
                       <button
-                        type="submit" disabled={isLoading}
-                        className="w-full h-[58px] rounded-[18px] bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-[16px] font-bold transition-all disabled:opacity-50 shadow-[0_8px_16px_-6px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2"
+                        type="button"
+                        onClick={() => setIsProjectPickerOpen(true)}
+                        className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700"
                       >
-                        {isLoading ? (
-                          <><Loader2 className="w-5 h-5 animate-spin" /><span>{isEditing ? 'Saving...' : 'Initializing...'}</span></>
-                        ) : (
-                          <span>{isEditing ? 'Save Changes' : 'Initialize Member'}</span>
-                        )}
+                        <FolderOpen className="w-3.5 h-3.5" />
+                        {selectedProjects.length > 0 ? 'Edit Projects' : 'Assign Projects'}
                       </button>
                     </div>
-                  </form>
-                </div>
-              </GlassCard>
-            </motion.div>
-          </div>
+
+                    {selectedProjects.length === 0 ? (
+                      <p className="text-xs text-slate-400 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+                        No projects assigned yet.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {selectedProjects.map(project => (
+                          <div key={project._id} className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl">
+                            <span className="text-sm font-semibold text-gray-900 truncate flex-1">{project.name}</span>
+                            <select
+                              value={projectRoles[project._id] || ''}
+                              onChange={e => setProjectRoles(prev => ({ ...prev, [project._id]: e.target.value }))}
+                              className="text-xs font-semibold bg-white border border-gray-200 rounded-lg py-1.5 px-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                            >
+                              <option value="">Use global role</option>
+                              {roles.map(role => (
+                                <option key={role._id} value={role._id}>{role.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="pt-2">
+                    <button
+                      type="submit" disabled={isLoading}
+                      className="w-full h-[58px] rounded-[18px] bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-[16px] font-bold transition-all disabled:opacity-50 shadow-[0_8px_16px_-6px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2"
+                    >
+                      {isLoading ? (
+                        <><Loader2 className="w-5 h-5 animate-spin" /><span>{isEditing ? 'Saving...' : 'Initializing...'}</span></>
+                      ) : (
+                        <span>{isEditing ? 'Save Changes' : 'Initialize Member'}</span>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </GlassCard>
+          </motion.div>
+        </div>
         )}
       </AnimatePresence>
 

@@ -18,6 +18,19 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const isJwtExpired = (jwt?: string | null): boolean => {
+  if (!jwt) return true;
+  try {
+    const parts = jwt.split('.');
+    if (parts.length !== 3) return true;
+    const payload = JSON.parse(window.atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return !!(payload.exp && payload.exp * 1000 < Date.now());
+  } catch (e) {
+    console.error('Failed to parse token expiration', e);
+    return true;
+  }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,19 +42,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const savedInteriorUser = localStorage.getItem('interiorUser');
     const token = Cookies.get('token') || localStorage.getItem('token') || localStorage.getItem('interiorAccessToken');
     const saToken = Cookies.get('saToken') || localStorage.getItem('saToken');
-
-    const isJwtExpired = (jwt: string | null | undefined) => {
-      if (!jwt) return true;
-      try {
-        const parts = jwt.split('.');
-        if (parts.length !== 3) return false;
-        const payload = JSON.parse(window.atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-        return !!(payload.exp && payload.exp * 1000 < Date.now());
-      } catch (e) {
-        console.error('Failed to parse token expiration', e);
-        return false;
-      }
-    };
 
     // The access token lives 1h, the refresh token 7d. An expired access token
     // alone is not a logged-out session: the API client refreshes it on the

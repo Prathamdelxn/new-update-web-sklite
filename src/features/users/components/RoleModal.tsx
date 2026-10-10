@@ -16,44 +16,47 @@ interface RoleModalProps {
 }
 
 const MODULES: { id: string; title: string; icon: string; excludeActions?: string[] }[] = [
-  { id: 'projects', title: 'Project Management', icon: '🏗️', excludeActions: ['approve', 'complete'] },
-  { id: 'inventory', title: 'Material Management', icon: '📦', excludeActions: ['complete', 'assign'] },
-  { id: 'users', title: 'User Management', icon: '👥', excludeActions: ['approve', 'complete', 'assign'] },
-  { id: 'plans', title: 'Plan Management', icon: '📐' },
-  { id: 'annotations', title: 'Plan Annotations', icon: '✏️' },
-  { id: 'sitesurvey', title: 'Site Survey Management', icon: '📋' },
-  { id: 'budget', title: 'Budget Management', icon: '📊' },
-  { id: 'land', title: 'Land Documents Mgmt', icon: '📄', excludeActions: ['complete', 'assign'] },
-  { id: 'boq', title: 'BOQ Management', icon: '🗂️', excludeActions: ['complete'] },
-  { id: 'tasks', title: 'Task Management', icon: '✅', excludeActions: ['approve'] },
-  { id: 'workprogress', title: 'Work Progress', icon: '📈' },
-  { id: 'reports', title: 'Reports Management', icon: '📊', excludeActions: ['create', 'update', 'delete', 'approve', 'complete', 'assign'] },
-  { id: 'risks', title: 'Risk Management', icon: '🚨', excludeActions: ['approve', 'complete', 'assign'] },
-  { id: 'handover', title: 'Handover Management', icon: '🤝', excludeActions: ['update', 'delete', 'complete'] },
-  { id: 'snags', title: 'Snag Management', icon: '🔍', excludeActions: ['approve'] },
-  { id: 'transactions', title: 'Transaction Management', icon: '💳', excludeActions: ['approve', 'complete', 'assign'] },
-  { id: 'category', title: 'Category Management', icon: '📁', excludeActions: ['approve', 'complete', 'assign'] },
-  { id: 'template', title: 'Template Management', icon: '📑', excludeActions: ['approve', 'complete', 'assign'] },
+  { id: 'projects',     title: 'Project Management',         icon: '🏗️' },
+  { id: 'financials',   title: 'Financials & Payments',      icon: '💰' },
+  { id: 'inventory',    title: 'Material Management',        icon: '📦' },
+  { id: 'users',        title: 'User Management',            icon: '👥' },
+  { id: 'plans',        title: 'Plan Management',            icon: '📐' },
+  { id: 'annotations',  title: 'Plan Annotations',           icon: '✏️' },
+  { id: 'sitesurvey',   title: 'Site Survey Management',     icon: '📋' },
+  { id: 'budget',       title: 'Budget Management',          icon: '📊' },
+  { id: 'land',         title: 'Land Documents Mgmt',        icon: '📄', excludeActions: ['complete', 'assign'] },
+  { id: 'boq',          title: 'BOQ Management',             icon: '🗂️', excludeActions: ['complete'] },
+  { id: 'tasks',        title: 'Task Management',            icon: '✅', excludeActions: ['approve'] },
+  { id: 'workprogress', title: 'Work Progress',              icon: '📈' },
+  { id: 'reports',      title: 'Reports Management',         icon: '📊' },
+  { id: 'risks',        title: 'Risk & Escalation Matrix',   icon: '🚨' },
+  { id: 'handover',     title: 'Handover Management',        icon: '🤝' },
+  { id: 'snags',        title: 'Snags & Issues Management',  icon: '🔍' },
+  { id: 'transactions', title: 'Transaction Management',     icon: '💳' },
+  { id: 'category',     title: 'Category Management',        icon: '📁' },
+  { id: 'template',     title: 'Template Management',        icon: '📑' },
+  { id: 'rooms',        title: 'Room Management',            icon: '🚪' },
+  { id: 'ffe',          title: 'FF&E Management',            icon: '🛋️' },
 ];
 
 const ACTIONS = [
-  { id: 'view', label: 'View', color: 'blue' },
-  { id: 'create', label: 'Create', color: 'sky' },
-  { id: 'update', label: 'Update', color: 'amber' },
-  { id: 'delete', label: 'Delete', color: 'red' },
-  { id: 'approve', label: 'Approve', color: 'purple' },
+  { id: 'view',     label: 'View',     color: 'blue' },
+  { id: 'create',   label: 'Create',   color: 'sky' },
+  { id: 'update',   label: 'Update',   color: 'amber' },
+  { id: 'delete',   label: 'Delete',   color: 'red' },
+  { id: 'approve',  label: 'Approve',  color: 'purple' },
   { id: 'complete', label: 'Complete', color: 'emerald' },
-  { id: 'assign', label: 'Assign', color: 'indigo' },
+  { id: 'assign',   label: 'Assign',   color: 'indigo' },
 ];
 
 const ACTION_STYLES: Record<string, { active: string; dot: string }> = {
-  view: { active: 'bg-blue-50 border-blue-200 text-blue-700', dot: 'bg-blue-500' },
-  create: { active: 'bg-sky-50 border-sky-200 text-sky-700', dot: 'bg-sky-400' },
-  update: { active: 'bg-amber-50 border-amber-200 text-amber-700', dot: 'bg-amber-500' },
-  delete: { active: 'bg-red-50 border-red-200 text-red-700', dot: 'bg-red-500' },
-  approve: { active: 'bg-purple-50 border-purple-200 text-purple-700', dot: 'bg-purple-500' },
+  view:     { active: 'bg-blue-50 border-blue-200 text-blue-700',       dot: 'bg-blue-500' },
+  create:   { active: 'bg-sky-50 border-sky-200 text-sky-700',          dot: 'bg-sky-400' },
+  update:   { active: 'bg-amber-50 border-amber-200 text-amber-700',    dot: 'bg-amber-500' },
+  delete:   { active: 'bg-red-50 border-red-200 text-red-700',          dot: 'bg-red-500' },
+  approve:  { active: 'bg-purple-50 border-purple-200 text-purple-700', dot: 'bg-purple-500' },
   complete: { active: 'bg-emerald-50 border-emerald-200 text-emerald-700', dot: 'bg-emerald-500' },
-  assign: { active: 'bg-indigo-50 border-indigo-200 text-indigo-700', dot: 'bg-indigo-500' },
+  assign:   { active: 'bg-indigo-50 border-indigo-200 text-indigo-700', dot: 'bg-indigo-500' },
 };
 
 type PermMap = Record<string, Record<string, boolean>>;
@@ -74,8 +77,8 @@ const PROJECT_VIEW_FIRST_MSG =
   "Enable Project Management → View first. Without it the user can't open any project, so this permission won't work.";
 
 const DEFAULT_ACTIONS = { view: false, create: false, update: false, delete: false, approve: false, complete: false, assign: false };
-const FULL_ACCESS = { view: true, create: true, update: true, delete: true, approve: true, complete: true, assign: true };
-const READ_ONLY = { view: true, create: false, update: false, delete: false, approve: false, complete: false, assign: false };
+const FULL_ACCESS      = { view: true,  create: true,  update: true,  delete: true,  approve: true,  complete: true,  assign: true };
+const READ_ONLY        = { view: true,  create: false, update: false, delete: false, approve: false, complete: false, assign: false };
 
 function emptyPerms(): PermMap {
   return Object.fromEntries(MODULES.map(m => [m.id, { ...DEFAULT_ACTIONS }]));
@@ -354,7 +357,7 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
                               <div className="flex items-center gap-2">
                                 {/* Active count badge */}
                                 {activeCount > 0 && (
-                                  <span className="px-2 py-0.5 rounded-sm text-[9px] font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+                                    <span className="px-2 py-0.5 rounded-sm text-[9px] font-semibold bg-gray-100 text-gray-700 border border-gray-200">
                                     {activeCount}/{modActions.length}
                                   </span>
                                 )}

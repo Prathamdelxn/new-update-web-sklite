@@ -227,7 +227,7 @@ export default function InteriorNewProjectsView() {
   });
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-
+  
   // Filters & Sorting
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
@@ -540,7 +540,7 @@ export default function InteriorNewProjectsView() {
 
   return (
     <div className="interior-os-theme min-h-screen p-3 sm:p-4 lg:p-6 space-y-4 max-w-[1600px] mx-auto overflow-x-hidden">
-
+      
       {/* ── 1. Page Header & Primary Action ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[hsl(var(--border)/0.6)]">
         <div>
@@ -582,7 +582,7 @@ export default function InteriorNewProjectsView() {
       <div className="p-3 sm:p-4 rounded-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] space-y-3">
         {/* Top Control Line: Search Bar + Status Filter Tabs + Filter Toggle Button + View Switcher */}
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5">
-
+          
           {/* Search Box */}
           <div className="relative flex-1 min-w-[220px]">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]" />
@@ -895,7 +895,7 @@ export default function InteriorNewProjectsView() {
               >
                 <div className="h-full flex flex-col justify-between rounded-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.45)] transition-all duration-200 overflow-hidden relative">
                   <div className="p-3.5 sm:p-4.5 flex-1 flex flex-col justify-between space-y-3.5">
-
+                    
                     {/* 1. Header Row: Icon + Code/Type + Health Badge */}
                     <div>
                       <div className="flex items-start justify-between gap-2.5">
@@ -987,7 +987,7 @@ export default function InteriorNewProjectsView() {
                   {/* 4. Card Bottom Action Bar */}
                   <div className="flex items-center justify-between px-3.5 sm:px-4 py-2.5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.2)] group-hover:bg-[hsl(var(--primary)/0.04)] transition-colors">
                     <span className="text-xs font-bold text-[hsl(var(--primary))] flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                      <span className="bg-[hsl(var(--primary))] px-2.5 py-1 rounded-lg text-white text-[11px] font-bold">View Project</span>
+                      <span className="bg-[hsl(var(--primary))] px-2.5 py-1 rounded-lg text-white text-[11px] font-bold">View Project</span> 
                     </span>
                     <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] flex items-center gap-1">
                       <button

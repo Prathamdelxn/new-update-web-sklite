@@ -324,9 +324,9 @@ export const MilestoneDetailModal: React.FC<Props> = ({
                       <Flag className="w-5 h-5 text-blue-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-xl font-bold text-gray-900 leading-tight break-words [overflow-wrap:anywhere] [word-break:break-word]">{milestone.name}</h2>
+                      <h2 className="text-xl font-bold text-gray-900 leading-tight">{milestone.name}</h2>
                       {milestone.description && (
-                        <p className="text-sm text-slate-500 mt-1 leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] [word-break:break-word] min-w-0">{milestone.description}</p>
+                        <p className="text-sm text-slate-500 mt-1 leading-relaxed">{milestone.description}</p>
                       )}
                     </div>
                   </div>

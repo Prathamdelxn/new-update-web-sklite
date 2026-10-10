@@ -58,9 +58,9 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   console.log(project);
   const budgetHistory = project?.budgetHistory;
-  const currentBudgetAmount = (budgetHistory && budgetHistory.length > 0)
-    ? budgetHistory[budgetHistory.length - 1].amount
-    : ((project as any)?.budget ?? (project as any)?.totalBudget ?? 0);
+  const currentBudgetAmount = (budgetHistory && budgetHistory.length > 0) 
+    ? budgetHistory[budgetHistory.length - 1].amount 
+    : 0;
 
   // Common fields
   const [accessibility, setAccessibility] = useState('Good');
@@ -97,7 +97,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
   // Media files states
   const [observationImage, setObservationImage] = useState<string>('');
   const [observationFile, setObservationFile] = useState<File | null>(null);
-
+  
   const [additionalPhotos, setAdditionalPhotos] = useState<string[]>([]);
   const [additionalFiles, setAdditionalFiles] = useState<File[]>([]);
 
@@ -305,7 +305,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
 
             {/* Scrollable Form */}
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-
+              
               {/* Section: Conditions & Utilities */}
               <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm space-y-4">
                 <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest border-b border-slate-100 pb-2">
@@ -358,7 +358,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                 <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm space-y-4">
                   <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest border-b border-slate-100 pb-2">Terrain & Soil</p>
                   <label className="text-sm font-bold text-slate-900 block mb-1">Terrain / Soil Notes</label>
-                  <textarea rows={2.5} value={terrainNotes} onChange={e => setTerrainNotes(e.target.value)}
+                  <textarea required rows={2.5} value={terrainNotes} onChange={e => setTerrainNotes(e.target.value)}
                     className={`${inputCls} resize-none`} placeholder="Soil type, slope, clearing needed..." />
                 </div>
               )}
@@ -458,7 +458,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                   {/* MEP & Utility Readiness */}
                   <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm space-y-4">
                     <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest border-b border-slate-100 pb-2">MEP & Services Readiness</p>
-
+                    
                     <div>
                       <label className="text-sm font-bold text-slate-900 mb-2 block">Electrical Supply Phase</label>
                       <div className="grid grid-cols-3 gap-2">
@@ -495,7 +495,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                   {/* Freight & Elevator Access */}
                   <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm space-y-4">
                     <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest border-b border-slate-100 pb-2">Material Access & Freight Logistics</p>
-
+                    
                     <div>
                       <label className="text-sm font-bold text-slate-900 mb-2 block">Elevator / Stair Access</label>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -522,7 +522,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                   {/* Structural & Design */}
                   <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm space-y-4">
                     <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest border-b border-slate-100 pb-2">Structural & Design</p>
-
+                    
                     <ToggleRow
                       label="Structural Modifications Needed"
                       subLabel="Wall removal, partition additions, beam work"
@@ -530,7 +530,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                       onChange={setStructuralModification}
                       activeColor="bg-orange-500"
                     />
-
+                    
                     {structuralModification && (
                       <div className="mt-2">
                         <label className="text-sm font-bold text-slate-900 mb-2 block">Structural Notes</label>
@@ -538,7 +538,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                           className={`${inputCls} resize-none`} placeholder="Describe required structural changes..." />
                       </div>
                     )}
-
+                    
                     <div className="border-t border-slate-100 pt-1 mt-2" />
 
                     <div>
@@ -552,7 +552,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
 
               {/* Photo Upload Sections */}
               <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm space-y-6">
-
+                
                 {/* Main Observation Image */}
                 <div>
                   <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest border-b border-slate-100 pb-2 mb-4">Media Observations</p>
@@ -560,7 +560,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                     {isInterior ? 'Space Photo (Observation)' : 'Site Photo (Observation)'}
                   </label>
                   <input type="file" accept="image/*" className="hidden" ref={obsInputRef} onChange={handleObsImageSelect} />
-
+                  
                   <div
                     onClick={() => obsInputRef.current?.click()}
                     className="w-full h-44 border-2 border-dashed border-slate-200 hover:border-blue-400 bg-slate-50 rounded-2xl cursor-pointer flex flex-col items-center justify-center gap-2 overflow-hidden group transition-all"
@@ -590,52 +590,52 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                   )}
                 </div>
 
-                {/* Additional Site / Room Photos */}
-                <div>
-                  <label className="text-sm font-bold text-slate-900 mb-3 block border-t border-slate-100 pt-4">
-                    {isInterior ? 'Additional Room Photos' : 'Additional Site Photos'}
-                  </label>
-                  <input type="file" accept="image/*" multiple className="hidden" ref={addInputRef} onChange={handleAddPhotosSelect} />
+                {/* Additional Room Photos (Interior-only) */}
+                {isInterior && (
+                  <div>
+                    <label className="text-sm font-bold text-slate-900 mb-3 block border-t border-slate-100 pt-4">Additional Space Photos</label>
+                    <input type="file" accept="image/*" multiple className="hidden" ref={addInputRef} onChange={handleAddPhotosSelect} />
+                    
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                      {/* Upload button */}
+                      <div
+                        onClick={() => addInputRef.current?.click()}
+                        className="h-24 border-2 border-dashed border-slate-200 hover:border-blue-400 bg-slate-50 rounded-2xl cursor-pointer flex flex-col items-center justify-center gap-1 group transition-all"
+                      >
+                        <Plus className="w-6 h-6 text-slate-450 group-hover:text-blue-500" />
+                        <span className="text-[10px] font-bold text-slate-500">Add Photo</span>
+                      </div>
 
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                    {/* Upload button */}
-                    <div
-                      onClick={() => addInputRef.current?.click()}
-                      className="h-24 border-2 border-dashed border-slate-200 hover:border-blue-400 bg-slate-50 rounded-2xl cursor-pointer flex flex-col items-center justify-center gap-1 group transition-all"
-                    >
-                      <Plus className="w-6 h-6 text-slate-450 group-hover:text-blue-500" />
-                      <span className="text-[10px] font-bold text-slate-500">Add Photo</span>
+                      {/* Existing Photos URLs */}
+                      {additionalPhotos.map((url, idx) => (
+                        <div key={`url-${idx}`} className="h-24 bg-slate-100 border border-slate-200 rounded-2xl overflow-hidden relative group">
+                          <img src={url} alt="Space attachment" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeAdditionalPhotoUrl(idx)}
+                            className="absolute top-1 right-1 p-1 bg-white/80 rounded-lg hover:bg-white text-red-500"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+
+                      {/* New Photos Files */}
+                      {additionalFiles.map((file, idx) => (
+                        <div key={`file-${idx}`} className="h-24 bg-slate-100 border border-slate-200 rounded-2xl overflow-hidden relative group">
+                          <img src={URL.createObjectURL(file)} alt="File attachment" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeAdditionalFile(idx)}
+                            className="absolute top-1 right-1 p-1 bg-white/80 rounded-lg hover:bg-white text-red-500"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
                     </div>
-
-                    {/* Existing Photos URLs */}
-                    {additionalPhotos.map((url, idx) => (
-                      <div key={`url-${idx}`} className="h-24 bg-slate-100 border border-slate-200 rounded-2xl overflow-hidden relative group">
-                        <img src={url} alt="Photo attachment" className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => removeAdditionalPhotoUrl(idx)}
-                          className="absolute top-1 right-1 p-1 bg-white/80 rounded-lg hover:bg-white text-red-500"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-
-                    {/* New Photos Files */}
-                    {additionalFiles.map((file, idx) => (
-                      <div key={`file-${idx}`} className="h-24 bg-slate-100 border border-slate-200 rounded-2xl overflow-hidden relative group">
-                        <img src={URL.createObjectURL(file)} alt="File attachment" className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => removeAdditionalFile(idx)}
-                          className="absolute top-1 right-1 p-1 bg-white/80 rounded-lg hover:bg-white text-red-500"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Surveyor Comments (common) */}
@@ -673,19 +673,10 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                           className="w-full bg-white border border-red-150 rounded-xl py-2 px-3 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 font-semibold" />
                       </div>
                       <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <label className="text-sm font-bold text-slate-900">Reason</label>
-                          <span className="text-[10px] font-bold text-slate-400">{budgetReason.length}/250</span>
-                        </div>
-                        <input
-                          type="text"
-                          required
-                          maxLength={250}
-                          value={budgetReason}
-                          onChange={e => setBudgetReason(e.target.value)}
+                        <label className="text-sm font-bold text-slate-900 mb-2 block">Reason</label>
+                        <input type="text" required value={budgetReason} onChange={e => setBudgetReason(e.target.value)}
                           className="w-full bg-white border border-red-150 rounded-xl py-2 px-3 text-slate-800 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 font-semibold"
-                          placeholder="e.g. Structural modifications required"
-                        />
+                          placeholder="e.g. Structural modifications required" />
                       </div>
                     </div>
                   </div>
