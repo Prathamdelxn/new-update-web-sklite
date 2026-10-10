@@ -89,7 +89,7 @@ const RESTRICTED_TABS = [
 
 // ── Inner layout ───────────────────────────────────────────────
 function LayoutInner({ children }: { children: React.ReactNode }) {
-  const { project, loading, fetchProject, projectId } = useProjectContext();
+  const { project, loading, accessDenied, fetchProject, projectId } = useProjectContext();
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuth();
@@ -150,8 +150,12 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
     <SkeletonLoader loading={loading} preset="detail">
       {!project && !loading ? (
         <div className="text-center py-20 bg-white border border-slate-200 rounded-3xl p-8 shadow-card">
-          <h2 className="text-2xl font-bold text-slate-900">Project not found</h2>
-          <p className="text-slate-500 text-sm mt-1">This project does not exist or has been removed.</p>
+          <h2 className="text-2xl font-bold text-slate-900">{accessDenied ? 'Access denied' : 'Project not found'}</h2>
+          <p className="text-slate-500 text-sm mt-1">
+            {accessDenied
+              ? "You don't have permission to view this project."
+              : 'This project does not exist or has been removed.'}
+          </p>
           <button
             onClick={() => router.push(projectsListRoute)}
             className="mt-5 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-xs shadow-sm hover:bg-blue-500 transition-colors"

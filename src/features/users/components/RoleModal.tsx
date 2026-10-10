@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Shield, Loader2, ChevronDown, ChevronUp, ShieldCheck } from 'lucide-react';
+import { X, Shield, Loader2, ChevronDown, ChevronUp, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
@@ -16,10 +16,9 @@ interface RoleModalProps {
 }
 
 const MODULES: { id: string; title: string; icon: string; excludeActions?: string[] }[] = [
-  { id: 'projects', title: 'Project Management', icon: '🏗️' },
-  { id: 'financials', title: 'Financials & Payments', icon: '💰' },
-  { id: 'inventory', title: 'Material Management', icon: '📦' },
-  { id: 'users', title: 'User Management', icon: '👥' },
+  { id: 'projects', title: 'Project Management', icon: '🏗️', excludeActions: ['approve', 'complete'] },
+  { id: 'inventory', title: 'Material Management', icon: '📦', excludeActions: ['complete', 'assign'] },
+  { id: 'users', title: 'User Management', icon: '👥', excludeActions: ['approve', 'complete', 'assign'] },
   { id: 'plans', title: 'Plan Management', icon: '📐' },
   { id: 'annotations', title: 'Plan Annotations', icon: '✏️' },
   { id: 'sitesurvey', title: 'Site Survey Management', icon: '📋' },
@@ -28,15 +27,13 @@ const MODULES: { id: string; title: string; icon: string; excludeActions?: strin
   { id: 'boq', title: 'BOQ Management', icon: '🗂️', excludeActions: ['complete'] },
   { id: 'tasks', title: 'Task Management', icon: '✅', excludeActions: ['approve'] },
   { id: 'workprogress', title: 'Work Progress', icon: '📈' },
-  { id: 'reports', title: 'Reports Management', icon: '📊' },
-  { id: 'risks', title: 'Risk & Escalation Matrix', icon: '🚨' },
-  { id: 'handover', title: 'Handover Management', icon: '🤝' },
-  { id: 'snags', title: 'Snags & Issues Management', icon: '🔍' },
-  { id: 'transactions', title: 'Transaction Management', icon: '💳' },
-  { id: 'category', title: 'Category Management', icon: '📁' },
-  { id: 'template', title: 'Template Management', icon: '📑' },
-  { id: 'rooms', title: 'Room Management', icon: '🚪' },
-  { id: 'ffe', title: 'FF&E Management', icon: '🛋️' },
+  { id: 'reports', title: 'Reports Management', icon: '📊', excludeActions: ['create', 'update', 'delete', 'approve', 'complete', 'assign'] },
+  { id: 'risks', title: 'Risk Management', icon: '🚨', excludeActions: ['approve', 'complete', 'assign'] },
+  { id: 'handover', title: 'Handover Management', icon: '🤝', excludeActions: ['update', 'delete', 'complete'] },
+  { id: 'snags', title: 'Snag Management', icon: '🔍', excludeActions: ['approve'] },
+  { id: 'transactions', title: 'Transaction Management', icon: '💳', excludeActions: ['approve', 'complete', 'assign'] },
+  { id: 'category', title: 'Category Management', icon: '📁', excludeActions: ['approve', 'complete', 'assign'] },
+  { id: 'template', title: 'Template Management', icon: '📑', excludeActions: ['approve', 'complete', 'assign'] },
 ];
 
 const ACTIONS = [
@@ -61,6 +58,21 @@ const ACTION_STYLES: Record<string, { active: string; dot: string }> = {
 
 type PermMap = Record<string, Record<string, boolean>>;
 
+// Org-wide modules that work without opening a project. Every other module is
+// project-scoped: its permissions only apply inside a project the user can
+// see, so they're useless without Project Management > View.
+const ORG_LEVEL_MODULES = ['projects', 'users', 'category', 'template'];
+
+function hasProjectScopedPerms(perms: PermMap): boolean {
+  return MODULES.some(m =>
+    !ORG_LEVEL_MODULES.includes(m.id) &&
+    Object.entries(perms[m.id] || {}).some(([action, on]) => on && !m.excludeActions?.includes(action))
+  );
+}
+
+const PROJECT_VIEW_FIRST_MSG =
+  "Enable Project Management → View first. Without it the user can't open any project, so this permission won't work.";
+
 const DEFAULT_ACTIONS = { view: false, create: false, update: false, delete: false, approve: false, complete: false, assign: false };
 const FULL_ACCESS = { view: true, create: true, update: true, delete: true, approve: true, complete: true, assign: true };
 const READ_ONLY = { view: true, create: false, update: false, delete: false, approve: false, complete: false, assign: false };
@@ -76,7 +88,12 @@ function fromBackend(flat: string[]): PermMap {
     return nested;
   }
   flat.forEach(p => {
-    const [mod, action] = p.split(':');
+    let [mod, action] = p.split(':');
+    // Default roles seeded at registration use the older `project:*` and
+    // `team:assign` keys — show them under Project Management so saving the
+    // role keeps them (as `projects:*`) instead of silently dropping them.
+    if (mod === 'project') mod = 'projects';
+    if (mod === 'team' && action === 'assign') mod = 'projects';
     if (mod && action && nested[mod]) nested[mod][action] = true;
   });
   return nested;
@@ -113,6 +130,12 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
 
   const toggle = (moduleId: string, actionId: string) => {
     if (isAdmin) return;
+    // Project-scoped permissions need Project Management > View first
+    const enabling = !permissions[moduleId]?.[actionId];
+    if (enabling && !ORG_LEVEL_MODULES.includes(moduleId) && !permissions.projects?.view) {
+      toast.error(PROJECT_VIEW_FIRST_MSG);
+      return;
+    }
     setPermissions(prev => {
       const current = prev[moduleId] || { ...DEFAULT_ACTIONS };
       const newValue = !current[actionId];
@@ -162,6 +185,7 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) { toast.error('Role name is required'); return; }
+    if (missingProjectView) { toast.error(PROJECT_VIEW_FIRST_MSG); return; }
     setIsLoading(true);
     try {
       const payload = { name, description, permissions: toBackend(permissions) };
@@ -181,9 +205,16 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
     }
   };
 
-  const totalEnabled = Object.values(permissions).reduce(
-    (sum, mod) => sum + Object.values(mod).filter(Boolean).length, 0
-  );
+  // Role grants project-scoped permissions but can't see any project
+  const missingProjectView = !isAdmin && !permissions.projects?.view && hasProjectScopedPerms(permissions);
+  const enableProjectView = () =>
+    setPermissions(prev => ({ ...prev, projects: { ...(prev.projects || {}), view: true } }));
+
+  // Count only actions the module actually offers (excluded ones are never saved)
+  const totalEnabled = Object.entries(permissions).reduce((sum, [modId, mod]) => {
+    const excluded = MODULES.find(m => m.id === modId)?.excludeActions || [];
+    return sum + Object.entries(mod).filter(([action, on]) => on && !excluded.includes(action)).length;
+  }, 0);
 
   return (
     <AnimatePresence>
@@ -271,6 +302,21 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
                         </div>
                       )}
                     </div>
+
+                    {/* Project-scoped permissions without Project Management > View */}
+                    {missingProjectView && (
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                        <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+                        <p className="text-xs font-semibold text-amber-800 flex-1">
+                          This role has project permissions but not <span className="font-bold">Project Management → View</span>.
+                          Members with it won't be able to open any project, so those permissions won't work.
+                        </p>
+                        <button type="button" onClick={enableProjectView}
+                          className="px-3 py-1.5 rounded-md text-xs font-bold bg-amber-600 text-white hover:bg-amber-500 transition-all shrink-0">
+                          Enable Project View
+                        </button>
+                      </div>
+                    )}
 
                     {/* Admin lock notice */}
                     {isAdmin && (

@@ -8,6 +8,9 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
 import { uploadToCloudinary } from '@/lib/upload';
+import { useAuth } from '@/providers/AuthContext';
+import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
+import { hasProjectPermission } from '@/lib/permissions';
 
 interface IssueModalProps {
   isOpen: boolean;
@@ -29,6 +32,10 @@ export const IssueModal: React.FC<IssueModalProps> = ({
   existingIssue,
 }) => {
   const isEdit = !!existingIssue;
+  const { user } = useAuth();
+  const { project } = useProjectContext();
+  // Choosing an assignee is the Assign action (the API enforces it too)
+  const canAssign = hasProjectPermission(user, project, 'snags:assign');
   const [isLoading, setIsLoading] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
   const [files, setFiles] = useState<File[]>([]);
@@ -173,6 +180,7 @@ export const IssueModal: React.FC<IssueModalProps> = ({
                   </div>
 
 
+                  {canAssign && (
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-600 ml-1">Assign To</label>
                     <select
@@ -186,6 +194,7 @@ export const IssueModal: React.FC<IssueModalProps> = ({
                       ))}
                     </select>
                   </div>
+                  )}
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-600 ml-1">Description</label>

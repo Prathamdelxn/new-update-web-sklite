@@ -93,11 +93,15 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const { user } = useAuth();
   const { project } = useProjectContext();
   const isAdmin = user?.role?.name === 'Admin' || (user?.role?.permissions?.includes('*') ?? false);
-  const canAnnotate = isAdmin || hasProjectPermission(user, project, 'annotations:create') || hasProjectPermission(user, project, 'annotations:update');
+  // This viewer only adds and removes pins, so: View to see them, Create to
+  // add, Delete to remove (the API enforces the same).
+  const canViewAnnotations = isAdmin || hasProjectPermission(user, project, 'annotations:view');
+  const canAnnotate = isAdmin || hasProjectPermission(user, project, 'annotations:create');
   const canDeleteAnnotation = isAdmin || hasProjectPermission(user, project, 'annotations:delete');
 
   const loadAnnotations = useCallback(async () => {
     if (!projectId || !document?._id) return;
+    if (!canViewAnnotations) { setAnnotations([]); return; }
     try {
       if (folderId) {
         const res = await api.get(`/projects/${projectId}/folders/${folderId}/annotations?documentId=${document._id}`);
@@ -114,7 +118,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         })));
       }
     } catch { /* silent — annotations are optional */ }
-  }, [projectId, document?._id, folderId]);
+  }, [projectId, document?._id, folderId, canViewAnnotations]);
 
   useEffect(() => {
     if (isOpen) {
@@ -146,7 +150,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   // array (matching PlanAnnotator), so both save and delete below build the
   // full updated array and PATCH it in one call.
   const toFolderPayload = (list: Annotation[]) => list.map(a => ({
-    clientId: (a as any).clientId,
+    // Older pins were saved without a clientId; their _id identifies them instead
+    clientId: (a as any).clientId || a._id,
     documentId: document._id,
     x: a.x,
     y: a.y,
@@ -588,7 +593,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                     ) : (
                       <div className="divide-y divide-gray-100">
                         {annotations.map((ann, idx) => {
-                          const canDelete = canDeleteAnnotation || ann.createdBy === (user as any)?._id;
+                          // Removing a pin needs Delete, even for the person who placed it
+                          const canDelete = canDeleteAnnotation;
                           const isActive = activePin === ann._id;
                           return (
                             <div

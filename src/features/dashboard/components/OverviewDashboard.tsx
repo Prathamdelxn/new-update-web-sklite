@@ -43,6 +43,7 @@ import { cn } from '@/lib/utils';
 import api from '@/services/api.client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/providers/AuthContext';
+import { canCreateProjects } from '@/lib/permissions';
 import Link from 'next/link';
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 import { CreateProjectModal } from '@/components/modals/CreateProjectModal';
@@ -209,7 +210,7 @@ export const OverviewDashboard = () => {
       return data.stages;
     }
     return [
-      { name: 'Structural & Civil', progress: taskPct > 0 ? Math.min(100, taskPct + 12) : 84, colorFrom: 'from-indigo-500', colorTo: 'to-indigo-700', textCol: 'text-indigo-600' },
+      { name: 'Structural & Civil', progress: taskPct > 0 ? Math.min(100, taskPct + 12) : 84, colorFrom: 'from-blue-500', colorTo: 'to-blue-700', textCol: 'text-blue-600' },
       { name: 'MEP & Electrical', progress: taskPct > 0 ? Math.round(taskPct * 0.85) : 62, colorFrom: 'from-amber-400', colorTo: 'to-orange-500', textCol: 'text-orange-500' },
       { name: 'Finishes & Snagging', progress: taskPct > 0 ? Math.round(taskPct * 0.6) : 45, colorFrom: 'from-teal-400', colorTo: 'to-emerald-500', textCol: 'text-teal-600' },
     ];
@@ -423,9 +424,9 @@ export const OverviewDashboard = () => {
       <div className="space-y-5 pb-12 font-sans text-slate-800">
 
         {/* Organization Project Switcher & Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shadow-2xs">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shadow-2xs">
               <Building2 className="w-5 h-5" />
             </div>
             <div>
@@ -445,13 +446,13 @@ export const OverviewDashboard = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full lg:w-auto min-w-0">
             {/* Project Filter Dropdown */}
-            <div className="relative">
+            <div className="relative flex-1 lg:flex-none min-w-0">
               <select
                 value={selectedProjectId}
                 onChange={(e) => setSelectedProjectId(e.target.value)}
-                className="text-xs font-semibold bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer transition-all pr-8"
+                className="w-full lg:w-64 truncate text-xs font-semibold bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-all pr-8"
               >
                 <option value="all">All Organization Projects ({allProjects.length})</option>
                 {allProjects.map((p: any) => (
@@ -466,15 +467,15 @@ export const OverviewDashboard = () => {
             {selectedProjectId !== 'all' ? (
               <Link
                 href={`/construction-dashboard/projects/${selectedProjectId}/milestones`}
-                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold transition-all shadow-xs inline-flex items-center gap-1.5"
+                className="shrink-0 whitespace-nowrap px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold transition-all shadow-xs inline-flex items-center gap-1.5"
               >
                 <span>Project Milestones</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
-            ) : (
+            ) : canCreateProjects(user) && (
               <button
                 onClick={() => setIsCreateModalOpen(true)}
-                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold transition-all shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
+                className="shrink-0 whitespace-nowrap px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold transition-all shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>New Project</span>
@@ -582,14 +583,14 @@ export const OverviewDashboard = () => {
                         "h-7 w-7 mx-auto rounded-full flex items-center justify-center text-[11px] font-semibold transition-all relative",
                         !item.isCurrentMonth && "text-slate-300 opacity-40 cursor-default",
                         item.isCurrentMonth && "text-slate-700 hover:bg-slate-100 cursor-pointer",
-                        isSelected && "bg-indigo-600 text-white font-bold hover:bg-indigo-700 shadow-2xs",
-                        isToday && !isSelected && "border border-indigo-500 text-indigo-600 font-bold",
+                        isSelected && "bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-2xs",
+                        isToday && !isSelected && "border border-blue-500 text-blue-600 font-bold",
                         item.hasEvent && !isSelected && "ring-1 ring-slate-300 font-bold"
                       )}
                     >
                       {item.day}
                       {item.hasEvent && !isSelected && (
-                        <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-indigo-600" />
+                        <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-blue-600" />
                       )}
                     </button>
                   );
@@ -600,12 +601,12 @@ export const OverviewDashboard = () => {
             {/* Quick Inspection Indicator */}
             <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
               <span className="flex items-center gap-1.5 font-medium truncate">
-                <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
+                <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
                 {selectedDateEvents.length > 0
                   ? `${selectedDateEvents.length} Item${selectedDateEvents.length > 1 ? 's' : ''} on ${currentMonthName.slice(0, 3)} ${selectedCalendarDate}`
                   : `${monthlyEventsCount} Deliverables Scheduled`}
               </span>
-              <span className="text-[10px] font-bold text-indigo-600 shrink-0">
+              <span className="text-[10px] font-bold text-blue-600 shrink-0">
                 {calendarMonthOffset === 0 ? 'This Month' : currentMonthName.slice(0, 3)}
               </span>
             </div>
@@ -622,7 +623,7 @@ export const OverviewDashboard = () => {
                     className={cn(
                       "px-2 py-0.5 rounded-md transition-all cursor-pointer",
                       milestoneViewMode === 'milestones'
-                        ? "bg-white text-indigo-600 shadow-2xs font-bold"
+                        ? "bg-white text-blue-600 shadow-2xs font-bold"
                         : "text-slate-400 hover:text-slate-700"
                     )}
                   >
@@ -633,7 +634,7 @@ export const OverviewDashboard = () => {
                     className={cn(
                       "px-2 py-0.5 rounded-md transition-all cursor-pointer",
                       milestoneViewMode === 'stages'
-                        ? "bg-white text-indigo-600 shadow-2xs font-bold"
+                        ? "bg-white text-blue-600 shadow-2xs font-bold"
                         : "text-slate-400 hover:text-slate-700"
                     )}
                   >
@@ -651,13 +652,13 @@ export const OverviewDashboard = () => {
                         m.status === 'Completed'
                           ? 'from-emerald-400 to-emerald-600'
                           : m.progress > 50
-                            ? 'from-indigo-500 to-indigo-700'
+                            ? 'from-blue-500 to-blue-700'
                             : 'from-amber-400 to-orange-500';
                       const textCol =
                         m.status === 'Completed'
                           ? 'text-emerald-600'
                           : m.progress > 50
-                            ? 'text-indigo-600'
+                            ? 'text-blue-600'
                             : 'text-orange-500';
 
                       return (
@@ -669,7 +670,7 @@ export const OverviewDashboard = () => {
                           <div className="space-y-1.5">
                             <div className="flex justify-between items-center text-[11px] font-semibold text-slate-700">
                               <div className="min-w-0 pr-2">
-                                <span className="truncate block group-hover:text-indigo-600 transition-colors">
+                                <span className="truncate block group-hover:text-blue-600 transition-colors">
                                   {m.name}
                                 </span>
                                 <span className="text-[9px] text-slate-400 font-medium truncate block">
@@ -698,7 +699,7 @@ export const OverviewDashboard = () => {
                     <div key={idx} className="space-y-1.5">
                       <div className="flex justify-between text-[11px] font-semibold text-slate-600">
                         <span>{stage.name}</span>
-                        <span className={cn('font-bold', stage.textCol || 'text-indigo-600')}>
+                        <span className={cn('font-bold', stage.textCol || 'text-blue-600')}>
                           {stage.progress}%
                         </span>
                       </div>
@@ -707,7 +708,7 @@ export const OverviewDashboard = () => {
                           initial={{ width: 0 }}
                           animate={{ width: `${stage.progress}%` }}
                           transition={{ duration: 0.6, delay: idx * 0.1 }}
-                          className={cn('h-full rounded-full bg-gradient-to-r', stage.colorFrom || 'from-indigo-500', stage.colorTo || 'to-indigo-700')}
+                          className={cn('h-full rounded-full bg-gradient-to-r', stage.colorFrom || 'from-blue-500', stage.colorTo || 'to-blue-700')}
                         />
                       </div>
                     </div>
@@ -733,7 +734,7 @@ export const OverviewDashboard = () => {
             <div>
               <div className="flex items-center justify-between min-w-0 gap-2 mb-2">
                 <h3 className="text-xs sm:text-sm font-bold text-slate-800 truncate">Execution Velocity</h3>
-                <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
+                <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
                   Real-time
                 </span>
               </div>
@@ -744,8 +745,8 @@ export const OverviewDashboard = () => {
                 <svg viewBox="0 0 200 80" preserveAspectRatio="none" className="w-full h-full">
                   <defs>
                     <linearGradient id="waveIndigo" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#4F46E5" stopOpacity="0.45" />
-                      <stop offset="100%" stopColor="#4F46E5" stopOpacity="0.0" />
+                      <stop offset="0%" stopColor="#2563EB" stopOpacity="0.45" />
+                      <stop offset="100%" stopColor="#2563EB" stopOpacity="0.0" />
                     </linearGradient>
                     <linearGradient id="waveOrange" x1="0%" y1="0%" x2="0%" y2="100%">
                       <stop offset="0%" stopColor="#F97316" stopOpacity="0.35" />
@@ -755,7 +756,7 @@ export const OverviewDashboard = () => {
 
                   {/* Wave 1: Indigo Actual */}
                   <path d={velocityWaves.actualArea} fill="url(#waveIndigo)" />
-                  <path d={velocityWaves.actualLine} fill="none" stroke="#4F46E5" strokeWidth="2.5" />
+                  <path d={velocityWaves.actualLine} fill="none" stroke="#2563EB" strokeWidth="2.5" />
 
                   {/* Wave 2: Orange Planned */}
                   <path d={velocityWaves.plannedArea} fill="url(#waveOrange)" />
@@ -772,7 +773,7 @@ export const OverviewDashboard = () => {
 
             <div className="flex items-center justify-between text-[10px] font-semibold text-slate-500 pt-2 border-t border-slate-100">
               <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-indigo-600" /> Actual Output
+                <span className="w-2 h-2 rounded-full bg-blue-600" /> Actual Output
               </span>
               <span className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-orange-500" /> Planned Target
@@ -822,8 +823,8 @@ export const OverviewDashboard = () => {
               <svg viewBox="0 0 500 180" preserveAspectRatio="none" className="w-full h-full">
                 <defs>
                   <linearGradient id="mainCurvePurple" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#6366F1" stopOpacity="0.35" />
-                    <stop offset="100%" stopColor="#6366F1" stopOpacity="0.0" />
+                    <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.0" />
                   </linearGradient>
                   <linearGradient id="mainCurveAmber" x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.25" />
@@ -852,7 +853,7 @@ export const OverviewDashboard = () => {
                 <path
                   d={trajectoryCurves.deliveredLine}
                   fill="none"
-                  stroke="#4F46E5"
+                  stroke="#2563EB"
                   strokeWidth="3"
                 />
 
@@ -876,7 +877,7 @@ export const OverviewDashboard = () => {
                     cy={p.y}
                     r={idx === trajectoryCurves.deliveredPoints.length - 1 ? 5 : 4}
                     fill="#FFFFFF"
-                    stroke="#4F46E5"
+                    stroke="#2563EB"
                     strokeWidth={idx === trajectoryCurves.deliveredPoints.length - 1 ? 3 : 2}
                   />
                 ))}
@@ -887,7 +888,7 @@ export const OverviewDashboard = () => {
             <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs font-semibold text-slate-500">
               <div className="flex items-center gap-6">
                 <span className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-indigo-600" /> Delivered Scope ({completedCount})
+                  <span className="w-3 h-3 rounded-full bg-blue-600" /> Delivered Scope ({completedCount})
                 </span>
                 <span className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-full bg-amber-500" /> Planned Baseline ({totalTasks || totalDeliverablesCount})
@@ -923,7 +924,7 @@ export const OverviewDashboard = () => {
                     cy="72"
                     r="58"
                     fill="transparent"
-                    stroke="#4F46E5"
+                    stroke="#2563EB"
                     strokeWidth="14"
                     strokeDasharray={`${2 * Math.PI * 58}`}
                     strokeDashoffset={`${2 * Math.PI * 58 * (1 - taskPct / 100)}`}
@@ -948,7 +949,7 @@ export const OverviewDashboard = () => {
             <div className="mt-4 pt-3">
               <Link
                 href="/construction-dashboard/projects"
-                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold transition-all shadow-md shadow-indigo-600/20 active:scale-95 inline-flex items-center justify-center gap-2"
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold transition-all shadow-md shadow-blue-600/20 active:scale-95 inline-flex items-center justify-center gap-2"
               >
                 <span>Inspect Workspace</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -977,7 +978,7 @@ export const OverviewDashboard = () => {
                         className={cn(
                           "px-2 py-0.5 text-[10px] font-bold rounded-lg transition-all cursor-pointer",
                           selectedFinanceMonthIdx === idx
-                            ? "bg-white text-indigo-600 shadow-2xs font-extrabold"
+                            ? "bg-white text-blue-600 shadow-2xs font-extrabold"
                             : "text-slate-400 hover:text-slate-700"
                         )}
                       >
@@ -986,7 +987,7 @@ export const OverviewDashboard = () => {
                     ))}
                   </div>
                 ) : (
-                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full">
                     {financials.currentMonthName || 'Monthly'}
                   </span>
                 )}
@@ -1011,7 +1012,7 @@ export const OverviewDashboard = () => {
                   {
                     name: 'Debit Notes (Recoveries & Adjustments)',
                     pct: currentFinanceMonth.debitNotesPct,
-                    gradient: 'from-indigo-600 to-purple-500',
+                    gradient: 'from-blue-600 to-purple-500',
                   },
                 ].map((trade, idx) => (
                   <div key={idx} className="space-y-1.5">
@@ -1048,7 +1049,7 @@ export const OverviewDashboard = () => {
                 <span className="w-2 h-2 rounded-full bg-rose-500" /> Outgoing
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-indigo-600" /> Debit Notes
+                <span className="w-2 h-2 rounded-full bg-blue-600" /> Debit Notes
               </span>
             </div>
           </div>
@@ -1132,7 +1133,7 @@ export const OverviewDashboard = () => {
                     cy="56"
                     r="44"
                     fill="transparent"
-                    stroke="#4F46E5"
+                    stroke="#2563EB"
                     strokeWidth="12"
                     strokeDasharray={`${2 * Math.PI * 44}`}
                     strokeDashoffset={`${2 * Math.PI * 44 * (1 - qualityVsRisk.riskPercentage / 100)}`}
@@ -1144,7 +1145,7 @@ export const OverviewDashboard = () => {
                 </svg>
 
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-xs font-bold text-indigo-600">{qualityVsRisk.riskPercentage}%</span>
+                  <span className="text-xs font-bold text-blue-600">{qualityVsRisk.riskPercentage}%</span>
                   <span className="text-sm font-black text-orange-600">{qualityVsRisk.qualityPercentage}%</span>
                 </div>
               </div>
@@ -1160,7 +1161,7 @@ export const OverviewDashboard = () => {
               </div>
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-slate-500 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-indigo-600" /> Risk & Snags
+                  <span className="w-2 h-2 rounded-full bg-blue-600" /> Risk & Snags
                 </span>
                 <strong className="text-slate-800">{qualityVsRisk.riskPercentage}%</strong>
               </div>

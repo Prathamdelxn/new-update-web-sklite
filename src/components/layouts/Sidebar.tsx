@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/providers/AuthContext';
+import { hasProjectPermission, hasAnyRolePermission } from '@/lib/permissions';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -17,7 +18,7 @@ interface SidebarProps {
   onToggleCollapse?: () => void;
 }
 
-const NAV_SECTIONS = [
+const NAV_SECTIONS: { label: string; items: { name: string; href: string; icon: any; permission?: string | string[]; anyRole?: boolean }[] }[] = [
   {
     label: 'WORKSPACE',
     items: [
@@ -29,8 +30,8 @@ const NAV_SECTIONS = [
   {
     label: 'OPERATIONS',
     items: [
-      { name: 'Templates', href: '/construction-dashboard/templates', icon: Layers },
-      { name: 'Team & Roles', href: '/construction-dashboard/users', icon: Users },
+      { name: 'Templates', href: '/construction-dashboard/templates', icon: Layers, permission: ['template:view', 'category:view'], anyRole: true },
+      { name: 'Team & Roles', href: '/construction-dashboard/users', icon: Users, permission: 'users:view' },
     ],
   },
   {
@@ -50,7 +51,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
-  const roleName = user?.role?.name || 'Admin';
+  // No global role = project-scoped user; never label them Admin
+  const roleName = user?.role?.name || 'Member';
   const dashboardHome = '/construction-dashboard';
 
   return (
@@ -77,7 +79,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           isCollapsed ? "justify-center px-2" : "px-5 justify-between"
         )}>
           <Link href={dashboardHome} onClick={onClose} className="flex items-center gap-3 outline-none min-w-0 group">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-blue-700 text-white shadow-sm shadow-indigo-600/30 border border-white/20 group-hover:scale-105 transition-all shrink-0">
+            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 via-blue-700 to-blue-700 text-white shadow-sm shadow-blue-600/30 border border-white/20 group-hover:scale-105 transition-all shrink-0">
               <img
                 src="/SS-Logo-2025-Colour.svg"
                 alt="SkyStruct Lite"
@@ -88,7 +90,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && (
               <div className="flex flex-col min-w-0">
                 <span className="font-extrabold text-slate-900 text-sm  tracking-tight leading-tight">
-                  SKYSTRUCT <span className="text-indigo-600">LITE</span>
+                  SKYSTRUCT <span className="text-blue-600">LITE</span>
                 </span>
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.1em] mt-0.5">
                   Construction
@@ -121,7 +123,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               )}
 
               <div className="space-y-1">
-                {section.items.map((item) => {
+                {section.items.filter((item) => !item.permission || [item.permission].flat().some((p) => (item.anyRole ? hasAnyRolePermission(user, p) : hasProjectPermission(user, null, p)))).map((item) => {
                   const isActive =
                     item.href === '/construction-dashboard'
                       ? pathname === '/construction-dashboard'
@@ -138,14 +140,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           ? 'justify-center w-11 h-11 mx-auto'
                           : 'px-3.5 h-11 gap-3',
                         isActive
-                          ? 'bg-indigo-50/90 border border-indigo-200/80 text-indigo-700 shadow-xs'
+                          ? 'bg-blue-50/90 border border-blue-200/80 text-blue-700 shadow-xs'
                           : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border border-transparent'
                       )}
                       title={isCollapsed ? item.name : undefined}
                     >
                       <div className={cn(
                         "flex items-center justify-center shrink-0 transition-colors duration-150",
-                        isActive ? "text-indigo-600" : "text-slate-500 group-hover:text-slate-900"
+                        isActive ? "text-blue-600" : "text-slate-500 group-hover:text-slate-900"
                       )}>
                         <item.icon className="w-5 h-5 stroke-[2.2]" />
                       </div>
@@ -153,7 +155,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       {!isCollapsed && (
                         <span className={cn(
                           "text-sm font-bold tracking-tight truncate flex-1",
-                          isActive ? "text-indigo-700" : "text-slate-600 group-hover:text-slate-900"
+                          isActive ? "text-blue-700" : "text-slate-600 group-hover:text-slate-900"
                         )}>
                           {item.name}
                         </span>
@@ -182,17 +184,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
               )}
               title={isCollapsed ? (user?.name || 'Profile') : undefined}
             >
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-blue-700 text-white font-extrabold text-sm flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 text-white font-extrabold text-sm flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
                 {user?.name?.charAt(0)?.toUpperCase() || 'U'}
               </div>
 
               {!isCollapsed && (
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-slate-900 truncate tracking-tight group-hover:text-indigo-600 transition-colors">
+                  <p className="text-sm font-bold text-slate-900 truncate tracking-tight group-hover:text-blue-600 transition-colors">
                     {user?.name || 'Account'}
                   </p>
                   <p className="text-xs font-semibold text-slate-500 truncate flex items-center gap-1 mt-0.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                    <ShieldCheck className="w-3.5 h-3.5 text-blue-500 shrink-0" />
                     <span>{roleName}</span>
                   </p>
                 </div>
@@ -225,7 +227,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   type="button"
                   onClick={onToggleCollapse}
-                  className="w-10 h-8 mx-auto flex items-center justify-center rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200/50 transition-all cursor-pointer shadow-2xs"
+                  className="w-10 h-8 mx-auto flex items-center justify-center rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-slate-200/50 transition-all cursor-pointer shadow-2xs"
                   title="Expand sidebar"
                 >
                   <PanelLeftOpen className="w-4 h-4" />

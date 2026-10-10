@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthContext';
 import { useSocket } from '@/providers/SocketContext';
 import { hasProjectPermission, isProjectLocked } from '@/lib/permissions';
-import toast from 'react-hot-toast';
+import { useToast } from '@/providers/ToastContext';
 import {
   Map,
   Users,
@@ -41,6 +41,7 @@ export function ProjectDetailsTab() {
   const { project: typedProject, projectId, fetchProject } = useProjectContext();
   const project = typedProject as any;
   const { user } = useAuth();
+  const toast = useToast();
   const { socket } = useSocket();
   const router = useRouter();
 
@@ -202,6 +203,8 @@ export function ProjectDetailsTab() {
   if (!project) return null;
 
   const canApproveBudget = !isProjectLocked(project) && hasProjectPermission(user, project, 'budget:approve');
+  const canAssignMembers = !isProjectLocked(project) && hasProjectPermission(user, project, 'projects:assign');
+  const canAssignSurveyor = !isProjectLocked(project) && hasProjectPermission(user, project, 'sitesurvey:assign');
   const pendingRequests = project.budgetHistory?.filter((bh: any) => bh.approvalStatus === 'Pending') || [];
 
   const calculateDaysRemaining = () => {
@@ -403,6 +406,7 @@ export function ProjectDetailsTab() {
 
             <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
               {!project.siteSurveyor ? (
+                canAssignSurveyor && (
                 <button
                   onClick={() => setIsSurveyModalOpen(true)}
                   className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
@@ -410,6 +414,7 @@ export function ProjectDetailsTab() {
                   <Users className="w-3.5 h-3.5" />
                   <span>Assign Surveyor & Send</span>
                 </button>
+                )
               ) : (
                 <button
                   onClick={() => {
@@ -666,7 +671,7 @@ export function ProjectDetailsTab() {
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">Coordination Team</h3>
               </div>
-              {!isProjectLocked(project) && (
+              {canAssignMembers && (
                 <button
                   onClick={() => setIsTeamModalOpen(true)}
                   className="flex items-center space-x-1 px-3 py-1.5 bg-blue-50 border border-blue-200/60 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold transition-all shadow-2xs"

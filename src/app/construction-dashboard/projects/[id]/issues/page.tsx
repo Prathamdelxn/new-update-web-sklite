@@ -4,5 +4,5 @@ import { IssuesTab } from '@/features/projects/issues/components/IssuesTab';
 
 export default function IssuesTabPage() {
   const { project, projectId, fetchProject } = useProjectContext();
-  return <IssuesTab projectId={projectId} initialType="Issue" />;
+  return <IssuesTab projectId={projectId} initialType="Snag" />;
 }

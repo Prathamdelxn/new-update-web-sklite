@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/providers/ToastContext';
 import { useAuth } from '@/providers/AuthContext';
+import { hasAnyRolePermission } from '@/lib/permissions';
 import api from '@/services/api.client';
 import { uploadToCloudinary } from '@/lib/upload';
 import { cn } from '@/lib/utils';
@@ -471,7 +472,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                           );
                         })}
                         
-                        {categories.length > 0 && !loadingModal && (
+                        {categories.length > 0 && !loadingModal && hasAnyRolePermission(user, 'category:create') && (
                           <button
                             type="button"
                             onClick={() => { setIsAddingCategory(true); setNewCategoryName(''); }}

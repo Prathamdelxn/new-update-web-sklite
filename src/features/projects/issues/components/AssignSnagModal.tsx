@@ -27,7 +27,7 @@ export const AssignSnagModal: React.FC<AssignSnagModalProps> = ({
     const fetchEligibleMembers = async () => {
       setLoading(true);
       try {
-        const response = await api.get(`/users?projectId=${projectId}&permission=snag:complete`);
+        const response = await api.get(`/users?projectId=${projectId}&permission=snags:complete`);
         setUsers(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error('Error fetching eligible snag completion users:', error);

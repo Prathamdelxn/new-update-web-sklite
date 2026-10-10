@@ -13,6 +13,8 @@ import { cn, formatCurrency } from '@/lib/utils';
 import api from '@/services/api.client';
 import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
+import { useAuth } from '@/providers/AuthContext';
+import { hasAnyRolePermission } from '@/lib/permissions';
 import { TemplateModal } from '@/features/templates/components/TemplateModal';
 import { TemplateDetailModal } from '@/features/templates/components/TemplateDetailModal';
 import { Pagination, usePagination } from '@/components/shared/Pagination';
@@ -29,6 +31,11 @@ export const TemplateList = () => {
 
   const toast = useToast();
   const { confirm } = useConfirm();
+  // Template Management is org-wide: the global role or any project role counts
+  const { user } = useAuth();
+  const canCreate = hasAnyRolePermission(user, 'template:create');
+  const canUpdate = hasAnyRolePermission(user, 'template:update');
+  const canDelete = hasAnyRolePermission(user, 'template:delete');
 
   const fetchTemplates = async () => {
     try {
@@ -101,6 +108,7 @@ export const TemplateList = () => {
             />
           </div>
           <div className="flex items-center gap-3">
+            {canCreate && (
             <button
               onClick={() => setIsCreateOpen(true)}
               className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all shadow-xs"
@@ -108,6 +116,7 @@ export const TemplateList = () => {
               <Plus className="w-3.5 h-3.5" />
               <span>New Template</span>
             </button>
+            )}
           </div>
         </div>
 
@@ -179,6 +188,7 @@ export const TemplateList = () => {
                           <Eye className="w-4 h-4 text-gray-400" />
                           View Details
                         </button>
+                        {canUpdate && (
                         <button
                           onClick={(e) => { e.stopPropagation(); openEdit(template); }}
                           className="w-full px-3.5 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 transition-colors font-medium"
@@ -186,6 +196,9 @@ export const TemplateList = () => {
                           <Pencil className="w-4 h-4 text-gray-400" />
                           Edit Template
                         </button>
+                        )}
+                        {canDelete && (
+                        <>
                         <div className="border-t border-gray-100 my-1 mx-3" />
                         <button
                           onClick={(e) => handleDelete(e, template._id, template.name)}
@@ -194,6 +207,8 @@ export const TemplateList = () => {
                           <Trash2 className="w-4 h-4 text-rose-500" />
                           Delete Template
                         </button>
+                        </>
+                        )}
                       </div>
                     )}
                   </div>
@@ -291,6 +306,7 @@ export const TemplateList = () => {
               <p className="text-sm text-gray-400 mt-1.5 max-w-sm">
                 Get started by creating your first project template
               </p>
+              {canCreate && (
               <button
                 onClick={() => setIsCreateOpen(true)}
                 className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow-lg shadow-blue-600/25"
@@ -298,6 +314,7 @@ export const TemplateList = () => {
                 <Plus className="w-4 h-4" />
                 Create Template
               </button>
+              )}
             </div>
           )}
         </div>
@@ -323,7 +340,7 @@ export const TemplateList = () => {
           isOpen={!!viewTemplateId}
           onClose={() => setViewTemplateId(null)}
           templateId={viewTemplateId}
-          onEdit={(t) => { setViewTemplateId(null); setEditingTemplate(t); }}
+          onEdit={canUpdate ? (t) => { setViewTemplateId(null); setEditingTemplate(t); } : undefined}
         />
       </div>
     </SkeletonLoader>

@@ -62,6 +62,16 @@ export const SendForSurveyModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
     }
   };
 
+  // The role that matters here is the one the user has on THIS project; fall
+  // back to their global role. (Never invent a label like "Surveyor".)
+  const roleLabel = (u: any): string => {
+    const assignment = (u.projects || []).find((p: any) =>
+      String(p.project?._id || p.project) === String(projectId)
+    );
+    const projectRoleName = typeof assignment?.role === 'object' ? assignment.role?.name : undefined;
+    return projectRoleName || u.role?.name || 'No role';
+  };
+
   const filtered = users.filter(u =>
     u.name?.toLowerCase().includes(search.toLowerCase()) ||
     u.email?.toLowerCase().includes(search.toLowerCase())
@@ -140,7 +150,7 @@ export const SendForSurveyModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-900 truncate">{u.name}</p>
-                          <p className="text-xs text-slate-400 truncate">{u.role?.name || 'Surveyor'}</p>
+                          <p className="text-xs text-slate-400 truncate">{roleLabel(u)}</p>
                         </div>
                         {isSelected && (
                           <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center shrink-0">

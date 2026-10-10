@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { markForbidden } from '@/lib/permissionErrors';
 
 const baseURL = typeof window === 'undefined'
   ? process.env.NEXT_PUBLIC_API_BASE_URL || '/api'
@@ -60,6 +61,9 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    // Lets the toast layer show "no permission" instead of a generic failure
+    if (error.response?.status === 403) markForbidden();
+
     const originalRequest = error.config;
     const originalUrl = originalRequest?.url;
 

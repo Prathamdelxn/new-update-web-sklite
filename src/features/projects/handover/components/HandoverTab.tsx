@@ -80,7 +80,8 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
   const fetchApprovers = useCallback(async () => {
     setLoadingApprovers(true);
     try {
-      const response = await api.get(`/users?projectId=${projectId}`);
+      // Only people who can actually approve a handover are offered as approvers
+      const response = await api.get(`/users?projectId=${projectId}&permission=handover:approve`);
       setApprovers(Array.isArray(response.data) ? response.data : []);
     } catch (e) {
       console.error('Error fetching handover approvers:', e);
@@ -421,6 +422,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
   };
 
   const canViewHandover = hasProjectPermission(user, project, 'handover:view');
+  const canApproveHandover = !isProjectLocked(project) && hasProjectPermission(user, project, 'handover:approve');
 
   if (!canViewHandover) {
     return (
@@ -450,8 +452,8 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
   // ── Permissions ────────────────────────────────────────────────────────
   const isAdmin = user?.role?.name === 'Admin' || user?.role?.permissions?.includes('*');
   const isLocked = isProjectLocked(project);
-  const canAssignSnagging = !isLocked && hasProjectPermission(user, project, 'snag:assign');
-  const canCompleteSnag = !isLocked && hasProjectPermission(user, project, 'snag:complete');
+  const canAssignSnagging = !isLocked && hasProjectPermission(user, project, 'snags:assign');
+  const canCompleteSnag = !isLocked && hasProjectPermission(user, project, 'snags:complete');
 
   const renderChecklistGroup = (
     title: string,
@@ -908,7 +910,8 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
           {/* Verification / Approval Box */}
           <div className="border-t border-slate-100 pt-6">
             {currentStatus === 'Pending Handover' ? (
-              (project.handoverApprover?._id || project.handoverApprover) === currentUserId ? (
+              // Approve/Reject: the designated approver, and only with Handover > Approve
+              (project.handoverApprover?._id || project.handoverApprover) === currentUserId && canApproveHandover ? (
                 /* Approver box */
                 <div className="bg-amber-50/20 border border-amber-200/30 rounded-2xl p-4.5 text-center space-y-4">
                   <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl w-fit mx-auto border border-amber-100">
@@ -983,6 +986,11 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                     onClick={() => {
                       if (isLocked || !hasProjectPermission(user, project, 'handover:create')) {
                         toast.error("You don't have permission to initialize handover completion.");
+                        return;
+                      }
+                      // Requesting includes choosing the approver, which is the Assign action
+                      if (!hasProjectPermission(user, project, 'handover:assign')) {
+                        toast.error("You don't have permission to assign a handover approver.");
                         return;
                       }
                       setIsApproverModalOpen(true);

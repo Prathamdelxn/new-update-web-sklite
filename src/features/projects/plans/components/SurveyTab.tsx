@@ -63,14 +63,18 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
     (user?.id === siteSurveyorId || user?._id === siteSurveyorId)
   );
 
-  const isAdminOrManager = !isProjectLocked(project) && hasProjectPermission(user, project, 'sitesurvey:manage');
-  const canView = hasProjectPermission(user, project, 'sitesurvey:view') || isAdminOrManager || isAssignedSurveyor;
+  // Each action follows its own Site Survey permission (role editor actions);
+  // the API enforces the same rules.
+  const isLocked = isProjectLocked(project);
+  const canView = hasProjectPermission(user, project, 'sitesurvey:view');
+  const canCreateSurvey = !isLocked && hasProjectPermission(user, project, 'sitesurvey:create');
+  const canUpdateSurvey = !isLocked && hasProjectPermission(user, project, 'sitesurvey:update');
+  const canApproveSurvey = !isLocked && hasProjectPermission(user, project, 'sitesurvey:approve');
 
-  const canApproveBudget = !isProjectLocked(project) && (
+  const canApproveBudget = !isLocked && (
     hasProjectPermission(user, project, 'budget:approve') ||
     (user?.role as any) === 'Admin' ||
-    (user?.role as any)?.name === 'Admin' ||
-    isAdminOrManager
+    (user?.role as any)?.name === 'Admin'
   );
 
   const pendingBudgetReq = project?.budgetHistory?.find(
@@ -211,6 +215,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
 
   // Surveyor User formatting matching mobile logic
   const surveyorId = (survey?.surveyor as any)?._id || survey?.surveyor;
+  const isOwnSurvey = !!surveyorId && (String(surveyorId) === String(user?.id) || String(surveyorId) === String((user as any)?._id));
   const matchedMember: any = (project?.members as any[])?.find((m: any) => String(m.user?._id || m.user) === String(surveyorId));
   const surveyorUser = (matchedMember?.user && typeof matchedMember.user === 'object' ? matchedMember.user : null) ||
     ((project?.createdBy as any)?._id === surveyorId ? project?.createdBy : survey?.surveyor);
@@ -260,7 +265,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
           <p className="text-slate-500 max-w-md mx-auto text-xs mt-1.5 leading-relaxed">
             A site survey captures essential site accessibility, utility connections, photos, and terrain report before project planning.
           </p>
-          {(isAssignedSurveyor || isAdminOrManager) && (
+          {canCreateSurvey && (
             <button
               onClick={() => setIsModalOpen(true)}
               className="mt-5 px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow-xs inline-flex items-center gap-2 transition-all cursor-pointer"
@@ -300,7 +305,8 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
                     <span>{survey.status}</span>
                   </div>
                 )}
-                {(isAssignedSurveyor || isAdminOrManager) && survey.status !== 'Approved' && (
+                {/* The API only lets the original surveyor edit their report */}
+                {canUpdateSurvey && isOwnSurvey && survey.status !== 'Approved' && (
                   <button
                     onClick={() => setIsModalOpen(true)}
                     className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer"
@@ -667,7 +673,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
           )}
 
           {/* ── 8. Admin Executive Decision Bar (Matching Mobile Action Row) ── */}
-          {isAdminOrManager && survey.status === 'Submitted' && (
+          {canApproveSurvey && survey.status === 'Submitted' && (
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
                 disabled={isProcessing}

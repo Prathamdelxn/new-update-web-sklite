@@ -33,6 +33,7 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
+  Pencil,
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { cn } from '@/lib/utils';
@@ -42,6 +43,7 @@ import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { useAuth } from '@/providers/AuthContext';
 import { hasProjectPermission, isProjectLocked } from '@/lib/permissions';
+import { useIsAdmin } from '@/hooks/usePermission';
 import { DocumentViewer } from './DocumentViewer';
 import { useProjectContext } from '../../contexts/ProjectContext';
 
@@ -94,6 +96,11 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  // Edit document (Land > Update): rename and/or replace the file
+  const [editingDoc, setEditingDoc] = useState<any | null>(null);
+  const [editName, setEditName] = useState('');
+  const [replacementFile, setReplacementFile] = useState<File | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [viewingDoc, setViewingDoc] = useState<Doc | null>(null);
 
   const toast = useToast();
@@ -105,7 +112,9 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
   const canUpload = !isLocked && hasProjectPermission(user, project, 'land:create');
   const canApprove = !isLocked && hasProjectPermission(user, project, 'land:approve');
   const canDelete = !isLocked && hasProjectPermission(user, project, 'land:delete');
-  const isAdmin = !isLocked && hasProjectPermission(user, project, 'land:delete');
+  const canUpdate = !isLocked && hasProjectPermission(user, project, 'land:update');
+  // Only a real Admin may approve their own upload (the API enforces this)
+  const isAdmin = useIsAdmin();
 
   const fetchDocs = async () => {
     try {
@@ -377,6 +386,40 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
       toast.error(error.response?.data?.message || 'Upload failed');
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const openEdit = (doc: any) => {
+    setEditingDoc(doc);
+    setEditName(doc.name || '');
+    setReplacementFile(null);
+  };
+
+  const closeEdit = () => {
+    setEditingDoc(null);
+    setReplacementFile(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingDoc) return;
+    const name = editName.trim();
+    if (!name) { toast.error('Document name cannot be empty'); return; }
+    setIsSavingEdit(true);
+    try {
+      const payload: any = { name };
+      if (replacementFile) {
+        payload.url = await uploadToCloudinary(replacementFile);
+        payload.mimeType = replacementFile.type;
+        payload.size = replacementFile.size;
+      }
+      await api.patch(`/projects/${projectId}/documents/${editingDoc._id}`, payload);
+      toast.success(replacementFile ? 'Document updated and sent for approval again' : 'Document updated');
+      closeEdit();
+      fetchDocs();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update document');
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -764,7 +807,17 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                                 >
                                   <Download className="w-3.5 h-3.5" />
                                 </a>
-                                {activeFolderId === 'project_docs' && isAdmin && (
+                                {activeFolderId === 'project_docs' && canUpdate && (
+                                  <button
+                                    type="button"
+                                    onClick={() => openEdit(doc)}
+                                    className="p-1.5 rounded-lg bg-slate-50 hover:bg-amber-50 border border-slate-200/70 text-slate-500 hover:text-amber-600 transition-all cursor-pointer shadow-2xs"
+                                    title="Edit Document"
+                                  >
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                                {activeFolderId === 'project_docs' && canDelete && (
                                   <button
                                     type="button"
                                     onClick={() => handleDelete(doc._id, doc.name)}
@@ -849,6 +902,96 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                           <Plus className="w-4 h-4" />
                           <span>Upload</span>
                         </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </GlassCard>
+            </motion.div>
+          </div>
+        )}
+
+        {editingDoc && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeEdit}
+              className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="w-full max-w-md relative z-10"
+            >
+              <GlassCard className="p-8 border-gray-200" gradient>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200">
+                      <Pencil className="w-5 h-5 text-amber-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">Edit Document</h3>
+                      <p className="text-xs text-slate-500 truncate max-w-[220px]">{editingDoc.name}</p>
+                    </div>
+                  </div>
+                  <button onClick={closeEdit} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Document name</label>
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Replace file (optional)</label>
+                    <label className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 cursor-pointer text-sm text-slate-600 transition-colors">
+                      <Upload className="w-4 h-4 text-slate-400 shrink-0" />
+                      <span className="truncate">{replacementFile ? replacementFile.name : 'Choose a new file'}</span>
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={(e) => { setReplacementFile(e.target.files?.[0] || null); e.target.value = ''; }}
+                      />
+                    </label>
+                    {replacementFile && (
+                      <p className="text-[11px] text-amber-700 mt-1.5">
+                        Replacing the file sends the document for approval again.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="pt-2 flex space-x-3">
+                    <button
+                      type="button"
+                      onClick={closeEdit}
+                      className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-bold transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveEdit}
+                      disabled={isSavingEdit}
+                      className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all disabled:opacity-50 flex items-center justify-center space-x-2 shadow-lg shadow-blue-600/20"
+                    >
+                      {isSavingEdit ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <span>Save Changes</span>
                       )}
                     </button>
                   </div>
