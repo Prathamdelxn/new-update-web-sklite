@@ -6,6 +6,7 @@
 // =============================================================================
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   PenTool,
@@ -37,7 +38,6 @@ import { Button, Input, Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
 import { cn } from '@/lib/utils';
-import { Interior3DViewerModal } from '@/features/interior-new/components/crm/modals/Interior3DViewerModal';
 
 interface InteriorDrawingsViewProps {
   projectId: string;
@@ -119,6 +119,7 @@ export function getFileTypeBadge(fileName: string = '', url: string = '', drawin
 }
 
 export default function InteriorDrawingsView({ projectId }: InteriorDrawingsViewProps) {
+  const router = useRouter();
   const toast = useToast();
 
   const [drawings, setDrawings] = useState<any[]>([]);
@@ -150,9 +151,6 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
   const [revName, setRevName] = useState('');
   const [revChanges, setRevChanges] = useState('');
   const [selectedRevFile, setSelectedRevFile] = useState<File | null>(null);
-
-  // Lightbox Preview for Images / Renders
-  const [lightboxFile, setLightboxFile] = useState<{ url: string; title: string; type: string } | null>(null);
 
   const closeCreateModal = () => {
     setIsModalOpen(false);
@@ -598,7 +596,7 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
               >
                 {/* Visual Header / Thumbnail Box */}
                 <div
-                  onClick={() => setLightboxFile({ url: currentRev.url, title: dwg.title, type })}
+                  onClick={() => router.push(`/interior-new/projects/${projectId}/drawings/${dwg._id || dwg.id || dwg.drawingNumber}`)}
                   className="relative w-full h-36 bg-[hsl(var(--muted)/0.4)] border-b border-[hsl(var(--border))] flex items-center justify-center overflow-hidden group cursor-pointer"
                 >
                   {isImage && currentRev.url ? (
@@ -613,14 +611,13 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setLightboxFile({ url: currentRev.url, title: dwg.title, type });
+                            router.push(`/interior-new/projects/${projectId}/drawings/${dwg._id || dwg.id || dwg.drawingNumber}`);
                           }}
-                          className="p-2 rounded-full bg-white/90 text-slate-900 hover:bg-white transition-all"
-                          title="Preview in full view"
+                          className="p-2 rounded-full bg-white/90 text-slate-900 hover:bg-white transition-all shadow-md"
+                          title="Open Drawing Studio"
                         >
                           <Eye size={15} />
                         </button>
-                        
                       </div>
                     </>
                   ) : (
@@ -640,14 +637,13 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setLightboxFile({ url: currentRev.url, title: dwg.title, type });
+                            router.push(`/interior-new/projects/${projectId}/drawings/${dwg._id || dwg.id || dwg.drawingNumber}`);
                           }}
-                          className="p-2 rounded-full bg-white/90 text-slate-900 hover:bg-white transition-all"
-                          title="View 3D asset details"
+                          className="p-2 rounded-full bg-white/90 text-slate-900 hover:bg-white transition-all shadow-md"
+                          title="Open Drawing Studio"
                         >
                           <Eye size={15} />
                         </button>
-                        
                       </div>
                     </div>
                   )}
@@ -694,15 +690,15 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                     <div className="flex items-center justify-between gap-1.5">
                       <button
                         type="button"
-                        onClick={() => setLightboxFile({ url: currentRev.url, title: dwg.title, type })}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] text-[11px] font-bold rounded-lg transition-all border border-[hsl(var(--border))]"
+                        onClick={() => router.push(`/interior-new/projects/${projectId}/drawings/${dwg._id || dwg.id || dwg.drawingNumber}`)}
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] text-[11px] font-bold rounded-lg transition-all border border-[hsl(var(--border))] cursor-pointer"
                       >
                         <Eye size={13} className="text-indigo-600" /> View Drawing
                       </button>
 
                       <button
                         onClick={() => handleDeleteDrawing(dwg._id, dwg.title)}
-                        className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-rose-600 hover:bg-rose-500/10 rounded-lg transition-all"
+                        className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-rose-600 hover:bg-rose-500/10 rounded-lg transition-all cursor-pointer"
                         title="Delete Drawing"
                       >
                         <Trash2 size={14} />
@@ -856,14 +852,15 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
 
                               <div className="flex items-center gap-2 shrink-0">
                                 {type === 'image' && file.url && (
-                                  <button
-                                    type="button"
-                                    onClick={() => setLightboxFile({ url: file.url, title: file.title || file.name, type: file.category })}
-                                    className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] rounded-xl transition-colors"
+                                  <a
+                                    href={file.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] rounded-xl transition-colors inline-flex items-center justify-center"
                                     title="Preview image"
                                   >
                                     <Eye size={15} />
-                                  </button>
+                                  </a>
                                 )}
                                 <button
                                   type="button"
@@ -977,22 +974,6 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
           </div>
         )}
       </AnimatePresence>
-
-      {/* ── 7. Fullscreen Interactive 3D Model & Design Viewer Modal (From Lead Module) ── */}
-      <Interior3DViewerModal
-        isOpen={!!lightboxFile}
-        onClose={() => setLightboxFile(null)}
-        file={
-          lightboxFile
-            ? {
-                name: lightboxFile.title || (lightboxFile.url ? lightboxFile.url.split('/').pop()?.split('?')[0] : '') || 'Drawing Asset',
-                url: lightboxFile.url,
-                fileType: detectDrawingFileType(lightboxFile.title, lightboxFile.url),
-                category: lightboxFile.type,
-              }
-            : null
-        }
-      />
     </div>
   );
 }

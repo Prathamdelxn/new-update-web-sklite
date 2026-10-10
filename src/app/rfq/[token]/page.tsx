@@ -86,7 +86,16 @@ export default function PublicRFQPage({ params }: { params: Promise<{ token: str
  );
  }
 
- if (error || !rfqData) {
+ const isClosedByStatus = rfqData?.status && ['approved', 'partially_delivered', 'delivered'].includes(rfqData.status);
+ const isManuallyClosed = rfqData?.materialName?.includes('||CLOSED||');
+  const isClosed = error || !rfqData || isClosedByStatus || isManuallyClosed;
+ 
+ if (isClosed && !loading) {
+ const isAwarded = isClosedByStatus;
+ const displayMessage = error || (isAwarded 
+ ? 'This Request for Quotation has concluded and the contract has already been awarded to a successful vendor. Thank you for your interest.' 
+ : 'This Request for Quotation has expired and is no longer accepting new submissions.');
+
  return (
  <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
  <motion.div 
@@ -99,7 +108,7 @@ export default function PublicRFQPage({ params }: { params: Promise<{ token: str
  </div>
  <h2 className="text-2xl font-bold text-slate-900 ">Request Closed</h2>
  <p className="text-slate-500 text-sm leading-relaxed">
- {error || 'This request for quotation is no longer accepting submissions.'}
+ {displayMessage}
  </p>
  </motion.div>
  </div>

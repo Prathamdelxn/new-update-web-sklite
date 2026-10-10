@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Truck, User, Phone, Mail, Building, FileText, CreditCard, Landmark, AlignLeft } from 'lucide-react';
+import { X, Truck, User, Phone, Mail, Building, FileText, AlignLeft } from 'lucide-react';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
 
@@ -22,11 +22,6 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess, initialVendor }:
     email: '',
     gstNumber: '',
     address: '',
-    paymentTerms: 'Standard',
-    accountName: '',
-    accountNumber: '',
-    ifscCode: '',
-    bankName: '',
   });
 
   React.useEffect(() => {
@@ -39,11 +34,6 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess, initialVendor }:
         email: initialVendor.email || '',
         gstNumber: initialVendor.gstNumber || '',
         address: initialVendor.address || '',
-        paymentTerms: initialVendor.paymentTerms || 'Standard',
-        accountName: initialVendor.bankDetails?.accountName || '',
-        accountNumber: initialVendor.bankDetails?.accountNumber || '',
-        ifscCode: initialVendor.bankDetails?.ifscCode || '',
-        bankName: initialVendor.bankDetails?.bankName || '',
       });
     } else {
       setFormData({
@@ -54,11 +44,6 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess, initialVendor }:
         email: '',
         gstNumber: '',
         address: '',
-        paymentTerms: 'Standard',
-        accountName: '',
-        accountNumber: '',
-        ifscCode: '',
-        bankName: '',
       });
     }
   }, [initialVendor, isOpen]);
@@ -78,15 +63,7 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess, initialVendor }:
 
     try {
       setIsSubmitting(true);
-      const payload = {
-        ...formData,
-        bankDetails: {
-          accountName: formData.accountName,
-          accountNumber: formData.accountNumber,
-          ifscCode: formData.ifscCode,
-          bankName: formData.bankName,
-        }
-      };
+      const payload = { ...formData };
 
       if (initialVendor?._id) {
         await interiorProjectService.updateVendor(initialVendor._id, payload);
@@ -249,64 +226,7 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess, initialVendor }:
                 </div>
               </div>
 
-              {/* Payment & Bank Details */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold tracking-widest text-slate-400 uppercase border-b border-slate-100 pb-2">Payment & Bank Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                      <CreditCard size={14} className="text-slate-400" /> Payment Terms
-                    </label>
-                    <input
-                      type="text"
-                      name="paymentTerms"
-                      value={formData.paymentTerms}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
-                      placeholder="e.g., Net 30 Days, 50% Advance"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                      <Landmark size={14} className="text-slate-400" /> Bank Name
-                    </label>
-                    <input
-                      type="text"
-                      name="bankName"
-                      value={formData.bankName}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
-                      placeholder="e.g., HDFC Bank / ICICI Bank"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                      <CreditCard size={14} className="text-slate-400" /> Account Number
-                    </label>
-                    <input
-                      type="text"
-                      name="accountNumber"
-                      value={formData.accountNumber}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-mono"
-                      placeholder="e.g., 50200012345678"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                      <Landmark size={14} className="text-slate-400" /> IFSC / Branch Code
-                    </label>
-                    <input
-                      type="text"
-                      name="ifscCode"
-                      value={formData.ifscCode}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all uppercase font-mono"
-                      placeholder="e.g., HDFC0001234"
-                    />
-                  </div>
-                </div>
-              </div>
+
             </form>
           </div>
 

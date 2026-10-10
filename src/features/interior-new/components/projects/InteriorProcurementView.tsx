@@ -111,18 +111,48 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [updatingPo, setUpdatingPo] = useState(false);
   const [isSendRFQOpen, setIsSendRFQOpen] = useState(false);
-  const [sentEmailVendorIds, setSentEmailVendorIds] = useState<Set<string>>(new Set());
+  const [sentEmailVendorIdsByPo, setSentEmailVendorIdsByPo] = useState<Record<string, Set<string>>>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('interior_rfq_sent_vendors');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          const result: Record<string, Set<string>> = {};
+          for (const [poId, vendorArray] of Object.entries(parsed)) {
+            if (Array.isArray(vendorArray)) {
+              result[poId] = new Set(vendorArray);
+            }
+          }
+          return result;
+        }
+      } catch (e) {
+        console.error('Failed to parse saved sent vendors', e);
+      }
+    }
+    return {};
+  });
+
+  useEffect(() => {
+    try {
+      const toSave: Record<string, string[]> = {};
+      for (const [poId, vendorSet] of Object.entries(sentEmailVendorIdsByPo)) {
+        toSave[poId] = Array.from(vendorSet);
+      }
+      localStorage.setItem('interior_rfq_sent_vendors', JSON.stringify(toSave));
+    } catch (e) {
+      console.error('Failed to save sent vendors', e);
+    }
+  }, [sentEmailVendorIdsByPo]);
   const [isGRNOpen, setIsGRNOpen] = useState(false);
   
   const [isLinkActive, setIsLinkActive] = useState(true);
+  useEffect(() => { if (selectedPo) { setIsLinkActive(!selectedPo.materialName?.includes('||CLOSED||')); } }, [selectedPo?._id, selectedPo?.materialName]);
   const [linkExpiry, setLinkExpiry] = useState('12h');
 
   // Reset link active state when a new PO is opened
   useEffect(() => {
     if (selectedPo) {
       setIsLinkActive(true);
-      // We also could reset sentEmailVendorIds here if we wanted to
-      setSentEmailVendorIds(new Set());
     }
   }, [selectedPo]);
 
@@ -164,7 +194,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
         type: 'outgoing',
         poNo: payingPo.poNumber || payingPo._id,
         vendorName: payingPo.vendorName || payingPo.vendorId?.name || 'Vendor',
-        category: payingPo.materialName || 'Wood & Plywood',
+        category: payingPo.materialName?.replace(' ||CLOSED||', '') || 'Wood & Plywood',
         amount: parseFloat(paymentForm.amount),
         paymentDate: paymentForm.paymentDate,
         paymentMethod: paymentForm.paymentMethod,
@@ -222,13 +252,13 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       setCreatingMaterial(true);
       if (editingMaterialId) {
         await interiorProjectService.updateInventoryMaterial(projectId, editingMaterialId, {
-          productName: newMaterialName,
+          productName: newMaterialName?.replace(' ||CLOSED||', ''),
           unit: newMaterialUnit,
         });
         toast.success('Material updated successfully');
       } else {
         await interiorProjectService.createInventoryMaterial(projectId, {
-          productName: newMaterialName,
+          productName: newMaterialName?.replace(' ||CLOSED||', ''),
           unit: newMaterialUnit,
           initialStock: newMaterialStock === '' ? 0 : Number(newMaterialStock),
         });
@@ -742,7 +772,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         </div>
                         <span className="font-bold text-[hsl(var(--foreground))] text-sm">{formatCost(item.amount)}</span>
                       </div>
-                      <h4 className="text-base font-bold text-[hsl(var(--foreground))] line-clamp-1">{item.materialName}</h4>
+                      <h4 className="text-base font-bold text-[hsl(var(--foreground))] line-clamp-1">{item.materialName?.replace(' ||CLOSED||', '')}</h4>
                       {item.status !== 'requested' && item.vendorName && item.vendorName !== 'Unassigned' && (
                         <p className="text-xs text-[hsl(var(--muted-foreground))] truncate mt-1">Vendor: {item.vendorName}</p>
                       )}
@@ -764,6 +794,8 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                           try {
                             await interiorProjectService.updatePurchaseOrder(projectId, item._id, { status: 'rfq' });
                             setActivePipeline('rfq'); // Automatically jump to the RFQ tab
+                            setSelectedPo({ ...item, status: 'rfq' });
+                            setIsDetailOpen(true);
                             invalidateProcurementData();
                           } catch (err) {
                             console.error('Failed to update status to RFQ', err);
@@ -798,7 +830,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                             amount: suggestedPayment.toString(),
                             paymentMethod: 'Bank Transfer',
                             referenceNo: '',
-                            remarks: `Payment for PO ${item.poNumber} (${item.materialName})`,
+                            remarks: `Payment for PO ${item.poNumber} (${item.materialName?.replace(' ||CLOSED||', '')})`,
                             paymentDate: new Date().toISOString().split('T')[0],
                             projectName: '',
                             projectLocation: '',
@@ -1088,12 +1120,12 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       {/* PO Detail & Status Update Drawer */}
       <AnimatePresence>
         {isDetailOpen && selectedPo && (
-          <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              className="w-full max-w-md border-l border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-2xl flex flex-col h-full overflow-hidden"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-4xl border border-[hsl(var(--border))] rounded-2xl bg-[hsl(var(--card))] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <div>
@@ -1138,7 +1170,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         ) : (
                           <div className="p-3 flex items-center justify-between text-xs bg-[hsl(var(--card))]">
                             <div>
-                              <p className="font-bold text-[hsl(var(--foreground))]">{selectedPo.materialName}</p>
+                              <p className="font-bold text-[hsl(var(--foreground))]">{selectedPo.materialName?.replace(' ||CLOSED||', '')}</p>
                             </div>
                             <span className="font-bold font-mono text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.3)] px-2 py-1 rounded">
                               1 unit
@@ -1171,7 +1203,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         ) : (
                           <div className="p-3 flex items-center justify-between text-xs bg-[hsl(var(--card))]">
                             <div>
-                              <p className="font-bold text-[hsl(var(--foreground))]">{selectedPo.materialName}</p>
+                              <p className="font-bold text-[hsl(var(--foreground))]">{selectedPo.materialName?.replace(' ||CLOSED||', '')}</p>
                             </div>
                             <span className="font-bold font-mono text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.3)] px-2 py-1 rounded">
                               1 unit
@@ -1240,7 +1272,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                           size="sm" 
                           variant={isLinkActive ? 'destructive' : 'outline'} 
                           className="h-6 text-[10px] px-2"
-                          onClick={() => setIsLinkActive(!isLinkActive)}
+                          onClick={async () => { const newIsLinkActive = !isLinkActive; setIsLinkActive(newIsLinkActive); if (selectedPo) { try { let newMaterialName = selectedPo.materialName.replace(' ||CLOSED||', '').trim(); if (!newIsLinkActive) { newMaterialName += ' ||CLOSED||'; } await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { materialName: newMaterialName }); setSelectedPo((prev: any) => prev ? { ...prev, materialName: newMaterialName } : prev); invalidateProcurementData(); toast.success(newIsLinkActive ? 'Link reactivated' : 'Link manually expired'); } catch (err) { toast.error('Failed to update link status'); setIsLinkActive(!newIsLinkActive); } } }}
                         >
                           {isLinkActive ? 'Force Expire Now' : 'Reactivate Link'}
                         </Button>
@@ -1256,7 +1288,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                           {vendors.map((vendor: any) => {
                             const rfqUrl = `${window.location.origin}/rfq/${selectedPo._id}`;
                             const waMessage = encodeURIComponent(`Hello ${vendor.name},\n\nPlease submit your quotation for our requirement by clicking the following link:\n${rfqUrl}\n\nThank you.`);
-                            const emailSubject = encodeURIComponent(`Request for Quotation: ${selectedPo.materialName}`);
+                            const emailSubject = encodeURIComponent(`Request for Quotation: ${selectedPo.materialName?.replace(' ||CLOSED||', '')}`);
                             const emailBody = encodeURIComponent(`Hello ${vendor.name},\n\nPlease submit your quotation for our requirement by clicking the following link:\n${rfqUrl}\n\nThank you.`);
 
                             return (
@@ -1287,16 +1319,20 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                           notes: '',
                                           rfqLink: `${window.location.origin}/rfq/${selectedPo._id}`
                                         });
-                                        setSentEmailVendorIds(prev => new Set(prev).add(vendor._id));
+                                        setSentEmailVendorIdsByPo(prev => {
+                                          const newSet = new Set(prev[selectedPo._id] || []);
+                                          newSet.add(vendor._id);
+                                          return { ...prev, [selectedPo._id]: newSet };
+                                        });
                                         toast.success(`RFQ sent to ${vendor.name} via email!`);
                                       } catch (err) {
                                         console.error('Failed to send RFQ email', err);
                                         toast.error(`Failed to send email to ${vendor.name}`);
                                       }
                                     }}
-                                    disabled={!vendor.email || sentEmailVendorIds.has(vendor._id)}
+                                    disabled={!vendor.email || sentEmailVendorIdsByPo[selectedPo._id]?.has(vendor._id)}
                                   >
-                                    {sentEmailVendorIds.has(vendor._id) ? (
+                                    {sentEmailVendorIdsByPo[selectedPo._id]?.has(vendor._id) ? (
                                       <><CheckCircle2 className="w-3 h-3 text-green-500" /> Sent</>
                                     ) : (
                                       <><Mail className="w-3 h-3" /> Email</>
@@ -1317,17 +1353,53 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         </span>
                         <div className="space-y-2">
                           {selectedPo.quotes && selectedPo.quotes.length > 0 ? (
-                            selectedPo.quotes.map((quote: any, idx: number) => (
-                              <div key={idx} className="p-3 border border-[hsl(var(--border))] rounded-lg flex items-center justify-between bg-[hsl(var(--card))]">
-                                <div>
-                                  <p className="font-bold text-xs">{quote.vendorName}</p>
-                                  <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                                    Submitted {new Date(quote.submittedAt).toLocaleDateString()}
-                                  </p>
+                            selectedPo.quotes.map((quote: any, idx: number) => {
+                              const myTotal = quote.rates?.reduce((sum: number, r: any) => {
+                                const item = selectedPo.items?.find((i: any) => (i._id || i.id) === r.itemId || i.name === r.name);
+                                return sum + ((r.unitPrice || 0) * (item?.quantity || 1));
+                              }, 0) || 0;
+
+                              return (
+                                <div key={idx} className="border border-[hsl(var(--border))] rounded-lg overflow-hidden bg-[hsl(var(--card))] shadow-sm">
+                                  <div className="p-3 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--muted)/0.2)]">
+                                    <div>
+                                      <p className="font-bold text-xs">{quote.vendorName}</p>
+                                      <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                                        Submitted {new Date(quote.submittedAt).toLocaleDateString()}
+                                      </p>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="font-mono font-bold text-sm text-[hsl(var(--foreground))]">
+                                        {currencySymbol} {myTotal.toLocaleString()}
+                                      </p>
+                                      <span className="text-[9px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-bold border border-indigo-100">Quote Received</span>
+                                    </div>
+                                  </div>
+                                  <div className="p-3 space-y-3">
+                                    <div className="space-y-1.5">
+                                      <p className="text-[9px] uppercase font-bold text-[hsl(var(--muted-foreground))]">Item Rates</p>
+                                      <div className="divide-y divide-[hsl(var(--border))] bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-md">
+                                        {(selectedPo.items && selectedPo.items.length > 0 ? selectedPo.items : [{_id: 'item-1', name: selectedPo.materialName?.replace(' ||CLOSED||', '') || 'Material', quantity: 1, unit: 'unit'}]).map((item: any, itemIdx: number) => {
+                                          const rate = quote.rates?.find((r: any) => r.itemId === (item._id || item.id) || r.name === item.name);
+                                          return (
+                                            <div key={itemIdx} className="p-2 flex items-center justify-between text-[10px]">
+                                              <span className="font-medium text-[hsl(var(--foreground))]">{item.name}</span>
+                                              <span className="font-mono text-[hsl(var(--muted-foreground))]">{currencySymbol}{rate?.unitPrice || 0}</span>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                    {(quote.notes || quote.remarks) && (
+                                      <div className="bg-amber-50 dark:bg-amber-950/20 p-2 rounded-md border border-amber-100 dark:border-amber-900/30">
+                                        <p className="text-[9px] uppercase font-bold text-amber-800 dark:text-amber-500 mb-0.5">Remarks</p>
+                                        <p className="text-[10px] text-amber-900/80 dark:text-amber-200/70 whitespace-pre-wrap">{quote.notes || quote.remarks}</p>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                                <span className="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-1 rounded font-bold border border-indigo-100">Quote Received</span>
-                              </div>
-                            ))
+                              );
+                            })
                           ) : (
                             <div className="p-3 border border-dashed border-[hsl(var(--border))] rounded-lg flex items-center justify-center bg-[hsl(var(--muted)/0.3)] opacity-70">
                               <p className="text-[10px] text-[hsl(var(--muted-foreground))] italic">Waiting for vendors to submit quotes...</p>
@@ -1339,128 +1411,122 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         </p>
                       </div>
                     ) : (
-                      <div className="space-y-3">
-                        <span className="text-[10px] uppercase font-bold text-[hsl(var(--foreground))] tracking-wider flex items-center gap-1.5">
-                          <History className="w-3.5 h-3.5" /> Vendor Quotation Comparison
-                        </span>
-                        
-                        <div className="border border-[hsl(var(--border))] rounded-xl overflow-hidden bg-[hsl(var(--card))] shadow-sm">
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-left text-xs">
-                              <thead className="bg-[hsl(var(--muted)/0.3)] border-b border-[hsl(var(--border))] text-[10px] uppercase text-[hsl(var(--muted-foreground))]">
-                                <tr>
-                                  <th className="p-3 font-bold">Item</th>
-                                  {selectedPo.quotes && selectedPo.quotes.length > 0 ? (
-                                    selectedPo.quotes.map((quote: any, idx: number) => {
-                                      // Determine if this is the lowest total cost vendor
-                                      let isLowest = false;
-                                      if (selectedPo.quotes.length > 1) {
-                                        const totals = selectedPo.quotes.map((q: any) => 
-                                          q.rates.reduce((sum: number, r: any) => {
-                                            const item = selectedPo.items?.find((i: any) => (i._id || i.id) === r.itemId || i.name === r.name);
-                                            return sum + (r.unitPrice * (item?.quantity || 1));
-                                          }, 0)
-                                        );
-                                        const myTotal = quote.rates.reduce((sum: number, r: any) => {
-                                            const item = selectedPo.items?.find((i: any) => (i._id || i.id) === r.itemId || i.name === r.name);
-                                            return sum + (r.unitPrice * (item?.quantity || 1));
-                                          }, 0);
-                                        if (myTotal === Math.min(...totals) && myTotal > 0) isLowest = true;
-                                      }
-
-                                      return (
-                                        <th key={idx} className={`p-3 font-bold border-l border-[hsl(var(--border))] min-w-[100px] ${isLowest ? 'bg-emerald-50/30 dark:bg-emerald-950/10 text-emerald-700' : ''}`}>
-                                          Supplier {idx + 1}<br/>
-                                          <span className="font-normal normal-case text-[9px]">{quote.vendorName}</span>
-                                        </th>
-                                      )
-                                    })
-                                  ) : (
-                                    <th className="p-3 font-bold border-l border-[hsl(var(--border))] min-w-[100px] italic text-[hsl(var(--muted-foreground))]">No quotes yet</th>
-                                  )}
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-[hsl(var(--border))]">
-                                {(selectedPo.items && selectedPo.items.length > 0 ? selectedPo.items : [{_id: 'item-1', name: selectedPo.materialName || 'Material', quantity: 1, unit: 'unit'}]).map((item: any, idx: number) => (
-                                  <tr key={idx}>
-                                    <td className="p-3 font-medium text-[hsl(var(--foreground))]">{item.name} <span className="text-[9px] text-[hsl(var(--muted-foreground))] block mt-0.5">{item.quantity} {item.unit}</span></td>
-                                    {selectedPo.quotes && selectedPo.quotes.length > 0 ? (
-                                      selectedPo.quotes.map((quote: any, qIdx: number) => {
-                                        const rate = quote.rates?.find((r: any) => r.itemId === (item._id || item.id) || r.name === item.name);
-                                        return (
-                                          <td key={qIdx} className="p-3 border-l border-[hsl(var(--border))] font-mono">
-                                            {rate ? `${currencySymbol} ${rate.unitPrice}` : 'N/A'}
-                                          </td>
-                                        );
-                                      })
-                                    ) : (
-                                      <td className="p-3 border-l border-[hsl(var(--border))] font-mono text-[hsl(var(--muted-foreground))]">-</td>
-                                    )}
-                                  </tr>
-                                ))}
-                                
-                                {selectedPo.quotes && selectedPo.quotes.length > 0 && (
-                                  <>
-                                    <tr className="bg-[hsl(var(--muted)/0.1)]">
-                                      <td className="p-3 font-bold text-[hsl(var(--foreground))] text-[10px] uppercase">Total Cost</td>
-                                      {selectedPo.quotes.map((quote: any, qIdx: number) => {
-                                        const myTotal = quote.rates.reduce((sum: number, r: any) => {
-                                            const item = selectedPo.items?.find((i: any) => (i._id || i.id) === r.itemId || i.name === r.name);
-                                            return sum + (r.unitPrice * (item?.quantity || 1));
-                                        }, 0);
-                                        
-                                        const totals = selectedPo.quotes.map((q: any) => 
-                                          q.rates.reduce((sum: number, r: any) => {
-                                            const it = selectedPo.items?.find((i: any) => (i._id || i.id) === r.itemId || i.name === r.name);
-                                            return sum + (r.unitPrice * (it?.quantity || 1));
-                                          }, 0)
-                                        );
-                                        const isLowest = (myTotal === Math.min(...totals) && myTotal > 0 && selectedPo.quotes.length > 1);
-
-                                        return (
-                                          <td key={qIdx} className={`p-3 border-l border-[hsl(var(--border))] font-mono font-bold ${isLowest ? 'text-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/20' : ''}`}>
-                                            {currencySymbol} {myTotal.toLocaleString()}
-                                          </td>
-                                        );
-                                      })}
-                                    </tr>
-                                    <tr>
-                                      <td className="p-3 font-semibold text-[hsl(var(--muted-foreground))] text-[10px]">Action</td>
-                                      {selectedPo.quotes.map((quote: any, qIdx: number) => {
-                                        const myTotal = quote.rates.reduce((sum: number, r: any) => {
-                                            const item = selectedPo.items?.find((i: any) => (i._id || i.id) === r.itemId || i.name === r.name);
-                                            return sum + (r.unitPrice * (item?.quantity || 1));
-                                        }, 0);
-                                        
-                                        const totals = selectedPo.quotes.map((q: any) => 
-                                          q.rates.reduce((sum: number, r: any) => {
-                                            const it = selectedPo.items?.find((i: any) => (i._id || i.id) === r.itemId || i.name === r.name);
-                                            return sum + (r.unitPrice * (it?.quantity || 1));
-                                          }, 0)
-                                        );
-                                        const isLowest = (myTotal === Math.min(...totals) && myTotal > 0 && selectedPo.quotes.length > 1);
-
-                                        return (
-                                          <td key={qIdx} className={`p-3 border-l border-[hsl(var(--border))] ${isLowest ? 'bg-emerald-50/30 dark:bg-emerald-950/10' : ''}`}>
-                                            <Button 
-                                              size="sm" 
-                                              variant={isLowest ? 'default' : 'outline'} 
-                                              className={`w-full h-7 text-[10px] ${isLowest ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}`}
-                                              onClick={() => handleUpdateVendor(quote.vendorName)}
-                                            >
-                                              {isLowest ? 'Award PO' : 'Award'}
-                                            </Button>
-                                          </td>
-                                        );
-                                      })}
-                                    </tr>
-                                  </>
-                                )}
-                              </tbody>
-                            </table>
-                          </div>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] uppercase font-bold text-[hsl(var(--foreground))] tracking-wider flex items-center gap-1.5">
+                            <History className="w-3.5 h-3.5" /> Vendor Quotation Comparison
+                          </span>
+                          <span className="text-[10px] bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-2 py-0.5 rounded-full font-bold">
+                            {selectedPo.quotes?.length || 0} Quotes
+                          </span>
                         </div>
-                        <p className="text-[9px] text-[hsl(var(--muted-foreground))] text-center mt-2 leading-relaxed">
+                        
+                        {selectedPo.quotes && selectedPo.quotes.length > 0 ? (
+                          <div className="space-y-3">
+                            {(() => {
+                              // Calculate totals for all quotes to find the lowest
+                              const quoteTotals = selectedPo.quotes.map((q: any) => 
+                                q.rates?.reduce((sum: number, r: any) => {
+                                  const item = selectedPo.items?.find((i: any) => (i._id || i.id) === r.itemId || i.name === r.name);
+                                  return sum + ((r.unitPrice || 0) * (item?.quantity || 1));
+                                }, 0) || 0
+                              );
+                              const minTotal = Math.min(...quoteTotals.filter((t: number) => t > 0));
+
+                              return selectedPo.quotes.map((quote: any, idx: number) => {
+                                const myTotal = quoteTotals[idx];
+                                const isLowest = (myTotal === minTotal && myTotal > 0 && selectedPo.quotes.length > 1);
+
+                                return (
+                                  <div 
+                                    key={idx} 
+                                    className={`border rounded-xl overflow-hidden shadow-sm transition-all ${
+                                      isLowest 
+                                        ? 'border-emerald-500/50 bg-emerald-50/10 dark:bg-emerald-950/10 shadow-emerald-500/10' 
+                                        : 'border-[hsl(var(--border))] bg-[hsl(var(--card))]'
+                                    }`}
+                                  >
+                                    <div className={`p-4 border-b flex items-start justify-between ${isLowest ? 'border-emerald-500/20 bg-emerald-50/30 dark:bg-emerald-900/20' : 'border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]'}`}>
+                                      <div>
+                                        <div className="flex items-center gap-2">
+                                          <h4 className="font-bold text-sm text-[hsl(var(--foreground))]">{quote.vendorName}</h4>
+                                          {isLowest && (
+                                            <span className="text-[9px] font-bold uppercase bg-emerald-100 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded-md dark:bg-emerald-900/40 dark:text-emerald-400 dark:border-emerald-800">
+                                              Lowest Bid
+                                            </span>
+                                          )}
+                                        </div>
+                                        <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-0.5">
+                                          Submitted on {new Date(quote.submittedAt).toLocaleDateString()}
+                                        </p>
+                                      </div>
+                                      <div className="text-right">
+                                        <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase font-bold mb-0.5">Total Cost</p>
+                                        <p className={`font-mono font-bold text-base ${isLowest ? 'text-emerald-600 dark:text-emerald-400' : 'text-[hsl(var(--foreground))]'}`}>
+                                          {currencySymbol} {myTotal.toLocaleString()}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="p-4 space-y-4">
+                                      <div className="space-y-2">
+                                        <p className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))]">Item Breakdown</p>
+                                        <div className="border border-[hsl(var(--border))] rounded-lg divide-y divide-[hsl(var(--border))] bg-[hsl(var(--background))]">
+                                          {(selectedPo.items && selectedPo.items.length > 0 ? selectedPo.items : [{_id: 'item-1', name: selectedPo.materialName?.replace(' ||CLOSED||', '') || 'Material', quantity: 1, unit: 'unit'}]).map((item: any, itemIdx: number) => {
+                                            const rate = quote.rates?.find((r: any) => r.itemId === (item._id || item.id) || r.name === item.name);
+                                            const itemTotal = (rate?.unitPrice || 0) * (item.quantity || 1);
+                                            return (
+                                              <div key={itemIdx} className="p-2.5 flex items-center justify-between text-xs">
+                                                <div className="min-w-0 flex-1 pr-4">
+                                                  <p className="font-semibold text-[hsl(var(--foreground))] truncate">{item.name}</p>
+                                                  <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                                                    {item.quantity} {item.unit} &times; {currencySymbol}{rate?.unitPrice || 0}
+                                                  </p>
+                                                </div>
+                                                <div className="font-mono font-medium text-[hsl(var(--foreground))] shrink-0">
+                                                  {currencySymbol} {itemTotal.toLocaleString()}
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+
+                                      {(quote.notes || quote.remarks) && (
+                                        <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-lg border border-amber-100 dark:border-amber-900/30">
+                                          <p className="text-[10px] uppercase font-bold text-amber-800 dark:text-amber-500 mb-1">Vendor Remarks</p>
+                                          <p className="text-xs text-amber-900/80 dark:text-amber-200/70 whitespace-pre-wrap">{quote.notes || quote.remarks}</p>
+                                        </div>
+                                      )}
+
+                                      <Button 
+                                        size="sm" 
+                                        className={`w-full text-xs font-bold ${isLowest ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 shadow-lg' : ''}`}
+                                        variant={isLowest ? 'default' : 'outline'}
+                                        onClick={() => handleUpdateVendor(quote.vendorName)}
+                                      >
+                                        {isLowest ? (
+                                          <><CheckCircle2 className="w-4 h-4 mr-2" /> Award PO to {quote.vendorName}</>
+                                        ) : (
+                                          `Award PO to ${quote.vendorName}`
+                                        )}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                );
+                              });
+                            })()}
+                          </div>
+                        ) : (
+                          <div className="p-6 border border-dashed border-[hsl(var(--border))] rounded-xl flex flex-col items-center justify-center bg-[hsl(var(--muted)/0.2)]">
+                            <History className="w-8 h-8 text-[hsl(var(--muted-foreground))] opacity-20 mb-2" />
+                            <p className="text-sm font-semibold text-[hsl(var(--foreground))]">No quotes submitted yet</p>
+                            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1 text-center max-w-[250px]">
+                              Vendors haven't submitted any quotes. You can send them a reminder using the share links above.
+                            </p>
+                          </div>
+                        )}
+                        <p className="text-[9px] text-[hsl(var(--muted-foreground))] text-center mt-4 leading-relaxed max-w-sm mx-auto">
                           Awarding a PO will automatically convert this request to an Approved Purchase Order and lock in the winning rates.
                         </p>
                       </div>
@@ -1638,7 +1704,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                           ) : (
                             <div className="p-3 flex items-center justify-between text-xs bg-[hsl(var(--card))]">
                               <div>
-                                <p className="font-bold text-[hsl(var(--foreground))]">{selectedPo.materialName}</p>
+                                <p className="font-bold text-[hsl(var(--foreground))]">{selectedPo.materialName?.replace(' ||CLOSED||', '')}</p>
                                 <div className="flex items-center gap-1 mt-1 text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
                                   <span>1 unit @ </span>
                                   {isApprovedOrLocked ? (
@@ -1844,7 +1910,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
               <form onSubmit={handleRecordPaymentSubmit} className="flex flex-col overflow-hidden">
                 <div className="p-5 space-y-4 overflow-y-auto">
                   <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-lg text-xs space-y-1">
-                    <p className="font-bold text-emerald-800 dark:text-emerald-400">Material: {payingPo.materialName}</p>
+                    <p className="font-bold text-emerald-800 dark:text-emerald-400">Material: {payingPo.materialName?.replace(' ||CLOSED||', '')}</p>
                     <p className="text-emerald-700 dark:text-emerald-500">
                       Total PO Amount: <span className="font-bold">{currencySymbol} {(payingPo.amount || 0).toLocaleString()}</span>
                     </p>

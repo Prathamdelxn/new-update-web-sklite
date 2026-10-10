@@ -28,6 +28,7 @@ interface Props {
   customerPhone?: string;
   quotation: any;
   quotationIndex?: number | null;
+  initialTarget?: SendTarget;
   onSuccess: () => void;
 }
 
@@ -42,12 +43,13 @@ export function InteriorSendQuotationModal({
   customerPhone = '',
   quotation,
   quotationIndex = null,
+  initialTarget = 'customer',
   onSuccess,
 }: Props) {
   const { formatExactCurrency } = useCurrency();
   const toast = useToast();
 
-  const [sendTarget, setSendTarget] = useState<SendTarget>('customer');
+  const [sendTarget, setSendTarget] = useState<SendTarget>(initialTarget);
   const [recipientEmail, setRecipientEmail] = useState('');
   const [recipientName, setRecipientName] = useState('');
   const [customSubject, setCustomSubject] = useState('');
@@ -89,9 +91,9 @@ export function InteriorSendQuotationModal({
   // Reset & load vendors
   useEffect(() => {
     if (isOpen) {
-      setSendTarget('customer');
-      setRecipientEmail(customerEmail || '');
-      setRecipientName(customerName || '');
+      setSendTarget(initialTarget || 'customer');
+      setRecipientEmail(initialTarget === 'customer' ? (customerEmail || '') : '');
+      setRecipientName(initialTarget === 'customer' ? (customerName || '') : '');
       setAdditionalNote('');
       setSelectedVendorId('');
       setVendorSearchQuery('');
@@ -720,7 +722,9 @@ export function InteriorSendQuotationModal({
                     <Send className="w-3.5 h-3.5" />
                     <span>
                       {sendTarget === 'customer'
-                        ? 'Send for Customer Approval'
+                        ? quotation?.status === 'Sent'
+                          ? 'Resend for Customer Approval'
+                          : 'Send for Customer Approval'
                         : selectedVendorObj
                         ? `Send Quotation to ${selectedVendorObj.name || 'Vendor'}`
                         : 'Send to Vendor / Other'}

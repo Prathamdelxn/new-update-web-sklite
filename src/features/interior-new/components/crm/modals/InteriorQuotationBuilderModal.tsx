@@ -354,10 +354,11 @@ export function InteriorQuotationBuilderModal({
     setItems(newItems);
   };
 
-  // Calculation metrics
-  const subtotal = items.reduce((acc, item) => acc + (Number(item.total) || 0), 0);
-  const tax = (subtotal * (Number(taxPercentage) || 0)) / 100;
-  const grandTotal = Math.max(0, subtotal + tax - (Number(discount) || 0));
+  // Calculation metrics with financial rounding precision
+  const round2 = (val: number) => Math.round((val + Number.EPSILON) * 100) / 100;
+  const subtotal = round2(items.reduce((acc, item) => acc + (Number(item.total) || 0), 0));
+  const tax = round2((subtotal * (Number(taxPercentage) || 0)) / 100);
+  const grandTotal = Math.max(0, round2(subtotal + tax - (Number(discount) || 0)));
 
   const maxBudget = parseMaxBudget(lead?.budgetRange || lead?.estimatedBudget || lead?.budget);
   const isOverBudget = Boolean(maxBudget && maxBudget > 0 && grandTotal > maxBudget);
