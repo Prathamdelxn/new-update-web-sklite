@@ -89,7 +89,7 @@ const ALL_ROLES = [
 const PROJECT_MODULES: { module: string; label: string }[] = [
   { module: 'projects', label: 'Project Config' },
   { module: 'wbs', label: 'WBS Hierarchy' },
-  { module: 'tasks', label: 'Tasks' },
+  { module: 'tasks', label: 'Activity / Task' },
   { module: 'milestones', label: 'Milestones' },
   { module: 'dpr', label: 'Daily Progress Report' },
   { module: 'weekly_reports', label: 'Weekly Reports' },

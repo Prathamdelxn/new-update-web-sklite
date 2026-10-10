@@ -15,6 +15,7 @@ import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { cn } from '@/lib/utils';
+import { uploadToCloudinary } from '@/lib/upload';
 
 interface InteriorHandoverViewProps {
   projectId: string;
@@ -150,18 +151,29 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
 
     try {
       setUpdating(true);
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-
       const uploadToastId = toast.loading('Uploading file...');
-      const uploadRes = await interiorProjectService.uploadHandoverDocumentFile(projectId, formData);
+      
+      let uploadedUrl = '';
+      try {
+        uploadedUrl = await uploadToCloudinary(selectedFile);
+      } catch (cloudErr) {
+        console.warn('Direct Cloudinary upload failed, using backend upload endpoint:', cloudErr);
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        const uploadRes = await interiorProjectService.uploadHandoverDocumentFile(projectId, formData);
+        if (uploadRes.success && uploadRes.data?.url) {
+          uploadedUrl = uploadRes.data.url;
+        } else {
+          throw new Error(uploadRes.message || 'File upload failed');
+        }
+      }
+
       toast.dismiss(uploadToastId);
 
-      if (!uploadRes.success || !uploadRes.data?.url) {
+      if (!uploadedUrl) {
         throw new Error('File upload failed');
       }
 
-      const uploadedUrl = uploadRes.data.url;
       toast.success('Document uploaded!');
 
       const res = await interiorProjectService.updateHandover(projectId, {

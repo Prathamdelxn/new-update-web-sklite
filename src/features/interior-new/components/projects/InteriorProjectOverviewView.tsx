@@ -135,7 +135,7 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
         </div>
 
         <div className="h-full">
-          <Card onClick={() => router.push(`/interior-new/projects/${projectId}/tasks`)} className="cursor-pointer hover:border-[hsl(var(--primary)/0.3)] h-full flex flex-col border border-[hsl(var(--border))]">
+          <Card onClick={() => router.push(`/interior-new/projects/${projectId}/wbs`)} className="cursor-pointer hover:border-[hsl(var(--primary)/0.3)] h-full flex flex-col border border-[hsl(var(--border))]">
             <CardContent className="p-3.5 sm:p-5 flex-1 flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] sm:text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Tasks Status</span>

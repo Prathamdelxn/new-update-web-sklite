@@ -57,27 +57,21 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // Editable lists for the report being generated
+  // Auto-scanned lists for the selected period
   const [completedActivities, setCompletedActivities] = useState<string[]>([]);
   const [delayedActivities, setDelayedActivities] = useState<string[]>([]);
   const [reportRisks, setReportRisks] = useState<string[]>([]);
   const [nextWeekPlan, setNextWeekPlan] = useState<string[]>([]);
 
-  // Temp input states for adding custom items in modal
-  const [newCompleted, setNewCompleted] = useState('');
-  const [newDelayed, setNewDelayed] = useState('');
-  const [newRisk, setNewRisk] = useState('');
-  const [newPlan, setNewPlan] = useState('');
-
   // Load live project data & weekly reports
   const loadData = async () => {
     try {
       setLoading(true);
-      const [projRes, repRes, taskRes, mileRes, riskRes] = await Promise.allSettled([
+      const [projRes, repRes, taskRes, wbsRes, riskRes] = await Promise.allSettled([
         interiorProjectService.getProjectDetails(projectId),
         interiorProjectService.getWeeklyReports(projectId),
         interiorProjectService.getTasks(projectId),
-        interiorProjectService.getMilestones(projectId),
+        interiorProjectService.getWbs(projectId),
         interiorProjectService.getRisks(projectId),
       ]);
 
@@ -89,9 +83,6 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
       }
       if (taskRes.status === 'fulfilled' && taskRes.value?.data) {
         setTasks(taskRes.value.data || []);
-      }
-      if (mileRes.status === 'fulfilled' && mileRes.value?.data) {
-        setMilestones(mileRes.value.data || []);
       }
       if (riskRes.status === 'fulfilled' && riskRes.value?.data) {
         setRisks(riskRes.value.data || []);
@@ -151,23 +142,40 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
     // 1. Completed Tasks in this period
     const done = tasks
       .filter((t) => t.status === 'completed')
-      .map((t) => `${t.name} (${t.packageId?.trade || 'Site Activity'})`);
+      .map((t) => {
+        const pkgName = t.packageId?.name ? `[${t.packageId.name}] ` : '';
+        const assignees = t.assignees?.map((a: any) => `${a.firstName || ''} ${a.lastName || ''}`.trim() || a.name || a.email).filter(Boolean).join(', ');
+        const assigneeStr = assignees ? ` (Assigned: ${assignees})` : '';
+        return `${pkgName}${t.name} (100% Completed)${assigneeStr}`;
+      });
 
-    // 2. Delayed Milestones / Tasks
-    const delayed = milestones
-      .filter((m) => m.status === 'delayed' || (m.dueDate && new Date(m.dueDate) < e && m.status !== 'completed'))
-      .map((m) => `Milestone: ${m.name} [Target Date: ${new Date(m.dueDate).toLocaleDateString('en-IN')}]`);
+    // 2. Delayed / Overdue Tasks
+    const delayed = tasks
+      .filter((t) => t.status !== 'completed' && t.endDate && new Date(t.endDate) < e)
+      .map((t) => {
+        const pkgName = t.packageId?.name ? `[${t.packageId.name}] ` : '';
+        const assignees = t.assignees?.map((a: any) => `${a.firstName || ''} ${a.lastName || ''}`.trim() || a.name || a.email).filter(Boolean).join(', ');
+        const assigneeStr = assignees ? ` • Assigned: ${assignees}` : '';
+        const dueStr = new Date(t.endDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' });
+        return `${pkgName}${t.name} (Overdue: Due ${dueStr}${assigneeStr})`;
+      });
 
     // 3. Open Risks
     const openRisks = risks
       .filter((r) => r.status === 'open')
-      .map((r) => `${r.title || r.description} (${r.severity || 'Medium'} impact)`);
+      .map((r) => `${r.title || r.description} (${r.severity || 'Medium'} severity)`);
 
     // 4. Next Week Target Plan
     const upcoming = tasks
       .filter((t) => t.status === 'todo' || (t.status === 'in_progress' && (t.progress || 0) < 100))
-      .slice(0, 5)
-      .map((t) => `Execute ${t.name} [${t.packageId?.trade || 'Trade'}]`);
+      .slice(0, 10)
+      .map((t) => {
+        const pkgName = t.packageId?.name ? `[${t.packageId.name}] ` : '';
+        const assignees = t.assignees?.map((a: any) => `${a.firstName || ''} ${a.lastName || ''}`.trim() || a.name || a.email).filter(Boolean).join(', ');
+        const assigneeStr = assignees ? ` • Assigned: ${assignees}` : '';
+        const progStr = t.progress ? ` (${t.progress}% ongoing)` : ' (Scheduled)';
+        return `Execute ${pkgName}${t.name}${progStr}${assigneeStr}`;
+      });
 
     setCompletedActivities(done.length > 0 ? done : ['Site initial inspection & work area layout verification']);
     setDelayedActivities(delayed.length > 0 ? delayed : []);
@@ -275,8 +283,8 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
         </div>
 
         <Button onClick={handleOpenModal} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer">
-          <Plus className="w-4 h-4" />
-          Compile Weekly Report
+          <Sparkles className="w-4 h-4" />
+          Generate Weekly Report
         </Button>
       </div>
 
@@ -291,13 +299,13 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
           <div className="mx-auto w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 mb-4 border border-blue-100">
             <FileSpreadsheet className="w-7 h-7" />
           </div>
-          <h3 className="text-base font-bold text-[hsl(var(--foreground))] mb-1">No Weekly Reports Compiled Yet</h3>
+          <h3 className="text-base font-bold text-[hsl(var(--foreground))] mb-1">No Weekly Reports Generated Yet</h3>
           <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-md mx-auto mb-6">
             Auto-aggregate this week&apos;s finished tasks, delayed milestones, identified risks, and next week plan into an official executive WPR sheet.
           </p>
-          <Button onClick={handleOpenModal} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white">
-            <Plus className="w-4 h-4" />
-            Compile First Weekly Report
+          <Button onClick={handleOpenModal} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer">
+            <Sparkles className="w-4 h-4" />
+            Generate First Weekly Report
           </Button>
         </Card>
       ) : (
@@ -551,7 +559,7 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-blue-600" />
-                        Weekly Timeline Period
+                        Select Weekly Timeline Period
                       </span>
                       <div className="flex items-center gap-1.5">
                         <button
@@ -580,7 +588,7 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1">
-                        <label className="text-[11px] font-semibold text-slate-700">Week Start Date</label>
+                        <label className="text-[11px] font-semibold text-slate-700">Week Start Date *</label>
                         <Input
                           required
                           type="date"
@@ -592,7 +600,7 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[11px] font-semibold text-slate-700">Week End Date</label>
+                        <label className="text-[11px] font-semibold text-slate-700">Week End Date *</label>
                         <Input
                           required
                           type="date"
@@ -606,236 +614,56 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
                     </div>
                   </div>
 
-                  {/* 1. Completed Activities */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                        1. Completed Activities & Milestones ({completedActivities.length})
-                      </label>
-                    </div>
+                  {/* Auto-Generation Live Overview Card */}
+                  <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
                     <div className="flex items-center gap-2">
-                      <Input
-                        placeholder="Add completed task or milestone..."
-                        value={newCompleted}
-                        onChange={(e) => setNewCompleted(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && newCompleted.trim()) {
-                            e.preventDefault();
-                            setCompletedActivities([...completedActivities, newCompleted.trim()]);
-                            setNewCompleted('');
-                          }
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (newCompleted.trim()) {
-                            setCompletedActivities([...completedActivities, newCompleted.trim()]);
-                            setNewCompleted('');
-                          }
-                        }}
-                        disabled={!newCompleted.trim()}
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </Button>
+                      <Sparkles className="w-4 h-4 text-blue-600" />
+                      <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                        Live Auto-Generation Scope
+                      </h4>
                     </div>
-                    <div className="space-y-1 max-h-32 overflow-y-auto">
-                      {completedActivities.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-emerald-50/50 border border-emerald-100 text-xs">
-                          <span className="truncate flex-1 font-medium text-emerald-950">{item}</span>
-                          <button
-                            type="button"
-                            onClick={() => setCompletedActivities(completedActivities.filter((_, i) => i !== idx))}
-                            className="p-1 text-slate-400 hover:text-red-600 rounded cursor-pointer"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                    <p className="text-xs text-slate-500">
+                      The system will automatically scan and compile the report directly from your live project WBS, completed tasks, overdue items, active risks, and upcoming schedule for this date range:
+                    </p>
 
-                  {/* 2. Delayed Milestones */}
-                  <div className="space-y-2 pt-2 border-t border-slate-100">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-rose-800 uppercase tracking-wider flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-rose-600" />
-                        2. Delayed Milestones & Critical Blockers ({delayedActivities.length})
-                      </label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        placeholder="Add milestone delay or schedule blocker..."
-                        value={newDelayed}
-                        onChange={(e) => setNewDelayed(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && newDelayed.trim()) {
-                            e.preventDefault();
-                            setDelayedActivities([...delayedActivities, newDelayed.trim()]);
-                            setNewDelayed('');
-                          }
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (newDelayed.trim()) {
-                            setDelayedActivities([...delayedActivities, newDelayed.trim()]);
-                            setNewDelayed('');
-                          }
-                        }}
-                        disabled={!newDelayed.trim()}
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                    <div className="space-y-1 max-h-32 overflow-y-auto">
-                      {delayedActivities.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-rose-50/50 border border-rose-100 text-xs">
-                          <span className="truncate flex-1 font-medium text-rose-950">{item}</span>
-                          <button
-                            type="button"
-                            onClick={() => setDelayedActivities(delayedActivities.filter((_, i) => i !== idx))}
-                            className="p-1 text-slate-400 hover:text-red-600 rounded cursor-pointer"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* 3. Identified Risks */}
-                  <div className="space-y-2 pt-2 border-t border-slate-100">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-                        3. Identified Risks & Quality Notes ({reportRisks.length})
-                      </label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        placeholder="Add site risk, procurement bottleneck, or design delay..."
-                        value={newRisk}
-                        onChange={(e) => setNewRisk(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && newRisk.trim()) {
-                            e.preventDefault();
-                            setReportRisks([...reportRisks, newRisk.trim()]);
-                            setNewRisk('');
-                          }
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (newRisk.trim()) {
-                            setReportRisks([...reportRisks, newRisk.trim()]);
-                            setNewRisk('');
-                          }
-                        }}
-                        disabled={!newRisk.trim()}
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                    <div className="space-y-1 max-h-32 overflow-y-auto">
-                      {reportRisks.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-amber-50/50 border border-amber-100 text-xs">
-                          <span className="truncate flex-1 font-medium text-amber-950">{item}</span>
-                          <button
-                            type="button"
-                            onClick={() => setReportRisks(reportRisks.filter((_, i) => i !== idx))}
-                            className="p-1 text-slate-400 hover:text-red-600 rounded cursor-pointer"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* 4. Next Week Target Plan */}
-                  <div className="space-y-2 pt-2 border-t border-slate-100">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-blue-800 uppercase tracking-wider flex items-center gap-1.5">
-                        <Target className="w-3.5 h-3.5 text-blue-600" />
-                        4. Next Week Planned Target Scope ({nextWeekPlan.length})
-                      </label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        placeholder="Add targeted work package or milestone for next week..."
-                        value={newPlan}
-                        onChange={(e) => setNewPlan(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && newPlan.trim()) {
-                            e.preventDefault();
-                            setNextWeekPlan([...nextWeekPlan, newPlan.trim()]);
-                            setNewPlan('');
-                          }
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (newPlan.trim()) {
-                            setNextWeekPlan([...nextWeekPlan, newPlan.trim()]);
-                            setNewPlan('');
-                          }
-                        }}
-                        disabled={!newPlan.trim()}
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                    <div className="space-y-1 max-h-32 overflow-y-auto">
-                      {nextWeekPlan.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-blue-50/50 border border-blue-100 text-xs">
-                          <span className="truncate flex-1 font-medium text-blue-950">{item}</span>
-                          <button
-                            type="button"
-                            onClick={() => setNextWeekPlan(nextWeekPlan.filter((_, i) => i !== idx))}
-                            className="p-1 text-slate-400 hover:text-red-600 rounded cursor-pointer"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ))}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                      <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-100 text-center">
+                        <p className="text-[10px] uppercase font-bold text-emerald-700">Completed</p>
+                        <p className="text-sm font-extrabold text-emerald-950 mt-0.5">
+                          {completedActivities.length} tasks
+                        </p>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-100 text-center">
+                        <p className="text-[10px] uppercase font-bold text-rose-700">Delays</p>
+                        <p className="text-sm font-extrabold text-rose-950 mt-0.5">
+                          {delayedActivities.length} overdue
+                        </p>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-100 text-center">
+                        <p className="text-[10px] uppercase font-bold text-amber-700">Risks</p>
+                        <p className="text-sm font-extrabold text-amber-950 mt-0.5">
+                          {reportRisks.length} flagged
+                        </p>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-blue-50 border border-blue-100 text-center">
+                        <p className="text-[10px] uppercase font-bold text-blue-700">Next Plan</p>
+                        <p className="text-sm font-extrabold text-blue-950 mt-0.5">
+                          {nextWeekPlan.length} targets
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Modal Footer */}
-                <div className="flex items-center justify-between p-4 border-t border-slate-200 bg-slate-50">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-9 text-xs text-blue-600 border-blue-200 hover:bg-blue-50"
-                    onClick={() => autoScanTimeline()}
-                  >
-                    <Sparkles className="w-3.5 h-3.5 mr-1" />
-                    Re-scan Live Project
+                <div className="flex items-center justify-end gap-2 p-4 border-t border-slate-200 bg-slate-50">
+                  <Button variant="outline" type="button" size="sm" onClick={() => setIsModalOpen(false)}>
+                    Cancel
                   </Button>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" type="button" size="sm" onClick={() => setIsModalOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" size="sm" disabled={generating} className="bg-blue-600 hover:bg-blue-700 text-white">
-                      {generating && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                      Save & Compile Report
-                    </Button>
-                  </div>
+                  <Button type="submit" size="sm" disabled={generating} className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5 cursor-pointer">
+                    {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    <span>Generate Weekly Report</span>
+                  </Button>
                 </div>
               </form>
             </motion.div>

@@ -117,23 +117,32 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
     const liveTasks = loadedTasks || tasks;
     const liveMoms = loadedMoms || moms;
 
-    // Active/Ongoing tasks for Today's Labour & Works
-    const activeTasks = liveTasks.filter((t: any) => t.status === 'in_progress' || t.status === 'todo');
-    const liveLabour = activeTasks.length > 0
-      ? activeTasks.map((t: any) => {
-          const trade = t.packageId?.trade || t.packageId?.name || 'General Trade';
+    // All project tasks mapped to WBS, Assignees, and Execution Status
+    const liveLabour = liveTasks.length > 0
+      ? liveTasks.map((t: any) => {
+          const wbsName = t.packageId?.name ? `[${t.packageId.name}] ` : '';
+          const assigneesList = t.assignees && t.assignees.length > 0
+            ? t.assignees.map((a: any) => `${a.firstName || ''} ${a.lastName || ''}`.trim() || a.name || a.email).filter(Boolean).join(', ')
+            : 'Unassigned';
+
           const subtaskCount = t.subtasks?.length || 0;
           const completedSubtasks = t.subtasks?.filter((s: any) => s.completed).length || 0;
-          const ongoingWork = subtaskCount > 0
-            ? `${completedSubtasks}/${subtaskCount} steps done (${t.subtasks.map((s: any) => s.title).slice(0, 2).join(', ')})`
+          const workDetail = subtaskCount > 0
+            ? `${completedSubtasks}/${subtaskCount} subtasks done (${t.subtasks.map((s: any) => s.title).slice(0, 2).join(', ')})`
             : t.description || t.name;
 
+          const statusStr = t.status === 'completed'
+            ? 'Completed (100%)'
+            : t.status === 'in_progress'
+            ? `In Progress (${t.progress || 0}%)`
+            : 'Scheduled (0%)';
+
           return {
-            agencyActivity: `${trade} - ${t.name}`,
+            agencyActivity: `${wbsName}${t.name}`,
             skilled: Math.max(1, t.assignees?.length || 1),
             unskilled: 1,
-            currentWork: ongoingWork,
-            statusAsPerBarChart: `${t.progress || 0}% (${t.status === 'in_progress' ? 'In Progress' : 'Scheduled'})`,
+            currentWork: `Assigned: ${assigneesList} • ${workDetail}`,
+            statusAsPerBarChart: statusStr,
           };
         })
       : [
@@ -143,13 +152,20 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
     // Upcoming / In-progress tasks for Tomorrow's Planning
     const upcomingTasks = liveTasks.filter((t: any) => t.status === 'todo' || (t.status === 'in_progress' && (t.progress || 0) < 100));
     const liveTomorrow = upcomingTasks.length > 0
-      ? upcomingTasks.slice(0, 4).map((t: any) => ({
-          agencyActivity: `${t.packageId?.trade || 'Site Trade'} - ${t.name}`,
-          skilled: Math.max(1, t.assignees?.length || 1),
-          unskilled: 1,
-          targetedWorks: `Continue execution for ${t.name}`,
-          remarkConcern: 'Materials and site clearances verified',
-        }))
+      ? upcomingTasks.slice(0, 8).map((t: any) => {
+          const wbsName = t.packageId?.name ? `[${t.packageId.name}] ` : '';
+          const assigneesList = t.assignees && t.assignees.length > 0
+            ? t.assignees.map((a: any) => `${a.firstName || ''} ${a.lastName || ''}`.trim() || a.name || a.email).filter(Boolean).join(', ')
+            : 'Team';
+
+          return {
+            agencyActivity: `${wbsName}${t.name}`,
+            skilled: Math.max(1, t.assignees?.length || 1),
+            unskilled: 1,
+            targetedWorks: `Assigned to ${assigneesList} • Continue site works for ${wbsName}${t.name}`,
+            remarkConcern: 'Materials and site clearances verified',
+          };
+        })
       : [
           { agencyActivity: '', skilled: 1, unskilled: 0, targetedWorks: '', remarkConcern: '' },
         ];
@@ -736,19 +752,31 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                   {/* TAB 1: LABOUR REPORT & ONGOING WORK STATUS */}
                   {activeFormTab === 'labour' && (
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
                         <div>
                           <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))]">
                             Labour Report & Ongoing Work Status
                           </h4>
                           <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                            Track agency activity, skilled / unskilled headcount, and ongoing task status.
+                            Auto-aligned with WBS elements, assigned members, and live activity completion status.
                           </p>
                         </div>
-                        <Button type="button" variant="outline" size="sm" onClick={addLabourRow} className="gap-1 text-xs">
-                          <Plus className="w-3.5 h-3.5" />
-                          Add Row
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => populateFromLiveProject()}
+                            className="gap-1.5 text-xs text-blue-600 border-blue-200 bg-blue-50/50 hover:bg-blue-50"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                            Auto-Fill from Project
+                          </Button>
+                          <Button type="button" variant="outline" size="sm" onClick={addLabourRow} className="gap-1 text-xs">
+                            <Plus className="w-3.5 h-3.5" />
+                            Add Row
+                          </Button>
+                        </div>
                       </div>
 
                       <div className="space-y-3">
@@ -770,12 +798,62 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                               )}
                             </div>
 
+                            {/* Quick Select from Project Tasks */}
+                            {tasks.length > 0 && (
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
+                                  Link to Project Activity / WBS
+                                </label>
+                                <select
+                                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-blue-200 bg-blue-50/30 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                  onChange={(e) => {
+                                    const tId = e.target.value;
+                                    if (!tId) return;
+                                    const t = tasks.find((item: any) => String(item._id || item.id) === tId);
+                                    if (!t) return;
+                                    const wbsName = t.packageId?.name ? `[${t.packageId.name}] ` : '';
+                                    const assigneesList = t.assignees?.map((a: any) => `${a.firstName || ''} ${a.lastName || ''}`.trim() || a.name || a.email).filter(Boolean).join(', ') || 'Unassigned';
+                                    const subtaskCount = t.subtasks?.length || 0;
+                                    const completedSubtasks = t.subtasks?.filter((s: any) => s.completed).length || 0;
+                                    const workDetail = subtaskCount > 0
+                                      ? `${completedSubtasks}/${subtaskCount} subtasks done`
+                                      : t.description || t.name;
+
+                                    const statusStr = t.status === 'completed'
+                                      ? 'Completed (100%)'
+                                      : t.status === 'in_progress'
+                                      ? `In Progress (${t.progress || 0}%)`
+                                      : 'To Do (0%)';
+
+                                    const updated = [...labourReports];
+                                    updated[idx].agencyActivity = `${wbsName}${t.name}`;
+                                    updated[idx].currentWork = `Assigned: ${assigneesList} • ${workDetail}`;
+                                    updated[idx].statusAsPerBarChart = statusStr;
+                                    updated[idx].skilled = Math.max(1, t.assignees?.length || 1);
+                                    setLabourReports(updated);
+                                  }}
+                                >
+                                  <option value="">Choose an existing activity to auto-fill...</option>
+                                  {tasks.map((t: any) => {
+                                    const wbsName = t.packageId?.name ? `[${t.packageId.name}] ` : '';
+                                    const statusLabel = t.status === 'completed' ? 'Completed' : t.status === 'in_progress' ? 'In Progress' : 'To Do';
+                                    const assigneeLabel = t.assignees?.[0] ? ` • ${t.assignees[0].firstName || t.assignees[0].name || ''}` : '';
+                                    return (
+                                      <option key={t._id} value={t._id}>
+                                        {wbsName}{t.name} ({statusLabel}{assigneeLabel})
+                                      </option>
+                                    );
+                                  })}
+                                </select>
+                              </div>
+                            )}
+
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                               <div className="sm:col-span-2 space-y-1">
-                                <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">Agency - Activity *</label>
+                                <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">WBS Element & Activity *</label>
                                 <Input
                                   required
-                                  placeholder="e.g. Electrical - Conduit Piping / Carpentry"
+                                  placeholder="e.g. [Kitchen Furniture] Base Cabinets Assembly"
                                   value={row.agencyActivity}
                                   onChange={(e) => updateLabourRow(idx, 'agencyActivity', e.target.value)}
                                 />
@@ -806,18 +884,18 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                               <div className="sm:col-span-2 space-y-1">
-                                <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">Current Ongoing Work *</label>
+                                <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">Current Work / Assignees *</label>
                                 <Input
                                   required
-                                  placeholder="e.g. Living room wall chasing, bedroom conduit pull"
+                                  placeholder="e.g. Assigned: John Doe • Living room cabinet installation"
                                   value={row.currentWork}
                                   onChange={(e) => updateLabourRow(idx, 'currentWork', e.target.value)}
                                 />
                               </div>
                               <div className="space-y-1">
-                                <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">Status as per Bar Chart</label>
+                                <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">Completion Status</label>
                                 <Input
-                                  placeholder="e.g. On Track / 70% / Delayed"
+                                  placeholder="e.g. Completed (100%) / In Progress (60%)"
                                   value={row.statusAsPerBarChart}
                                   onChange={(e) => updateLabourRow(idx, 'statusAsPerBarChart', e.target.value)}
                                 />
@@ -966,11 +1044,50 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                               )}
                             </div>
 
+                            {/* Quick Select from Project Tasks */}
+                            {tasks.length > 0 && (
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
+                                  Link to Project Activity / WBS
+                                </label>
+                                <select
+                                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-blue-200 bg-blue-50/30 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                  onChange={(e) => {
+                                    const tId = e.target.value;
+                                    if (!tId) return;
+                                    const t = tasks.find((item: any) => String(item._id || item.id) === tId);
+                                    if (!t) return;
+                                    const wbsName = t.packageId?.name ? `[${t.packageId.name}] ` : '';
+                                    const assigneesList = t.assignees?.map((a: any) => `${a.firstName || ''} ${a.lastName || ''}`.trim() || a.name || a.email).filter(Boolean).join(', ') || 'Team';
+                                    
+                                    const updated = [...tomorrowPlanning];
+                                    updated[idx].agencyActivity = `${wbsName}${t.name}`;
+                                    updated[idx].targetedWorks = `Assigned to ${assigneesList} • Continue site works for ${wbsName}${t.name}`;
+                                    updated[idx].remarkConcern = 'Materials and site clearances verified';
+                                    updated[idx].skilled = Math.max(1, t.assignees?.length || 1);
+                                    setTomorrowPlanning(updated);
+                                  }}
+                                >
+                                  <option value="">Choose an upcoming activity to auto-fill...</option>
+                                  {tasks.map((t: any) => {
+                                    const wbsName = t.packageId?.name ? `[${t.packageId.name}] ` : '';
+                                    const statusLabel = t.status === 'completed' ? 'Completed' : t.status === 'in_progress' ? 'In Progress' : 'To Do';
+                                    const assigneeLabel = t.assignees?.[0] ? ` • ${t.assignees[0].firstName || t.assignees[0].name || ''}` : '';
+                                    return (
+                                      <option key={t._id} value={t._id}>
+                                        {wbsName}{t.name} ({statusLabel}{assigneeLabel})
+                                      </option>
+                                    );
+                                  })}
+                                </select>
+                              </div>
+                            )}
+
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                               <div className="sm:col-span-2 space-y-1">
                                 <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">Agency - Activity</label>
                                 <Input
-                                  placeholder="e.g. POP / False Ceiling Framing"
+                                  placeholder="e.g. [False Ceiling] GI Channel Fixing"
                                   value={row.agencyActivity}
                                   onChange={(e) => updateTomorrowPlanningRow(idx, 'agencyActivity', e.target.value)}
                                 />

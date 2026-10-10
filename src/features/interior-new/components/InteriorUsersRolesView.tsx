@@ -107,7 +107,7 @@ const ALL_MODULES = [
   // Execution & Project Modules
   { key: 'projects',         label: 'Project Config',            category: 'Project Execution' },
   { key: 'wbs',              label: 'WBS Hierarchy',             category: 'Project Execution' },
-  { key: 'tasks',            label: 'Tasks',                     category: 'Project Execution' },
+  { key: 'tasks',            label: 'Activity / Task',           category: 'Project Execution' },
   { key: 'milestones',       label: 'Milestones',                category: 'Project Execution' },
   { key: 'dpr',              label: 'Daily Progress',            category: 'Project Execution' },
   { key: 'weekly_reports',   label: 'Weekly Reports',            category: 'Project Execution' },

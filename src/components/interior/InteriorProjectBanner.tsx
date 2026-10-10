@@ -28,11 +28,10 @@ const CATEGORIES = (projectId: string) => [
     items: [
       { label: 'Overview', href: `/interior-new/projects/${projectId}`, exact: true },
       { label: 'File Management', href: `/interior-new/projects/${projectId}/filemgt` },
-            { label: 'Site Details', href: `/interior-new/projects/${projectId}/sitedetails` },
-
+      { label: 'Site Details', href: `/interior-new/projects/${projectId}/sitedetails` },
       { label: 'Quotation', href: `/interior-new/projects/${projectId}/quotation` },
-            { label: 'Team & Members', href: `/interior-new/projects/${projectId}/members` },
-
+      { label: 'Confirm Order', href: `/interior-new/projects/${projectId}/confirm-order` },
+      { label: 'Team & Members', href: `/interior-new/projects/${projectId}/members` },
     ],
   },
    {
@@ -49,8 +48,8 @@ const CATEGORIES = (projectId: string) => [
     icon: '📐',
     items: [
       { label: 'WBS Hierarchy', href: `/interior-new/projects/${projectId}/wbs` },
+      { label: 'Activity / Tasks', href: `/interior-new/projects/${projectId}/tasks` },
       { label: 'Milestones', href: `/interior-new/projects/${projectId}/milestones` },
-      { label: 'Tasks', href: `/interior-new/projects/${projectId}/tasks` },
       { label: 'DPR Log', href: `/interior-new/projects/${projectId}/dpr` },
       { label: 'Weekly Reports', href: `/interior-new/projects/${projectId}/weekly-reports` },
       { label: 'MOM', href: `/interior-new/projects/${projectId}/mom` },

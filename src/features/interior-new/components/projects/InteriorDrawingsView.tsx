@@ -32,7 +32,8 @@ import {
   Download,
   Check,
   AlertCircle,
-  UploadCloud
+  UploadCloud,
+  Pin
 } from 'lucide-react';
 import { Button, Input, Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
@@ -663,6 +664,12 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                     <span className="px-1.5 py-0.5 rounded-lg text-[9px] font-mono font-bold bg-black/60 text-white backdrop-blur-md border border-white/10">
                       {dwg.drawingNumber}
                     </span>
+                    {dwg.annotations && dwg.annotations.length > 0 && (
+                      <span className="px-1.5 py-0.5 rounded-lg text-[9px] font-mono font-bold bg-amber-500/90 text-white backdrop-blur-md border border-amber-400/30 flex items-center gap-0.5 shadow-xs">
+                        <Pin size={9} className="fill-white" />
+                        <span>{dwg.annotations.length}</span>
+                      </span>
+                    )}
                   </div>
 
                   <div className="absolute top-2.5 right-2.5">

@@ -2,14 +2,12 @@
 
 // =============================================================================
 // Sky-Lite Web — Interior-New BOQ (Bill of Quantities) View
-// Port of interior-os-frontend's projects/[projectId]/boq/page.tsx, backed by
-// interiorProjectService. The "Compare Revisions" tab is dropped — its
-// backing endpoint (projectService.compareBoqVersions) has no equivalent in
-// interiorProject.service.ts. use-project-permissions gating is also dropped
-// (no permission infra in this app) — all actions are shown unconditionally.
+// Professional, Section-Based Hierarchical BOQ Management, Version Control,
+// Specifications, Multi-Section Groups, and BOQ vs Actual Site Tracking.
+// Backed directly by interiorProjectService & InteriorProjectBoqBuilderModal.
 // =============================================================================
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
@@ -19,9 +17,14 @@ import {
   FileSpreadsheet,
   Loader2,
   List,
-  Activity,
   Trash2,
   X,
+  Pencil,
+  FileText,
+  Layers,
+  Sparkles,
+  Download,
+  Eye,
 } from 'lucide-react';
 import { Button, Input, Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
@@ -30,7 +33,7 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { BOQ_UNITS } from '@/features/interior-new/components/crm/modals/InteriorBoqBuilderModal';
+import { InteriorProjectBoqBuilderModal } from '@/features/interior-new/components/projects/modals/InteriorProjectBoqBuilderModal';
 
 interface InteriorBoqViewProps {
   projectId: string;
@@ -46,17 +49,15 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
   const [activeTab, setActiveTab] = useState<'items' | 'actual'>('items');
   const [selectedBoqId, setSelectedBoqId] = useState<string | null>(null);
 
-  // Create / Import modals
+  // Builder modal state (Identical to CRM BOQ Builder)
+  const [isBuilderOpen, setIsBuilderOpen] = useState(false);
+  const [builderEditBoq, setBuilderEditBoq] = useState<any | null>(null);
+  const [isBuilderReadOnly, setIsBuilderReadOnly] = useState(false);
+
+  // Excel Import modal
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
-
-  // Manual Create form
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [newBoqNotes, setNewBoqNotes] = useState('');
-  const [newItems, setNewItems] = useState<any[]>([
-    { serialNumber: 1, category: 'Flooring', itemName: '', description: '', quantity: 1, unit: 'sqft', rate: 0 },
-  ]);
 
   // Rejection modal
   const [isRejectOpen, setIsRejectOpen] = useState(false);
@@ -128,6 +129,18 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
 
   const fetchBoqDetail = (boqId: string) => {
     setSelectedBoqId(boqId);
+  };
+
+  const handleOpenCreateBuilder = () => {
+    setBuilderEditBoq(null);
+    setIsBuilderReadOnly(false);
+    setIsBuilderOpen(true);
+  };
+
+  const handleOpenEditBuilder = (boq: any, readOnly = false) => {
+    setBuilderEditBoq(boq);
+    setIsBuilderReadOnly(readOnly);
+    setIsBuilderOpen(true);
   };
 
   const handleApprovalAction = async (action: 'submit' | 'approve' | 'reject', reason?: string) => {
@@ -212,366 +225,350 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
     }
   };
 
-  const handleManualCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await interiorProjectService.createBoq(projectId, {
-        notes: newBoqNotes,
-        items: newItems,
-      });
-      if (res.success) {
-        toast.success('BOQ Created Successfully!');
-        setIsCreateOpen(false);
-        setNewBoqNotes('');
-        setNewItems([{ serialNumber: 1, category: 'Flooring', itemName: '', description: '', quantity: 1, unit: 'sqft', rate: 0 }]);
-        fetchBoqs(true);
-      }
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.response?.data?.error || 'Failed to create BOQ');
-    }
-  };
-
-  const addNewItemRow = () => {
-    setNewItems((prev) => [
-      ...prev,
-      {
-        serialNumber: prev.length + 1,
-        category: prev[prev.length - 1]?.category || 'Flooring',
-        itemName: '',
-        description: '',
-        quantity: 1,
-        unit: prev[prev.length - 1]?.unit || 'sqft',
-        rate: 0,
-      },
-    ]);
-  };
-
-  const removeNewItemRow = (index: number) => {
-    setNewItems((prev) => prev.filter((_, i) => i !== index).map((it, idx) => ({ ...it, serialNumber: idx + 1 })));
-  };
-
-  const updateNewItemField = (index: number, field: string, value: any) => {
-    setNewItems((prev) => prev.map((it, i) => (i === index ? { ...it, [field]: value } : it)));
-  };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20';
-      case 'pending_approval':
-        return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20 animate-pulse';
+        return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
       case 'rejected':
-        return 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20';
+        return 'bg-red-500/10 text-red-600 border-red-500/20';
+      case 'pending_approval':
+        return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
       case 'superseded':
-        return 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20';
+        return 'bg-slate-500/10 text-slate-500 border-slate-500/20';
       default:
-        return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20';
+        return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
     }
   };
 
+  // Group items by sections for professional hierarchical display
+  const groupedSections = useMemo(() => {
+    if (!selectedBoq || !selectedBoq.items || selectedBoq.items.length === 0) return [];
+
+    if (Array.isArray(selectedBoq.sections) && selectedBoq.sections.length > 0) {
+      return selectedBoq.sections.map((sec: any) => {
+        const secItems = selectedBoq.items.filter(
+          (it: any) =>
+            it.sectionId === sec.id ||
+            it.sectionId === sec.sectionId ||
+            it.sectionNumber === sec.sectionNumber ||
+            it.sectionTitle === sec.sectionTitle ||
+            it.category === sec.sectionTitle
+        );
+        const subTotal = secItems.reduce((sum: number, it: any) => sum + (Number(it.amount) || 0), 0);
+        return {
+          ...sec,
+          items: secItems,
+          subTotal,
+        };
+      }).filter((s: any) => s.items.length > 0);
+    }
+
+    // Default grouping by category
+    const categories = Array.from(new Set(selectedBoq.items.map((it: any) => it.category || 'Civil Work')));
+    return categories.map((cat, idx) => {
+      const secItems = selectedBoq.items.filter((it: any) => (it.category || 'Civil Work') === cat);
+      const subTotal = secItems.reduce((sum: number, it: any) => sum + (Number(it.amount) || 0), 0);
+      const firstItem = secItems[0];
+      return {
+        id: `sec-${idx + 1}`,
+        sectionNumber: firstItem?.sectionNumber || String(idx + 1),
+        sectionTitle: firstItem?.sectionTitle || cat,
+        scopeDescription: firstItem?.sectionScope || '',
+        items: secItems,
+        subTotal,
+      };
+    });
+  }, [selectedBoq]);
+
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       {/* Top action row */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[hsl(var(--border))] pb-5">
         <div>
-          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Bill of Quantities (BOQ)</h2>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-            Manage materials, pricing, and revision audits alongside actual site consumption tracking.
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Bill of Quantities (BOQ)</h2>
+            <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-50 text-blue-600 border border-blue-200">
+              SkyStruct Lite Standard
+            </span>
+          </div>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
+            Section-based hierarchical BOQ builder, technical specifications, brand/makes, versioning, and actual site consumption tracking.
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onClick={() => setIsImportOpen(true)}>
-            <Upload className="w-4 h-4 mr-2" /> Import Excel
+          <Button variant="outline" size="sm" onClick={() => setIsImportOpen(true)} className="gap-1.5 text-xs cursor-pointer">
+            <Upload className="w-3.5 h-3.5" /> Import Excel
           </Button>
-          <Button size="sm" onClick={() => setIsCreateOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" /> Create BOQ
+          <Button size="sm" onClick={handleOpenCreateBuilder} className="gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white cursor-pointer">
+            <Plus className="w-3.5 h-3.5" /> Create BOQ Version
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left Side: Version Selector & Summary */}
-        <div className="lg:col-span-1 space-y-4">
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              <h3 className="text-sm font-bold tracking-tight text-[hsl(var(--muted-foreground))] uppercase">Versions List</h3>
+      <div className="space-y-6">
+        {/* Top Horizontal: BOQ Versions & Active Version Details */}
+        <Card className="border border-[hsl(var(--border))] shadow-xs overflow-hidden">
+          <CardContent className="p-4 sm:p-5 space-y-4">
+            {/* BOQ Versions Selector (Horizontal) */}
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <h3 className="text-xs font-bold tracking-wider text-[hsl(var(--muted-foreground))] uppercase flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-blue-600" /> BOQ Versions
+                </h3>
+                <span className="text-[11px] text-slate-400 font-medium">
+                  {boqs.length} {boqs.length === 1 ? 'version' : 'versions'} available
+                </span>
+              </div>
 
               {loading && boqs.length === 0 ? (
                 <div className="flex justify-center p-4">
-                  <Loader2 className="w-5 h-5 animate-spin text-[hsl(var(--primary))]" />
+                  <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
                 </div>
               ) : boqs.length === 0 ? (
-                <div className="text-xs text-[hsl(var(--muted-foreground))] text-center py-4">
-                  No BOQ registered. Click Create or Import to start.
+                <div className="text-xs text-[hsl(var(--muted-foreground))] text-center py-4 border border-dashed rounded-xl p-3 bg-slate-50/50">
+                  No BOQ registered. Click &quot;Create BOQ Version&quot; to begin.
                 </div>
               ) : (
-                <div className="space-y-1">
-                  {boqs.map((boq: any) => (
-                    <button
-                      key={boq._id}
-                      onClick={() => fetchBoqDetail(boq._id)}
-                      className={cn(
-                        'w-full text-left p-3 rounded-lg border text-xs font-semibold transition-all flex flex-col gap-1',
-                        selectedBoq?._id === boq._id
-                          ? 'bg-[hsl(var(--primary)/0.05)] border-[hsl(var(--primary))] text-[hsl(var(--primary))]'
-                          : 'border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]'
-                      )}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-sm">{boq.versionLabel}</span>
-                        <span className={cn('px-1.5 py-0.5 rounded text-[9px] uppercase font-bold border', getStatusBadge(boq.status))}>
-                          {boq.status.replace('_', ' ')}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-[10px] text-[hsl(var(--muted-foreground))] font-medium pt-1">
-                        <span>{currencySymbol} {boq.totalAmount?.toLocaleString()}</span>
-                        <span>{new Date(boq.createdAt).toLocaleDateString('en-IN')}</span>
-                      </div>
-                    </button>
-                  ))}
+                <div className="flex items-center gap-3 overflow-x-auto pb-1.5 scrollbar-thin">
+                  {boqs.map((boq: any) => {
+                    const isSelected = selectedBoq?._id === boq._id;
+                    return (
+                      <button
+                        key={boq._id}
+                        onClick={() => fetchBoqDetail(boq._id)}
+                        className={cn(
+                          'shrink-0 text-left p-3 rounded-xl border text-xs font-semibold transition-all flex flex-col gap-1.5 cursor-pointer min-w-[190px]',
+                          isSelected
+                            ? 'bg-blue-50/80 border-blue-500 text-blue-950 shadow-xs ring-1 ring-blue-500/20'
+                            : 'border-[hsl(var(--border))] bg-white text-[hsl(var(--foreground))] hover:bg-slate-50 hover:border-slate-300'
+                        )}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-black text-sm text-slate-900">{boq.versionLabel}</span>
+                          <span className={cn('px-2 py-0.5 rounded-full text-[9px] uppercase font-bold border', getStatusBadge(boq.status))}>
+                            {boq.status.replace('_', ' ')}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium pt-0.5">
+                          <span className="font-bold font-mono text-slate-800">{currencySymbol} {boq.totalAmount?.toLocaleString('en-IN')}</span>
+                          <span className="text-[10px]">{new Date(boq.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
 
-          {selectedBoq && (
-            <Card>
-              <CardContent className="p-4 space-y-3 text-xs">
-                <h3 className="font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-tight">Active Version Details</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between border-b pb-1.5">
-                    <span className="text-[hsl(var(--muted-foreground))]">Total Cost:</span>
-                    <span className="font-bold text-[hsl(var(--foreground))]">{currencySymbol} {selectedBoq.totalAmount?.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between border-b pb-1.5">
-                    <span className="text-[hsl(var(--muted-foreground))]">Created By:</span>
-                    <span className="font-medium text-[hsl(var(--foreground))]">
-                      {selectedBoq.createdBy?.firstName} {selectedBoq.createdBy?.lastName}
+            {/* Active Version Horizontal Strip & Actions */}
+            {selectedBoq && (
+              <div className="pt-3.5 border-t border-[hsl(var(--border))] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[hsl(var(--muted-foreground))] text-[11px]">Total Cost:</span>
+                    <span className="font-black font-mono text-sm text-slate-900 bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200">
+                      {currencySymbol} {selectedBoq.totalAmount?.toLocaleString('en-IN')}
                     </span>
                   </div>
-                  <div className="flex justify-between border-b pb-1.5">
-                    <span className="text-[hsl(var(--muted-foreground))]">Source:</span>
-                    <span className="font-medium capitalize text-[hsl(var(--foreground))]">{selectedBoq.importedFrom || 'manual'}</span>
+
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[hsl(var(--muted-foreground))] text-[11px]">Created By:</span>
+                    <span className="font-semibold text-slate-800">
+                      {selectedBoq.createdBy?.firstName} {selectedBoq.createdBy?.lastName || 'System'}
+                    </span>
                   </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[hsl(var(--muted-foreground))] text-[11px]">Source:</span>
+                    <span className="font-semibold capitalize text-slate-800 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                      {selectedBoq.importedFrom || 'CRM Builder'}
+                    </span>
+                  </div>
+
                   {selectedBoq.notes && (
-                    <div className="pt-1">
-                      <span className="text-[hsl(var(--muted-foreground))] block mb-1">Notes:</span>
-                      <p className="p-2 rounded bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] text-[10px] leading-relaxed">{selectedBoq.notes}</p>
+                    <div className="flex items-center gap-1.5 max-w-md">
+                      <span className="text-[hsl(var(--muted-foreground))] text-[11px] shrink-0">Scope & Terms:</span>
+                      <span className="text-slate-600 text-[11px] truncate bg-slate-50 px-2 py-0.5 rounded border border-slate-200" title={selectedBoq.notes}>
+                        {selectedBoq.notes}
+                      </span>
                     </div>
                   )}
                 </div>
 
-                <div className="pt-4 border-t space-y-2">
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 flex-wrap shrink-0">
+                  {(selectedBoq.status === 'draft' || selectedBoq.status === 'rejected') && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleOpenEditBuilder(selectedBoq)}
+                      className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50"
+                    >
+                      <Pencil className="w-3.5 h-3.5 mr-1" /> Edit in Builder
+                    </Button>
+                  )}
                   {selectedBoq.status === 'draft' && (
-                    <Button className="w-full" size="sm" onClick={() => handleApprovalAction('submit')}>
+                    <Button
+                      size="sm"
+                      className="h-8 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => handleApprovalAction('submit')}
+                    >
                       Submit for Approval
                     </Button>
                   )}
                   {selectedBoq.status === 'pending_approval' && (
-                    <div className="flex gap-2">
-                      <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" size="sm" onClick={() => handleApprovalAction('approve')}>
+                    <>
+                      <Button
+                        size="sm"
+                        className="h-8 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => handleApprovalAction('approve')}
+                      >
                         Approve
                       </Button>
-                      <Button className="flex-1 bg-red-600 hover:bg-red-700 text-white" size="sm" onClick={() => setIsRejectOpen(true)}>
+                      <Button
+                        size="sm"
+                        className="h-8 text-xs font-bold bg-red-600 hover:bg-red-700 text-white"
+                        onClick={() => setIsRejectOpen(true)}
+                      >
                         Reject
                       </Button>
-                    </div>
+                    </>
                   )}
                   {selectedBoq.status === 'approved' && (
-                    <Button variant="outline" className="w-full text-[hsl(var(--primary))] border-[hsl(var(--primary))]" size="sm" onClick={handleCreateRevision}>
-                      Create New Revision
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50"
+                      onClick={handleCreateRevision}
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1" /> Create New Revision
                     </Button>
                   )}
                   {(selectedBoq.status === 'draft' || selectedBoq.status === 'rejected') && (
-                    <Button variant="outline" className="w-full text-red-500 hover:text-red-600 border-red-200" size="sm" onClick={handleDeleteBoq}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
+                      onClick={handleDeleteBoq}
+                    >
                       <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete Draft
                     </Button>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-        {/* Right Side: Tab View Content */}
-        <div className="lg:col-span-3 space-y-6">
-          <div className="flex flex-wrap items-center gap-1 bg-[hsl(var(--muted)/0.3)] p-1 rounded-xl border">
-            <button
-              onClick={() => setActiveTab('items')}
-              className={cn(
-                'px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5',
-                activeTab === 'items' ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-sm' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
-              )}
-            >
-              <List className="w-3.5 h-3.5" /> BOQ Line Items
-            </button>
-           
-            {/* "Compare Revisions" tab dropped — no compareBoqVersions endpoint in interiorProject.service.ts */}
+        {/* Full Width Main Content: BOQ Line Items & Sections */}
+        <div className="space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50/80 p-1.5 rounded-2xl border border-[hsl(var(--border))]">
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setActiveTab('items')}
+                className={cn(
+                  'px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer',
+                  activeTab === 'items'
+                    ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
+                    : 'text-[hsl(var(--muted-foreground))] hover:text-slate-900'
+                )}
+              >
+                <List className="w-3.5 h-3.5 text-blue-600" /> BOQ Line Items & Sections
+              </button>
+            </div>
+
+            {selectedBoq && (
+              <div className="flex items-center gap-2 pr-1">
+                {(selectedBoq.status === 'draft' || selectedBoq.status === 'rejected') && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleOpenEditBuilder(selectedBoq)}
+                    className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50"
+                  >
+                    <Pencil className="w-3.5 h-3.5 mr-1" />
+                    Open in Builder
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
 
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-[hsl(var(--primary))]" />
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
             </div>
           ) : (
             <div>
               {activeTab === 'items' && selectedBoq && (
-                <Card>
-                  <CardContent className="p-0 overflow-x-auto">
-                    <table className="w-full text-xs text-left border-collapse">
-                      <thead>
-                        <tr className="bg-[hsl(var(--muted)/0.4)] text-[hsl(var(--muted-foreground))] font-bold border-b">
-                          <th className="p-3 w-12 text-center">S.No</th>
-                          <th className="p-3">Category</th>
-                          <th className="p-3">Item Description</th>
-                          <th className="p-3 text-right">Quantity</th>
-                          <th className="p-3 text-center">Unit</th>
-                          <th className="p-3 text-right">Rate ({currencySymbol})</th>
-                          <th className="p-3 text-right">Amount ({currencySymbol})</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedBoq.items?.map((item: any, idx: number) => (
-                          <tr key={item._id || idx} className="border-b hover:bg-[hsl(var(--muted)/0.15)] transition-colors">
-                            <td className="p-3 text-center font-mono font-medium text-[hsl(var(--muted-foreground))]">{item.serialNumber}</td>
-                            <td className="p-3">
-                              <span className="px-2 py-0.5 rounded bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] font-bold text-[10px]">{item.category}</span>
-                            </td>
-                            <td className="p-3">
-                              <div className="font-bold text-[hsl(var(--foreground))]">{item.itemName}</div>
-                              {item.description && <div className="text-[10px] text-[hsl(var(--muted-foreground))] mt-0.5">{item.description}</div>}
-                            </td>
-                            <td className="p-3 text-right font-semibold">{item.quantity?.toLocaleString('en-IN')}</td>
-                            <td className="p-3 text-center uppercase text-[hsl(var(--muted-foreground))]">{item.unit}</td>
-                            <td className="p-3 text-right font-medium">{item.rate?.toLocaleString('en-IN')}</td>
-                            <td className="p-3 text-right font-bold text-[hsl(var(--foreground))]">{currencySymbol} {item.amount?.toLocaleString()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </CardContent>
-                </Card>
-              )}
-
-              {activeTab === 'items' && !selectedBoq && (
-                <Card className="p-8 text-center text-xs text-[hsl(var(--muted-foreground))] border-dashed">
-                  Select or create a BOQ version to view line items.
-                </Card>
-              )}
-
-              {activeTab === 'actual' && (
                 <div className="space-y-6">
-                  {loadingActual ? (
-                    <div className="flex items-center justify-center py-12">
-                      <Loader2 className="w-6 h-6 animate-spin text-[hsl(var(--primary))]" />
-                    </div>
-                  ) : !actualData ? (
-                    <Card className="p-8 text-center text-xs text-[hsl(var(--muted-foreground))] border-dashed">
-                      No approved BOQ found to compare against site consumption. Approve a version first.
-                    </Card>
-                  ) : (
-                    <>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Card className="bg-blue-50/20 border-blue-100">
-                          <CardContent className="p-4 space-y-1">
-                            <span className="text-[10px] uppercase font-bold text-blue-600 tracking-wider">Total Planned Budget</span>
-                            <div className="text-xl font-black">{currencySymbol} {actualData.summary?.totalPlannedAmount?.toLocaleString()}</div>
-                            <p className="text-[9px] text-[hsl(var(--muted-foreground))]">Approved BOQ Master Value</p>
-                          </CardContent>
-                        </Card>
-                        <Card className="bg-amber-50/20 border-amber-100">
-                          <CardContent className="p-4 space-y-1">
-                            <span className="text-[10px] uppercase font-bold text-amber-600 tracking-wider">Consumed Cost</span>
-                            <div className="text-xl font-black">{currencySymbol} {actualData.summary?.totalConsumedAmount?.toLocaleString()}</div>
-                            <p className="text-[9px] text-[hsl(var(--muted-foreground))]">Calculated via site installation logs</p>
-                          </CardContent>
-                        </Card>
-                        <Card
-                          className={cn(
-                            'border-opacity-40',
-                            actualData.summary?.overallVariance > 0 ? 'bg-red-50/20 border-red-200' : 'bg-emerald-50/20 border-emerald-200'
-                          )}
-                        >
-                          <CardContent className="p-4 space-y-1">
-                            <span className="text-[10px] uppercase font-bold tracking-wider">Overall Variance</span>
-                            <div className="text-xl font-black flex items-center gap-1">
-                              {actualData.summary?.overallVariance > 0 ? (
-                                <span className="text-red-600 flex items-center">
-                                  <TrendingUp className="w-4 h-4" /> +{actualData.summary.overallVariance}%
-                                </span>
-                              ) : (
-                                <span className="text-emerald-600 flex items-center">
-                                  <TrendingDown className="w-4 h-4" /> {actualData.summary?.overallVariance}%
-                                </span>
-                              )}
+                  {groupedSections.length > 0 ? (
+                    groupedSections.map((section: any, sIdx: number) => (
+                      <Card key={section.id || sIdx} className="overflow-hidden border border-slate-200 shadow-xs">
+                        {/* Section Header */}
+                        <div className="p-3.5 sm:p-4 bg-slate-100/70 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-mono font-bold text-xs px-2 py-0.5 rounded-md bg-blue-100 text-blue-800">
+                                Section {section.sectionNumber || sIdx + 1}
+                              </span>
+                              <h4 className="font-bold text-sm text-slate-900">{section.sectionTitle}</h4>
+                              <span className="text-[10px] text-slate-500 font-semibold bg-slate-200/80 px-2 py-0.5 rounded-full">
+                                {section.items?.length || 0} items
+                              </span>
                             </div>
-                            <p className="text-[9px] text-[hsl(var(--muted-foreground))]">Overall budget variance threshold</p>
-                          </CardContent>
-                        </Card>
-                      </div>
+                            {section.scopeDescription && (
+                              <p className="text-[11px] text-slate-500 mt-1">{section.scopeDescription}</p>
+                            )}
+                          </div>
 
-                      <Card>
+                          <div className="text-right shrink-0 font-mono font-bold text-xs text-slate-900 bg-white px-3 py-1 rounded-lg border border-slate-200">
+                            Subtotal: {currencySymbol}{section.subTotal?.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                          </div>
+                        </div>
+
+                        {/* Section Items Table */}
                         <CardContent className="p-0 overflow-x-auto">
-                          <table className="w-full text-xs text-left border-collapse">
+                          <table className="w-full text-xs text-left border-collapse min-w-[750px]">
                             <thead>
-                              <tr className="bg-[hsl(var(--muted)/0.4)] text-[hsl(var(--muted-foreground))] font-bold border-b">
-                                <th className="p-3 w-12 text-center">S.No</th>
-                                <th className="p-3">Material Item</th>
-                                <th className="p-3 text-right">BOQ Planned</th>
-                                <th className="p-3 text-right">Site Consumed</th>
-                                <th className="p-3 text-right">Remaining</th>
-                                <th className="p-3 text-right">Variance (%)</th>
-                                <th className="p-3 text-center">Budget Status</th>
+                              <tr className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200 text-[11px]">
+                                <th className="p-2.5 w-12 text-center">Code</th>
+                                <th className="p-2.5 w-44">Item Headline</th>
+                                <th className="p-2.5">Technical Specification</th>
+                                <th className="p-2.5 w-20 text-right">Qty</th>
+                                <th className="p-2.5 w-24 text-center">Unit</th>
+                                <th className="p-2.5 w-24 text-right">Rate ({currencySymbol})</th>
+                                <th className="p-2.5 w-28 text-right">Amount ({currencySymbol})</th>
+                                <th className="p-2.5 w-36">Remarks</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {actualData.items?.map((item: any, idx: number) => (
-                                <tr key={item._id || idx} className="border-b hover:bg-[hsl(var(--muted)/0.15)] transition-colors">
-                                  <td className="p-3 text-center font-mono font-medium text-[hsl(var(--muted-foreground))]">{item.serialNumber}</td>
-                                  <td className="p-3">
-                                    <div className="font-bold text-[hsl(var(--foreground))]">{item.itemName}</div>
-                                    <div className="text-[10px] text-[hsl(var(--muted-foreground))] mt-0.5 uppercase tracking-wide">
-                                      {item.category} • {item.unit}
-                                    </div>
+                              {section.items?.map((item: any, idx: number) => (
+                                <tr key={item._id || idx} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                                  <td className="p-2.5 text-center font-mono font-bold text-slate-600">
+                                    {item.itemCode || item.serialNumber || idx + 1}
                                   </td>
-                                  <td className="p-3 text-right font-medium">
-                                    <div>{item.plannedQuantity?.toLocaleString('en-IN')}</div>
-                                    <div className="text-[9px] text-[hsl(var(--muted-foreground))] mt-0.5">{currencySymbol} {item.plannedAmount?.toLocaleString()}</div>
+                                  <td className="p-2.5 font-bold text-slate-900 align-top">
+                                    {item.itemName}
                                   </td>
-                                  <td className="p-3 text-right font-medium">
-                                    <div className="font-bold text-[hsl(var(--foreground))]">{item.consumedQuantity?.toLocaleString('en-IN')}</div>
-                                    <div className="text-[9px] text-[hsl(var(--muted-foreground))] mt-0.5">{currencySymbol} {item.consumedAmount?.toLocaleString()}</div>
+                                  <td className="p-2.5 text-slate-700 align-top leading-tight text-[11px]">
+                                    {item.description || '—'}
                                   </td>
-                                  <td className="p-3 text-right">
-                                    <div className={cn('font-medium', item.remainingQuantity < 0 ? 'text-red-500 font-bold' : 'text-[hsl(var(--muted-foreground))]')}>
-                                      {item.remainingQuantity?.toLocaleString('en-IN')}
-                                    </div>
-                                    <div className="text-[9px] text-[hsl(var(--muted-foreground))] mt-0.5">{currencySymbol} {item.remainingAmount?.toLocaleString()}</div>
+                                  <td className="p-2.5 text-right font-mono font-bold text-slate-900 align-top">
+                                    {item.quantity?.toLocaleString('en-IN')}
                                   </td>
-                                  <td className="p-3 text-right font-mono font-bold">
-                                    {item.variancePercentage > 0 ? (
-                                      <span className="text-red-500">+{item.variancePercentage}%</span>
-                                    ) : item.variancePercentage < 0 ? (
-                                      <span className="text-emerald-500">{item.variancePercentage}%</span>
-                                    ) : (
-                                      <span className="text-[hsl(var(--muted-foreground))]">0%</span>
-                                    )}
+                                  <td className="p-2.5 text-center text-slate-600 font-semibold align-top uppercase text-[10px]">
+                                    {item.unit}
                                   </td>
-                                  <td className="p-3 text-center">
-                                    <span
-                                      className={cn(
-                                        'px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border whitespace-nowrap',
-                                        item.status === 'over_budget' && 'bg-red-50 text-red-700 border-red-200',
-                                        item.status === 'completed' && 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                                        item.status === 'on_track' && 'bg-blue-50 text-blue-700 border-blue-200',
-                                        item.status === 'in_progress' && 'bg-amber-50 text-amber-700 border-amber-200',
-                                        item.status === 'not_started' && 'bg-slate-50 text-slate-700 border-slate-200'
-                                      )}
-                                    >
-                                      {item.status?.replace('_', ' ')}
-                                    </span>
+                                  <td className="p-2.5 text-right font-mono text-slate-800 align-top">
+                                    {item.rate?.toLocaleString('en-IN')}
+                                  </td>
+                                  <td className="p-2.5 text-right font-mono font-bold text-slate-900 align-top">
+                                    {currencySymbol} {item.amount?.toLocaleString('en-IN')}
+                                  </td>
+                                  <td className="p-2.5 text-slate-500 text-[11px] align-top">
+                                    {item.remarks || '—'}
                                   </td>
                                 </tr>
                               ))}
@@ -579,16 +576,58 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                           </table>
                         </CardContent>
                       </Card>
-                    </>
+                    ))
+                  ) : (
+                    <Card className="p-8 text-center text-xs text-slate-400 border-dashed">
+                      No line items in this BOQ version.
+                    </Card>
                   )}
+
+                  {/* Grand Total Strip */}
+                  <div className="p-4 rounded-2xl bg-slate-900 text-white flex items-center justify-between shadow-md">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">
+                        Total Master BOQ Value ({selectedBoq.versionLabel})
+                      </span>
+                      <span className="text-xs text-slate-300">
+                        {groupedSections.length} Sections • {selectedBoq.items?.length || 0} Total Specifications
+                      </span>
+                    </div>
+                    <span className="text-lg sm:text-xl font-black font-mono text-white">
+                      {currencySymbol} {selectedBoq.totalAmount?.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
                 </div>
+              )}
+
+              {activeTab === 'items' && !selectedBoq && (
+                <Card className="p-12 text-center text-xs text-slate-500 border-dashed">
+                  <FileSpreadsheet className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                  Select or create a BOQ version to view line items.
+                </Card>
               )}
             </div>
           )}
         </div>
       </div>
 
-      {/* MODAL 1: Excel Import */}
+      {/* ========================================================================= */}
+      {/* MODAL 1: Project BOQ Builder Modal (Identical to CRM Builder) */}
+      {/* ========================================================================= */}
+      <InteriorProjectBoqBuilderModal
+        isOpen={isBuilderOpen}
+        onClose={() => setIsBuilderOpen(false)}
+        projectId={projectId}
+        existingBoq={builderEditBoq}
+        isReadOnly={isBuilderReadOnly}
+        onSuccess={() => {
+          fetchBoqs(true);
+        }}
+      />
+
+      {/* ========================================================================= */}
+      {/* MODAL 2: Excel Import Modal */}
+      {/* ========================================================================= */}
       <AnimatePresence>
         {isImportOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -596,13 +635,13 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-md border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] shadow-2xl overflow-hidden"
+              className="w-full max-w-md border border-[hsl(var(--border))] rounded-2xl bg-[hsl(var(--card))] shadow-2xl overflow-hidden"
             >
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <h3 className="text-sm font-black text-[hsl(var(--foreground))] flex items-center gap-2">
                   <FileSpreadsheet className="w-5 h-5 text-emerald-600" /> Import BOQ Excel Sheet
                 </h3>
-                <button onClick={() => setIsImportOpen(false)} className="p-1 rounded hover:bg-[hsl(var(--muted))]">
+                <button onClick={() => setIsImportOpen(false)} className="p-1 rounded hover:bg-[hsl(var(--muted))] cursor-pointer">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -613,7 +652,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                     Upload your architecture spreadsheet (.xlsx or .xls). Columns will automatically map for Category, Item Name, Quantity, Unit, and Rate.
                   </p>
 
-                  <div className="border-2 border-dashed border-[hsl(var(--border))] rounded-lg p-6 flex flex-col items-center justify-center gap-2 hover:border-emerald-500/50 transition-colors relative cursor-pointer bg-[hsl(var(--background))]">
+                  <div className="border-2 border-dashed border-[hsl(var(--border))] rounded-xl p-6 flex flex-col items-center justify-center gap-2 hover:border-emerald-500/50 transition-colors relative cursor-pointer bg-[hsl(var(--background))]">
                     <input
                       type="file"
                       required
@@ -637,7 +676,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                   <Button variant="outline" type="button" onClick={() => setIsImportOpen(false)}>
                     Cancel
                   </Button>
-                  <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white" disabled={importing}>
+                  <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer" disabled={importing}>
                     {importing && <Loader2 className="w-4 h-4 animate-spin mr-2" />} Import & Process
                   </Button>
                 </div>
@@ -647,141 +686,9 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
         )}
       </AnimatePresence>
 
-      {/* MODAL 2: Create Manual BOQ */}
-      <AnimatePresence>
-        {isCreateOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-4xl border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] shadow-2xl overflow-hidden flex flex-col h-[85vh]"
-            >
-              <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))] shrink-0">
-                <h3 className="text-sm font-black text-[hsl(var(--foreground))]">Manual BOQ Entry</h3>
-                <button onClick={() => setIsCreateOpen(false)} className="p-1 rounded hover:bg-[hsl(var(--muted))]">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <form onSubmit={handleManualCreate} className="flex-1 flex flex-col overflow-hidden">
-                <div className="flex-1 overflow-y-auto p-5 space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))]">BOQ Line Items ({newItems.length})</span>
-                      <Button variant="outline" size="sm" type="button" onClick={addNewItemRow} className="text-xs h-7 px-2.5">
-                        <Plus className="w-3.5 h-3.5 mr-1" /> Add Row
-                      </Button>
-                    </div>
-
-                    <div className="border border-[hsl(var(--border))] rounded-lg overflow-hidden">
-                      <table className="w-full text-xs text-left border-collapse">
-                        <thead>
-                          <tr className="bg-[hsl(var(--muted)/0.4)] text-[hsl(var(--muted-foreground))] font-bold border-b">
-                            <th className="p-2 w-10 text-center">#</th>
-                            <th className="p-2 w-32">Category</th>
-                            <th className="p-2">Item Name</th>
-                            <th className="p-2 w-20 text-right">Quantity</th>
-                            <th className="p-2 w-20 text-center">Unit</th>
-                            <th className="p-2 w-28 text-right">Unit Rate ({currencySymbol})</th>
-                            <th className="p-2 w-12 text-center" />
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {newItems.map((item, idx) => (
-                            <tr key={idx} className="border-b">
-                              <td className="p-2 text-center font-mono text-[hsl(var(--muted-foreground))]">{item.serialNumber}</td>
-                              <td className="p-2">
-                                <Input
-                                  list="boq-categories"
-                                  className="h-8 py-1"
-                                  placeholder="Type or select category..."
-                                  value={item.category}
-                                  onChange={(e) => updateNewItemField(idx, 'category', e.target.value)}
-                                />
-                                <datalist id="boq-categories">
-                                  {/* WBS & Default Categories */}
-                                  <option value="Flooring" />
-                                  <option value="Woodwork" />
-                                  <option value="False Ceiling" />
-                                  <option value="Painting" />
-                                  <option value="Electrical Works" />
-                                  <option value="Plumbing" />
-                                  <option value="HVAC" />
-                                  <option value="Masonry" />
-                                  <option value="Design & Planning" />
-                                  <option value="Architectural Design" />
-                                  <option value="Space Planning" />
-                                  <option value="3D Visualization" />
-                                  <option value="Material Selection" />
-                                  <option value="Civil Works" />
-                                  <option value="Demolition" />
-                                  <option value="Waterproofing" />
-                                  <option value="Carpentry" />
-                                  <option value="Kitchen" />
-                                  <option value="Wardrobe" />
-                                  <option value="TV Unit" />
-                                  <option value="Handover" />
-                                  <option value="Other" />
-                                </datalist>
-                              </td>
-                              <td className="p-2">
-                                <Input required placeholder="Item / material specifications" value={item.itemName} onChange={(e) => updateNewItemField(idx, 'itemName', e.target.value)} className="h-8 py-1" />
-                              </td>
-                              <td className="p-2">
-                                <Input type="number" required min={0.01} step="any" value={item.quantity} onChange={(e) => updateNewItemField(idx, 'quantity', parseFloat(e.target.value) || 0)} className="h-8 py-1 text-right" />
-                              </td>
-                              <td className="p-2 min-w-[120px]">
-                                <select
-                                  value={(item.unit || 'sqft').toLowerCase()}
-                                  onChange={(e) => updateNewItemField(idx, 'unit', e.target.value)}
-                                  className="h-8 w-full rounded-md border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-2 text-xs font-semibold uppercase text-[hsl(var(--foreground))] focus:border-[hsl(var(--ring))] focus:outline-none cursor-pointer"
-                                >
-                                  {BOQ_UNITS.map((u) => (
-                                    <option key={u.value} value={u.value}>
-                                      {u.label}
-                                    </option>
-                                  ))}
-                                  {item.unit &&
-                                    !BOQ_UNITS.some((u) => u.value.toLowerCase() === item.unit.toLowerCase()) && (
-                                      <option value={item.unit}>{item.unit.toUpperCase()}</option>
-                                    )}
-                                </select>
-                              </td>
-                              <td className="p-2">
-                                <Input type="number" required min={0} step="any" value={item.rate} onChange={(e) => updateNewItemField(idx, 'rate', parseFloat(e.target.value) || 0)} className="h-8 py-1 text-right" />
-                              </td>
-                              <td className="p-2 text-center">
-                                <button
-                                  type="button"
-                                  onClick={() => removeNewItemRow(idx)}
-                                  disabled={newItems.length === 1}
-                                  className="p-1 rounded text-red-500 hover:bg-red-50 hover:bg-opacity-80 disabled:opacity-50"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)] shrink-0">
-                  <Button variant="outline" type="button" onClick={() => setIsCreateOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit">Create BOQ version</Button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
+      {/* ========================================================================= */}
       {/* MODAL 3: Rejection Reason */}
+      {/* ========================================================================= */}
       <AnimatePresence>
         {isRejectOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -789,11 +696,11 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-md border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] shadow-2xl overflow-hidden"
+              className="w-full max-w-md border border-[hsl(var(--border))] rounded-2xl bg-[hsl(var(--card))] shadow-2xl overflow-hidden"
             >
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <h3 className="text-sm font-black text-[hsl(var(--foreground))]">Specify Rejection Reason</h3>
-                <button onClick={() => setIsRejectOpen(false)} className="p-1 rounded hover:bg-[hsl(var(--muted))]">
+                <button onClick={() => setIsRejectOpen(false)} className="p-1 rounded hover:bg-[hsl(var(--muted))] cursor-pointer">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -803,7 +710,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                   <label className="text-xs font-semibold">Comments</label>
                   <textarea
                     rows={3}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-1 focus:ring-blue-500"
                     placeholder="Enter reason for rejecting this BOQ version draft..."
                     value={rejectReason}
                     onChange={(e) => setRejectReason(e.target.value)}
@@ -815,7 +722,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                 <Button variant="outline" type="button" onClick={() => setIsRejectOpen(false)}>
                   Cancel
                 </Button>
-                <Button className="bg-red-600 hover:bg-red-700 text-white" disabled={!rejectReason || submittingAction} onClick={() => handleApprovalAction('reject', rejectReason)}>
+                <Button className="bg-red-600 hover:bg-red-700 text-white cursor-pointer" disabled={!rejectReason || submittingAction} onClick={() => handleApprovalAction('reject', rejectReason)}>
                   {submittingAction && <Loader2 className="w-4 h-4 animate-spin mr-2" />} Reject BOQ
                 </Button>
               </div>

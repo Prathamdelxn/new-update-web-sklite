@@ -25,9 +25,14 @@ import {
   TrendingDown,
   Wallet,
   Trash2,
+  Download,
+  Printer,
+  Eye,
+  FileCheck,
 } from 'lucide-react';
 import { validatePositiveNumber, validateNonEmpty, validateRequiredDate, ValidationErrors } from '@/lib/crmValidation';
 import { interiorProjectService } from '@/services/interiorProject.service';
+import { downloadInvoicePdf, printInvoice, generateInvoiceHtml } from '@/features/interior-new/utils/invoicePdfGenerator';
 
 // ---------------------------------------------------------------------------
 // Types — mirrors what the backend stores
@@ -88,13 +93,17 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
 
   // Data loading
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  const [project, setProject] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Modals
+  // Modals & Preview
   const [isIncomingModalOpen, setIsIncomingModalOpen] = useState(false);
   const [isOutgoingModalOpen, setIsOutgoingModalOpen] = useState(false);
   const [isDebitNoteModalOpen, setIsDebitNoteModalOpen] = useState(false);
+  const [previewInvoice, setPreviewInvoice] = useState<PaymentRecord | null>(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [generateInvoiceOnSave, setGenerateInvoiceOnSave] = useState(true);
 
   // Form 1: Incoming Payment
   const [incomingForm, setIncomingForm] = useState({
@@ -191,7 +200,36 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
   useEffect(() => {
     loadPayments();
     loadPurchaseOrders();
-  }, [loadPayments, loadPurchaseOrders]);
+    interiorProjectService
+      .getProjectDetails(projectId)
+      .then((res) => {
+        if (res?.data) setProject(res.data);
+        else if (res) setProject(res);
+      })
+      .catch((e) => console.error('Failed to load project details for invoice', e));
+  }, [loadPayments, loadPurchaseOrders, projectId]);
+
+  const handleDownloadInvoice = async (record: PaymentRecord) => {
+    try {
+      setIsDownloadingPdf(record._id);
+      toast.success('Generating PDF invoice...');
+      await downloadInvoicePdf(record, project, currencySymbol);
+    } catch (err) {
+      console.error('PDF download error', err);
+      toast.error('Failed to generate PDF invoice');
+    } finally {
+      setIsDownloadingPdf(null);
+    }
+  };
+
+  const handlePrintInvoice = (record: PaymentRecord) => {
+    try {
+      printInvoice(record, project, currencySymbol);
+    } catch (err) {
+      console.error('Print invoice error', err);
+      toast.error('Failed to open print preview');
+    }
+  };
 
   const handlePoSelect = (poId: string) => {
     setSelectedPoId(poId);
@@ -231,8 +269,8 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
   // ---------------------------------------------------------------------------
   // Submit Handlers (POST to backend)
   // ---------------------------------------------------------------------------
-  const handleIncomingSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleIncomingSubmit = async (e?: React.FormEvent, forceGenerateInvoice?: boolean) => {
+    if (e) e.preventDefault();
     const errors: ValidationErrors = {
       amount: validatePositiveNumber(incomingForm.amount, 'Payment amount'),
       paymentDate: validateRequiredDate(incomingForm.paymentDate, 'Payment date'),
@@ -244,10 +282,12 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
       return;
     }
 
+    const shouldGenInvoice = forceGenerateInvoice ?? generateInvoiceOnSave;
+
     setIsSubmitting(true);
     try {
-      await interiorProjectService.createPayment(projectId, {
-        type: 'incoming',
+      const payload = {
+        type: 'incoming' as const,
         invoiceNo: incomingForm.invoiceNo,
         milestoneName: incomingForm.milestoneName,
         amount: parseFloat(incomingForm.amount),
@@ -255,8 +295,29 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
         paymentMethod: incomingForm.paymentMethod,
         referenceNo: incomingForm.referenceNo.trim(),
         remarks: incomingForm.remarks.trim(),
-      });
-      toast.success('Incoming client payment recorded successfully!');
+      };
+
+      const res = await interiorProjectService.createPayment(projectId, payload);
+
+      const createdRecord: PaymentRecord = {
+        _id: res?.data?._id || 'temp-' + Date.now(),
+        ...payload,
+        incomingStatus: 'Completed',
+        createdAt: new Date().toISOString(),
+      };
+
+      if (shouldGenInvoice) {
+        toast.success('Payment recorded! Generating PDF invoice...');
+        try {
+          await downloadInvoicePdf(createdRecord, project, currencySymbol);
+        } catch (pdfErr) {
+          console.error('Failed to generate PDF', pdfErr);
+          toast.error('Payment saved, but PDF invoice generation failed.');
+        }
+      } else {
+        toast.success('Incoming client payment recorded successfully!');
+      }
+
       setIsIncomingModalOpen(false);
       setIncomingForm({
         milestoneName: 'Booking Advance (10%)',
@@ -473,10 +534,11 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                 ? 'text-emerald-600 dark:text-emerald-400'
                 : 'text-rose-600 dark:text-rose-400'
             }`}>
-              ₹{Math.abs(
+              {incomingPayments.reduce((s, p) => s + p.amount, 0) - outgoingPayments.reduce((s, p) => s + p.amount, 0) < 0 ? '-' : ''}
+              {currencySymbol} {Math.abs(
                 incomingPayments.reduce((s, p) => s + p.amount, 0) -
                 outgoingPayments.reduce((s, p) => s + p.amount, 0)
-              ).toLocaleString('en-IN')}
+              ).toLocaleString()}
             </p>
           )}
           <p className="text-xs text-[hsl(var(--muted-foreground))]">Incoming minus outgoing</p>
@@ -695,13 +757,34 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-right">
-                        <button
-                          onClick={() => handleDeletePayment(tx._id)}
-                          title="Delete payment record"
-                          className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => setPreviewInvoice(tx)}
+                            title="View / Print Invoice"
+                            className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded transition-colors cursor-pointer"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDownloadInvoice(tx)}
+                            disabled={isDownloadingPdf === tx._id}
+                            title="Download PDF Invoice"
+                            className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded transition-colors cursor-pointer disabled:opacity-50"
+                          >
+                            {isDownloadingPdf === tx._id ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+                            ) : (
+                              <Download className="w-4 h-4" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => handleDeletePayment(tx._id)}
+                            title="Delete payment record"
+                            className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -984,7 +1067,21 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                   />
                 </div>
 
-                <div className="pt-2 flex justify-end gap-3">
+                {/* Auto-generate Invoice Option */}
+                <div className="flex items-center gap-2.5 p-3 rounded-lg bg-[hsl(var(--muted)/0.4)] border border-[hsl(var(--border))]">
+                  <input
+                    type="checkbox"
+                    id="generateInvoiceCheckbox"
+                    checked={generateInvoiceOnSave}
+                    onChange={(e) => setGenerateInvoiceOnSave(e.target.checked)}
+                    className="w-4 h-4 rounded text-[hsl(var(--primary))] focus:ring-[hsl(var(--ring))] cursor-pointer accent-[hsl(var(--primary))]"
+                  />
+                  <label htmlFor="generateInvoiceCheckbox" className="text-xs text-[hsl(var(--foreground))] font-medium cursor-pointer select-none">
+                    Auto-generate &amp; download official PDF invoice upon saving
+                  </label>
+                </div>
+
+                <div className="pt-2 flex flex-wrap items-center justify-end gap-2.5">
                   <Button
                     type="button"
                     variant="outline"
@@ -994,12 +1091,21 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                     Cancel
                   </Button>
                   <Button
+                    type="button"
+                    variant="outline"
+                    isLoading={isSubmitting}
+                    onClick={() => handleIncomingSubmit(undefined, true)}
+                    className="text-xs font-semibold flex items-center gap-1.5 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Save &amp; Generate Invoice
+                  </Button>
+                  <Button
                     type="submit"
                     variant="default"
                     isLoading={isSubmitting}
                     className="text-xs font-semibold"
                   >
-                    Save Incoming Payment
+                    Save Payment
                   </Button>
                 </div>
               </form>
@@ -1303,6 +1409,80 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                   </Button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* Modal 4: Invoice Preview & Print */}
+      <AnimatePresence>
+        {previewInvoice && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setPreviewInvoice(null)}
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl shadow-2xl p-5 sm:p-6 w-full max-w-3xl z-10 max-h-[92vh] flex flex-col"
+            >
+              <div className="flex items-center justify-between border-b border-[hsl(var(--border))] pb-4 mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-[hsl(var(--foreground))]">
+                      Payment Invoice &amp; Receipt
+                    </h2>
+                    <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                      {previewInvoice.invoiceNo} &bull; {previewInvoice.milestoneName}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handlePrintInvoice(previewInvoice)}
+                    className="text-xs font-semibold flex items-center gap-1.5"
+                  >
+                    <Printer className="w-3.5 h-3.5" /> Print
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    disabled={isDownloadingPdf === previewInvoice._id}
+                    onClick={() => handleDownloadInvoice(previewInvoice)}
+                    className="text-xs font-semibold flex items-center gap-1.5"
+                  >
+                    {isDownloadingPdf === previewInvoice._id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Download className="w-3.5 h-3.5" />
+                    )}
+                    Download PDF
+                  </Button>
+                  <button
+                    onClick={() => setPreviewInvoice(null)}
+                    className="p-2 hover:bg-[hsl(var(--muted))] rounded-lg text-[hsl(var(--muted-foreground))] transition-colors cursor-pointer ml-1"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto rounded-xl border border-[hsl(var(--border))] bg-white shadow-inner p-1 min-h-[480px]">
+                <iframe
+                  srcDoc={generateInvoiceHtml(previewInvoice, project, currencySymbol)}
+                  title="Invoice Preview"
+                  className="w-full h-[520px] rounded-lg border-0 bg-white"
+                />
+              </div>
             </motion.div>
           </div>
         )}
