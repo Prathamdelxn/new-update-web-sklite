@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Calendar, Users, DollarSign, TrendingUp, AlertCircle, ShieldAlert,
@@ -95,7 +95,18 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
 
   if (!project) return null;
 
-  const currentBudget = project.budgetHistory?.[project.budgetHistory.length - 1]?.amount || 0;
+  const currentBudget = (() => {
+    const history = project.budgetHistory || [];
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].approvalStatus === 'Approved') return Number(history[i].amount) || 0;
+    }
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].approvalStatus !== 'Pending' && history[i].approvalStatus !== 'Rejected') {
+        return Number(history[i].amount) || 0;
+      }
+    }
+    return Number((project as any).budget ?? (project as any).totalBudget ?? 0);
+  })();
   const progress = STATUS_PROGRESS[project.status as string] ?? 10;
   const startDate = project.startDate ? new Date(project.startDate) : null;
   const endDate = project.endDate ? new Date(project.endDate) : null;
@@ -210,7 +221,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
               )}
             </div>
             <p className="text-2xl font-black text-gray-900">{stats.loading ? '—' : stats.issues.total}</p>
-            <p className="text-xs text-slate-500 mt-0.5 font-medium">Issues & Snags</p>
+            <p className="text-xs text-slate-500 mt-0.5 font-medium">Issues</p>
           </GlassCard>
         </button>
 

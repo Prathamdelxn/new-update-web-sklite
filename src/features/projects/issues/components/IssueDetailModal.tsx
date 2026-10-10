@@ -182,29 +182,20 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
                   <div className={cn(
                     'p-3 rounded-xl border shrink-0',
                     issue.priority === 'Critical' ? 'bg-red-100 border-red-200 text-red-600' :
-                    issue.priority === 'High' ? 'bg-orange-100 border-orange-200 text-orange-600' :
-                    'bg-amber-100 border-amber-200 text-amber-600'
+                      issue.priority === 'High' ? 'bg-orange-100 border-orange-200 text-orange-600' :
+                        'bg-amber-100 border-amber-200 text-amber-600'
                   )}>
                     <AlertTriangle className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="flex items-center flex-wrap gap-2 mb-1.5">
-                      <span className={cn('px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border', getPriorityColor(issue.priority))}>
-                        {issue.priority}
-                      </span>
-                      {issue.category && (
-                        <span className="flex items-center space-x-1 text-[10px] font-bold text-slate-500">
-                          <Tag className="w-3 h-3" />
-                          <span>{issue.category}</span>
-                        </span>
-                      )}
-                      {issue.location && (
+                    {issue.location && (
+                      <div className="flex items-center flex-wrap gap-2 mb-1.5">
                         <span className="flex items-center space-x-1 text-[10px] font-bold text-slate-500">
                           <MapPin className="w-3 h-3" />
                           <span>{issue.location}</span>
                         </span>
-                      )}
-                    </div>
+                      </div>
+                    )}
                     <h2 className="text-base font-bold text-gray-900 leading-snug">{issue.title}</h2>
                   </div>
                 </div>
@@ -326,7 +317,7 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
                     <textarea
                       value={resolutionDetails}
                       onChange={e => setResolutionDetails(e.target.value)}
-                      placeholder="Describe how this issue was resolved or add follow-up notes..."
+                      placeholder="Describe how this snag was resolved or add follow-up notes..."
                       rows={3}
                       disabled={isLocked}
                       className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none pr-12"

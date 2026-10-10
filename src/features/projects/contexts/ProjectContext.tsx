@@ -10,6 +10,8 @@ import { useSocket } from '@/providers/SocketContext';
 interface ProjectContextType {
   project: Project | null;
   loading: boolean;
+  // True when the API refused the project (403) — the user lacks projects:view
+  accessDenied: boolean;
   fetchProject: () => Promise<void>;
   projectId: string;
 }
@@ -17,6 +19,7 @@ interface ProjectContextType {
 const ProjectContext = createContext<ProjectContextType>({
   project: null,
   loading: true,
+  accessDenied: false,
   fetchProject: async () => {},
   projectId: '',
 });
@@ -27,6 +30,7 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
   const { joinProject, leaveProject } = useSocket();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
   const toast = useToast();
 
   useProjectSocket(projectId);
@@ -35,7 +39,12 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
     try {
       const response = await api.get(`/projects/${projectId}`);
       setProject(response.data);
+      setAccessDenied(false);
     } catch (err: any) {
+      if (err?.response?.status === 403) {
+        setAccessDenied(true);
+        return;
+      }
       console.error('Error fetching project:', err);
       toast.error(err?.response?.data?.message || 'Failed to load project');
     } finally {
@@ -52,7 +61,7 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
   }, [projectId]);
 
   return (
-    <ProjectContext.Provider value={{ project, loading, fetchProject, projectId }}>
+    <ProjectContext.Provider value={{ project, loading, accessDenied, fetchProject, projectId }}>
       {children}
     </ProjectContext.Provider>
   );

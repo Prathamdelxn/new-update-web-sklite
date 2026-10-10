@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  X, ZoomIn, ZoomOut, MapPin, Mic, StopCircle, ImageIcon,
+  X, ZoomIn, ZoomOut, MapPin, Mic, StopCircle, ImageIcon, Video,
   Loader2, MessageSquare, Trash2, CheckCircle2, RotateCcw,
   ChevronRight, PanelRightClose, PanelRightOpen,
 } from 'lucide-react';
@@ -56,6 +56,7 @@ interface Annotation {
   y: number;
   position?: { x: number; y: number };
   imageUri?: string;
+  videoUri?: string;
   voiceNoteUri?: string;
   createdBy?: string;
   createdByName?: string;
@@ -73,27 +74,34 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const [pendingPos, setPendingPos]         = useState<{ x: number; y: number } | null>(null);
   const [newText, setNewText]               = useState('');
   const [newImageUri, setNewImageUri]       = useState('');
+  const [newVideoUri, setNewVideoUri]       = useState('');
   const [newVoiceUri, setNewVoiceUri]       = useState('');
   const [isSaving, setIsSaving]             = useState(false);
   const [isRecording, setIsRecording]       = useState(false);
   const [isUploadingImg, setIsUploadingImg] = useState(false);
+  const [isUploadingVid, setIsUploadingVid] = useState(false);
   const [panelOpen, setPanelOpen]           = useState(true);
 
   const imageRef         = useRef<HTMLImageElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef   = useRef<Blob[]>([]);
   const imgInputRef      = useRef<HTMLInputElement>(null);
+  const vidInputRef      = useRef<HTMLInputElement>(null);
   const textInputRef     = useRef<HTMLInputElement>(null);
 
   const toast = useToast();
   const { user } = useAuth();
   const { project } = useProjectContext();
   const isAdmin = user?.role?.name === 'Admin' || (user?.role?.permissions?.includes('*') ?? false);
-  const canAnnotate = isAdmin || hasProjectPermission(user, project, 'annotations:create') || hasProjectPermission(user, project, 'annotations:update');
+  // This viewer only adds and removes pins, so: View to see them, Create to
+  // add, Delete to remove (the API enforces the same).
+  const canViewAnnotations = isAdmin || hasProjectPermission(user, project, 'annotations:view');
+  const canAnnotate = isAdmin || hasProjectPermission(user, project, 'annotations:create');
   const canDeleteAnnotation = isAdmin || hasProjectPermission(user, project, 'annotations:delete');
 
   const loadAnnotations = useCallback(async () => {
     if (!projectId || !document?._id) return;
+    if (!canViewAnnotations) { setAnnotations([]); return; }
     try {
       if (folderId) {
         const res = await api.get(`/projects/${projectId}/folders/${folderId}/annotations?documentId=${document._id}`);
@@ -110,7 +118,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         })));
       }
     } catch { /* silent — annotations are optional */ }
-  }, [projectId, document?._id, folderId]);
+  }, [projectId, document?._id, folderId, canViewAnnotations]);
 
   useEffect(() => {
     if (isOpen) {
@@ -120,6 +128,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       setPendingPos(null);
       setNewText('');
       setNewImageUri('');
+      setNewVideoUri('');
       setNewVoiceUri('');
       loadAnnotations();
     }
@@ -141,12 +150,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   // array (matching PlanAnnotator), so both save and delete below build the
   // full updated array and PATCH it in one call.
   const toFolderPayload = (list: Annotation[]) => list.map(a => ({
-    clientId: (a as any).clientId,
+    // Older pins were saved without a clientId; their _id identifies them instead
+    clientId: (a as any).clientId || a._id,
     documentId: document._id,
     x: a.x,
     y: a.y,
     text: a.text || '',
     imageUri: a.imageUri || '',
+    videoUri: a.videoUri || (a as any).videoUri || '',
     audioUri: a.voiceNoteUri || (a as any).audioUri || '',
   }));
 
@@ -161,6 +172,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           y: pendingPos.y,
           text: newText.trim() || '(No note)',
           imageUri: newImageUri || '',
+          videoUri: newVideoUri || '',
           voiceNoteUri: newVoiceUri || '',
         } as unknown as Annotation;
         const res = await api.patch(`/projects/${projectId}/folders/${folderId}/annotations`, {
@@ -175,13 +187,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           text: newText.trim() || '(No note)',
           position: pendingPos,
           imageUri: newImageUri || undefined,
+          videoUri: newVideoUri || undefined,
           voiceNoteUri: newVoiceUri || undefined,
         });
         const saved = res.data;
         setAnnotations(prev => [{ ...saved, x: saved.position?.x ?? 0, y: saved.position?.y ?? 0 }, ...prev]);
       }
       toast.success('Annotation saved');
-      setNewText(''); setNewImageUri(''); setNewVoiceUri(''); setPendingPos(null);
+      setNewText(''); setNewImageUri(''); setNewVideoUri(''); setNewVoiceUri(''); setPendingPos(null);
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Failed to save annotation');
     } finally {
@@ -245,6 +258,17 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       setNewImageUri(url);
     } catch { toast.error('Image upload failed'); }
     finally { setIsUploadingImg(false); e.target.value = ''; }
+  };
+
+  const handleVidUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingVid(true);
+    try {
+      const url = await uploadToCloudinary(file);
+      setNewVideoUri(url);
+    } catch { toast.error('Video upload failed'); }
+    finally { setIsUploadingVid(false); e.target.value = ''; }
   };
 
   // ── AnimatePresence wraps the conditional — this eliminates the flicker ──
@@ -516,6 +540,17 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                               {isUploadingImg ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImageIcon className="w-3.5 h-3.5" />}
                             </button>
                             <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={handleImgUpload} />
+                            <button
+                              onClick={() => vidInputRef.current?.click()}
+                              title={newVideoUri ? 'Video attached' : 'Attach video'}
+                              className={cn(
+                                'p-2 rounded-lg border transition-all shrink-0',
+                                newVideoUri ? 'bg-purple-50 border-purple-200 text-purple-600' : 'bg-white border-gray-200 text-slate-500 hover:border-gray-300'
+                              )}
+                            >
+                              {isUploadingVid ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Video className="w-3.5 h-3.5" />}
+                            </button>
+                            <input ref={vidInputRef} type="file" accept="video/*" className="hidden" onChange={handleVidUpload} />
                             <div className="flex-1" />
                             <button
                               onClick={handleSave}
@@ -530,6 +565,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                             <div className="relative rounded-xl overflow-hidden border border-emerald-200">
                               <img src={newImageUri} alt="attached" className="w-full h-20 object-cover" />
                               <button onClick={() => setNewImageUri('')} className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-bold">✕</button>
+                            </div>
+                          )}
+                          {newVideoUri && (
+                            <div className="relative rounded-xl overflow-hidden border border-purple-200 bg-black">
+                              <video controls src={newVideoUri} className="w-full h-20 object-contain" />
+                              <button onClick={() => setNewVideoUri('')} className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-bold z-10">✕</button>
                             </div>
                           )}
                         </div>
@@ -552,7 +593,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                     ) : (
                       <div className="divide-y divide-gray-100">
                         {annotations.map((ann, idx) => {
-                          const canDelete = canDeleteAnnotation || ann.createdBy === (user as any)?._id;
+                          // Removing a pin needs Delete, even for the person who placed it
+                          const canDelete = canDeleteAnnotation;
                           const isActive = activePin === ann._id;
                           return (
                             <div
@@ -575,10 +617,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                                   {ann.createdByName && (
                                     <p className="text-[10px] text-slate-400 mt-0.5 font-medium">{ann.createdByName}</p>
                                   )}
-                                  {(ann.imageUri || ann.voiceNoteUri) && (
+                                  {(ann.imageUri || ann.videoUri || ann.voiceNoteUri) && (
                                     <div className="flex flex-col gap-1.5 mt-2">
                                       {ann.imageUri && (
                                         <img src={ann.imageUri} alt="attached" className="w-full h-16 rounded-lg object-cover border border-gray-200" />
+                                      )}
+                                      {ann.videoUri && (
+                                        <video controls src={ann.videoUri} className="w-full h-24 rounded-lg border border-gray-200 object-contain bg-black" />
                                       )}
                                       {ann.voiceNoteUri && (
                                         <audio controls src={ann.voiceNoteUri} className="w-full h-7" />

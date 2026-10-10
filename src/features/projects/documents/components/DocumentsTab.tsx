@@ -27,10 +27,13 @@ import {
   Map,
   Receipt,
   BarChart2,
-  User,
   Filter,
   Lock,
   Eye,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  Pencil,
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { cn } from '@/lib/utils';
@@ -40,6 +43,7 @@ import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { useAuth } from '@/providers/AuthContext';
 import { hasProjectPermission, isProjectLocked } from '@/lib/permissions';
+import { useIsAdmin } from '@/hooks/usePermission';
 import { DocumentViewer } from './DocumentViewer';
 import { useProjectContext } from '../../contexts/ProjectContext';
 
@@ -92,6 +96,11 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  // Edit document (Land > Update): rename and/or replace the file
+  const [editingDoc, setEditingDoc] = useState<any | null>(null);
+  const [editName, setEditName] = useState('');
+  const [replacementFile, setReplacementFile] = useState<File | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [viewingDoc, setViewingDoc] = useState<Doc | null>(null);
 
   const toast = useToast();
@@ -103,7 +112,9 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
   const canUpload = !isLocked && hasProjectPermission(user, project, 'land:create');
   const canApprove = !isLocked && hasProjectPermission(user, project, 'land:approve');
   const canDelete = !isLocked && hasProjectPermission(user, project, 'land:delete');
-  const isAdmin = !isLocked && hasProjectPermission(user, project, 'land:delete');
+  const canUpdate = !isLocked && hasProjectPermission(user, project, 'land:update');
+  // Only a real Admin may approve their own upload (the API enforces this)
+  const isAdmin = useIsAdmin();
 
   const fetchDocs = async () => {
     try {
@@ -378,6 +389,40 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
     }
   };
 
+  const openEdit = (doc: any) => {
+    setEditingDoc(doc);
+    setEditName(doc.name || '');
+    setReplacementFile(null);
+  };
+
+  const closeEdit = () => {
+    setEditingDoc(null);
+    setReplacementFile(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingDoc) return;
+    const name = editName.trim();
+    if (!name) { toast.error('Document name cannot be empty'); return; }
+    setIsSavingEdit(true);
+    try {
+      const payload: any = { name };
+      if (replacementFile) {
+        payload.url = await uploadToCloudinary(replacementFile);
+        payload.mimeType = replacementFile.type;
+        payload.size = replacementFile.size;
+      }
+      await api.patch(`/projects/${projectId}/documents/${editingDoc._id}`, payload);
+      toast.success(replacementFile ? 'Document updated and sent for approval again' : 'Document updated');
+      closeEdit();
+      fetchDocs();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update document');
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
   const handleDelete = async (docId: string, name: string) => {
     const ok = await confirm({
       title: 'Delete Document',
@@ -536,187 +581,262 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
           </div>
         ) : (
           /* Active Folder View */
-          <div className="space-y-6">
-            {/* Search & Filter Options */}
-            <div className="flex flex-col sm:flex-row items-center gap-3">
-              <div className="relative w-full sm:max-w-xs">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Search documents..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 border border-gray-200 bg-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                />
-              </div>
-
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={cn(
-                  'flex items-center gap-1.5 px-4 py-2 border rounded-xl text-xs font-bold transition-all',
-                  showFilters
-                    ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
-                    : 'bg-white border-gray-200 text-slate-600 hover:text-gray-900 hover:bg-gray-50'
-                )}
-              >
-                <Filter className="w-3.5 h-3.5" />
-                Filters
-              </button>
-
-              <AnimatePresence>
-                {showFilters && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    className="flex items-center gap-1.5"
-                  >
-                    {['All', 'Approved', 'Pending', 'Rejected'].map(status => (
-                      <button
-                        key={status}
-                        onClick={() => setStatusFilter(status as any)}
-                        className={cn(
-                          'px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border',
-                          statusFilter === status
-                            ? 'bg-blue-50 border-blue-200 text-blue-600 shadow-sm'
-                            : 'bg-white border-gray-100 text-slate-400 hover:text-gray-600'
-                        )}
-                      >
-                        {status}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
+          <div className="space-y-5">
             {/* Folder Metrics (Project Docs only) */}
             {activeFolderId === 'project_docs' && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
                 {[
-                  { label: 'Total Files', value: projectDocs.length, color: 'text-blue-600' },
-                  { label: 'Approved', value: projectDocs.filter(d => d.status === 'Approved').length, color: 'text-emerald-600' },
-                  { label: 'Pending', value: projectDocs.filter(d => d.status === 'Pending' || !d.status).length, color: 'text-amber-600' },
-                  { label: 'Rejected', value: projectDocs.filter(d => d.status === 'Rejected').length, color: 'text-rose-600' },
-                ].map((s, i) => (
-                  <GlassCard key={i} className="p-4 border-gray-200" gradient>
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{s.label}</p>
-                    <p className={cn('text-2xl font-black', s.color)}>{s.value}</p>
-                  </GlassCard>
-                ))}
+                  {
+                    label: 'Total Files',
+                    value: projectDocs.length,
+                    icon: Files,
+                    color: 'text-blue-600',
+                    bg: 'bg-blue-50 border-blue-200/60',
+                    desc: 'All project assets'
+                  },
+                  {
+                    label: 'Approved',
+                    value: projectDocs.filter(d => d.status === 'Approved').length,
+                    icon: CheckCircle2,
+                    color: 'text-emerald-600',
+                    bg: 'bg-emerald-50 border-emerald-200/60',
+                    desc: 'Verified & active'
+                  },
+                  {
+                    label: 'Pending',
+                    value: projectDocs.filter(d => d.status === 'Pending' || !d.status).length,
+                    icon: Clock,
+                    color: 'text-amber-600',
+                    bg: 'bg-amber-50 border-amber-200/60',
+                    desc: 'Awaiting review'
+                  },
+                  {
+                    label: 'Rejected',
+                    value: projectDocs.filter(d => d.status === 'Rejected').length,
+                    icon: XCircle,
+                    color: 'text-rose-600',
+                    bg: 'bg-rose-50 border-rose-200/60',
+                    desc: 'Declined uploads'
+                  },
+                ].map((s, i) => {
+                  const SIcon = s.icon;
+                  return (
+                    <div key={i} className="p-4 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{s.label}</p>
+                        <p className={cn('text-2xl font-black mt-1 tracking-tight', s.color)}>{s.value}</p>
+                        <p className="text-[10px] text-slate-400 font-medium mt-0.5">{s.desc}</p>
+                      </div>
+                      <div className={cn("w-10 h-10 rounded-xl border flex items-center justify-center shrink-0", s.bg, s.color)}>
+                        <SIcon className="w-5 h-5" />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
-            {/* Documents List */}
-            <GlassCard className="p-0 border-gray-200 overflow-hidden" gradient>
+            {/* Search & Filter Options */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white/80 backdrop-blur-md p-3 rounded-2xl border border-slate-200/80 shadow-2xs">
+              <div className="relative w-full sm:max-w-sm">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search by file name or uploader..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-8 py-2 border border-slate-200 bg-slate-50/70 rounded-xl text-xs font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Status Filter Chips */}
+              <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                {(['All', 'Approved', 'Pending', 'Rejected'] as const).map(status => {
+                  const count = status === 'All'
+                    ? baseDocuments.length
+                    : baseDocuments.filter(d => (d.status || 'Pending') === status).length;
+                  const isActive = statusFilter === status;
+
+                  return (
+                    <button
+                      key={status}
+                      onClick={() => setStatusFilter(status)}
+                      className={cn(
+                        'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap border cursor-pointer',
+                        isActive
+                          ? 'bg-blue-600 border-blue-600 text-white shadow-xs'
+                          : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600'
+                      )}
+                    >
+                      <span>{status}</span>
+                      <span className={cn(
+                        'px-1.5 py-0.2 rounded-md text-[10px] font-black',
+                        isActive ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-600'
+                      )}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Documents Table */}
+            <div className="rounded-2xl border border-slate-200/80 bg-white/95 backdrop-blur-md shadow-xs overflow-hidden">
               {filteredDocuments.length === 0 ? (
-                <div className="py-20 flex flex-col items-center justify-center text-center">
-                  <FolderOpen className="w-12 h-12 text-gray-300 mb-4" />
-                  <p className="text-slate-500 font-medium">No documents found.</p>
-                  <p className="text-slate-400 text-sm mt-1">No files match the selected filter/search criteria.</p>
+                <div className="py-20 flex flex-col items-center justify-center text-center px-4">
+                  <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 mb-3 shadow-2xs">
+                    <FolderOpen className="w-7 h-7" />
+                  </div>
+                  <p className="text-sm font-bold text-slate-700">No documents found</p>
+                  <p className="text-xs text-slate-400 mt-1 max-w-sm">No files match your current search and filter criteria in this folder.</p>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-100">
-                  {/* Table header */}
-                  <div className="grid grid-cols-[2fr_1.2fr_1.2fr_1.2fr_80px_100px] gap-4 px-6 py-3 bg-gray-50 border-b border-gray-100">
-                    {['Name', 'Status', 'Uploaded', 'Size', '', ''].map((h, i) => (
-                      <span key={i} className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{h}</span>
-                    ))}
-                  </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse min-w-[700px]">
+                    <thead>
+                      <tr className="border-b border-slate-200/80 bg-slate-50/80">
+                        <th className="py-3.5 pl-6 pr-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Document Name</th>
+                        <th className="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-36">Status</th>
+                        <th className="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-36">Uploaded</th>
+                        <th className="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-28">Size</th>
+                        <th className="py-3.5 pl-4 pr-6 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right w-44">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {filteredDocuments.map(doc => {
+                        const Icon = fileIcon(doc.mimeType);
+                        const isUploader = doc.uploadedBy?._id === user?._id || doc.uploadedBy?.user === user?._id;
+                        const canManageApproval = canApprove && (!isUploader || isAdmin);
+                        const status = doc.status || 'Pending';
 
-                  {filteredDocuments.map(doc => {
-                    const Icon = fileIcon(doc.mimeType);
-                    const isUploader = doc.uploadedBy?._id === user?._id || doc.uploadedBy?.user === user?._id;
-                    const canManageApproval = canApprove && (!isUploader || isAdmin);
+                        return (
+                          <tr key={doc._id} className="hover:bg-slate-50/70 transition-colors group">
+                            {/* Name */}
+                            <td className="py-3.5 pl-6 pr-4 align-middle">
+                              <div className="flex items-center space-x-3 min-w-0">
+                                <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0 shadow-2xs">
+                                  <Icon className="w-4 h-4" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-xs font-bold text-slate-900 truncate max-w-xs md:max-w-md" title={doc.name}>
+                                    {doc.name}
+                                  </p>
+                                  {doc.uploadedBy?.name && (
+                                    <p className="text-[10px] text-slate-400 font-medium mt-0.5 truncate">
+                                      by {doc.uploadedBy.name}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
 
-                    return (
-                      <div key={doc._id} className="grid grid-cols-[2fr_1.2fr_1.2fr_1.2fr_80px_100px] gap-4 px-6 py-4 items-center hover:bg-gray-50 transition-colors group">
-                        {/* Name */}
-                        <div className="flex items-center space-x-3 min-w-0">
-                          <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
-                            <Icon className="w-4 h-4 text-blue-500" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">{doc.name}</p>
-                            {doc.uploadedBy?.name && (
-                              <p className="text-[10px] text-slate-400">{doc.uploadedBy.name}</p>
-                            )}
-                          </div>
-                        </div>
+                            {/* Status */}
+                            <td className="py-3.5 px-4 align-middle whitespace-nowrap">
+                              <span className={cn(
+                                'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border',
+                                status === 'Approved' && 'bg-emerald-50 border-emerald-200 text-emerald-700',
+                                status === 'Rejected' && 'bg-rose-50 border-rose-200 text-rose-700',
+                                status === 'Pending' && 'bg-amber-50 border-amber-200 text-amber-700'
+                              )}>
+                                <span className={cn(
+                                  'w-1.5 h-1.5 rounded-full shrink-0',
+                                  status === 'Approved' && 'bg-emerald-500',
+                                  status === 'Rejected' && 'bg-rose-500',
+                                  status === 'Pending' && 'bg-amber-500'
+                                )} />
+                                <span>{status}</span>
+                              </span>
+                            </td>
 
-                        {/* Status */}
-                        <span className={cn(
-                          'px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border w-fit',
-                          doc.status === 'Approved' && 'bg-emerald-100 border-emerald-200 text-emerald-700',
-                          doc.status === 'Rejected' && 'bg-rose-100 border-rose-200 text-rose-700',
-                          (doc.status === 'Pending' || !doc.status) && 'bg-amber-100 border-amber-200 text-amber-700'
-                        )}>
-                          {doc.status || 'Pending'}
-                        </span>
+                            {/* Date */}
+                            <td className="py-3.5 px-4 align-middle whitespace-nowrap text-xs text-slate-600 font-medium">
+                              {new Date(doc.uploadedAt).toLocaleDateString()}
+                            </td>
 
-                        {/* Date */}
-                        <span className="text-xs text-slate-500">
-                          {new Date(doc.uploadedAt).toLocaleDateString()}
-                        </span>
+                            {/* Size */}
+                            <td className="py-3.5 px-4 align-middle whitespace-nowrap text-xs font-semibold text-slate-500">
+                              {fmtSize(doc.size)}
+                            </td>
 
-                        {/* Size */}
-                        <span className="text-xs font-semibold text-slate-500">{fmtSize(doc.size)}</span>
-
-                        {/* Empty cell */}
-                        <span />
-
-                        {/* Actions */}
-                        <div className="flex items-center justify-end space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {activeFolderId === 'project_docs' && (doc.status === 'Pending' || !doc.status) && canManageApproval && (
-                            <>
-                              <button
-                                onClick={() => handleAction(doc._id, 'Approved')}
-                                className="p-1.5 rounded-lg text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 transition-all"
-                                title="Approve"
-                              >
-                                <Check className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleAction(doc._id, 'Rejected')}
-                                className="p-1.5 rounded-lg text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition-all"
-                                title="Reject"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </>
-                          )}
-                          <button
-                            onClick={() => setViewingDoc(doc)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
-                            title="Preview"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <a
-                            href={doc.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
-                            title="Download"
-                          >
-                            <Download className="w-4 h-4" />
-                          </a>
-                          {activeFolderId === 'project_docs' && isAdmin && (
-                            <button
-                              onClick={() => handleDelete(doc._id, doc.name)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                            {/* Actions */}
+                            <td className="py-3.5 pl-4 pr-6 align-middle text-right whitespace-nowrap">
+                              <div className="flex items-center justify-end gap-1">
+                                {activeFolderId === 'project_docs' && status === 'Pending' && canManageApproval && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAction(doc._id, 'Approved')}
+                                      className="p-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-all cursor-pointer shadow-2xs"
+                                      title="Approve Document"
+                                    >
+                                      <Check className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAction(doc._id, 'Rejected')}
+                                      className="p-1.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 transition-all cursor-pointer shadow-2xs"
+                                      title="Reject Document"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  </>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => setViewingDoc(doc)}
+                                  className="p-1.5 rounded-lg bg-slate-50 hover:bg-blue-50 border border-slate-200/70 text-slate-500 hover:text-blue-600 transition-all cursor-pointer shadow-2xs"
+                                  title="Preview Document"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <a
+                                  href={doc.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-1.5 rounded-lg bg-slate-50 hover:bg-blue-50 border border-slate-200/70 text-slate-500 hover:text-blue-600 transition-all cursor-pointer shadow-2xs inline-flex items-center justify-center"
+                                  title="Download Document"
+                                >
+                                  <Download className="w-3.5 h-3.5" />
+                                </a>
+                                {activeFolderId === 'project_docs' && canUpdate && (
+                                  <button
+                                    type="button"
+                                    onClick={() => openEdit(doc)}
+                                    className="p-1.5 rounded-lg bg-slate-50 hover:bg-amber-50 border border-slate-200/70 text-slate-500 hover:text-amber-600 transition-all cursor-pointer shadow-2xs"
+                                    title="Edit Document"
+                                  >
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                                {activeFolderId === 'project_docs' && canDelete && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDelete(doc._id, doc.name)}
+                                    className="p-1.5 rounded-lg bg-slate-50 hover:bg-rose-50 border border-slate-200/70 text-slate-500 hover:text-rose-600 transition-all cursor-pointer shadow-2xs"
+                                    title="Delete Document"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               )}
-            </GlassCard>
+            </div>
           </div>
         )}
       </div>
@@ -782,6 +902,96 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                           <Plus className="w-4 h-4" />
                           <span>Upload</span>
                         </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </GlassCard>
+            </motion.div>
+          </div>
+        )}
+
+        {editingDoc && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeEdit}
+              className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="w-full max-w-md relative z-10"
+            >
+              <GlassCard className="p-8 border-gray-200" gradient>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200">
+                      <Pencil className="w-5 h-5 text-amber-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">Edit Document</h3>
+                      <p className="text-xs text-slate-500 truncate max-w-[220px]">{editingDoc.name}</p>
+                    </div>
+                  </div>
+                  <button onClick={closeEdit} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Document name</label>
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Replace file (optional)</label>
+                    <label className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 cursor-pointer text-sm text-slate-600 transition-colors">
+                      <Upload className="w-4 h-4 text-slate-400 shrink-0" />
+                      <span className="truncate">{replacementFile ? replacementFile.name : 'Choose a new file'}</span>
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={(e) => { setReplacementFile(e.target.files?.[0] || null); e.target.value = ''; }}
+                      />
+                    </label>
+                    {replacementFile && (
+                      <p className="text-[11px] text-amber-700 mt-1.5">
+                        Replacing the file sends the document for approval again.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="pt-2 flex space-x-3">
+                    <button
+                      type="button"
+                      onClick={closeEdit}
+                      className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-bold transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveEdit}
+                      disabled={isSavingEdit}
+                      className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all disabled:opacity-50 flex items-center justify-center space-x-2 shadow-lg shadow-blue-600/20"
+                    >
+                      {isSavingEdit ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <span>Save Changes</span>
                       )}
                     </button>
                   </div>

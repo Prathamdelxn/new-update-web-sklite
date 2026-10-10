@@ -97,7 +97,7 @@ export default function FinancePage() {
   }, []);
 
   const summaries: ProjectFinanceSummary[] = projects.map(p => {
-    const budget = p.budgetHistory?.[p.budgetHistory.length - 1]?.amount || 0;
+    const budget = p.budgetHistory?.[p.budgetHistory.length - 1]?.amount ?? (p as any).budget ?? (p as any).totalBudget ?? 0;
     const projectTx = transactions.filter((t: any) => t.projectId === p._id);
     const totalIncoming = projectTx.filter(t => t.type === 'Incoming').reduce((s, t) => s + t.amount, 0);
     const totalOutgoing = projectTx.filter(t => t.type === 'Outgoing' && !t.isPurchase).reduce((s, t) => s + t.amount, 0);

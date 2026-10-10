@@ -77,10 +77,10 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
         setMembers(rawUsers);
 
         setProject(getData(projectRes));
-        
+
         const issuesData = getData(issuesRes);
         setIssues(Array.isArray(issuesData) ? issuesData : []);
-        
+
         const snagsData = getData(snagsRes);
         setSnags(Array.isArray(snagsData) ? snagsData : []);
       } catch (err: any) {
@@ -138,8 +138,8 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
         const d = new Date();
         d.setDate(d.getDate() - i);
         const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        const count = allCompletedTasks.filter(t => 
-          t.completedAtDate.getDate() === d.getDate() && 
+        const count = allCompletedTasks.filter(t =>
+          t.completedAtDate.getDate() === d.getDate() &&
           t.completedAtDate.getMonth() === d.getMonth() &&
           t.completedAtDate.getFullYear() === d.getFullYear()
         ).length;
@@ -151,7 +151,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
         const d = new Date();
         d.setMonth(d.getMonth() - i);
         const monthStr = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
-        const count = allCompletedTasks.filter(t => 
+        const count = allCompletedTasks.filter(t =>
           t.completedAtDate.getMonth() === d.getMonth() &&
           t.completedAtDate.getFullYear() === d.getFullYear()
         ).length;
@@ -262,7 +262,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
     try {
       // @ts-ignore
       const html2pdf = (await import('html2pdf.js')).default;
-      
+
       const allCompletedTasks: any[] = [];
       milestones.forEach(m => {
         if (m.tasks) {
@@ -439,11 +439,11 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
       element.innerHTML = htmlContent;
 
       const opt = {
-        margin:       0.3,
-        filename:     `Project_Report_${project?.name || 'Details'}_${reportType}.pdf`,
-        image:        { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
-        jsPDF:        { unit: 'in' as const, format: 'letter' as const, orientation: 'portrait' as const }
+        margin: 0.3,
+        filename: `Project_Report_${project?.name || 'Details'}_${reportType}.pdf`,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'in' as const, format: 'letter' as const, orientation: 'portrait' as const }
       };
 
       await html2pdf().set(opt).from(element).save();
@@ -753,8 +753,8 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                         <span className={cn(
                           'px-2 py-0.5 rounded-full text-[9px] font-bold border',
                           issue.priority === 'Critical' ? 'bg-red-50 text-red-700 border-red-100' :
-                          issue.priority === 'High' ? 'bg-orange-50 text-orange-700 border-orange-100' :
-                          'bg-blue-50 text-blue-700 border-blue-100'
+                            issue.priority === 'High' ? 'bg-orange-50 text-orange-700 border-orange-100' :
+                              'bg-blue-50 text-blue-700 border-blue-100'
                         )}>
                           {issue.priority}
                         </span>
@@ -808,8 +808,8 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                         <span className={cn(
                           'px-2 py-0.5 rounded-full text-[9px] font-bold border',
                           snag.priority === 'Critical' ? 'bg-red-50 text-red-700 border-red-100' :
-                          snag.priority === 'High' ? 'bg-orange-50 text-orange-700 border-orange-100' :
-                          'bg-blue-50 text-blue-700 border-blue-100'
+                            snag.priority === 'High' ? 'bg-orange-50 text-orange-700 border-orange-100' :
+                              'bg-blue-50 text-blue-700 border-blue-100'
                         )}>
                           {snag.priority}
                         </span>

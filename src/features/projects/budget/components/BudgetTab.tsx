@@ -86,7 +86,18 @@ export const BudgetTab: React.FC<BudgetTabProps> = ({ project, onUpdate }) => {
     }
   };
 
-  const currentBudget = project.budgetHistory?.[project.budgetHistory.length - 1]?.amount || 0;
+  const currentBudget = (() => {
+    const history = project.budgetHistory || [];
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].approvalStatus === 'Approved') return Number(history[i].amount) || 0;
+    }
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].approvalStatus !== 'Pending' && history[i].approvalStatus !== 'Rejected') {
+        return Number(history[i].amount) || 0;
+      }
+    }
+    return Number((project as any).budget ?? (project as any).totalBudget ?? 0);
+  })();
   const previousBudget = project.budgetHistory?.[project.budgetHistory.length - 2]?.amount || 0;
   const budgetChange = currentBudget - previousBudget;
   const percentChange = previousBudget !== 0 ? (budgetChange / previousBudget) * 100 : 0;
@@ -331,7 +342,24 @@ export const BudgetTab: React.FC<BudgetTabProps> = ({ project, onUpdate }) => {
                         </div>
                       )}
                     </div>
-                    <p className="text-xs text-slate-500">Updated by <span className="text-blue-600 font-bold">{entry.updatedByName}</span> on {new Date(entry.timestamp).toLocaleDateString()} at {new Date(entry.timestamp).toLocaleTimeString()}</p>
+                    {(() => {
+                      let assignedTo = null;
+                      if (entry.reason) {
+                        const match = entry.reason.match(/sent to ([^:]+)/i);
+                        if (match) assignedTo = match[1].trim();
+                      }
+                      return (
+                        <p className="text-xs text-slate-500">
+                          {entry.approvalStatus === 'Approved' ? (
+                            <>Approved by <span className="text-emerald-600 font-bold">{entry.updatedByName}</span></>
+                          ) : entry.approvalStatus === 'Rejected' ? (
+                            <>Rejected by <span className="text-rose-600 font-bold">{entry.updatedByName}</span></>
+                          ) : (
+                            <>Requested by <span className="text-blue-600 font-bold">{entry.updatedByName}</span>{assignedTo && <> • Assigned to <span className="text-amber-600 font-bold">{assignedTo}</span></>}</>
+                          )} on {new Date(entry.timestamp).toLocaleDateString()} at {new Date(entry.timestamp).toLocaleTimeString()}
+                        </p>
+                      );
+                    })()}
                   </div>
                   <button
                     onClick={() => setExpandedAuditIndex(isExpanded ? null : index)}

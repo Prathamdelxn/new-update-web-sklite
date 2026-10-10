@@ -29,21 +29,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const savedInteriorUser = localStorage.getItem('interiorUser');
     const token = Cookies.get('token') || localStorage.getItem('token') || localStorage.getItem('interiorAccessToken');
     const saToken = Cookies.get('saToken') || localStorage.getItem('saToken');
-    
-    let isTokenExpired = false;
-    if (token) {
+
+    const isJwtExpired = (jwt: string | null | undefined) => {
+      if (!jwt) return true;
       try {
-        const parts = token.split('.');
-        if (parts.length === 3) {
-          const payload = JSON.parse(window.atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-          if (payload.exp && payload.exp * 1000 < Date.now()) {
-            isTokenExpired = true;
-          }
-        }
+        const parts = jwt.split('.');
+        if (parts.length !== 3) return false;
+        const payload = JSON.parse(window.atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+        return !!(payload.exp && payload.exp * 1000 < Date.now());
       } catch (e) {
         console.error('Failed to parse token expiration', e);
+        return false;
       }
-    }
+    };
+
+    // The access token lives 1h, the refresh token 7d. An expired access token
+    // alone is not a logged-out session: the API client refreshes it on the
+    // first 401. Only clear the session when the refresh token is unusable too —
+    // clearing it here used to log users out on any reload after an hour.
+    const refreshToken = localStorage.getItem('refreshToken');
+    const canRefresh = !!refreshToken && !isJwtExpired(refreshToken);
+    const isTokenExpired = !!token && isJwtExpired(token) && !canRefresh;
 
     if (isTokenExpired) {
       localStorage.removeItem('token');
@@ -91,6 +97,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     setLoading(false);
   }, [router]);
+
+  // Role permissions are saved at login. Re-read them on load and whenever the
+  // tab regains focus, so role changes an admin makes apply without the user
+  // having to log out and back in.
+  useEffect(() => {
+    const syncUser = async () => {
+      const hasOrgSession =
+        !!(Cookies.get('token') || localStorage.getItem('token')) &&
+        !!localStorage.getItem('user') &&
+        Cookies.get('industryType') !== 'interior';
+      if (!hasOrgSession) return;
+      try {
+        const res = await api.get('/auth/me');
+        const fresh = res.data?.user;
+        if (!fresh) return;
+        localStorage.setItem('user', JSON.stringify(fresh));
+        setUser((prev) => (prev ? { ...prev, ...fresh } : prev));
+      } catch {
+        // Keep the cached user; auth failures are handled by the API client.
+      }
+    };
+    syncUser();
+    window.addEventListener('focus', syncUser);
+    return () => window.removeEventListener('focus', syncUser);
+  }, []);
 
   const login = async (credentials: any) => {
     const { authType, ...payload } = credentials;

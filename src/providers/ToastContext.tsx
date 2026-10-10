@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
+import { toPermissionMessage } from '@/lib/permissionErrors';
 
 interface ToastContextType {
   success: (message: string) => void;
@@ -31,7 +32,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const error = (message: string) => {
-    toast.error(message, {
+    toast.error(toPermissionMessage(message), {
       style: {
         background: 'rgba(15, 23, 42, 0.8)',
         color: '#fff',

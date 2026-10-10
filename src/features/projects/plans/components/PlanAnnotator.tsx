@@ -51,8 +51,14 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
   const { user } = useAuth();
   const { project } = useProjectContext();
 
-  const canAnnotate = hasProjectPermission(user, project, 'annotations:create') || hasProjectPermission(user, project, 'annotations:update');
-  const canDeleteAnnotation = hasProjectPermission(user, project, 'annotations:delete');
+  // Each Plan Annotations action follows its own permission (the API enforces
+  // the same: new pins need Create, edited pins Update, removed pins Delete).
+  const canViewAnnotations = hasProjectPermission(user, project, 'annotations:view');
+  const canCreateAnnotations = hasProjectPermission(user, project, 'annotations:create');
+  const canUpdateAnnotations = hasProjectPermission(user, project, 'annotations:update');
+  const canDeleteAnnotations = hasProjectPermission(user, project, 'annotations:delete');
+  // Pins already saved on the server; anything else was added in this session
+  const persistedIdsRef = useRef<Set<string>>(new Set());
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -97,6 +103,13 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
   useEffect(() => {
     if (!isOpen || !document) return;
     const fetchAnnotations = async () => {
+      if (!canViewAnnotations) {
+        persistedIdsRef.current = new Set();
+        setHistory([[]]);
+        setHistoryIndex(0);
+        setIsLoading(false);
+        return;
+      }
       setIsLoading(true);
       try {
         const res = await api.get(`/projects/${projectId}/folders/${folderId}/annotations?documentId=${document._id}`);
@@ -105,6 +118,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
             ...ann,
             clientId: ann.clientId || ann._id
           }));
+          persistedIdsRef.current = new Set(normalized.map((a: any) => a.clientId));
           setHistory([normalized]);
           setHistoryIndex(0);
         }
@@ -115,7 +129,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
       }
     };
     fetchAnnotations();
-  }, [isOpen, document, projectId, folderId]);
+  }, [isOpen, document, projectId, folderId, canViewAnnotations]);
 
   // Handle Zoom
   const zoomIn = () => setZoomIdx(i => Math.min(i + 1, ZOOM_STEPS.length - 1));
@@ -172,6 +186,12 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
   const handleMouseUp = () => {
     setIsDragging(false);
   };
+
+  // For the pin open in the sidebar: a pin added in this session is part of
+  // creating (Create); an already-saved pin needs Update to edit, Delete to remove.
+  const isEditingNewPin = !!editingAnn && !persistedIdsRef.current.has(editingAnn.clientId);
+  const canAnnotate = isEditingNewPin ? canCreateAnnotations : canUpdateAnnotations;
+  const canDeleteAnnotation = isEditingNewPin ? canCreateAnnotations : canDeleteAnnotations;
 
   const openSidebar = (ann: any) => {
     setSelectedId(ann.clientId);
@@ -287,6 +307,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
         documentId: document._id,
         annotations,
       });
+      persistedIdsRef.current = new Set(annotations.map((a: any) => a.clientId));
       setHasUnsaved(false);
       toast.success('Annotations saved');
       if (onUpdate) onUpdate();
@@ -345,7 +366,13 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
 
           <div className="w-px h-6 bg-slate-200" />
 
-          {canAnnotate && (
+          {!canViewAnnotations && (
+            <span className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg">
+              You don't have permission to view annotations
+            </span>
+          )}
+
+          {canCreateAnnotations && (
             <button
               onClick={() => setIsAddingPin(!isAddingPin)}
               className={cn(
@@ -360,7 +387,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
             </button>
           )}
 
-          {canAnnotate && (
+          {(canCreateAnnotations || canUpdateAnnotations || canDeleteAnnotations) && (
             <button
               onClick={handleSaveAll}
               disabled={!hasUnsaved || isSaving}
@@ -541,6 +568,33 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
                   ) : (
                     <div className="h-20 rounded-xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-xs text-gray-400 font-medium">
                       {isUploading ? 'Uploading...' : 'No photo attached'}
+                    </div>
+                  )}
+                </div>
+
+                {/* Video Attach */}
+                <div>
+                  <label className="flex items-center justify-between text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
+                    <div className="flex items-center gap-2"><Video className="w-3.5 h-3.5" /> Video</div>
+                    {canAnnotate && !videoUri && (
+                      <label className="text-[10px] text-blue-600 cursor-pointer hover:underline">
+                        Upload
+                        <input type="file" accept="video/*" className="hidden" onChange={(e) => handleFileUpload(e, 'video')} />
+                      </label>
+                    )}
+                  </label>
+                  {videoUri ? (
+                    <div className="relative group rounded-xl overflow-hidden border border-gray-200 bg-black">
+                      <video controls src={videoUri} className="w-full h-40 object-contain rounded-xl" />
+                      {canAnnotate && (
+                        <button onClick={() => setVideoUri('')} className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="h-20 rounded-xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-xs text-gray-400 font-medium">
+                      {isUploading ? 'Uploading...' : 'No video attached'}
                     </div>
                   )}
                 </div>

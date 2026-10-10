@@ -89,6 +89,8 @@ import { cn } from '@/lib/utils';
 import api from '@/services/api.client';
 import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
+import { useAuth } from '@/providers/AuthContext';
+import { hasAnyRolePermission } from '@/lib/permissions';
 
 export const CategoryList = () => {
   const [categories, setCategories] = useState<any[]>([]);
@@ -100,6 +102,11 @@ export const CategoryList = () => {
 
   const toast = useToast();
   const { confirm } = useConfirm();
+  // Category Management is org-wide: the global role or any project role counts
+  const { user } = useAuth();
+  const canCreate = hasAnyRolePermission(user, 'category:create');
+  const canUpdate = hasAnyRolePermission(user, 'category:update');
+  const canDelete = hasAnyRolePermission(user, 'category:delete');
   const [lastAdded, setLastAdded] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
@@ -208,6 +215,7 @@ export const CategoryList = () => {
           </div>
           <div className="flex items-center gap-4">
             
+            {canCreate && (
             <button
               onClick={() => { setShowCreate(true); setNewName(''); }}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all active:scale-95 shadow-lg shadow-blue-600/25"
@@ -215,6 +223,7 @@ export const CategoryList = () => {
               <Plus className="w-4 h-4" />
               Add Category
             </button>
+            )}
           </div>
         </div>
 
@@ -323,18 +332,22 @@ export const CategoryList = () => {
                       </>
                     ) : (
                       <>
+                        {canUpdate && (
                         <button
                           onClick={() => startEditing(cat)}
                           className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
+                        )}
+                        {canDelete && (
                         <button
                           onClick={() => handleDelete(cat._id)}
                           className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
+                        )}
                       </>
                     )}
                   </div>
@@ -360,7 +373,7 @@ export const CategoryList = () => {
                   : 'Create your first category to organize templates'
                 }
               </p>
-              {!search && (
+              {!search && canCreate && (
                 <button
                   onClick={() => { setShowCreate(true); setNewName(''); }}
                   className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow-lg shadow-blue-600/25"

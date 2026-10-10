@@ -108,7 +108,6 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
   const canCreate = !isLocked && hasProjectPermission(user, project, 'risks:create');
   const canUpdate = !isLocked && hasProjectPermission(user, project, 'risks:update');
   const canDelete = !isLocked && hasProjectPermission(user, project, 'risks:delete');
-  const isAdmin = user?.role?.name === 'Admin' || (user?.role?.permissions?.includes('*') ?? false);
 
   const fetchRisks = async () => {
     try {
@@ -160,7 +159,7 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
         <Lock className="w-12 h-12 text-slate-300 mb-4" />
         <h3 className="text-lg font-bold text-gray-900">Access Restricted</h3>
         <p className="text-sm text-slate-500 mt-2 max-w-sm">
-          You don't have permission to view the Risk & Escalation Matrix module.
+          You don't have permission to view the Risk Management module.
         </p>
       </div>
     );
@@ -270,7 +269,6 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
               const statusColor = getStatusColor(risk.status);
               const categoryObj = CATEGORIES.find(c => c.name === risk.category);
               const CategoryIcon = categoryObj?.icon || AlertCircle;
-              const isOwner = String(risk.owner?._id) === String(user?.id);
 
               return (
                 <div
@@ -319,21 +317,9 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
 
                   {/* Bottom card footer */}
                   <div className="flex items-center justify-between pt-3 border-t border-slate-50">
-                    <div className="flex items-center space-x-2.5 min-w-0">
-                      <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-150 flex items-center justify-center shrink-0">
-                        <span className="text-[10px] font-black text-slate-500 uppercase">
-                          {risk.owner?.name?.charAt(0) || 'U'}
-                        </span>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[11px] font-bold text-slate-700 truncate">
-                          {risk.owner?.name || 'Unassigned'}
-                        </p>
-                        <p className="text-[9px] text-slate-400">
-                          {new Date(risk.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </p>
-                      </div>
-                    </div>
+                    <p className="text-[10px] font-semibold text-slate-400">
+                      Updated {new Date(risk.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </p>
 
                     <div className="flex items-center space-x-1 shrink-0">
                       <button
@@ -360,7 +346,8 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
                         </button>
                       )}
 
-                      {canDelete && (isAdmin || isOwner) && (
+                      {/* Risk Management > Delete decides — not who raised the risk */}
+                      {canDelete && (
                         <button
                           onClick={() => handleDeleteRisk(risk._id)}
                           disabled={deletingId === risk._id}

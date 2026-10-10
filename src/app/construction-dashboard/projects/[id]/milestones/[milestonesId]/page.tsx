@@ -62,6 +62,7 @@ export default function MilestoneDetailPage() {
   const [milestone, setMilestone]   = useState<any>(null);
   const [members, setMembers]       = useState<Member[]>([]);
   const [materials, setMaterials]   = useState<MaterialOption[]>([]);
+  const [materialUsages, setMaterialUsages] = useState<any[]>([]);
   const [loading, setLoading]       = useState(true);
   const [savingStatus, setSavingStatus] = useState(false);
   const [submitting, setSubmitting] = useState<number | null>(null);
@@ -82,26 +83,70 @@ export default function MilestoneDetailPage() {
 
   const fileRefs = useRef<Record<number, HTMLInputElement | null>>({});
 
+  const extractUsers = (sources: any[]): Member[] => {
+    const map = new Map<string, Member>();
+    sources.forEach(src => {
+      if (!src) return;
+      const list = Array.isArray(src)
+        ? src
+        : Array.isArray(src.users)
+          ? src.users
+          : Array.isArray(src.members)
+            ? src.members
+            : Array.isArray(src.data)
+              ? src.data
+              : [];
+
+      list.forEach((item: any) => {
+        if (!item) return;
+        const u = item.user && typeof item.user === 'object' ? item.user : item;
+        const id = u._id || u.id;
+        if (!id || typeof id !== 'string') return;
+        const name =
+          u.name ||
+          u.fullName ||
+          [u.firstName, u.lastName].filter(Boolean).join(' ') ||
+          u.email ||
+          'Member';
+        if (!map.has(id)) {
+          map.set(id, { _id: id, name });
+        }
+      });
+    });
+    return Array.from(map.values());
+  };
+
   // ── Fetch data ───────────────────────────────────────────────────────────────
   useEffect(() => {
     const load = async () => {
       try {
-        const [msRes, usersRes, matRes] = await Promise.all([
-          api.get(`/projects/${projectId}/milestones`),
-          api.get(`/users?projectId=${projectId}`),
-          api.get(`/projects/${projectId}/materials`),
+        const [msRes, projRes, usersRes, allUsersRes, matRes, usageRes] = await Promise.all([
+          api.get(`/projects/${projectId}/milestones`).catch(() => null),
+          api.get(`/projects/${projectId}`).catch(() => null),
+          api.get(`/users?projectId=${projectId}`).catch(() => null),
+          api.get('/users').catch(() => null),
+          api.get(`/projects/${projectId}/materials`).catch(() => null),
+          api.get(`/projects/${projectId}/material-usage`).catch(() => null),
         ]);
 
-        const all = Array.isArray(msRes.data) ? msRes.data : msRes.data?.milestones ?? [];
+        const all = Array.isArray(msRes?.data) ? msRes.data : msRes?.data?.milestones ?? [];
         const found = all.find((m: any) => m._id === milestoneId);
         if (!found) { toast.error('Milestone not found'); router.push(`/construction-dashboard/projects/${projectId}/milestones`); return; }
         setMilestone(found);
 
-        const rawUsers: any[] = Array.isArray(usersRes.data) ? usersRes.data : [];
-        setMembers(rawUsers.map((u: any) => ({ _id: u._id, name: u.name || 'Member' })));
+        const loadedMembers = extractUsers([
+          projRes?.data?.members,
+          project?.members,
+          usersRes?.data,
+          allUsersRes?.data,
+        ]);
+        setMembers(loadedMembers);
 
-        const matList = Array.isArray(matRes.data) ? matRes.data : matRes.data?.materials ?? [];
+        const matList = Array.isArray(matRes?.data) ? matRes.data : matRes?.data?.materials ?? [];
         setMaterials(matList);
+
+        const usageList = Array.isArray(usageRes?.data) ? usageRes.data : [];
+        setMaterialUsages(usageList);
       } catch {
         toast.error('Failed to load milestone');
       } finally {
@@ -109,12 +154,40 @@ export default function MilestoneDetailPage() {
       }
     };
     load();
-  }, [projectId, milestoneId]);
+  }, [projectId, milestoneId, project]);
+
+  const getTaskMaterials = (task: any) => {
+    if (!task) return [];
+    if (Array.isArray(task.materialsUsed) && task.materialsUsed.length > 0) {
+      return task.materialsUsed;
+    }
+    const matched = materialUsages.filter((u: any) => {
+      const locMatch = u.locationOrTask && task.title && u.locationOrTask.trim().toLowerCase() === task.title.trim().toLowerCase();
+      const noteMatch = task.completionNote && u.commonNote && u.commonNote.trim() === task.completionNote.trim();
+      return locMatch || (noteMatch && Boolean(u.commonNote));
+    });
+
+    const items: any[] = [];
+    matched.forEach((u: any) => {
+      (u.items || []).forEach((it: any) => {
+        const mat = materials.find((m: any) => m._id === (it.materialId?._id || it.materialId));
+        const name = it.materialId?.name || it.name || mat?.name || 'Material';
+        const unit = it.unit || it.materialId?.unit || mat?.unit || '';
+        items.push({
+          materialId: it.materialId?._id || it.materialId,
+          name,
+          quantity: it.quantity,
+          unit,
+        });
+      });
+    });
+    return items;
+  };
 
   const memberName = (assignedTo: any) => {
     if (!assignedTo) return null;
-    const id = assignedTo?._id || assignedTo;
-    return members.find(m => m._id === id)?.name || assignedTo?.name || null;
+    const id = String(assignedTo?._id || assignedTo?.id || assignedTo);
+    return members.find(m => String(m._id) === id)?.name || assignedTo?.name || assignedTo?.fullName || null;
   };
 
   // ── Form helpers ─────────────────────────────────────────────────────────────
@@ -184,13 +257,33 @@ export default function MilestoneDetailPage() {
           items: validMaterials.map(r => ({ materialId: r.materialId, quantity: Number(r.quantity) })),
           locationOrTask: tasks[taskIndex]?.title || '',
           commonNote: form.note || '',
+          source: 'task',
+          milestoneId,
+          taskId: tasks[taskIndex]?._id,
         });
       }
+
+      const usedMaterialsForTask = validMaterials.map(r => {
+        const mat = materials.find(m => m._id === r.materialId);
+        return {
+          materialId: r.materialId,
+          name: mat?.name || 'Material',
+          quantity: Number(r.quantity),
+          unit: mat?.unit || '',
+        };
+      });
 
       const allDone = tasks.every((t: any, i: number) => i === taskIndex ? true : t.isCompleted);
       const updatedTasks = tasks.map((t: any, i: number) => {
         if (i !== taskIndex) return t;
-        return { ...t, isCompleted: true, completedAt: new Date().toISOString(), completionNote: form.note || t.completionNote || '', ...(proofImage ? { proofImage } : {}) };
+        return {
+          ...t,
+          isCompleted: true,
+          completedAt: new Date().toISOString(),
+          completionNote: form.note || t.completionNote || '',
+          ...(usedMaterialsForTask.length > 0 ? { materialsUsed: usedMaterialsForTask } : {}),
+          ...(proofImage ? { proofImage } : {})
+        };
       });
 
       const payload: any = { tasks: updatedTasks };
@@ -199,6 +292,17 @@ export default function MilestoneDetailPage() {
       const res = await api.patch(`/projects/${projectId}/milestones/${milestoneId}`, payload);
       setMilestone(res.data);
       setSubmitForms(prev => { const n = { ...prev }; delete n[taskIndex]; return n; });
+
+      // Refresh stock levels and material usage logs in background
+      api.get(`/projects/${projectId}/materials`).then(r => {
+        const list = Array.isArray(r?.data) ? r.data : r?.data?.materials ?? [];
+        setMaterials(list);
+      }).catch(() => {});
+      api.get(`/projects/${projectId}/material-usage`).then(r => {
+        const list = Array.isArray(r?.data) ? r.data : [];
+        setMaterialUsages(list);
+      }).catch(() => {});
+
       if (payload.status === 'Completed') toast.success('All tasks done — milestone Completed!');
       else toast.success('Task submitted');
     } catch (err: any) {
@@ -330,9 +434,9 @@ export default function MilestoneDetailPage() {
                 <Flag className="w-6 h-6 text-blue-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl font-semibold text-gray-900 leading-tight truncate">{milestone.name}</h1>
+                <h1 className="text-xl font-semibold text-gray-900 leading-tight break-words [overflow-wrap:anywhere] [word-break:break-word]">{milestone.name}</h1>
                 {milestone.description && (
-                  <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">{milestone.description}</p>
+                  <p className="text-sm text-slate-500 mt-1.5 leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] [word-break:break-word] min-w-0">{milestone.description}</p>
                 )}
                 <div className="flex flex-wrap items-center gap-3 mt-4">
                   <div className="flex items-center gap-2">
@@ -568,10 +672,20 @@ export default function MilestoneDetailPage() {
                           {task.endDate ? ` → ${new Date(task.endDate).toLocaleDateString()}` : ''}
                         </span>
                       )}
-                      {assignee && (
-                        <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                          <User className="w-3.5 h-3.5" />{assignee}
+                      {assignee ? (
+                        <span className="flex items-center gap-1.5 text-xs text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md font-medium">
+                          <User className="w-3.5 h-3.5 text-blue-600" />{assignee}
                         </span>
+                      ) : (
+                        !task.isCompleted && (canUpdate || canAssign) && (
+                          <button
+                            type="button"
+                            onClick={e => { e.stopPropagation(); openEdit(i); }}
+                            className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-md font-semibold transition-colors"
+                          >
+                            <User className="w-3.5 h-3.5" />Assign Member
+                          </button>
+                        )
                       )}
                       {task.isCompleted && task.completedAt && (
                         <span className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
@@ -596,6 +710,36 @@ export default function MilestoneDetailPage() {
                             </p>
                           </div>
                         )}
+                        {/* Materials Used */}
+                        {(() => {
+                          const taskMats = getTaskMaterials(task);
+                          if (!taskMats || taskMats.length === 0) return null;
+                          return (
+                            <div className="col-span-2 md:col-span-3">
+                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                <Package className="w-3.5 h-3.5 text-blue-500" /> Materials Used
+                              </p>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                                {taskMats.map((mat: any, mi: number) => (
+                                  <div
+                                    key={mi}
+                                    className="flex items-center justify-between p-2.5 rounded-xl bg-blue-50/50 border border-blue-100 text-xs"
+                                  >
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <div className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                                        <Package className="w-3.5 h-3.5" />
+                                      </div>
+                                      <span className="font-semibold text-slate-800 truncate">{mat.name}</span>
+                                    </div>
+                                    <span className="font-bold text-blue-700 shrink-0 ml-2">
+                                      {mat.quantity} <span className="font-normal text-slate-500">{mat.unit}</span>
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
                         {task.proofImage?.url && (
                           <div className="col-span-2 md:col-span-3">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Proof Photo</p>

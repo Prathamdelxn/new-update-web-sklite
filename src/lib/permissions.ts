@@ -1,3 +1,31 @@
+// The Role editor saves `projects:<action>`, but default roles seeded at
+// registration use `project:<action>` / `team:assign`. Treat them as equal
+// (mirrors the backend's src/lib/permissions.js).
+const PERMISSION_ALIASES: Record<string, string[]> = {
+  'projects:view': ['project:view'],
+  'projects:create': ['project:create'],
+  'projects:update': ['project:update'],
+  'projects:delete': ['project:delete'],
+  'projects:approve': ['project:approve'],
+  'projects:complete': ['project:complete'],
+  'projects:assign': ['project:assign', 'team:assign'],
+  // Site survey: older code/roles used `manage` for assign+approve and
+  // `submit` for creating a survey.
+  'sitesurvey:create': ['sitesurvey:submit'],
+  'sitesurvey:approve': ['sitesurvey:manage'],
+  'sitesurvey:assign': ['sitesurvey:manage'],
+  // Snags & Issues: older code used singular `snag:*`; default roles were
+  // seeded with `snags:resolve` / `snags:close` for completing.
+  'snags:assign': ['snag:assign'],
+  'snags:complete': ['snag:complete', 'snags:resolve', 'snags:close'],
+};
+
+export const permissionListIncludes = (perms: string[] | undefined, permission: string): boolean => {
+  if (!Array.isArray(perms)) return false;
+  if (perms.includes('*') || perms.includes(permission)) return true;
+  return (PERMISSION_ALIASES[permission] || []).some((alias) => perms.includes(alias));
+};
+
 export const hasProjectPermission = (user: any, project: any, permission: string): boolean => {
   if (!user) return false;
 
@@ -8,7 +36,7 @@ export const hasProjectPermission = (user: any, project: any, permission: string
   }
 
   // 2. Check Global Permission (if assigned globally)
-  if (globalPerms.includes(permission)) {
+  if (permissionListIncludes(globalPerms, permission)) {
     return true;
   }
 
@@ -21,7 +49,7 @@ export const hasProjectPermission = (user: any, project: any, permission: string
     });
 
     if (myMember?.role?.permissions) {
-      if (myMember.role.permissions.includes('*') || myMember.role.permissions.includes(permission)) {
+      if (permissionListIncludes(myMember.role.permissions, permission)) {
         return true;
       }
     }
@@ -29,6 +57,28 @@ export const hasProjectPermission = (user: any, project: any, permission: string
 
   return false;
 };
+
+// Creating a project isn't tied to an existing project, so Create counts from
+// the global role OR any of the user's project roles (mirrors POST /projects).
+export const canCreateProjects = (user: any): boolean => hasAnyRolePermission(user, 'projects:create');
+
+// True if the permission is on the user's global role OR on any of their
+// project roles. Used for org-wide modules (Templates, Categories, creating
+// projects) that aren't tied to one project — so a member whose access comes
+// only from a project assignment still gets it. Mirrors the backend.
+export function hasAnyRolePermission(user: any, permission: string): boolean {
+  if (hasProjectPermission(user, null, permission)) return true;
+  return (user?.projects || []).some((p: any) => {
+    const role = p?.role;
+    if (!role || typeof role !== 'object') return false;
+    return role.name === 'Admin' || role.isSystemRole || permissionListIncludes(role.permissions, permission);
+  });
+}
+
+// Whether any of the user's roles (global or per-project) lets them see projects.
+// Without it the project list is empty and every project-scoped permission
+// (site survey, BOQ, ...) is unreachable.
+export const canViewAnyProject = (user: any): boolean => hasAnyRolePermission(user, 'projects:view');
 
 export const hasAnyProjectPermissionPrefix = (user: any, project: any, prefix: string): boolean => {
   if (!user) return false;
@@ -75,7 +125,7 @@ export const hasProjectPermissionWithMembers = (user: any, projectMembers: any[]
   if (!user) return false;
 
   const globalPerms = user?.role?.permissions || [];
-  if (user?.role?.name === 'Admin' || globalPerms.includes('*') || globalPerms.includes(permission)) {
+  if (user?.role?.name === 'Admin' || permissionListIncludes(globalPerms, permission)) {
     return true;
   }
 
@@ -87,7 +137,7 @@ export const hasProjectPermissionWithMembers = (user: any, projectMembers: any[]
     });
 
     if (myMember?.role?.permissions) {
-      if (myMember.role.permissions.includes('*') || myMember.role.permissions.includes(permission)) {
+      if (permissionListIncludes(myMember.role.permissions, permission)) {
         return true;
       }
     }

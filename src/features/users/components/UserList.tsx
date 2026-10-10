@@ -25,10 +25,14 @@ import { useToast } from '@/providers/ToastContext';
 import { UserModal } from '@/features/users/components/UserModal';
 import { Pagination, usePagination } from '@/components/shared/Pagination';
 import { cn } from '@/lib/utils';
+import { useUserManagementPermissions } from '@/features/users/components/UserManagementGate';
+import { useIsAdmin } from '@/hooks/usePermission';
 import { useAuth } from '@/providers/AuthContext';
 
 export const UserList = () => {
   const { user: currentUser } = useAuth();
+  const { canCreate, canUpdate, canDelete } = useUserManagementPermissions();
+  const isViewerAdmin = useIsAdmin();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -181,6 +185,7 @@ export const UserList = () => {
               </div>
             )}
           </div>
+          {canCreate && (
           <button
             onClick={() => { setEditingUser(null); setIsModalOpen(true); }}
             className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs shrink-0"
@@ -188,6 +193,7 @@ export const UserList = () => {
             <UserPlus className="w-3.5 h-3.5" />
             <span>Add New Member</span>
           </button>
+          )}
         </div>
       </div>
 
@@ -228,6 +234,10 @@ export const UserList = () => {
           );
           const isSelf = !!currentUser && (currentUser._id === user._id || (currentUser as any).id === user._id);
           const canManageThisUser = !isTargetAdmin || isSelf;
+          // Non-admins edit their own name/phone on the Profile page and can't
+          // change their own role; the API enforces the same rules.
+          const showEdit = canUpdate && canManageThisUser && (!isSelf || isViewerAdmin);
+          const showDelete = canDelete && canManageThisUser && !isSelf;
 
           return (
             <div key={user._id || `user-${idx}`} className="p-4.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs hover:border-slate-300 hover:shadow-card-hover transition-all flex items-center justify-between group">
@@ -255,20 +265,24 @@ export const UserList = () => {
                 </div>
               </div>
 
-              {canManageThisUser && (
+              {(showEdit || showDelete) && (
                 <div className="flex items-center space-x-1.5 shrink-0">
+                  {showEdit && (
                   <button
                     onClick={() => openEdit(user)}
                     className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-colors"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
+                  )}
+                  {showDelete && (
                   <button
                     onClick={() => openDelete(user)}
                     className="w-8 h-8 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-100 hover:border-red-200 transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
+                  )}
                 </div>
               )}
             </div>

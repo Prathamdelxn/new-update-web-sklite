@@ -29,6 +29,7 @@ export interface Project {
   siteSurveyor?: string | User;
   surveyStatus?: string;
   snaggedBy?: string | User;
+  budget?: number;
   documents: ProjectDocument[];
   budgetHistory: BudgetHistory[];
   createdAt: string;
