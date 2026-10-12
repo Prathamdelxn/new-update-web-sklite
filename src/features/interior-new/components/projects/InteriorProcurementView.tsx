@@ -144,15 +144,18 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
     }
   }, [sentEmailVendorIdsByPo]);
   const [isGRNOpen, setIsGRNOpen] = useState(false);
-  
+
   const [isLinkActive, setIsLinkActive] = useState(true);
-  useEffect(() => { if (selectedPo) { setIsLinkActive(!selectedPo.materialName?.includes('||CLOSED||')); } }, [selectedPo?._id, selectedPo?.materialName]);
   const [linkExpiry, setLinkExpiry] = useState('12h');
 
-  // Reset link active state when a new PO is opened
+  // Sync link active state with selected PO
   useEffect(() => {
     if (selectedPo) {
-      setIsLinkActive(true);
+      if (selectedPo.materialName && selectedPo.materialName.includes('||CLOSED||')) {
+        setIsLinkActive(false);
+      } else {
+        setIsLinkActive(true);
+      }
     }
   }, [selectedPo]);
 
@@ -171,7 +174,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   const [newMaterialUnit, setNewMaterialUnit] = useState('');
   const [newMaterialStock, setNewMaterialStock] = useState<number | ''>(0);
   const [editingMaterialId, setEditingMaterialId] = useState<string | null>(null);
-  const [viewingImages, setViewingImages] = useState<{proofUrl?: string, invoiceUrl?: string} | null>(null);
+  const [viewingImages, setViewingImages] = useState<{ proofUrl?: string, invoiceUrl?: string } | null>(null);
 
   const invalidateProcurementData = () => {
     queryClient.invalidateQueries({ queryKey: ['project-materials', projectId] });
@@ -353,7 +356,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
       // Find the selected quote
       const quote = selectedPo.quotes?.find((q: any) => q.vendorName === vendorName);
-      
+
       let updatedItems = selectedPo.items || [];
       let totalAmount = selectedPo.amount || 0;
 
@@ -372,8 +375,8 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
         totalAmount = updatedItems.reduce((sum: number, item: any) => sum + (item.totalPrice || 0), 0);
       }
 
-      const updatedPoPayload = { 
-        vendorName, 
+      const updatedPoPayload = {
+        vendorName,
         status: 'approved',
         items: updatedItems,
         amount: totalAmount
@@ -381,7 +384,34 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
       setSelectedPo({ ...selectedPo, ...updatedPoPayload });
       await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, updatedPoPayload);
-      toast.success('Vendor selected and PO approved!');
+      
+      const vendorInfo = vendors?.find((v: any) => v.name === vendorName);
+      const targetEmail = quote?.email || quote?.vendorEmail || quote?.vendorContact || vendorInfo?.email;
+      const targetPhone = quote?.phoneNumber || quote?.phone || vendorInfo?.phoneNumber || vendorInfo?.phone;
+      const poLink = `${window.location.origin}/rfq/${selectedPo._id}`;
+
+      if (targetEmail) {
+        try {
+          await interiorProjectService.sendAwardEmail(projectId, selectedPo._id, {
+            email: targetEmail,
+            vendorName: vendorName,
+            materialName: selectedPo.materialName?.replace(' ||CLOSED||', '').trim(),
+            poLink: poLink
+          });
+          toast.success('Vendor selected, PO approved, and Email Sent automatically!');
+        } catch (emailErr) {
+          console.error('Failed to send automated email', emailErr);
+          toast.error('PO approved, but failed to send automated email.');
+        }
+      } else if (targetPhone) {
+        // Fallback to WhatsApp if no email is found but a phone number is present
+        const waMessage = encodeURIComponent(`Hello ${vendorName},\n\nWe are pleased to inform you that you have been awarded the Purchase Order for ${selectedPo.materialName?.replace(' ||CLOSED||', '').trim()}.\n\nPlease review your PO details here:\n${poLink}\n\nThank you.`);
+        window.open(`https://wa.me/${targetPhone}?text=${waMessage}`, '_blank');
+        toast.success('Vendor selected and PO approved! Opened WhatsApp.');
+      } else {
+        toast.success('Vendor selected and PO approved!');
+      }
+
       setIsDetailOpen(false);
       await autoCreatePaymentForPo({ ...selectedPo, ...updatedPoPayload });
       invalidateProcurementData();
@@ -414,13 +444,13 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
         invoiceUrl,
         receivedAt: new Date().toISOString()
       };
-      
+
       let currentGrns = selectedPo.grns;
       if (!currentGrns && selectedPo.grnData?.allGrns) {
-        try { currentGrns = JSON.parse(selectedPo.grnData.allGrns); } catch(e) {}
+        try { currentGrns = JSON.parse(selectedPo.grnData.allGrns); } catch (e) { }
       }
       if (!currentGrns) currentGrns = selectedPo.grnData ? [selectedPo.grnData] : [];
-      
+
       const updatedGrns = [...currentGrns, newGrn];
 
       // Calculate if fully delivered
@@ -437,13 +467,13 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
       const newStatus = fullyDelivered ? 'delivered' : 'partially_delivered';
       const updatedPo = { ...selectedPo, status: newStatus, grns: updatedGrns, grnData: { allGrns: JSON.stringify(updatedGrns) } };
-      
-      await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { 
+
+      await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, {
         status: newStatus,
         grns: updatedGrns,
         grnData: { allGrns: JSON.stringify(updatedGrns) }
       });
-      
+
       setSelectedPo(updatedPo);
       await autoCreatePaymentForPo(updatedPo);
       invalidateProcurementData();
@@ -457,7 +487,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
   const handleSaveRates = async () => {
     if (!selectedPo) return;
-    
+
     if (selectedPo.status === 'approved') {
       const formattedAmount = formatCost(selectedPo.amount || 0);
       const ok = await confirm({
@@ -471,11 +501,11 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
     try {
       setUpdatingPo(true);
-      await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { 
+      await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, {
         vendorName: selectedPo.vendorName,
         status: selectedPo.status,
-        items: selectedPo.items, 
-        amount: selectedPo.amount 
+        items: selectedPo.items,
+        amount: selectedPo.amount
       });
       if (selectedPo.status === 'approved') {
         await autoCreatePaymentForPo(selectedPo);
@@ -720,7 +750,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                 let receivedValue = 0;
                 let parsedGrns = item.grns;
                 if (!parsedGrns && item.grnData?.allGrns) {
-                  try { parsedGrns = JSON.parse(item.grnData.allGrns); } catch(e) {}
+                  try { parsedGrns = JSON.parse(item.grnData.allGrns); } catch (e) { }
                 }
                 if (!parsedGrns && item.grnData) {
                   parsedGrns = [item.grnData];
@@ -734,7 +764,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                     receivedValue += (totalReceived * (poItem.unitPrice || 0));
                   });
                 }
-                
+
                 let suggestedPayment = remainingBalance;
                 if (receivedValue > 0) {
                   suggestedPayment = Math.max(0, receivedValue - poPaidAmount);
@@ -786,7 +816,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         </span>
                       )}
                     </div>
-                    
+
                     {activePipeline === 'requested' && (
                       <Button
                         onClick={async (e) => {
@@ -1035,10 +1065,10 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                           value={newItem.quantity || ''}
                           onChange={(e) => setNewItem({ ...newItem, quantity: parseInt(e.target.value) || 0 })}
                         />
-                        <Input 
-                          placeholder="Unit" 
-                          value={newItem.unit} 
-                          disabled 
+                        <Input
+                          placeholder="Unit"
+                          value={newItem.unit}
+                          disabled
                           className="bg-slate-50 opacity-70 cursor-not-allowed"
                         />
                         <Input
@@ -1217,17 +1247,17 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                     <div className="p-4 bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30 rounded-xl space-y-3">
                       <div className="flex items-center justify-between">
                         <span className={`text-[10px] uppercase font-bold flex items-center gap-1.5 ${isLinkActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500'}`}>
-                          <FileText className="w-3.5 h-3.5" /> 
+                          <FileText className="w-3.5 h-3.5" />
                           {isLinkActive ? 'Public RFQ Link Active' : 'RFQ Link Expired'}
                         </span>
-                        
+
                         {isLinkActive ? (
                           <div className="flex items-center gap-2">
                             <span className="text-[10px] font-bold text-rose-500 bg-rose-50 dark:bg-rose-950/30 px-2 py-1 rounded border border-rose-100 dark:border-rose-900/30">
                               Expires in:
                             </span>
-                            <select 
-                              value={linkExpiry} 
+                            <select
+                              value={linkExpiry}
                               onChange={(e) => setLinkExpiry(e.target.value)}
                               className="text-xs bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-800 rounded px-1 py-0.5 text-rose-600 focus:outline-none"
                             >
@@ -1244,16 +1274,16 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <input 
-                          readOnly 
+                        <input
+                          readOnly
                           value={`${window.location.origin}/rfq/${selectedPo._id}`}
                           className="w-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-md px-3 py-1.5 text-xs text-[hsl(var(--muted-foreground))] font-mono"
                         />
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="shrink-0 h-7" 
-                          disabled={!isLinkActive} 
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="shrink-0 h-7"
+                          disabled={!isLinkActive}
                           onClick={() => {
                             const url = `${window.location.origin}/rfq/${selectedPo._id}`;
                             navigator.clipboard.writeText(url);
@@ -1268,9 +1298,9 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         <span className="text-[10px] text-indigo-600/70 dark:text-indigo-400/70">
                           {isLinkActive ? 'Vendors can currently submit quotes' : 'No longer accepting quotes'}
                         </span>
-                        <Button 
-                          size="sm" 
-                          variant={isLinkActive ? 'destructive' : 'outline'} 
+                        <Button
+                          size="sm"
+                          variant={isLinkActive ? 'destructive' : 'outline'}
                           className="h-6 text-[10px] px-2"
                           onClick={async () => { const newIsLinkActive = !isLinkActive; setIsLinkActive(newIsLinkActive); if (selectedPo) { try { let newMaterialName = selectedPo.materialName.replace(' ||CLOSED||', '').trim(); if (!newIsLinkActive) { newMaterialName += ' ||CLOSED||'; } await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { materialName: newMaterialName }); setSelectedPo((prev: any) => prev ? { ...prev, materialName: newMaterialName } : prev); invalidateProcurementData(); toast.success(newIsLinkActive ? 'Link reactivated' : 'Link manually expired'); } catch (err) { toast.error('Failed to update link status'); setIsLinkActive(!newIsLinkActive); } } }}
                         >
@@ -1298,18 +1328,18 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                   <p className="text-[9px] text-[hsl(var(--muted-foreground))]">{vendor.email || vendor.phoneNumber || 'No contact info'}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline" 
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
                                     className="h-7 text-[10px] flex items-center gap-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-900/50 dark:text-emerald-400 dark:hover:bg-emerald-900/20"
                                     onClick={() => window.open(`https://wa.me/${(vendor.phoneNumber || '').replace(/[^0-9]/g, '')}?text=${waMessage}`, '_blank')}
                                     disabled={!vendor.phoneNumber}
                                   >
                                     WhatsApp
                                   </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline" 
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
                                     className="h-7 text-[10px] flex items-center gap-1"
                                     onClick={async () => {
                                       try {
@@ -1379,7 +1409,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                     <div className="space-y-1.5">
                                       <p className="text-[9px] uppercase font-bold text-[hsl(var(--muted-foreground))]">Item Rates</p>
                                       <div className="divide-y divide-[hsl(var(--border))] bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-md">
-                                        {(selectedPo.items && selectedPo.items.length > 0 ? selectedPo.items : [{_id: 'item-1', name: selectedPo.materialName?.replace(' ||CLOSED||', '') || 'Material', quantity: 1, unit: 'unit'}]).map((item: any, itemIdx: number) => {
+                                        {(selectedPo.items && selectedPo.items.length > 0 ? selectedPo.items : [{ _id: 'item-1', name: selectedPo.materialName?.replace(' ||CLOSED||', '') || 'Material', quantity: 1, unit: 'unit' }]).map((item: any, itemIdx: number) => {
                                           const rate = quote.rates?.find((r: any) => r.itemId === (item._id || item.id) || r.name === item.name);
                                           return (
                                             <div key={itemIdx} className="p-2 flex items-center justify-between text-[10px]">
@@ -1420,12 +1450,12 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                             {selectedPo.quotes?.length || 0} Quotes
                           </span>
                         </div>
-                        
+
                         {selectedPo.quotes && selectedPo.quotes.length > 0 ? (
                           <div className="space-y-3">
                             {(() => {
                               // Calculate totals for all quotes to find the lowest
-                              const quoteTotals = selectedPo.quotes.map((q: any) => 
+                              const quoteTotals = selectedPo.quotes.map((q: any) =>
                                 q.rates?.reduce((sum: number, r: any) => {
                                   const item = selectedPo.items?.find((i: any) => (i._id || i.id) === r.itemId || i.name === r.name);
                                   return sum + ((r.unitPrice || 0) * (item?.quantity || 1));
@@ -1438,13 +1468,12 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                 const isLowest = (myTotal === minTotal && myTotal > 0 && selectedPo.quotes.length > 1);
 
                                 return (
-                                  <div 
-                                    key={idx} 
-                                    className={`border rounded-xl overflow-hidden shadow-sm transition-all ${
-                                      isLowest 
-                                        ? 'border-emerald-500/50 bg-emerald-50/10 dark:bg-emerald-950/10 shadow-emerald-500/10' 
+                                  <div
+                                    key={idx}
+                                    className={`border rounded-xl overflow-hidden shadow-sm transition-all ${isLowest
+                                        ? 'border-emerald-500/50 bg-emerald-50/10 dark:bg-emerald-950/10 shadow-emerald-500/10'
                                         : 'border-[hsl(var(--border))] bg-[hsl(var(--card))]'
-                                    }`}
+                                      }`}
                                   >
                                     <div className={`p-4 border-b flex items-start justify-between ${isLowest ? 'border-emerald-500/20 bg-emerald-50/30 dark:bg-emerald-900/20' : 'border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]'}`}>
                                       <div>
@@ -1467,12 +1496,12 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                         </p>
                                       </div>
                                     </div>
-                                    
+
                                     <div className="p-4 space-y-4">
                                       <div className="space-y-2">
                                         <p className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))]">Item Breakdown</p>
                                         <div className="border border-[hsl(var(--border))] rounded-lg divide-y divide-[hsl(var(--border))] bg-[hsl(var(--background))]">
-                                          {(selectedPo.items && selectedPo.items.length > 0 ? selectedPo.items : [{_id: 'item-1', name: selectedPo.materialName?.replace(' ||CLOSED||', '') || 'Material', quantity: 1, unit: 'unit'}]).map((item: any, itemIdx: number) => {
+                                          {(selectedPo.items && selectedPo.items.length > 0 ? selectedPo.items : [{ _id: 'item-1', name: selectedPo.materialName?.replace(' ||CLOSED||', '') || 'Material', quantity: 1, unit: 'unit' }]).map((item: any, itemIdx: number) => {
                                             const rate = quote.rates?.find((r: any) => r.itemId === (item._id || item.id) || r.name === item.name);
                                             const itemTotal = (rate?.unitPrice || 0) * (item.quantity || 1);
                                             return (
@@ -1499,10 +1528,11 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                         </div>
                                       )}
 
-                                      <Button 
-                                        size="sm" 
+                                      <Button
+                                        size="sm"
                                         className={`w-full text-xs font-bold ${isLowest ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 shadow-lg' : ''}`}
                                         variant={isLowest ? 'default' : 'outline'}
+                                        disabled={updatingPo}
                                         onClick={() => handleUpdateVendor(quote.vendorName)}
                                       >
                                         {isLowest ? (
@@ -1604,7 +1634,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                       {(() => {
                         let parsedGrns = selectedPo.grns;
                         if (!parsedGrns && selectedPo.grnData?.allGrns) {
-                          try { parsedGrns = JSON.parse(selectedPo.grnData.allGrns); } catch(e) {}
+                          try { parsedGrns = JSON.parse(selectedPo.grnData.allGrns); } catch (e) { }
                         }
                         if (!parsedGrns && selectedPo.grnData) {
                           parsedGrns = [selectedPo.grnData];
@@ -1636,7 +1666,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                   </div>
                                   {(grn.proofUrl || grn.invoiceUrl) && (
                                     <div className="shrink-0 ml-2">
-                                      <button 
+                                      <button
                                         type="button"
                                         onClick={(e) => {
                                           e.stopPropagation();
@@ -1686,10 +1716,10 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                     ) : (
                                       <>
                                         <span>{currencySymbol}</span>
-                                        <input 
-                                          type="number" 
-                                          min="0" 
-                                          value={item.unitPrice || ''} 
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          value={item.unitPrice || ''}
                                           onChange={(e) => handleLocalRateChange(idx, parseFloat(e.target.value) || 0)}
                                           className="w-16 px-1 py-0.5 border border-[hsl(var(--border))] rounded bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:border-[hsl(var(--primary))] text-right"
                                         />
@@ -1712,10 +1742,10 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                   ) : (
                                     <>
                                       <span>{currencySymbol}</span>
-                                      <input 
-                                        type="number" 
-                                        min="0" 
-                                        value={selectedPo.amount || ''} 
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        value={selectedPo.amount || ''}
                                         onChange={(e) => {
                                           const newAmount = parseFloat(e.target.value) || 0;
                                           setSelectedPo({ ...selectedPo, amount: newAmount });
@@ -1749,11 +1779,11 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                   <Trash2 className="w-4 h-4 mr-2" /> {selectedPo.status === 'requested' ? 'Delete Request' : 'Delete PO'}
                 </Button>
                 {selectedPo.status !== 'requested' && selectedPo.status !== 'rfq' && (
-                  <Button 
+                  <Button
                     onClick={async () => {
                       await handleSaveRates();
                       setIsDetailOpen(false);
-                    }} 
+                    }}
                     className="w-full"
                     disabled={updatingPo}
                   >
@@ -2047,7 +2077,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                     No Delivery Proof Uploaded
                   </div>
                 )}
-                
+
                 {viewingImages.invoiceUrl ? (
                   <div className="space-y-2">
                     <h4 className="text-sm font-bold text-center text-[hsl(var(--foreground))]">Invoice</h4>
@@ -2064,11 +2094,11 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
         )}
       </AnimatePresence>
 
-      <SendRFQModal 
-        isOpen={isSendRFQOpen} 
-        onClose={() => setIsSendRFQOpen(false)} 
-        po={selectedPo} 
-        vendors={vendors} 
+      <SendRFQModal
+        isOpen={isSendRFQOpen}
+        onClose={() => setIsSendRFQOpen(false)}
+        po={selectedPo}
+        vendors={vendors}
         onSuccess={() => {
           handleUpdateStatus('rfq');
           setActivePipeline('rfq');

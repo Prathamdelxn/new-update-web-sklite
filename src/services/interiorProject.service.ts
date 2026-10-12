@@ -71,6 +71,8 @@ export const interiorProjectService = {
     interiorApiClient.put(`/projects/${projectId}/procurement/${poId}`, data).then((res) => res.data),
   deletePurchaseOrder: (projectId: string, poId: string) =>
     interiorApiClient.delete(`/projects/${projectId}/procurement/${poId}`).then((res) => res.data),
+  sendAwardEmail: (projectId: string, poId: string, data: any) =>
+    interiorApiClient.post(`/projects/${projectId}/procurement/${poId}/send-award-email`, data).then((res) => res.data),
 
   // Vendors
   getVendors: () => interiorApiClient.get(`/vendors`).then((res) => res.data),
