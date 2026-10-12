@@ -5,9 +5,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Image as ImageIcon, Plus, X, Loader2, Calendar } from 'lucide-react';
+import { Image as ImageIcon, Plus, X, Loader2, Calendar, Trash2 } from 'lucide-react';
 import { Button, Input, Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
+import { uploadToCloudinary } from '@/lib/upload';
 import { useToast } from '@/providers/ToastContext';
 import { cn } from '@/lib/utils';
 
@@ -22,6 +23,7 @@ export default function InteriorPhotosView({ projectId }: InteriorPhotosViewProp
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>('all');
 
   const [caption, setCaption] = useState('');
@@ -61,19 +63,22 @@ export default function InteriorPhotosView({ projectId }: InteriorPhotosViewProp
 
     try {
       setSubmitting(true);
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-
       const uploadToastId = toast.loading('Uploading photo...');
-      const uploadRes = await interiorProjectService.uploadPhotoFile(projectId, formData);
-      toast.dismiss(uploadToastId);
+      let secureUrl = '';
 
-      if (!uploadRes.success || !uploadRes.data?.url) {
-        throw new Error('Photo upload failed');
+      try {
+        secureUrl = await uploadToCloudinary(selectedFile);
+      } catch (cloudErr) {
+        console.warn('Cloudinary upload fallback to backend upload:', cloudErr);
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        const uploadRes = await interiorProjectService.uploadPhotoFile(projectId, formData);
+        if (!uploadRes.success || !uploadRes.data?.url) {
+          throw new Error('Photo upload failed');
+        }
+        secureUrl = uploadRes.data.url;
       }
-
-      const secureUrl = uploadRes.data.url;
-      toast.success('Photo uploaded!');
+      toast.dismiss(uploadToastId);
 
       const payload = { caption, category, url: secureUrl };
 
@@ -88,6 +93,24 @@ export default function InteriorPhotosView({ projectId }: InteriorPhotosViewProp
       toast.error(err.response?.data?.error || err.message || 'Failed to log site photo');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDeletePhoto = async (photoId: string) => {
+    if (!window.confirm('Are you sure you want to delete this site photo?')) return;
+    try {
+      setDeletingId(photoId);
+      const res = await interiorProjectService.deletePhoto(projectId, photoId);
+      if (res.success) {
+        toast.success('Site photo deleted');
+        setPhotos((prev) => prev.filter((p) => p._id !== photoId));
+      } else {
+        toast.error(res.error || 'Failed to delete photo');
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || err.message || 'Failed to delete photo');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -148,6 +171,22 @@ export default function InteriorPhotosView({ projectId }: InteriorPhotosViewProp
                 <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold bg-black/60 text-white backdrop-blur-sm">
                   {photo.category}
                 </span>
+                <button
+                  type="button"
+                  disabled={deletingId === photo._id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeletePhoto(photo._id);
+                  }}
+                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 hover:bg-red-600 text-white transition-colors opacity-0 group-hover:opacity-100 backdrop-blur-sm cursor-pointer"
+                  title="Delete photo"
+                >
+                  {deletingId === photo._id ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-3.5 h-3.5" />
+                  )}
+                </button>
               </div>
               <CardContent className="p-4 space-y-2">
                 <p className="text-sm font-medium text-[hsl(var(--foreground))] line-clamp-1">{photo.caption || 'No caption added'}</p>

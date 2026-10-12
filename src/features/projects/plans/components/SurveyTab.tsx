@@ -556,7 +556,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
           )}
 
           {/* ── 7. Admin Executive Decision Bar ── */}
-          {isAdminOrManager && survey.status === 'Submitted' && (
+          {canApproveSurvey && survey.status === 'Submitted' && (
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
                 disabled={isProcessing}

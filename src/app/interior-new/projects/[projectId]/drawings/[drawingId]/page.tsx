@@ -103,6 +103,7 @@ export interface DrawingAnnotation {
   y: number; // percentage (0 - 100)
   text: string;
   type?: 'comment' | 'issue' | 'snag' | 'revision' | 'approved';
+  snagId?: string;
   attachments?: AnnotationAttachment[];
   author?: {
     name: string;
@@ -229,7 +230,7 @@ export default function ProjectDrawingStudioPage() {
   
   // Create / Edit Annotation Form State
   const [annoText, setAnnoText] = useState('');
-  const [annoType, setAnnoType] = useState<'comment' | 'issue'>('comment');
+  const [annoType, setAnnoType] = useState<'comment' | 'issue' | 'snag'>('comment');
   const [annoAttachments, setAnnoAttachments] = useState<AnnotationAttachment[]>([]);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
@@ -932,16 +933,60 @@ export default function ProjectDrawingStudioPage() {
 
       let updatedList: DrawingAnnotation[];
       let targetPinNumber: number;
+      const targetDrawingId = drawing?._id || drawing?.id || drawingId;
+      const cleanDrawingId = targetDrawingId && String(targetDrawingId).length === 24 ? String(targetDrawingId) : undefined;
+      const imagePhotos = effectiveAttachments.filter((a) => a.type === 'image').map((a) => a.url);
 
       if (editingAnnoId) {
         const existing = annotations.find((a) => a.id === editingAnnoId);
         targetPinNumber = existing?.pinNumber || 1;
+        let associatedSnagId = existing?.snagId;
+
+        // If snag exists, sync update to Snags register
+        if (associatedSnagId) {
+          try {
+            await interiorProjectService.updateSnag(projectId, {
+              snagId: associatedSnagId,
+              description: annoText.trim() || `Inspection Defect #${targetPinNumber}`,
+              photos: imagePhotos,
+            });
+            queryClient.invalidateQueries({ queryKey: ['interior-project-snags', projectId] });
+          } catch (snagErr) {
+            console.warn('Sync update to Snags register failed', snagErr);
+          }
+        } else if (annoType === 'issue' || annoType === 'snag') {
+          // Changed type to snag/issue, so create a new snag item
+          try {
+            const snagRes = await interiorProjectService.createSnag(projectId, {
+              description: annoText.trim() || `Inspection Defect on ${drawing?.title || 'Drawing'} (Pin #${targetPinNumber})`,
+              location: `${drawing?.title || 'Drawing Plan'} • Pin #${targetPinNumber}`,
+              priority: 'high',
+              photos: imagePhotos,
+              drawingId: cleanDrawingId,
+              drawingTitle: drawing?.title || 'Drawing Blueprint',
+              drawingNumber: drawing?.drawingNumber || '',
+              annotationId: editingAnnoId,
+              pinNumber: targetPinNumber,
+              x: existing?.x,
+              y: existing?.y,
+              source: 'drawing_annotation',
+            });
+            if (snagRes?.data?._id || snagRes?.data?.id) {
+              associatedSnagId = snagRes.data._id || snagRes.data.id;
+            }
+            queryClient.invalidateQueries({ queryKey: ['interior-project-snags', projectId] });
+          } catch (snagErr) {
+            console.warn('Auto-create snag for annotation failed', snagErr);
+          }
+        }
+
         updatedList = annotations.map((a) => {
           if (a.id === editingAnnoId) {
             return {
               ...a,
               text: annoText.trim(),
               type: annoType,
+              snagId: associatedSnagId,
               attachments: effectiveAttachments,
             };
           }
@@ -950,15 +995,44 @@ export default function ProjectDrawingStudioPage() {
       } else {
         const currentVers = annotations.filter((a) => !a.versionNumber || Number(a.versionNumber) === Number(activeVersionNum));
         targetPinNumber = currentVers.reduce((max, a) => Math.max(max, a.pinNumber || 0), 0) + 1;
+        const newAnnoId = `anno-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        let createdSnagId: string | undefined = undefined;
+
+        // If type is issue / snag, auto-create a linked Snag in the Project Quality Snags register
+        if (annoType === 'issue' || annoType === 'snag') {
+          try {
+            const snagRes = await interiorProjectService.createSnag(projectId, {
+              description: annoText.trim() || `Inspection Defect on ${drawing?.title || 'Drawing'} (Pin #${targetPinNumber})`,
+              location: `${drawing?.title || 'Drawing Plan'} • Pin #${targetPinNumber}`,
+              priority: 'high',
+              photos: imagePhotos,
+              drawingId: cleanDrawingId,
+              drawingTitle: drawing?.title || 'Drawing Blueprint',
+              drawingNumber: drawing?.drawingNumber || '',
+              annotationId: newAnnoId,
+              pinNumber: targetPinNumber,
+              x: pendingCoords.x,
+              y: pendingCoords.y,
+              source: 'drawing_annotation',
+            });
+            if (snagRes?.data?._id || snagRes?.data?.id) {
+              createdSnagId = snagRes.data._id || snagRes.data.id;
+            }
+            queryClient.invalidateQueries({ queryKey: ['interior-project-snags', projectId] });
+          } catch (snagErr) {
+            console.warn('Auto-create snag for annotation failed', snagErr);
+          }
+        }
 
         const newAnno: DrawingAnnotation = {
-          id: `anno-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          id: newAnnoId,
           pinNumber: targetPinNumber,
           versionNumber: activeVersionNum,
           x: pendingCoords.x,
           y: pendingCoords.y,
           text: annoText.trim(),
           type: annoType,
+          snagId: createdSnagId,
           attachments: effectiveAttachments,
           author: {
             name: 'Site Architect',
@@ -971,7 +1045,6 @@ export default function ProjectDrawingStudioPage() {
         updatedList = [...annotations, newAnno];
       }
 
-      const targetDrawingId = drawing?._id || drawing?.id || drawingId;
       if (targetDrawingId) {
         await interiorProjectService.updateDrawing(projectId, {
           drawingId: String(targetDrawingId),
@@ -1018,7 +1091,11 @@ export default function ProjectDrawingStudioPage() {
             setHoveredAnnotationId((curr) => (curr === createdId ? null : curr));
           }, 3000);
         }
-        toast.success(`Inspection Pin #${targetPinNumber} placed`);
+        if (annoType === 'issue' || annoType === 'snag') {
+          toast.success(`Inspection Pin #${targetPinNumber} placed & linked to Snags Register`);
+        } else {
+          toast.success(`Inspection Pin #${targetPinNumber} placed`);
+        }
       }
     } catch (err: any) {
       toast.error(err?.message || 'Failed to save annotation');
@@ -1028,15 +1105,28 @@ export default function ProjectDrawingStudioPage() {
   };
 
   const handleDeleteAnnotation = async (annoId: string) => {
+    const targetAnno = annotations.find((a) => a.id === annoId);
     const confirmed = await confirm({
       title: 'Delete Inspection Pin',
-      message: 'Are you sure you want to permanently remove this pin and all attached photos/videos?',
+      message: targetAnno?.snagId
+        ? 'Are you sure you want to delete this pin? The corresponding item in the Project Snags Register will also be removed.'
+        : 'Are you sure you want to permanently remove this pin and all attached photos/videos?',
       confirmText: 'Delete Pin',
       type: 'danger',
     });
     if (!confirmed) return;
 
     try {
+      // If linked to a Snag, delete from Snag collection as well
+      if (targetAnno?.snagId) {
+        try {
+          await interiorProjectService.deleteSnag(projectId, targetAnno.snagId);
+          queryClient.invalidateQueries({ queryKey: ['interior-project-snags', projectId] });
+        } catch (snagErr) {
+          console.warn('Sync delete snag failed', snagErr);
+        }
+      }
+
       const updatedList = annotations.filter((a) => a.id !== annoId);
       const targetDrawingId = drawing?._id || drawing?.id || drawingId;
       if (targetDrawingId) {
@@ -1067,8 +1157,24 @@ export default function ProjectDrawingStudioPage() {
 
   const handleToggleResolve = async (annoId: string) => {
     try {
+      const targetAnno = annotations.find((a) => a.id === annoId);
+      const nextResolved = !targetAnno?.resolved;
+
+      // Sync status to Snags register if linked
+      if (targetAnno?.snagId) {
+        try {
+          await interiorProjectService.updateSnag(projectId, {
+            snagId: targetAnno.snagId,
+            status: nextResolved ? 'resolved' : 'open',
+          });
+          queryClient.invalidateQueries({ queryKey: ['interior-project-snags', projectId] });
+        } catch (snagErr) {
+          console.warn('Sync snag resolve status failed', snagErr);
+        }
+      }
+
       const updatedList = annotations.map((a) => {
-        if (a.id === annoId) return { ...a, resolved: !a.resolved };
+        if (a.id === annoId) return { ...a, resolved: nextResolved };
         return a;
       });
 
@@ -1093,9 +1199,9 @@ export default function ProjectDrawingStudioPage() {
       setAnnotations(updatedList);
       setDrawing((prev: any) => (prev ? { ...prev, annotations: updatedList } : prev));
       if (selectedAnnotation?.id === annoId) {
-        setSelectedAnnotation((prev) => (prev ? { ...prev, resolved: !prev.resolved } : null));
+        setSelectedAnnotation((prev) => (prev ? { ...prev, resolved: nextResolved } : null));
       }
-      toast.success('Status updated');
+      toast.success(nextResolved ? 'Marked as Resolved & synced to Snags' : 'Reopened & synced to Snags');
     } catch (err) {
       toast.error('Failed to update status');
     }
@@ -2233,6 +2339,15 @@ export default function ProjectDrawingStudioPage() {
                       <span>Snag / Defect</span>
                     </button>
                   </div>
+
+                  {annoType === 'issue' && (
+                    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-rose-50/80 border border-rose-200/70 text-[11px] text-rose-800 leading-tight">
+                      <AlertTriangle size={13} className="text-rose-600 shrink-0" />
+                      <span>
+                        <strong>Auto-linked to Quality Snags:</strong> This defect will automatically sync as an active item inside the Project Quality Snag Register.
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Observation Note */}
@@ -2744,6 +2859,20 @@ export default function ProjectDrawingStudioPage() {
                 </button>
 
                 <div className="flex items-center gap-2">
+                  {(selectedAnnotation.type === 'issue' || selectedAnnotation.snagId) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        router.push(`/interior-new/projects/${projectId}/snags`);
+                      }}
+                      className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
+                      title="Open Project Snags Register"
+                    >
+                      <ExternalLink size={12} className="text-slate-500" />
+                      <span>Snags Register</span>
+                    </button>
+                  )}
+
                   {selectedAnnotation.type === 'issue' && (
                     <button
                       type="button"

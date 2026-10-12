@@ -39,8 +39,9 @@ const CATEGORIES = (projectId: string) => [
     icon: '📂',
     items: [
       { label: 'Drawings', href: `/interior-new/projects/${projectId}/drawings` },
+      { label: 'Site Photos', href: `/interior-new/projects/${projectId}/photos` },
       { label: 'RFIs Tracker', href: `/interior-new/projects/${projectId}/rfis` },
-      // { label: 'Utility Checks', href: `/interior-new/projects/${projectId}/utilities` },
+      { label: 'Utility Checks', href: `/interior-new/projects/${projectId}/utilities` },
     ],
   },
   {
@@ -71,6 +72,7 @@ const CATEGORIES = (projectId: string) => [
     icon: '🔍',
     items: [
       { label: 'Snags Logger', href: `/interior-new/projects/${projectId}/snags` },
+      { label: 'Non-Conformance (NCR)', href: `/interior-new/projects/${projectId}/ncrs` },
       { label: 'Risks Matrix', href: `/interior-new/projects/${projectId}/risks` },
     ],
   },

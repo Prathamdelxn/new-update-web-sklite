@@ -52,6 +52,7 @@ import { interiorProjectService } from '@/services/interiorProject.service';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
+import { uploadToCloudinary } from '@/lib/upload';
 
 interface InteriorTasksViewProps {
   projectId: string;
@@ -129,6 +130,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
   >([]);
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
   const [submittingProof, setSubmittingProof] = useState(false);
+  const [uploadingProofImages, setUploadingProofImages] = useState(false);
   const [imageLightboxUrl, setImageLightboxUrl] = useState<string | null>(null);
 
   // Unified Activity Modal State (Exact match with InteriorWbsView)
@@ -442,20 +444,50 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
     }
   };
 
-  // Upload proof image handler (FileReader base64 data url)
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Upload proof image handler (Cloudinary CDN upload with fallback)
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          setProofImages((prev) => [...prev, { url: reader.result as string, name: file.name, size: file.size }]);
+    const fileList = Array.from(files);
+    setUploadingProofImages(true);
+    const toastId = toast.loading(`Uploading ${fileList.length} completion photo${fileList.length > 1 ? 's' : ''}...`);
+
+    try {
+      const uploadedResults: Array<{ url: string; name: string; size?: number }> = [];
+
+      for (const file of fileList) {
+        let secureUrl = '';
+        try {
+          secureUrl = await uploadToCloudinary(file);
+        } catch (cloudErr) {
+          console.warn('Direct Cloudinary upload failed, attempting backend upload fallback:', cloudErr);
+          const formData = new FormData();
+          formData.append('file', file);
+          const uploadRes = await interiorProjectService.uploadPhotoFile(projectId, formData);
+          if (uploadRes?.success && uploadRes?.data?.url) {
+            secureUrl = uploadRes.data.url;
+          } else {
+            throw new Error('Upload failed');
+          }
         }
-      };
-      reader.readAsDataURL(file);
-    });
+
+        if (secureUrl) {
+          uploadedResults.push({ url: secureUrl, name: file.name, size: file.size });
+        }
+      }
+
+      toast.dismiss(toastId);
+      toast.success(`${uploadedResults.length} photo${uploadedResults.length > 1 ? 's' : ''} uploaded`);
+      setProofImages((prev) => [...prev, ...uploadedResults]);
+    } catch (err: any) {
+      toast.dismiss(toastId);
+      console.error('Failed to upload proof photos', err);
+      toast.error(err?.message || 'Failed to upload proof photos');
+    } finally {
+      setUploadingProofImages(false);
+      if (e.target) e.target.value = '';
+    }
   };
 
   const handleRemoveProofImage = (index: number) => {
@@ -1538,15 +1570,26 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                       <span className="text-[11px] font-normal text-[hsl(var(--muted-foreground))]">JPG, PNG, WebP</span>
                     </label>
 
-                    <label className="border-2 border-dashed border-[hsl(var(--border))] hover:border-emerald-500 rounded-xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer bg-[hsl(var(--background))] hover:bg-emerald-50/20 transition-all text-center">
-                      <UploadCloud className="w-6 h-6 text-emerald-600" />
+                    <label className={`border-2 border-dashed border-[hsl(var(--border))] rounded-xl p-4 flex flex-col items-center justify-center gap-2 bg-[hsl(var(--background))] transition-all text-center ${
+                      uploadingProofImages ? 'opacity-60 cursor-not-allowed' : 'hover:border-emerald-500 hover:bg-emerald-50/20 cursor-pointer'
+                    }`}>
+                      {uploadingProofImages ? (
+                        <Loader2 className="w-6 h-6 text-emerald-600 animate-spin" />
+                      ) : (
+                        <UploadCloud className="w-6 h-6 text-emerald-600" />
+                      )}
                       <div className="space-y-0.5">
-                        <p className="text-xs font-semibold text-[hsl(var(--foreground))]">Click or Drag & Drop Site Photos</p>
-                        <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Upload clear proof of completed work</p>
+                        <p className="text-xs font-semibold text-[hsl(var(--foreground))]">
+                          {uploadingProofImages ? 'Uploading photos to CDN...' : 'Click or Drag & Drop Site Photos'}
+                        </p>
+                        <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                          {uploadingProofImages ? 'Please wait a moment' : 'Upload clear proof of completed work'}
+                        </p>
                       </div>
                       <input
                         type="file"
                         multiple
+                        disabled={uploadingProofImages}
                         accept="image/*"
                         onChange={handleImageUpload}
                         className="hidden"
@@ -1596,6 +1639,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                   <Button
                     variant="outline"
                     type="button"
+                    disabled={submittingProof || uploadingProofImages}
                     onClick={() => {
                       setIsProofModalOpen(false);
                       setProofTask(null);
@@ -1603,9 +1647,13 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={submittingProof} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                    {submittingProof && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}
-                    Confirm & Complete Task
+                  <Button 
+                    type="submit" 
+                    disabled={submittingProof || uploadingProofImages} 
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  >
+                    {(submittingProof || uploadingProofImages) && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}
+                    {uploadingProofImages ? 'Uploading Photos...' : submittingProof ? 'Completing Task...' : 'Confirm & Complete Task'}
                   </Button>
                 </div>
               </form>

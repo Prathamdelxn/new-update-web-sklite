@@ -146,15 +146,12 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   const [isGRNOpen, setIsGRNOpen] = useState(false);
   
   const [isLinkActive, setIsLinkActive] = useState(true);
-  useEffect(() => { if (selectedPo) { setIsLinkActive(!selectedPo.materialName?.includes('||CLOSED||')); } }, [selectedPo?._id, selectedPo?.materialName]);
+  useEffect(() => { 
+    if (selectedPo) { 
+      setIsLinkActive(!selectedPo.materialName?.includes('||CLOSED||')); 
+    } 
+  }, [selectedPo?._id, selectedPo?.materialName]);
   const [linkExpiry, setLinkExpiry] = useState('12h');
-
-  // Reset link active state when a new PO is opened
-  useEffect(() => {
-    if (selectedPo) {
-      setIsLinkActive(true);
-    }
-  }, [selectedPo]);
 
 
   const [selectedStock, setSelectedStock] = useState<any>(null);
