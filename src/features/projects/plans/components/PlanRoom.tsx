@@ -219,7 +219,10 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
                       <Send className="w-3.5 h-3.5" />
                     </button>
                   )}
-                  {doc.approvalStatus === 'Pending' && canApprovePlans && (
+                  {/* Approve/Reject: Plan Management > Approve AND an assigned approver who hasn't responded (admins always, like the API) */}
+                  {doc.approvalStatus === 'Pending' && (isAdmin || (canApprovePlans && (doc.approvals || []).some((a: any) =>
+                    String(a.user?._id || a.user) === String((user as any)?._id || (user as any)?.id) && a.status === 'Pending'
+                  ))) && (
                     <>
                       <button
                         onClick={() => handleAction(doc._id, 'respond', { response: 'Approved', versionId: doc.versionId })}
