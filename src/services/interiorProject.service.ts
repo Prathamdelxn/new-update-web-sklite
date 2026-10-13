@@ -115,12 +115,6 @@ export const interiorProjectService = {
   updateSnag: (projectId: string, data: any) => interiorApiClient.put(`/projects/${projectId}/snags`, data).then((res) => res.data),
   deleteSnag: (projectId: string, snagId: string) => interiorApiClient.delete(`/projects/${projectId}/snags?snagId=${snagId}`).then((res) => res.data),
 
-  // NCRs
-  getNcrs: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/ncrs`).then((res) => res.data),
-  createNcr: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/ncrs`, data).then((res) => res.data),
-  updateNcr: (projectId: string, data: any) => interiorApiClient.put(`/projects/${projectId}/ncrs`, data).then((res) => res.data),
-  deleteNcr: (projectId: string, ncrId: string) => interiorApiClient.delete(`/projects/${projectId}/ncrs?ncrId=${ncrId}`).then((res) => res.data),
-
   // Utilities
   getUtilities: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/utilities`).then((res) => res.data),
   updateUtility: (projectId: string, data: any) => interiorApiClient.put(`/projects/${projectId}/utilities`, data).then((res) => res.data),

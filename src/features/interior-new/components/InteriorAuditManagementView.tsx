@@ -6,7 +6,7 @@
 // and comprehensive change diff inspection modal.
 // =============================================================================
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import {
@@ -162,14 +162,24 @@ export default function InteriorAuditManagementView() {
 
   const [activeSegment, setActiveSegment] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [debouncedSearch, setDebouncedSearch] = useState<string>('');
   const [selectedAction, setSelectedAction] = useState<string>('all');
   const [selectedEntity, setSelectedEntity] = useState<string>('All Modules');
   const [dateRange, setDateRange] = useState<string>('all');
+
+  // Debounce search input to prevent server spam
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Modal State
   const [selectedLog, setSelectedLog] = useState<AuditLogItem | null>(null);
   const [modalTab, setModalTab] = useState<'overview' | 'diff' | 'security' | 'json'>('overview');
   const [copiedPayload, setCopiedPayload] = useState<boolean>(false);
+  const [exporting, setExporting] = useState<boolean>(false);
 
   const queryParams = useMemo(() => {
     const params: Record<string, any> = {
@@ -177,25 +187,28 @@ export default function InteriorAuditManagementView() {
       limit,
     };
 
-    if (searchTerm.trim()) params.search = searchTerm.trim();
+    if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
     if (selectedAction !== 'all') params.action = selectedAction;
     if (selectedEntity !== 'All Modules') params.entity = selectedEntity;
 
+    const todayStr = new Date().toISOString().split('T')[0];
     if (dateRange === 'today') {
-      const today = new Date().toISOString().split('T')[0];
-      params.startDate = today;
+      params.startDate = todayStr;
+      params.endDate = todayStr;
     } else if (dateRange === '7days') {
       const d = new Date();
       d.setDate(d.getDate() - 7);
       params.startDate = d.toISOString().split('T')[0];
+      params.endDate = todayStr;
     } else if (dateRange === '30days') {
       const d = new Date();
       d.setDate(d.getDate() - 30);
       params.startDate = d.toISOString().split('T')[0];
+      params.endDate = todayStr;
     }
 
     return params;
-  }, [page, limit, searchTerm, selectedAction, selectedEntity, dateRange]);
+  }, [page, limit, debouncedSearch, selectedAction, selectedEntity, dateRange]);
 
   const {
     data: auditResult,
@@ -271,18 +284,23 @@ export default function InteriorAuditManagementView() {
     }
   };
 
-  // Export CSV Handler
-  const handleExportCSV = () => {
-    if (logs.length === 0) {
+  // Export CSV Handler (fetches full matching dataset)
+  const handleExportCSV = async () => {
+    if (totalCount === 0) {
       toast.info('No audit records available to export.');
       return;
     }
 
+    setExporting(true);
     try {
+      const exportParams = { ...queryParams, page: 1, limit: Math.min(totalCount, 5000) };
+      const res = await interiorAuditService.getAuditLogs(exportParams);
+      const exportLogs = res.data?.logs && res.data.logs.length > 0 ? res.data.logs : logs;
+
       const headers = ['Event ID', 'Date & Time', 'Action', 'Module', 'Entity Name', 'Description', 'Actor Name', 'Actor Email', 'IP Address'];
-      const rows = logs.map((log) => {
+      const rows = exportLogs.map((log) => {
         const actor = typeof log.userId === 'object' && log.userId ? (log.userId as AuditUser) : null;
-        const actorName = actor ? `${actor.firstName} ${actor.lastName}` : 'System Automation';
+        const actorName = actor ? `${actor.firstName || ''} ${actor.lastName || ''}`.trim() || actor.email : 'System Automation';
         const actorEmail = actor ? actor.email : 'system@interioros.local';
 
         return [
@@ -307,9 +325,11 @@ export default function InteriorAuditManagementView() {
       link.click();
       document.body.removeChild(link);
 
-      toast.success('Audit log export downloaded successfully.');
-    } catch (e) {
+      toast.success(`Exported ${exportLogs.length} audit records to CSV.`);
+    } catch {
       toast.error('Failed to generate export file.');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -352,12 +372,94 @@ export default function InteriorAuditManagementView() {
             variant="default"
             size="sm"
             onClick={handleExportCSV}
-            className="gap-1.5 h-8.5 text-xs shadow-xs font-semibold"
+            disabled={exporting || totalCount === 0}
+            className="gap-1.5 h-8.5 text-xs shadow-xs font-semibold cursor-pointer"
           >
-            <Download className="w-3.5 h-3.5" />
-            <span>Export CSV</span>
+            <Download className={cn('w-3.5 h-3.5', exporting && 'animate-bounce')} />
+            <span>{exporting ? 'Exporting...' : 'Export CSV'}</span>
           </Button>
         </div>
+      </div>
+
+      {/* ── KPI Stat Metrics Overview ────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Card className="border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-xs hover:border-[hsl(var(--primary)/0.3)] transition-colors">
+          <CardContent className="p-3.5 flex items-center justify-between">
+            <div className="space-y-0.5 min-w-0">
+              <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider block">
+                Total Events
+              </span>
+              <div className="text-xl font-bold tracking-tight text-[hsl(var(--foreground))]">
+                {stats ? stats.totalLogs.toLocaleString() : totalCount.toLocaleString()}
+              </div>
+              <span className="text-[10px] text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Immutable Ledger
+              </span>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/20">
+              <Activity className="w-5 h-5" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-xs hover:border-[hsl(var(--primary)/0.3)] transition-colors">
+          <CardContent className="p-3.5 flex items-center justify-between">
+            <div className="space-y-0.5 min-w-0">
+              <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider block">
+                Activity Today
+              </span>
+              <div className="text-xl font-bold tracking-tight text-[hsl(var(--foreground))]">
+                {stats?.todayLogs ?? 0}
+              </div>
+              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                <TrendingUp className="w-3 h-3" />
+                Live recording
+              </span>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
+              <Clock className="w-5 h-5" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-xs hover:border-[hsl(var(--primary)/0.3)] transition-colors">
+          <CardContent className="p-3.5 flex items-center justify-between">
+            <div className="space-y-0.5 min-w-0">
+              <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider block">
+                Active Actors
+              </span>
+              <div className="text-xl font-bold tracking-tight text-[hsl(var(--foreground))]">
+                {stats?.uniqueUsersCount ?? 0}
+              </div>
+              <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                Unique team members
+              </span>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/20">
+              <Users className="w-5 h-5" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-xs hover:border-[hsl(var(--primary)/0.3)] transition-colors">
+          <CardContent className="p-3.5 flex items-center justify-between">
+            <div className="space-y-0.5 min-w-0">
+              <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider block">
+                Critical Events
+              </span>
+              <div className="text-xl font-bold tracking-tight text-rose-600 dark:text-rose-400">
+                {stats?.criticalActionsCount ?? 0}
+              </div>
+              <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                Deletions & Rejections
+              </span>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/20">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* ── Quick Segment Filter Bar ────────────────────────────────────────── */}
@@ -428,7 +530,10 @@ export default function InteriorAuditManagementView() {
                 <option value="approve">Approved</option>
                 <option value="reject">Rejected</option>
                 <option value="login">User Login</option>
+                <option value="logout">User Logout</option>
                 <option value="export">Data Export</option>
+                <option value="upload">File Upload</option>
+                <option value="download">File Download</option>
               </select>
             </div>
 
@@ -546,7 +651,7 @@ export default function InteriorAuditManagementView() {
                   const EntityIcon = ENTITY_ICONS[log.entity] || FolderKanban;
 
                   const actor = typeof log.userId === 'object' && log.userId ? (log.userId as AuditUser) : null;
-                  const actorName = actor ? `${actor.firstName} ${actor.lastName}` : 'System Automation';
+                  const actorName = actor ? `${actor.firstName || ''} ${actor.lastName || ''}`.trim() || actor.email : 'System Automation';
                   const actorEmail = actor ? actor.email : 'system@interioros.local';
 
                   const dateObj = new Date(log.createdAt);
@@ -572,7 +677,7 @@ export default function InteriorAuditManagementView() {
                       <td className="py-3 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-2.5">
                           <div className="w-7 h-7 rounded-lg bg-linear-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary)/0.7)] text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
-                            {actorName.charAt(0).toUpperCase()}
+                            {(actorName || 'S').charAt(0).toUpperCase()}
                           </div>
                           <div className="min-w-0">
                             <div className="font-bold text-xs text-[hsl(var(--foreground))] truncate max-w-[140px]">
@@ -963,6 +1068,23 @@ export default function InteriorAuditManagementView() {
                         {selectedLog.description}
                       </div>
                     </div>
+
+                    {/* Metadata Card if available */}
+                    {selectedLog.metadata && Object.keys(selectedLog.metadata).length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                          Contextual Metadata
+                        </h4>
+                        <div className="p-4 rounded-2xl bg-[hsl(var(--background))] border border-[hsl(var(--border))] text-xs space-y-1.5 font-mono">
+                          {Object.entries(selectedLog.metadata).map(([k, v]) => (
+                            <div key={k} className="flex items-center justify-between py-1 border-b border-[hsl(var(--border)/0.5)] last:border-0">
+                              <span className="text-[hsl(var(--muted-foreground))] font-medium">{k}:</span>
+                              <span className="text-[hsl(var(--foreground))] font-bold">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

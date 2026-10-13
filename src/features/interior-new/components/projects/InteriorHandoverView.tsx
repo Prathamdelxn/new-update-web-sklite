@@ -48,7 +48,6 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
   const [tasks, setTasks] = useState<any[]>([]);
   const [drawings, setDrawings] = useState<any[]>([]);
   const [snags, setSnags] = useState<any[]>([]);
-  const [ncrs, setNcrs] = useState<any[]>([]);
   const [handover, setHandover] = useState<any>(null);
 
   const [loading, setLoading] = useState(true);
@@ -70,14 +69,13 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
     try {
       if (showLoading) setLoading(true);
 
-      const [projRes, wbsRes, tasksRes, drawingsRes, snagsRes, ncrsRes, handoverRes] =
+      const [projRes, wbsRes, tasksRes, drawingsRes, snagsRes, handoverRes] =
         await Promise.allSettled([
           interiorProjectService.getProjectDetails(projectId),
           interiorProjectService.getWbs(projectId),
           interiorProjectService.getTasks(projectId),
           interiorProjectService.getDrawings(projectId),
           interiorProjectService.getSnags(projectId),
-          interiorProjectService.getNcrs(projectId),
           interiorProjectService.getHandover(projectId),
         ]);
 
@@ -95,9 +93,6 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
       }
       if (snagsRes.status === 'fulfilled' && snagsRes.value?.success && snagsRes.value.data) {
         setSnags(snagsRes.value.data);
-      }
-      if (ncrsRes.status === 'fulfilled' && ncrsRes.value?.success && ncrsRes.value.data) {
-        setNcrs(ncrsRes.value.data);
       }
       if (handoverRes.status === 'fulfilled' && handoverRes.value?.success && handoverRes.value.data) {
         setHandover(handoverRes.value.data);
@@ -204,12 +199,7 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
     ).length;
     const isSnagsDone = openSnags === 0;
 
-    // 5. NCRs
-    const totalNcrs = ncrs.length;
-    const openNcrs = ncrs.filter((n) => n.status !== 'resolved' && n.status !== 'closed').length;
-    const isNcrsDone = openNcrs === 0;
-
-    // 6. Documents
+    // 5. Documents
     const docs = handover?.documents || [];
     const isDocsDone = docs.length > 0;
 
@@ -252,14 +242,6 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
         href: `/interior-new/projects/${projectId}/snags`,
       },
       {
-        id: 'ncrs',
-        title: 'Non-conformance reports (NCR) cleared',
-        subtitle: openNcrs === 0 ? 'Zero active NCR infractions' : `${openNcrs} open NCR${openNcrs > 1 ? 's' : ''}`,
-        passed: isNcrsDone,
-        tag: openNcrs === 0 ? 'Cleared' : `${openNcrs} Open`,
-        href: `/interior-new/projects/${projectId}/ncrs`,
-      },
-      {
         id: 'documents',
         title: 'Interior Care & Appliance Manuals',
         subtitle: docs.length === 0 ? 'No manuals or warranties uploaded yet' : `${docs.length} document${docs.length > 1 ? 's' : ''} registered`,
@@ -268,7 +250,7 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
         href: '#closeout-docs',
       },
     ];
-  }, [actualWbsNodes, project, tasks, drawings, snags, ncrs, handover, projectId]);
+  }, [actualWbsNodes, project, tasks, drawings, snags, handover, projectId]);
 
   // Overall Score
   const completedCount = checklistItems.filter((i) => i.passed).length;

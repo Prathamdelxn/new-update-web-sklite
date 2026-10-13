@@ -72,7 +72,6 @@ const CATEGORIES = (projectId: string) => [
     icon: '🔍',
     items: [
       { label: 'Snags Logger', href: `/interior-new/projects/${projectId}/snags` },
-      { label: 'Non-Conformance (NCR)', href: `/interior-new/projects/${projectId}/ncrs` },
       { label: 'Risks Matrix', href: `/interior-new/projects/${projectId}/risks` },
     ],
   },

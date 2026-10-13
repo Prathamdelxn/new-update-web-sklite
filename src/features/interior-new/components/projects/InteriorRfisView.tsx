@@ -301,6 +301,15 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
                   </div>
                 </div>
 
+                {selectedRfi.response && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Official Response / Clarification</h4>
+                    <div className="p-4 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 text-sm whitespace-pre-wrap text-emerald-950 dark:text-emerald-200">
+                      {selectedRfi.response}
+                    </div>
+                  </div>
+                )}
+
                 {selectedRfi.status !== 'closed' && (
                   <div className="flex items-center gap-2">
                     <Button variant="outline" className="text-emerald-600 border-emerald-200" onClick={() => handleCloseRFI(selectedRfi._id)}>

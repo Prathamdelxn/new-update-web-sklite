@@ -26,6 +26,7 @@ const navigation: NavItem[] = [
   { label: 'Vendor Management', href: '/interior-new/vendors', icon: Truck, wired: true },
   { label: 'Users & Roles', href: '/interior-new/users-roles', icon: UsersRound, wired: true },
   { label: 'Audit Management', href: '/interior-new/audit', icon: ShieldCheck, wired: true },
+  { label: 'Settings', href: '/interior-new/settings', icon: Settings, wired: true },
 ];
 
 const bottomNavigation: NavItem[] = [];
