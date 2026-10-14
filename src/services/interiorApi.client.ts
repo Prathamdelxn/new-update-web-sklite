@@ -9,7 +9,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 const getBaseUrl = (): string => {
   if (typeof window !== 'undefined') {
     const envUrl = process.env.NEXT_PUBLIC_INTERIOR_API_URL;
-    console.log("api calling",envUrl);
+
     if (envUrl && !envUrl.includes('10.56.63.159')) {
       return envUrl.replace(/\/+$/, '');
     }
