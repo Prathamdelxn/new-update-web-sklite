@@ -4,7 +4,7 @@
 // Sky-Lite Web — Architectural Drawing Studio Lightbox Modal
 // Reusable Blueprint & Drawing Viewer with Pan, Zoom, Rotate, Dotted Grid Canvas
 // =============================================================================
-
+//safddfs
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
