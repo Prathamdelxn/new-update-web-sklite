@@ -109,7 +109,7 @@ function LoginForm() {
               </h1>
 
               <p className="mt-3 xl:mt-4 max-w-xl text-blue-100/90 text-xs xl:text-sm leading-normal">
-                Access your workspace, manage teams, projects, and budgets seamlessly from one place.
+                Access uat your workspace, manage teams, projects, and budgets seamlessly from one place.
               </p>
             </div>
 
