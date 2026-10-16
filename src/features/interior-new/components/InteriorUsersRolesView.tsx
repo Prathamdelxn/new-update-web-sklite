@@ -9,6 +9,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from '@/components/interior/ui';
 import { useToast } from '@/providers/ToastContext';
+import { InteriorRolesManager } from '@/features/interior-new/components/InteriorRolesManager';
 import {
   Users,
   Search,
@@ -36,6 +37,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { interiorProjectService } from '@/services/interiorProject.service';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -96,13 +98,13 @@ interface UserWithProjects {
 // ---------------------------------------------------------------------------
 const ALL_MODULES = [
   // CRM Pipeline Stages
-  { key: 'crm_leads',         label: 'CRM: Leads Pipeline',       category: 'CRM Pipeline' },
-  { key: 'crm_followups',     label: 'CRM: Follow-ups & Calls',   category: 'CRM Pipeline' },
-  { key: 'crm_site_visits',   label: 'CRM: Site Survey & Specs',  category: 'CRM Pipeline' },
-  { key: 'crm_requirements',  label: 'CRM: Scope & Design',       category: 'CRM Pipeline' },
-  { key: 'crm_drawings',      label: 'CRM: 2D/3D Design Files',   category: 'CRM Pipeline' },
-  { key: 'crm_boq',           label: 'CRM: BOQ Estimation',       category: 'CRM Pipeline' },
-  { key: 'crm_quotations',    label: 'CRM: Quotes & Conversion',  category: 'CRM Pipeline' },
+  { key: 'crm_leads',         label: 'CRM: Leads',                category: 'CRM Pipeline' },
+  { key: 'crm_followups',     label: 'CRM: Follow-ups',           category: 'CRM Pipeline' },
+  { key: 'crm_site_visits',   label: 'CRM: Site Visits',          category: 'CRM Pipeline' },
+  { key: 'crm_requirements',  label: 'CRM: Requirements',         category: 'CRM Pipeline' },
+  { key: 'crm_drawings',      label: 'CRM: Drawings (2D/3D)',     category: 'CRM Pipeline' },
+  { key: 'crm_boq',           label: 'CRM: BOQ',                  category: 'CRM Pipeline' },
+  { key: 'crm_quotations',    label: 'CRM: Quotations',           category: 'CRM Pipeline' },
 
   // Execution & Project Modules
   { key: 'projects',         label: 'Project Config',            category: 'Project Execution' },
@@ -129,98 +131,8 @@ const ALL_MODULES = [
 
 const ALL_ACTIONS = ['create', 'read', 'update', 'delete', 'approve', 'export', 'manage'];
 
-type ProjectRoleKey = 'project_manager' | 'sales_executive' | 'site_engineer' | 'quantity_surveyor' | 'designer' | 'sub_contractor' | 'client_representative' | 'viewer';
-
 const full  = ['create', 'read', 'update', 'delete', 'approve', 'export', 'manage'];
-const crud  = ['create', 'read', 'update', 'delete'];
-const cru   = ['create', 'read', 'update'];
-const ro    = ['read'];
 const none: string[] = [];
-
-// Role permission matrix (mirrors backend project-permissions.ts and role.model.ts)
-const ROLE_MATRIX: Record<ProjectRoleKey, Record<string, string[]>> = {
-  project_manager: {
-    crm_leads: full, crm_followups: full, crm_site_visits: full,
-    crm_requirements: full, crm_drawings: full, crm_boq: full, crm_quotations: full,
-    projects: full, wbs: full, tasks: full, milestones: full, dpr: full,
-    weekly_reports: full, procurement: full, purchase_orders: full, drawings: full,
-    rfis: full, mom: full, risks: full, snags: full, ncrs: full, utilities: full,
-    photos: full, handover: full, users: full, filemgt: full, financials: full,
-  },
-  sales_executive: {
-    crm_leads: ['create', 'read', 'update', 'export', 'manage'],
-    crm_followups: full,
-    crm_site_visits: ['create', 'read', 'update', 'manage'],
-    crm_requirements: ro,
-    crm_drawings: ro,
-    crm_boq: ro,
-    crm_quotations: ['create', 'read', 'update', 'export', 'manage', 'approve'],
-    projects: ro, wbs: none, tasks: ro, milestones: ro, dpr: none,
-    weekly_reports: ro, procurement: none, purchase_orders: none, drawings: ro,
-    rfis: ro, mom: ro, risks: none, snags: none, ncrs: none, utilities: none,
-    photos: ro, handover: ro, users: ro, filemgt: ro, financials: ro,
-  },
-  site_engineer: {
-    crm_leads: ro, crm_followups: cru, crm_site_visits: full,
-    crm_requirements: ro, crm_drawings: ro, crm_boq: ro, crm_quotations: ro,
-    projects: ro, wbs: ro, tasks: cru, milestones: ro, dpr: crud, weekly_reports: crud,
-    procurement: ro, purchase_orders: ro, drawings: ro, rfis: crud, mom: crud,
-    risks: crud, snags: crud, ncrs: crud, utilities: crud, photos: crud,
-    handover: ro, users: ro, filemgt: crud, financials: ro,
-  },
-  quantity_surveyor: {
-    crm_leads: ro, crm_followups: ro, crm_site_visits: ro,
-    crm_requirements: ro, crm_drawings: ro, crm_boq: full, crm_quotations: ['create', 'read', 'update', 'export', 'approve'],
-    projects: ro, wbs: ro, tasks: ro, milestones: ro, dpr: ro, weekly_reports: ro,
-    procurement: crud, purchase_orders: crud, drawings: ro, rfis: ro, mom: ro,
-    risks: ro, snags: ro, ncrs: ro, utilities: crud, photos: ro,
-    handover: ro, users: none, filemgt: crud, financials: crud,
-  },
-  designer: {
-    crm_leads: ro, crm_followups: ro, crm_site_visits: cru,
-    crm_requirements: ['create', 'read', 'update', 'manage'], crm_drawings: full,
-    crm_boq: ro, crm_quotations: ro,
-    projects: ro, wbs: ro, tasks: ro, milestones: ro, dpr: none, weekly_reports: none,
-    procurement: none, purchase_orders: none, drawings: crud, rfis: crud, mom: ro,
-    risks: ro, snags: ro, ncrs: ro, utilities: none, photos: crud,
-    handover: ro, users: none, filemgt: crud, financials: ro,
-  },
-  sub_contractor: {
-    crm_leads: none, crm_followups: none, crm_site_visits: none,
-    crm_requirements: none, crm_drawings: ro, crm_boq: none, crm_quotations: none,
-    projects: ro, wbs: none, tasks: cru, milestones: none, dpr: ro, weekly_reports: none,
-    procurement: ro, purchase_orders: ro, drawings: ro, rfis: ro, mom: none,
-    risks: none, snags: ro, ncrs: ro, utilities: none, photos: ro,
-    handover: none, users: none, filemgt: ro, financials: ro,
-  },
-  client_representative: {
-    crm_leads: ro, crm_followups: ro, crm_site_visits: ro,
-    crm_requirements: ro, crm_drawings: ro, crm_boq: ro, crm_quotations: ro,
-    projects: ro, wbs: ro, tasks: ro, milestones: ro, dpr: ro, weekly_reports: ro,
-    procurement: ro, purchase_orders: ro, drawings: ro, rfis: ro, mom: ro,
-    risks: ro, snags: ro, ncrs: ro, utilities: ro, photos: ro,
-    handover: ro, users: none, filemgt: ro, financials: ro,
-  },
-  viewer: {
-    crm_leads: ro, crm_followups: ro, crm_site_visits: ro,
-    crm_requirements: ro, crm_drawings: ro, crm_boq: ro, crm_quotations: ro,
-    projects: ro, wbs: ro, tasks: ro, milestones: ro, dpr: ro, weekly_reports: ro,
-    procurement: ro, purchase_orders: ro, drawings: ro, rfis: ro, mom: ro,
-    risks: ro, snags: ro, ncrs: ro, utilities: ro, photos: ro,
-    handover: ro, users: none, filemgt: ro, financials: ro,
-  },
-};
-
-const ROLE_DEFS: { key: ProjectRoleKey; label: string; desc: string }[] = [
-  { key: 'project_manager',       label: 'Project Manager',     desc: 'Full access to CRM pipeline & project execution' },
-  { key: 'sales_executive',       label: 'Sales Executive',     desc: 'Leads, follow-ups, quotes & project conversion' },
-  { key: 'site_engineer',         label: 'Site Engineer',       desc: 'Field surveys, measurements & daily progress' },
-  { key: 'quantity_surveyor',     label: 'Quantity Surveyor',   desc: 'BOQ estimation, rate analysis & quotations' },
-  { key: 'designer',              label: 'Designer / Architect', desc: 'Design files, scope modeling & site requirements' },
-  { key: 'sub_contractor',        label: 'Sub Contractor',      desc: 'Assigned execution tasks & limited drawing view' },
-  { key: 'client_representative', label: 'Client Rep.',         desc: 'Read-only stakeholder oversight across all stages' },
-  { key: 'viewer',                label: 'Viewer',              desc: 'General read-only access' },
-];
 
 // Action badge styling
 const ACTION_COLORS: Record<string, string> = {
@@ -429,7 +341,7 @@ function AddUserModal({
                 type={showPassword ? 'text' : 'password'}
                 value={form.password}
                 onChange={set('password')}
-                placeholder="Leave blank for Welcome@123"
+                placeholder="Leave blank for welcome123"
                 className={`${fieldCls} pl-9 pr-9`}
               />
               <button
@@ -441,7 +353,7 @@ function AddUserModal({
                 {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
             </div>
-            <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Default password is <span className="font-mono font-semibold">Welcome@123</span> if left blank</p>
+            <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Default password is <span className="font-mono font-semibold">welcome123</span> if left blank</p>
           </div>
 
           {/* Phone */}
@@ -831,6 +743,7 @@ function UserRow({ user, roles, onUserUpdated }: { user: UserWithProjects; roles
   const [selectedAssignment, setSelectedAssignment] = useState<ProjectAssignment | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+const { isOrgAdmin: canManageUsers } = usePermissions();
   const initials = getInitials(user.firstName, user.lastName);
   const avatarBg = getAvatarColor(user.firstName + user.lastName);
   const sysRole = SYSTEM_ROLE_LABELS[user.systemRole] ?? { label: user.systemRole, color: 'bg-slate-100 text-slate-600' };
@@ -886,28 +799,32 @@ function UserRow({ user, roles, onUserUpdated }: { user: UserWithProjects; roles
 
             {/* Edit & Delete Action Buttons */}
             <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsEditOpen(true);
-                }}
-                className="p-1.5 rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] transition-colors cursor-pointer"
-                title="Edit User Details"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsDeleteOpen(true);
-                }}
-                className="p-1.5 rounded-lg border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
-                title="Delete User"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
+              {canManageUsers && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditOpen(true);
+                  }}
+                  className="p-1.5 rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] transition-colors cursor-pointer"
+                  title="Edit User Details"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                </button>
+              )}
+              {canManageUsers && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsDeleteOpen(true);
+                  }}
+                  className="p-1.5 rounded-lg border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
+                  title="Delete User"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
             {expanded ? <ChevronUp className="w-4 h-4 text-[hsl(var(--muted-foreground))]" /> : <ChevronDown className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />}
@@ -971,136 +888,24 @@ function UserRow({ user, roles, onUserUpdated }: { user: UserWithProjects; roles
 }
 
 // ---------------------------------------------------------------------------
-// Role Card (expandable — for Roles tab)
-// ---------------------------------------------------------------------------
-function RoleCard({ roleDef }: { roleDef: typeof ROLE_DEFS[number] }) {
-  const [expanded, setExpanded] = useState(false);
-  const matrix = ROLE_MATRIX[roleDef.key];
-  const totalModules = ALL_MODULES.length;
-  const modulesWithAccess = ALL_MODULES.filter((m) => (matrix[m.key] ?? []).length > 0).length;
-  const fullAccessCount = ALL_MODULES.filter((m) => (matrix[m.key] ?? []).join(',') === full.join(',')).length;
-
-  return (
-    <motion.div layout className="border border-[hsl(var(--border))] rounded-xl overflow-hidden bg-[hsl(var(--card))]">
-      {/* Header */}
-      <div
-        onClick={() => setExpanded((v) => !v)}
-        className="flex items-center gap-4 p-4 cursor-pointer hover:bg-[hsl(var(--muted)/0.4)] transition-colors"
-      >
-        <div className="w-10 h-10 rounded-xl bg-[hsl(var(--muted)/0.5)] border border-[hsl(var(--border))] flex items-center justify-center shrink-0">
-          <Shield className="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-[hsl(var(--foreground))]">{roleDef.label}</span>
-            {roleDef.key === 'project_manager' && (
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]">FULL ACCESS</span>
-            )}
-            {roleDef.key === 'sales_executive' && (
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-300 dark:border-amber-800">CRM SPECIALIST</span>
-            )}
-            {roleDef.key === 'designer' && (
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-800">DESIGN LEAD</span>
-            )}
-            {roleDef.key === 'viewer' && (
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">READ-ONLY</span>
-            )}
-          </div>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{roleDef.desc}</p>
-        </div>
-
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden sm:flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
-            <span className="px-2 py-0.5 rounded bg-[hsl(var(--muted)/0.5)] font-semibold text-[hsl(var(--foreground))]">
-              {modulesWithAccess}/{totalModules} modules
-            </span>
-            {fullAccessCount > 0 && (
-              <span className="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 font-semibold text-[10px]">
-                {fullAccessCount} full
-              </span>
-            )}
-          </div>
-          {expanded ? <ChevronUp className="w-4 h-4 text-[hsl(var(--muted-foreground))]" /> : <ChevronDown className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />}
-        </div>
-      </div>
-
-      {/* Expanded permissions table */}
-      <AnimatePresence>
-        {expanded && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}
-            className="border-t border-[hsl(var(--border))] overflow-hidden">
-            <div className="p-4 space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {ALL_MODULES.map((mod) => {
-                  const perms = matrix[mod.key] ?? [];
-                  const hasAccess = perms.length > 0;
-                  const isFull = perms.join(',') === full.join(',');
-                  const isReadOnly = perms.join(',') === ro.join(',');
-                  return (
-                    <div key={mod.key}
-                      className={`flex items-center justify-between p-2.5 rounded-lg border text-xs transition-colors ${
-                        hasAccess
-                          ? 'border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.25)]'
-                          : 'border-dashed border-[hsl(var(--border)/0.5)] opacity-40 bg-transparent'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        {hasAccess ? (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                        ) : (
-                          <MinusCircle className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))] shrink-0" />
-                        )}
-                        <span className={`font-medium truncate ${hasAccess ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]'}`}>
-                          {mod.label}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0 ml-2">
-                        {isFull ? (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
-                            FULL
-                          </span>
-                        ) : isReadOnly ? (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                            READ
-                          </span>
-                        ) : hasAccess ? (
-                          <div className="flex gap-0.5 flex-wrap justify-end">
-                            {perms.map((act) => (
-                              <span key={act} className={`px-1 py-0.2 rounded text-[9px] font-semibold ${ACTION_COLORS[act] ?? 'bg-slate-100 text-slate-600'}`}>
-                                {act[0].toUpperCase()}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-[10px] text-[hsl(var(--muted-foreground))]">—</span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Main View
 // ---------------------------------------------------------------------------
 export default function InteriorUsersRolesView() {
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<'users' | 'roles'>('users');
+  // Managing users is admin-only on the server; the Roles tab needs Roles → View
+  const { isOrgAdmin, hasPermission } = usePermissions();
+  const showUsersTab = isOrgAdmin;
+  const showRolesTab = isOrgAdmin || hasPermission('roles', 'read');
+  const [selectedTab, setActiveTab] = useState<'users' | 'roles'>('users');
+  const activeTab: 'users' | 'roles' | null =
+    selectedTab === 'users' && showUsersTab ? 'users' : showRolesTab ? 'roles' : showUsersTab ? 'users' : null;
   const [users, setUsers] = useState<UserWithProjects[]>([]);
   const [roles, setRoles] = useState<OrgRole[]>(DEFAULT_ORG_ROLES);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('All');
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+const { isOrgAdmin: canAddUsers } = usePermissions();
 
   const loadRoles = useCallback(async () => {
     try {
@@ -1116,16 +921,17 @@ export default function InteriorUsersRolesView() {
   }, []);
 
   const loadUsers = useCallback(async () => {
+    if (!isOrgAdmin) { setIsLoading(false); return; } // Users tab is admin-only
     try {
       setIsLoading(true);
       const res = await interiorProjectService.getUsersWithProjects();
       setUsers(res?.data ?? res ?? []);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? 'Failed to load users');
+      toast.error(err?.response?.data?.error ?? err?.response?.data?.message ?? 'Failed to load users');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isOrgAdmin]);
 
   useEffect(() => {
     loadUsers();
@@ -1165,13 +971,15 @@ export default function InteriorUsersRolesView() {
             <Button variant="outline" size="sm" onClick={() => { loadUsers(); loadRoles(); }} className="text-xs font-semibold" isLoading={isLoading}>
               Refresh
             </Button>
-            <button
-              onClick={() => setIsAddUserOpen(true)}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              Add User
-            </button>
+            {canAddUsers && (
+              <button
+                onClick={() => setIsAddUserOpen(true)}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                Add User
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -1185,6 +993,7 @@ export default function InteriorUsersRolesView() {
 
       {/* ── Tab toggle ── */}
       <div className="flex items-center gap-1 p-1 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.4)] w-fit">
+        {showUsersTab && (
         <button
           onClick={() => setActiveTab('users')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
@@ -1195,6 +1004,8 @@ export default function InteriorUsersRolesView() {
         >
           <Users className="w-3.5 h-3.5" /> Users
         </button>
+        )}
+        {showRolesTab && (
         <button
           onClick={() => setActiveTab('roles')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
@@ -1205,7 +1016,14 @@ export default function InteriorUsersRolesView() {
         >
           <Shield className="w-3.5 h-3.5" /> Roles
         </button>
+        )}
       </div>
+
+      {activeTab === null && (
+        <div className="rounded-xl border border-[hsl(var(--border))] p-10 text-center text-sm text-[hsl(var(--muted-foreground))]">
+          You don&apos;t have permission to view users or roles.
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
         {/* ═══════════════════════════════════ USERS TAB ═══════════════════════════════════ */}
@@ -1280,36 +1098,9 @@ export default function InteriorUsersRolesView() {
 
         {/* ═══════════════════════════════════ ROLES TAB ═══════════════════════════════════ */}
         {activeTab === 'roles' && (
-          <motion.div key="roles" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="space-y-5">
-            {/* Info banner */}
-            <div className="flex items-start gap-3 p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
-              <ShieldCheck className="w-4 h-4 text-[hsl(var(--primary))] mt-0.5 shrink-0" />
-              <div>
-                <p className="text-xs font-semibold text-[hsl(var(--foreground))]">Default Project Roles</p>
-                <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                  These are the built-in permission presets automatically assigned when a user is added to a project. Click any role to expand its full permission matrix.
-                </p>
-              </div>
-            </div>
-
-            {/* Summary row */}
-            <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
-              {ROLE_DEFS.map((r) => (
-                <div key={r.key} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-2.5 text-center">
-                  <p className="text-xs font-bold text-[hsl(var(--foreground))]">{r.label}</p>
-                  <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-0.5">
-                    {ALL_MODULES.filter((m) => (ROLE_MATRIX[r.key][m.key] ?? []).length > 0).length} modules
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            {/* Role cards */}
-            <div className="space-y-3">
-              {ROLE_DEFS.map((roleDef) => (
-                <RoleCard key={roleDef.key} roleDef={roleDef} />
-              ))}
-            </div>
+          <motion.div key="roles" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
+            {/* Live, editable organization roles (replaces the old hard-coded preset matrix) */}
+            <InteriorRolesManager roles={roles} onChanged={loadRoles} />
           </motion.div>
         )}
       </AnimatePresence>

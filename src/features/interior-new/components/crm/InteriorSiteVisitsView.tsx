@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 interface Props {
   leads: any[];
@@ -31,6 +32,7 @@ interface Props {
 
 export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirements, onMarkAsLost }: Props) => {
   const router = useRouter();
+const { hasPermission: canDo } = usePermissions();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -264,24 +266,26 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
 
                     {/* Actions Ribbon */}
                     <div className="flex items-center justify-between gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => onLogSiteVisit(lead._id)}
-                        className={cn(
-                          'inline-flex items-center justify-center rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
-                          lead.siteMeasurements
-                            ? 'p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
-                            : 'gap-1 px-2.5 py-1.5 bg-purple-600 text-white'
-                        )}
-                        title="Edit Site Visit Measurements & Photos"
-                      >
-                        {lead.siteMeasurements ? (
-                          <Pencil size={13} className="text-purple-600" />
-                        ) : (
-                          <>
-                            <Ruler size={11} /> Log Survey
-                          </>
-                        )}
-                      </button>
+                      {(canDo('crm_site_visits', 'update')) && (
+                        <button
+                          onClick={() => onLogSiteVisit(lead._id)}
+                          className={cn(
+                            'inline-flex items-center justify-center rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
+                            lead.siteMeasurements
+                              ? 'p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
+                              : 'gap-1 px-2.5 py-1.5 bg-purple-600 text-white'
+                          )}
+                          title="Edit Site Visit Measurements & Photos"
+                        >
+                          {lead.siteMeasurements ? (
+                            <Pencil size={13} className="text-purple-600" />
+                          ) : (
+                            <>
+                              <Ruler size={11} /> Log Survey
+                            </>
+                          )}
+                        </button>
+                      )}
 
                       {lead.siteMeasurements && (
                         (Boolean(Array.isArray(lead.quotations) && lead.quotations.some((q: any) => ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase()))) ||
@@ -291,12 +295,14 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                             Passed 
                           </span>
                         ) : (
-                          <button
-                            onClick={() => onPassToRequirements(lead._id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
-                          >
-                            Pass <ArrowRight size={11} />
-                          </button>
+                          (canDo('crm_site_visits', 'update') || canDo('crm_requirements', 'update') || canDo('crm_requirements', 'create')) && (
+                            <button
+                              onClick={() => onPassToRequirements(lead._id)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                            >
+                              Pass <ArrowRight size={11} />
+                            </button>
+                          )
                         )
                       )}
                     </div>
@@ -427,20 +433,24 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                         <td className="px-4.5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-1.5">
                             {lead.siteMeasurements ? (
-                              <button
-                                onClick={() => onLogSiteVisit(lead._id)}
-                                className="p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs inline-flex items-center justify-center"
-                                title="Edit Site Visit Measurements & Photos"
-                              >
-                                <Pencil size={13} className="text-purple-600" />
-                              </button>
+                              (canDo('crm_site_visits', 'update')) && (
+                                <button
+                                  onClick={() => onLogSiteVisit(lead._id)}
+                                  className="p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs inline-flex items-center justify-center"
+                                  title="Edit Site Visit Measurements & Photos"
+                                >
+                                  <Pencil size={13} className="text-purple-600" />
+                                </button>
+                              )
                             ) : (
-                              <button
-                                onClick={() => onLogSiteVisit(lead._id)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 text-white hover:bg-purple-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                              >
-                                <Ruler size={11} /> + Log
-                              </button>
+                              (canDo('crm_site_visits', 'update')) && (
+                                <button
+                                  onClick={() => onLogSiteVisit(lead._id)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 text-white hover:bg-purple-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                >
+                                  <Ruler size={11} /> + Log
+                                </button>
+                              )
                             )}
                             {lead.siteMeasurements &&
                               ((Boolean(Array.isArray(lead.quotations) && lead.quotations.some((q: any) => ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase()))) ||
@@ -453,22 +463,26 @@ export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirem
                                   Passed 
                                 </span>
                               ) : (
-                                <button
-                                  onClick={() => onPassToRequirements(lead._id)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                  title="Pass to Requirements & Design"
-                                >
-                                  Pass <ArrowRight size={11} />
-                                </button>
+                                (canDo('crm_site_visits', 'update') || canDo('crm_requirements', 'update') || canDo('crm_requirements', 'create')) && (
+                                  <button
+                                    onClick={() => onPassToRequirements(lead._id)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                    title="Pass to Requirements & Design"
+                                  >
+                                    Pass <ArrowRight size={11} />
+                                  </button>
+                                )
                               ))}
                             {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
-                                className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
-                                title="Mark as Lost"
-                              >
-                                <XCircle size={13} />
-                              </button>
+                              (canDo('crm_site_visits', 'update') || canDo('crm_leads', 'update')) && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
+                                  className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
+                                  title="Mark as Lost"
+                                >
+                                  <XCircle size={13} />
+                                </button>
+                              )
                             )}
                           </div>
                         </td>

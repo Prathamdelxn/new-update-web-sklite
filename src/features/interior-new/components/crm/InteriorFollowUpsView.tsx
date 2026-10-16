@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/providers/ToastContext';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 interface Props {
   onPassToSiteVisit: (leadId: string) => void;
@@ -27,6 +28,7 @@ function displayUserName(u?: any) {
 export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMarkAsLost }: Props) => {
   const router = useRouter();
   const toast = useToast();
+const { hasPermission: canDo } = usePermissions();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'completed'>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -268,16 +270,18 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
                     </div>
                     <div className="flex items-center gap-1.5">
                       {act.status !== 'Completed' && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onPassToSiteVisit(act.customer?._id || act.customer?.id);
-                          }}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer shadow-sm"
-                          title="Complete Follow-up and Send to Site Visit"
-                        >
-                          <CheckCircle2 size={12} /> Done
-                        </button>
+                        (canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_site_visits', 'create')) && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onPassToSiteVisit(act.customer?._id || act.customer?.id);
+                            }}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer shadow-sm"
+                            title="Complete Follow-up and Send to Site Visit"
+                          >
+                            <CheckCircle2 size={12} /> Done
+                          </button>
+                        )
                       )}
                     </div>
                   </div>
@@ -384,25 +388,29 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMar
                       <td className="px-4.5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1.5">
                           {act.status === 'Pending' && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onPassToSiteVisit(act.customer?._id || act.customer?.id);
-                              }}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                              title="Complete Follow-up and Send to Site Visit"
-                            >
-                              <CheckCircle2 size={12} /> Complete
-                            </button>
+                            (canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_site_visits', 'create')) && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onPassToSiteVisit(act.customer?._id || act.customer?.id);
+                                }}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                title="Complete Follow-up and Send to Site Visit"
+                              >
+                                <CheckCircle2 size={12} /> Complete
+                              </button>
+                            )
                           )}
                           {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(act.customer?.status) && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); onMarkAsLost(act.customer?._id); }}
-                              className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
-                              title="Mark as Lost"
-                            >
-                              <XCircle size={13} />
-                            </button>
+                            (canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_followups', 'create')) && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); onMarkAsLost(act.customer?._id); }}
+                                className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
+                                title="Mark as Lost"
+                              >
+                                <XCircle size={13} />
+                              </button>
+                            )
                           )}
                         </div>
                       </td>

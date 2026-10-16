@@ -33,18 +33,31 @@ import {
   EyeOff,
 } from 'lucide-react';
 import { interiorProjectService } from '@/services/interiorProject.service';
+import { PERMISSION_MODULES, moduleActions } from '@/features/interior-new/lib/permissionCatalog';
 import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { cn } from '@/lib/utils';
+import { useProjectPermissions, invalidateProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
+import { refreshInteriorUser } from '@/features/interior-new/hooks/usePermissions';
+import { memberRoleLabel as roleLabelFor, isVirtualAdminMember } from '@/features/interior-new/lib/memberRoleLabel';
 
 interface Permission {
   module: string;
   actions: string[];
 }
 
+interface OrgRoleOption {
+  _id: string;
+  name: string;
+  slug: string;
+  permissions: Permission[];
+}
+
 interface ProjectMember {
   _id: string;
   projectRole: string;
+  // Org role used as this member's project role (populated by the API)
+  roleId?: OrgRoleOption | string | null;
   permissions: Permission[];
   userId: {
     _id: string;
@@ -86,28 +99,10 @@ const ALL_ROLES = [
   'designer', 'sub_contractor', 'client_representative', 'viewer',
 ];
 
-const PROJECT_MODULES: { module: string; label: string }[] = [
-  { module: 'projects', label: 'Project Config' },
-  { module: 'wbs', label: 'WBS Hierarchy' },
-  { module: 'tasks', label: 'Activity / Task' },
-  { module: 'milestones', label: 'Milestones' },
-  { module: 'dpr', label: 'Daily Progress Report' },
-  { module: 'weekly_reports', label: 'Weekly Reports' },
-  { module: 'procurement', label: 'Procurement' },
-  { module: 'purchase_orders', label: 'Purchase Orders' },
-  { module: 'vendors', label: 'Vendors' },
-  { module: 'drawings', label: 'Drawings' },
-  { module: 'rfis', label: 'RFIs' },
-  { module: 'mom', label: 'Minutes of Meeting' },
-  { module: 'risks', label: 'Risks' },
-  { module: 'snags', label: 'Snags' },
-  { module: 'ncrs', label: 'NCRs' },
-  { module: 'utilities', label: 'Utilities' },
-  { module: 'photos', label: 'Site Photos' },
-  { module: 'handover', label: 'Handover' },
-  { module: 'users', label: 'Team / Members' },
-  { module: 'filemgt', label: 'File Management' },
-];
+// Same project sections as the role editor (shared catalog)
+const PROJECT_MODULES: { module: string; label: string }[] = PERMISSION_MODULES
+  .filter((m) => m.category === 'Project Execution')
+  .map((m) => ({ module: m.key, label: m.label }));
 
 const PERMISSION_ACTIONS = ['create', 'read', 'update', 'delete', 'approve', 'export', 'manage'];
 
@@ -152,6 +147,7 @@ interface InteriorMembersViewProps {
 
 export default function InteriorMembersView({ projectId }: InteriorMembersViewProps) {
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
   const { confirm } = useConfirm();
 
   const [members, setMembers] = useState<ProjectMember[]>([]);
@@ -161,7 +157,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteForm, setInviteForm] = useState({
     firstName: '', lastName: '', email: '', password: '',
-    projectRole: 'viewer', designation: '', department: '',
+    projectRole: 'viewer', roleId: '', designation: '', department: '',
   });
   const [isInviting, setIsInviting] = useState(false);
   const [showInvitePassword, setShowInvitePassword] = useState(false);
@@ -179,6 +175,9 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
   const [editedPermissions, setEditedPermissions] = useState<Permission[]>([]);
   const [editedRole, setEditedRole] = useState('');
   const [isSavingPerms, setIsSavingPerms] = useState(false);
+  // Project roles come from the organization's roles (Users & Roles → Roles)
+  const [orgRoles, setOrgRoles] = useState<OrgRoleOption[]>([]);
+  const [permMode, setPermMode] = useState<'role' | 'custom'>('role');
 
   const fetchMembers = useCallback(async () => {
     try {
@@ -196,6 +195,31 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
     if (!projectId) return;
     fetchMembers();
   }, [projectId, fetchMembers]);
+
+  useEffect(() => {
+    interiorProjectService.getRoles()
+      .then((res: any) => {
+        const raw = res?.data ?? res ?? [];
+        const list: OrgRoleOption[] = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : []);
+        setOrgRoles(list);
+        // Default new members to the read-only Viewer role
+        const viewer = list.find((r) => r.slug === 'viewer') || list[0];
+        if (viewer) {
+          setAddMemberRole((prev) => prev && list.some((r) => r._id === prev) ? prev : viewer._id);
+          setInviteForm((prev) => ({ ...prev, roleId: prev.roleId || viewer._id }));
+        }
+      })
+      .catch(() => setOrgRoles([]));
+  }, []);
+
+  // A member's role id (linked) — or the built-in role matching their preset
+  const memberRoleId = (m: ProjectMember): string => {
+    if (m.roleId && typeof m.roleId === 'object') return m.roleId._id;
+    if (typeof m.roleId === 'string' && m.roleId) return m.roleId;
+    const slug = (m.projectRole || '').replace(/_/g, '-');
+    return orgRoles.find((r) => r.slug === slug)?._id || '';
+  };
+  const memberRoleLabel = (m: ProjectMember): string => roleLabelFor(m);
 
   const fetchOrgUsers = useCallback(async () => {
     setOrgUsersLoading(true);
@@ -222,7 +246,11 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
     if (!addMemberUserId) { toast.error('Please select a user'); return; }
     setIsAddingMember(true);
     try {
-      await interiorProjectService.addProjectMember(projectId, { userId: addMemberUserId, projectRole: addMemberRole });
+      const chosen = orgRoles.find((r) => r._id === addMemberRole);
+      await interiorProjectService.addProjectMember(
+        projectId,
+        chosen ? { userId: addMemberUserId, roleId: chosen._id } : { userId: addMemberUserId, projectRole: addMemberRole }
+      );
       toast.success('Member added to project');
       setIsAddMemberOpen(false);
       fetchMembers();
@@ -235,7 +263,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inviteForm.firstName || !inviteForm.lastName || !inviteForm.email || !inviteForm.password) {
+    if (!inviteForm.firstName || !inviteForm.lastName || !inviteForm.email) {
       toast.error('Please fill all required fields');
       return;
     }
@@ -245,7 +273,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
       if (res?.success) {
         toast.success('User created and added to project');
         setIsInviteModalOpen(false);
-        setInviteForm({ firstName: '', lastName: '', email: '', password: '', projectRole: 'viewer', designation: '', department: '' });
+        setInviteForm({ firstName: '', lastName: '', email: '', password: '', projectRole: 'viewer', roleId: orgRoles.find((r) => r.slug === 'viewer')?._id || '', designation: '', department: '' });
         fetchMembers();
       }
     } catch (err: any) {
@@ -276,9 +304,13 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
 
   const openPermissionsModal = useCallback((member: ProjectMember) => {
     setPermModalMember(member);
-    setEditedPermissions(JSON.parse(JSON.stringify(member.permissions || [])));
-    setEditedRole(member.projectRole);
-  }, []);
+    const linked = member.roleId && typeof member.roleId === 'object' ? member.roleId : null;
+    setEditedPermissions(JSON.parse(JSON.stringify((linked ? linked.permissions : member.permissions) || [])));
+    setEditedRole(memberRoleId(member));
+    // Linked members follow their role; older members keep their own permissions until a role is picked
+    setPermMode(linked ? 'role' : 'custom');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orgRoles]);
 
   const closePermissionsModal = () => {
     setPermModalMember(null);
@@ -287,6 +319,8 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
   };
 
   const togglePermissionAction = (moduleName: string, action: string) => {
+    // Hand-picking permissions makes them custom for this member (no role link)
+    setPermMode('custom');
     setEditedPermissions((prev) => {
       const existingIndex = prev.findIndex((p) => p.module === moduleName);
       if (existingIndex > -1) {
@@ -296,15 +330,26 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
           : [...existing.actions, action];
 
         if (newActions.length === 0) {
-          return prev.filter((p) => p.module !== moduleName);
+          return ensureProjectView(prev.filter((p) => p.module !== moduleName));
         }
 
         const updated = [...prev];
         updated[existingIndex] = { ...existing, actions: newActions };
-        return updated;
+        return ensureProjectView(updated);
       }
-      return [...prev, { module: moduleName, actions: [action] }];
+      return ensureProjectView([...prev, { module: moduleName, actions: [action] }]);
     });
+  };
+
+  // Opening the project needs Project Config → View, so any other project
+  // permission keeps it on (same rule as the role editor)
+  const ensureProjectView = (perms: Permission[]): Permission[] => {
+    const needsProject = perms.some((p) => p.module !== 'projects' && p.actions.length > 0);
+    const projectPerm = perms.find((p) => p.module === 'projects');
+    if (!needsProject || projectPerm?.actions.includes('read')) return perms;
+    return projectPerm
+      ? perms.map((p) => (p.module === 'projects' ? { ...p, actions: [...p.actions, 'read'] } : p))
+      : [...perms, { module: 'projects', actions: ['read'] }];
   };
 
   const hasAction = (moduleName: string, action: string): boolean => {
@@ -312,25 +357,29 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
     return perm ? perm.actions.includes(action) : false;
   };
 
-  const handleRoleChange = (role: string) => {
-    setEditedRole(role);
-    // Automatically apply defaults when role is changed
-    const defaults = DEFAULT_ROLE_PERMISSIONS[role] || [];
-    setEditedPermissions(defaults);
-    toast.success(`Applied default permissions for ${ROLE_LABELS[role] || role}`);
+  const handleRoleChange = (roleId: string) => {
+    setEditedRole(roleId);
+    const role = orgRoles.find((r) => r._id === roleId);
+    setEditedPermissions(JSON.parse(JSON.stringify(role?.permissions || [])));
+    setPermMode('role');
+    if (role) toast.success(`Using the "${role.name}" role's permissions`);
   };
 
   const handleSavePermissions = async () => {
     if (!permModalMember) return;
     setIsSavingPerms(true);
     try {
-      const payload: any = { permissions: editedPermissions };
-      if (editedRole !== permModalMember.projectRole) {
-        payload.projectRole = editedRole;
-      }
+      // Role mode → link the org role (its permissions apply live);
+      // custom mode → save these exact permissions for this member only
+      const payload: any = permMode === 'role' && editedRole
+        ? { roleId: editedRole }
+        : { permissions: editedPermissions };
       const res = await interiorProjectService.updateProjectMember(projectId, permModalMember._id, payload);
       if (res?.success) {
         toast.success('Permissions updated successfully');
+        // Apply the change to open screens right away (this browser)
+        invalidateProjectPermissions(projectId);
+        refreshInteriorUser(true);
         closePermissionsModal();
         fetchMembers();
       }
@@ -342,9 +391,10 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
   };
 
   const handleResetToDefaults = () => {
-    const defaults = DEFAULT_ROLE_PERMISSIONS[editedRole] || [];
-    setEditedPermissions(defaults);
-    toast.success(`Reset to ${ROLE_LABELS[editedRole] || editedRole} defaults`);
+    const role = orgRoles.find((r) => r._id === editedRole);
+    setEditedPermissions(JSON.parse(JSON.stringify(role?.permissions || [])));
+    setPermMode('role');
+    toast.success(`Reset to the "${role?.name || 'selected'}" role's permissions`);
   };
 
   const filteredMembers = members.filter(
@@ -365,20 +415,24 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={openAddMemberModal}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium border border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] rounded-xl transition-all shadow-sm active:scale-95"
-          >
-            <UserPlus className="w-4 h-4" />
-            Add Member
-          </button>
-          <button
-            onClick={() => setIsInviteModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[hsl(var(--primary))] rounded-xl transition-all shadow-sm active:scale-95"
-          >
-            <Plus className="w-4 h-4" />
-            Create Member
-          </button>
+          {canDo('users', 'create') && (
+            <button
+              onClick={openAddMemberModal}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium border border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] rounded-xl transition-all shadow-sm active:scale-95"
+            >
+              <UserPlus className="w-4 h-4" />
+              Add Member
+            </button>
+          )}
+          {canDo('users', 'create') && (
+            <button
+              onClick={() => setIsInviteModalOpen(true)}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[hsl(var(--primary))] rounded-xl transition-all shadow-sm active:scale-95"
+            >
+              <Plus className="w-4 h-4" />
+              Create Member
+            </button>
+          )}
         </div>
       </div>
 
@@ -412,13 +466,15 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
             {searchQuery ? 'Try adjusting your search query.' : 'Start by adding members to collaborate on this project.'}
           </p>
           {!searchQuery && (
-            <button
-              onClick={() => setIsInviteModalOpen(true)}
-              className="mt-4 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)] hover:bg-[hsl(var(--primary)/0.2)] rounded-xl transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              Add Member
-            </button>
+            canDo('users', 'create') && (
+              <button
+                onClick={() => setIsInviteModalOpen(true)}
+                className="mt-4 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)] hover:bg-[hsl(var(--primary)/0.2)] rounded-xl transition-all"
+              >
+                <Plus className="w-4 h-4" />
+                Add Member
+              </button>
+            )
           )}
         </div>
       ) : (
@@ -436,20 +492,24 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                   className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-5 hover:border-[hsl(var(--primary)/0.5)] transition-all hover:shadow-md group relative"
                 >
                   <div className="absolute top-4 right-4 flex items-center gap-1">
-                    <button
-                      onClick={() => openPermissionsModal(member)}
-                      className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                      title="Edit Permissions"
-                    >
-                      <Settings2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteMember(member._id)}
-                      className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                      title="Remove Member"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {canDo('users', 'update') && !isVirtualAdminMember(member) && (
+                      <button
+                        onClick={() => openPermissionsModal(member)}
+                        className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                        title="Edit Permissions"
+                      >
+                        <Settings2 className="w-4 h-4" />
+                      </button>
+                    )}
+                    {canDo('users', 'delete') && !isVirtualAdminMember(member) && (
+                      <button
+                        onClick={() => handleDeleteMember(member._id)}
+                        className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                        title="Remove Member"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
 
                   <div className="flex items-start gap-4">
@@ -478,16 +538,18 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                       'px-2.5 py-1 text-xs font-semibold rounded-full border',
                       ROLE_COLORS[member.projectRole] || ROLE_COLORS.viewer
                     )}>
-                      {ROLE_LABELS[member.projectRole] || 'Viewer'}
+                      {memberRoleLabel(member)}
                     </span>
 
-                    <button
-                      onClick={() => openPermissionsModal(member)}
-                      className="text-[10px] font-medium text-[hsl(var(--muted-foreground))] flex items-center gap-1 bg-[hsl(var(--muted))] px-2 py-0.5 rounded-full hover:bg-[hsl(var(--primary)/0.1)] hover:text-[hsl(var(--primary))] transition-colors cursor-pointer"
-                    >
-                      <Shield className="w-3 h-3" />
-                      {permCount} permissions
-                    </button>
+                    {canDo('users', 'update') && !isVirtualAdminMember(member) && (
+                      <button
+                        onClick={() => openPermissionsModal(member)}
+                        className="text-[10px] font-medium text-[hsl(var(--muted-foreground))] flex items-center gap-1 bg-[hsl(var(--muted))] px-2 py-0.5 rounded-full hover:bg-[hsl(var(--primary)/0.1)] hover:text-[hsl(var(--primary))] transition-colors cursor-pointer"
+                      >
+                        <Shield className="w-3 h-3" />
+                        {permCount} permissions
+                      </button>
+                    )}
                   </div>
                 </motion.div>
               );
@@ -593,13 +655,10 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                     onChange={(e) => setAddMemberRole(e.target.value)}
                     className="w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
                   >
-                    <option value="viewer">Viewer (Read Only)</option>
-                    <option value="sub_contractor">Sub Contractor</option>
-                    <option value="designer">Designer</option>
-                    <option value="quantity_surveyor">Quantity Surveyor</option>
-                    <option value="site_engineer">Site Engineer</option>
-                    <option value="client_representative">Client Representative</option>
-                    <option value="project_manager">Project Manager</option>
+                    {orgRoles.length === 0 && <option value="">Loading roles…</option>}
+                    {orgRoles.map((r) => (
+                      <option key={r._id} value={r._id}>{r.name}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -673,17 +732,16 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-[hsl(var(--foreground))]">Temporary Password <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-medium text-[hsl(var(--foreground))]">Temporary Password <span className="text-[hsl(var(--muted-foreground))] font-normal">(optional)</span></label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
                     <input
                       type={showInvitePassword ? 'text' : 'password'}
-                      required
                       minLength={8}
                       value={inviteForm.password}
                       onChange={(e) => setInviteForm({ ...inviteForm, password: e.target.value })}
                       className="w-full pl-9 pr-9 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
-                      placeholder="At least 8 characters"
+                      placeholder="Leave blank to use welcome123"
                     />
                     <button
                       type="button"
@@ -697,15 +755,12 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-[hsl(var(--foreground))]">Project Role <span className="text-red-500">*</span></label>
-                  <select value={inviteForm.projectRole} onChange={(e) => setInviteForm({ ...inviteForm, projectRole: e.target.value })}
+                  <select value={inviteForm.roleId} onChange={(e) => setInviteForm({ ...inviteForm, roleId: e.target.value })}
                     className="w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]">
-                    <option value="viewer">Viewer (Read Only)</option>
-                    <option value="sub_contractor">Sub Contractor</option>
-                    <option value="designer">Designer</option>
-                    <option value="quantity_surveyor">Quantity Surveyor</option>
-                    <option value="site_engineer">Site Engineer</option>
-                    <option value="client_representative">Client Representative</option>
-                    <option value="project_manager">Project Manager</option>
+                    {orgRoles.length === 0 && <option value="">Loading roles…</option>}
+                    {orgRoles.map((r) => (
+                      <option key={r._id} value={r._id}>{r.name}</option>
+                    ))}
                   </select>
                   <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
                     Default permissions will be auto-assigned based on this role. You can customize them afterwards.
@@ -784,17 +839,22 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                         onChange={(e) => handleRoleChange(e.target.value)}
                         className="appearance-none pl-3 pr-8 py-1.5 text-sm font-medium bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] cursor-pointer"
                       >
-                        {ALL_ROLES.map((r) => (
-                          <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                        {!editedRole && <option value="">Select a role…</option>}
+                        {orgRoles.map((r) => (
+                          <option key={r._id} value={r._id}>{r.name}</option>
                         ))}
                       </select>
                       <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))] pointer-events-none" />
                     </div>
-                    {editedRole !== permModalMember.projectRole && (
+                    {permMode === 'custom' ? (
+                      <span className="text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-500/20" title="These permissions apply to this member only and won't follow role changes">
+                        Custom permissions
+                      </span>
+                    ) : editedRole !== memberRoleId(permModalMember) ? (
                       <span className="text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-500/20">
                         Role changed
                       </span>
-                    )}
+                    ) : null}
                   </div>
                   <button
                     onClick={handleResetToDefaults}
@@ -831,6 +891,11 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                           </td>
                           {PERMISSION_ACTIONS.map((action) => {
                             const active = hasAction(mod.module, action);
+                            if (action !== 'manage' && !moduleActions(mod.module).includes(action as any)) {
+                              return (
+                                <td key={action} className="text-center py-2.5 px-2 border-b border-[hsl(var(--border)/0.5)] text-[hsl(var(--muted-foreground)/0.5)]">—</td>
+                              );
+                            }
                             return (
                               <td key={action} className="text-center py-2.5 px-2 border-b border-[hsl(var(--border)/0.5)]">
                                 <button

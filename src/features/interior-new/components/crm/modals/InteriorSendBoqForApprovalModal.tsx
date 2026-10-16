@@ -117,7 +117,7 @@ export function InteriorSendBoqForApprovalModal({
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to submit BOQ for approval.');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to submit BOQ for approval.');
     } finally {
       setIsSubmitting(false);
     }

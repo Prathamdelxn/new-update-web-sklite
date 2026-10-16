@@ -136,7 +136,7 @@ export function InteriorCrmShareModal({
       }
     } catch (err: any) {
       console.error('Error sharing drawings:', err);
-      toast.error(err.response?.data?.message || 'Failed to configure share link');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to configure share link');
     } finally {
       setLoading(false);
     }
@@ -156,7 +156,7 @@ export function InteriorCrmShareModal({
       }
     } catch (err: any) {
       console.error('Error revoking share link:', err);
-      toast.error(err.response?.data?.message || 'Failed to revoke link');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to revoke link');
     } finally {
       setLoading(false);
     }

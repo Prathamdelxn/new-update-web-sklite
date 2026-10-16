@@ -34,6 +34,7 @@ import { useConfirm } from '@/providers/ConfirmContext';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { InteriorProjectBoqBuilderModal } from '@/features/interior-new/components/projects/modals/InteriorProjectBoqBuilderModal';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 
 interface InteriorBoqViewProps {
   projectId: string;
@@ -41,6 +42,7 @@ interface InteriorBoqViewProps {
 
 export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
   const { currencySymbol } = useCurrency();
   const { confirm } = useConfirm();
   const queryClient = useQueryClient();
@@ -297,12 +299,16 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onClick={() => setIsImportOpen(true)} className="gap-1.5 text-xs cursor-pointer">
-            <Upload className="w-3.5 h-3.5" /> Import Excel
-          </Button>
-          <Button size="sm" onClick={handleOpenCreateBuilder} className="gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white cursor-pointer">
-            <Plus className="w-3.5 h-3.5" /> Create BOQ Version
-          </Button>
+          {canDo('boq', 'create') && (
+            <Button variant="outline" size="sm" onClick={() => setIsImportOpen(true)} className="gap-1.5 text-xs cursor-pointer">
+              <Upload className="w-3.5 h-3.5" /> Import Excel
+            </Button>
+          )}
+          {canDo('boq', 'create') && (
+            <Button size="sm" onClick={handleOpenCreateBuilder} className="gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white cursor-pointer">
+              <Plus className="w-3.5 h-3.5" /> Create BOQ Version
+            </Button>
+          )}
         </div>
       </div>
 
@@ -399,61 +405,73 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                 {/* Action Buttons */}
                 <div className="flex items-center gap-2 flex-wrap shrink-0">
                   {(selectedBoq.status === 'draft' || selectedBoq.status === 'rejected') && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleOpenEditBuilder(selectedBoq)}
-                      className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50"
-                    >
-                      <Pencil className="w-3.5 h-3.5 mr-1" /> Edit in Builder
-                    </Button>
+                    canDo('boq', 'update') && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleOpenEditBuilder(selectedBoq)}
+                        className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50"
+                      >
+                        <Pencil className="w-3.5 h-3.5 mr-1" /> Edit in Builder
+                      </Button>
+                    )
                   )}
                   {selectedBoq.status === 'draft' && (
-                    <Button
-                      size="sm"
-                      className="h-8 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
-                      onClick={() => handleApprovalAction('submit')}
-                    >
-                      Submit for Approval
-                    </Button>
+                    canDo('boq', 'update') && (
+                      <Button
+                        size="sm"
+                        className="h-8 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
+                        onClick={() => handleApprovalAction('submit')}
+                      >
+                        Submit for Approval
+                      </Button>
+                    )
                   )}
                   {selectedBoq.status === 'pending_approval' && (
                     <>
-                      <Button
-                        size="sm"
-                        className="h-8 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
-                        onClick={() => handleApprovalAction('approve')}
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="h-8 text-xs font-bold bg-red-600 hover:bg-red-700 text-white"
-                        onClick={() => setIsRejectOpen(true)}
-                      >
-                        Reject
-                      </Button>
+                      {canDo('boq', 'approve') && (
+                        <Button
+                          size="sm"
+                          className="h-8 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
+                          onClick={() => handleApprovalAction('approve')}
+                        >
+                          Approve
+                        </Button>
+                      )}
+                      {canDo('boq', 'approve') && (
+                        <Button
+                          size="sm"
+                          className="h-8 text-xs font-bold bg-red-600 hover:bg-red-700 text-white"
+                          onClick={() => setIsRejectOpen(true)}
+                        >
+                          Reject
+                        </Button>
+                      )}
                     </>
                   )}
                   {selectedBoq.status === 'approved' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50"
-                      onClick={handleCreateRevision}
-                    >
-                      <Plus className="w-3.5 h-3.5 mr-1" /> Create New Revision
-                    </Button>
+                    canDo('boq', 'update') && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50"
+                        onClick={handleCreateRevision}
+                      >
+                        <Plus className="w-3.5 h-3.5 mr-1" /> Create New Revision
+                      </Button>
+                    )
                   )}
                   {(selectedBoq.status === 'draft' || selectedBoq.status === 'rejected') && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
-                      onClick={handleDeleteBoq}
-                    >
-                      <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete Draft
-                    </Button>
+                    canDo('boq', 'delete') && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
+                        onClick={handleDeleteBoq}
+                      >
+                        <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete Draft
+                      </Button>
+                    )
                   )}
                 </div>
               </div>
@@ -481,15 +499,17 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
             {selectedBoq && (
               <div className="flex items-center gap-2 pr-1">
                 {(selectedBoq.status === 'draft' || selectedBoq.status === 'rejected') && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleOpenEditBuilder(selectedBoq)}
-                    className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50"
-                  >
-                    <Pencil className="w-3.5 h-3.5 mr-1" />
-                    Open in Builder
-                  </Button>
+                  canDo('boq', 'update') && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleOpenEditBuilder(selectedBoq)}
+                      className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50"
+                    >
+                      <Pencil className="w-3.5 h-3.5 mr-1" />
+                      Open in Builder
+                    </Button>
+                  )
                 )}
               </div>
             )}

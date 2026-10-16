@@ -6,11 +6,12 @@
 // window.confirm instead.
 
 import React, { useEffect, useState } from 'react';
-import { Milestone, Calendar, AlertTriangle, CheckCircle, Clock, Loader2, CalendarRange, Trash2, Plus, X } from 'lucide-react';
+import { Milestone, Calendar, AlertTriangle, CheckCircle, Clock, Loader2, CalendarRange, Trash2, Plus, X, Pencil } from 'lucide-react';
 import { Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 
 interface InteriorMilestonesViewProps {
   projectId: string;
@@ -24,6 +25,7 @@ const statusConfig: Record<string, { label: string; color: string; Icon: any }> 
 
 export default function InteriorMilestonesView({ projectId }: InteriorMilestonesViewProps) {
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
 
   const [milestones, setMilestones] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +36,29 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [newDueDate, setNewDueDate] = useState('');
+  // Set when the modal edits an existing milestone instead of creating one
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editStatus, setEditStatus] = useState<'planned' | 'achieved' | 'delayed'>('planned');
+
+  const openCreateModal = () => {
+    setEditingId(null);
+    setNewName('');
+    setNewDueDate('');
+    setShowCreateModal(true);
+  };
+
+  const openEditModal = (m: any) => {
+    setEditingId(m._id);
+    setNewName(m.name || '');
+    setNewDueDate(m.dueDate ? String(m.dueDate).split('T')[0] : '');
+    setEditStatus(m.status === 'achieved' || m.status === 'delayed' ? m.status : 'planned');
+    setShowCreateModal(true);
+  };
+
+  const closeModal = () => {
+    setShowCreateModal(false);
+    setEditingId(null);
+  };
 
   const fetchMilestones = async () => {
     try {
@@ -84,15 +109,22 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
 
     try {
       setCreating(true);
-      const res = await interiorProjectService.createMilestone(projectId, {
-        name: newName.trim(),
-        dueDate: newDueDate,
-        linkedTasks: [],
-      });
+      const res = editingId
+        ? await interiorProjectService.updateMilestone(projectId, editingId, {
+            name: newName.trim(),
+            dueDate: newDueDate,
+            status: editStatus,
+          })
+        : await interiorProjectService.createMilestone(projectId, {
+            name: newName.trim(),
+            dueDate: newDueDate,
+            linkedTasks: [],
+          });
 
       if (res?.success) {
-        toast.success(`Milestone "${newName.trim()}" added successfully.`);
+        toast.success(editingId ? `Milestone "${newName.trim()}" updated.` : `Milestone "${newName.trim()}" added successfully.`);
         setShowCreateModal(false);
+        setEditingId(null);
         setNewName('');
         setNewDueDate('');
         fetchMilestones();
@@ -100,7 +132,7 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
         toast.error(res?.message || 'Failed to create milestone.');
       }
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to create milestone.');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || (editingId ? 'Failed to update milestone.' : 'Failed to create milestone.'));
     } finally {
       setCreating(false);
     }
@@ -113,13 +145,15 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
           <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Milestones & Key Targets</h2>
           <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">Track major targets, deliverables, and timeline milestones.</p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-xs transition-colors"
-        >
-          <Plus size={14} />
-          <span>New Milestone</span>
-        </button>
+        {canDo('milestones', 'create') && (
+          <button
+            onClick={openCreateModal}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-xs transition-colors"
+          >
+            <Plus size={14} />
+            <span>New Milestone</span>
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -187,15 +221,28 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
                           {isAchieved ? 'Achieved' : isDelayed ? 'Delayed' : 'Planned'}
                         </span>
 
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteMilestone(m._id, m.name)}
-                          disabled={isDeleting}
-                          title="Delete Milestone"
-                          className="p-1 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
-                        >
-                          {isDeleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
-                        </button>
+                        {canDo('milestones', 'update') && (
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(m)}
+                            title="Edit Milestone"
+                            className="p-1 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                        )}
+
+                        {canDo('milestones', 'delete') && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteMilestone(m._id, m.name)}
+                            disabled={isDeleting}
+                            title="Delete Milestone"
+                            className="p-1 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                          >
+                            {isDeleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -241,10 +288,10 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <Milestone size={18} className="text-blue-600" />
-                <h3 className="text-base font-bold text-slate-900">Create New Milestone</h3>
+                <h3 className="text-base font-bold text-slate-900">{editingId ? 'Edit Milestone' : 'Create New Milestone'}</h3>
               </div>
               <button
-                onClick={() => setShowCreateModal(false)}
+                onClick={closeModal}
                 className="text-slate-400 hover:text-slate-600 p-1 rounded-md"
               >
                 <X size={16} />
@@ -279,10 +326,25 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
                 />
               </div>
 
+              {editingId && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Status</label>
+                  <select
+                    value={editStatus}
+                    onChange={(e) => setEditStatus(e.target.value as 'planned' | 'achieved' | 'delayed')}
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500 bg-white"
+                  >
+                    <option value="planned">Planned</option>
+                    <option value="achieved">Achieved</option>
+                    <option value="delayed">Delayed</option>
+                  </select>
+                </div>
+              )}
+
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={closeModal}
                   className="px-3.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
                 >
                   Cancel
@@ -293,7 +355,7 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
                   className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-xs"
                 >
                   {creating && <Loader2 size={13} className="animate-spin" />}
-                  <span>Save Milestone</span>
+                  <span>{editingId ? 'Save Changes' : 'Save Milestone'}</span>
                 </button>
               </div>
             </form>

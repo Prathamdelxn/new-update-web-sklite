@@ -26,6 +26,7 @@ import { interiorProjectService } from '@/services/interiorProject.service';
 import { CreateVendorModal } from '@/components/modals/CreateVendorModal';
 import { useToast } from '@/providers/ToastContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 function VendorCardSkeleton() {
   return (
@@ -89,6 +90,7 @@ function InteriorVendorsSkeleton() {
 
 export default function InteriorVendorsManagementView() {
   const toast = useToast();
+  const { hasPermission: canDo } = usePermissions();
   const [dbVendors, setDbVendors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -204,15 +206,17 @@ export default function InteriorVendorsManagementView() {
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
 
-          <button
-            onClick={() => {
-              setEditingVendor(null);
-              setIsAddVendorOpen(true);
-            }}
-            className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
-          >
-            + Add Vendor
-          </button>
+          {canDo('vendors', 'create') && (
+            <button
+              onClick={() => {
+                setEditingVendor(null);
+                setIsAddVendorOpen(true);
+              }}
+              className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              + Add Vendor
+            </button>
+          )}
         </div>
       </div>
 
@@ -264,15 +268,17 @@ export default function InteriorVendorsManagementView() {
               ? 'Try adjusting your search query or category filter.'
               : 'Click "+ Add Vendor" to register suppliers and subcontractors for your organization.'}
           </p>
-          <button
-            onClick={() => {
-              setEditingVendor(null);
-              setIsAddVendorOpen(true);
-            }}
-            className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm transition-all cursor-pointer inline-flex items-center gap-1.5"
-          >
-            + Add Vendor
-          </button>
+          {canDo('vendors', 'create') && (
+            <button
+              onClick={() => {
+                setEditingVendor(null);
+                setIsAddVendorOpen(true);
+              }}
+              className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm transition-all cursor-pointer inline-flex items-center gap-1.5"
+            >
+              + Add Vendor
+            </button>
+          )}
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -312,23 +318,27 @@ export default function InteriorVendorsManagementView() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        onClick={() => {
-                          setEditingVendor(vendor);
-                          setIsAddVendorOpen(true);
-                        }}
-                        title="Edit Vendor"
-                        className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--muted))] transition-colors cursor-pointer"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setVendorToDelete(vendor)}
-                        title="Delete Vendor"
-                        className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {canDo('vendors', 'update') && (
+                        <button
+                          onClick={() => {
+                            setEditingVendor(vendor);
+                            setIsAddVendorOpen(true);
+                          }}
+                          title="Edit Vendor"
+                          className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--muted))] transition-colors cursor-pointer"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                      )}
+                      {canDo('vendors', 'delete') && (
+                        <button
+                          onClick={() => setVendorToDelete(vendor)}
+                          title="Delete Vendor"
+                          className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
 

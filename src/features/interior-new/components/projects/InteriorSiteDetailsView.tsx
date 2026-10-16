@@ -37,12 +37,14 @@ import {
 import { InteriorLogSiteVisitModal } from '@/features/interior-new/components/crm/modals/InteriorLogSiteVisitModal';
 import { InteriorLogRequirementsModal } from '@/features/interior-new/components/crm/modals/InteriorLogRequirementsModal';
 import { cn } from '@/lib/utils';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 type TabType = 'measurements' | 'requirements' | 'photos' | 'all';
 
 export default function InteriorSiteDetailsView() {
   const { projectId } = useParams() as { projectId: string };
   const toast = useToast();
+  const { hasPermission: canDo } = usePermissions();
   const [loading, setLoading] = useState(true);
   const [customerData, setCustomerData] = useState<any>(null);
   const [allCustomers, setAllCustomers] = useState<any[]>([]);
@@ -175,28 +177,32 @@ export default function InteriorSiteDetailsView() {
                   </option>
                 ))}
               </select>
-              <button
-                type="button"
-                disabled={actionLoading || !selectedCustomerIdToLink}
-                onClick={handleLinkExistingCustomer}
-                className="px-3 py-2 text-xs font-bold rounded-xl bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 transition-colors"
-              >
-                Link
-              </button>
+              {canDo('crm_leads', 'update') && (
+                <button
+                  type="button"
+                  disabled={actionLoading || !selectedCustomerIdToLink}
+                  onClick={handleLinkExistingCustomer}
+                  className="px-3 py-2 text-xs font-bold rounded-xl bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 transition-colors"
+                >
+                  Link
+                </button>
+              )}
             </div>
           </div>
         )}
 
         <div className="pt-2">
-          <button
-            type="button"
-            disabled={actionLoading}
-            onClick={handleInitializeSiteProfile}
-            className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-white shadow-sm flex items-center gap-1.5 transition-all"
-          >
-            {actionLoading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-            Initialize New Site Details Profile
-          </button>
+          {canDo('crm_leads', 'create') && (
+            <button
+              type="button"
+              disabled={actionLoading}
+              onClick={handleInitializeSiteProfile}
+              className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-white shadow-sm flex items-center gap-1.5 transition-all"
+            >
+              {actionLoading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+              Initialize New Site Details Profile
+            </button>
+          )}
         </div>
       </div>
     );
@@ -218,18 +224,22 @@ export default function InteriorSiteDetailsView() {
           The original CRM lead does not have any recorded requirements, measurements, or site photos.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <button
-            onClick={() => setIsSiteVisitModalOpen(true)}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 shadow-md shadow-purple-600/20"
-          >
-            <Plus size={15} /> Log Site Measurements
-          </button>
-          <button
-            onClick={() => setIsReqModalOpen(true)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 shadow-md shadow-emerald-600/20"
-          >
-            <Plus size={15} /> Add Requirements
-          </button>
+          {canDo('crm_site_visits', 'update') && (
+            <button
+              onClick={() => setIsSiteVisitModalOpen(true)}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 shadow-md shadow-purple-600/20"
+            >
+              <Plus size={15} /> Log Site Measurements
+            </button>
+          )}
+          {canDo('crm_requirements', 'update') && (
+            <button
+              onClick={() => setIsReqModalOpen(true)}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 shadow-md shadow-emerald-600/20"
+            >
+              <Plus size={15} /> Add Requirements
+            </button>
+          )}
         </div>
 
         {customerData && (
@@ -278,18 +288,22 @@ export default function InteriorSiteDetailsView() {
         </div>
 
         <div className="flex items-center flex-wrap gap-2.5 shrink-0">
-          <button
-            onClick={() => setIsSiteVisitModalOpen(true)}
-            className="inline-flex items-center justify-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-purple-600/20"
-          >
-            <Pencil size={13} /> Edit Measurements & Photos
-          </button>
-          <button
-            onClick={() => setIsReqModalOpen(true)}
-            className="inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-emerald-600/20"
-          >
-            <PenTool size={13} /> Edit Requirements
-          </button>
+          {canDo('crm_site_visits', 'update') && (
+            <button
+              onClick={() => setIsSiteVisitModalOpen(true)}
+              className="inline-flex items-center justify-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-purple-600/20"
+            >
+              <Pencil size={13} /> Edit Measurements & Photos
+            </button>
+          )}
+          {canDo('crm_requirements', 'update') && (
+            <button
+              onClick={() => setIsReqModalOpen(true)}
+              className="inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-emerald-600/20"
+            >
+              <PenTool size={13} /> Edit Requirements
+            </button>
+          )}
         </div>
       </div>
 
@@ -377,28 +391,34 @@ export default function InteriorSiteDetailsView() {
 
         <div className="hidden md:flex items-center gap-2 pr-2">
           {activeTab === 'measurements' && (
-            <button
-              onClick={() => setIsSiteVisitModalOpen(true)}
-              className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-600 hover:text-purple-700 bg-purple-500/10 hover:bg-purple-500/20 px-2.5 py-1 rounded-lg transition-colors"
-            >
-              <Pencil size={11} /> Edit Dimensions
-            </button>
+            canDo('crm_site_visits', 'update') && (
+              <button
+                onClick={() => setIsSiteVisitModalOpen(true)}
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-600 hover:text-purple-700 bg-purple-500/10 hover:bg-purple-500/20 px-2.5 py-1 rounded-lg transition-colors"
+              >
+                <Pencil size={11} /> Edit Dimensions
+              </button>
+            )
           )}
           {activeTab === 'requirements' && (
-            <button
-              onClick={() => setIsReqModalOpen(true)}
-              className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-lg transition-colors"
-            >
-              <PenTool size={11} /> Edit Specs
-            </button>
+            canDo('crm_requirements', 'update') && (
+              <button
+                onClick={() => setIsReqModalOpen(true)}
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-lg transition-colors"
+              >
+                <PenTool size={11} /> Edit Specs
+              </button>
+            )
           )}
           {activeTab === 'photos' && (
-            <button
-              onClick={() => setIsSiteVisitModalOpen(true)}
-              className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 px-2.5 py-1 rounded-lg transition-colors"
-            >
-              <Plus size={11} /> Add Photos
-            </button>
+            canDo('crm_site_visits', 'update') && (
+              <button
+                onClick={() => setIsSiteVisitModalOpen(true)}
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 px-2.5 py-1 rounded-lg transition-colors"
+              >
+                <Plus size={11} /> Add Photos
+              </button>
+            )
           )}
         </div>
       </div>
@@ -419,12 +439,14 @@ export default function InteriorSiteDetailsView() {
                 <Ruler size={16} className="text-purple-600" />
                 Spatial & Structural Measurements
               </h3>
-              <button
-                onClick={() => setIsSiteVisitModalOpen(true)}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-600 hover:text-purple-700 bg-purple-500/10 hover:bg-purple-500/20 px-3 py-1.5 rounded-xl border border-purple-500/20 transition-all active:scale-95"
-              >
-                <Pencil size={12} /> Edit Measurements
-              </button>
+              {canDo('crm_site_visits', 'update') && (
+                <button
+                  onClick={() => setIsSiteVisitModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-600 hover:text-purple-700 bg-purple-500/10 hover:bg-purple-500/20 px-3 py-1.5 rounded-xl border border-purple-500/20 transition-all active:scale-95"
+                >
+                  <Pencil size={12} /> Edit Measurements
+                </button>
+              )}
             </div>
 
             {(customerData.remarks || customerData.siteMeasurements?.notes || customerData.siteVisitScheduledDate) && (
@@ -648,12 +670,14 @@ export default function InteriorSiteDetailsView() {
                 <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-sm mx-auto">
                   Log carpet area, ceiling heights, door/window openings, and MEP utilities.
                 </p>
-                <button
-                  onClick={() => setIsSiteVisitModalOpen(true)}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md shadow-purple-600/20"
-                >
-                  <Plus size={13} /> Log Measurements Now
-                </button>
+                {canDo('crm_site_visits', 'update') && (
+                  <button
+                    onClick={() => setIsSiteVisitModalOpen(true)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md shadow-purple-600/20"
+                  >
+                    <Plus size={13} /> Log Measurements Now
+                  </button>
+                )}
               </div>
             )}
           </motion.div>
@@ -683,12 +707,14 @@ export default function InteriorSiteDetailsView() {
                   <span className="text-xs font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl">
                     {requirements.length} Spaces to Execute
                   </span>
-                  <button
-                    onClick={() => setIsReqModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 rounded-xl border border-emerald-500/20 transition-all active:scale-95"
-                  >
-                    <PenTool size={12} /> Edit Requirements
-                  </button>
+                  {canDo('crm_requirements', 'update') && (
+                    <button
+                      onClick={() => setIsReqModalOpen(true)}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 rounded-xl border border-emerald-500/20 transition-all active:scale-95"
+                    >
+                      <PenTool size={12} /> Edit Requirements
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -909,12 +935,14 @@ export default function InteriorSiteDetailsView() {
                   <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-sm mx-auto">
                     Configure room-by-room functional and aesthetic specifications for this project.
                   </p>
-                  <button
-                    onClick={() => setIsReqModalOpen(true)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md shadow-emerald-600/20"
-                  >
-                    <Plus size={13} /> Add Room Requirements
-                  </button>
+                  {canDo('crm_requirements', 'update') && (
+                    <button
+                      onClick={() => setIsReqModalOpen(true)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md shadow-emerald-600/20"
+                    >
+                      <Plus size={13} /> Add Room Requirements
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -941,12 +969,14 @@ export default function InteriorSiteDetailsView() {
                     {sitePhotos.length} Photos
                   </span>
                 </div>
-                <button
-                  onClick={() => setIsSiteVisitModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 rounded-xl border border-blue-500/20 transition-all active:scale-95"
-                >
-                  <Pencil size={12} /> Manage Photos
-                </button>
+                {canDo('crm_site_visits', 'update') && (
+                  <button
+                    onClick={() => setIsSiteVisitModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 rounded-xl border border-blue-500/20 transition-all active:scale-95"
+                  >
+                    <Pencil size={12} /> Manage Photos
+                  </button>
+                )}
               </div>
 
               {hasPhotos ? (
@@ -975,12 +1005,14 @@ export default function InteriorSiteDetailsView() {
                   <ImageIcon className="w-8 h-8 text-[hsl(var(--muted-foreground))] opacity-60" />
                   <p className="text-xs font-bold text-[hsl(var(--foreground))]">No Site Photos Uploaded</p>
                   <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Upload site inspection photos & progress views.</p>
-                  <button
-                    onClick={() => setIsSiteVisitModalOpen(true)}
-                    className="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md shadow-blue-600/20"
-                  >
-                    <Plus size={12} /> Upload Site Photos
-                  </button>
+                  {canDo('crm_site_visits', 'update') && (
+                    <button
+                      onClick={() => setIsSiteVisitModalOpen(true)}
+                      className="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md shadow-blue-600/20"
+                    >
+                      <Plus size={12} /> Upload Site Photos
+                    </button>
+                  )}
                 </div>
               )}
             </div>

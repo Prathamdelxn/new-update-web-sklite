@@ -39,6 +39,7 @@ import { Button, Input, Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
 import { cn } from '@/lib/utils';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 
 interface InteriorDrawingsViewProps {
   projectId: string;
@@ -122,6 +123,7 @@ export function getFileTypeBadge(fileName: string = '', url: string = '', drawin
 export default function InteriorDrawingsView({ projectId }: InteriorDrawingsViewProps) {
   const router = useRouter();
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
 
   const [drawings, setDrawings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -479,12 +481,14 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
         </div>
 
         <div className="flex items-center gap-2.5">
-          <Button
-            onClick={() => setIsModalOpen(true)}
-            className="rounded-xl font-bold text-xs gap-1.5"
-          >
-            <UploadCloud size={15} /> Upload 2D / 3D Drawings
-          </Button>
+          {canDo('drawings', 'create') && (
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              className="rounded-xl font-bold text-xs gap-1.5"
+            >
+              <UploadCloud size={15} /> Upload 2D / 3D Drawings
+            </Button>
+          )}
         </div>
       </div>
 
@@ -564,12 +568,14 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
               : `Upload your first ${drawingTypeFilter === '3D' ? '3D DWG, SketchUp model, or CGI render' : '2D GFC plan, floor layout, or CAD drawing'
               } to start tracking.`}
           </p>
-          <Button
-            onClick={() => setIsModalOpen(true)}
-            className="rounded-xl font-bold text-xs gap-1.5"
-          >
-            <UploadCloud size={14} /> Upload {drawingTypeFilter === '3D' ? '3D Models / Renders' : '2D Drawings'}
-          </Button>
+          {canDo('drawings', 'create') && (
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              className="rounded-xl font-bold text-xs gap-1.5"
+            >
+              <UploadCloud size={14} /> Upload {drawingTypeFilter === '3D' ? '3D Models / Renders' : '2D Drawings'}
+            </Button>
+          )}
         </div>
       ) : (
         /* ── Drawings Card Grid (4 In a Row) ── */
@@ -703,13 +709,15 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                         <Eye size={13} className="text-indigo-600" /> View Drawing
                       </button>
 
-                      <button
-                        onClick={() => handleDeleteDrawing(dwg._id, dwg.title)}
-                        className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-rose-600 hover:bg-rose-500/10 rounded-lg transition-all cursor-pointer"
-                        title="Delete Drawing"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      {canDo('drawings', 'delete') && (
+                        <button
+                          onClick={() => handleDeleteDrawing(dwg._id, dwg.title)}
+                          className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-rose-600 hover:bg-rose-500/10 rounded-lg transition-all cursor-pointer"
+                          title="Delete Drawing"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

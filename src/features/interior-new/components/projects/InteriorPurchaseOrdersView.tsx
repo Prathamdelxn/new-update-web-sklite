@@ -12,6 +12,7 @@ import { Button, Input, Card } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 
 interface InteriorPurchaseOrdersViewProps {
   projectId: string;
@@ -19,6 +20,7 @@ interface InteriorPurchaseOrdersViewProps {
 
 export default function InteriorPurchaseOrdersView({ projectId }: InteriorPurchaseOrdersViewProps) {
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
 
   const [pos, setPos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,10 +117,12 @@ export default function InteriorPurchaseOrdersView({ projectId }: InteriorPurcha
             Log financial contracts, purchase workflows, and vendor closeouts.
           </p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Create PO
-        </Button>
+        {canDo('procurement', 'create') && (
+          <Button onClick={() => setIsModalOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create PO
+          </Button>
+        )}
       </div>
 
       {loading ? (

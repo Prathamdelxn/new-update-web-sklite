@@ -109,6 +109,7 @@ import { InteriorCreateConfirmOrderModal } from '@/features/interior-new/compone
 import { InteriorConfirmedOrderStageView } from '@/features/interior-new/components/crm/InteriorConfirmedOrderStageView';
 import { InteriorLeadFollowUpsTab } from '@/features/interior-new/components/crm/InteriorLeadFollowUpsTab';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 export default function Lead360View() {
   const { currencySymbol, currencyCode, formatExactCurrency, formatCurrency } = useCurrency();
@@ -117,6 +118,7 @@ export default function Lead360View() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToast();
+const { hasPermission: canDo } = usePermissions();
   const { confirm, prompt } = useConfirm();
   const queryClient = useQueryClient();
 
@@ -1118,25 +1120,29 @@ export default function Lead360View() {
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-500/10 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold">
                   <Lock size={12} /> Lead Lost
                 </span>
-                <button 
-                  onClick={() => setIsDeleteModalOpen(true)}
-                  className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg transition-all active:scale-95"
-                  title="Delete Lead"
-                >
-                  <Trash2 size={14} />
-                </button>
+                {(canDo('crm_leads', 'delete')) && (
+                  <button 
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg transition-all active:scale-95"
+                    title="Delete Lead"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </div>
             ) : (
               <>
                 {['Under Quotation', 'Quotation Pending', 'Quotation Sent', 'Negotiation', 'Booking Pending'].includes(lead.status) && (
                   ((lead.quotations && lead.quotations.some((q: any) => q.status === 'Accepted' || q.status === 'Approved')) || lead.status === 'Booking Pending') && (
-                    <button
-                      onClick={() => setIsConvertToProjectOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95"
-                      title="Convert to Won Project"
-                    >
-                      <CheckCircle2 size={12} /> Convert to Project
-                    </button>
+                    (canDo('crm_quotations', 'approve')) && (
+                      <button
+                        onClick={() => setIsConvertToProjectOpen(true)}
+                        className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95"
+                        title="Convert to Won Project"
+                      >
+                        <CheckCircle2 size={12} /> Convert to Project
+                      </button>
+                    )
                   )
                 )}
 
@@ -1144,38 +1150,46 @@ export default function Lead360View() {
                   !hasFollowUp &&
                   !lead.siteMeasurements &&
                   (!lead.quotations || lead.quotations.length === 0) && (
-                    <button
-                      onClick={() => setIsFollowUpModalOpen(true)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
-                      title="Schedule Initial Follow-up"
-                    >
-                      <Calendar size={12} /> Follow-up
-                    </button>
+                    (canDo('crm_followups', 'create')) && (
+                      <button
+                        onClick={() => setIsFollowUpModalOpen(true)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
+                        title="Schedule Initial Follow-up"
+                      >
+                        <Calendar size={12} /> Follow-up
+                      </button>
+                    )
                   )}
 
-                <button
-                  onClick={() => setIsMarkAsLostOpen(true)}
-                  className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg transition-all active:scale-95"
-                  title="Mark Lead as Lost"
-                >
-                  <X size={14} />
-                </button>
+                {(canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_requirements', 'update') || canDo('crm_drawings', 'update') || canDo('crm_boq', 'update') || canDo('crm_quotations', 'update')) && (
+                  <button
+                    onClick={() => setIsMarkAsLostOpen(true)}
+                    className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg transition-all active:scale-95"
+                    title="Mark Lead as Lost"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
 
-                <button 
-                  onClick={() => setIsEditModalOpen(true)}
-                  className="p-1.5 bg-[hsl(var(--muted))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-lg transition-all active:scale-95"
-                  title="Edit Lead Details"
-                >
-                  <Pencil size={14} />
-                </button>
+                {(canDo('crm_leads', 'update')) && (
+                  <button 
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="p-1.5 bg-[hsl(var(--muted))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-lg transition-all active:scale-95"
+                    title="Edit Lead Details"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                )}
 
-                <button 
-                  onClick={() => setIsDeleteModalOpen(true)}
-                  className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg transition-all active:scale-95"
-                  title="Delete Lead"
-                >
-                  <Trash2 size={14} />
-                </button>
+                {(canDo('crm_leads', 'delete')) && (
+                  <button 
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg transition-all active:scale-95"
+                    title="Delete Lead"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </>
             )}
           </div>
@@ -1343,13 +1357,15 @@ export default function Lead360View() {
                         </div>
                       </div>
                       {!isReadOnly && (
-                        <button
-                          onClick={() => setIsEditModalOpen(true)}
-                          className="text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 px-2 py-0.5 rounded transition-colors flex items-center gap-1"
-                          title="Edit Location & Lead Details"
-                        >
-                          <Pencil size={11} /> Edit
-                        </button>
+                        (canDo('crm_leads', 'update')) && (
+                          <button
+                            onClick={() => setIsEditModalOpen(true)}
+                            className="text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 px-2 py-0.5 rounded transition-colors flex items-center gap-1"
+                            title="Edit Location & Lead Details"
+                          >
+                            <Pencil size={11} /> Edit
+                          </button>
+                        )
                       )}
                     </div>
 
@@ -1466,12 +1482,14 @@ export default function Lead360View() {
                       <Activity className="w-3.5 h-3.5 text-blue-500" /> Activity Timeline
                     </h3>
                     {!isReadOnly && (
-                      <button
-                        onClick={() => setIsActivityModalOpen(true)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
-                      >
-                        <Plus size={12} /> Log Note
-                      </button>
+                      (canDo('crm_followups', 'create')) && (
+                        <button
+                          onClick={() => setIsActivityModalOpen(true)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
+                        >
+                          <Plus size={12} /> Log Note
+                        </button>
+                      )
                     )}
                   </div>
                   
@@ -1648,12 +1666,14 @@ export default function Lead360View() {
                             </button>
                           )}
                           {!isReadOnly && (
-                            <button
-                              onClick={() => setIsSendToSiteVisitOpen(true)}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
-                            >
-                              <Calendar size={12} /> Reschedule Visit
-                            </button>
+                            (canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_site_visits', 'create')) && (
+                              <button
+                                onClick={() => setIsSendToSiteVisitOpen(true)}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                              >
+                                <Calendar size={12} /> Reschedule Visit
+                              </button>
+                            )
                           )}
                         </div>
                       </div>
@@ -1708,35 +1728,43 @@ export default function Lead360View() {
                             <>
                               {lead.siteMeasurements ? (
                                 <>
-                                  <button
-                                    onClick={() => setIsSiteVisitModalOpen(true)}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
-                                  >
-                                    <Pencil size={12} /> Edit Measurements
-                                  </button>
-                                  {['Under Site Visit', 'Measurement Done'].includes(lead.status) && (
+                                  {(canDo('crm_site_visits', 'update')) && (
                                     <button
-                                      onClick={() => setIsSendToReqOpen(true)}
-                                      className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                                      onClick={() => setIsSiteVisitModalOpen(true)}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
                                     >
-                                      Pass to Requirements <ArrowRight size={12} />
+                                      <Pencil size={12} /> Edit Measurements
                                     </button>
+                                  )}
+                                  {['Under Site Visit', 'Measurement Done'].includes(lead.status) && (
+                                    (canDo('crm_site_visits', 'update') || canDo('crm_requirements', 'update') || canDo('crm_requirements', 'create')) && (
+                                      <button
+                                        onClick={() => setIsSendToReqOpen(true)}
+                                        className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                                      >
+                                        Pass to Requirements <ArrowRight size={12} />
+                                      </button>
+                                    )
                                   )}
                                 </>
                               ) : (
                                 <>
-                                  <button
-                                    onClick={() => setIsSendToSiteVisitOpen(true)}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
-                                  >
-                                    <Calendar size={12} /> Reschedule
-                                  </button>
-                                  <button
-                                    onClick={() => setIsSiteVisitModalOpen(true)}
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
-                                  >
-                                    <Plus size={13} /> Log Measurements
-                                  </button>
+                                  {(canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_site_visits', 'create')) && (
+                                    <button
+                                      onClick={() => setIsSendToSiteVisitOpen(true)}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
+                                    >
+                                      <Calendar size={12} /> Reschedule
+                                    </button>
+                                  )}
+                                  {(canDo('crm_site_visits', 'update')) && (
+                                    <button
+                                      onClick={() => setIsSiteVisitModalOpen(true)}
+                                      className="inline-flex items-center gap-1 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                                    >
+                                      <Plus size={13} /> Log Measurements
+                                    </button>
+                                  )}
                                 </>
                               )}
                             </>
@@ -1836,12 +1864,14 @@ export default function Lead360View() {
                           </p>
                         </div>
                         {!isReadOnly && (
-                          <button 
-                            onClick={() => setIsSiteVisitModalOpen(true)} 
-                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <Plus size={14} /> Log Site Visit & Measurements
-                          </button>
+                          (canDo('crm_site_visits', 'update')) && (
+                            <button 
+                              onClick={() => setIsSiteVisitModalOpen(true)} 
+                              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Plus size={14} /> Log Site Visit & Measurements
+                            </button>
+                          )
                         )}
                       </div>
                     ) : (
@@ -2093,12 +2123,14 @@ export default function Lead360View() {
                           </div>
                         </div>
                         {!isReadOnly && (
-                          <button
-                            onClick={() => setIsSendToReqOpen(true)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shrink-0"
-                          >
-                            <Calendar size={12} /> Reschedule Session
-                          </button>
+                          (canDo('crm_site_visits', 'update') || canDo('crm_requirements', 'update') || canDo('crm_requirements', 'create')) && (
+                            <button
+                              onClick={() => setIsSendToReqOpen(true)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shrink-0"
+                            >
+                              <Calendar size={12} /> Reschedule Session
+                            </button>
+                          )
                         )}
                       </div>
                     )}
@@ -2141,35 +2173,43 @@ export default function Lead360View() {
                           <div className="flex items-center gap-1.5 flex-wrap">
                             {hasRequirements ? (
                               <>
-                                <button
-                                  onClick={() => setIsReqModalOpen(true)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
-                                >
-                                  <Pencil size={12} /> Edit Requirements
-                                </button>
-                                {['Under Requirement', 'Requirement Completed'].includes(lead.status) && (
+                                {(canDo('crm_requirements', 'update')) && (
                                   <button
-                                    onClick={() => setIsSendToDrawingOpen(true)}
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                                    onClick={() => setIsReqModalOpen(true)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
                                   >
-                                    Pass to 2D/3D Drawing <ArrowRight size={12} />
+                                    <Pencil size={12} /> Edit Requirements
                                   </button>
+                                )}
+                                {['Under Requirement', 'Requirement Completed'].includes(lead.status) && (
+                                  (canDo('crm_requirements', 'update') || canDo('crm_drawings', 'update') || canDo('crm_drawings', 'create')) && (
+                                    <button
+                                      onClick={() => setIsSendToDrawingOpen(true)}
+                                      className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                                    >
+                                      Pass to 2D/3D Drawing <ArrowRight size={12} />
+                                    </button>
+                                  )
                                 )}
                               </>
                             ) : (
                               <>
-                                <button
-                                  onClick={() => setIsSendToReqOpen(true)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
-                                >
-                                  <Calendar size={12} /> Reschedule Session
-                                </button>
-                                <button
-                                  onClick={() => setIsReqModalOpen(true)}
-                                  className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
-                                >
-                                  <Plus size={13} /> Add Requirements
-                                </button>
+                                {(canDo('crm_site_visits', 'update') || canDo('crm_requirements', 'update') || canDo('crm_requirements', 'create')) && (
+                                  <button
+                                    onClick={() => setIsSendToReqOpen(true)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
+                                  >
+                                    <Calendar size={12} /> Reschedule Session
+                                  </button>
+                                )}
+                                {(canDo('crm_requirements', 'update')) && (
+                                  <button
+                                    onClick={() => setIsReqModalOpen(true)}
+                                    className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                                  >
+                                    <Plus size={13} /> Add Requirements
+                                  </button>
+                                )}
                               </>
                             )}
                           </div>
@@ -2328,12 +2368,14 @@ export default function Lead360View() {
                           </p>
                         </div>
                         {!isReadOnly && (
-                          <button 
-                            onClick={() => setIsReqModalOpen(true)} 
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <Plus size={14} /> Add Design Requirements
-                          </button>
+                          (canDo('crm_requirements', 'update')) && (
+                            <button 
+                              onClick={() => setIsReqModalOpen(true)} 
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Plus size={14} /> Add Design Requirements
+                            </button>
+                          )
                         )}
                       </div>
                     ) : (
@@ -2708,12 +2750,14 @@ export default function Lead360View() {
                           <div className="flex items-center gap-1.5 flex-wrap">
                             {hasDesignFiles ? (
                               <>
-                                <button
-                                  onClick={() => setIsDesignModalOpen(true)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
-                                >
-                                  <Plus size={13} /> Upload More
-                                </button>
+                                {(canDo('crm_drawings', 'create')) && (
+                                  <button
+                                    onClick={() => setIsDesignModalOpen(true)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
+                                  >
+                                    <Plus size={13} /> Upload More
+                                  </button>
+                                )}
                                 {['Under Drawing', 'Design Approved'].includes(lead.status) && (
                                   <button
                                     onClick={() => {
@@ -2743,12 +2787,14 @@ export default function Lead360View() {
                                 )}
                               </>
                             ) : (
-                              <button
-                                onClick={() => setIsDesignModalOpen(true)}
-                                className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
-                              >
-                                <Plus size={13} /> Upload Drawings
-                              </button>
+                              (canDo('crm_drawings', 'create')) && (
+                                <button
+                                  onClick={() => setIsDesignModalOpen(true)}
+                                  className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                                >
+                                  <Plus size={13} /> Upload Drawings
+                                </button>
+                              )
                             )}
                           </div>
                         )}
@@ -2781,12 +2827,14 @@ export default function Lead360View() {
                                 <ExternalLink size={11} /> Preview
                               </a>
                             )}
-                            <button
-                              onClick={() => setIsShareModalOpen(true)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[11px] font-bold active:scale-95"
-                            >
-                              <Share2 size={11} /> {lead.shareSettings?.isPublic ? 'Share Link' : 'Generate Link'}
-                            </button>
+                            {(canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_requirements', 'update') || canDo('crm_drawings', 'update') || canDo('crm_boq', 'update') || canDo('crm_quotations', 'update')) && (
+                              <button
+                                onClick={() => setIsShareModalOpen(true)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[11px] font-bold active:scale-95"
+                              >
+                                <Share2 size={11} /> {lead.shareSettings?.isPublic ? 'Share Link' : 'Generate Link'}
+                              </button>
+                            )}
                           </div>
                         </div>
                       )}
@@ -2846,12 +2894,14 @@ export default function Lead360View() {
                           </p>
                         </div>
                         {!isReadOnly && (
-                          <button 
-                            onClick={() => setIsDesignModalOpen(true)} 
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <Plus size={14} /> Upload Drawings
-                          </button>
+                          (canDo('crm_drawings', 'create')) && (
+                            <button 
+                              onClick={() => setIsDesignModalOpen(true)} 
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Plus size={14} /> Upload Drawings
+                            </button>
+                          )
                         )}
                       </div>
                     ) : (
@@ -3028,14 +3078,16 @@ export default function Lead360View() {
 
                                     <div className="flex items-center gap-1">
                                       {!isReadOnly && (
-                                        <button
-                                          type="button"
-                                          onClick={() => setDrawingToDelete(file)}
-                                          className="p-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-600"
-                                          title="Delete"
-                                        >
-                                          <Trash2 size={11} />
-                                        </button>
+                                        canDo('crm_drawings', 'delete') && (
+                                          <button
+                                            type="button"
+                                            onClick={() => setDrawingToDelete(file)}
+                                            className="p-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-600"
+                                            title="Delete"
+                                          >
+                                            <Trash2 size={11} />
+                                          </button>
+                                        )
                                       )}
                                       <button
                                         type="button"
@@ -3136,73 +3188,85 @@ export default function Lead360View() {
                               </span>
                             ) : hasBoqs ? (
                               <>
-                                <button
-                                  onClick={() => {
-                                    setEditingBoqIndex(activeBoqIndex);
-                                    setIsBoqModalOpen(true);
-                                  }}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
-                                >
-                                  <Pencil size={12} /> Edit BOQ
-                                </button>
-                                {isBoqApproved && (
+                                {canDo('crm_boq', 'update') && (
                                   <button
                                     onClick={() => {
-                                      setEditingBoqIndex(null);
+                                      setEditingBoqIndex(activeBoqIndex);
                                       setIsBoqModalOpen(true);
                                     }}
                                     className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
                                   >
-                                    <Plus size={13} /> New Version
+                                    <Pencil size={12} /> Edit BOQ
                                   </button>
                                 )}
-                                <button
-                                  onClick={() => {
-                                    setBoqIndexToDelete(activeBoqIndex);
-                                    setIsDeleteBoqModalOpen(true);
-                                  }}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold transition-all active:scale-95 cursor-pointer"
-                                  title="Delete Active BOQ Version"
-                                >
-                                  <Trash2 size={12} /> Delete
-                                </button>
+                                {isBoqApproved && (
+                                  canDo('crm_boq', 'create') && (
+                                    <button
+                                      onClick={() => {
+                                        setEditingBoqIndex(null);
+                                        setIsBoqModalOpen(true);
+                                      }}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
+                                    >
+                                      <Plus size={13} /> New Version
+                                    </button>
+                                  )
+                                )}
+                                {canDo('crm_boq', 'delete') && (
+                                  <button
+                                    onClick={() => {
+                                      setBoqIndexToDelete(activeBoqIndex);
+                                      setIsDeleteBoqModalOpen(true);
+                                    }}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                                    title="Delete Active BOQ Version"
+                                  >
+                                    <Trash2 size={12} /> Delete
+                                  </button>
+                                )}
 
-                                <button
-                                  onClick={() =>
-                                    exportBoqToExcel({
-                                      lead,
-                                      boqIndex: activeBoqIndex,
-                                      currencySymbol,
-                                      currencyCode,
-                                    })
-                                  }
-                                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-2xs cursor-pointer"
-                                  title="Export Bill of Quantities to Excel (.xlsx)"
-                                >
-                                  <FileSpreadsheet size={13} /> Export Excel
-                                </button>
+                                {canDo('crm_boq', 'export') && (
+                                  <button
+                                    onClick={() =>
+                                      exportBoqToExcel({
+                                        lead,
+                                        boqIndex: activeBoqIndex,
+                                        currencySymbol,
+                                        currencyCode,
+                                      })
+                                    }
+                                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-2xs cursor-pointer"
+                                    title="Export Bill of Quantities to Excel (.xlsx)"
+                                  >
+                                    <FileSpreadsheet size={13} /> Export Excel
+                                  </button>
+                                )}
 
                               
 
                               
 
                                 {['Under BOQ Creation', 'Design Approved', 'Under Drawing'].includes(lead.status) && isBoqApproved && (
-                                  <button
-                                    onClick={() => setIsSendToQuotationsOpen(true)}
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
-                                    title="Pass to Quotation Phase"
-                                  >
-                                    Pass to Quotation <ArrowRight size={12} />
-                                  </button>
+                                  (canDo('crm_boq', 'update') || canDo('crm_quotations', 'update') || canDo('crm_quotations', 'create')) && (
+                                    <button
+                                      onClick={() => setIsSendToQuotationsOpen(true)}
+                                      className="inline-flex items-center gap-1 px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
+                                      title="Pass to Quotation Phase"
+                                    >
+                                      Pass to Quotation <ArrowRight size={12} />
+                                    </button>
+                                  )
                                 )}
                               </>
                             ) : (
-                              <button
-                                onClick={() => setIsBoqModalOpen(true)}
-                                className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
-                              >
-                                <Plus size={13} /> Create BOQ
-                              </button>
+                              (canDo('crm_boq', 'create')) && (
+                                <button
+                                  onClick={() => setIsBoqModalOpen(true)}
+                                  className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                                >
+                                  <Plus size={13} /> Create BOQ
+                                </button>
+                              )
                             )}
                           </div>
                         )}
@@ -3247,12 +3311,14 @@ export default function Lead360View() {
                           </p>
                         </div>
                         {!isReadOnly && !isBoqLocked && (
-                          <button 
-                            onClick={() => setIsBoqModalOpen(true)} 
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <Plus size={14} /> Create Initial BOQ
-                          </button>
+                          (canDo('crm_boq', 'create')) && (
+                            <button 
+                              onClick={() => setIsBoqModalOpen(true)} 
+                              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Plus size={14} /> Create Initial BOQ
+                            </button>
+                          )
                         )}
                       </div>
                     ) : (
@@ -3283,24 +3349,24 @@ export default function Lead360View() {
                           lead={lead} 
                           boqIndex={activeBoqIndex} 
                           onSuccess={fetchData} 
-                          onEdit={isBoqLocked ? undefined : () => {
+                          onEdit={isBoqLocked || !canDo('crm_boq', 'update') ? undefined : () => {
                             setEditingBoqIndex(activeBoqIndex);
                             setIsBoqModalOpen(true);
                           }}
-                          onDelete={isBoqLocked ? undefined : (idx) => {
+                          onDelete={isBoqLocked || !canDo('crm_boq', 'delete') ? undefined : (idx) => {
                             setBoqIndexToDelete(idx);
                             setIsDeleteBoqModalOpen(true);
                           }}
-                          onSendForApproval={isBoqLocked ? undefined : (idx) => {
+                          onSendForApproval={isBoqLocked || !canDo('crm_boq', 'update') ? undefined : (idx) => {
                             setActiveBoqIndex(idx);
                             setIsSendBoqApprovalOpen(true);
                           }}
-                          onApprove={isBoqLocked ? undefined : (idx) => {
+                          onApprove={isBoqLocked || !canDo('crm_boq', 'approve') ? undefined : (idx) => {
                             setActiveBoqIndex(idx);
                             setBoqApprovalAction('approve');
                             setIsBoqApprovalOpen(true);
                           }}
-                          onReject={isBoqLocked ? undefined : (idx) => {
+                          onReject={isBoqLocked || !canDo('crm_boq', 'approve') ? undefined : (idx) => {
                             setActiveBoqIndex(idx);
                             setBoqApprovalAction('reject');
                             setIsBoqApprovalOpen(true);
@@ -3384,12 +3450,14 @@ export default function Lead360View() {
                         {!isReadOnly && (
                           <div className="flex items-center gap-2 flex-wrap">
                             {hasQuotations && (hasAcceptedQuote || lead.status === 'Booking Pending') && !['Won', 'Converted'].includes(lead.status) && (
-                              <button
-                                onClick={() => setIsConvertToProjectOpen(true)}
-                                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs"
-                              >
-                                <CheckCircle2 size={14} /> Convert to Project
-                              </button>
+                              (canDo('crm_quotations', 'approve')) && (
+                                <button
+                                  onClick={() => setIsConvertToProjectOpen(true)}
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs"
+                                >
+                                  <CheckCircle2 size={14} /> Convert to Project
+                                </button>
+                              )
                             )}
 
                             <button
@@ -3613,14 +3681,16 @@ export default function Lead360View() {
                                           )}
 
                                           {!isReadOnly && !isConverted && (
-                                            <button
-                                              type="button"
-                                              onClick={() => handleDeleteQuotationByIndex(idx)}
-                                              className="inline-flex items-center justify-center p-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors cursor-pointer shadow-xs dark:bg-[hsl(var(--card))] dark:border-[hsl(var(--border))] dark:text-[hsl(var(--muted-foreground))]"
-                                              title="Delete Quotation"
-                                            >
-                                              <Trash2 size={13} />
-                                            </button>
+                                            (canDo('crm_quotations', 'delete')) && (
+                                              <button
+                                                type="button"
+                                                onClick={() => handleDeleteQuotationByIndex(idx)}
+                                                className="inline-flex items-center justify-center p-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors cursor-pointer shadow-xs dark:bg-[hsl(var(--card))] dark:border-[hsl(var(--border))] dark:text-[hsl(var(--muted-foreground))]"
+                                                title="Delete Quotation"
+                                              >
+                                                <Trash2 size={13} />
+                                              </button>
+                                            )
                                           )}
                                         </div>
                                       </td>

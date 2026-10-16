@@ -45,6 +45,7 @@ import { useToast } from '@/providers/ToastContext';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import InteriorProjectCard from './projects/InteriorProjectCard';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 const healthConfig = {
   'on-track': {
@@ -202,6 +203,7 @@ function InteriorNewProjectsSkeleton() {
 
 export default function InteriorNewProjectsView() {
   const toast = useToast();
+  const { hasPermission: canDo } = usePermissions();
   const { currencySymbol, formatCurrency } = useCurrency();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -560,16 +562,20 @@ export default function InteriorNewProjectsView() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              handleCloseDialog();
-              setIsDialogOpen(true);
-            }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium shadow-xs transition-all active:scale-[0.98]"
-          >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>New Project</span>
-          </button>
+          {canDo('projects', 'create') && (
+            canDo('projects', 'create') && (
+              <button
+                onClick={() => {
+                  handleCloseDialog();
+                  setIsDialogOpen(true);
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium shadow-xs transition-all active:scale-[0.98]"
+              >
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <span>New Project</span>
+              </button>
+            )
+          )}
         </div>
       </div>
 
@@ -1050,24 +1056,28 @@ export default function InteriorNewProjectsView() {
                       </td>
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <button
-                            className="p-1.5 rounded-lg hover:bg-blue-50 text-[hsl(var(--muted-foreground))] hover:text-blue-600 transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditProject(project);
-                            }}
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            className="p-1.5 rounded-lg hover:bg-rose-50 text-[hsl(var(--muted-foreground))] hover:text-rose-600 transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteProject(project);
-                            }}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          {canDo('projects', 'update') && (
+                            <button
+                              className="p-1.5 rounded-lg hover:bg-blue-50 text-[hsl(var(--muted-foreground))] hover:text-blue-600 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditProject(project);
+                              }}
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {canDo('projects', 'delete') && (
+                            <button
+                              className="p-1.5 rounded-lg hover:bg-rose-50 text-[hsl(var(--muted-foreground))] hover:text-rose-600 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteProject(project);
+                              }}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                           <ArrowUpRight className="w-4 h-4 ml-1 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] group-hover:translate-x-0.5 transition-all" />
                         </div>
                       </td>

@@ -486,7 +486,7 @@ export function InteriorQuotationBuilderModal({
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to save quotation');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to save quotation');
     } finally {
       setIsSubmitting(false);
     }

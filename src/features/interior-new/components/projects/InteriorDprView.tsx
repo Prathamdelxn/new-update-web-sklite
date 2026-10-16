@@ -33,6 +33,7 @@ import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { downloadDprPdf, printDpr, DPRData } from '@/features/interior-new/utils/dprPdfGenerator';
 import { DprPdfPreviewModal } from '@/features/interior-new/components/projects/DprPdfPreviewModal';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 
 interface InteriorDprViewProps {
   projectId: string;
@@ -40,6 +41,7 @@ interface InteriorDprViewProps {
 
 export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
   const { confirm } = useConfirm();
   const queryClient = useQueryClient();
 
@@ -409,10 +411,12 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
             <Download className="w-3.5 h-3.5" />
             <span className="hidden md:inline">Blank Template PDF</span>
           </Button>
-          <Button onClick={handleOpenCreateForm} className="gap-1.5">
-            <Plus className="w-4 h-4" />
-            Log New DPR
-          </Button>
+          {canDo('dpr', 'create') && (
+            <Button onClick={handleOpenCreateForm} className="gap-1.5">
+              <Plus className="w-4 h-4" />
+              Log New DPR
+            </Button>
+          )}
         </div>
       </div>
 
@@ -431,10 +435,12 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
           <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-md mx-auto mb-6">
             Log site manpower, ongoing work progress, materials received, and tomorrow&apos;s planning. Click below to generate your first official DPR report.
           </p>
-          <Button onClick={handleOpenCreateForm} className="gap-2">
-            <Plus className="w-4 h-4" />
-            Create First DPR
-          </Button>
+          {canDo('dpr', 'create') && (
+            <Button onClick={handleOpenCreateForm} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Create First DPR
+            </Button>
+          )}
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-5">
@@ -488,42 +494,48 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                         <Eye className="w-3.5 h-3.5" />
                         Preview Sheet
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePrintDpr(dpr)}
-                        className="gap-1.5 text-xs h-8"
-                      >
-                        <Printer className="w-3.5 h-3.5" />
-                        Print
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handleDownloadPdf(dpr)}
-                        disabled={downloadingId === dpr._id}
-                        className="gap-1.5 text-xs h-8 bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        {downloadingId === dpr._id ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <Download className="w-3.5 h-3.5" />
-                        )}
-                        <span>Download PDF</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteDpr(dpr)}
-                        disabled={deletingId === dpr._id}
-                        className="text-xs h-8 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
-                        title="Delete DPR"
-                      >
-                        {deletingId === dpr._id ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <Trash2 className="w-3.5 h-3.5" />
-                        )}
-                      </Button>
+                      {canDo('dpr', 'export') && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePrintDpr(dpr)}
+                          className="gap-1.5 text-xs h-8"
+                        >
+                          <Printer className="w-3.5 h-3.5" />
+                          Print
+                        </Button>
+                      )}
+                      {canDo('dpr', 'export') && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleDownloadPdf(dpr)}
+                          disabled={downloadingId === dpr._id}
+                          className="gap-1.5 text-xs h-8 bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          {downloadingId === dpr._id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Download className="w-3.5 h-3.5" />
+                          )}
+                          <span>Download PDF</span>
+                        </Button>
+                      )}
+                      {canDo('dpr', 'delete') && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteDpr(dpr)}
+                          disabled={deletingId === dpr._id}
+                          className="text-xs h-8 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
+                          title="Delete DPR"
+                        >
+                          {deletingId === dpr._id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5" />
+                          )}
+                        </Button>
+                      )}
                     </div>
                   </div>
 
@@ -1299,6 +1311,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
         onClose={() => setIsPreviewOpen(false)}
         dpr={previewDpr}
         project={project}
+        canExport={canDo('dpr', 'export')}
       />
     </div>
   );

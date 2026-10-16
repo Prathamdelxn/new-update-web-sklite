@@ -32,6 +32,7 @@ import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { cn } from '@/lib/utils';
 import { uploadToCloudinary } from '@/lib/upload';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 
 interface InteriorHandoverViewProps {
   projectId: string;
@@ -40,6 +41,7 @@ interface InteriorHandoverViewProps {
 export default function InteriorHandoverView({ projectId }: InteriorHandoverViewProps) {
   const router = useRouter();
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
   const { confirm } = useConfirm();
 
   // Project Datasets
@@ -405,10 +407,12 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
             Certificate
           </Button>
 
-          <Button size="sm" className="text-xs h-9 gap-1.5" onClick={() => setIsModalOpen(true)}>
-            <Plus className="w-4 h-4" />
-            Add Document
-          </Button>
+          {canDo('handover', 'create') && (
+            <Button size="sm" className="text-xs h-9 gap-1.5" onClick={() => setIsModalOpen(true)}>
+              <Plus className="w-4 h-4" />
+              Add Document
+            </Button>
+          )}
         </div>
       </div>
 
@@ -575,14 +579,16 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
                     <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => window.open(doc.url, '_blank')}>
                       <FileDown className="w-3.5 h-3.5" />
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 w-7 p-0 text-rose-500 hover:text-rose-600 border-rose-100"
-                      onClick={() => handleDeleteDocument(doc._id)}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                    {canDo('handover', 'delete') && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-rose-500 hover:text-rose-600 border-rose-100"
+                        onClick={() => handleDeleteDocument(doc._id)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}

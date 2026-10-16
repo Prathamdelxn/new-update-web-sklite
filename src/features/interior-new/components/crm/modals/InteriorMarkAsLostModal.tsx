@@ -77,7 +77,7 @@ export function InteriorMarkAsLostModal({ isOpen, onClose, customerId, leadName,
       }
       onClose();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to mark lead as lost');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to mark lead as lost');
     } finally {
       setIsSubmitting(false);
     }

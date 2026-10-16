@@ -36,6 +36,7 @@ import { useConfirm } from '@/providers/ConfirmContext';
 import { useCurrency } from '@/hooks/useCurrency';
 import { InteriorQuotationBuilderModal } from '@/features/interior-new/components/crm/modals/InteriorQuotationBuilderModal';
 import { InteriorQuotationPreviewModal } from '@/features/interior-new/components/crm/modals/InteriorQuotationPreviewModal';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 function InteriorProjectQuotationSkeleton() {
   return (
@@ -99,6 +100,7 @@ export default function InteriorProjectQuotationView() {
   const projectId = (params?.projectId || params?.id) as string;
   const router = useRouter();
   const toast = useToast();
+  const { hasPermission: canDo } = usePermissions();
   const { confirm } = useConfirm();
   const { currencySymbol, formatCurrency } = useCurrency();
 
@@ -302,15 +304,17 @@ export default function InteriorProjectQuotationView() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => {
-                setEditingQuotationIndex(null);
-                setIsQuotationModalOpen(true);
-              }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
-            >
-              <Plus size={14} /> Create Quotation
-            </button>
+            {canDo('crm_quotations', 'create') && (
+              <button
+                onClick={() => {
+                  setEditingQuotationIndex(null);
+                  setIsQuotationModalOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
+              >
+                <Plus size={14} /> Create Quotation
+              </button>
+            )}
           </div>
         </div>
 
@@ -372,15 +376,17 @@ export default function InteriorProjectQuotationView() {
               Generate itemized pricing proposals directly from project BOQ estimation, apply custom discounts and taxes.
             </p>
           </div>
-          <button
-            onClick={() => {
-              setEditingQuotationIndex(null);
-              setIsQuotationModalOpen(true);
-            }}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer shadow-sm"
-          >
-            <Plus size={15} /> Create First Quotation
-          </button>
+          {canDo('crm_quotations', 'create') && (
+            <button
+              onClick={() => {
+                setEditingQuotationIndex(null);
+                setIsQuotationModalOpen(true);
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer shadow-sm"
+            >
+              <Plus size={15} /> Create First Quotation
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
@@ -515,26 +521,30 @@ export default function InteriorProjectQuotationView() {
                               <Eye size={13} /> View
                             </button>
 
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditingQuotationIndex(idx);
-                                setIsQuotationModalOpen(true);
-                              }}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-200 transition-colors cursor-pointer shadow-xs dark:bg-[hsl(var(--card))] dark:border-[hsl(var(--border))] dark:text-[hsl(var(--foreground))]"
-                              title="Edit Quotation"
-                            >
-                              <Pencil size={12} /> Edit
-                            </button>
+                            {canDo('crm_quotations', 'update') && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingQuotationIndex(idx);
+                                  setIsQuotationModalOpen(true);
+                                }}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-200 transition-colors cursor-pointer shadow-xs dark:bg-[hsl(var(--card))] dark:border-[hsl(var(--border))] dark:text-[hsl(var(--foreground))]"
+                                title="Edit Quotation"
+                              >
+                                <Pencil size={12} /> Edit
+                              </button>
+                            )}
 
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteQuotationByIndex(idx)}
-                              className="inline-flex items-center justify-center p-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors cursor-pointer shadow-xs dark:bg-[hsl(var(--card))] dark:border-[hsl(var(--border))] dark:text-[hsl(var(--muted-foreground))]"
-                              title="Delete Quotation"
-                            >
-                              <Trash2 size={13} />
-                            </button>
+                            {canDo('crm_quotations', 'delete') && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteQuotationByIndex(idx)}
+                                className="inline-flex items-center justify-center p-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors cursor-pointer shadow-xs dark:bg-[hsl(var(--card))] dark:border-[hsl(var(--border))] dark:text-[hsl(var(--muted-foreground))]"
+                                title="Delete Quotation"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -560,20 +570,22 @@ export default function InteriorProjectQuotationView() {
 
       {/* ── 5. Quotation Builder / Editor Modal ── */}
       {lead && (
-        <InteriorQuotationBuilderModal
-          isOpen={isQuotationModalOpen}
-          onClose={() => {
-            setIsQuotationModalOpen(false);
-            setEditingQuotationIndex(null);
-          }}
-          customerId={lead._id || projectId}
-          customerEmail={lead.email}
-          existingQuotations={quotations}
-          existingBoqs={lead.boqs || project?.boqs || []}
-          editingQuotationIndex={editingQuotationIndex}
-          lead={lead}
-          onSuccess={loadData}
-        />
+        (canDo('crm_quotations', 'create') || canDo('crm_quotations', 'update')) && (
+          <InteriorQuotationBuilderModal
+            isOpen={isQuotationModalOpen}
+            onClose={() => {
+              setIsQuotationModalOpen(false);
+              setEditingQuotationIndex(null);
+            }}
+            customerId={lead._id || projectId}
+            customerEmail={lead.email}
+            existingQuotations={quotations}
+            existingBoqs={lead.boqs || project?.boqs || []}
+            editingQuotationIndex={editingQuotationIndex}
+            lead={lead}
+            onSuccess={loadData}
+          />
+        )
       )}
     </div>
   );

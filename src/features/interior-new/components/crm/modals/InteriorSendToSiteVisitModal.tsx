@@ -164,7 +164,7 @@ export function InteriorSendToSiteVisitModal({
       onClose();
       setErrors({});
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to send to site visit');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to send to site visit');
     } finally {
       setIsSubmitting(false);
     }

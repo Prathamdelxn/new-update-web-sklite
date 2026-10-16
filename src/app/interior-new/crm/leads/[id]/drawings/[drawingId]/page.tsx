@@ -58,6 +58,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 export function detectFileType(
   fileName: string = '',
@@ -138,6 +139,7 @@ export default function DrawingViewerPage() {
   const params = useParams();
   const router = useRouter();
   const toast = useToast();
+const { hasPermission: canDo } = usePermissions();
 
   const customerId = (params?.id || '') as string;
   const rawDrawingId = (params?.drawingId || '') as string;
@@ -775,43 +777,51 @@ export default function DrawingViewerPage() {
               </button>
 
               {isCurrentVersionDraft && (
-                <button
-                  type="button"
-                  onClick={() => setIsSendApprovalModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
-                >
-                  <Send size={13} /> Send for Approval
-                </button>
+                canDo('crm_drawings', 'update') && (
+                  <button
+                    type="button"
+                    onClick={() => setIsSendApprovalModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
+                  >
+                    <Send size={13} /> Send for Approval
+                  </button>
+                )
               )}
 
               {isCurrentVersionPending && (
                 <>
-                  <button
-                    type="button"
-                    onClick={() => setIsApprovalModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors cursor-pointer"
-                  >
-                    <XCircle size={13} /> Rejected
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsConfirmApproveModalOpen(true)}
-                    disabled={approvingDirect}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer disabled:opacity-50"
-                  >
-                    <CheckCircle2 size={13} /> Approve (v{activeVersionNum})
-                  </button>
+                  {canDo('crm_drawings', 'approve') && (
+                    <button
+                      type="button"
+                      onClick={() => setIsApprovalModalOpen(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors cursor-pointer"
+                    >
+                      <XCircle size={13} /> Rejected
+                    </button>
+                  )}
+                  {canDo('crm_drawings', 'approve') && (
+                    <button
+                      type="button"
+                      onClick={() => setIsConfirmApproveModalOpen(true)}
+                      disabled={approvingDirect}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      <CheckCircle2 size={13} /> Approve (v{activeVersionNum})
+                    </button>
+                  )}
                 </>
               )}
 
               {isCurrentVersionRejected && (
-                <button
-                  type="button"
-                  onClick={() => setIsRevisionModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
-                >
-                  <UploadCloud size={13} /> + Upload Revision (v{allVersions.length + 1})
-                </button>
+                canDo('crm_drawings', 'update') && (
+                  <button
+                    type="button"
+                    onClick={() => setIsRevisionModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
+                  >
+                    <UploadCloud size={13} /> + Upload Revision (v{allVersions.length + 1})
+                  </button>
+                )
               )}
             </div>
           </div>

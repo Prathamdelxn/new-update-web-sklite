@@ -159,7 +159,7 @@ export function InteriorSendToRequirementsModal({
       }
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to send to requirements');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to send to requirements');
     } finally {
       setIsSubmitting(false);
     }

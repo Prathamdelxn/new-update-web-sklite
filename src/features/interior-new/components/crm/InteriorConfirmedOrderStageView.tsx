@@ -18,6 +18,7 @@ import { useToast } from '@/providers/ToastContext';
 import { cn } from '@/lib/utils';
 import { uploadToCloudinary } from '@/lib/upload';
 import { InteriorQuotationPreviewModal } from '@/features/interior-new/components/crm/modals/InteriorQuotationPreviewModal';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 interface OrderAttachment {
   name: string;
@@ -79,6 +80,7 @@ export function InteriorConfirmedOrderStageView({
   onOpenQuotationModal,
 }: Props) {
   const toast = useToast();
+const { hasPermission: canDo } = usePermissions();
   const allQuotations: any[] = useMemo(() => lead?.quotations || [], [lead?.quotations]);
 
   // State of all vendor quotes grouped by quotation index
@@ -770,16 +772,18 @@ export function InteriorConfirmedOrderStageView({
 
                           {/* Show + Upload button only if no document is uploaded yet */}
                           {row.attachments.length === 0 && !isReadOnly && (
-                            <button
-                              type="button"
-                              onClick={() => triggerVendorUpload(row.quotationIndex, row.id)}
-                              disabled={isUploadingThis}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 hover:border-slate-400 rounded-md text-xs font-semibold transition-all shadow-2xs cursor-pointer shrink-0 active:scale-95"
-                              title="Upload vendor PDF / photo document"
-                            >
-                              <UploadCloud size={12} className="text-slate-500" />
-                              <span>{isUploadingThis ? 'Uploading...' : '+ Upload'}</span>
-                            </button>
+                            (canDo('crm_quotations', 'update')) && (
+                              <button
+                                type="button"
+                                onClick={() => triggerVendorUpload(row.quotationIndex, row.id)}
+                                disabled={isUploadingThis}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 hover:border-slate-400 rounded-md text-xs font-semibold transition-all shadow-2xs cursor-pointer shrink-0 active:scale-95"
+                                title="Upload vendor PDF / photo document"
+                              >
+                                <UploadCloud size={12} className="text-slate-500" />
+                                <span>{isUploadingThis ? 'Uploading...' : '+ Upload'}</span>
+                              </button>
+                            )
                           )}
                         </div>
                       </td>
@@ -800,14 +804,16 @@ export function InteriorConfirmedOrderStageView({
                             <span>View</span>
                           </button>
                           {row.hasVendor && !isReadOnly && (
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveVendorFromQuote(row.quotationIndex, row.id)}
-                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                              title="Delete vendor dispatch row"
-                            >
-                              <Trash2 size={13} />
-                            </button>
+                            (canDo('crm_quotations', 'update')) && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveVendorFromQuote(row.quotationIndex, row.id)}
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                title="Delete vendor dispatch row"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )
                           )}
                         </div>
                       </td>
@@ -834,15 +840,17 @@ export function InteriorConfirmedOrderStageView({
           </div>
 
           {!isReadOnly && (
-            <button
-              type="button"
-              onClick={() => generalFileInputRef.current?.click()}
-              disabled={isUploadingGeneral}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 hover:border-slate-400 rounded-lg text-xs font-semibold transition-all shadow-2xs cursor-pointer"
-            >
-              <UploadCloud size={13} className="text-slate-500" />
-              {isUploadingGeneral ? 'Uploading...' : 'Upload General Docs'}
-            </button>
+            (canDo('crm_quotations', 'update')) && (
+              <button
+                type="button"
+                onClick={() => generalFileInputRef.current?.click()}
+                disabled={isUploadingGeneral}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 hover:border-slate-400 rounded-lg text-xs font-semibold transition-all shadow-2xs cursor-pointer"
+              >
+                <UploadCloud size={13} className="text-slate-500" />
+                {isUploadingGeneral ? 'Uploading...' : 'Upload General Docs'}
+              </button>
+            )
           )}
         </div>
 
@@ -882,14 +890,16 @@ export function InteriorConfirmedOrderStageView({
                     </a>
                   )}
                   {!isReadOnly && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveGeneralAttachment(idx)}
-                      className="p-1 text-slate-400 hover:text-rose-600 rounded cursor-pointer transition-colors"
-                      title="Remove"
-                    >
-                      <Trash2 size={13} />
-                    </button>
+                    (canDo('crm_quotations', 'update')) && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveGeneralAttachment(idx)}
+                        className="p-1 text-slate-400 hover:text-rose-600 rounded cursor-pointer transition-colors"
+                        title="Remove"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )
                   )}
                 </div>
               </div>

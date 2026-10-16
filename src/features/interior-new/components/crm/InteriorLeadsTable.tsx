@@ -139,6 +139,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
 }) => {
   const router = useRouter();
   const { hasPermission } = usePermissions();
+const { hasPermission: canDo } = usePermissions();
 
   // Search, Filter & Pagination State
   const [searchTerm, setSearchTerm] = useState('');
@@ -629,58 +630,68 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                       {/* Stage Progression & Edit/Delete Menu */}
                       <div className="flex items-center gap-1">
                         {lead.status === 'New Lead' && onPassToFollowUp && (
-                          <button
-                            onClick={() => onPassToFollowUp(lead._id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-500/10 text-blue-600 rounded-xl text-xs font-bold border border-blue-500/20 active:scale-95"
-                            title="Schedule Follow-up"
-                          >
-                            <Calendar size={12} /> + Follow-up
-                          </button>
+                          (canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_followups', 'create')) && (
+                            <button
+                              onClick={() => onPassToFollowUp(lead._id)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-500/10 text-blue-600 rounded-xl text-xs font-bold border border-blue-500/20 active:scale-95"
+                              title="Schedule Follow-up"
+                            >
+                              <Calendar size={12} /> + Follow-up
+                            </button>
+                          )
                         )}
 
                         {activeTab === 'drawing' && onUploadDesign && (
-                          <button
-                            onClick={() => onUploadDesign(lead._id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-bold active:scale-95"
-                          >
-                            Upload
-                          </button>
+                          (canDo('crm_drawings', 'create')) && (
+                            <button
+                              onClick={() => onUploadDesign(lead._id)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-bold active:scale-95"
+                            >
+                              Upload
+                            </button>
+                          )
                         )}
 
                         {activeTab === 'boq' && onAddBoq && (
-                          <button
-                            onClick={() => onAddBoq(lead._id)}
-                            className={cn(
-                              "inline-flex items-center justify-center rounded-xl text-xs font-bold active:scale-95",
-                              (!lead.boqs || lead.boqs.length === 0)
-                                ? "gap-1 px-2.5 py-1.5 bg-teal-600 text-white"
-                                : "p-2 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]"
-                            )}
-                            title={(!lead.boqs || lead.boqs.length === 0) ? 'Create BOQ' : 'Edit BOQ'}
-                          >
-                            {(!lead.boqs || lead.boqs.length === 0) ? '+ BOQ' : <Pencil size={13} />}
-                          </button>
+                          (canDo('crm_boq', 'create')) && (
+                            <button
+                              onClick={() => onAddBoq(lead._id)}
+                              className={cn(
+                                "inline-flex items-center justify-center rounded-xl text-xs font-bold active:scale-95",
+                                (!lead.boqs || lead.boqs.length === 0)
+                                  ? "gap-1 px-2.5 py-1.5 bg-teal-600 text-white"
+                                  : "p-2 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]"
+                              )}
+                              title={(!lead.boqs || lead.boqs.length === 0) ? 'Create BOQ' : 'Edit BOQ'}
+                            >
+                              {(!lead.boqs || lead.boqs.length === 0) ? '+ BOQ' : <Pencil size={13} />}
+                            </button>
+                          )
                         )}
 
                         {lead.status !== 'Won' && lead.status !== 'Converted' ? (
                           <>
                             {hasPermission('crm_leads', 'update') && (
-                              <button
-                                onClick={() => onEdit(lead)}
-                                className="p-2 rounded-xl bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] active:scale-95"
-                                title="Edit Lead"
-                              >
-                                <Pencil size={13} />
-                              </button>
+                              (canDo('crm_leads', 'update')) && (
+                                <button
+                                  onClick={() => onEdit(lead)}
+                                  className="p-2 rounded-xl bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] active:scale-95"
+                                  title="Edit Lead"
+                                >
+                                  <Pencil size={13} />
+                                </button>
+                              )
                             )}
                             {onDelete && hasPermission('crm_leads', 'delete') && (
-                              <button
-                                onClick={() => onDelete(lead)}
-                                className="p-2 rounded-xl bg-rose-500/10 text-rose-600 border border-rose-500/20 active:scale-95"
-                                title="Delete Lead"
-                              >
-                                <Trash2 size={13} />
-                              </button>
+                              (canDo('crm_leads', 'delete')) && (
+                                <button
+                                  onClick={() => onDelete(lead)}
+                                  className="p-2 rounded-xl bg-rose-500/10 text-rose-600 border border-rose-500/20 active:scale-95"
+                                  title="Delete Lead"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              )
                             )}
                           </>
                         ) : (
@@ -831,21 +842,25 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                           <div className="flex items-center justify-end gap-1.5">
                             {/* Tab Specific Stage Actions */}
                             {activeTab === 'drawing' && onUploadDesign && (
-                              <button
-                                onClick={() => onUploadDesign(lead._id)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                              >
-                                Upload
-                              </button>
+                              (canDo('crm_drawings', 'create')) && (
+                                <button
+                                  onClick={() => onUploadDesign(lead._id)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                >
+                                  Upload
+                                </button>
+                              )
                             )}
 
                             {activeTab === 'drawing' && onPassToBoq && lead.designFiles && lead.designFiles.length > 0 && (
-                              <button
-                                onClick={() => onPassToBoq(lead._id)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-cyan-600 text-white hover:bg-cyan-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                              >
-                                Pass <ArrowRight size={11} />
-                              </button>
+                              (canDo('crm_drawings', 'update') || canDo('crm_boq', 'update') || canDo('crm_boq', 'create')) && (
+                                <button
+                                  onClick={() => onPassToBoq(lead._id)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-cyan-600 text-white hover:bg-cyan-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                >
+                                  Pass <ArrowRight size={11} />
+                                </button>
+                              )
                             )}
 
                             {activeTab === 'boq' && onAddBoq && (
@@ -862,85 +877,99 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                                 }
 
                                 return (
-                                  <button
-                                    onClick={() => onAddBoq(lead._id, (lead.boqs && lead.boqs.length > 0) ? lead.boqs.length - 1 : undefined)}
-                                    className={cn(
-                                      "inline-flex items-center justify-center rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs",
-                                      (!lead.boqs || lead.boqs.length === 0)
-                                        ? "gap-1 px-2.5 py-1.5 bg-teal-600 text-white hover:bg-teal-700"
-                                        : "p-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]"
-                                    )}
-                                    title={(!lead.boqs || lead.boqs.length === 0) ? 'Create BOQ' : 'Edit BOQ'}
-                                  >
-                                    {(!lead.boqs || lead.boqs.length === 0) ? '+ BOQ' : <Pencil size={13} className="text-teal-600" />}
-                                  </button>
+                                  (((lead.boqs && lead.boqs.length > 0) ? canDo('crm_boq', 'update') : canDo('crm_boq', 'create'))) && (
+                                    <button
+                                      onClick={() => onAddBoq(lead._id, (lead.boqs && lead.boqs.length > 0) ? lead.boqs.length - 1 : undefined)}
+                                      className={cn(
+                                        "inline-flex items-center justify-center rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs",
+                                        (!lead.boqs || lead.boqs.length === 0)
+                                          ? "gap-1 px-2.5 py-1.5 bg-teal-600 text-white hover:bg-teal-700"
+                                          : "p-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]"
+                                      )}
+                                      title={(!lead.boqs || lead.boqs.length === 0) ? 'Create BOQ' : 'Edit BOQ'}
+                                    >
+                                      {(!lead.boqs || lead.boqs.length === 0) ? '+ BOQ' : <Pencil size={13} className="text-teal-600" />}
+                                    </button>
+                                  )
                                 );
                               })()
                             )}
 
                             {activeTab === 'boq' && onPassToQuotations && lead.boqs && lead.boqs.length > 0 && (
-                              <button
-                                onClick={() => onPassToQuotations(lead._id)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-600 hover:text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                              >
-                                Pass <ArrowRight size={11} />
-                              </button>
+                              (canDo('crm_boq', 'update') || canDo('crm_quotations', 'update') || canDo('crm_quotations', 'create')) && (
+                                <button
+                                  onClick={() => onPassToQuotations(lead._id)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-600 hover:text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                >
+                                  Pass <ArrowRight size={11} />
+                                </button>
+                              )
                             )}
 
                             {/* Master Leads Actions */}
                             {(activeTab === 'leads' || activeTab === 'lost_leads') && (
                               <>
                                 {lead.status === 'New Lead' && onPassToFollowUp && (
-                                  <button
-                                    onClick={() => onPassToFollowUp(lead._id)}
-                                    className="p-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 rounded-lg transition-all border border-blue-500/20 cursor-pointer"
-                                    title="Schedule Follow-up"
-                                  >
-                                    <Calendar size={13} />
-                                  </button>
+                                  (canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_followups', 'create')) && (
+                                    <button
+                                      onClick={() => onPassToFollowUp(lead._id)}
+                                      className="p-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 rounded-lg transition-all border border-blue-500/20 cursor-pointer"
+                                      title="Schedule Follow-up"
+                                    >
+                                      <Calendar size={13} />
+                                    </button>
+                                  )
                                 )}
 
                                 {lead.status !== 'Won' && lead.status !== 'Converted' ? (
                                   <>
                                     {hasPermission('crm_leads', 'update') && (
-                                      <button
-                                        onClick={() => onEdit(lead)}
-                                        className="p-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] rounded-lg transition-all border border-[hsl(var(--border))] cursor-pointer"
-                                        title="Edit Lead"
-                                      >
-                                        <Pencil size={13} />
-                                      </button>
+                                      (canDo('crm_leads', 'update')) && (
+                                        <button
+                                          onClick={() => onEdit(lead)}
+                                          className="p-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] rounded-lg transition-all border border-[hsl(var(--border))] cursor-pointer"
+                                          title="Edit Lead"
+                                        >
+                                          <Pencil size={13} />
+                                        </button>
+                                      )
                                     )}
 
                                     {onDelete && hasPermission('crm_leads', 'delete') && (
-                                      <button
-                                        onClick={() => onDelete(lead)}
-                                        className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded-lg transition-all border border-rose-500/20 cursor-pointer"
-                                        title="Delete Lead"
-                                      >
-                                        <Trash2 size={13} />
-                                      </button>
+                                      (canDo('crm_leads', 'delete')) && (
+                                        <button
+                                          onClick={() => onDelete(lead)}
+                                          className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded-lg transition-all border border-rose-500/20 cursor-pointer"
+                                          title="Delete Lead"
+                                        >
+                                          <Trash2 size={13} />
+                                        </button>
+                                      )
                                     )}
 
                                     {onReopenLead && lead.status === 'Lost' && (
-                                      <button
-                                        onClick={() => onReopenLead(lead._id)}
-                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 rounded-lg transition-all border border-emerald-500/20 cursor-pointer font-bold text-xs"
-                                        title="Reopen Lost Lead"
-                                      >
-                                        <RotateCcw size={12} />
-                                        <span>Reopen</span>
-                                      </button>
+                                      (canDo('crm_leads', 'update')) && (
+                                        <button
+                                          onClick={() => onReopenLead(lead._id)}
+                                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 rounded-lg transition-all border border-emerald-500/20 cursor-pointer font-bold text-xs"
+                                          title="Reopen Lost Lead"
+                                        >
+                                          <RotateCcw size={12} />
+                                          <span>Reopen</span>
+                                        </button>
+                                      )
                                     )}
 
                                     {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
-                                      <button
-                                        onClick={() => onMarkAsLost(lead._id)}
-                                        className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg transition-all border border-orange-500/20 cursor-pointer"
-                                        title="Mark as Lost"
-                                      >
-                                        <XCircle size={13} />
-                                      </button>
+                                      (canDo('crm_leads', 'update')) && (
+                                        <button
+                                          onClick={() => onMarkAsLost(lead._id)}
+                                          className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg transition-all border border-orange-500/20 cursor-pointer"
+                                          title="Mark as Lost"
+                                        >
+                                          <XCircle size={13} />
+                                        </button>
+                                      )
                                     )}
                                   </>
                                 ) : (

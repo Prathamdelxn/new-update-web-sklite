@@ -34,12 +34,17 @@ import {
   findCountry,
 } from '@/services/country.service';
 import { cn } from '@/lib/utils';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 type SettingsTab = 'general' | 'profile' | 'localization' | 'security';
 
 export default function InteriorSettingsView() {
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<SettingsTab>('general');
+  const [selectedTab, setActiveTab] = useState<SettingsTab>('general');
+  // Company profile and regional settings are org-wide → admins only (PATCH /organizations/settings)
+  const { isOrgAdmin } = usePermissions();
+  const activeTab: SettingsTab =
+    !isOrgAdmin && (selectedTab === 'general' || selectedTab === 'localization') ? 'profile' : selectedTab;
   const [loading, setLoading] = useState(true);
 
   // User State
@@ -279,7 +284,7 @@ export default function InteriorSettingsView() {
       toast.success('Password updated successfully');
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update password');
+      toast.error(error.response?.data?.error || error.response?.data?.message || 'Failed to update password');
     } finally {
       setSavingPwd(false);
     }
@@ -311,12 +316,12 @@ export default function InteriorSettingsView() {
 
   const roleName = currentUser?.role?.name || (currentUser?.systemRole === 'org_admin' ? 'Administrator' : currentUser?.systemRole) || 'Member';
 
-  const navItems: { id: SettingsTab; label: string; icon: React.ElementType; badge?: string }[] = [
+  const navItems = ([
     { id: 'general', label: 'Company Profile', icon: Building2 },
     { id: 'profile', label: 'Personal Account', icon: User },
     { id: 'localization', label: 'Currency & Regional', icon: Globe2 },
     { id: 'security', label: 'Security & Access', icon: Lock },
-  ];
+  ] as { id: SettingsTab; label: string; icon: React.ElementType; badge?: string }[]).filter((item) => isOrgAdmin || (item.id !== 'general' && item.id !== 'localization'));
 
   return (
     <InteriorShell>

@@ -36,6 +36,7 @@ import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { cn } from '@/lib/utils';
 import { uploadToCloudinary } from '@/lib/upload';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 
 interface InteriorSnagsViewProps {
   projectId: string;
@@ -44,6 +45,7 @@ interface InteriorSnagsViewProps {
 export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps) {
   const router = useRouter();
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
   const { confirm } = useConfirm();
   const [snags, setSnags] = useState<any[]>([]);
   const [drawings, setDrawings] = useState<any[]>([]);
@@ -373,13 +375,15 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
           </p>
         </div>
 
-        <Button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white shadow-xs font-semibold text-xs px-3.5 h-8.5 self-start sm:self-auto"
-        >
-          <Plus className="w-3.5 h-3.5 mr-1 stroke-[2.5]" />
-          Log Snag
-        </Button>
+        {canDo('snags', 'create') && (
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white shadow-xs font-semibold text-xs px-3.5 h-8.5 self-start sm:self-auto"
+          >
+            <Plus className="w-3.5 h-3.5 mr-1 stroke-[2.5]" />
+            Log Snag
+          </Button>
+        )}
       </div>
 
       {/* ── 2. Slim Horizontal Stats Bar ── */}
@@ -659,17 +663,19 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
 
                       {/* Status */}
                       <td className="py-2.5 px-3" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          type="button"
-                          onClick={() => handleToggleStatus(snag._id, snag.status)}
-                          className={cn(
-                            'px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider border hover:opacity-80 transition-opacity cursor-pointer flex items-center gap-1',
-                            getStatusBadge(snag.status)
-                          )}
-                          title="Click to toggle status"
-                        >
-                          <span>{snag.status === 'open' ? 'Open' : snag.status.replace('_', ' ')}</span>
-                        </button>
+                        {canDo('snags', 'update') && (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleStatus(snag._id, snag.status)}
+                            className={cn(
+                              'px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider border hover:opacity-80 transition-opacity cursor-pointer flex items-center gap-1',
+                              getStatusBadge(snag.status)
+                            )}
+                            title="Click to toggle status"
+                          >
+                            <span>{snag.status === 'open' ? 'Open' : snag.status.replace('_', ' ')}</span>
+                          </button>
+                        )}
                       </td>
 
                       {/* Due Date */}
@@ -695,22 +701,26 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => openEditModal(snag)}
-                            className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded transition-colors"
-                            title="Edit"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteSnag(snag._id)}
-                            className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          {canDo('snags', 'update') && (
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(snag)}
+                              className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded transition-colors"
+                              title="Edit"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {canDo('snags', 'delete') && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteSnag(snag._id)}
+                              className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -749,20 +759,24 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                     </div>
 
                     <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => openEditModal(snag)}
-                        className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded transition-colors"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteSnag(snag._id)}
-                        className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      {canDo('snags', 'update') && (
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(snag)}
+                          className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded transition-colors"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {canDo('snags', 'delete') && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteSnag(snag._id)}
+                          className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -952,19 +966,21 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                     </div>
 
                     <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100 bg-slate-50/70">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleToggleStatus(selectedDetailSnag._id, selectedDetailSnag.status)}
-                        className="h-8 text-xs font-semibold"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />
-                        {selectedDetailSnag.status === 'open' || selectedDetailSnag.status === 'assigned' || selectedDetailSnag.status === 'in_progress'
-                          ? 'Mark as Resolved'
-                          : selectedDetailSnag.status === 'resolved'
-                          ? 'Verify & Close'
-                          : 'Reopen Snag'}
-                      </Button>
+                      {canDo('snags', 'update') && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleToggleStatus(selectedDetailSnag._id, selectedDetailSnag.status)}
+                          className="h-8 text-xs font-semibold"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />
+                          {selectedDetailSnag.status === 'open' || selectedDetailSnag.status === 'assigned' || selectedDetailSnag.status === 'in_progress'
+                            ? 'Mark as Resolved'
+                            : selectedDetailSnag.status === 'resolved'
+                            ? 'Verify & Close'
+                            : 'Reopen Snag'}
+                        </Button>
+                      )}
 
                       <button
                         type="button"

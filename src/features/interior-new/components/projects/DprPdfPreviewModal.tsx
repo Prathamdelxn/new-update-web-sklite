@@ -16,6 +16,8 @@ interface DprPdfPreviewModalProps {
   onClose: () => void;
   dpr: DPRData | null;
   project?: any;
+  /** Print / Download PDF (DPR → Export permission) */
+  canExport?: boolean;
 }
 
 export const DprPdfPreviewModal: React.FC<DprPdfPreviewModalProps> = ({
@@ -23,6 +25,7 @@ export const DprPdfPreviewModal: React.FC<DprPdfPreviewModalProps> = ({
   onClose,
   dpr,
   project,
+  canExport = true,
 }) => {
   const toast = useToast();
   const [downloading, setDownloading] = useState(false);
@@ -78,14 +81,18 @@ export const DprPdfPreviewModal: React.FC<DprPdfPreviewModalProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={handlePrint} className="gap-1.5">
-                <Printer className="w-4 h-4" />
-                <span className="hidden sm:inline">Print</span>
-              </Button>
-              <Button size="sm" onClick={handleDownload} disabled={downloading} className="gap-1.5">
-                {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                <span>{downloading ? 'Exporting...' : 'Download PDF'}</span>
-              </Button>
+              {canExport && (
+                <Button variant="outline" size="sm" onClick={handlePrint} className="gap-1.5">
+                  <Printer className="w-4 h-4" />
+                  <span className="hidden sm:inline">Print</span>
+                </Button>
+              )}
+              {canExport && (
+                <Button size="sm" onClick={handleDownload} disabled={downloading} className="gap-1.5">
+                  {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                  <span>{downloading ? 'Exporting...' : 'Download PDF'}</span>
+                </Button>
+              )}
               <button
                 onClick={onClose}
                 className="p-1.5 ml-1 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]"
@@ -113,9 +120,11 @@ export const DprPdfPreviewModal: React.FC<DprPdfPreviewModalProps> = ({
               <Button variant="outline" size="sm" onClick={onClose}>
                 Close
               </Button>
-              <Button size="sm" onClick={handleDownload} disabled={downloading}>
-                {downloading ? 'Downloading...' : 'Download PDF'}
-              </Button>
+              {canExport && (
+                <Button size="sm" onClick={handleDownload} disabled={downloading}>
+                  {downloading ? 'Downloading...' : 'Download PDF'}
+                </Button>
+              )}
             </div>
           </div>
         </motion.div>

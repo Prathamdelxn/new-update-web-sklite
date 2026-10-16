@@ -53,6 +53,8 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { uploadToCloudinary } from '@/lib/upload';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
+import { memberRoleLabel as roleLabelFor, isVirtualAdminMember } from '@/features/interior-new/lib/memberRoleLabel';
 
 interface InteriorTasksViewProps {
   projectId: string;
@@ -98,6 +100,7 @@ const getAllDescendantIds = (node: any): string[] => {
 
 export default function InteriorTasksView({ projectId }: InteriorTasksViewProps) {
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
   const { confirm } = useConfirm();
 
   // Data states
@@ -188,7 +191,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
             ? `${m.userId.firstName} ${m.userId.lastName || ''}`.trim()
             : m.userId?.email || m.name || m.email || 'Member',
           email: m.userId?.email || m.email || '',
-          role: (m.roleTitle || m.projectRole || m.role || 'Member').replace(/_/g, ' '),
+          role: roleLabelFor(m),
         }));
         setProjectMembers(formattedMembers);
       } else {
@@ -664,10 +667,12 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
         </div>
 
         <div className="flex items-center gap-2.5">
-          <Button onClick={() => handleOpenAddActivity()} className="shadow-sm">
-            <Plus className="w-4 h-4 mr-1.5" />
-            Add Activity / Task
-          </Button>
+          {canDo('tasks', 'create') && (
+            <Button onClick={() => handleOpenAddActivity()} className="shadow-sm">
+              <Plus className="w-4 h-4 mr-1.5" />
+              Add Activity / Task
+            </Button>
+          )}
         </div>
       </div>
 
@@ -845,9 +850,11 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
               ? 'Try changing your filters or search query.'
               : 'Start organizing your site tasks by creating the first activity.'}
           </p>
-          <Button className="mt-4" onClick={() => handleOpenAddActivity()}>
-            <Plus className="w-4 h-4 mr-1.5" /> Add First Task
-          </Button>
+          {canDo('tasks', 'create') && (
+            <Button className="mt-4" onClick={() => handleOpenAddActivity()}>
+              <Plus className="w-4 h-4 mr-1.5" /> Add First Task
+            </Button>
+          )}
         </div>
       ) : (
         <>
@@ -953,14 +960,16 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                           <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-end gap-1.5">
                               {task.status !== 'completed' ? (
-                                <button
-                                  type="button"
-                                  onClick={() => initiateCompleteTask(task)}
-                                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
-                                  title="Complete Activity with Proof of Work"
-                                >
-                                  <Camera className="w-3 h-3 text-emerald-600" /> Complete with Proof
-                                </button>
+                                canDo('tasks', 'update') && (
+                                  <button
+                                    type="button"
+                                    onClick={() => initiateCompleteTask(task)}
+                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
+                                    title="Complete Activity with Proof of Work"
+                                  >
+                                    <Camera className="w-3 h-3 text-emerald-600" /> Complete with Proof
+                                  </button>
+                                )
                               ) : (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                   <CheckCircle2 className="w-3 h-3" /> Completed
@@ -974,22 +983,26 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                               >
                                 <Eye className="w-3.5 h-3.5" />
                               </button>
-                              <button
-                                type="button"
-                                title="Edit Activity"
-                                className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-amber-600 hover:bg-amber-50 border border-slate-200 hover:border-amber-200 transition-colors cursor-pointer shadow-2xs"
-                                onClick={(e) => handleOpenEditActivity(task, e)}
-                              >
-                                <Edit className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                title="Delete Task"
-                                className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-colors cursor-pointer shadow-2xs"
-                                onClick={(e) => handleDeleteTaskDirect(task, e)}
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                              {canDo('tasks', 'update') && (
+                                <button
+                                  type="button"
+                                  title="Edit Activity"
+                                  className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-amber-600 hover:bg-amber-50 border border-slate-200 hover:border-amber-200 transition-colors cursor-pointer shadow-2xs"
+                                  onClick={(e) => handleOpenEditActivity(task, e)}
+                                >
+                                  <Edit className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              {canDo('tasks', 'delete') && (
+                                <button
+                                  type="button"
+                                  title="Delete Task"
+                                  className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-colors cursor-pointer shadow-2xs"
+                                  onClick={(e) => handleDeleteTaskDirect(task, e)}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -1061,13 +1074,15 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                         {group.tasks.length === 0 ? (
                           <div className="p-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 flex items-center justify-between col-span-full text-xs text-slate-500">
                             <span>No activities in this WBS package yet.</span>
-                            <button
-                              type="button"
-                              onClick={() => handleOpenAddActivity(group.package.id)}
-                              className="text-blue-600 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
-                            >
-                              <Plus size={12} /> Add First Activity
-                            </button>
+                            {canDo('tasks', 'create') && (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenAddActivity(group.package.id)}
+                                className="text-blue-600 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
+                              >
+                                <Plus size={12} /> Add First Activity
+                              </button>
+                            )}
                           </div>
                         ) : (
                           group.tasks.map((task) => (
@@ -1094,13 +1109,15 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
 
                               <div className="flex items-center justify-between gap-1 pt-2 border-t border-slate-100" onClick={(e) => e.stopPropagation()}>
                                 {task.status !== 'completed' ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => initiateCompleteTask(task)}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
-                                  >
-                                    <Camera className="w-3 h-3 text-emerald-600" /> Complete with Proof
-                                  </button>
+                                  canDo('tasks', 'update') && (
+                                    <button
+                                      type="button"
+                                      onClick={() => initiateCompleteTask(task)}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
+                                    >
+                                      <Camera className="w-3 h-3 text-emerald-600" /> Complete with Proof
+                                    </button>
+                                  )
                                 ) : (
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                     <CheckCircle2 className="w-3 h-3" /> Completed
@@ -1116,22 +1133,26 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                                   >
                                     <Eye className="w-3.5 h-3.5" />
                                   </button>
-                                  <button
-                                    type="button"
-                                    title="Edit Activity"
-                                    onClick={(e) => handleOpenEditActivity(task, e)}
-                                    className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-amber-600 hover:bg-amber-50 border border-slate-200 hover:border-amber-200 transition-colors cursor-pointer shadow-2xs"
-                                  >
-                                    <Edit className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    title="Delete Task"
-                                    onClick={(e) => handleDeleteTaskDirect(task, e)}
-                                    className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-colors cursor-pointer shadow-2xs"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
+                                  {canDo('tasks', 'update') && (
+                                    <button
+                                      type="button"
+                                      title="Edit Activity"
+                                      onClick={(e) => handleOpenEditActivity(task, e)}
+                                      className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-amber-600 hover:bg-amber-50 border border-slate-200 hover:border-amber-200 transition-colors cursor-pointer shadow-2xs"
+                                    >
+                                      <Edit className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                  {canDo('tasks', 'delete') && (
+                                    <button
+                                      type="button"
+                                      title="Delete Task"
+                                      onClick={(e) => handleDeleteTaskDirect(task, e)}
+                                      className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-colors cursor-pointer shadow-2xs"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -1711,14 +1732,16 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenEditActivity(selectedTask)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer"
-                    title="Edit Activity"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
+                  {canDo('tasks', 'update') && (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditActivity(selectedTask)}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer"
+                      title="Edit Activity"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                  )}
                   <button
                     onClick={() => setSelectedTask(null)}
                     className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
@@ -1789,15 +1812,17 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                           )}
                         </div>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-[11px] px-2 text-emerald-800 hover:bg-emerald-100 border-emerald-300 bg-white"
-                        onClick={() => initiateCompleteTask(selectedTask)}
-                      >
-                        <Camera className="w-3 h-3 mr-1" />
-                        Update Proof
-                      </Button>
+                      {canDo('tasks', 'update') && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-[11px] px-2 text-emerald-800 hover:bg-emerald-100 border-emerald-300 bg-white"
+                          onClick={() => initiateCompleteTask(selectedTask)}
+                        >
+                          <Camera className="w-3 h-3 mr-1" />
+                          Update Proof
+                        </Button>
+                      )}
                     </div>
 
                     {selectedTask.completionProof?.images?.length > 0 ? (
@@ -1880,10 +1905,12 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
 
               {/* Drawer Footer with Delete */}
               <div className="p-4 border-t border-[hsl(var(--border))] bg-slate-50 flex items-center justify-between">
-                <Button variant="outline" type="button" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={handleDeleteTask}>
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Task
-                </Button>
+                {canDo('tasks', 'delete') && (
+                  <Button variant="outline" type="button" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={handleDeleteTask}>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Task
+                  </Button>
+                )}
                 <Button variant="outline" type="button" onClick={() => setSelectedTask(null)}>
                   Close
                 </Button>

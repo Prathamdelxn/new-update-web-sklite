@@ -98,7 +98,7 @@ export function InteriorDeleteBoqModal({
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to delete BOQ. Please try again.');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to delete BOQ. Please try again.');
     } finally {
       setIsDeleting(false);
     }

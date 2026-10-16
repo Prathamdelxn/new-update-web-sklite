@@ -26,6 +26,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { InteriorCrmShareModal } from './modals/InteriorCrmShareModal';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 interface Props {
   leads: any[];
@@ -44,6 +45,7 @@ function displayUserName(u?: any) {
 
 export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMarkAsLost }: Props) => {
   const router = useRouter();
+const { hasPermission: canDo } = usePermissions();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterState, setFilterState] = useState<'all' | 'pending' | 'completed'>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -287,43 +289,49 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                             <Eye size={13} className="text-indigo-600" />
                           </button>
                         ) : (
-                          <button
-                            onClick={() => onUploadDesign(lead._id)}
-                            className="inline-flex items-center justify-center rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer gap-1 px-2.5 py-1.5 bg-indigo-600 text-white"
-                            title="Upload Drawings"
-                          >
-                            <UploadCloud size={11} /> Upload
-                          </button>
+                          (canDo('crm_drawings', 'create')) && (
+                            <button
+                              onClick={() => onUploadDesign(lead._id)}
+                              className="inline-flex items-center justify-center rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer gap-1 px-2.5 py-1.5 bg-indigo-600 text-white"
+                              title="Upload Drawings"
+                            >
+                              <UploadCloud size={11} /> Upload
+                            </button>
+                          )
                         )}
 
                         {hasDrawings && hasApprovedDrawing && (
-                          <button
-                            onClick={() => setShareLead(lead)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-500/10 text-indigo-600 border border-indigo-500/20 active:scale-95 shadow-sm cursor-pointer"
-                            title="Share Drawings with Client"
-                          >
-                            <Share2 size={11} /> Share
-                          </button>
+                          (canDo('crm_drawings', 'update')) && (
+                            <button
+                              onClick={() => setShareLead(lead)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-500/10 text-indigo-600 border border-indigo-500/20 active:scale-95 shadow-sm cursor-pointer"
+                              title="Share Drawings with Client"
+                            >
+                              <Share2 size={11} /> Share
+                            </button>
+                          )
                         )}
                       </div>
 
                       {hasDrawings && onPassToBoq && !isPassedToNext && (
-                        <button
-                          onClick={() => onPassToBoq(lead._id)}
-                          className={cn(
-                            "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all",
-                            areAllDrawingsApproved
-                              ? "bg-indigo-600 hover:bg-indigo-700 text-white active:scale-95 cursor-pointer"
-                              : "bg-amber-500/10 text-amber-700 border border-amber-500/20 hover:bg-amber-500/20 cursor-pointer"
-                          )}
-                          title={
-                            areAllDrawingsApproved 
-                              ? "Pass to BOQ Estimation" 
-                              : `Cannot pass to BOQ: ${pendingDrawings.length} drawing(s) still pending approval`
-                          }
-                        >
-                          Pass to BOQ {areAllDrawingsApproved ? <ArrowRight size={11} /> : <AlertTriangle size={11} className="text-amber-600" />}
-                        </button>
+                        (canDo('crm_drawings', 'update') || canDo('crm_boq', 'update') || canDo('crm_boq', 'create')) && (
+                          <button
+                            onClick={() => onPassToBoq(lead._id)}
+                            className={cn(
+                              "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all",
+                              areAllDrawingsApproved
+                                ? "bg-indigo-600 hover:bg-indigo-700 text-white active:scale-95 cursor-pointer"
+                                : "bg-amber-500/10 text-amber-700 border border-amber-500/20 hover:bg-amber-500/20 cursor-pointer"
+                            )}
+                            title={
+                              areAllDrawingsApproved 
+                                ? "Pass to BOQ Estimation" 
+                                : `Cannot pass to BOQ: ${pendingDrawings.length} drawing(s) still pending approval`
+                            }
+                          >
+                            Pass to BOQ {areAllDrawingsApproved ? <ArrowRight size={11} /> : <AlertTriangle size={11} className="text-amber-600" />}
+                          </button>
+                        )
                       )}
                     </div>
                   </div>
@@ -496,52 +504,60 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                                 <Eye size={13} className="text-indigo-600" />
                               </button>
                             ) : (
-                              <button
-                                onClick={() => onUploadDesign(lead._id)}
-                                className="inline-flex items-center justify-center rounded-lg text-xs font-bold transition-all border cursor-pointer shadow-xs gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
-                                title="Upload Drawings"
-                              >
-                                <Upload size={11} className="text-indigo-600" /> Upload
-                              </button>
+                              (canDo('crm_drawings', 'create')) && (
+                                <button
+                                  onClick={() => onUploadDesign(lead._id)}
+                                  className="inline-flex items-center justify-center rounded-lg text-xs font-bold transition-all border cursor-pointer shadow-xs gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
+                                  title="Upload Drawings"
+                                >
+                                  <Upload size={11} className="text-indigo-600" /> Upload
+                                </button>
+                              )
                             )}
 
                             {hasDrawings && hasApprovedDrawing && (
-                              <button
-                                onClick={() => setShareLead(lead)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 rounded-lg text-xs font-bold transition-all border border-indigo-500/20 cursor-pointer shadow-xs"
-                                title="Share Drawings Link"
-                              >
-                                <Share2 size={11} /> Share
-                              </button>
+                              (canDo('crm_drawings', 'update')) && (
+                                <button
+                                  onClick={() => setShareLead(lead)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 rounded-lg text-xs font-bold transition-all border border-indigo-500/20 cursor-pointer shadow-xs"
+                                  title="Share Drawings Link"
+                                >
+                                  <Share2 size={11} /> Share
+                                </button>
+                              )
                             )}
 
                             {hasDrawings && onPassToBoq && !isPassedToNext && (
-                              <button
-                                onClick={() => onPassToBoq(lead._id)}
-                                className={cn(
-                                  "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs",
-                                  areAllDrawingsApproved
-                                    ? "bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer active:scale-95"
-                                    : "bg-amber-500/10 text-amber-700 border border-amber-500/20 hover:bg-amber-500/20 cursor-pointer"
-                                )}
-                                title={
-                                  areAllDrawingsApproved 
-                                    ? "Pass to BOQ Estimation" 
-                                    : `Cannot pass to BOQ: ${pendingDrawings.length} drawing(s) still pending approval`
-                                }
-                              >
-                                Pass {areAllDrawingsApproved ? <ArrowRight size={11} /> : <AlertTriangle size={11} className="text-amber-600" />}
-                              </button>
+                              (canDo('crm_drawings', 'update') || canDo('crm_boq', 'update') || canDo('crm_boq', 'create')) && (
+                                <button
+                                  onClick={() => onPassToBoq(lead._id)}
+                                  className={cn(
+                                    "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs",
+                                    areAllDrawingsApproved
+                                      ? "bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer active:scale-95"
+                                      : "bg-amber-500/10 text-amber-700 border border-amber-500/20 hover:bg-amber-500/20 cursor-pointer"
+                                  )}
+                                  title={
+                                    areAllDrawingsApproved 
+                                      ? "Pass to BOQ Estimation" 
+                                      : `Cannot pass to BOQ: ${pendingDrawings.length} drawing(s) still pending approval`
+                                  }
+                                >
+                                  Pass {areAllDrawingsApproved ? <ArrowRight size={11} /> : <AlertTriangle size={11} className="text-amber-600" />}
+                                </button>
+                              )
                             )}
 
                             {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
-                                className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
-                                title="Mark as Lost"
-                              >
-                                <XCircle size={13} />
-                              </button>
+                              (canDo('crm_drawings', 'update') || canDo('crm_leads', 'update')) && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
+                                  className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
+                                  title="Mark as Lost"
+                                >
+                                  <XCircle size={13} />
+                                </button>
+                              )
                             )}
                           </div>
                         </td>

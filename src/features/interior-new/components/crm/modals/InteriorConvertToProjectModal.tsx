@@ -48,7 +48,7 @@ export function InteriorConvertToProjectModal({ isOpen, onClose, customerId, onS
       }
       onClose();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to convert lead to project');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to convert lead to project');
     } finally {
       setIsSubmitting(false);
     }

@@ -33,6 +33,7 @@ import {
 import { validatePositiveNumber, validateNonEmpty, validateRequiredDate, ValidationErrors } from '@/lib/crmValidation';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { downloadInvoicePdf, printInvoice, generateInvoiceHtml } from '@/features/interior-new/utils/invoicePdfGenerator';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 
 // ---------------------------------------------------------------------------
 // Types — mirrors what the backend stores
@@ -85,6 +86,7 @@ function genRef(prefix: string): string {
 // ---------------------------------------------------------------------------
 export default function InteriorPaymentsView({ projectId }: InteriorPaymentsViewProps) {
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
   const { currencySymbol, formatExactCurrency } = useCurrency();
   const { confirm } = useConfirm();
   const [activeCategory, setActiveCategory] = useState<'incoming' | 'outgoing' | 'debitNote'>('incoming');
@@ -482,36 +484,42 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
 
         <div className="flex items-center gap-3">
           {activeCategory === 'incoming' && (
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => setIsIncomingModalOpen(true)}
-              className="text-xs sm:text-sm font-semibold"
-            >
-              <ArrowDownLeft className="w-4 h-4 mr-1.5 text-emerald-300" /> Record Incoming Payment
-            </Button>
+            canDo('financials', 'create') && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setIsIncomingModalOpen(true)}
+                className="text-xs sm:text-sm font-semibold"
+              >
+                <ArrowDownLeft className="w-4 h-4 mr-1.5 text-emerald-300" /> Record Incoming Payment
+              </Button>
+            )
           )}
 
           {activeCategory === 'outgoing' && (
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => setIsOutgoingModalOpen(true)}
-              className="text-xs sm:text-sm font-semibold"
-            >
-              <ArrowUpRight className="w-4 h-4 mr-1.5 text-rose-300" /> Record Outgoing Payment
-            </Button>
+            canDo('financials', 'create') && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setIsOutgoingModalOpen(true)}
+                className="text-xs sm:text-sm font-semibold"
+              >
+                <ArrowUpRight className="w-4 h-4 mr-1.5 text-rose-300" /> Record Outgoing Payment
+              </Button>
+            )
           )}
 
           {activeCategory === 'debitNote' && (
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => setIsDebitNoteModalOpen(true)}
-              className="text-xs sm:text-sm font-semibold"
-            >
-              <Plus className="w-4 h-4 mr-1.5" /> Issue Debit Note
-            </Button>
+            canDo('financials', 'create') && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setIsDebitNoteModalOpen(true)}
+                className="text-xs sm:text-sm font-semibold"
+              >
+                <Plus className="w-4 h-4 mr-1.5" /> Issue Debit Note
+              </Button>
+            )
           )}
         </div>
       </div>
@@ -765,25 +773,29 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => handleDownloadInvoice(tx)}
-                            disabled={isDownloadingPdf === tx._id}
-                            title="Download PDF Invoice"
-                            className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded transition-colors cursor-pointer disabled:opacity-50"
-                          >
-                            {isDownloadingPdf === tx._id ? (
-                              <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
-                            ) : (
-                              <Download className="w-4 h-4" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => handleDeletePayment(tx._id)}
-                            title="Delete payment record"
-                            className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {canDo('financials', 'export') && (
+                            <button
+                              onClick={() => handleDownloadInvoice(tx)}
+                              disabled={isDownloadingPdf === tx._id}
+                              title="Download PDF Invoice"
+                              className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded transition-colors cursor-pointer disabled:opacity-50"
+                            >
+                              {isDownloadingPdf === tx._id ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+                              ) : (
+                                <Download className="w-4 h-4" />
+                              )}
+                            </button>
+                          )}
+                          {canDo('financials', 'delete') && (
+                            <button
+                              onClick={() => handleDeletePayment(tx._id)}
+                              title="Delete payment record"
+                              className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -850,13 +862,15 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-right">
-                        <button
-                          onClick={() => handleDeletePayment(tx._id)}
-                          title="Delete payment record"
-                          className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {canDo('financials', 'delete') && (
+                          <button
+                            onClick={() => handleDeletePayment(tx._id)}
+                            title="Delete payment record"
+                            className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -921,13 +935,15 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-right">
-                        <button
-                          onClick={() => handleDeletePayment(dn._id)}
-                          title="Delete debit note"
-                          className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {canDo('financials', 'delete') && (
+                          <button
+                            onClick={() => handleDeletePayment(dn._id)}
+                            title="Delete debit note"
+                            className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -1445,28 +1461,32 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handlePrintInvoice(previewInvoice)}
-                    className="text-xs font-semibold flex items-center gap-1.5"
-                  >
-                    <Printer className="w-3.5 h-3.5" /> Print
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="default"
-                    disabled={isDownloadingPdf === previewInvoice._id}
-                    onClick={() => handleDownloadInvoice(previewInvoice)}
-                    className="text-xs font-semibold flex items-center gap-1.5"
-                  >
-                    {isDownloadingPdf === previewInvoice._id ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Download className="w-3.5 h-3.5" />
-                    )}
-                    Download PDF
-                  </Button>
+                  {canDo('financials', 'export') && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handlePrintInvoice(previewInvoice)}
+                      className="text-xs font-semibold flex items-center gap-1.5"
+                    >
+                      <Printer className="w-3.5 h-3.5" /> Print
+                    </Button>
+                  )}
+                  {canDo('financials', 'export') && (
+                    <Button
+                      size="sm"
+                      variant="default"
+                      disabled={isDownloadingPdf === previewInvoice._id}
+                      onClick={() => handleDownloadInvoice(previewInvoice)}
+                      className="text-xs font-semibold flex items-center gap-1.5"
+                    >
+                      {isDownloadingPdf === previewInvoice._id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Download className="w-3.5 h-3.5" />
+                      )}
+                      Download PDF
+                    </Button>
+                  )}
                   <button
                     onClick={() => setPreviewInvoice(null)}
                     className="p-2 hover:bg-[hsl(var(--muted))] rounded-lg text-[hsl(var(--muted-foreground))] transition-colors cursor-pointer ml-1"

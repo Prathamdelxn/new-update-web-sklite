@@ -273,7 +273,7 @@ export function InteriorReopenLeadModal({
       }
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to reopen lead');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to reopen lead');
     } finally {
       setIsSubmitting(false);
     }

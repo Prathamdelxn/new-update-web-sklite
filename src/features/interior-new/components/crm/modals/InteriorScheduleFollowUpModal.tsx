@@ -159,7 +159,7 @@ export function InteriorScheduleFollowUpModal({
       onClose();
       setErrors({});
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to schedule follow-up');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to schedule follow-up');
     } finally {
       setIsSubmitting(false);
     }
