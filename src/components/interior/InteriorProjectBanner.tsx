@@ -39,8 +39,9 @@ const CATEGORIES = (projectId: string) => [
     icon: '📂',
     items: [
       { label: 'Drawings', href: `/interior-new/projects/${projectId}/drawings` },
+      { label: 'Site Photos', href: `/interior-new/projects/${projectId}/photos` },
       { label: 'RFIs Tracker', href: `/interior-new/projects/${projectId}/rfis` },
-      // { label: 'Utility Checks', href: `/interior-new/projects/${projectId}/utilities` },
+      { label: 'Utility Checks', href: `/interior-new/projects/${projectId}/utilities` },
     ],
   },
   {

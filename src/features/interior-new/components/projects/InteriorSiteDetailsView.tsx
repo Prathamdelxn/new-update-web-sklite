@@ -45,6 +45,10 @@ export default function InteriorSiteDetailsView() {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [customerData, setCustomerData] = useState<any>(null);
+  const [allCustomers, setAllCustomers] = useState<any[]>([]);
+  const [projectInfo, setProjectInfo] = useState<any>(null);
+  const [selectedCustomerIdToLink, setSelectedCustomerIdToLink] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('measurements');
   const [isSiteVisitModalOpen, setIsSiteVisitModalOpen] = useState(false);
   const [isReqModalOpen, setIsReqModalOpen] = useState(false);
@@ -53,8 +57,21 @@ export default function InteriorSiteDetailsView() {
     try {
       setLoading(true);
       // Fetch CRM customers to find the original lead linked to this project
-      const custRes = await interiorApiClient.get(`/crm/customers`);
-      const customers = custRes.data?.data || custRes.data || [];
+      const [custRes, projRes] = await Promise.allSettled([
+        interiorApiClient.get(`/crm/customers`),
+        interiorApiClient.get(`/projects/${projectId}`)
+      ]);
+
+      let customers: any[] = [];
+      if (custRes.status === 'fulfilled') {
+        customers = custRes.value.data?.data || custRes.value.data || [];
+        setAllCustomers(customers);
+      }
+
+      if (projRes.status === 'fulfilled') {
+        const p = projRes.value.data?.data || projRes.value.data;
+        setProjectInfo(p);
+      }
 
       const customer = customers.find((c: any) => {
         if (!c.linkedProject) return false;
@@ -78,6 +95,49 @@ export default function InteriorSiteDetailsView() {
     loadSiteDetails();
   }, [loadSiteDetails]);
 
+  const handleLinkExistingCustomer = async () => {
+    if (!selectedCustomerIdToLink) {
+      toast.error('Please select a customer to link');
+      return;
+    }
+    try {
+      setActionLoading(true);
+      await interiorApiClient.patch(`/crm/customers/${selectedCustomerIdToLink}`, {
+        linkedProject: projectId,
+      });
+      toast.success('Successfully linked customer to this project');
+      await loadSiteDetails();
+    } catch (err: any) {
+      console.error('Failed to link customer', err);
+      toast.error(err.response?.data?.error || err.message || 'Failed to link customer');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleInitializeSiteProfile = async () => {
+    try {
+      setActionLoading(true);
+      const projName = projectInfo?.name || 'Interior Project';
+      const cleanName = projName.replace(/[^a-zA-Z\s'.-]/g, '').trim() || 'Project Client';
+      const payload = {
+        name: cleanName,
+        mobileNumber: '9876543210',
+        leadSource: 'Existing Customer',
+        status: 'Won',
+        linkedProject: projectId,
+      };
+      await interiorApiClient.post(`/crm/customers`, payload);
+      toast.success('Initialized site measurements profile for this project');
+      await loadSiteDetails();
+    } catch (err: any) {
+      console.error('Failed to initialize site profile', err);
+      toast.error(err.response?.data?.error || err.message || 'Failed to initialize site profile');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-16">
@@ -88,14 +148,56 @@ export default function InteriorSiteDetailsView() {
 
   if (!customerData) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 border border-dashed border-[hsl(var(--border))] rounded-3xl bg-[hsl(var(--card))] max-w-xl mx-auto mt-6 text-center space-y-4 shadow-sm">
-        <div className="w-16 h-16 bg-[hsl(var(--muted))] rounded-full flex items-center justify-center text-[hsl(var(--muted-foreground))]">
-          <ClipboardList size={32} />
+      <div className="flex flex-col items-center justify-center p-8 border border-dashed border-[hsl(var(--border))] rounded-3xl bg-[hsl(var(--card))] max-w-xl mx-auto mt-6 text-center space-y-5 shadow-sm">
+        <div className="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center text-purple-600">
+          <Ruler size={32} />
         </div>
-        <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">No CRM Link Found</h3>
-        <p className="text-sm text-[hsl(var(--muted-foreground))] max-w-sm">
-          This project doesn't have an associated CRM lead record or site visit data linked yet.
-        </p>
+        <div className="space-y-1">
+          <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">No Site Profile Linked</h3>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-sm mx-auto">
+            Link an existing client lead or initialize a new site profile to log room dimensions, structural observations, and requirements.
+          </p>
+        </div>
+
+        {allCustomers.length > 0 && (
+          <div className="w-full max-w-sm space-y-2 pt-2 text-left">
+            <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Link Existing CRM Client</label>
+            <div className="flex gap-2">
+              <select
+                value={selectedCustomerIdToLink}
+                onChange={(e) => setSelectedCustomerIdToLink(e.target.value)}
+                className="flex-1 px-3 py-2 text-xs rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:outline-none"
+              >
+                <option value="">-- Choose client to link --</option>
+                {allCustomers.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name} {c.mobileNumber ? `(${c.mobileNumber})` : ''}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                disabled={actionLoading || !selectedCustomerIdToLink}
+                onClick={handleLinkExistingCustomer}
+                className="px-3 py-2 text-xs font-bold rounded-xl bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 transition-colors"
+              >
+                Link
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="pt-2">
+          <button
+            type="button"
+            disabled={actionLoading}
+            onClick={handleInitializeSiteProfile}
+            className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-white shadow-sm flex items-center gap-1.5 transition-all"
+          >
+            {actionLoading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+            Initialize New Site Details Profile
+          </button>
+        </div>
       </div>
     );
   }

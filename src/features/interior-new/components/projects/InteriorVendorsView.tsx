@@ -87,10 +87,10 @@ export default function InteriorVendorsView({ projectId }: InteriorVendorsViewPr
     const name = vendor.name;
     const stats = vendorsMap.get(name) || { count: 0, totalValue: 0 };
     
-    const rating = [4.8, 4.2, 4.6, 3.9][index % 4] || 4.5;
-    const compliance = [95, 88, 92, 75][index % 4] || 90;
-    const onTime = [98, 80, 94, 70][index % 4] || 92;
-    const trade = vendor.vendorCategory || ['Acoustic & Glazing', 'MEP Pipes', 'Interior Slabs', 'Finishes & Drywalls'][index % 4] || 'Fit-out Trades';
+    const rating = typeof vendor.rating === 'number' ? vendor.rating : null;
+    const compliance = typeof vendor.complianceScore === 'number' ? vendor.complianceScore : null;
+    const onTime = typeof vendor.onTimeDelivery === 'number' ? vendor.onTimeDelivery : null;
+    const trade = vendor.vendorCategory || 'General Fit-out';
     const gstNumber = vendor.gstNumber;
 
     return {

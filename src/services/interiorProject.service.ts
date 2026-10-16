@@ -101,6 +101,7 @@ export const interiorProjectService = {
   getRfis: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/rfis`).then((res) => res.data),
   createRfi: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/rfis`, data).then((res) => res.data),
   updateRfi: (projectId: string, data: any) => interiorApiClient.put(`/projects/${projectId}/rfis`, data).then((res) => res.data),
+  deleteRfi: (projectId: string, rfiId: string) => interiorApiClient.delete(`/projects/${projectId}/rfis?rfiId=${rfiId}`).then((res) => res.data),
 
   // Risks
   getRisks: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/risks`).then((res) => res.data),
@@ -114,12 +115,6 @@ export const interiorProjectService = {
   updateSnag: (projectId: string, data: any) => interiorApiClient.put(`/projects/${projectId}/snags`, data).then((res) => res.data),
   deleteSnag: (projectId: string, snagId: string) => interiorApiClient.delete(`/projects/${projectId}/snags?snagId=${snagId}`).then((res) => res.data),
 
-  // NCRs
-  getNcrs: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/ncrs`).then((res) => res.data),
-  createNcr: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/ncrs`, data).then((res) => res.data),
-  updateNcr: (projectId: string, data: any) => interiorApiClient.put(`/projects/${projectId}/ncrs`, data).then((res) => res.data),
-  deleteNcr: (projectId: string, ncrId: string) => interiorApiClient.delete(`/projects/${projectId}/ncrs?ncrId=${ncrId}`).then((res) => res.data),
-
   // Utilities
   getUtilities: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/utilities`).then((res) => res.data),
   updateUtility: (projectId: string, data: any) => interiorApiClient.put(`/projects/${projectId}/utilities`, data).then((res) => res.data),
@@ -127,6 +122,7 @@ export const interiorProjectService = {
   // Photos
   getPhotos: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/photos`).then((res) => res.data),
   createPhoto: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/photos`, data).then((res) => res.data),
+  deletePhoto: (projectId: string, photoId: string) => interiorApiClient.delete(`/projects/${projectId}/photos?photoId=${photoId}`).then((res) => res.data),
   uploadPhotoFile: (projectId: string, formData: FormData) =>
     interiorApiClient.post(`/projects/${projectId}/photos/upload`, formData).then((res) => res.data),
 
@@ -172,6 +168,8 @@ export const interiorProjectService = {
   // MOM
   getMoms: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/mom`).then((res) => res.data),
   createMom: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/mom`, data).then((res) => res.data),
+  updateMom: (projectId: string, data: any) => interiorApiClient.put(`/projects/${projectId}/mom`, data).then((res) => res.data),
+  deleteMom: (projectId: string, momId: string) => interiorApiClient.delete(`/projects/${projectId}/mom?momId=${momId}`).then((res) => res.data),
 
   // Payments (Incoming / Outgoing / Debit Notes)
   getPayments: (projectId: string, type?: 'incoming' | 'outgoing' | 'debit_note') =>
