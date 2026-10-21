@@ -51,6 +51,7 @@ export const PERMISSION_MODULES: { key: string; label: string; category: ModuleC
   { key: 'inventory', label: 'Inventory', category: 'Project Execution', actions: CRUD },
   { key: 'change_requests', label: 'Change Requests', category: 'Project Execution' },
   { key: 'variation_orders', label: 'Variation Orders', category: 'Project Execution', actions: ['read', 'create', 'approve'] },
+  { key: 'confirm_order', label: 'Confirm Order', category: 'Project Execution', actions: ['read', 'update'] },
   { key: 'drawings', label: 'Drawings & CAD', category: 'Project Execution' },
   { key: 'rfis', label: 'RFIs', category: 'Project Execution', actions: CRUD },
   { key: 'mom', label: 'Minutes of Meeting', category: 'Project Execution', actions: CRUD },
@@ -59,7 +60,7 @@ export const PERMISSION_MODULES: { key: string; label: string; category: ModuleC
   { key: 'utilities', label: 'Utilities', category: 'Project Execution', actions: ['read', 'update'] },
   { key: 'photos', label: 'Site Photos', category: 'Project Execution', actions: ['read', 'create', 'delete'] },
   { key: 'handover', label: 'Handover', category: 'Project Execution', actions: ['read', 'create', 'update', 'delete'] },
-  { key: 'filemgt', label: 'File Management', category: 'Project Execution', actions: ['read', 'create'] },
+  { key: 'filemgt', label: 'File Management', category: 'Project Execution', actions: ['read', 'create', 'delete'] },
   { key: 'financials', label: 'Payments & Financials', category: 'Project Execution', actions: ['read', 'create', 'delete', 'export'] },
   { key: 'users', label: 'Team / Members', category: 'Project Execution' },
   // Organization-wide

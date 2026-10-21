@@ -159,6 +159,11 @@ export const interiorProjectService = {
   approveChangeRequest: (projectId: string, crId: string) => interiorApiClient.post(`/projects/${projectId}/change-requests/${crId}/approve`).then((res) => res.data),
 
   // Variation Orders
+  // Confirm Order (the linked CRM lead's confirmed order — project "Confirm Order" permission)
+  getProjectConfirmOrder: (projectId: string) =>
+    interiorApiClient.get(`/projects/${projectId}/confirm-order`).then((res) => res.data),
+  updateProjectConfirmOrder: (projectId: string, data: any) =>
+    interiorApiClient.patch(`/projects/${projectId}/confirm-order`, data).then((res) => res.data),
   getVariationOrders: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/variation-orders`).then((res) => res.data),
   getVariationOrderDetail: (projectId: string, voId: string) => interiorApiClient.get(`/projects/${projectId}/variation-orders/${voId}`).then((res) => res.data),
   createVariationOrder: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/variation-orders`, data).then((res) => res.data),

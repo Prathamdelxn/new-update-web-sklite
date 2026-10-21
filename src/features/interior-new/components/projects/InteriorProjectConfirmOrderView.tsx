@@ -13,6 +13,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import interiorApiClient from '@/services/interiorApi.client';
+import { interiorProjectService } from '@/services/interiorProject.service';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 import { useToast } from '@/providers/ToastContext';
 import { useCurrency } from '@/hooks/useCurrency';
 import { InteriorConfirmedOrderStageView } from '@/features/interior-new/components/crm/InteriorConfirmedOrderStageView';
@@ -68,34 +70,28 @@ export default function InteriorProjectConfirmOrderView() {
   const [project, setProject] = useState<any>(null);
   const [lead, setLead] = useState<any>(null);
   const [isConfirmOrderModalOpen, setIsConfirmOrderModalOpen] = useState(false);
+  // Project "Confirm Order" permission (no CRM access needed)
+  const { can: canDo } = useProjectPermissions(projectId);
+  const saveUpdates = (updates: Record<string, any>) => interiorProjectService.updateProjectConfirmOrder(projectId, updates);
 
   const loadData = useCallback(async () => {
     if (!projectId) return;
     try {
       setLoading(true);
 
-      // 1. Fetch Project Details
+      // 1. Project details (optional — only used for the fallback below)
       let projectData: any = null;
-      try {
-        const prjRes = await interiorApiClient.get(`/projects/${projectId}`);
-        projectData = prjRes?.data?.data || prjRes?.data || null;
+      const [prjResult, orderResult] = await Promise.allSettled([
+        interiorApiClient.get(`/projects/${projectId}`),
+        // 2. The CRM lead linked to this project (Confirm Order → View)
+        interiorProjectService.getProjectConfirmOrder(projectId),
+      ]);
+      if (prjResult.status === 'fulfilled') {
+        projectData = prjResult.value?.data?.data || prjResult.value?.data || null;
         setProject(projectData);
-      } catch (e) {
-        console.warn('Could not fetch project details', e);
       }
-
-      // 2. Fetch CRM Customers / Leads to find the linked customer
-      const custRes = await interiorApiClient.get('/crm/customers');
-      const customers = custRes?.data?.data || custRes?.data || [];
-
-      const matchedCustomer = customers.find((c: any) => {
-        if (!c.linkedProject) return false;
-        const linkedId =
-          typeof c.linkedProject === 'object' && c.linkedProject !== null && c.linkedProject._id
-            ? String(c.linkedProject._id)
-            : String(c.linkedProject);
-        return linkedId === String(projectId);
-      });
+      if (orderResult.status === 'rejected') throw orderResult.reason;
+      const matchedCustomer = orderResult.value?.data || null;
 
       if (matchedCustomer) {
         setLead(matchedCustomer);
@@ -118,7 +114,7 @@ export default function InteriorProjectConfirmOrderView() {
       }
     } catch (err) {
       console.error('Failed to load project confirmed order:', err);
-      toast.error('Failed to load order confirmation data');
+      toast.error((err as any)?.response?.data?.error || 'Failed to load order confirmation data');
     } finally {
       setLoading(false);
     }
@@ -141,6 +137,8 @@ export default function InteriorProjectConfirmOrderView() {
         onRefresh={loadData}
         onOpenConfirmModal={() => setIsConfirmOrderModalOpen(true)}
         onOpenQuotationModal={() => router.push(`/interior-new/projects/${projectId}/quotation`)}
+        saveUpdates={saveUpdates}
+        canEdit={canDo('confirm_order', 'update')}
       />
 
       {/* Confirm Order Modal */}
@@ -149,6 +147,7 @@ export default function InteriorProjectConfirmOrderView() {
           isOpen={isConfirmOrderModalOpen}
           onClose={() => setIsConfirmOrderModalOpen(false)}
           lead={lead}
+          saveUpdates={saveUpdates}
           onSuccess={() => {
             setIsConfirmOrderModalOpen(false);
             loadData();

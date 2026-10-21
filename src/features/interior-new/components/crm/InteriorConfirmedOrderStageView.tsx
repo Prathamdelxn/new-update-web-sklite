@@ -69,6 +69,10 @@ interface Props {
   onRefresh: () => void;
   onOpenConfirmModal: () => void;
   onOpenQuotationModal: () => void;
+  /** Project tab: save through the project Confirm Order endpoint instead of the CRM lead. */
+  saveUpdates?: (updates: Record<string, any>) => Promise<unknown>;
+  /** Project tab: editing follows Confirm Order → Update (defaults to CRM Quotations → Update). */
+  canEdit?: boolean;
 }
 
 export function InteriorConfirmedOrderStageView({
@@ -78,9 +82,14 @@ export function InteriorConfirmedOrderStageView({
   onRefresh,
   onOpenConfirmModal,
   onOpenQuotationModal,
+  saveUpdates,
+  canEdit,
 }: Props) {
   const toast = useToast();
-const { hasPermission: canDo } = usePermissions();
+  const { hasPermission: canDo } = usePermissions();
+  const canEditOrder = canEdit ?? canDo('crm_quotations', 'update');
+  const saveLeadUpdates = (updates: Record<string, any>) =>
+    saveUpdates ? saveUpdates(updates) : interiorCrmService.updateCustomer(lead._id, updates);
   const allQuotations: any[] = useMemo(() => lead?.quotations || [], [lead?.quotations]);
 
   // State of all vendor quotes grouped by quotation index
@@ -285,7 +294,7 @@ const { hasPermission: canDo } = usePermissions();
       : undefined;
 
     try {
-      await interiorCrmService.updateCustomer(lead._id, {
+      await saveLeadUpdates({
         quotations: updatedQuotations,
         ...(updatedConfirmedOrder ? { confirmedOrder: updatedConfirmedOrder } : {}),
       });
@@ -453,7 +462,7 @@ const { hasPermission: canDo } = usePermissions();
         : [];
       const updatedAttachments = [...existingAttachments, ...newFiles];
 
-      await interiorCrmService.updateCustomer(lead._id, {
+      await saveLeadUpdates({
         confirmedOrder: {
           ...(lead.confirmedOrder || {}),
           attachments: updatedAttachments,
@@ -478,7 +487,7 @@ const { hasPermission: canDo } = usePermissions();
     const updatedAttachments = existingAttachments.filter((_: any, i: number) => i !== idx);
 
     try {
-      await interiorCrmService.updateCustomer(lead._id, {
+      await saveLeadUpdates({
         confirmedOrder: {
           ...(lead.confirmedOrder || {}),
           attachments: updatedAttachments,
@@ -772,7 +781,7 @@ const { hasPermission: canDo } = usePermissions();
 
                           {/* Show + Upload button only if no document is uploaded yet */}
                           {row.attachments.length === 0 && !isReadOnly && (
-                            (canDo('crm_quotations', 'update')) && (
+                            (canEditOrder) && (
                               <button
                                 type="button"
                                 onClick={() => triggerVendorUpload(row.quotationIndex, row.id)}
@@ -804,7 +813,7 @@ const { hasPermission: canDo } = usePermissions();
                             <span>View</span>
                           </button>
                           {row.hasVendor && !isReadOnly && (
-                            (canDo('crm_quotations', 'update')) && (
+                            (canEditOrder) && (
                               <button
                                 type="button"
                                 onClick={() => handleRemoveVendorFromQuote(row.quotationIndex, row.id)}
@@ -840,7 +849,7 @@ const { hasPermission: canDo } = usePermissions();
           </div>
 
           {!isReadOnly && (
-            (canDo('crm_quotations', 'update')) && (
+            (canEditOrder) && (
               <button
                 type="button"
                 onClick={() => generalFileInputRef.current?.click()}
@@ -890,7 +899,7 @@ const { hasPermission: canDo } = usePermissions();
                     </a>
                   )}
                   {!isReadOnly && (
-                    (canDo('crm_quotations', 'update')) && (
+                    (canEditOrder) && (
                       <button
                         type="button"
                         onClick={() => handleRemoveGeneralAttachment(idx)}
