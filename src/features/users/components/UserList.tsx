@@ -99,6 +99,11 @@ export const UserList = () => {
   };
 
   const openDelete = (user: any) => {
+    const isSelf = !!currentUser && (currentUser._id === user._id || (currentUser as any).id === user._id);
+    if (isSelf) {
+      toast.error("You cannot delete your own account");
+      return;
+    }
     setDeletingUser(user);
     setOpenMenuId(null);
   };
