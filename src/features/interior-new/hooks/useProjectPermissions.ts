@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import interiorApiClient from '@/services/interiorApi.client';
 import { permissionsAllow, type PermissionAction, type RolePermission } from '@/features/interior-new/lib/permissionCatalog';
-import { usePermissions } from './usePermissions';
+import { usePermissions, PERMISSIONS_CHANGED_EVENT } from './usePermissions';
 
 interface ProjectAccess {
   isMember: boolean;
@@ -38,7 +38,12 @@ function loadProjectAccess(projectId: string, force = false): Promise<ProjectAcc
         roleName: d.roleName,
         permissions: Array.isArray(d.permissions) ? d.permissions : [],
       };
+      const before = cache.get(projectId)?.data;
       cache.set(projectId, { at: Date.now(), data });
+      // Role in this project changed while the page was open: let the shell reload the page
+      if (before && JSON.stringify(before) !== JSON.stringify(data) && typeof window !== 'undefined') {
+        window.dispatchEvent(new Event(PERMISSIONS_CHANGED_EVENT));
+      }
       return data;
     })
     .catch(() => ({ isMember: false, isAdmin: false, permissions: [] as RolePermission[] }))

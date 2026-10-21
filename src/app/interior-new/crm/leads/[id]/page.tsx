@@ -345,7 +345,7 @@ const { hasPermission: canDo } = usePermissions();
   };
 
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'followups' | 'site' | 'requirements' | 'designs' | 'boq' | 'quotations' | 'confirm_order'>(() => {
+  const [selectedTab, setActiveTab] = useState<'overview' | 'followups' | 'site' | 'requirements' | 'designs' | 'boq' | 'quotations' | 'confirm_order'>(() => {
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
@@ -362,6 +362,18 @@ const { hasPermission: canDo } = usePermissions();
     }
     return 'overview';
   });
+  // Each stage tab needs that stage's View permission (Overview is always shown)
+  const LEAD_TAB_MODULE: Record<string, string> = {
+    followups: 'crm_followups',
+    site: 'crm_site_visits',
+    requirements: 'crm_requirements',
+    designs: 'crm_drawings',
+    boq: 'crm_boq',
+    quotations: 'crm_quotations',
+    confirm_order: 'crm_quotations',
+  };
+  const canViewLeadTab = (id: string) => !LEAD_TAB_MODULE[id] || canDo(LEAD_TAB_MODULE[id], 'read');
+  const activeTab = canViewLeadTab(selectedTab) ? selectedTab : 'overview';
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -1248,7 +1260,7 @@ const { hasPermission: canDo } = usePermissions();
 
         {/* --- 3. HIGH DENSITY TAB NAVIGATION --- */}
         <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-1 flex items-center gap-1 overflow-x-auto scrollbar-none touch-pan-x">
-          {TABS.map((tab) => {
+          {TABS.filter((tab) => canViewLeadTab(tab.id)).map((tab) => {
             const { isLocked } = getTabLockState(tab.id);
             const isActive = activeTab === tab.id;
 
@@ -1601,6 +1613,15 @@ const { hasPermission: canDo } = usePermissions();
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 max-w-md">
                     Complete initial follow-up and schedule a Site Visit to unlock measurement logging.
                   </p>
+                  {/* Bring the lead into this stage from here — no need for the previous stage's tab */}
+                  {!isReadOnly && (canDo('crm_site_visits', 'create') || canDo('crm_site_visits', 'update') || canDo('crm_followups', 'update') || canDo('crm_leads', 'update')) && (
+                    <button
+                      onClick={() => setIsSendToSiteVisitOpen(true)}
+                      className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 active:scale-95 transition-all"
+                    >
+                      Send to Site Visit <ArrowRight size={12} />
+                    </button>
+                  )}
                 </div>
               ) : (() => {
                 const isSiteVisitOverdue = Boolean(
@@ -2063,6 +2084,15 @@ const { hasPermission: canDo } = usePermissions();
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 max-w-md">
                     Complete the Site Visit & Measurements phase first to unlock requirement logging.
                   </p>
+                  {/* Bring the lead into this stage from here — no need for the previous stage's tab */}
+                  {!isReadOnly && (canDo('crm_requirements', 'create') || canDo('crm_requirements', 'update') || canDo('crm_site_visits', 'update')) && (
+                    <button
+                      onClick={() => setIsSendToReqOpen(true)}
+                      className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 active:scale-95 transition-all"
+                    >
+                      Send to Requirements <ArrowRight size={12} />
+                    </button>
+                  )}
                 </div>
               ) : (() => {
                 const hasRequirements = Boolean(normalizedRequirements && normalizedRequirements.length > 0);
@@ -2123,7 +2153,7 @@ const { hasPermission: canDo } = usePermissions();
                           </div>
                         </div>
                         {!isReadOnly && (
-                          (canDo('crm_site_visits', 'update') || canDo('crm_requirements', 'update') || canDo('crm_requirements', 'create')) && (
+                          (canDo('crm_requirements', 'update')) && (
                             <button
                               onClick={() => setIsSendToReqOpen(true)}
                               className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shrink-0"
@@ -2194,7 +2224,7 @@ const { hasPermission: canDo } = usePermissions();
                               </>
                             ) : (
                               <>
-                                {(canDo('crm_site_visits', 'update') || canDo('crm_requirements', 'update') || canDo('crm_requirements', 'create')) && (
+                                {(canDo('crm_requirements', 'update')) && (
                                   <button
                                     onClick={() => setIsSendToReqOpen(true)}
                                     className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
@@ -2202,7 +2232,7 @@ const { hasPermission: canDo } = usePermissions();
                                     <Calendar size={12} /> Reschedule Session
                                   </button>
                                 )}
-                                {(canDo('crm_requirements', 'update')) && (
+                                {(canDo('crm_requirements', 'create')) && (
                                   <button
                                     onClick={() => setIsReqModalOpen(true)}
                                     className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
@@ -2640,6 +2670,15 @@ const { hasPermission: canDo } = usePermissions();
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 max-w-md">
                     Complete the Client Requirements phase first to unlock drawing uploads.
                   </p>
+                  {/* Bring the lead into this stage from here — no need for the previous stage's tab */}
+                  {!isReadOnly && (canDo('crm_drawings', 'create') || canDo('crm_drawings', 'update') || canDo('crm_requirements', 'update')) && (
+                    <button
+                      onClick={() => setIsSendToDrawingOpen(true)}
+                      className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 active:scale-95 transition-all"
+                    >
+                      Send to Drawings <ArrowRight size={12} />
+                    </button>
+                  )}
                 </div>
               ) : (() => {
                 const designFilesList = lead.designFiles || [];
@@ -3127,6 +3166,15 @@ const { hasPermission: canDo } = usePermissions();
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 max-w-md">
                     Complete and approve drawings to unlock BOQ creation and itemized estimations.
                   </p>
+                  {/* Bring the lead into this stage from here — no need for the previous stage's tab */}
+                  {!isReadOnly && (canDo('crm_boq', 'create') || canDo('crm_boq', 'update') || canDo('crm_drawings', 'update')) && (
+                    <button
+                      onClick={() => setIsSendToBoqOpen(true)}
+                      className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 active:scale-95 transition-all"
+                    >
+                      Send to BOQ <ArrowRight size={12} />
+                    </button>
+                  )}
                 </div>
               ) : (() => {
                 const hasBoqs = Boolean(lead.boqs && lead.boqs.length > 0);
@@ -3188,7 +3236,7 @@ const { hasPermission: canDo } = usePermissions();
                               </span>
                             ) : hasBoqs ? (
                               <>
-                                {canDo('crm_boq', 'update') && (
+                                {canDo('crm_boq', 'update') && !isBoqApproved && (
                                   <button
                                     onClick={() => {
                                       setEditingBoqIndex(activeBoqIndex);
@@ -3349,7 +3397,7 @@ const { hasPermission: canDo } = usePermissions();
                           lead={lead} 
                           boqIndex={activeBoqIndex} 
                           onSuccess={fetchData} 
-                          onEdit={isBoqLocked || !canDo('crm_boq', 'update') ? undefined : () => {
+                          onEdit={isBoqLocked || isBoqApproved || !canDo('crm_boq', 'update') ? undefined : () => {
                             setEditingBoqIndex(activeBoqIndex);
                             setIsBoqModalOpen(true);
                           }}
@@ -3395,6 +3443,15 @@ const { hasPermission: canDo } = usePermissions();
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 max-w-md">
                     Finalize the BOQ estimate first to unlock commercial proposals.
                   </p>
+                  {/* Bring the lead into this stage from here — no need for the previous stage's tab */}
+                  {!isReadOnly && (canDo('crm_quotations', 'create') || canDo('crm_quotations', 'update') || canDo('crm_boq', 'update')) && (
+                    <button
+                      onClick={() => setIsSendToQuotationsOpen(true)}
+                      className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 active:scale-95 transition-all"
+                    >
+                      Send to Quotations <ArrowRight size={12} />
+                    </button>
+                  )}
                 </div>
               ) : (() => {
                 const hasQuotations = Boolean(lead.quotations && lead.quotations.length > 0);

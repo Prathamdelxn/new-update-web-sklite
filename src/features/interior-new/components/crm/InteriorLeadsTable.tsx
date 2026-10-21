@@ -877,9 +877,9 @@ const { hasPermission: canDo } = usePermissions();
                                 }
 
                                 return (
-                                  (((lead.boqs && lead.boqs.length > 0) ? canDo('crm_boq', 'update') : canDo('crm_boq', 'create'))) && (
+                                  (((lead.boqs && lead.boqs.length > 0 && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? canDo('crm_boq', 'update') : canDo('crm_boq', 'create'))) && (
                                     <button
-                                      onClick={() => onAddBoq(lead._id, (lead.boqs && lead.boqs.length > 0) ? lead.boqs.length - 1 : undefined)}
+                                      onClick={() => onAddBoq(lead._id, (lead.boqs && lead.boqs.length > 0 && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? lead.boqs.length - 1 : undefined)}
                                       className={cn(
                                         "inline-flex items-center justify-center rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs",
                                         (!lead.boqs || lead.boqs.length === 0)

@@ -320,22 +320,22 @@ const { hasPermission: canDo } = usePermissions();
                             )}
 
                             {/* 2. Edit BOQ */}
-                            {(hasBoqs ? canDo('crm_boq', 'update') : canDo('crm_boq', 'create')) && (
+                            {((hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? canDo('crm_boq', 'update') : canDo('crm_boq', 'create')) && (
                               <button
-                                onClick={() => onAddBoq(lead._id, hasBoqs ? (lead.boqs.length - 1) : undefined)}
+                                onClick={() => onAddBoq(lead._id, (hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? (lead.boqs.length - 1) : undefined)}
                                 className={cn(
                                   'inline-flex items-center justify-center rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
-                                  hasBoqs
+                                  (hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved')
                                     ? 'p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
                                     : 'gap-1 px-2.5 py-1.5 bg-blue-600 text-white'
                                 )}
-                                title={hasBoqs ? 'Edit BOQ' : 'Create BOQ'}
+                                title={(hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? 'Edit BOQ' : hasBoqs ? 'Approved BOQs are final — create a new version' : 'Create BOQ'}
                               >
-                              {hasBoqs ? (
+                              {(hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? (
                                 <Pencil size={13} className="text-blue-600" />
                               ) : (
                                 <>
-                                  <Plus size={11} /> Create BOQ
+                                  <Plus size={11} /> {hasBoqs ? 'New Version' : 'Create BOQ'}
                                 </>
                               )}
                               </button>
@@ -580,22 +580,22 @@ const { hasPermission: canDo } = usePermissions();
                                 )}
 
                                 {/* 2. Edit BOQ */}
-                                {(hasBoqs ? canDo('crm_boq', 'update') : canDo('crm_boq', 'create')) && (
+                                {((hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? canDo('crm_boq', 'update') : canDo('crm_boq', 'create')) && (
                                   <button
-                                    onClick={() => onAddBoq(lead._id, hasBoqs ? (lead.boqs.length - 1) : undefined)}
+                                    onClick={() => onAddBoq(lead._id, (hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? (lead.boqs.length - 1) : undefined)}
                                     className={cn(
                                       "inline-flex items-center justify-center rounded-lg text-xs font-bold transition-all border cursor-pointer shadow-xs",
-                                      hasBoqs
+                                      (hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved')
                                         ? "p-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
                                         : "gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
                                     )}
-                                    title={hasBoqs ? 'Edit BOQ' : 'Create BOQ'}
+                                    title={(hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? 'Edit BOQ' : hasBoqs ? 'Approved BOQs are final — create a new version' : 'Create BOQ'}
                                   >
-                                    {hasBoqs ? (
+                                    {(hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? (
                                       <Pencil size={13} className="text-blue-600" />
                                     ) : (
                                       <>
-                                        <Plus size={11} className="text-blue-600" />BOQ
+                                        <Plus size={11} className="text-blue-600" />{hasBoqs ? 'New Version' : 'BOQ'}
                                       </>
                                     )}
                                   </button>

@@ -13,11 +13,22 @@ import interiorApiClient from '@/services/interiorApi.client';
 // shared by every component using this hook) so role changes an admin makes
 // apply without logging out — mirrors the construction AuthContext refresh.
 const USER_UPDATED_EVENT = 'interior-user-updated';
+/** Fired when the user's permissions (org role, or role in a project) actually change. */
+export const PERMISSIONS_CHANGED_EVENT = 'interior-permissions-changed';
 const REFRESH_INTERVAL_MS = 10_000; // minimum gap between refreshes
 const POLL_INTERVAL_MS = 15_000; // background re-check while the tab is visible
+const FIRST_LOAD_TIMEOUT_MS = 6_000; // don't hold the page longer than this if the server is slow
 let lastRefreshAt = 0;
 let refreshInFlight: Promise<void> | null = null;
 let pollTimer: ReturnType<typeof setInterval> | null = null;
+let firstRefresh: Promise<void> | null = null;
+
+// The parts of the user that decide what they can see and do
+function permissionSignature(user: any): string {
+  if (!user) return '';
+  const role = user.role && typeof user.role === 'object' ? user.role : { slug: user.role };
+  return JSON.stringify([user.systemRole, role._id ?? role.id ?? role.slug, role.permissions ?? null, user.navAccess ?? null]);
+}
 
 // One shared poller for the whole app: permission changes an admin makes (grant
 // or revoke) reach open screens within ~15s without a page refresh.
@@ -41,13 +52,33 @@ export function refreshInteriorUser(force = false): Promise<void> {
     .then((res) => {
       const fresh = res?.data?.data?.user ?? res?.data?.user;
       if (!fresh) return;
-      const merged = { ...(getInteriorUser() || {}), ...fresh };
+      const cached = getInteriorUser();
+      const merged = { ...(cached || {}), ...fresh };
       localStorage.setItem('interiorUser', JSON.stringify(merged));
       window.dispatchEvent(new Event(USER_UPDATED_EVENT));
+      if (permissionSignature(cached) !== permissionSignature(merged)) {
+        window.dispatchEvent(new Event(PERMISSIONS_CHANGED_EVENT));
+      }
     })
     .catch(() => { /* keep the cached user */ })
     .finally(() => { refreshInFlight = null; });
   return refreshInFlight;
+}
+
+/**
+ * Resolves once the user has been re-read from the server on this page load.
+ * Pages wait for it before their first render, so a browser refresh always shows
+ * the current permissions (not the ones saved at login / on the previous page).
+ */
+export function ensureFreshInteriorUser(): Promise<void> {
+  if (typeof window === 'undefined') return Promise.resolve();
+  if (!firstRefresh) {
+    firstRefresh = Promise.race([
+      refreshInteriorUser(true),
+      new Promise<void>((resolve) => setTimeout(resolve, FIRST_LOAD_TIMEOUT_MS)),
+    ]);
+  }
+  return firstRefresh;
 }
 
 export type PermissionAction = 'create' | 'read' | 'update' | 'delete' | 'approve' | 'export' | 'manage';
