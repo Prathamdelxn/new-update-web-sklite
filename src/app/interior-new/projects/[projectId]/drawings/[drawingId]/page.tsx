@@ -87,6 +87,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 
 export interface AnnotationAttachment {
   name: string;
@@ -195,6 +196,7 @@ export default function ProjectDrawingStudioPage() {
   const queryClient = useQueryClient();
 
   const projectId = (params?.projectId || params?.id || '') as string;
+const { can: canDo } = useProjectPermissions(projectId);
   const rawDrawingId = (params?.drawingId || '') as string;
   const drawingId = decodeURIComponent(rawDrawingId);
 
@@ -1222,7 +1224,7 @@ export default function ProjectDrawingStudioPage() {
         refetchDrawings();
       }
     } catch (err: any) {
-      toast.error('Failed to update status');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to update status');
     }
   };
 
@@ -2181,29 +2183,35 @@ export default function ProjectDrawingStudioPage() {
                     <div className="space-y-2">
                       <span className="text-xs font-bold text-slate-700">Approval Workflow</span>
                       <div className="grid grid-cols-2 gap-2">
-                        <button
-                          onClick={() => handleStatusChange('approved')}
-                          className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
-                        >
-                          <CheckCircle2 size={14} /> Approve
-                        </button>
-                        <button
-                          onClick={() => handleStatusChange('rejected')}
-                          className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                        >
-                          <XCircle size={14} /> Request Change
-                        </button>
+                        {canDo('drawings', 'approve') && (
+                          <button
+                            onClick={() => handleStatusChange('approved')}
+                            className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <CheckCircle2 size={14} /> Approve
+                          </button>
+                        )}
+                        {canDo('drawings', 'approve') && (
+                          <button
+                            onClick={() => handleStatusChange('rejected')}
+                            className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <XCircle size={14} /> Request Change
+                          </button>
+                        )}
                       </div>
                     </div>
 
                     {/* Action Buttons */}
                     <div className="space-y-2 pt-2 border-t border-slate-200">
-                      <button
-                        onClick={() => setIsRevisionModalOpen(true)}
-                        className="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer"
-                      >
-                        <UploadCloud size={15} /> Upload Next Revision
-                      </button>
+                      {canDo('drawings', 'update') && (
+                        <button
+                          onClick={() => setIsRevisionModalOpen(true)}
+                          className="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <UploadCloud size={15} /> Upload Next Revision
+                        </button>
+                      )}
 
                       {activeUrl && (
                         <a
@@ -2849,14 +2857,16 @@ export default function ProjectDrawingStudioPage() {
 
               {/* Footer Actions */}
               <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/60">
-                <button
-                  type="button"
-                  onClick={() => handleDeleteAnnotation(selectedAnnotation.id)}
-                  className="px-2.5 py-1.5 text-xs font-medium text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Trash2 size={13} />
-                  <span>Delete Pin</span>
-                </button>
+                {canDo('drawings', 'update') && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteAnnotation(selectedAnnotation.id)}
+                    className="px-2.5 py-1.5 text-xs font-medium text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Trash2 size={13} />
+                    <span>Delete Pin</span>
+                  </button>
+                )}
 
                 <div className="flex items-center gap-2">
                   {(selectedAnnotation.type === 'issue' || selectedAnnotation.snagId) && (
@@ -2874,29 +2884,33 @@ export default function ProjectDrawingStudioPage() {
                   )}
 
                   {selectedAnnotation.type === 'issue' && (
-                    <button
-                      type="button"
-                      onClick={() => handleToggleResolve(selectedAnnotation.id)}
-                      className={cn(
-                        'px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs',
-                        selectedAnnotation.resolved
-                          ? 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
-                          : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                      )}
-                    >
-                      <CheckCircle2 size={13} />
-                      <span>{selectedAnnotation.resolved ? 'Reopen Snag' : 'Mark as Resolved'}</span>
-                    </button>
+                    canDo('drawings', 'update') && (
+                      <button
+                        type="button"
+                        onClick={() => handleToggleResolve(selectedAnnotation.id)}
+                        className={cn(
+                          'px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs',
+                          selectedAnnotation.resolved
+                            ? 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+                            : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                        )}
+                      >
+                        <CheckCircle2 size={13} />
+                        <span>{selectedAnnotation.resolved ? 'Reopen Snag' : 'Mark as Resolved'}</span>
+                      </button>
+                    )
                   )}
 
-                  <button
-                    type="button"
-                    onClick={() => handleStartEditAnnotation(selectedAnnotation)}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Pencil size={13} />
-                    <span>Edit Pin</span>
-                  </button>
+                  {canDo('drawings', 'update') && (
+                    <button
+                      type="button"
+                      onClick={() => handleStartEditAnnotation(selectedAnnotation)}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Pencil size={13} />
+                      <span>Edit Pin</span>
+                    </button>
+                  )}
 
                   <button
                     type="button"

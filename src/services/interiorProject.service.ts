@@ -17,7 +17,8 @@ export const interiorProjectService = {
 
   // Members
   getProjectMembers: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/members`).then((res) => res.data),
-  addProjectMember: (projectId: string, data: { userId: string; projectRole: string }) =>
+  // roleId links an org role as the member's project role (preferred); projectRole is the legacy preset
+  addProjectMember: (projectId: string, data: { userId: string; roleId?: string; projectRole?: string }) =>
     interiorApiClient.post(`/projects/${projectId}/members`, data).then((res) => res.data),
   inviteProjectMember: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/members/invite`, data).then((res) => res.data),
   updateProjectMember: (projectId: string, memberId: string, data: any) =>
@@ -225,4 +226,8 @@ export const interiorProjectService = {
 
   createRole: (data: { name: string; description?: string; permissions?: any[] }) =>
     interiorApiClient.post('/roles', data).then((res) => res.data),
+  updateRole: (roleId: string, data: { name?: string; description?: string; permissions?: any[] }) =>
+    interiorApiClient.patch(`/roles/${roleId}`, data).then((res) => res.data),
+  deleteRole: (roleId: string) =>
+    interiorApiClient.delete(`/roles/${roleId}`).then((res) => res.data),
 };

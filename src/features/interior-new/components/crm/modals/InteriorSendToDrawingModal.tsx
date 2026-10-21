@@ -128,7 +128,7 @@ export function InteriorSendToDrawingModal({
       }
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to send to drawing');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to send to drawing');
     } finally {
       setIsSubmitting(false);
     }

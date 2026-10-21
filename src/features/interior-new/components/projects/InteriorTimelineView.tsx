@@ -21,6 +21,7 @@ import { interiorProjectService } from '@/services/interiorProject.service';
 import { Card } from '@/components/interior/ui';
 import { cn } from '@/lib/utils';
 import { addDays, differenceInDays, format, min, max, startOfWeek, endOfWeek, isToday, isValid } from 'date-fns';
+import { useToast } from '@/providers/ToastContext';
 
 interface InteriorTimelineViewProps {
   projectId: string;
@@ -77,6 +78,7 @@ const statusBadges: Record<'completed' | 'in_progress' | 'todo', { label: string
 };
 
 export default function InteriorTimelineView({ projectId }: InteriorTimelineViewProps) {
+  const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState<any[]>([]);
   const [wbsRootNodes, setWbsRootNodes] = useState<any[]>([]);
@@ -88,16 +90,23 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [tasksRes, wbsRes] = await Promise.all([
+        // Load each on its own: a member who can see the WBS but not tasks (or the
+        // reverse) still gets a timeline
+        const [tasksResult, wbsResult] = await Promise.allSettled([
           interiorProjectService.getTasks(projectId),
           interiorProjectService.getWbs(projectId),
         ]);
+        const tasksRes = tasksResult.status === 'fulfilled' ? tasksResult.value : null;
+        const wbsRes = wbsResult.status === 'fulfilled' ? wbsResult.value : null;
 
         if (tasksRes?.success && tasksRes?.data) {
           setTasks(tasksRes.data);
         }
         if (wbsRes?.success && wbsRes?.data) {
           setWbsRootNodes(wbsRes.data);
+        }
+        if (tasksResult.status === 'rejected' && wbsResult.status === 'rejected') {
+          toast.error("You don't have permission to view the timeline (needs WBS or Activity/Task view)");
         }
       } catch (err) {
         console.error('Failed to load timeline data', err);

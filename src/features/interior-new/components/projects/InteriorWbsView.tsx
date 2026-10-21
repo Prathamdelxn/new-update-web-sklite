@@ -28,6 +28,8 @@ import { interiorProjectService } from '@/services/interiorProject.service';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
+import { memberRoleLabel as roleLabelFor, isVirtualAdminMember } from '@/features/interior-new/lib/memberRoleLabel';
 
 interface InteriorWbsViewProps {
   projectId: string;
@@ -52,6 +54,7 @@ const priorityConfig: Record<string, { label: string; color: string }> = {
 
 export default function InteriorWbsView({ projectId }: InteriorWbsViewProps) {
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
   const { confirm } = useConfirm();
 
   const [wbsData, setWbsData] = useState<any[]>([]);
@@ -119,7 +122,7 @@ export default function InteriorWbsView({ projectId }: InteriorWbsViewProps) {
         id: String(m.userId?._id || m.userId?.id || m.userId || m._id || ''),
         name: m.userId?.firstName ? `${m.userId.firstName} ${m.userId.lastName || ''}`.trim() : m.userId?.email || 'Member',
         email: m.userId?.email || '',
-        role: (m.roleTitle || m.projectRole || 'Member').replace(/_/g, ' '),
+        role: roleLabelFor(m),
       }));
       setMembers(formattedMembers);
     } catch (err) {
@@ -518,13 +521,15 @@ const getAllDescendantIds = (node: any): string[] => {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <Button
-            onClick={handleOpenCreateModal}
-            className="shadow-xs font-semibold flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Create WBS
-          </Button>
+          {canDo('wbs', 'create') && (
+            <Button
+              onClick={handleOpenCreateModal}
+              className="shadow-xs font-semibold flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Create WBS
+            </Button>
+          )}
         </div>
       </div>
 
@@ -540,13 +545,15 @@ const getAllDescendantIds = (node: any): string[] => {
               <p className="font-semibold text-slate-700">No WBS elements defined yet</p>
               <p className="text-xs text-slate-400 mt-0.5">Click &quot;Create WBS&quot; to initialize your project work breakdown elements.</p>
               <div className="mt-4">
-                <Button
-                  onClick={handleOpenCreateModal}
-                  className="shadow-xs font-semibold inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  Create WBS
-                </Button>
+                {canDo('wbs', 'create') && (
+                  <Button
+                    onClick={handleOpenCreateModal}
+                    className="shadow-xs font-semibold inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Create WBS
+                  </Button>
+                )}
               </div>
             </div>
           ) : (
@@ -629,34 +636,40 @@ const getAllDescendantIds = (node: any): string[] => {
 
                       {/* Row Actions */}
                       <div className="flex items-center gap-2 shrink-0 ml-3">
-                        <Button
-                          size="sm"
-                          className="h-8 px-2.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 shadow-xs cursor-pointer"
-                          onClick={() => handleOpenAddActivity(node)}
-                          title="Add Activity under this WBS element"
-                        >
-                          <Plus className="w-3.5 h-3.5" /> Activity
-                        </Button>
+                        {canDo('tasks', 'create') && (
+                          <Button
+                            size="sm"
+                            className="h-8 px-2.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 shadow-xs cursor-pointer"
+                            onClick={() => handleOpenAddActivity(node)}
+                            title="Add Activity under this WBS element"
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Activity
+                          </Button>
+                        )}
 
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0 bg-white hover:bg-slate-100 text-slate-600 border-slate-200 cursor-pointer"
-                          onClick={() => handleOpenEditModal(node)}
-                          title="Edit WBS element"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </Button>
+                        {canDo('wbs', 'update') && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 bg-white hover:bg-slate-100 text-slate-600 border-slate-200 cursor-pointer"
+                            onClick={() => handleOpenEditModal(node)}
+                            title="Edit WBS element"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
 
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0 bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 border-slate-200 hover:border-rose-200 cursor-pointer"
-                          onClick={() => handleDeleteNode(node.type, node.id, node.name)}
-                          title="Delete WBS element"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
+                        {canDo('wbs', 'delete') && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 border-slate-200 hover:border-rose-200 cursor-pointer"
+                            onClick={() => handleDeleteNode(node.type, node.id, node.name)}
+                            title="Delete WBS element"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
                       </div>
                     </div>
 
@@ -672,13 +685,15 @@ const getAllDescendantIds = (node: any): string[] => {
                           {directTasks.length === 0 ? (
                             <div className="p-3 rounded-lg border border-dashed border-slate-200 bg-white flex items-center justify-between text-xs text-slate-500">
                               <span>No activities created under this WBS element yet.</span>
-                              <button
-                                type="button"
-                                onClick={() => handleOpenAddActivity(node)}
-                                className="text-blue-600 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
-                              >
-                                <Plus size={12} /> Add First Activity
-                              </button>
+                              {canDo('tasks', 'create') && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenAddActivity(node)}
+                                  className="text-blue-600 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Plus size={12} /> Add First Activity
+                                </button>
+                              )}
                             </div>
                           ) : (
                             <div className="space-y-1.5">
@@ -789,28 +804,32 @@ const getAllDescendantIds = (node: any): string[] => {
 
                                     {/* Activity Actions: Edit & Delete */}
                                     <div className="flex items-center gap-1 shrink-0 ml-2">
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleOpenEditActivity(task, node);
-                                        }}
-                                        className="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
-                                        title="Edit Activity"
-                                      >
-                                        <Edit2 className="w-3.5 h-3.5" />
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleDeleteActivity(task._id || task.id, task.name);
-                                        }}
-                                        className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                                        title="Delete Activity"
-                                      >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                      </button>
+                                      {canDo('tasks', 'update') && (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleOpenEditActivity(task, node);
+                                          }}
+                                          className="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                                          title="Edit Activity"
+                                        >
+                                          <Edit2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      )}
+                                      {canDo('tasks', 'delete') && (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteActivity(task._id || task.id, task.name);
+                                          }}
+                                          className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                          title="Delete Activity"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      )}
                                     </div>
                                   </div>
                                 );

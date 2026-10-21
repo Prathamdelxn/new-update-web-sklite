@@ -259,7 +259,7 @@ export function InteriorSendQuotationModal({
       onClose();
     } catch (err: any) {
       console.error('Failed to send quotation email:', err);
-      toast.error(err?.response?.data?.message || err?.message || 'Failed to send quotation email.');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || err?.message || 'Failed to send quotation email.');
     } finally {
       setIsSubmitting(false);
     }

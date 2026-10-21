@@ -194,27 +194,41 @@ export const InteriorUploadRevisionModal: React.FC<Props> = ({
 
             {/* Internal Rejection Reason (If internally rejected) */}
             {(approvalStatus === 'internally_rejected' || rejectionReason) && (
-              <div className="p-4 bg-rose-50/70 border border-rose-200 rounded-xl space-y-1.5">
-                <div className="flex items-center gap-2 text-rose-800 font-bold text-xs uppercase tracking-wide">
-                  <XCircle className="w-4 h-4 text-rose-600" />
-                  Internal Rejection Reason & Required Changes:
+              <div className="p-4 bg-rose-50/80 border border-rose-200 rounded-xl space-y-2 max-w-full overflow-hidden">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 text-rose-800 font-bold text-xs uppercase tracking-wide">
+                    <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>Internal Rejection Reason & Required Changes:</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full border border-rose-200 shrink-0">
+                    Action Required
+                  </span>
                 </div>
-                <p className="text-sm text-rose-950 bg-white p-3 rounded-lg border border-rose-200 shadow-2xs font-medium">
-                  {rejectionReason || internalNotes || 'Drawing was rejected during internal review and requires modifications.'}
-                </p>
+                <div className="p-3 bg-white rounded-lg border border-rose-200/90 shadow-2xs max-h-40 overflow-y-auto overflow-x-hidden">
+                  <p className="text-xs sm:text-sm text-rose-950 font-normal leading-relaxed whitespace-pre-wrap break-all select-text">
+                    {rejectionReason || internalNotes || 'Drawing was rejected during internal review and requires modifications.'}
+                  </p>
+                </div>
               </div>
             )}
 
             {/* Client Rejection / Feedback (If client requested changes) */}
             {(clientStatus === 'client_changes_requested' || clientFeedback) && (
-              <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-xl space-y-1.5">
-                <div className="flex items-center gap-2 text-amber-800 font-bold text-xs uppercase tracking-wide">
-                  <MessageSquare className="w-4 h-4 text-amber-600" />
-                  Client Feedback to Address:
+              <div className="p-4 bg-amber-50/80 border border-amber-200 rounded-xl space-y-2 max-w-full overflow-hidden">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 text-amber-800 font-bold text-xs uppercase tracking-wide">
+                    <MessageSquare className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>Client Feedback to Address:</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200 shrink-0">
+                    Client Changes Requested
+                  </span>
                 </div>
-                <p className="text-sm text-amber-950 bg-white p-3 rounded-lg border border-amber-200 shadow-2xs font-medium">
-                  {clientFeedback || 'Client requested modifications on the previous version.'}
-                </p>
+                <div className="p-3 bg-white rounded-lg border border-amber-200/90 shadow-2xs max-h-40 overflow-y-auto overflow-x-hidden">
+                  <p className="text-xs sm:text-sm text-amber-950 font-normal leading-relaxed whitespace-pre-wrap break-all select-text">
+                    {clientFeedback || 'Client requested modifications on the previous version.'}
+                  </p>
+                </div>
               </div>
             )}
 

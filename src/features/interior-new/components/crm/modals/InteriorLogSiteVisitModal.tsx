@@ -258,7 +258,7 @@ export const InteriorLogSiteVisitModal = ({
       onClose();
     } catch (error: any) {
       console.error('Failed to log site visit:', error);
-      toast.error(error?.response?.data?.message || error?.message || 'Failed to save site visit');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || error?.message || 'Failed to save site visit');
     } finally {
       setIsSubmitting(false);
     }

@@ -584,7 +584,7 @@ export function InteriorBoqBuilderModal({
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to save BOQ');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to save BOQ');
     } finally {
       setIsSubmitting(false);
     }

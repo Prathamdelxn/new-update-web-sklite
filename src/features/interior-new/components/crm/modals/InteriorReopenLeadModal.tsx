@@ -234,7 +234,7 @@ export function InteriorReopenLeadModal({
 
       const updatePayload: Record<string, any> = {
         status: resolvedStatus,
-        lostReason: null,
+        lostReason: '',
         futureFollowUpDate: mode === 'follow_up' && scheduledDate ? new Date(scheduledDate) : undefined,
         remarks: `Lead Reopened [${stageSummary}]: ${trimmedNotes}`,
       };
@@ -273,7 +273,7 @@ export function InteriorReopenLeadModal({
       }
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to reopen lead');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to reopen lead');
     } finally {
       setIsSubmitting(false);
     }

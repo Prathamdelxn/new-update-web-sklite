@@ -109,32 +109,23 @@ export const InteriorUploadDesignModal = ({
   const [category, setCategory] = useState<'2D' | '3D'>('2D');
   const [roomTag, setRoomTag] = useState('General / Not Specified');
   const [customRoomInput, setCustomRoomInput] = useState('');
-  const [selectedFileObj, setSelectedFileObj] = useState<File | null>(null);
-  const [selectedFilePreviewUrl, setSelectedFilePreviewUrl] = useState<string>('');
+  const [selectedFiles, setSelectedFiles] = useState<{
+    file: File;
+    previewUrl?: string;
+    detectedType: string;
+  }[]>([]);
 
-  const isDuplicateTitleInCategory = (testTitle: string, testCategory: '2D' | '3D', ignoreId?: string): boolean => {
+  const isDuplicateTitleInCategory = (testTitle: string, testCategory: '2D' | '3D'): boolean => {
     const normalizedTest = testTitle.trim().toLowerCase();
     if (!normalizedTest) return false;
 
-    // 1. Check against already saved files in this category
-    const existsInUploaded = existingFiles.some((f: any) => {
+    // Check against already saved files in this category
+    return existingFiles.some((f: any) => {
       const fileCat = (f.category || '2D').toUpperCase() === '3D' ? '3D' : '2D';
       if (fileCat !== testCategory) return false;
       const fileTitle = (f.title || f.name || '').trim().toLowerCase();
       return fileTitle === normalizedTest;
     });
-
-    if (existsInUploaded) return true;
-
-    // 2. Check against staged files in this category
-    const existsInQueue = queuedFiles.some((q) => {
-      if (ignoreId && q.id === ignoreId) return false;
-      if (q.category !== testCategory) return false;
-      const queuedTitle = (q.title || q.name || '').trim().toLowerCase();
-      return queuedTitle === normalizedTest;
-    });
-
-    return existsInQueue;
   };
 
   const getTitleValidationError = (val: string, targetCategory: '2D' | '3D' = category): string | null => {
@@ -149,18 +140,6 @@ export const InteriorUploadDesignModal = ({
 
     return null;
   };
-
-  // Staged / Queued files if user wants to upload multiple at once
-  const [queuedFiles, setQueuedFiles] = useState<{
-    id: string;
-    title: string;
-    name: string;
-    category: '2D' | '3D';
-    roomTag: string;
-    fileObj: File;
-    previewUrl?: string;
-    fileType: string;
-  }[]>([]);
 
   // Room Options combining customer requirements + standard list
   const availableRooms = React.useMemo(() => {
@@ -182,41 +161,56 @@ export const InteriorUploadDesignModal = ({
       setCategory('2D');
       setRoomTag('General / Not Specified');
       setCustomRoomInput('');
-      setSelectedFileObj(null);
-      setSelectedFilePreviewUrl('');
-      setQueuedFiles([]);
+      setSelectedFiles([]);
     }
   }, [isOpen]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
 
-    const detected = detectFileType(file.name);
-    if (['3d-model'].includes(detected)) {
+    const filesArray = Array.from(fileList);
+    const newItems: { file: File; previewUrl?: string; detectedType: string }[] = [];
+
+    // If any file is a 3D model, recommend/switch to 3D category
+    const has3d = filesArray.some((f) => ['3d-model'].includes(detectFileType(f.name)));
+    if (has3d) {
       setCategory('3D');
     }
 
-    if (!title.trim()) {
-      const sanitized = sanitizeTitle(file.name);
+    // Set initial title from first file if not yet set
+    if (!title.trim() && filesArray[0]) {
+      const sanitized = sanitizeTitle(filesArray[0].name);
       setTitle(sanitized.slice(0, 50));
     }
 
-    setSelectedFileObj(file);
-
-    if (detected === 'image') {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setSelectedFilePreviewUrl(event.target.result as string);
-        }
+    filesArray.forEach((file) => {
+      const detected = detectFileType(file.name);
+      const item: { file: File; previewUrl?: string; detectedType: string } = {
+        file,
+        detectedType: detected
       };
-      reader.readAsDataURL(file);
-    } else {
-      setSelectedFilePreviewUrl('');
-    }
 
+      if (detected === 'image') {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            setSelectedFiles((prev) =>
+              prev.map((p) => (p.file === file ? { ...p, previewUrl: event.target!.result as string } : p))
+            );
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+      newItems.push(item);
+    });
+
+    setSelectedFiles((prev) => [...prev, ...newItems]);
     e.target.value = '';
+  };
+
+  const handleRemoveFile = (indexToRemove: number) => {
+    setSelectedFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
   const getEffectiveRoom = () => {
@@ -226,9 +220,11 @@ export const InteriorUploadDesignModal = ({
     return roomTag || 'General / Not Specified';
   };
 
-  const handleAddCurrentToQueue = () => {
-    if (!selectedFileObj) {
-      toast.error('Please select a file to stage.');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (selectedFiles.length === 0) {
+      toast.error('Please choose at least one drawing file or photo to upload.');
       return;
     }
 
@@ -239,94 +235,39 @@ export const InteriorUploadDesignModal = ({
       return;
     }
 
-    const fileType = detectFileType(selectedFileObj.name);
-    const resolvedRoom = getEffectiveRoom();
-
-    setQueuedFiles((prev) => [
-      ...prev,
-      {
-        id: Math.random().toString(36).substring(7),
-        title: title.trim(),
-        name: selectedFileObj.name,
-        category,
-        roomTag: resolvedRoom,
-        fileObj: selectedFileObj,
-        previewUrl: selectedFilePreviewUrl,
-        fileType
-      }
-    ]);
-
-    // Reset inputs for next file
-    setTitle('');
-    setTitleTouched(false);
-    setSelectedFileObj(null);
-    setSelectedFilePreviewUrl('');
-    toast.success('Drawing staged! You can add another drawing or click Submit.');
-  };
-
-  const removeQueuedFile = (id: string) => {
-    setQueuedFiles((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Compile items to upload: either staged list OR current form inputs
-    let itemsToUpload = [...queuedFiles];
-
-    if (itemsToUpload.length === 0) {
-      if (!selectedFileObj) {
-        toast.error('Please choose a drawing file or 3D model to upload.');
-        return;
-      }
-
-      const titleError = getTitleValidationError(title);
-      if (titleError) {
-        setTitleTouched(true);
-        toast.error(titleError);
-        return;
-      }
-
-      const fileType = detectFileType(selectedFileObj.name);
-      const resolvedRoom = getEffectiveRoom();
-
-      itemsToUpload.push({
-        id: 'primary',
-        title: title.trim(),
-        name: selectedFileObj.name,
-        category,
-        roomTag: resolvedRoom,
-        fileObj: selectedFileObj,
-        fileType
-      });
-    }
-
     setIsSubmitting(true);
 
     try {
-      // Upload all items to Cloudinary and structure full versioning payload
-      const uploadedNewFiles = await Promise.all(
-        itemsToUpload.map(async (fileData) => {
-          const fileUrl = await uploadToCloudinary(fileData.fileObj);
+      const resolvedRoom = getEffectiveRoom();
+
+      // Upload all selected files in parallel to Cloudinary
+      const uploadedDrawings = await Promise.all(
+        selectedFiles.map(async (fileItem, index) => {
+          const fileUrl = await uploadToCloudinary(fileItem.file);
+
+          const drawingTitle =
+            selectedFiles.length === 1
+              ? title.trim() || sanitizeTitle(fileItem.file.name)
+              : `${title.trim() || sanitizeTitle(fileItem.file.name)} (${index + 1})`;
 
           const initialVersion = {
             versionNumber: 1,
-            name: fileData.title || fileData.name,
+            name: drawingTitle,
             url: fileUrl,
-            fileType: fileData.fileType,
-            category: fileData.category,
+            fileType: fileItem.detectedType,
+            category,
             uploadedAt: new Date(),
             approvalStatus: 'draft',
             clientStatus: 'pending_client_review'
           };
 
           return {
-            name: fileData.name,
-            title: fileData.title || fileData.name,
+            name: fileItem.file.name,
+            title: drawingTitle,
             url: fileUrl,
-            fileType: fileData.fileType,
-            category: fileData.category,
-            roomTag: fileData.roomTag,
+            fileType: fileItem.detectedType,
+            category,
+            roomTag: resolvedRoom,
             currentVersion: 1,
             status: 'draft',
             approvalStatus: 'draft',
@@ -336,24 +277,29 @@ export const InteriorUploadDesignModal = ({
         })
       );
 
-      const updatedFiles = [...existingFiles, ...uploadedNewFiles];
+      const updatedFiles = [...existingFiles, ...uploadedDrawings];
 
       await interiorCrmService.updateCustomer(customerId, {
         designFiles: updatedFiles
       });
 
-      const fileTitlesSummary = uploadedNewFiles.map((f) => f.title).join(', ');
+      const summaryTitles = uploadedDrawings.map((d) => d.title).join(', ');
       await interiorCrmService.createActivity({
         customer: customerId,
         type: 'Design Shared',
         status: 'Completed',
-        remarks: `Uploaded ${uploadedNewFiles.length} drawing(s): ${fileTitlesSummary}.`,
+        remarks: `Uploaded ${uploadedDrawings.length} ${category} drawing(s): ${summaryTitles}.`,
         completedDate: new Date()
       });
 
-      toast.success(`${uploadedNewFiles.length} drawing(s) uploaded successfully!`);
+      toast.success(
+        selectedFiles.length === 1
+          ? `${category} drawing uploaded successfully!`
+          : `${uploadedDrawings.length} ${category} drawings uploaded successfully!`
+      );
+
       if (onSuccess) {
-        onSuccess({ _id: customerId, designFiles: [...existingFiles, ...uploadedNewFiles] });
+        onSuccess({ _id: customerId, designFiles: updatedFiles });
       }
       onClose();
     } catch (error) {
@@ -499,7 +445,7 @@ export const InteriorUploadDesignModal = ({
                   ? "border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
                   : "border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
               )}
-              required={queuedFiles.length === 0}
+              required
             />
             {titleTouched && getTitleValidationError(title) && (
               <p className="text-[11px] text-rose-500 font-medium mt-1">
@@ -546,65 +492,82 @@ export const InteriorUploadDesignModal = ({
             )}
           </div>
 
-          {/* File Upload Dropzone */}
+          {/* File Upload Dropzone & Selected Files Preview */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              File Attachment <span className="text-rose-500">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-slate-700">
+                File Attachment(s) <span className="text-rose-500">*</span>
+              </label>
+              {selectedFiles.length > 0 && (
+                <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                  {selectedFiles.length} {selectedFiles.length === 1 ? 'file' : 'files'} selected
+                </span>
+              )}
+            </div>
 
-            {selectedFileObj ? (
-              <div className="p-3.5 bg-slate-50 border border-blue-200 rounded-xl flex items-center justify-between gap-3 shadow-2xs">
-                <div className="flex items-center gap-3 overflow-hidden">
-                  {selectedFilePreviewUrl ? (
-                    <div className="w-11 h-11 rounded-lg overflow-hidden bg-white shrink-0 border border-slate-200 shadow-2xs">
-                      <img src={selectedFilePreviewUrl} alt={selectedFileObj.name} className="w-full h-full object-cover" />
-                    </div>
-                  ) : (
-                    <div className={cn(
-                      "w-11 h-11 rounded-lg flex items-center justify-center shrink-0 text-white font-medium text-xs shadow-2xs",
-                      category === '3D' ? "bg-purple-600" : "bg-blue-600"
-                    )}>
-                      {category === '3D' ? <Box size={20} /> : <FileText size={20} />}
-                    </div>
-                  )}
+            {selectedFiles.length > 0 ? (
+              <div className="space-y-2">
+                <div className="max-h-56 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                  {selectedFiles.map((item, idx) => (
+                    <div
+                      key={`${item.file.name}-${idx}`}
+                      className="p-3 bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-xl flex items-center justify-between gap-3 shadow-2xs transition-all"
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        {item.previewUrl ? (
+                          <div className="w-10 h-10 rounded-lg overflow-hidden bg-white shrink-0 border border-slate-200 shadow-2xs">
+                            <img src={item.previewUrl} alt={item.file.name} className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <div className={cn(
+                            "w-10 h-10 rounded-lg flex items-center justify-center shrink-0 text-white font-medium text-xs shadow-2xs",
+                            category === '3D' ? "bg-purple-600" : "bg-blue-600"
+                          )}>
+                            {category === '3D' ? <Box size={18} /> : <FileText size={18} />}
+                          </div>
+                        )}
 
-                  <div className="overflow-hidden">
-                    <p className="text-xs font-semibold text-slate-900 truncate max-w-xs sm:max-w-sm">
-                      {selectedFileObj.name}
-                    </p>
-                    <p className="text-[11px] text-slate-500 mt-0.5 font-mono">
-                      {(selectedFileObj.size / (1024 * 1024)).toFixed(2)} MB • {detectFileType(selectedFileObj.name).toUpperCase()}
-                    </p>
-                  </div>
+                        <div className="overflow-hidden">
+                          <p className="text-xs font-semibold text-slate-900 truncate max-w-[220px] sm:max-w-xs">
+                            {item.file.name}
+                          </p>
+                          <p className="text-[10px] text-slate-500 mt-0.5 font-mono">
+                            {(item.file.size / (1024 * 1024)).toFixed(2)} MB • {item.detectedType.toUpperCase()}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFile(idx)}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
+                        title="Remove file"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <label className="px-2.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-lg text-xs font-medium transition-colors shadow-2xs cursor-pointer">
-                    Change
+                {/* Add More Files Button */}
+                <div className="flex items-center justify-end pt-1">
+                  <label className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100/70 border border-blue-200/60 text-blue-700 rounded-lg text-xs font-semibold cursor-pointer transition-colors shadow-2xs">
+                    <Plus size={14} /> Add More Files
                     <input
                       type="file"
+                      multiple
                       onChange={handleFileSelect}
                       className="hidden"
                       accept={category === '2D' ? "image/*,application/pdf,.pdf,.dxf,.zip,.rar" : "image/*,application/pdf,.pdf,.dwg,.dxf,.skp,.obj,.fbx,.3ds,.dae,.blend,.rvt,.rfa,.ifc,.gltf,.glb,.max,.zip,.rar"}
                     />
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedFileObj(null);
-                      setSelectedFilePreviewUrl('');
-                    }}
-                    className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
-                    title="Remove file"
-                  >
-                    <Trash2 size={16} />
-                  </button>
                 </div>
               </div>
             ) : (
               <div className="border-2 border-dashed border-slate-200 hover:border-blue-400 bg-slate-50/60 hover:bg-blue-50/40 rounded-xl p-5 text-center transition-all relative cursor-pointer group">
                 <input
                   type="file"
+                  multiple
                   onChange={handleFileSelect}
                   accept={category === '2D' ? "image/*,application/pdf,.pdf,.dxf,.zip,.rar" : "image/*,application/pdf,.pdf,.dwg,.dxf,.skp,.obj,.fbx,.3ds,.dae,.blend,.rvt,.rfa,.ifc,.gltf,.glb,.max,.zip,.rar"}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
@@ -613,68 +576,14 @@ export const InteriorUploadDesignModal = ({
                   <UploadCloud size={20} />
                 </div>
                 <p className="text-xs font-semibold text-slate-800">
-                  Click or drag file here to upload
+                  Click or drag files/photos here to upload
                 </p>
                 <p className="text-[11px] text-slate-500 mt-1">
-                  {category === '2D'
-                    ? 'Supports PDF, DXF, JPG, PNG'
-                    : 'Supports .DWG, SketchUp (.skp), .OBJ, .FBX, Renders'}
+                  Select one or multiple files (Photos, PDFs, 3D models)
                 </p>
               </div>
             )}
           </div>
-
-          {/* Optional Stage to Multi-Upload Batch */}
-          {selectedFileObj && (
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={handleAddCurrentToQueue}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100/70 border border-blue-200/60 rounded-lg transition-colors cursor-pointer shadow-2xs"
-              >
-                <Plus size={14} /> Stage & Add Another
-              </button>
-            </div>
-          )}
-
-          {/* Queued Staged Files Summary */}
-          {queuedFiles.length > 0 && (
-            <div className="space-y-2 pt-2 border-t border-slate-100">
-              <h4 className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                <CheckCircle2 size={14} className="text-emerald-600" /> Staged for Upload ({queuedFiles.length})
-              </h4>
-              <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
-                {queuedFiles.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between gap-3 text-xs"
-                  >
-                    <div className="flex items-center gap-2 overflow-hidden">
-                      <span className={cn(
-                        "px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase shrink-0",
-                        item.category === '3D' ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"
-                      )}>
-                        {item.category}
-                      </span>
-                      <div className="overflow-hidden">
-                        <p className="font-semibold text-slate-900 truncate">{item.title}</p>
-                        <p className="text-[11px] text-slate-500 truncate">
-                          {item.roomTag} • {item.name}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeQueuedFile(item.id)}
-                      className="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 transition-colors"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Action Footer */}
           <div className="pt-3 flex items-center justify-end gap-2.5 mt-2 border-t border-slate-100">
@@ -687,7 +596,7 @@ export const InteriorUploadDesignModal = ({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || (!selectedFileObj && queuedFiles.length === 0)}
+              disabled={isSubmitting || selectedFiles.length === 0}
               className="px-5 py-2 rounded-xl text-xs sm:text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
             >
               {isSubmitting ? (
@@ -695,9 +604,7 @@ export const InteriorUploadDesignModal = ({
               ) : (
                 <>
                   <UploadCloud size={16} />
-                  {queuedFiles.length > 0
-                    ? `Upload ${queuedFiles.length + (selectedFileObj ? 1 : 0)} Drawing(s)`
-                    : 'Upload Drawing'}
+                  {selectedFiles.length > 1 ? `Upload ${selectedFiles.length} Drawings` : 'Upload Drawing'}
                 </>
               )}
             </button>

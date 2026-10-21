@@ -304,10 +304,10 @@ export function BoqPreview({
                 <span className="px-2 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-blue-700 font-mono text-[11px] font-bold shrink-0">
                   Sec {section.sectionNumber || secIdx + 1}
                 </span>
-                <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate max-w-sm sm:max-w-md">
                   {section.sectionTitle}
                 </h3>
-                <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full shrink-0">
                   {section.items.length} {section.items.length === 1 ? 'item' : 'items'}
                 </span>
               </div>
@@ -325,12 +325,12 @@ export function BoqPreview({
               <div className="px-4 py-3 bg-slate-50/50 border-b border-slate-200 space-y-2.5">
                 {/* Section Scope of Work Note */}
                 {section.scopeDescription && (
-                  <div className="p-3 bg-blue-50/70 border border-blue-200/90 rounded-xl space-y-1 shadow-2xs">
+                  <div className="p-3 bg-blue-50/70 border border-blue-200/90 rounded-xl space-y-1 shadow-2xs max-w-full overflow-hidden">
                     <div className="flex items-center gap-1.5 text-[11px] font-bold text-blue-900">
-                      <FileText size={13} className="text-blue-600" />
+                      <FileText size={13} className="text-blue-600 shrink-0" />
                       <span>Section Scope of Work / Overview Note</span>
                     </div>
-                    <p className="text-xs text-slate-900 font-normal leading-relaxed whitespace-pre-wrap">
+                    <p className="text-xs text-slate-900 font-normal leading-relaxed whitespace-pre-wrap break-all">
                       {section.scopeDescription}
                     </p>
                   </div>
@@ -374,16 +374,16 @@ export function BoqPreview({
 
             {/* Section Items Table */}
             <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left border-collapse">
+              <table className="w-full text-xs text-left border-collapse table-fixed">
                 <thead>
                   <tr className="bg-slate-50 text-slate-600 font-bold text-[11px] uppercase tracking-wider border-b border-slate-200">
-                    <th className="p-3 w-12 text-center">Sr. No</th>
-                    <th className="p-3 min-w-[220px]">Item Description & Technical Specifications</th>
-                    <th className="p-3 text-center w-24">Unit</th>
+                    <th className="p-3 w-14 text-center">Sr. No</th>
+                    <th className="p-3 w-[40%] min-w-[200px]">Item Description & Technical Specifications</th>
+                    <th className="p-3 text-center w-20">Unit</th>
                     <th className="p-3 text-center w-20">Quantity</th>
-                    <th className="p-3 text-right w-28">Rate ({currencySymbol})</th>
+                    <th className="p-3 text-right w-24">Rate ({currencySymbol})</th>
                     <th className="p-3 text-right w-28">Amount ({currencySymbol})</th>
-                    <th className="p-3 min-w-[150px]">Remarks / Disposal</th>
+                    <th className="p-3 w-[22%] min-w-[140px]">Remarks / Disposal</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
@@ -394,18 +394,18 @@ export function BoqPreview({
                     return (
                       <tr key={itemId} className="hover:bg-slate-50/80 transition-colors group align-top">
                         {/* Sr No / Code */}
-                        <td className="p-3 text-center font-mono font-bold text-slate-500">
+                        <td className="p-3 text-center font-mono font-bold text-slate-500 whitespace-nowrap">
                           {item.itemCode || item.serialNumber || idx + 1}
                         </td>
 
                         {/* Description & Technical Specs */}
                         <td
                           onClick={() => toggleExpandItem(itemId)}
-                          className="p-3 min-w-[220px] max-w-[440px] space-y-1 cursor-pointer select-text transition-all duration-300"
+                          className="p-3 space-y-1 cursor-pointer select-text transition-all duration-300 max-w-full overflow-hidden"
                           title="Click or hover to expand/collapse full specification"
                         >
                           <div className="flex items-start justify-between gap-1.5">
-                            <div className="font-bold text-xs text-slate-900 group-hover:text-blue-600 transition-colors break-words [overflow-wrap:anywhere]">
+                            <div className="font-bold text-xs text-slate-900 group-hover:text-blue-600 transition-colors break-words [overflow-wrap:anywhere] leading-snug">
                               {item.itemName}
                             </div>
                             {item.description && (
@@ -427,43 +427,43 @@ export function BoqPreview({
                                   : "max-h-[1.35rem] group-hover:max-h-[600px] opacity-80 group-hover:opacity-100"
                               )}
                             >
-                              <p className="whitespace-pre-wrap leading-relaxed">
+                              <p className="whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
                                 {item.description}
                               </p>
                             </div>
                           )}
                         </td>
 
-                      {/* Unit */}
-                      <td className="p-3 text-center">
-                        <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                          {item.unit || 'Nos'}
-                        </span>
-                      </td>
+                        {/* Unit */}
+                        <td className="p-3 text-center align-top">
+                          <span className="inline-block px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-700 uppercase tracking-wider whitespace-nowrap">
+                            {item.unit || 'Nos'}
+                          </span>
+                        </td>
 
-                      {/* Quantity */}
-                      <td className="p-3 text-center font-mono font-bold text-xs text-slate-900">
-                        {Number(item.quantity || 0).toLocaleString()}
-                      </td>
+                        {/* Quantity */}
+                        <td className="p-3 text-center font-mono font-bold text-xs text-slate-900 whitespace-nowrap align-top">
+                          {Number(item.quantity || 0).toLocaleString()}
+                        </td>
 
-                      {/* Rate */}
-                      <td className="p-3 text-right font-mono font-bold text-xs text-slate-700">
-                        {currencySymbol} {Number(item.rate || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
-                      </td>
+                        {/* Rate */}
+                        <td className="p-3 text-right font-mono font-bold text-xs text-slate-700 whitespace-nowrap align-top">
+                          {currencySymbol} {Number(item.rate || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                        </td>
 
-                      {/* Amount */}
-                      <td className="p-3 text-right font-mono font-black text-xs text-slate-900">
-                        {currencySymbol} {Number(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
-                      </td>
+                        {/* Amount */}
+                        <td className="p-3 text-right font-mono font-black text-xs text-slate-900 whitespace-nowrap align-top">
+                          {currencySymbol} {Number(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                        </td>
 
-                      {/* Remarks */}
-                      <td className="p-3 text-[11px] text-slate-600 italic break-words [overflow-wrap:anywhere]">
-                        {item.remarks || '-'}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
+                        {/* Remarks */}
+                        <td className="p-3 text-[11px] text-slate-600 italic break-words [overflow-wrap:anywhere] align-top max-w-full overflow-hidden">
+                          {item.remarks || '-'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
               </table>
             </div>
 

@@ -7,6 +7,48 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { getInteriorUser } from '@/lib/interiorAuth';
+import interiorApiClient from '@/services/interiorApi.client';
+
+// Role permissions are saved at login. Re-read them from /auth/me (throttled,
+// shared by every component using this hook) so role changes an admin makes
+// apply without logging out — mirrors the construction AuthContext refresh.
+const USER_UPDATED_EVENT = 'interior-user-updated';
+const REFRESH_INTERVAL_MS = 10_000; // minimum gap between refreshes
+const POLL_INTERVAL_MS = 15_000; // background re-check while the tab is visible
+let lastRefreshAt = 0;
+let refreshInFlight: Promise<void> | null = null;
+let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+// One shared poller for the whole app: permission changes an admin makes (grant
+// or revoke) reach open screens within ~15s without a page refresh.
+function startPermissionPolling() {
+  if (typeof window === 'undefined' || pollTimer) return;
+  pollTimer = setInterval(() => {
+    if (document.visibilityState === 'visible') refreshInteriorUser();
+  }, POLL_INTERVAL_MS);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshInteriorUser();
+  });
+}
+
+export function refreshInteriorUser(force = false): Promise<void> {
+  if (typeof window === 'undefined' || !localStorage.getItem('interiorAccessToken')) return Promise.resolve();
+  if (refreshInFlight) return refreshInFlight;
+  if (!force && Date.now() - lastRefreshAt < REFRESH_INTERVAL_MS) return Promise.resolve();
+  lastRefreshAt = Date.now();
+  refreshInFlight = interiorApiClient
+    .get('/auth/me')
+    .then((res) => {
+      const fresh = res?.data?.data?.user ?? res?.data?.user;
+      if (!fresh) return;
+      const merged = { ...(getInteriorUser() || {}), ...fresh };
+      localStorage.setItem('interiorUser', JSON.stringify(merged));
+      window.dispatchEvent(new Event(USER_UPDATED_EVENT));
+    })
+    .catch(() => { /* keep the cached user */ })
+    .finally(() => { refreshInFlight = null; });
+  return refreshInFlight;
+}
 
 export type PermissionAction = 'create' | 'read' | 'update' | 'delete' | 'approve' | 'export' | 'manage';
 
@@ -113,8 +155,17 @@ export function usePermissions() {
   });
 
   useEffect(() => {
-    const user = getInteriorUser();
-    setCurrentUser(user);
+    const sync = () => setCurrentUser(getInteriorUser());
+    sync();
+    refreshInteriorUser();
+    startPermissionPolling();
+    const onFocus = () => refreshInteriorUser();
+    window.addEventListener(USER_UPDATED_EVENT, sync);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      window.removeEventListener(USER_UPDATED_EVENT, sync);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []);
 
   const isOrgAdmin = useMemo(() => {
@@ -155,7 +206,8 @@ export function usePermissions() {
       });
       return map;
     }
-    return DEFAULT_ROLE_PERMISSIONS[userRoleKey] || DEFAULT_ROLE_PERMISSIONS.admin;
+    // Unknown / custom roles get the least access (read-only), never Admin's
+    return DEFAULT_ROLE_PERMISSIONS[userRoleKey] || DEFAULT_ROLE_PERMISSIONS.viewer;
   }, [isOrgAdmin, currentUser, userRoleKey]);
 
   /**

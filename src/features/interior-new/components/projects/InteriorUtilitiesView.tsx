@@ -10,6 +10,7 @@ import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/compo
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
 import { cn } from '@/lib/utils';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 
 interface InteriorUtilitiesViewProps {
   projectId: string;
@@ -17,6 +18,7 @@ interface InteriorUtilitiesViewProps {
 
 export default function InteriorUtilitiesView({ projectId }: InteriorUtilitiesViewProps) {
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
 
   const [systems, setSystems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,7 +127,7 @@ export default function InteriorUtilitiesView({ projectId }: InteriorUtilitiesVi
                   {sys.checkpoints.map((cp: any) => (
                     <div
                       key={cp.name}
-                      onClick={() => handleOpenCheckpointModal(sys, cp)}
+                      onClick={() => canDo('utilities', 'update') && handleOpenCheckpointModal(sys, cp)}
                       className="flex items-center justify-between p-2.5 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.35)] transition-all cursor-pointer"
                     >
                       <div className="space-y-0.5">

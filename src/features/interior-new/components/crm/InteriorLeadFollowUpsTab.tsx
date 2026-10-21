@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
 import { useQuery } from '@tanstack/react-query';
 import { interiorCrmService } from '@/services/interiorCrm.service';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 interface InteriorLeadFollowUpsTabProps {
   lead: any;
@@ -50,6 +51,7 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
   isConverted = false,
 }) => {
   const toast = useToast();
+const { hasPermission: canDo } = usePermissions();
   const leadId = lead?._id || lead?.id;
 
   const { data: queryActivities } = useQuery({
@@ -222,12 +224,14 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
             : 'Schedule initial client touchpoints (calls, WhatsApp, or meetings) to capture client requirements before planning the site visit.'}
         </p>
         {!isConverted && !isLeadProgressed && (
-          <button
-            onClick={onScheduleFollowUp}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 shadow-sm cursor-pointer"
-          >
-            <Plus size={15} /> Schedule Initial Follow-up
-          </button>
+          (canDo('crm_followups', 'create')) && (
+            <button
+              onClick={onScheduleFollowUp}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 shadow-sm cursor-pointer"
+            >
+              <Plus size={15} /> Schedule Initial Follow-up
+            </button>
+          )
         )}
       </div>
     );
@@ -306,26 +310,30 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
             <div className="flex items-center gap-2 flex-wrap pt-2 md:pt-0 border-t md:border-t-0 border-[hsl(var(--border)/0.6)]">
               {!isLeadProgressed ? (
                 <>
-                  <button
-                    onClick={onScheduleFollowUp}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer",
-                      isOverdue
-                        ? "bg-rose-600 hover:bg-rose-700 text-white shadow-xs"
-                        : "bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]"
-                    )}
-                    title="Reschedule Follow-up Date & Time"
-                  >
-                    <Calendar size={13} /> Reschedule Follow-up
-                  </button>
-                  {!isOverdue && canSendToSiteVisit && (
+                  {(canDo('crm_followups', 'create')) && (
                     <button
-                      onClick={onSendToSiteVisit}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
-                      title="Complete follow-up & send lead to Site Visit stage"
+                      onClick={onScheduleFollowUp}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer",
+                        isOverdue
+                          ? "bg-rose-600 hover:bg-rose-700 text-white shadow-xs"
+                          : "bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]"
+                      )}
+                      title="Reschedule Follow-up Date & Time"
                     >
-                      <MapPin size={13} /> Complete & Send to Site Visit
+                      <Calendar size={13} /> Reschedule Follow-up
                     </button>
+                  )}
+                  {!isOverdue && canSendToSiteVisit && (
+                    (canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_site_visits', 'create')) && (
+                      <button
+                        onClick={onSendToSiteVisit}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
+                        title="Complete follow-up & send lead to Site Visit stage"
+                      >
+                        <MapPin size={13} /> Complete & Send to Site Visit
+                      </button>
+                    )
                   )}
                 </>
               ) : (

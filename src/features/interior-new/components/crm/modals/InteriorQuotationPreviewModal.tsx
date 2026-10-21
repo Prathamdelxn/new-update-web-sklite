@@ -36,6 +36,7 @@ import { useConfirm } from '@/providers/ConfirmContext';
 import { useCurrency } from '@/hooks/useCurrency';
 import { QuotationPreview } from '@/components/crm/QuotationPreview';
 import { cn } from '@/lib/utils';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 interface InteriorQuotationPreviewModalProps {
   isOpen: boolean;
@@ -55,6 +56,7 @@ export function InteriorQuotationPreviewModal({
   onSuccess,
 }: InteriorQuotationPreviewModalProps) {
   const toast = useToast();
+const { hasPermission: canDo } = usePermissions();
   const { confirm } = useConfirm();
   const router = useRouter();
   const { formatExactCurrency } = useCurrency();
@@ -355,7 +357,7 @@ export function InteriorQuotationPreviewModal({
       onSuccess();
       fetchActivities();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to update quotation status');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to update quotation status');
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -392,7 +394,7 @@ export function InteriorQuotationPreviewModal({
       onSuccess();
     } catch (err: any) {
       console.error('Failed to delete quotation:', err);
-      toast.error(err?.response?.data?.message || err?.message || 'Failed to delete quotation');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || err?.message || 'Failed to delete quotation');
     } finally {
       setIsDeletingQuotation(false);
     }
@@ -477,7 +479,7 @@ export function InteriorQuotationPreviewModal({
       setSideView('overview');
     } catch (err: any) {
       console.error('Failed to send quotation to vendor:', err);
-      toast.error(err?.response?.data?.message || err?.message || 'Failed to send quotation to vendor.');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || err?.message || 'Failed to send quotation to vendor.');
     } finally {
       setIsSendingVendor(false);
     }
@@ -529,7 +531,7 @@ export function InteriorQuotationPreviewModal({
       setSideView('overview');
     } catch (err: any) {
       console.error('Failed to send quotation to client:', err);
-      toast.error(err?.response?.data?.message || err?.message || 'Failed to send quotation to client.');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || err?.message || 'Failed to send quotation to client.');
     } finally {
       setIsSendingClient(false);
     }
@@ -627,25 +629,29 @@ export function InteriorQuotationPreviewModal({
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={handlePrint}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors cursor-pointer shadow-2xs"
-                title="Print or Save PDF"
-              >
-                <Printer size={13} /> Print / PDF
-              </button>
-
-              {!isConverted && (
+              {canDo('crm_quotations', 'export') && (
                 <button
                   type="button"
-                  disabled={isDeletingQuotation}
-                  onClick={handleDeleteQuotation}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-rose-50 text-rose-600 hover:text-rose-700 border border-rose-200 hover:border-rose-300 transition-colors cursor-pointer shadow-2xs disabled:opacity-50"
-                  title="Delete Quotation"
+                  onClick={handlePrint}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors cursor-pointer shadow-2xs"
+                  title="Print or Save PDF"
                 >
-                  <Trash2 size={13} /> {isDeletingQuotation ? 'Deleting...' : 'Delete'}
+                  <Printer size={13} /> Print / PDF
                 </button>
+              )}
+
+              {!isConverted && (
+                canDo('crm_quotations', 'delete') && (
+                  <button
+                    type="button"
+                    disabled={isDeletingQuotation}
+                    onClick={handleDeleteQuotation}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-rose-50 text-rose-600 hover:text-rose-700 border border-rose-200 hover:border-rose-300 transition-colors cursor-pointer shadow-2xs disabled:opacity-50"
+                    title="Delete Quotation"
+                  >
+                    <Trash2 size={13} /> {isDeletingQuotation ? 'Deleting...' : 'Delete'}
+                  </button>
+                )
               )}
 
               <div className="w-px h-5 bg-slate-200 mx-1" />
@@ -933,15 +939,17 @@ export function InteriorQuotationPreviewModal({
                     {/* DANGER ZONE: DELETE QUOTATION */}
                     {!isConverted && (
                       <div className="pt-1">
-                        <button
-                          type="button"
-                          disabled={isDeletingQuotation}
-                          onClick={handleDeleteQuotation}
-                          className="w-full py-2 px-3 rounded-xl text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 hover:border-rose-300 flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
-                        >
-                          <Trash2 size={13} />
-                          <span>{isDeletingQuotation ? 'Deleting Quotation...' : 'Delete This Quotation'}</span>
-                        </button>
+                        {canDo('crm_quotations', 'delete') && (
+                          <button
+                            type="button"
+                            disabled={isDeletingQuotation}
+                            onClick={handleDeleteQuotation}
+                            className="w-full py-2 px-3 rounded-xl text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 hover:border-rose-300 flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                          >
+                            <Trash2 size={13} />
+                            <span>{isDeletingQuotation ? 'Deleting Quotation...' : 'Delete This Quotation'}</span>
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1124,21 +1132,23 @@ export function InteriorQuotationPreviewModal({
 
                       {/* Action Button */}
                       <div className="pt-3 border-t border-slate-200">
-                        <button
-                          type="button"
-                          disabled={isSendingVendor || (!isManualVendor && !selectedVendorId) || (isManualVendor && !manualVendorEmail)}
-                          onClick={handleSendToVendor}
-                          className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 active:scale-98"
-                        >
-                          <Send size={13} />
-                          <span>
-                            {isSendingVendor
-                              ? 'Dispatching to Vendor...'
-                              : selectedVendorId && sentVendorIds.has(selectedVendorId)
-                              ? 'Resend Quotation to Vendor'
-                              : 'Send Quotation to Vendor'}
-                          </span>
-                        </button>
+                        {canDo('crm_quotations', 'update') && (
+                          <button
+                            type="button"
+                            disabled={isSendingVendor || (!isManualVendor && !selectedVendorId) || (isManualVendor && !manualVendorEmail)}
+                            onClick={handleSendToVendor}
+                            className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 active:scale-98"
+                          >
+                            <Send size={13} />
+                            <span>
+                              {isSendingVendor
+                                ? 'Dispatching to Vendor...'
+                                : selectedVendorId && sentVendorIds.has(selectedVendorId)
+                                ? 'Resend Quotation to Vendor'
+                                : 'Send Quotation to Vendor'}
+                            </span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   ) : (
@@ -1199,15 +1209,17 @@ export function InteriorQuotationPreviewModal({
 
                       {/* Action Button */}
                       <div className="pt-3 border-t border-slate-200">
-                        <button
-                          type="button"
-                          disabled={isSendingClient || !clientRecipientEmail}
-                          onClick={handleSendToClient}
-                          className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 active:scale-98"
-                        >
-                          <Send size={13} />
-                          <span>{isSendingClient ? 'Sending for Client Approval...' : 'Send for Client Approval'}</span>
-                        </button>
+                        {canDo('crm_quotations', 'update') && (
+                          <button
+                            type="button"
+                            disabled={isSendingClient || !clientRecipientEmail}
+                            onClick={handleSendToClient}
+                            className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 active:scale-98"
+                          >
+                            <Send size={13} />
+                            <span>{isSendingClient ? 'Sending for Client Approval...' : 'Send for Client Approval'}</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}

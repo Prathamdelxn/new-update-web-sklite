@@ -37,6 +37,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { useCurrency } from '@/hooks/useCurrency';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 
 interface POItemInput {
   name: string;
@@ -51,6 +52,7 @@ interface InteriorProcurementViewProps {
 
 export default function InteriorProcurementView({ projectId }: InteriorProcurementViewProps) {
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
   const { confirm } = useConfirm();
   const { currencySymbol, formatExactCurrency } = useCurrency();
   const queryClient = useQueryClient();
@@ -512,9 +514,9 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       }
       toast.success('PO Details saved successfully');
       invalidateProcurementData();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save PO details', err);
-      toast.error('Failed to save details');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to save details');
     } finally {
       setUpdatingPo(false);
     }
@@ -665,29 +667,35 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
           {activeTab === 'procurement' ? (
             <>
               {activePipeline === 'requested' && (
-                <Button onClick={() => setIsAddPoOpen(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Request Material
-                </Button>
+                canDo('procurement', 'create') && (
+                  <Button onClick={() => setIsAddPoOpen(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Request Material
+                  </Button>
+                )
               )}
               {activePipeline === 'pending' && (
-                <Button onClick={() => setIsAddPoOpen(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create PO
-                </Button>
+                canDo('procurement', 'create') && (
+                  <Button onClick={() => setIsAddPoOpen(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create PO
+                  </Button>
+                )
               )}
             </>
           ) : (
-            <Button onClick={() => {
-              setEditingMaterialId(null);
-              setNewMaterialName('');
-              setNewMaterialUnit('');
-              setNewMaterialStock(0);
-              setIsCreateMaterialOpen(true);
-            }}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Material
-            </Button>
+            canDo('inventory', 'create') && (
+              <Button onClick={() => {
+                setEditingMaterialId(null);
+                setNewMaterialName('');
+                setNewMaterialUnit('');
+                setNewMaterialStock(0);
+                setIsCreateMaterialOpen(true);
+              }}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Material
+              </Button>
+            )
           )}
         </div>
       </div>
@@ -818,63 +826,69 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                     </div>
 
                     {activePipeline === 'requested' && (
-                      <Button
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          try {
-                            await interiorProjectService.updatePurchaseOrder(projectId, item._id, { status: 'rfq' });
-                            setActivePipeline('rfq'); // Automatically jump to the RFQ tab
-                            setSelectedPo({ ...item, status: 'rfq' });
-                            setIsDetailOpen(true);
-                            invalidateProcurementData();
-                          } catch (err) {
-                            console.error('Failed to update status to RFQ', err);
-                            toast.error((err as any)?.response?.data?.message || 'Failed to update RFQ status');
-                          }
-                        }}
-                        className="w-full mt-2"
-                        size="sm"
-                      >
-                        Request for RFQ
-                      </Button>
+                      canDo('procurement', 'update') && (
+                        <Button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            try {
+                              await interiorProjectService.updatePurchaseOrder(projectId, item._id, { status: 'rfq' });
+                              setActivePipeline('rfq'); // Automatically jump to the RFQ tab
+                              setSelectedPo({ ...item, status: 'rfq' });
+                              setIsDetailOpen(true);
+                              invalidateProcurementData();
+                            } catch (err) {
+                              console.error('Failed to update status to RFQ', err);
+                              toast.error((err as any)?.response?.data?.message || 'Failed to update RFQ status');
+                            }
+                          }}
+                          className="w-full mt-2"
+                          size="sm"
+                        >
+                          Request for RFQ
+                        </Button>
+                      )
                     )}
                     {(activePipeline === 'partially_delivered') && (
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedPo(item);
-                          setIsGRNOpen(true);
-                        }}
-                        className="w-full mt-2 bg-emerald-500 hover:bg-emerald-600 text-white"
-                        size="sm"
-                      >
-                        Receive Material
-                      </Button>
+                      canDo('procurement', 'update') && (
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedPo(item);
+                            setIsGRNOpen(true);
+                          }}
+                          className="w-full mt-2 bg-emerald-500 hover:bg-emerald-600 text-white"
+                          size="sm"
+                        >
+                          Receive Material
+                        </Button>
+                      )
                     )}
                     {!isFullyPaid && ['approved', 'partially_delivered', 'delivered'].includes(item.status) && (
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setPayingPo(item);
-                          setPaymentForm({
-                            amount: suggestedPayment.toString(),
-                            paymentMethod: 'Bank Transfer',
-                            referenceNo: '',
-                            remarks: `Payment for PO ${item.poNumber} (${item.materialName?.replace(' ||CLOSED||', '')})`,
-                            paymentDate: new Date().toISOString().split('T')[0],
-                            projectName: '',
-                            projectLocation: '',
-                            invoiceNo: '',
-                          });
-                          setIsPayModalOpen(true);
-                        }}
-                        variant="outline"
-                        size="sm"
-                        className="w-full mt-2 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 cursor-pointer flex items-center justify-center gap-1.5"
-                      >
-                        <CreditCard className="w-3.5 h-3.5" />
-                        Pay Vendor ({currencySymbol} {suggestedPayment.toLocaleString()})
-                      </Button>
+                      canDo('financials', 'create') && (
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPayingPo(item);
+                            setPaymentForm({
+                              amount: suggestedPayment.toString(),
+                              paymentMethod: 'Bank Transfer',
+                              referenceNo: '',
+                              remarks: `Payment for PO ${item.poNumber} (${item.materialName?.replace(' ||CLOSED||', '')})`,
+                              paymentDate: new Date().toISOString().split('T')[0],
+                              projectName: '',
+                              projectLocation: '',
+                              invoiceNo: '',
+                            });
+                            setIsPayModalOpen(true);
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="w-full mt-2 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                          <CreditCard className="w-3.5 h-3.5" />
+                          Pay Vendor ({currencySymbol} {suggestedPayment.toLocaleString()})
+                        </Button>
+                      )
                     )}
                   </motion.div>
                 );
@@ -921,32 +935,38 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                               Unit: <span className="font-semibold text-[hsl(var(--foreground))]">{item.unit}</span>
                             </p>
                             <div className="flex items-center gap-1">
-                              <button onClick={() => {
-                                setEditingMaterialId(item._id);
-                                setNewMaterialName(item.productName);
-                                setNewMaterialUnit(item.unit);
-                                setNewMaterialStock(''); // Not updated on edit
-                                setIsCreateMaterialOpen(true);
-                              }} className="p-1 text-[hsl(var(--muted-foreground))] hover:text-blue-500 rounded hover:bg-blue-50 transition-colors" title="Edit Material">
-                                <Pencil className="w-3.5 h-3.5" />
-                              </button>
-                              <button onClick={() => handleDeleteMaterial(item)} className="p-1 text-[hsl(var(--muted-foreground))] hover:text-red-500 rounded hover:bg-red-50 transition-colors" title="Delete Material">
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                              {canDo('inventory', 'update') && (
+                                <button onClick={() => {
+                                  setEditingMaterialId(item._id);
+                                  setNewMaterialName(item.productName);
+                                  setNewMaterialUnit(item.unit);
+                                  setNewMaterialStock(''); // Not updated on edit
+                                  setIsCreateMaterialOpen(true);
+                                }} className="p-1 text-[hsl(var(--muted-foreground))] hover:text-blue-500 rounded hover:bg-blue-50 transition-colors" title="Edit Material">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              {canDo('inventory', 'delete') && (
+                                <button onClick={() => handleDeleteMaterial(item)} className="p-1 text-[hsl(var(--muted-foreground))] hover:text-red-500 rounded hover:bg-red-50 transition-colors" title="Delete Material">
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                             </div>
                           </div>
                         </div>
-                        <Button
-                          disabled={available <= 0}
-                          onClick={() => {
-                            setSelectedStock(item);
-                            setIsInstallOpen(true);
-                          }}
-                          size="sm"
-                          className="text-xs h-8 px-3 shrink-0"
-                        >
-                          <Wrench className="w-3 h-3 mr-1.5" /> Log Used
-                        </Button>
+                        {canDo('inventory', 'create') && (
+                          <Button
+                            disabled={available <= 0}
+                            onClick={() => {
+                              setSelectedStock(item);
+                              setIsInstallOpen(true);
+                            }}
+                            size="sm"
+                            className="text-xs h-8 px-3 shrink-0"
+                          >
+                            <Wrench className="w-3 h-3 mr-1.5" /> Log Used
+                          </Button>
+                        )}
                       </div>
 
                       <div className="grid grid-cols-3 gap-2 text-center bg-[hsl(var(--card))] p-3 rounded-lg border border-[hsl(var(--border))]">
@@ -1298,14 +1318,16 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         <span className="text-[10px] text-indigo-600/70 dark:text-indigo-400/70">
                           {isLinkActive ? 'Vendors can currently submit quotes' : 'No longer accepting quotes'}
                         </span>
-                        <Button
-                          size="sm"
-                          variant={isLinkActive ? 'destructive' : 'outline'}
-                          className="h-6 text-[10px] px-2"
-                          onClick={async () => { const newIsLinkActive = !isLinkActive; setIsLinkActive(newIsLinkActive); if (selectedPo) { try { let newMaterialName = selectedPo.materialName.replace(' ||CLOSED||', '').trim(); if (!newIsLinkActive) { newMaterialName += ' ||CLOSED||'; } await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { materialName: newMaterialName }); setSelectedPo((prev: any) => prev ? { ...prev, materialName: newMaterialName } : prev); invalidateProcurementData(); toast.success(newIsLinkActive ? 'Link reactivated' : 'Link manually expired'); } catch (err) { toast.error('Failed to update link status'); setIsLinkActive(!newIsLinkActive); } } }}
-                        >
-                          {isLinkActive ? 'Force Expire Now' : 'Reactivate Link'}
-                        </Button>
+                        {canDo('procurement', 'update') && (
+                          <Button
+                            size="sm"
+                            variant={isLinkActive ? 'destructive' : 'outline'}
+                            className="h-6 text-[10px] px-2"
+                            onClick={async () => { const newIsLinkActive = !isLinkActive; setIsLinkActive(newIsLinkActive); if (selectedPo) { try { let newMaterialName = selectedPo.materialName.replace(' ||CLOSED||', '').trim(); if (!newIsLinkActive) { newMaterialName += ' ||CLOSED||'; } await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { materialName: newMaterialName }); setSelectedPo((prev: any) => prev ? { ...prev, materialName: newMaterialName } : prev); invalidateProcurementData(); toast.success(newIsLinkActive ? 'Link reactivated' : 'Link manually expired'); } catch (err) { toast.error('Failed to update link status'); setIsLinkActive(!newIsLinkActive); } } }}
+                          >
+                            {isLinkActive ? 'Force Expire Now' : 'Reactivate Link'}
+                          </Button>
+                        )}
                       </div>
                     </div>
 
@@ -1337,37 +1359,39 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                   >
                                     WhatsApp
                                   </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-7 text-[10px] flex items-center gap-1"
-                                    onClick={async () => {
-                                      try {
-                                        await interiorApiClient.post('/procurement/send-rfq', {
-                                          poId: selectedPo._id,
-                                          vendorIds: [vendor._id],
-                                          notes: '',
-                                          rfqLink: `${window.location.origin}/rfq/${selectedPo._id}`
-                                        });
-                                        setSentEmailVendorIdsByPo(prev => {
-                                          const newSet = new Set(prev[selectedPo._id] || []);
-                                          newSet.add(vendor._id);
-                                          return { ...prev, [selectedPo._id]: newSet };
-                                        });
-                                        toast.success(`RFQ sent to ${vendor.name} via email!`);
-                                      } catch (err) {
-                                        console.error('Failed to send RFQ email', err);
-                                        toast.error(`Failed to send email to ${vendor.name}`);
-                                      }
-                                    }}
-                                    disabled={!vendor.email || sentEmailVendorIdsByPo[selectedPo._id]?.has(vendor._id)}
-                                  >
-                                    {sentEmailVendorIdsByPo[selectedPo._id]?.has(vendor._id) ? (
-                                      <><CheckCircle2 className="w-3 h-3 text-green-500" /> Sent</>
-                                    ) : (
-                                      <><Mail className="w-3 h-3" /> Email</>
-                                    )}
-                                  </Button>
+                                  {canDo('procurement', 'update') && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 text-[10px] flex items-center gap-1"
+                                      onClick={async () => {
+                                        try {
+                                          await interiorApiClient.post('/procurement/send-rfq', {
+                                            poId: selectedPo._id,
+                                            vendorIds: [vendor._id],
+                                            notes: '',
+                                            rfqLink: `${window.location.origin}/rfq/${selectedPo._id}`
+                                          });
+                                          setSentEmailVendorIdsByPo(prev => {
+                                            const newSet = new Set(prev[selectedPo._id] || []);
+                                            newSet.add(vendor._id);
+                                            return { ...prev, [selectedPo._id]: newSet };
+                                          });
+                                          toast.success(`RFQ sent to ${vendor.name} via email!`);
+                                        } catch (err) {
+                                          console.error('Failed to send RFQ email', err);
+                                          toast.error(`Failed to send email to ${vendor.name}`);
+                                        }
+                                      }}
+                                      disabled={!vendor.email || sentEmailVendorIdsByPo[selectedPo._id]?.has(vendor._id)}
+                                    >
+                                      {sentEmailVendorIdsByPo[selectedPo._id]?.has(vendor._id) ? (
+                                        <><CheckCircle2 className="w-3 h-3 text-green-500" /> Sent</>
+                                      ) : (
+                                        <><Mail className="w-3 h-3" /> Email</>
+                                      )}
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
                             );
@@ -1528,19 +1552,21 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                         </div>
                                       )}
 
-                                      <Button
-                                        size="sm"
-                                        className={`w-full text-xs font-bold ${isLowest ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 shadow-lg' : ''}`}
-                                        variant={isLowest ? 'default' : 'outline'}
-                                        disabled={updatingPo}
-                                        onClick={() => handleUpdateVendor(quote.vendorName)}
-                                      >
-                                        {isLowest ? (
-                                          <><CheckCircle2 className="w-4 h-4 mr-2" /> Award PO to {quote.vendorName}</>
-                                        ) : (
-                                          `Award PO to ${quote.vendorName}`
-                                        )}
-                                      </Button>
+                                      {canDo('procurement', 'update') && (
+                                        <Button
+                                          size="sm"
+                                          className={`w-full text-xs font-bold ${isLowest ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 shadow-lg' : ''}`}
+                                          variant={isLowest ? 'default' : 'outline'}
+                                          disabled={updatingPo}
+                                          onClick={() => handleUpdateVendor(quote.vendorName)}
+                                        >
+                                          {isLowest ? (
+                                            <><CheckCircle2 className="w-4 h-4 mr-2" /> Award PO to {quote.vendorName}</>
+                                          ) : (
+                                            `Award PO to ${quote.vendorName}`
+                                          )}
+                                        </Button>
+                                      )}
                                     </div>
                                   </div>
                                 );
@@ -1607,7 +1633,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         <div className="relative">
                           <select
                             value={selectedPo.status}
-                            disabled={updatingPo}
+                            disabled={updatingPo || !canDo('procurement', 'update')}
                             onChange={(e) => {
                               if (e.target.value === 'delivered' || e.target.value === 'partially_delivered') {
                                 setIsGRNOpen(true);
@@ -1698,9 +1724,11 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                             )}
                           </span>
                           {!isApprovedOrLocked && (
-                            <button onClick={handleSaveRates} disabled={updatingPo} className="text-[10px] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] px-2 py-1 rounded font-bold hover:bg-[hsl(var(--primary)/0.2)] flex items-center gap-1 transition-colors">
-                              {updatingPo ? <Loader2 className="w-3 h-3 animate-spin" /> : null} Save Rates
-                            </button>
+                            canDo('procurement', 'update') && (
+                              <button onClick={handleSaveRates} disabled={updatingPo} className="text-[10px] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] px-2 py-1 rounded font-bold hover:bg-[hsl(var(--primary)/0.2)] flex items-center gap-1 transition-colors">
+                                {updatingPo ? <Loader2 className="w-3 h-3 animate-spin" /> : null} Save Rates
+                              </button>
+                            )
                           )}
                         </div>
                         <div className="border border-[hsl(var(--border))] rounded-lg divide-y divide-[hsl(var(--border))]">
@@ -1775,20 +1803,24 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
               </div>
 
               <div className="p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)] flex items-center gap-3">
-                <Button onClick={handleDeletePO} variant="outline" className="w-full text-red-500 hover:bg-red-50 hover:text-red-700 border-red-200">
-                  <Trash2 className="w-4 h-4 mr-2" /> {selectedPo.status === 'requested' ? 'Delete Request' : 'Delete PO'}
-                </Button>
-                {selectedPo.status !== 'requested' && selectedPo.status !== 'rfq' && (
-                  <Button
-                    onClick={async () => {
-                      await handleSaveRates();
-                      setIsDetailOpen(false);
-                    }}
-                    className="w-full"
-                    disabled={updatingPo}
-                  >
-                    {updatingPo ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} Submit Details
+                {canDo('procurement', 'delete') && (
+                  <Button onClick={handleDeletePO} variant="outline" className="w-full text-red-500 hover:bg-red-50 hover:text-red-700 border-red-200">
+                    <Trash2 className="w-4 h-4 mr-2" /> {selectedPo.status === 'requested' ? 'Delete Request' : 'Delete PO'}
                   </Button>
+                )}
+                {selectedPo.status !== 'requested' && selectedPo.status !== 'rfq' && (
+                  canDo('procurement', 'update') && (
+                    <Button
+                      onClick={async () => {
+                        await handleSaveRates();
+                        setIsDetailOpen(false);
+                      }}
+                      className="w-full"
+                      disabled={updatingPo}
+                    >
+                      {updatingPo ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} Submit Details
+                    </Button>
+                  )
                 )}
               </div>
             </motion.div>

@@ -42,12 +42,23 @@ interface InteriorSidebarProps {
 export function InteriorSidebar({ organizationName, collapsed, onToggleCollapse, mobileOpen, onCloseMobile }: InteriorSidebarProps) {
   const pathname = usePathname();
   const toast = useToast();
-  const { isOrgAdmin } = usePermissions();
+  const { isOrgAdmin, currentUser } = usePermissions();
+
+  // Sections the server says this user can open (GET /auth/me → navAccess)
+  const navAccess: Record<string, boolean> | undefined = currentUser?.navAccess;
+  const NAV_ACCESS_KEY: Record<string, string> = {
+    '/interior-new/crm': 'crm',
+    '/interior-new/projects': 'projects',
+    '/interior-new/vendors': 'vendors',
+    '/interior-new/users-roles': 'usersRoles',
+  };
 
   const filteredNavigation = navigation.filter((item) => {
     if (item.href === '/interior-new/audit' || item.label === 'Audit Management') {
       return isOrgAdmin;
     }
+    const key = NAV_ACCESS_KEY[item.href];
+    if (!isOrgAdmin && key && navAccess && navAccess[key] === false) return false;
     return true;
   });
 

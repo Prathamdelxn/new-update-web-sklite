@@ -563,7 +563,7 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || err.message || 'Failed to create confirmed order');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || err.message || 'Failed to create confirmed order');
     } finally {
       setIsSubmitting(false);
     }

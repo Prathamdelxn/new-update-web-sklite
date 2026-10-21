@@ -110,7 +110,7 @@ export function InteriorBoqApprovalModal({
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to approve BOQ.');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to approve BOQ.');
     } finally {
       setIsSubmitting(false);
     }
@@ -149,7 +149,7 @@ export function InteriorBoqApprovalModal({
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to reject BOQ.');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to reject BOQ.');
     } finally {
       setIsSubmitting(false);
     }

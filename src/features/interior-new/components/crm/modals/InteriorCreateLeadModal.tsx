@@ -144,7 +144,7 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({
       }
       onClose();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to create lead');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to create lead');
     } finally {
       setIsSubmitting(false);
     }

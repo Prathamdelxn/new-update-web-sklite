@@ -37,17 +37,55 @@ import { InteriorQuotationBuilderModal } from './modals/InteriorQuotationBuilder
 import { InteriorDeleteLeadModal } from './modals/InteriorDeleteLeadModal';
 import { InteriorMarkAsLostModal } from './modals/InteriorMarkAsLostModal';
 import { InteriorReopenLeadModal } from './modals/InteriorReopenLeadModal';
+import { InteriorStageLeadPickerModal } from './modals/InteriorStageLeadPickerModal';
 import { Calendar, Lightbulb, Users, MapPin, FileText, Trophy, Plus, TrendingUp } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
+// Permission module behind each tab (same keys as InteriorCrmFlowTabs), in tab order
+const TAB_MODULE: Partial<Record<InteriorCrmStage, string>> = {
+  leads: 'crm_leads',
+  follow_ups: 'crm_followups',
+  site_visits: 'crm_site_visits',
+  requirement_design: 'crm_requirements',
+  drawing: 'crm_drawings',
+  boq: 'crm_boq',
+  quotations: 'crm_quotations',
+  lost_leads: 'crm_leads',
+  won_projects: 'crm_quotations',
+};
+
+// Pipeline position of each status, to know which leads can still enter a stage
+const STATUS_STAGE_INDEX: Record<string, number> = {
+  'New Lead': 0,
+  Contacted: 1,
+  'Meeting Scheduled': 1,
+  'Under Site Visit': 2,
+  'Measurement Done': 2,
+  'Under Requirement': 3,
+  'Requirement Completed': 3,
+  'Under Drawing': 4,
+  'Design Approved': 4,
+  'Under BOQ Creation': 5,
+  'Under Quotation': 6,
+  'Quotation Pending': 6,
+  'Quotation Sent': 6,
+  Negotiation: 6,
+  'Booking Pending': 6,
+};
+
 export default function InteriorCrmView() {
   const toast = useToast();
   const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<InteriorCrmStage>('leads');
+  const [selectedTab, setActiveTab] = useState<InteriorCrmStage>('leads');
+  // Users without "Leads: View" start on the first stage they can see
+  const firstVisibleTab = (Object.keys(TAB_MODULE) as InteriorCrmStage[]).find((t) => hasPermission(TAB_MODULE[t]!, 'read'));
+  const activeTab: InteriorCrmStage =
+    !TAB_MODULE[selectedTab] || hasPermission(TAB_MODULE[selectedTab]!, 'read') ? selectedTab : firstVisibleTab ?? selectedTab;
+  const [isStagePickerOpen, setIsStagePickerOpen] = useState(false);
   const [leads, setLeads] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -267,7 +305,7 @@ export default function InteriorCrmView() {
       toast.success('Lead deleted successfully');
       fetchLeads();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to delete lead');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to delete lead');
       fetchLeads();
     } finally {
       setIsDeletingLead(false);
@@ -434,6 +472,27 @@ export default function InteriorCrmView() {
 
   const wonLeadsCount = leads.filter((l) => ['Won', 'Converted'].includes(l.status)).length;
 
+  // "Add to <stage>": bring a lead into the current stage without going through the
+  // earlier tabs (users may have Create here but no access to the previous stage)
+  const STAGE_ADD: Partial<Record<InteriorCrmStage, { label: string; index: number; open: (leadId: string) => void }>> = {
+    follow_ups: { label: 'Schedule Follow-up', index: 1, open: openFollowUpModal },
+    site_visits: { label: 'Add to Site Visits', index: 2, open: openSendToSiteVisitModal },
+    requirement_design: { label: 'Add to Requirements', index: 3, open: openSendToRequirementsModal },
+    drawing: { label: 'Add to Drawings', index: 4, open: openSendToDrawingModal },
+    boq: { label: 'Add to BOQ', index: 5, open: openSendToBoqModal },
+    quotations: { label: 'Add to Quotations', index: 6, open: openSendToQuotationsModal },
+  };
+  const stageAdd = STAGE_ADD[activeTab];
+  const canAddToStage = !!stageAdd && hasPermission(TAB_MODULE[activeTab]!, 'create');
+  const stageCandidates = stageAdd
+    ? leads.filter((l) => {
+        const idx = STATUS_STAGE_INDEX[l.status];
+        if (idx === undefined) return false; // Lost / Won / Converted
+        // Follow-ups can be scheduled for any lead still in the follow-up stage
+        return activeTab === 'follow_ups' ? idx <= stageAdd.index : idx < stageAdd.index;
+      })
+    : [];
+
   return (
     <div className="interior-os-theme p-3 sm:p-6 lg:p-8 space-y-3.5 sm:space-y-6 pb-20 max-w-full overflow-x-hidden">
 
@@ -453,6 +512,15 @@ export default function InteriorCrmView() {
           </p>
         </div>
 
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        {canAddToStage && (
+          <button
+            onClick={() => setIsStagePickerOpen(true)}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 border border-[hsl(var(--primary)/0.4)] text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)] hover:bg-[hsl(var(--primary)/0.12)] px-4 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 cursor-pointer"
+          >
+            <Plus size={15} /> {stageAdd!.label}
+          </button>
+        )}
         {hasPermission('crm_leads', 'create') && (
           <button
             onClick={() => setIsCreateModalOpen(true)}
@@ -461,7 +529,16 @@ export default function InteriorCrmView() {
             <Plus size={15} /> Add New Lead
           </button>
         )}
+        </div>
       </div>
+
+      <InteriorStageLeadPickerModal
+        isOpen={isStagePickerOpen && !!stageAdd}
+        title={stageAdd?.label ?? ''}
+        leads={stageCandidates}
+        onClose={() => setIsStagePickerOpen(false)}
+        onPick={(leadId) => stageAdd?.open(leadId)}
+      />
 
       {/* CRM Flow Tabs */}
       <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">

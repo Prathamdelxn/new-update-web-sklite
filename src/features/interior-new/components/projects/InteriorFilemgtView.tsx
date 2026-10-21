@@ -18,6 +18,7 @@ import { useToast } from '@/providers/ToastContext';
 import interiorApiClient from '@/services/interiorApi.client';
 import { formatDistanceToNow } from 'date-fns';
 import { uploadToCloudinary } from '@/lib/upload';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 
 interface InteriorFilemgtViewProps {
   projectId: string;
@@ -25,6 +26,7 @@ interface InteriorFilemgtViewProps {
 
 export default function InteriorFilemgtView({ projectId }: InteriorFilemgtViewProps) {
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -138,15 +140,19 @@ export default function InteriorFilemgtView({ projectId }: InteriorFilemgtViewPr
             onChange={handleFileUpload}
             className="hidden"
           />
-          <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-            <Upload className="w-4 h-4 mr-2" />
-            Upload File
-          </Button>
+          {canDo('filemgt', 'create') && (
+            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+              <Upload className="w-4 h-4 mr-2" />
+              Upload File
+            </Button>
+          )}
 
-          <Button onClick={() => setCreateFolderOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            New Folder
-          </Button>
+          {canDo('filemgt', 'create') && (
+            <Button onClick={() => setCreateFolderOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              New Folder
+            </Button>
+          )}
         </div>
       </div>
 
@@ -188,12 +194,16 @@ export default function InteriorFilemgtView({ projectId }: InteriorFilemgtViewPr
               </p>
             </div>
             <div className="flex justify-center gap-3 pt-2">
-              <Button size="sm" variant="outline" onClick={() => setCreateFolderOpen(true)}>
-                New Folder
-              </Button>
-              <Button size="sm" onClick={() => fileInputRef.current?.click()}>
-                Upload File
-              </Button>
+              {canDo('filemgt', 'create') && (
+                <Button size="sm" variant="outline" onClick={() => setCreateFolderOpen(true)}>
+                  New Folder
+                </Button>
+              )}
+              {canDo('filemgt', 'create') && (
+                <Button size="sm" onClick={() => fileInputRef.current?.click()}>
+                  Upload File
+                </Button>
+              )}
             </div>
           </div>
         </Card>

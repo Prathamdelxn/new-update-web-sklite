@@ -31,6 +31,7 @@ import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { downloadWprPdf, printWpr, WPRData } from '@/features/interior-new/utils/wprPdfGenerator';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 
 interface InteriorWeeklyReportsViewProps {
   projectId: string;
@@ -38,6 +39,7 @@ interface InteriorWeeklyReportsViewProps {
 
 export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyReportsViewProps) {
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
   const { confirm } = useConfirm();
 
   const [project, setProject] = useState<any>(null);
@@ -282,10 +284,12 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
           </p>
         </div>
 
-        <Button onClick={handleOpenModal} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer">
-          <Sparkles className="w-4 h-4" />
-          Generate Weekly Report
-        </Button>
+        {canDo('weekly_reports', 'create') && (
+          <Button onClick={handleOpenModal} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer">
+            <Sparkles className="w-4 h-4" />
+            Generate Weekly Report
+          </Button>
+        )}
       </div>
 
       {/* Loading & Empty State */}
@@ -303,10 +307,12 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
           <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-md mx-auto mb-6">
             Auto-aggregate this week&apos;s finished tasks, delayed milestones, identified risks, and next week plan into an official executive WPR sheet.
           </p>
-          <Button onClick={handleOpenModal} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer">
-            <Sparkles className="w-4 h-4" />
-            Generate First Weekly Report
-          </Button>
+          {canDo('weekly_reports', 'create') && (
+            <Button onClick={handleOpenModal} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer">
+              <Sparkles className="w-4 h-4" />
+              Generate First Weekly Report
+            </Button>
+          )}
         </Card>
       ) : (
         <div className="space-y-6">
@@ -344,42 +350,48 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
 
                   {/* Actions */}
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePrint(report)}
-                      className="gap-1.5 text-xs h-8 cursor-pointer"
-                    >
-                      <Printer className="w-3.5 h-3.5" />
-                      Print
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => handleDownloadPdf(report)}
-                      disabled={downloadingId === report._id}
-                      className="gap-1.5 text-xs h-8 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
-                    >
-                      {downloadingId === report._id ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <Download className="w-3.5 h-3.5" />
-                      )}
-                      <span>Export PDF</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteReport(report)}
-                      disabled={deletingId === report._id}
-                      className="text-xs h-8 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 cursor-pointer"
-                      title="Delete Report"
-                    >
-                      {deletingId === report._id ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <Trash2 className="w-3.5 h-3.5" />
-                      )}
-                    </Button>
+                    {canDo('weekly_reports', 'export') && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePrint(report)}
+                        className="gap-1.5 text-xs h-8 cursor-pointer"
+                      >
+                        <Printer className="w-3.5 h-3.5" />
+                        Print
+                      </Button>
+                    )}
+                    {canDo('weekly_reports', 'export') && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleDownloadPdf(report)}
+                        disabled={downloadingId === report._id}
+                        className="gap-1.5 text-xs h-8 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
+                      >
+                        {downloadingId === report._id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Download className="w-3.5 h-3.5" />
+                        )}
+                        <span>Export PDF</span>
+                      </Button>
+                    )}
+                    {canDo('weekly_reports', 'delete') && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteReport(report)}
+                        disabled={deletingId === report._id}
+                        className="text-xs h-8 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 cursor-pointer"
+                        title="Delete Report"
+                      >
+                        {deletingId === report._id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </div>
 

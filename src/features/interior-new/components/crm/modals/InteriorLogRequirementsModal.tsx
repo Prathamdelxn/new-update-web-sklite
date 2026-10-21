@@ -304,7 +304,7 @@ export const InteriorLogRequirementsModal = ({
       onClose();
     } catch (error: any) {
       console.error('Failed to save requirements:', error);
-      toast.error(error?.response?.data?.message || error?.message || 'Failed to save requirements');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || error?.message || 'Failed to save requirements');
     } finally {
       setIsSubmitting(false);
     }

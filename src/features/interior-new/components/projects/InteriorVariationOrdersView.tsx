@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
 import { useCurrency } from '@/hooks/useCurrency';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 
 interface InteriorVariationOrdersViewProps {
   projectId: string;
@@ -32,6 +33,7 @@ interface InteriorVariationOrdersViewProps {
 
 export default function InteriorVariationOrdersView({ projectId }: InteriorVariationOrdersViewProps) {
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
   const { currencySymbol, formatExactCurrency } = useCurrency();
 
   const [variationOrders, setVariationOrders] = useState<any[]>([]);
@@ -80,12 +82,19 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
   const fetchVoData = async () => {
     try {
       setLoading(true);
-      const projRes = await interiorProjectService.getProjectDetails(projectId);
+      // The budget comes from Project Config — optional, so users with only
+      // Variation Orders access still get their list
+      const [projResult, voResult] = await Promise.allSettled([
+        interiorProjectService.getProjectDetails(projectId),
+        interiorProjectService.getVariationOrders(projectId),
+      ]);
+      const projRes = projResult.status === 'fulfilled' ? projResult.value : null;
       if (projRes && projRes.success && projRes.data) {
         setProjectBudget(projRes.data.budget?.amount || 500000);
       }
+      if (voResult.status === 'rejected') throw voResult.reason;
 
-      const res = await interiorProjectService.getVariationOrders(projectId);
+      const res = voResult.value;
       let list: any[] = [];
       if (res && res.success && res.data) {
         list = res.data;
@@ -226,13 +235,15 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
             Formally approve design variations, track cost margins, and view live database synchronization updates.
           </p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary)/0.9)] shadow-lg shadow-[hsl(var(--primary)/0.25)] transition-all cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          Create Variation Order
-        </button>
+        {canDo('variation_orders', 'create') && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary)/0.9)] shadow-lg shadow-[hsl(var(--primary)/0.25)] transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            Create Variation Order
+          </button>
+        )}
       </div>
 
       {/* KPI Metrics Widgets */}
@@ -543,14 +554,16 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
               {/* Detail Footer Actions */}
               {selectedVo.status !== 'approved' && (
                 <div className="p-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.15)] flex justify-end">
-                  <button
-                    onClick={handleApproveVo}
-                    disabled={actionLoading}
-                    className="flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 cursor-pointer shadow-lg shadow-emerald-500/10 disabled:opacity-50"
-                  >
-                    {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                    Approve & Run Auto Impact Updates
-                  </button>
+                  {canDo('variation_orders', 'approve') && (
+                    <button
+                      onClick={handleApproveVo}
+                      disabled={actionLoading}
+                      className="flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 cursor-pointer shadow-lg shadow-emerald-500/10 disabled:opacity-50"
+                    >
+                      {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                      Approve & Run Auto Impact Updates
+                    </button>
+                  )}
                 </div>
               )}
             </div>
