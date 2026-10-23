@@ -34,10 +34,12 @@ import {
 } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
+import { useAuth } from '@/providers/AuthContext';
 import { parseMaxBudget } from '@/lib/utils';
 import { useCurrency } from '@/hooks/useCurrency';
 import { uploadToCloudinary } from '@/lib/upload';
 import { BoqDrawingViewerModal } from '@/components/crm/BoqDrawingViewerModal';
+import { format } from 'date-fns';
 
 export const BOQ_UNITS = [
   { value: 'SQ M', label: 'SQ M (Square Meter)' },
@@ -140,6 +142,10 @@ export function InteriorBoqBuilderModal({
   const [notes, setNotes] = useState('');
   const [sections, setSections] = useState<BoqSection[]>([]);
   const [items, setItems] = useState<BoqItem[]>([]);
+  const { user } = useAuth();
+  const currentUserName = user
+    ? user.name || (user as any).fullName || `${(user as any).firstName || ''} ${(user as any).lastName || ''}`.trim() || user.email
+    : 'Team Member';
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const isEditing =
@@ -550,7 +556,9 @@ export function InteriorBoqBuilderModal({
           items: formattedItems,
           totalAmount,
           notes,
-          updatedAt: new Date(),
+          updatedAt: new Date().toISOString(),
+          updatedBy: user?._id || user?.id,
+          updatedByName: currentUserName,
         };
       } else {
         const newVersion = (existingBoqs?.length || 0) + 1;
@@ -561,7 +569,10 @@ export function InteriorBoqBuilderModal({
           totalAmount,
           notes,
           status: 'draft',
-          createdAt: new Date(),
+          createdAt: new Date().toISOString(),
+          createdBy: user?._id || user?.id,
+          createdByName: currentUserName,
+          createdByEmail: user?.email,
         });
       }
 
@@ -575,12 +586,12 @@ export function InteriorBoqBuilderModal({
         type: 'System Update',
         status: 'Completed',
         remarks: isEditing
-          ? `BOQ Version ${sourceBoq?.version || editingBoqIndex! + 1} updated with ${sections.length} sections.`
-          : `BOQ Version ${updatedBoqs.length} added with ${sections.length} sections and ${items.length} items.`,
+          ? `BOQ Version ${sourceBoq?.version || editingBoqIndex! + 1} updated by ${currentUserName}.`
+          : `BOQ Version ${updatedBoqs.length} created by ${currentUserName} with ${sections.length} sections and ${items.length} items.`,
         completedDate: new Date(),
       });
 
-      toast.success(isEditing ? 'BOQ updated successfully!' : 'New BOQ version created successfully!');
+      toast.success(isEditing ? 'BOQ updated successfully!' : `BOQ Version ${updatedBoqs.length} created successfully!`);
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -632,10 +643,24 @@ export function InteriorBoqBuilderModal({
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5 truncate">
-                  {isReadOnly
-                    ? 'This BOQ is preserved in read-only mode.'
-                    : 'Manage multi-section groups, drawings & image attachments, specifications, units, quantities, and rates.'}
+                <p className="text-xs text-slate-500 mt-0.5 truncate flex items-center gap-1.5 flex-wrap">
+                  <span>
+                    {isReadOnly
+                      ? `Preserved in read-only mode`
+                      : isEditing
+                      ? `Editing Version ${currentVersionNumber}`
+                      : `Creating Version ${currentVersionNumber}`}
+                  </span>
+                  <span>•</span>
+                  <span>
+                    By <strong className="text-slate-800 font-semibold">{currentUserName}</strong>
+                  </span>
+                  <span>•</span>
+                  <span>
+                    {isEditing && sourceBoq?.createdAt
+                      ? `Created on ${format(new Date(sourceBoq.createdAt), 'MMM dd, yyyy')}`
+                      : `Today, ${format(new Date(), 'MMM dd, yyyy')}`}
+                  </span>
                 </p>
               </div>
             </div>

@@ -355,13 +355,15 @@ export function QuotationPreview({ lead, quotationIndex, onSuccess, onAddVersion
               </div>
             </div>
 
-            {/* Footer Notes */}
-            <div className="mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-slate-100 print:break-inside-avoid min-w-0 overflow-hidden">
-              <p className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 sm:mb-2">Terms & Conditions</p>
-              <p className="text-[11px] sm:text-xs text-slate-500 whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
-                {quote.notes || '1. Quotation is valid for 30 days.\n2. 50% advance payment required to commence work.\n3. Goods once delivered and approved will not be returned.'}
-              </p>
-            </div>
+            {/* Footer Notes (Optional Remarks) */}
+            {Boolean(quote.notes?.trim()) && (
+              <div className="mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-slate-100 print:break-inside-avoid min-w-0 overflow-hidden">
+                <p className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 sm:mb-2">Notes & Remarks</p>
+                <p className="text-[11px] sm:text-xs text-slate-500 whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
+                  {quote.notes}
+                </p>
+              </div>
+            )}
             
           </div>
         </div>

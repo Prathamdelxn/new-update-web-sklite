@@ -358,7 +358,10 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                         </div>
                         <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium pt-0.5">
                           <span className="font-bold font-mono text-slate-800">{currencySymbol} {boq.totalAmount?.toLocaleString('en-IN')}</span>
-                          <span className="text-[10px]">{new Date(boq.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                          <span className="text-[10px] font-semibold text-slate-600">{new Date(boq.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-500 pt-0.5 border-t border-slate-100/80 truncate">
+                          by <strong className="font-semibold text-slate-700">{boq.createdBy?.firstName ? `${boq.createdBy.firstName} ${boq.createdBy.lastName || ''}`.trim() : boq.createdByName || 'Estimator'}</strong>
                         </div>
                       </button>
                     );
@@ -381,14 +384,14 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                   <div className="flex items-center gap-1.5">
                     <span className="text-[hsl(var(--muted-foreground))] text-[11px]">Created By:</span>
                     <span className="font-semibold text-slate-800">
-                      {selectedBoq.createdBy?.firstName} {selectedBoq.createdBy?.lastName || 'System'}
+                      {selectedBoq.createdBy?.firstName ? `${selectedBoq.createdBy.firstName} ${selectedBoq.createdBy.lastName || ''}`.trim() : selectedBoq.createdByName || 'System'}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[hsl(var(--muted-foreground))] text-[11px]">Source:</span>
-                    <span className="font-semibold capitalize text-slate-800 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
-                      {selectedBoq.importedFrom || 'CRM Builder'}
+                    <span className="text-[hsl(var(--muted-foreground))] text-[11px]">Created On:</span>
+                    <span className="font-semibold text-slate-800">
+                      {selectedBoq.createdAt ? new Date(selectedBoq.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
                     </span>
                   </div>
 

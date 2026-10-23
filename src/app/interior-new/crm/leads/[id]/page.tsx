@@ -110,6 +110,7 @@ import { InteriorConfirmedOrderStageView } from '@/features/interior-new/compone
 import { InteriorLeadFollowUpsTab } from '@/features/interior-new/components/crm/InteriorLeadFollowUpsTab';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
+import { format } from 'date-fns';
 
 export default function Lead360View() {
   const { currencySymbol, currencyCode, formatExactCurrency, formatCurrency } = useCurrency();
@@ -3372,23 +3373,53 @@ const { hasPermission: canDo } = usePermissions();
                     ) : (
                       <div className="space-y-3">
                         {lead.boqs.length > 1 && (
-                          <div className="flex items-center justify-between gap-2 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-2 sm:p-2.5">
-                            <span className="text-xs font-bold text-[hsl(var(--muted-foreground))]">Versions:</span>
-                            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
-                              {lead.boqs.map((q: any, idx: number) => (
-                                <button
-                                  key={idx}
-                                  onClick={() => setActiveBoqIndex(idx)}
-                                  className={cn(
-                                    "px-2.5 py-1 rounded text-xs font-bold transition-all whitespace-nowrap cursor-pointer",
-                                    activeBoqIndex === idx 
-                                      ? "bg-indigo-600 text-white" 
-                                      : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))]"
-                                  )}
-                                >
-                                  Version {q.version || idx + 1}
-                                </button>
-                              ))}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-3 shadow-2xs">
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className="text-xs font-extrabold text-[hsl(var(--foreground))]">BOQ Versions ({lead.boqs.length}):</span>
+                            </div>
+                            <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin pb-1">
+                              {lead.boqs.map((q: any, idx: number) => {
+                                const isCurrent = activeBoqIndex === idx;
+                                const createdDateStr = q.createdAt
+                                  ? format(new Date(q.createdAt), 'MMM dd, yyyy')
+                                  : null;
+                                const creatorName =
+                                  q.createdByName ||
+                                  (q.createdBy?.firstName ? `${q.createdBy.firstName} ${q.createdBy.lastName || ''}`.trim() : null) ||
+                                  null;
+
+                                return (
+                                  <button
+                                    key={idx}
+                                    onClick={() => setActiveBoqIndex(idx)}
+                                    className={cn(
+                                      "px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 border text-left",
+                                      isCurrent
+                                        ? "bg-indigo-600 text-white border-indigo-700 shadow-xs ring-1 ring-indigo-500/30"
+                                        : "bg-[hsl(var(--card))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] border-[hsl(var(--border))]"
+                                    )}
+                                  >
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-extrabold">v{q.version || idx + 1}</span>
+                                      <span className={cn(
+                                        "text-[9px] uppercase px-1.5 py-0.2 rounded font-bold",
+                                        isCurrent ? "bg-white/20 text-white" : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]"
+                                      )}>
+                                        {q.status || 'Draft'}
+                                      </span>
+                                    </div>
+                                    {(createdDateStr || creatorName) && (
+                                      <span className={cn(
+                                        "text-[10px] flex items-center gap-1 opacity-90",
+                                        isCurrent ? "text-indigo-100" : "text-[hsl(var(--muted-foreground))]"
+                                      )}>
+                                        {createdDateStr && <span>• {createdDateStr}</span>}
+                                        {creatorName && <span>by <strong>{creatorName}</strong></span>}
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
                             </div>
                           </div>
                         )}

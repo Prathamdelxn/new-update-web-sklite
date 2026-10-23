@@ -6,7 +6,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Calendar, Plus, Loader2, Target, Flag, X,
+  Calendar, Loader2, Target, Flag, X,
   CheckCircle2, Circle, ChevronDown, ChevronUp,
   Trash2, LayoutGrid, List, AlignLeft, MoreVertical, Pencil,
   User, Clock, MessageSquare, ChevronRight, Camera, Image as ImageIcon, FileText, ShieldAlert
@@ -525,14 +525,6 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
               <FileText className="w-3.5 h-3.5" /><span>Import XER</span>
             </button>
           )}
-          {canCreate && (
-            <button
-              onClick={openCreateModal}
-              className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs"
-            >
-              <Plus className="w-3.5 h-3.5" /><span>New Milestone</span>
-            </button>
-          )}
         </div>
       </div>
 
@@ -652,11 +644,6 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                     </button>
 
                     <div className="flex items-center space-x-1.5">
-                      {canUpdate && (
-                        <button onClick={() => openEditModal(milestone)} className="p-1.5 rounded-lg text-slate-400 hover:text-gray-900 hover:bg-gray-100 transition-all border border-gray-200 bg-white">
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                      )}
                       {canDelete && (
                         <button onClick={() => handleDelete(milestone._id, milestone.name)} className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all border border-gray-200 bg-white">
                           <Trash2 className="w-3.5 h-3.5" />
@@ -781,15 +768,6 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                         </td> */}
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end space-x-1">
-                            {canUpdate && (
-                              <button
-                                onClick={() => openEditModal(milestone)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-gray-900 hover:bg-gray-100 transition-all"
-                                title="Edit Milestone"
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </button>
-                            )}
                             {canDelete && (
                               <button
                                 onClick={() => handleDelete(milestone._id, milestone.name)}
@@ -1253,18 +1231,6 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
             style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 50 }}
             className="w-36 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
           >
-            {canUpdate && (
-              <button
-                onClick={() => {
-                  const ms = milestones.find(m => m._id === milestoneMenuId);
-                  if (ms) openEditModal(ms);
-                  setMilestoneMenuId(null); setMenuPos(null);
-                }}
-                className="w-full px-4 py-2.5 text-left text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2"
-              >
-                <Pencil className="w-3.5 h-3.5" /><span>Edit</span>
-              </button>
-            )}
             {canDelete && (
               <button
                 onClick={() => {

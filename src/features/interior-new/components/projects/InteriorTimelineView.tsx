@@ -16,6 +16,8 @@ import {
   User,
   Maximize2,
   Minimize2,
+  Check,
+  Flag,
 } from 'lucide-react';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { Card } from '@/components/interior/ui';
@@ -135,6 +137,58 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
     setExpandedWbs(new Set());
   };
 
+  // Helper to extract actual completion date
+  const getTaskCompletedDate = (task: any): Date | null => {
+    if (normalizeStatus(task.status) !== 'completed') return null;
+    const raw =
+      task.completedAt ||
+      task.completionProof?.completedAt ||
+      task.completedDate ||
+      task.updatedAt;
+    if (!raw) return null;
+    const d = new Date(raw);
+    return isValid(d) && !isNaN(d.getTime()) ? d : null;
+  };
+
+  // Quick toggle task completion directly from Timeline & Gantt
+  const handleToggleTaskStatus = async (task: any) => {
+    const isCurrentlyCompleted = normalizeStatus(task.status) === 'completed';
+    const newStatus = isCurrentlyCompleted ? 'in_progress' : 'completed';
+    const newProgress = newStatus === 'completed' ? 100 : 50;
+    const completedAt = newStatus === 'completed' ? new Date().toISOString() : null;
+
+    // Optimistic UI update
+    setTasks((prev) =>
+      prev.map((t) =>
+        (t._id === task._id || t.id === task.id)
+          ? { ...t, status: newStatus, progress: newProgress, completedAt }
+          : t
+      )
+    );
+
+    try {
+      await interiorProjectService.updateTask(projectId, task._id || task.id, {
+        status: newStatus,
+        progress: newProgress,
+        completedAt,
+      });
+      toast.success(
+        newStatus === 'completed'
+          ? `Activity completed! (${format(new Date(), 'MMM dd')})`
+          : 'Activity reopened'
+      );
+    } catch (err) {
+      console.error('Failed to update task status:', err);
+      toast.error('Failed to update activity status');
+      // Revert if error
+      setTasks((prev) =>
+        prev.map((t) =>
+          (t._id === task._id || t.id === task.id) ? task : t
+        )
+      );
+    }
+  };
+
   const DAY_WIDTH = 44; // pixels per day
 
   const { minDate, maxDate, totalDays, dates, timelineData, totalTasksCount } = useMemo(() => {
@@ -165,6 +219,7 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
     tasks.forEach((t) => {
       collectDate(t.startDate);
       collectDate(t.endDate);
+      collectDate(t.completedAt);
       collectDate(t.createdAt);
     });
 
@@ -389,7 +444,7 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                     <span>WBS Element / Activity</span>
                   </div>
                   <div className="w-[85px] text-center">Start</div>
-                  <div className="w-[85px] text-center">End</div>
+                  <div className="w-[85px] text-center" title="Planned end date and actual completion date">End / Done</div>
                 </div>
 
                 {/* Right Timeline Date Header */}
@@ -560,6 +615,8 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                             wbs.tasks.map((task: any) => {
                               const normStatus = normalizeStatus(task.status);
                               const badge = statusBadges[normStatus];
+                              const completedDate = getTaskCompletedDate(task);
+                              const isCompleted = normStatus === 'completed' && Boolean(completedDate);
 
                               const taskStart = task.startDate ? new Date(task.startDate) : null;
                               const taskEnd = task.endDate ? new Date(task.endDate) : taskStart;
@@ -572,6 +629,26 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                                 taskWidth = (differenceInDays(taskEnd, taskStart) + 1) * DAY_WIDTH;
                               }
 
+                              // Completion marking coordinates on the Gantt timeline
+                              let completedDayIndex = -1;
+                              let completedLeft = 0;
+                              let completedMarkerCenter = 0;
+                              let isCompletedVisible = false;
+                              if (isCompleted && completedDate) {
+                                completedDayIndex = differenceInDays(completedDate, minDate);
+                                completedLeft = completedDayIndex * DAY_WIDTH;
+                                completedMarkerCenter = completedLeft + DAY_WIDTH / 2;
+                                isCompletedVisible = completedDayIndex >= 0 && completedDayIndex < totalDays;
+                              }
+
+                              // Comparison with planned schedule
+                              const daysDiff =
+                                isCompleted && completedDate && taskEnd && isValid(taskEnd)
+                                  ? differenceInDays(completedDate, taskEnd)
+                                  : 0;
+                              const isEarly = daysDiff < 0;
+                              const isLate = daysDiff > 0;
+
                               const assigneeName =
                                 task.assignees && task.assignees.length > 0
                                   ? `${task.assignees[0].firstName || ''} ${task.assignees[0].lastName || ''}`.trim()
@@ -580,24 +657,39 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                               return (
                                 <div
                                   key={task._id}
-                                  className="flex h-[40px] border-b border-slate-100 hover:bg-blue-50/30 transition-colors group/taskrow"
+                                  className={cn(
+                                    'flex h-[40px] border-b border-slate-100 transition-colors group/taskrow relative',
+                                    isCompleted
+                                      ? 'border-l-4 border-l-emerald-500 bg-emerald-50/15 hover:bg-emerald-50/30'
+                                      : 'hover:bg-blue-50/30'
+                                  )}
                                 >
                                   {/* Left Cell (Task Name & Dates) */}
                                   <div className="w-[440px] shrink-0 sticky left-0 z-20 bg-white group-hover/taskrow:bg-slate-50/90 border-r border-slate-200 shadow-2xs transition-colors">
                                     <div className="flex items-center px-4 pl-10 w-full h-full">
                                       <div className="flex-1 flex items-center gap-2 overflow-hidden">
-                                        {normStatus === 'completed' ? (
-                                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                                        ) : normStatus === 'in_progress' ? (
-                                          <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                                        ) : (
-                                          <Circle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                        )}
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleToggleTaskStatus(task);
+                                          }}
+                                          className="p-0.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer group/chk"
+                                          title={isCompleted ? 'Click to reopen activity' : 'Click to mark as completed'}
+                                        >
+                                          {isCompleted ? (
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-600 fill-emerald-100 shrink-0 group-hover/chk:scale-110 transition-transform" />
+                                          ) : normStatus === 'in_progress' ? (
+                                            <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0 group-hover/chk:scale-110 transition-transform" />
+                                          ) : (
+                                            <Circle className="w-3.5 h-3.5 text-slate-400 shrink-0 group-hover/chk:text-emerald-500 group-hover/chk:scale-110 transition-transform" />
+                                          )}
+                                        </button>
 
                                         <span
                                           className={cn(
                                             'text-xs font-medium text-slate-800 truncate',
-                                            normStatus === 'completed' ? 'line-through text-slate-400' : ''
+                                            isCompleted ? 'line-through text-slate-400' : ''
                                           )}
                                           title={task.name}
                                         >
@@ -606,49 +698,178 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
 
                                         <span
                                           className={cn(
-                                            'px-1.5 py-0.2 text-[9px] font-bold rounded-full uppercase border shrink-0',
+                                            'px-1.5 py-0.2 text-[9px] font-bold rounded-full uppercase border shrink-0 inline-flex items-center gap-1',
                                             badge.bg,
                                             badge.text
                                           )}
+                                          title={
+                                            isCompleted && completedDate
+                                              ? `Completed on ${format(completedDate, 'MMMM dd, yyyy')}`
+                                              : badge.label
+                                          }
                                         >
-                                          {badge.label}
+                                          <span>{badge.label}</span>
+                                          {isCompleted && completedDate && (
+                                            <span className="font-semibold text-emerald-800 lowercase text-[8.5px]">
+                                              • {format(completedDate, 'MMM dd')}
+                                            </span>
+                                          )}
                                         </span>
                                       </div>
 
                                       <div className="w-[85px] text-center text-[10px] text-slate-500">
                                         {taskStart ? format(taskStart, 'MMM dd') : '—'}
                                       </div>
-                                      <div className="w-[85px] text-center text-[10px] text-slate-500">
-                                        {taskEnd ? format(taskEnd, 'MMM dd') : '—'}
+                                      <div className="w-[85px] text-center flex flex-col items-center justify-center">
+                                        <span
+                                          className={cn(
+                                            'text-[10px] font-medium',
+                                            isCompleted && completedDate
+                                              ? 'text-slate-400 line-through text-[9px]'
+                                              : 'text-slate-500'
+                                          )}
+                                          title={taskEnd ? `Planned: ${format(taskEnd, 'MMMM dd, yyyy')}` : undefined}
+                                        >
+                                          {taskEnd ? format(taskEnd, 'MMM dd') : '—'}
+                                        </span>
+                                        {isCompleted && completedDate && (
+                                          <span
+                                            className="text-[9px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300 inline-flex items-center gap-0.5 mt-0.5 whitespace-nowrap leading-none shadow-2xs"
+                                            title={`Completed on ${format(completedDate, 'MMMM dd, yyyy')}`}
+                                          >
+                                            ✓ {format(completedDate, 'MMM dd')}
+                                          </span>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
 
-                                  {/* Right Cell (Interactive Gantt Task Bar) */}
+                                  {/* Right Cell (Interactive Gantt Task Bar & Visual Completion Markings) */}
                                   <div
                                     className="relative bg-transparent group-hover/taskrow:bg-blue-50/20 transition-colors"
                                     style={{ width: `${totalDays * DAY_WIDTH}px` }}
                                   >
+                                    {/* 1. VISUAL MARKING: Completion Day Column Highlight Block */}
+                                    {isCompleted && isCompletedVisible && (
+                                      <div
+                                        className="absolute top-0 bottom-0 bg-emerald-500/12 border-x-2 border-dashed border-emerald-400/70 pointer-events-none z-10"
+                                        style={{
+                                          left: `${completedLeft}px`,
+                                          width: `${DAY_WIDTH}px`,
+                                        }}
+                                        title={`Activity Completed Date: ${format(completedDate!, 'MMMM dd, yyyy')}`}
+                                      />
+                                    )}
+
+                                    {/* 2. VISUAL MARKING: Vertical Completion Hairline Indicator Line */}
+                                    {isCompleted && isCompletedVisible && (
+                                      <div
+                                        className="absolute top-0 bottom-0 w-[2px] bg-emerald-500 z-20 pointer-events-none shadow-xs"
+                                        style={{
+                                          left: `${completedMarkerCenter - 1}px`,
+                                        }}
+                                      />
+                                    )}
+
+                                    {/* 3. VISUAL MARKING: Overdue Connector Line (if completed past planned deadline) */}
+                                    {isCompleted && isLate && hasDates && isCompletedVisible && (
+                                      <div
+                                        className="absolute top-1/2 -translate-y-1/2 h-0.5 border-t-2 border-dashed border-amber-500/80 z-15 pointer-events-none"
+                                        style={{
+                                          left: `${taskLeft + taskWidth}px`,
+                                          width: `${Math.max(0, completedMarkerCenter - (taskLeft + taskWidth))}px`,
+                                        }}
+                                      />
+                                    )}
+
+                                    {/* 4. GANTT TASK BAR */}
                                     {hasDates && (
                                       <div
                                         className={cn(
-                                          'absolute top-1/2 -translate-y-1/2 h-6 rounded-md shadow-xs text-white flex items-center px-2.5 text-[11px] font-medium border transition-transform hover:scale-102 hover:shadow-md cursor-pointer',
+                                          'absolute top-1/2 -translate-y-1/2 h-6 rounded-md shadow-xs text-white flex items-center px-2.5 text-[11px] font-medium border transition-transform hover:scale-101 hover:shadow-md cursor-pointer overflow-hidden',
                                           badge.barBg
                                         )}
                                         style={{
                                           left: `${Math.max(0, taskLeft)}px`,
                                           width: `${Math.max(DAY_WIDTH, taskWidth)}px`,
                                         }}
-                                        title={`${task.name} • ${badge.label} • ${taskStart ? format(taskStart, 'MMM dd') : ''} - ${taskEnd ? format(taskEnd, 'MMM dd') : ''}`}
+                                        title={`${task.name} • ${
+                                          isCompleted
+                                            ? `Completed on ${format(completedDate!, 'MMMM dd, yyyy')}${
+                                                isEarly
+                                                  ? ` (${Math.abs(daysDiff)}d early)`
+                                                  : isLate
+                                                  ? ` (${daysDiff}d overdue)`
+                                                  : ' (on schedule)'
+                                              }`
+                                            : badge.label
+                                        } • Planned: ${taskStart ? format(taskStart, 'MMM dd') : ''} - ${taskEnd ? format(taskEnd, 'MMM dd') : ''}`}
                                       >
-                                        <span className="truncate pr-1 text-[10px] font-semibold">
-                                          {task.name}
+                                        {/* If completed early, render visual demarcation notch on the bar */}
+                                        {isCompleted && isEarly && (
+                                          <div
+                                            className="absolute top-0 bottom-0 right-0 bg-emerald-950/25 border-l-2 border-white/60 border-dashed flex items-center justify-end px-1.5"
+                                            style={{
+                                              width: `${Math.min(taskWidth, Math.abs(daysDiff) * DAY_WIDTH)}px`,
+                                            }}
+                                            title={`Completed ${Math.abs(daysDiff)} day${Math.abs(daysDiff) > 1 ? 's' : ''} ahead of deadline`}
+                                          >
+                                            {Math.abs(daysDiff) * DAY_WIDTH > 36 && (
+                                              <span className="text-[8.5px] font-bold text-emerald-100/90 whitespace-nowrap">
+                                                {Math.abs(daysDiff)}d early
+                                              </span>
+                                            )}
+                                          </div>
+                                        )}
+
+                                        <span className="truncate pr-1 text-[10px] font-semibold flex items-center gap-1.5 z-10 relative">
+                                          {isCompleted && (
+                                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-100 shrink-0 stroke-[2.5]" />
+                                          )}
+                                          <span>{task.name}</span>
                                         </span>
-                                        {assigneeName && taskWidth > 120 && (
-                                          <span className="ml-auto text-[9px] bg-black/20 px-1.5 py-0.5 rounded text-white/90 truncate max-w-[90px]">
+
+                                        {assigneeName && taskWidth > 180 && (
+                                          <span className="ml-auto text-[9px] bg-black/20 px-1.5 py-0.5 rounded text-white/90 truncate max-w-[90px] z-10 relative">
                                             {assigneeName}
                                           </span>
                                         )}
+                                      </div>
+                                    )}
+
+                                    {/* 5. VISUAL MARKING: Milestone Pin / Stamp Badge at exact completion day */}
+                                    {isCompleted && isCompletedVisible && (
+                                      <div
+                                        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-30 flex items-center group/pin cursor-pointer select-none"
+                                        style={{
+                                          left: `${completedMarkerCenter}px`,
+                                        }}
+                                      >
+                                        {/* Visual Milestone Pin Flag/Badge */}
+                                        <div className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md border-2 border-white ring-2 ring-emerald-400/60 rounded-full px-2 py-0.5 transition-all group-hover/pin:scale-115">
+                                          <Check className="w-3 h-3 text-white stroke-[3] shrink-0" />
+                                          <span className="text-[9.5px] font-bold tracking-tight whitespace-nowrap">
+                                            {format(completedDate!, 'MMM dd')}
+                                          </span>
+                                        </div>
+
+                                        {/* Floating Detailed Tooltip on Hover */}
+                                        <div className="hidden group-hover/pin:flex absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 flex-col items-center pointer-events-none z-50">
+                                          <div className="bg-slate-900 text-white text-[11px] font-medium px-2.5 py-1 rounded shadow-xl whitespace-nowrap flex items-center gap-1.5 border border-slate-700">
+                                            <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block shrink-0" />
+                                            <span>
+                                              Activity completed on <strong className="text-emerald-300 font-bold">{format(completedDate!, 'MMMM dd, yyyy')}</strong>
+                                              {isEarly ? (
+                                                <span className="text-emerald-300 ml-1">({Math.abs(daysDiff)} day{Math.abs(daysDiff) > 1 ? 's' : ''} early)</span>
+                                              ) : isLate ? (
+                                                <span className="text-amber-300 ml-1">({daysDiff} day{daysDiff > 1 ? 's' : ''} late)</span>
+                                              ) : (
+                                                <span className="text-emerald-300 ml-1">(on schedule)</span>
+                                              )}
+                                            </span>
+                                          </div>
+                                          <div className="w-2 h-2 bg-slate-900 rotate-45 -mt-1 border-r border-b border-slate-700" />
+                                        </div>
                                       </div>
                                     )}
                                   </div>

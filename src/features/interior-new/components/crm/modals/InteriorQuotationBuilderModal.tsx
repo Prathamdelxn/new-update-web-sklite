@@ -33,6 +33,8 @@ import {
   CheckCheck,
   LayoutGrid,
   ListChecks,
+  Clock,
+  User,
 } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
@@ -203,7 +205,7 @@ export function InteriorQuotationBuilderModal({
         setQuotationTitle('');
         setTaxPercentage(0);
         setDiscount(0);
-        setNotes('1. 50% mobilization advance upon signing contract.\n2. 40% against work progress milestones.\n3. 10% on successful handover and snag completion.\n4. Proposal validity: 30 days from date of issue.');
+        setNotes('');
 
         // By default select all categories & items
         if (activeBoq && allBoqItems.length > 0) {
@@ -389,8 +391,8 @@ export function InteriorQuotationBuilderModal({
     if (discount > subtotal + tax) {
       return toast.error('Discount cannot exceed subtotal plus tax.');
     }
-    if (grandTotal <= 0) {
-      return toast.error('Grand total amount must be greater than zero.');
+    if (grandTotal < 0) {
+      return toast.error('Grand total amount cannot be negative.');
     }
 
     setIsSubmitting(true);
@@ -596,11 +598,18 @@ export function InteriorQuotationBuilderModal({
                     }}
                     className="w-full px-3 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-semibold text-[hsl(var(--foreground))] outline-none focus:border-indigo-500 cursor-pointer"
                   >
-                    {boqList.map((b: any, idx: number) => (
-                      <option key={idx} value={idx}>
-                        Version {b.version || idx + 1} ({b.status === 'approved' ? 'Approved' : 'Draft'}) — {currencySymbol} {(b.totalAmount || 0).toLocaleString()}
-                      </option>
-                    ))}
+                    {boqList.map((b: any, idx: number) => {
+                      const dateStr = b.createdAt
+                        ? new Date(b.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                        : '';
+                      const creatorStr = b.createdByName ? `by ${b.createdByName}` : '';
+                      const metaParts = [creatorStr, dateStr].filter(Boolean).join(' • ');
+                      return (
+                        <option key={idx} value={idx}>
+                          Version {b.version || idx + 1} ({b.status === 'approved' ? 'Approved' : 'Draft'}) {metaParts ? `[${metaParts}]` : ''} — {currencySymbol} {(b.totalAmount || 0).toLocaleString()}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               )}
@@ -615,9 +624,34 @@ export function InteriorQuotationBuilderModal({
                       <Layers size={15} />
                     </span>
                     <div>
-                      <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">
-                        Select Scope from BOQ v{activeBoq.version || 1}
-                      </h4>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">
+                          Select Scope from BOQ v{activeBoq.version || 1}
+                        </h4>
+                        {(activeBoq.createdByName || activeBoq.createdAt) && (
+                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] text-[10px] text-[hsl(var(--muted-foreground))]">
+                            {activeBoq.createdByName && (
+                              <span className="inline-flex items-center gap-1 font-semibold text-[hsl(var(--foreground))]">
+                                <User size={10} className="text-indigo-500" />
+                                {activeBoq.createdByName}
+                              </span>
+                            )}
+                            {activeBoq.createdByName && activeBoq.createdAt && <span>•</span>}
+                            {activeBoq.createdAt && (
+                              <span className="inline-flex items-center gap-1">
+                                <Clock size={10} className="text-muted-foreground" />
+                                {new Date(activeBoq.createdAt).toLocaleDateString('en-IN', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
                       <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
                         {selectedItemCount} of {totalBoqItemCount} items selected ({structuredBoqSections.length} categories)
                       </p>
@@ -890,16 +924,16 @@ export function InteriorQuotationBuilderModal({
 
             {/* D. Financial Summary, Taxes, Discount & Notes */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-              {/* Left Side: Client Terms & Notes */}
+              {/* Left Side: Client Notes & Remarks */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[hsl(var(--foreground))] uppercase tracking-wider flex items-center gap-1">
-                  Payment Terms & Conditions
+                  Quotation Notes / Remarks (Optional)
                 </label>
                 <textarea
                   rows={5}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Payment milestones, timeline, advance requirements, etc."
+                  placeholder="Optional notes or remarks for this quotation..."
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs text-[hsl(var(--foreground))] focus:border-indigo-500 outline-none resize-none leading-relaxed"
                 />
               </div>

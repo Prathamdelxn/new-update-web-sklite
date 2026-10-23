@@ -6,7 +6,7 @@
 // window.confirm instead.
 
 import React, { useEffect, useState } from 'react';
-import { Milestone, Calendar, AlertTriangle, CheckCircle, Clock, Loader2, CalendarRange, Trash2, Plus, X, Pencil } from 'lucide-react';
+import { Milestone, Calendar, AlertTriangle, CheckCircle, Clock, Loader2, CalendarRange, Trash2, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { cn } from '@/lib/utils';
@@ -145,15 +145,6 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
           <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Milestones & Key Targets</h2>
           <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">Track major targets, deliverables, and timeline milestones.</p>
         </div>
-        {canDo('milestones', 'create') && (
-          <button
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-xs transition-colors"
-          >
-            <Plus size={14} />
-            <span>New Milestone</span>
-          </button>
-        )}
       </div>
 
       {loading ? (
@@ -165,7 +156,7 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
           <Milestone className="w-10 h-10 mx-auto text-slate-300 mb-3" />
           <p className="font-semibold text-slate-700 text-sm">No Milestones Found</p>
           <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-            Mark activities as &quot;Milestone Activity&quot; when creating or editing activities in the WBS tab, or click &quot;New Milestone&quot; above.
+            Mark activities as &quot;Milestone Activity&quot; when creating or editing activities in the WBS tab.
           </p>
         </Card>
       ) : (
@@ -220,17 +211,6 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
                         >
                           {isAchieved ? 'Achieved' : isDelayed ? 'Delayed' : 'Planned'}
                         </span>
-
-                        {canDo('milestones', 'update') && (
-                          <button
-                            type="button"
-                            onClick={() => openEditModal(m)}
-                            title="Edit Milestone"
-                            className="p-1 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                          >
-                            <Pencil size={13} />
-                          </button>
-                        )}
 
                         {canDo('milestones', 'delete') && (
                           <button
