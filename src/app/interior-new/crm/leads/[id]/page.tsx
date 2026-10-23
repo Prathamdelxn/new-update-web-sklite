@@ -127,6 +127,9 @@ export default function Lead360View() {
   const [isReqModalOpen, setIsReqModalOpen] = useState(false);
   const [isDesignModalOpen, setIsDesignModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareModalMode, setShareModalMode] = useState<'drawings' | 'requirements'>('drawings');
+  const [requirementsViewMode, setRequirementsViewMode] = useState<'side-by-side' | 'technical' | 'client'>('side-by-side');
+  const [isImportingClientReqs, setIsImportingClientReqs] = useState(false);
   const [selected3DFile, setSelected3DFile] = useState<any | null>(null);
   const [selectedDrawingForApproval, setSelectedDrawingForApproval] = useState<any | null>(null);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
@@ -374,7 +377,7 @@ export default function Lead360View() {
 
   const normalizedRequirements = React.useMemo(() => {
     if (!lead) return [];
-    const raw = lead.requirements || (lead as any).requirementDetails || (lead as any).clientRequirements || (lead as any).designRequirements;
+    const raw = lead.requirements || (lead as any).requirementDetails || (lead as any).designRequirements;
     if (!raw) return [];
 
     // If already an array of room objects / names
@@ -464,6 +467,176 @@ export default function Lead360View() {
 
     return [];
   }, [lead]);
+
+  const normalizedClientRequirements = React.useMemo(() => {
+    if (!lead) return [];
+    const clientReq = lead.clientRequirements;
+    if (!clientReq) return [];
+
+    const roomsList = Array.isArray(clientReq)
+      ? clientReq
+      : Array.isArray(clientReq.rooms)
+      ? clientReq.rooms
+      : clientReq.items || clientReq.spaces || [];
+
+    if (!Array.isArray(roomsList) || roomsList.length === 0) {
+      if (typeof clientReq === 'object' && (clientReq.overallStyle || clientReq.generalNotes || clientReq.estimatedBudget)) {
+        return [{
+          roomName: 'General Client Wishlist',
+          interiorType: lead.propertyType || 'Residential',
+          designStyle: clientReq.overallStyle || '',
+          theme: clientReq.overallStyle || '',
+          description: clientReq.generalNotes || '',
+          budget: clientReq.estimatedBudget || '',
+          furnitureRequirements: '',
+          storage: '',
+          lightingRequirements: '',
+          colours: '',
+        }];
+      }
+      return [];
+    }
+
+    return roomsList.map((r: any, idx: number) => {
+      if (typeof r === 'string') {
+        return {
+          roomName: r,
+          interiorType: lead.propertyType || 'Residential',
+          designStyle: clientReq.overallStyle || '',
+          theme: clientReq.overallStyle || '',
+          description: '',
+          furnitureRequirements: '',
+          storage: '',
+          lightingRequirements: '',
+          colours: '',
+          budget: clientReq.estimatedBudget || '',
+        };
+      }
+      return {
+        ...r,
+        roomName: r.name || r.roomName || r.room || `Space ${idx + 1}`,
+        interiorType: r.type || r.interiorType || lead.propertyType || 'Residential',
+        designStyle: r.style || r.designStyle || clientReq.overallStyle || '',
+        theme: r.style || r.theme || clientReq.overallStyle || '',
+        description: r.notes || r.description || r.remarks || '',
+        furnitureRequirements: Array.isArray(r.furniture) ? r.furniture.join(', ') : (r.furniture || r.furnitureRequirements || ''),
+        storage: r.storage || r.storageRequirements || '',
+        lightingRequirements: r.lighting || r.lightingRequirements || '',
+        colours: r.colors || r.colours || '',
+        budget: r.budget || clientReq.estimatedBudget || '',
+      };
+    });
+  }, [lead]);
+
+  const handleImportClientRequirements = async () => {
+    const targetId = (params?.id as string) || lead?._id;
+    if (!targetId || !lead?.clientRequirements) return;
+    try {
+      setIsImportingClientReqs(true);
+      const clientRooms = normalizedClientRequirements;
+      if (clientRooms.length === 0) {
+        toast.error('No client rooms available to import');
+        return;
+      }
+
+      const existingReqs = Array.isArray(lead.requirements) ? [...lead.requirements] : [];
+      const updated = [...existingReqs];
+
+      for (const cr of clientRooms) {
+        const matchIndex = updated.findIndex((er: any) =>
+          (er.roomName || er.room || er.name || '').trim().toLowerCase() === cr.roomName.trim().toLowerCase()
+        );
+        if (matchIndex >= 0) {
+          updated[matchIndex] = {
+            ...updated[matchIndex],
+            furnitureRequirements: updated[matchIndex].furnitureRequirements || cr.furnitureRequirements,
+            storage: updated[matchIndex].storage || cr.storage,
+            lightingRequirements: updated[matchIndex].lightingRequirements || cr.lightingRequirements,
+            colours: updated[matchIndex].colours || cr.colours,
+            designStyle: updated[matchIndex].designStyle || cr.designStyle,
+            description: updated[matchIndex].description
+              ? `${updated[matchIndex].description}\n[Client Note]: ${cr.description}`
+              : cr.description,
+          };
+        } else {
+          updated.push({
+            roomName: cr.roomName,
+            interiorType: cr.interiorType || lead.propertyType || 'Residential',
+            designStyle: cr.designStyle || '',
+            furnitureRequirements: cr.furnitureRequirements || '',
+            storage: cr.storage || '',
+            lightingRequirements: cr.lightingRequirements || '',
+            colours: cr.colours || '',
+            description: cr.description ? `[Client Wishlist]: ${cr.description}` : '',
+            budget: cr.budget || '',
+          });
+        }
+      }
+
+      const res = await interiorCrmService.updateCustomer(targetId, {
+        requirements: updated,
+      });
+
+      if (res.success || res.data) {
+        toast.success('Successfully imported client requirements into technical specifications!');
+        fetchData();
+      } else {
+        toast.error(res.message || 'Failed to import requirements');
+      }
+    } catch (err: any) {
+      console.error('Error importing client requirements:', err);
+      toast.error(err.response?.data?.message || err.message || 'Failed to import requirements');
+    } finally {
+      setIsImportingClientReqs(false);
+    }
+  };
+
+  const handleImportSingleRoom = async (cr: any) => {
+    const targetId = (params?.id as string) || lead?._id;
+    if (!targetId) return;
+    try {
+      setIsImportingClientReqs(true);
+      const existingReqs = Array.isArray(lead.requirements) ? [...lead.requirements] : [];
+      const updated = [...existingReqs];
+
+      const matchIndex = updated.findIndex((er: any) =>
+        (er.roomName || er.room || er.name || '').trim().toLowerCase() === cr.roomName.trim().toLowerCase()
+      );
+      if (matchIndex >= 0) {
+        updated[matchIndex] = {
+          ...updated[matchIndex],
+          furnitureRequirements: updated[matchIndex].furnitureRequirements || cr.furnitureRequirements,
+          storage: updated[matchIndex].storage || cr.storage,
+          lightingRequirements: updated[matchIndex].lightingRequirements || cr.lightingRequirements,
+          colours: updated[matchIndex].colours || cr.colours,
+          designStyle: updated[matchIndex].designStyle || cr.designStyle,
+          description: updated[matchIndex].description
+            ? `${updated[matchIndex].description}\n[Client Note]: ${cr.description}`
+            : cr.description,
+        };
+      } else {
+        updated.push({
+          roomName: cr.roomName,
+          interiorType: cr.interiorType || lead.propertyType || 'Residential',
+          designStyle: cr.designStyle || '',
+          furnitureRequirements: cr.furnitureRequirements || '',
+          storage: cr.storage || '',
+          lightingRequirements: cr.lightingRequirements || '',
+          colours: cr.colours || '',
+          description: cr.description ? `[Client Wishlist]: ${cr.description}` : '',
+          budget: cr.budget || '',
+        });
+      }
+
+      await interiorCrmService.updateCustomer(targetId, { requirements: updated });
+      toast.success(`Imported "${cr.roomName}" into technical specifications!`);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to copy room');
+    } finally {
+      setIsImportingClientReqs(false);
+    }
+  };
 
   const drawingInfo = React.useMemo(() => {
     const handoverActivity = activities.find(
@@ -1784,6 +1957,12 @@ export default function Lead360View() {
                 </div>
               ) : (() => {
                 const hasRequirements = Boolean(normalizedRequirements && normalizedRequirements.length > 0);
+                const hasClientRequirements = Boolean(normalizedClientRequirements && normalizedClientRequirements.length > 0);
+                const hasClientSubmitted = Boolean(
+                  lead.clientRequirementsSubmittedAt ||
+                  lead.clientRequirements?.submittedAt ||
+                  hasClientRequirements
+                );
                 const isReqOverdue = Boolean(
                   !hasRequirements &&
                   requirementsInfo.scheduledDate &&
@@ -1979,18 +2158,98 @@ export default function Lead360View() {
                       </div>
                     </div>
 
+                    {/* Client Share Portal Ribbon (Same as Drawing Tab) */}
+                    <div className="bg-teal-500/[0.05] border border-teal-500/20 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-teal-500/15 text-teal-600 flex items-center justify-center shrink-0 border border-teal-500/25">
+                          <Globe size={16} />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-bold text-[hsl(var(--foreground))]">Client Requirements Intake Portal</span>
+                            <span className={cn(
+                              "text-[9px] font-bold px-1.5 py-0.5 rounded border",
+                              lead.shareSettings?.isPublic
+                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                                : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                            )}>
+                              {lead.shareSettings?.isPublic ? 'Active' : 'Unpublished'}
+                            </span>
+                            {hasClientSubmitted ? (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                                <CheckCircle2 size={10} /> Client Submitted
+                              </span>
+                            ) : (
+                              <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                                Awaiting Client
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-[hsl(var(--muted-foreground))] truncate mt-0.5">
+                            {hasClientSubmitted
+                              ? `Client submitted specifications on ${new Date(lead.clientRequirements?.submittedAt || lead.clientRequirementsSubmittedAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                              : 'Share this link so the client can self-fill their room preferences, style wishlist, and budget.'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                        {lead.shareSettings?.isPublic && lead.shareSettings?.shareToken && (
+                          <a
+                            href={`/share/requirements/${lead.shareSettings.shareToken}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all"
+                          >
+                            <ExternalLink size={12} /> Preview Form
+                          </a>
+                        )}
+                        <button
+                          onClick={() => {
+                            setShareModalMode('requirements');
+                            setIsShareModalOpen(true);
+                          }}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold shadow-xs active:scale-95 transition-all cursor-pointer"
+                        >
+                          <Share2 size={12} /> {lead.shareSettings?.isPublic ? 'Share Link' : 'Generate Link'}
+                        </button>
+                        {lead.shareSettings?.isPublic && lead.shareSettings?.shareToken && (
+                          <button
+                            onClick={() => {
+                              const origin = typeof window !== 'undefined' ? window.location.origin : '';
+                              const shareUrl = `${origin}/share/requirements/${lead.shareSettings.shareToken}`;
+                              const clientName = lead.name || 'Client';
+                              const text = encodeURIComponent(
+                                `Hello ${clientName},\n\nPlease fill out your interior design requirements & room wishlist using this link:\n${shareUrl}\n\nOur design team will review your preferences and specifications right away!`
+                              );
+                              const phone = (lead.mobileNumber || '').replace(/\D/g, '');
+                              const waUrl = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+                              window.open(waUrl, '_blank');
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs active:scale-95 transition-all cursor-pointer"
+                            title="Send intake link directly to WhatsApp"
+                          >
+                            <MessageCircle size={13} /> WhatsApp
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
                     {/* Top Overview Metric Cards */}
-                    {hasRequirements && (
+                    {(hasRequirements || hasClientRequirements) && (
                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
                         <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3 flex items-center gap-2.5">
                           <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
                             <DollarSign size={16} />
                           </div>
                           <div className="overflow-hidden min-w-0">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Estimated Budget</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Budget Overview</p>
                             <p className="text-xs font-bold text-[hsl(var(--foreground))] truncate mt-0.5">
-                              {lead.budgetRange || (lead.budget ? `₹${Number(lead.budget).toLocaleString('en-IN')}` : 'Not specified')}
+                              {lead.budgetRange || (lead.budget ? `₹${Number(lead.budget).toLocaleString('en-IN')}` : lead.clientRequirements?.estimatedBudget || 'Not specified')}
                             </p>
+                            {lead.clientRequirements?.estimatedBudget && lead.budgetRange && (
+                              <p className="text-[10px] text-teal-600 truncate">Client: {lead.clientRequirements.estimatedBudget}</p>
+                            )}
                           </div>
                         </div>
 
@@ -1999,7 +2258,7 @@ export default function Lead360View() {
                             <Building size={16} />
                           </div>
                           <div className="overflow-hidden min-w-0">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Interior Type</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Interior Scope</p>
                             <p className="text-xs font-bold text-[hsl(var(--foreground))] truncate mt-0.5">
                               {normalizedRequirements[0]?.interiorType || lead.propertyType || 'Residential'}
                             </p>
@@ -2011,10 +2270,13 @@ export default function Lead360View() {
                             <Palette size={16} />
                           </div>
                           <div className="overflow-hidden min-w-0">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Primary Style</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Design Style</p>
                             <p className="text-xs font-bold text-[hsl(var(--foreground))] truncate mt-0.5">
-                              {normalizedRequirements.find((r: any) => r.designStyle)?.designStyle || normalizedRequirements[0]?.theme || 'Custom Style'}
+                              {normalizedRequirements.find((r: any) => r.designStyle)?.designStyle || lead.clientRequirements?.overallStyle || 'Custom Style'}
                             </p>
+                            {lead.clientRequirements?.overallStyle && (
+                              <p className="text-[10px] text-teal-600 truncate">Client wishlist: {lead.clientRequirements.overallStyle}</p>
+                            )}
                           </div>
                         </div>
 
@@ -2023,9 +2285,9 @@ export default function Lead360View() {
                             <Layers size={16} />
                           </div>
                           <div className="overflow-hidden min-w-0">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Configured Spaces</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Spaces Comparison</p>
                             <p className="text-xs font-bold text-[hsl(var(--foreground))] truncate mt-0.5">
-                              {normalizedRequirements.length} {normalizedRequirements.length === 1 ? 'Room / Area' : 'Rooms / Areas'}
+                              Tech: {normalizedRequirements.length} | Client: {normalizedClientRequirements.length}
                             </p>
                           </div>
                         </div>
@@ -2061,270 +2323,565 @@ export default function Lead360View() {
                       </div>
                     )}
 
-                    {/* Room by Room Cards */}
-                    {!hasRequirements ? (
-                      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-6 text-center flex flex-col items-center space-y-3">
-                        <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-600">
-                          <PenTool size={24} />
-                        </div>
-                        <div className="max-w-md space-y-0.5">
-                          <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">
-                            Ready for Detailed Requirements Logging
-                          </h3>
-                          <p className="text-[hsl(var(--muted-foreground))] text-xs">
-                            Capture room-by-room functional needs, spatial usage, MEP requirements, styles, and materials.
-                          </p>
-                        </div>
-                        {!isReadOnly && (
-                          <button 
-                            onClick={() => setIsReqModalOpen(true)} 
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                    {/* Requirements View Switcher & Action Bar */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1">
+                      <div className="flex items-center gap-1 bg-[hsl(var(--muted)/0.5)] p-1 rounded-xl border border-[hsl(var(--border))] w-fit flex-wrap">
+                        <button
+                          onClick={() => setRequirementsViewMode('side-by-side')}
+                          className={cn(
+                            "px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
+                            requirementsViewMode === 'side-by-side'
+                              ? "bg-indigo-600 text-white shadow-xs"
+                              : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                          )}
+                        >
+                          <Columns size={13} /> Side-by-Side Comparison
+                        </button>
+                        <button
+                          onClick={() => setRequirementsViewMode('technical')}
+                          className={cn(
+                            "px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
+                            requirementsViewMode === 'technical'
+                              ? "bg-emerald-600 text-white shadow-xs"
+                              : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                          )}
+                        >
+                          <PenTool size={13} /> Technical Team ({normalizedRequirements.length})
+                        </button>
+                        <button
+                          onClick={() => setRequirementsViewMode('client')}
+                          className={cn(
+                            "px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
+                            requirementsViewMode === 'client'
+                              ? "bg-teal-600 text-white shadow-xs"
+                              : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                          )}
+                        >
+                          <User size={13} /> Client Entered ({normalizedClientRequirements.length})
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {hasClientSubmitted && !isReadOnly && (
+                          <button
+                            onClick={handleImportClientRequirements}
+                            disabled={isImportingClientReqs}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-600/10 hover:bg-teal-600/20 text-teal-700 dark:text-teal-300 border border-teal-500/30 rounded-lg text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+                            title="Import and merge all client wishlist spaces into technical team specifications"
                           >
-                            <Plus size={14} /> Add Design Requirements
+                            <Sparkles size={13} className="text-teal-500" />
+                            {isImportingClientReqs ? 'Importing...' : 'Adopt Client Wishlist to Specs'}
+                          </button>
+                        )}
+                        {!isReadOnly && (
+                          <button
+                            onClick={() => setIsReqModalOpen(true)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
+                          >
+                            <Plus size={13} /> {hasRequirements ? 'Edit Technical Specs' : 'Add Technical Specs'}
                           </button>
                         )}
                       </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {normalizedRequirements.map((req: any, index: number) => {
-                          const hasFunctional = !!(req.roomUsage || req.furnitureRequirements || req.storage || req.electricalPoints || req.lightingRequirements || req.plumbingRequirements || req.circulation || req.dimensions);
-                          const hasAesthetic = !!(req.designStyle || req.theme || req.colours || req.materials || req.flooring || req.ceiling || req.wallFinishes || req.furnitureStyle);
+                    </div>
 
-                          // Find any custom extra fields not covered by standard keys
-                          const standardKeys = new Set([
-                            'roomName', 'room', 'name', 'room_name', 'roomTitle',
-                            'interiorType', 'type',
-                            'designStyle', 'style', 'theme', 'design_style',
-                            'description', 'notes', 'remarks', 'instructions', 'specialRequests', 'clientNotes',
-                            'roomUsage', 'usage', 'purpose',
-                            'furnitureRequirements', 'furniture', 'furniture_requirements', 'furnitureSpecs',
-                            'storage', 'storageRequirements', 'wardrobes',
-                            'electricalPoints', 'electrical', 'power_points', 'powerPoints',
-                            'lightingRequirements', 'lighting', 'lighting_requirements', 'lights',
-                            'plumbingRequirements', 'plumbing', 'plumbing_requirements', 'waterPoints',
-                            'circulation', 'clearance', 'traffic_flow',
-                            'colours', 'colors', 'colorPalette', 'colour_palette', 'color_palette', 'palette',
-                            'materials', 'materialSpecs', 'finishes',
-                            'flooring', 'flooringType', 'floor',
-                            'ceiling', 'falseCeiling', 'ceiling_type', 'ceilingHeight',
-                            'wallFinishes', 'walls', 'wall_finishes', 'wallDecor',
-                            'furnitureStyle', 'furnishing_style',
-                            'dimensions', 'carpetArea', 'area', 'size',
-                            'budget', 'estimatedBudget', 'cost',
-                            'timeline', 'duration',
-                            'scopeOfWork', 'scope',
-                            '_id', 'id', '__v'
-                          ]);
-
-                          const extraEntries = Object.entries(req).filter(([k, v]) => {
-                            if (standardKeys.has(k)) return false;
-                            if (v === null || v === undefined || v === '') return false;
-                            if (typeof v === 'object' && Object.keys(v).length === 0) return false;
-                            return true;
-                          });
-
-                          return (
-                            <div key={index} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 sm:p-4 space-y-3 hover:border-emerald-500/30 transition-colors">
-                              {/* Room Header */}
-                              <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[hsl(var(--border))]">
-                                <div className="flex items-center gap-2">
-                                  <span className="w-6 h-6 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                                    {index + 1}
-                                  </span>
-                                  <div>
-                                    <h3 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">{req.roomName}</h3>
-                                  </div>
-                                </div>
-
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  {req.dimensions && (
-                                    <span className="text-[10px] font-bold bg-blue-500/10 text-blue-600 border border-blue-500/20 px-2 py-0.5 rounded flex items-center gap-1">
-                                      <Maximize2 size={10} /> {req.dimensions}
-                                    </span>
-                                  )}
-                                  {req.budget && (
-                                    <span className="text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20 px-2 py-0.5 rounded flex items-center gap-1">
-                                      <DollarSign size={10} /> {req.budget}
-                                    </span>
-                                  )}
-                                  {req.interiorType && (
-                                    <span className="text-[10px] font-bold uppercase bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] px-2 py-0.5 rounded">
-                                      {req.interiorType}
-                                    </span>
-                                  )}
-                                  {req.designStyle && (
-                                    <span className="text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2 py-0.5 rounded flex items-center gap-1">
-                                      <Palette size={10} /> {req.designStyle}
-                                    </span>
-                                  )}
-                                  {req.theme && req.theme !== req.designStyle && (
-                                    <span className="text-[10px] font-bold uppercase bg-purple-500/10 text-purple-600 border border-purple-500/20 px-2 py-0.5 rounded flex items-center gap-1">
-                                      <Sparkles size={10} /> {req.theme}
-                                    </span>
-                                  )}
-                                </div>
+                    {/* SIDE-BY-SIDE OR FOCUSED VIEW CONTAINER */}
+                    <div className={cn(
+                      "grid gap-4 items-start",
+                      requirementsViewMode === 'side-by-side' ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1"
+                    )}>
+                      {/* COLUMN 1: TECHNICAL PERSON / FIELD TEAM GATHERED DATA */}
+                      {(requirementsViewMode === 'side-by-side' || requirementsViewMode === 'technical') && (
+                        <div className="space-y-3">
+                          {/* Column Header Banner */}
+                          <div className="bg-emerald-500/[0.08] border border-emerald-500/30 rounded-xl p-3 flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                                <PenTool size={15} />
                               </div>
-
-                              {/* Specific Instructions / Description */}
-                              {req.description && (
-                                <div className="bg-emerald-500/[0.04] border border-emerald-500/20 rounded-lg p-2.5">
-                                  <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 flex items-center gap-1 mb-1">
-                                    <Sparkles size={11} className="text-emerald-600" /> Room Instructions & Notes
-                                  </p>
-                                  <p className="text-xs text-[hsl(var(--foreground))] font-medium leading-relaxed whitespace-pre-wrap">
-                                    {req.description}
-                                  </p>
-                                </div>
-                              )}
-
-                              {/* 2-Col Specs: Functional & Aesthetic */}
-                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                                {/* Functional Column */}
-                                <div className="bg-[hsl(var(--muted)/0.25)] border border-[hsl(var(--border))] rounded-lg p-3 space-y-2">
-                                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5 pb-1 border-b border-[hsl(var(--border))]">
-                                    <Sliders size={12} className="text-emerald-500" /> Functional Requirements
-                                  </h4>
-                                  <div className="space-y-1.5 text-xs">
-                                    {req.roomUsage && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Room Usage</span>
-                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.roomUsage}</span>
-                                      </div>
-                                    )}
-                                    {req.furnitureRequirements && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Furniture Requirements</span>
-                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.furnitureRequirements}</span>
-                                      </div>
-                                    )}
-                                    {req.storage && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Storage & Wardrobes</span>
-                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.storage}</span>
-                                      </div>
-                                    )}
-                                    {req.electricalPoints && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-amber-500 flex items-center gap-1"><Zap size={10} /> Electrical Points</span>
-                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.electricalPoints}</span>
-                                      </div>
-                                    )}
-                                    {req.lightingRequirements && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-amber-500 flex items-center gap-1"><Sun size={10} /> Lighting</span>
-                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.lightingRequirements}</span>
-                                      </div>
-                                    )}
-                                    {req.plumbingRequirements && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-cyan-500 flex items-center gap-1"><Droplets size={10} /> Plumbing</span>
-                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.plumbingRequirements}</span>
-                                      </div>
-                                    )}
-                                    {req.circulation && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Circulation & Clearance</span>
-                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.circulation}</span>
-                                      </div>
-                                    )}
-                                    {req.dimensions && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Dimensions / Carpet Area</span>
-                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.dimensions}</span>
-                                      </div>
-                                    )}
-                                    {!hasFunctional && (
-                                      <p className="text-[11px] text-[hsl(var(--muted-foreground))] italic p-1">No functional requirements specified.</p>
-                                    )}
-                                  </div>
-                                </div>
-
-                                {/* Aesthetic Column */}
-                                <div className="bg-[hsl(var(--muted)/0.25)] border border-[hsl(var(--border))] rounded-lg p-3 space-y-2">
-                                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5 pb-1 border-b border-[hsl(var(--border))]">
-                                    <Palette size={12} className="text-purple-500" /> Aesthetic & Finishes
-                                  </h4>
-                                  <div className="space-y-1.5 text-xs">
-                                    {req.designStyle && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Design Style</span>
-                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.designStyle}</span>
-                                      </div>
-                                    )}
-                                    {req.theme && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Theme</span>
-                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.theme}</span>
-                                      </div>
-                                    )}
-                                    {req.colours && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Colours & Palette</span>
-                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.colours}</span>
-                                      </div>
-                                    )}
-                                    {req.materials && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Materials & Finishes</span>
-                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.materials}</span>
-                                      </div>
-                                    )}
-                                    {req.flooring && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Flooring</span>
-                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.flooring}</span>
-                                      </div>
-                                    )}
-                                    {req.ceiling && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Ceiling & False Ceiling</span>
-                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.ceiling}</span>
-                                      </div>
-                                    )}
-                                    {req.wallFinishes && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Wall Finishes</span>
-                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.wallFinishes}</span>
-                                      </div>
-                                    )}
-                                    {req.furnitureStyle && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Furniture Style</span>
-                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.furnitureStyle}</span>
-                                      </div>
-                                    )}
-                                    {!hasAesthetic && (
-                                      <p className="text-[11px] text-[hsl(var(--muted-foreground))] italic p-1">No aesthetic requirements specified.</p>
-                                    )}
-                                  </div>
-                                </div>
+                              <div>
+                                <h3 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">
+                                  Technical Person / Team Data
+                                </h3>
+                                <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
+                                  Gathered by {requirementsInfo.assignedName || 'Consultant / Field Staff'}
+                                </p>
                               </div>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 border border-emerald-500/20">
+                                {normalizedRequirements.length} {normalizedRequirements.length === 1 ? 'Space' : 'Spaces'}
+                              </span>
+                            </div>
+                          </div>
 
-                              {/* Additional Custom Specifications if any exist */}
-                              {extraEntries.length > 0 && (
-                                <div className="bg-[hsl(var(--muted)/0.2)] border border-[hsl(var(--border))] rounded-lg p-3 space-y-2">
-                                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5 pb-1 border-b border-[hsl(var(--border))]">
-                                    <Box size={12} className="text-indigo-500" /> Additional Specifications & Details
-                                  </h4>
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-xs">
-                                    {extraEntries.map(([k, v]) => (
-                                      <div key={k} className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">
-                                          {k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}
-                                        </span>
-                                        <span className="font-semibold text-[hsl(var(--foreground))]">
-                                          {typeof v === 'object' ? JSON.stringify(v) : String(v)}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
+                          {!hasRequirements ? (
+                            <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-6 text-center flex flex-col items-center space-y-3">
+                              <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-600">
+                                <PenTool size={20} />
+                              </div>
+                              <div className="max-w-xs space-y-1">
+                                <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">
+                                  No Technical Specifications Recorded
+                                </h4>
+                                <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
+                                  Capture room-by-room functional needs, spatial usage, MEP requirements, styles, and materials.
+                                </p>
+                              </div>
+                              {!isReadOnly && (
+                                <button
+                                  onClick={() => setIsReqModalOpen(true)}
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                                >
+                                  <Plus size={13} /> Add Technical Specs
+                                </button>
                               )}
                             </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                          ) : (
+                            <div className="space-y-3">
+                              {normalizedRequirements.map((req: any, index: number) => {
+                                const hasFunctional = !!(req.roomUsage || req.furnitureRequirements || req.storage || req.electricalPoints || req.lightingRequirements || req.plumbingRequirements || req.circulation || req.dimensions);
+                                const hasAesthetic = !!(req.designStyle || req.theme || req.colours || req.materials || req.flooring || req.ceiling || req.wallFinishes || req.furnitureStyle);
+                                const matchesClient = normalizedClientRequirements.some((c: any) =>
+                                  c.roomName && req.roomName && c.roomName.trim().toLowerCase() === req.roomName.trim().toLowerCase()
+                                );
+
+                                const standardKeys = new Set([
+                                  'roomName', 'room', 'name', 'room_name', 'roomTitle',
+                                  'interiorType', 'type',
+                                  'designStyle', 'style', 'theme', 'design_style',
+                                  'description', 'notes', 'remarks', 'instructions', 'specialRequests', 'clientNotes',
+                                  'roomUsage', 'usage', 'purpose',
+                                  'furnitureRequirements', 'furniture', 'furniture_requirements', 'furnitureSpecs',
+                                  'storage', 'storageRequirements', 'wardrobes',
+                                  'electricalPoints', 'electrical', 'power_points', 'powerPoints',
+                                  'lightingRequirements', 'lighting', 'lighting_requirements', 'lights',
+                                  'plumbingRequirements', 'plumbing', 'plumbing_requirements', 'waterPoints',
+                                  'circulation', 'clearance', 'traffic_flow',
+                                  'colours', 'colors', 'colorPalette', 'colour_palette', 'color_palette', 'palette',
+                                  'materials', 'materialSpecs', 'finishes',
+                                  'flooring', 'flooringType', 'floor',
+                                  'ceiling', 'falseCeiling', 'ceiling_type', 'ceilingHeight',
+                                  'wallFinishes', 'walls', 'wall_finishes', 'wallDecor',
+                                  'furnitureStyle', 'furnishing_style',
+                                  'dimensions', 'carpetArea', 'area', 'size',
+                                  'budget', 'estimatedBudget', 'cost',
+                                  'timeline', 'duration',
+                                  'scopeOfWork', 'scope',
+                                  '_id', 'id', '__v'
+                                ]);
+
+                                const extraEntries = Object.entries(req).filter(([k, v]) => {
+                                  if (standardKeys.has(k)) return false;
+                                  if (v === null || v === undefined || v === '') return false;
+                                  if (typeof v === 'object' && Object.keys(v).length === 0) return false;
+                                  return true;
+                                });
+
+                                return (
+                                  <div key={index} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 sm:p-4 space-y-3 hover:border-emerald-500/30 transition-colors shadow-xs">
+                                    {/* Room Header */}
+                                    <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[hsl(var(--border))]">
+                                      <div className="flex items-center gap-2">
+                                        <span className="w-6 h-6 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                                          {index + 1}
+                                        </span>
+                                        <div>
+                                          <h4 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">{req.roomName}</h4>
+                                        </div>
+                                      </div>
+
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        {matchesClient && (
+                                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20 flex items-center gap-0.5">
+                                            <CheckCircle2 size={9} /> Matches Client Wishlist
+                                          </span>
+                                        )}
+                                        {req.dimensions && (
+                                          <span className="text-[10px] font-bold bg-blue-500/10 text-blue-600 border border-blue-500/20 px-2 py-0.5 rounded flex items-center gap-1">
+                                            <Maximize2 size={10} /> {req.dimensions}
+                                          </span>
+                                        )}
+                                        {req.budget && (
+                                          <span className="text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20 px-2 py-0.5 rounded flex items-center gap-1">
+                                            <DollarSign size={10} /> {req.budget}
+                                          </span>
+                                        )}
+                                        {req.interiorType && (
+                                          <span className="text-[10px] font-bold uppercase bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] px-2 py-0.5 rounded">
+                                            {req.interiorType}
+                                          </span>
+                                        )}
+                                        {req.designStyle && (
+                                          <span className="text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2 py-0.5 rounded flex items-center gap-1">
+                                            <Palette size={10} /> {req.designStyle}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Specific Instructions / Description */}
+                                    {req.description && (
+                                      <div className="bg-emerald-500/[0.04] border border-emerald-500/20 rounded-lg p-2.5">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 flex items-center gap-1 mb-1">
+                                          <Sparkles size={11} className="text-emerald-600" /> Technical Instructions & Notes
+                                        </p>
+                                        <p className="text-xs text-[hsl(var(--foreground))] font-medium leading-relaxed whitespace-pre-wrap">
+                                          {req.description}
+                                        </p>
+                                      </div>
+                                    )}
+
+                                    {/* Specs: Functional & Aesthetic */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                                      {/* Functional Requirements */}
+                                      <div className="bg-[hsl(var(--muted)/0.25)] border border-[hsl(var(--border))] rounded-lg p-2.5 space-y-1.5">
+                                        <h5 className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1 pb-1 border-b border-[hsl(var(--border))]">
+                                          <Sliders size={11} className="text-emerald-500" /> Functional Requirements
+                                        </h5>
+                                        <div className="space-y-1 text-xs">
+                                          {req.roomUsage && (
+                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
+                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Usage</span>
+                                              <span className="font-semibold text-[hsl(var(--foreground))]">{req.roomUsage}</span>
+                                            </div>
+                                          )}
+                                          {req.furnitureRequirements && (
+                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
+                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Furniture</span>
+                                              <span className="font-semibold text-[hsl(var(--foreground))]">{req.furnitureRequirements}</span>
+                                            </div>
+                                          )}
+                                          {req.storage && (
+                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
+                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Storage & Wardrobes</span>
+                                              <span className="font-semibold text-[hsl(var(--foreground))]">{req.storage}</span>
+                                            </div>
+                                          )}
+                                          {req.electricalPoints && (
+                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
+                                              <span className="text-[9px] font-bold uppercase text-amber-500 flex items-center gap-1"><Zap size={9} /> Electrical Points</span>
+                                              <span className="font-medium text-[hsl(var(--foreground))]">{req.electricalPoints}</span>
+                                            </div>
+                                          )}
+                                          {req.lightingRequirements && (
+                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
+                                              <span className="text-[9px] font-bold uppercase text-amber-500 flex items-center gap-1"><Sun size={9} /> Lighting</span>
+                                              <span className="font-medium text-[hsl(var(--foreground))]">{req.lightingRequirements}</span>
+                                            </div>
+                                          )}
+                                          {req.plumbingRequirements && (
+                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
+                                              <span className="text-[9px] font-bold uppercase text-cyan-500 flex items-center gap-1"><Droplets size={9} /> Plumbing</span>
+                                              <span className="font-medium text-[hsl(var(--foreground))]">{req.plumbingRequirements}</span>
+                                            </div>
+                                          )}
+                                          {req.circulation && (
+                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
+                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Circulation</span>
+                                              <span className="font-medium text-[hsl(var(--foreground))]">{req.circulation}</span>
+                                            </div>
+                                          )}
+                                          {!hasFunctional && (
+                                            <p className="text-[10px] text-[hsl(var(--muted-foreground))] italic p-1">No functional specs recorded.</p>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      {/* Aesthetic & Finishes */}
+                                      <div className="bg-[hsl(var(--muted)/0.25)] border border-[hsl(var(--border))] rounded-lg p-2.5 space-y-1.5">
+                                        <h5 className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1 pb-1 border-b border-[hsl(var(--border))]">
+                                          <Palette size={11} className="text-purple-500" /> Aesthetic & Finishes
+                                        </h5>
+                                        <div className="space-y-1 text-xs">
+                                          {req.designStyle && (
+                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
+                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Design Style</span>
+                                              <span className="font-semibold text-[hsl(var(--foreground))]">{req.designStyle}</span>
+                                            </div>
+                                          )}
+                                          {req.colours && (
+                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
+                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Color Palette</span>
+                                              <span className="font-semibold text-[hsl(var(--foreground))]">{req.colours}</span>
+                                            </div>
+                                          )}
+                                          {req.materials && (
+                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
+                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Materials & Finishes</span>
+                                              <span className="font-semibold text-[hsl(var(--foreground))]">{req.materials}</span>
+                                            </div>
+                                          )}
+                                          {req.flooring && (
+                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
+                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Flooring</span>
+                                              <span className="font-medium text-[hsl(var(--foreground))]">{req.flooring}</span>
+                                            </div>
+                                          )}
+                                          {req.ceiling && (
+                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
+                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Ceiling</span>
+                                              <span className="font-medium text-[hsl(var(--foreground))]">{req.ceiling}</span>
+                                            </div>
+                                          )}
+                                          {req.wallFinishes && (
+                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
+                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Wall Finishes</span>
+                                              <span className="font-medium text-[hsl(var(--foreground))]">{req.wallFinishes}</span>
+                                            </div>
+                                          )}
+                                          {!hasAesthetic && (
+                                            <p className="text-[10px] text-[hsl(var(--muted-foreground))] italic p-1">No aesthetic specs recorded.</p>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Custom Specifications */}
+                                    {extraEntries.length > 0 && (
+                                      <div className="bg-[hsl(var(--muted)/0.2)] border border-[hsl(var(--border))] rounded-lg p-2.5 space-y-1.5">
+                                        <h5 className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1 pb-1 border-b border-[hsl(var(--border))]">
+                                          <Box size={11} className="text-indigo-500" /> Additional Specifications
+                                        </h5>
+                                        <div className="grid grid-cols-2 gap-1.5 text-xs">
+                                          {extraEntries.map(([k, v]) => (
+                                            <div key={k} className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
+                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">
+                                                {k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}
+                                              </span>
+                                              <span className="font-semibold text-[hsl(var(--foreground))] truncate block">
+                                                {typeof v === 'object' ? JSON.stringify(v) : String(v)}
+                                              </span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* COLUMN 2: CLIENT ENTERED DATA & WISHLIST */}
+                      {(requirementsViewMode === 'side-by-side' || requirementsViewMode === 'client') && (
+                        <div className="space-y-3">
+                          {/* Column Header Banner */}
+                          <div className="bg-teal-500/[0.08] border border-teal-500/30 rounded-xl p-3 flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-lg bg-teal-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                                <User size={15} />
+                              </div>
+                              <div>
+                                <h3 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">
+                                  Client Entered Data & Wishlist
+                                </h3>
+                                <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
+                                  {hasClientSubmitted
+                                    ? `Submitted on ${new Date(lead.clientRequirements?.submittedAt || lead.clientRequirementsSubmittedAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                                    : 'Client self-filled online form'}
+                                </p>
+                              </div>
+                            </div>
+                            <span className={cn(
+                              "text-[10px] font-bold px-2 py-0.5 rounded border",
+                              hasClientSubmitted
+                                ? "bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-500/25"
+                                : "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20"
+                            )}>
+                              {hasClientSubmitted
+                                ? `${normalizedClientRequirements.length} ${normalizedClientRequirements.length === 1 ? 'Space' : 'Spaces'} Submitted`
+                                : 'Pending Client'}
+                            </span>
+                          </div>
+
+                          {!hasClientSubmitted && normalizedClientRequirements.length === 0 ? (
+                            <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-6 text-center flex flex-col items-center space-y-3">
+                              <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center text-teal-600">
+                                <Globe size={20} />
+                              </div>
+                              <div className="max-w-xs space-y-1">
+                                <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">
+                                  Awaiting Client Submission
+                                </h4>
+                                <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
+                                  The client has not filled out their requirements form yet. Share the intake link with them to capture their wishlist directly.
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2 pt-1 flex-wrap justify-center">
+                                <button
+                                  onClick={() => {
+                                    setShareModalMode('requirements');
+                                    setIsShareModalOpen(true);
+                                  }}
+                                  className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs"
+                                >
+                                  <Share2 size={13} /> Share Intake Form
+                                </button>
+                                {lead.shareSettings?.isPublic && lead.shareSettings?.shareToken && (
+                                  <a
+                                    href={`/share/requirements/${lead.shareSettings.shareToken}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--card))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all flex items-center gap-1"
+                                  >
+                                    <ExternalLink size={12} /> Preview Form
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              {/* Client Overall Preferences Card */}
+                              {(lead.clientRequirements?.overallStyle || lead.clientRequirements?.estimatedBudget || lead.clientRequirements?.generalNotes || lead.clientRequirementsNotes) && (
+                                <div className="bg-teal-500/[0.04] border border-teal-500/20 rounded-xl p-3 space-y-2">
+                                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300 flex items-center gap-1 pb-1 border-b border-teal-500/20">
+                                    <Sparkles size={11} className="text-teal-600" /> Client Overall Preferences
+                                  </h4>
+                                  <div className="grid grid-cols-2 gap-2 text-xs">
+                                    {lead.clientRequirements?.overallStyle && (
+                                      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-2">
+                                        <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Preferred Style</span>
+                                        <span className="font-bold text-teal-700 dark:text-teal-300">{lead.clientRequirements.overallStyle}</span>
+                                      </div>
+                                    )}
+                                    {lead.clientRequirements?.estimatedBudget && (
+                                      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-2">
+                                        <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Stated Budget</span>
+                                        <span className="font-bold text-amber-600">{lead.clientRequirements.estimatedBudget}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  {(lead.clientRequirements?.generalNotes || lead.clientRequirementsNotes) && (
+                                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-2 text-xs">
+                                      <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block mb-0.5">Client General Notes</span>
+                                      <p className="font-medium text-[hsl(var(--foreground))] whitespace-pre-wrap">
+                                        {lead.clientRequirements?.generalNotes || lead.clientRequirementsNotes}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Client Room Wishlist Cards */}
+                              {normalizedClientRequirements.map((cr: any, idx: number) => {
+                                const matchesTech = normalizedRequirements.some((t: any) =>
+                                  t.roomName && cr.roomName && t.roomName.trim().toLowerCase() === cr.roomName.trim().toLowerCase()
+                                );
+
+                                return (
+                                  <div key={idx} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 sm:p-4 space-y-3 hover:border-teal-500/30 transition-colors shadow-xs">
+                                    {/* Client Room Header */}
+                                    <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[hsl(var(--border))]">
+                                      <div className="flex items-center gap-2">
+                                        <span className="w-6 h-6 rounded-lg bg-teal-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                                          {idx + 1}
+                                        </span>
+                                        <div>
+                                          <h4 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">{cr.roomName}</h4>
+                                        </div>
+                                      </div>
+
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        {matchesTech ? (
+                                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 flex items-center gap-1">
+                                            <CheckCircle2 size={9} /> In Technical Specs
+                                          </span>
+                                        ) : (
+                                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 flex items-center gap-1">
+                                            <Sparkles size={9} /> New Space Requested
+                                          </span>
+                                        )}
+                                        {cr.designStyle && (
+                                          <span className="text-[10px] font-bold uppercase bg-teal-500/10 text-teal-600 border border-teal-500/20 px-2 py-0.5 rounded flex items-center gap-1">
+                                            <Palette size={10} /> {cr.designStyle}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Client Room Notes & Remarks */}
+                                    {cr.description && (
+                                      <div className="bg-teal-500/[0.04] border border-teal-500/20 rounded-lg p-2.5">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300 flex items-center gap-1 mb-1">
+                                          <MessageSquare size={11} className="text-teal-600" /> Client Wishlist & Wishes
+                                        </p>
+                                        <p className="text-xs text-[hsl(var(--foreground))] font-medium leading-relaxed whitespace-pre-wrap">
+                                          {cr.description}
+                                        </p>
+                                      </div>
+                                    )}
+
+                                    {/* Client Details Grid */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                      {cr.furnitureRequirements && (
+                                        <div className="p-2 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border))] space-y-1">
+                                          <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+                                            <Armchair size={10} className="text-teal-600" /> Furniture Wishlist
+                                          </span>
+                                          <span className="font-semibold text-[hsl(var(--foreground))] block leading-tight">
+                                            {cr.furnitureRequirements}
+                                          </span>
+                                        </div>
+                                      )}
+
+                                      {cr.storage && (
+                                        <div className="p-2 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border))] space-y-1">
+                                          <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+                                            <Archive size={10} className="text-purple-500" /> Storage Preferences
+                                          </span>
+                                          <span className="font-semibold text-[hsl(var(--foreground))] block leading-tight">
+                                            {cr.storage}
+                                          </span>
+                                        </div>
+                                      )}
+
+                                      {cr.lightingRequirements && (
+                                        <div className="p-2 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border))] space-y-1">
+                                          <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+                                            <Sun size={10} className="text-amber-500" /> Lighting Mood
+                                          </span>
+                                          <span className="font-semibold text-[hsl(var(--foreground))] block leading-tight">
+                                            {cr.lightingRequirements}
+                                          </span>
+                                        </div>
+                                      )}
+
+                                      {cr.colours && (
+                                        <div className="p-2 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border))] space-y-1">
+                                          <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+                                            <Palette size={10} className="text-pink-500" /> Color Choices
+                                          </span>
+                                          <span className="font-semibold text-[hsl(var(--foreground))] block leading-tight">
+                                            {cr.colours}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Action to import single room into technical specs */}
+                                    {!isReadOnly && (
+                                      <div className="pt-1 flex items-center justify-end">
+                                        <button
+                                          onClick={() => handleImportSingleRoom(cr)}
+                                          disabled={isImportingClientReqs}
+                                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--card))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                                          title={matchesTech ? 'Update existing space in technical specs with client preferences' : 'Add this space to technical specs'}
+                                        >
+                                          <Plus size={12} className="text-teal-600" />
+                                          {matchesTech ? 'Update in Technical Specs' : 'Add to Technical Specs'}
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })()}
@@ -2481,8 +3038,11 @@ export default function Lead360View() {
                               </a>
                             )}
                             <button
-                              onClick={() => setIsShareModalOpen(true)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[11px] font-bold active:scale-95"
+                              onClick={() => {
+                                setShareModalMode('drawings');
+                                setIsShareModalOpen(true);
+                              }}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[11px] font-bold active:scale-95 cursor-pointer"
                             >
                               <Share2 size={11} /> {lead.shareSettings?.isPublic ? 'Share Link' : 'Generate Link'}
                             </button>
@@ -3543,6 +4103,7 @@ export default function Lead360View() {
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         lead={lead}
+        mode={shareModalMode}
         onUpdated={fetchData}
       />
       <InteriorDrawingApprovalModal

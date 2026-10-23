@@ -35,6 +35,7 @@ interface InteriorCrmShareModalProps {
   onClose: () => void;
   lead: any;
   onUpdated?: () => void;
+  mode?: 'drawings' | 'requirements';
 }
 
 export function InteriorCrmShareModal({
@@ -42,6 +43,7 @@ export function InteriorCrmShareModal({
   onClose,
   lead,
   onUpdated,
+  mode = 'drawings',
 }: InteriorCrmShareModalProps) {
   const toast = useToast();
 
@@ -93,7 +95,8 @@ export function InteriorCrmShareModal({
   const origin =
     (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_APP_URL ? process.env.NEXT_PUBLIC_APP_URL.replace(/\/+$/, '') : '') ||
     (typeof window !== 'undefined' ? window.location.origin : '');
-  const shareUrl = shareToken ? `${origin}/share/drawing/${shareToken}` : '';
+  const sharePath = mode === 'requirements' ? 'requirements' : 'drawing';
+  const shareUrl = shareToken ? `${origin}/share/${sharePath}/${shareToken}` : '';
 
   const handleGenerateOrUpdate = async (
     regenerate = false,
@@ -109,7 +112,8 @@ export function InteriorCrmShareModal({
       const res = await interiorCrmService.generateShareLink(lead._id, {
         expiresHours: targetHours,
         allowDownload: targetDownload,
-        includeRequirements: false,
+        includeRequirements: mode === 'requirements',
+        mode,
         regenerate,
       });
 
@@ -199,9 +203,13 @@ export function InteriorCrmShareModal({
   const handleWhatsAppShare = () => {
     if (!shareUrl) return;
     const clientName = lead?.name || 'Client';
-    const text = encodeURIComponent(
-      `Hello ${clientName},\n\nHere is your interior design & drawings link for review:\n${shareUrl}\n\nPlease click to view your 2D plans and 3D renders.`
-    );
+    const text = mode === 'requirements'
+      ? encodeURIComponent(
+          `Hello ${clientName},\n\nPlease fill out your interior design requirements & room wishlist using this link:\n${shareUrl}\n\nOur design team will review your preferences and specifications right away!`
+        )
+      : encodeURIComponent(
+          `Hello ${clientName},\n\nHere is your interior design & drawings link for review:\n${shareUrl}\n\nPlease click to view your 2D plans and 3D renders.`
+        );
     const phone = (lead?.mobileNumber || '').replace(/\D/g, '');
     const waUrl = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
     window.open(waUrl, '_blank');
@@ -218,6 +226,7 @@ export function InteriorCrmShareModal({
     return isStatusApproved || hasApprovedVersion;
   });
   const approvedCount = approvedDrawings.length;
+  const isClientSubmitted = !!(lead.clientRequirements?.submittedAt || lead.clientRequirementsSubmittedAt);
 
   const EXPIRATION_OPTIONS = [
     { label: '1 Hr', fullLabel: '1 Hour', val: 1 },
@@ -254,7 +263,12 @@ export function InteriorCrmShareModal({
           className="relative w-full max-w-lg bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden my-auto"
         >
           {/* Header Banner */}
-          <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 p-4 sm:p-6 text-white relative">
+          <div className={cn(
+            "p-4 sm:p-6 text-white relative",
+            mode === 'requirements'
+              ? "bg-gradient-to-r from-teal-600 via-emerald-600 to-indigo-700"
+              : "bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700"
+          )}>
             <button
               onClick={onClose}
               className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
@@ -264,27 +278,41 @@ export function InteriorCrmShareModal({
 
             <div className="flex items-center gap-2.5 mb-1.5">
               <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner">
-                <Share2 size={18} className="text-white" />
+                {mode === 'requirements' ? <FileText size={18} className="text-white" /> : <Share2 size={18} className="text-white" />}
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-black tracking-tight">Share Drawings Link</h3>
-                <p className="text-xs text-indigo-100 font-medium">Public view-only portal for client review</p>
+                <h3 className="text-base sm:text-lg font-black tracking-tight">
+                  {mode === 'requirements' ? 'Client Requirements Link' : 'Share Drawings Link'}
+                </h3>
+                <p className="text-xs text-white/80 font-medium">
+                  {mode === 'requirements'
+                    ? 'Intake form for client to self-fill wishlist & room specs'
+                    : 'Public view-only portal for client review'}
+                </p>
               </div>
             </div>
 
             <div className="mt-3 flex items-center gap-2 text-xs bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/15 w-max">
               <span className="font-bold">{lead.name}</span>
-              <span className="text-indigo-200">•</span>
-              <span className="text-indigo-200">{lead.propertyType || 'Residential'}</span>
-              <span className="text-indigo-200">•</span>
-              <span className="font-bold text-emerald-300">{approvedCount} Approved {approvedCount === 1 ? 'Drawing' : 'Drawings'}</span>
+              <span className="text-white/60">•</span>
+              <span className="text-white/80">{lead.propertyType || 'Residential'}</span>
+              <span className="text-white/60">•</span>
+              {mode === 'requirements' ? (
+                <span className={cn("font-bold", isClientSubmitted ? "text-emerald-300" : "text-amber-200")}>
+                  {isClientSubmitted ? '✓ Client Submitted' : 'Pending Client Response'}
+                </span>
+              ) : (
+                <span className="font-bold text-emerald-300">
+                  {approvedCount} Approved {approvedCount === 1 ? 'Drawing' : 'Drawings'}
+                </span>
+              )}
             </div>
           </div>
 
           {/* Body Content */}
           <div className="p-4 sm:p-6 space-y-5">
-            {/* Warning if no drawings are approved yet */}
-            {approvedCount === 0 && (
+            {/* Warning if no drawings are approved yet (only for drawings mode) */}
+            {mode === 'drawings' && approvedCount === 0 && (
               <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-start gap-2.5 text-xs text-amber-800 dark:text-amber-200">
                 <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
                 <div>
@@ -406,26 +434,28 @@ export function InteriorCrmShareModal({
                 Client Permissions & View Settings
               </h4>
 
-              {/* Allow Downloads Toggle */}
-              <label className="flex items-center justify-between p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted)/0.3)] transition-colors cursor-pointer">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <Download size={16} className="text-indigo-600 shrink-0" />
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold text-[hsl(var(--foreground))] truncate">Allow Drawing Downloads</div>
-                    <div className="text-[10px] text-[hsl(var(--muted-foreground))]">Client can download CAD files, PDF blueprints, and 3D renders</div>
+              {/* Allow Downloads Toggle (Drawings only) */}
+              {mode === 'drawings' && (
+                <label className="flex items-center justify-between p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted)/0.3)] transition-colors cursor-pointer">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Download size={16} className="text-indigo-600 shrink-0" />
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-[hsl(var(--foreground))] truncate">Allow Drawing Downloads</div>
+                      <div className="text-[10px] text-[hsl(var(--muted-foreground))]">Client can download CAD files, PDF blueprints, and 3D renders</div>
+                    </div>
                   </div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={allowDownload}
-                  onChange={(e) => {
-                    const newDownload = e.target.checked;
-                    setAllowDownload(newDownload);
-                    if (isPublic) handleGenerateOrUpdate(false, expiresHours, newDownload);
-                  }}
-                  className="rounded accent-indigo-600 w-4 h-4 cursor-pointer shrink-0 ml-2"
-                />
-              </label>
+                  <input
+                    type="checkbox"
+                    checked={allowDownload}
+                    onChange={(e) => {
+                      const newDownload = e.target.checked;
+                      setAllowDownload(newDownload);
+                      if (isPublic) handleGenerateOrUpdate(false, expiresHours, newDownload);
+                    }}
+                    className="rounded accent-indigo-600 w-4 h-4 cursor-pointer shrink-0 ml-2"
+                  />
+                </label>
+              )}
 
               {/* Expiry Selector */}
               <div className="p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] space-y-2">

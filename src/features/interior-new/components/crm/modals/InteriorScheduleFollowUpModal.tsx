@@ -68,6 +68,8 @@ export function InteriorScheduleFollowUpModal({
 
   const minDateTime = getMinDateTimeLocal();
 
+  const initialDataKey = initialData ? JSON.stringify(initialData) : '';
+
   React.useEffect(() => {
     if (isOpen) {
       if (initialData) {
@@ -95,7 +97,7 @@ export function InteriorScheduleFollowUpModal({
       }
       setErrors({});
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialDataKey]);
 
   if (!isOpen) return null;
 

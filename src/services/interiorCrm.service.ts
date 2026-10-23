@@ -33,6 +33,7 @@ export const interiorCrmService = {
       expiresDays?: number | null;
       allowDownload?: boolean;
       includeRequirements?: boolean;
+      mode?: 'drawings' | 'requirements';
       regenerate?: boolean;
     }
   ) => interiorApiClient.post(`/crm/customers/${customerId}/share`, data).then((res) => res.data),
@@ -40,6 +41,8 @@ export const interiorCrmService = {
     interiorApiClient.delete(`/crm/customers/${customerId}/share`, {}).then((res) => res.data),
   getPublicDrawingData: (token: string) =>
     interiorApiClient.get(`/public/crm/${token}`).then((res) => res.data),
+  submitClientRequirements: (token: string, data: { requirements: any[]; notes?: string; budgetRange?: string }) =>
+    interiorApiClient.post(`/public/crm/${token}/requirements`, data).then((res) => res.data),
   submitClientFeedback: (token: string, data: { drawingId?: string; action: 'client_approved' | 'client_changes_requested'; clientFeedback?: string }) =>
     interiorApiClient.post(`/public/crm/${token}/feedback`, data).then((res) => res.data),
   approveDrawing: (customerId: string, drawingId: string, data: { action: 'approve' | 'reject'; versionNumber?: number; internalNotes?: string; assignedReviewer?: string }) =>

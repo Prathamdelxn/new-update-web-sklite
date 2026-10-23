@@ -109,12 +109,14 @@ const DEFAULT_ROOM: RoomRequirement = {
   theme: '',
 };
 
+const EMPTY_REQUIREMENTS: RoomRequirement[] = [];
+
 export const InteriorLogRequirementsModal = ({
   isOpen,
   onClose,
   customerId,
   onSuccess,
-  initialRequirements = [],
+  initialRequirements = EMPTY_REQUIREMENTS,
   initialBudget = '',
   isReadOnly = false,
   currentStatus
@@ -130,6 +132,8 @@ export const InteriorLogRequirementsModal = ({
   const [requirements, setRequirements] = useState<RoomRequirement[]>([
     { ...DEFAULT_ROOM, roomName: 'Living Room' }
   ]);
+
+  const requirementsKey = initialRequirements ? JSON.stringify(initialRequirements) : '';
 
   useEffect(() => {
     if (isOpen) {
@@ -150,7 +154,7 @@ export const InteriorLogRequirementsModal = ({
       setActiveSubTab({});
       setCollapsedRooms({});
     }
-  }, [isOpen, initialRequirements, initialBudget]);
+  }, [isOpen, customerId, requirementsKey, initialBudget]);
 
   const addRoom = () => {
     setRequirements((prev) => [...prev, { ...DEFAULT_ROOM, roomName: '' }]);

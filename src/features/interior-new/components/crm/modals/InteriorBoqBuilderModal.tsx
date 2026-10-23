@@ -49,7 +49,9 @@ interface BoqBuilderModalProps {
   onSuccess: () => void;
 }
 
-export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingBoqs = [], editingBoqIndex = null, isReadOnly = false, budgetRange, onSuccess }: BoqBuilderModalProps) {
+const EMPTY_BOQS: any[] = [];
+
+export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingBoqs = EMPTY_BOQS, editingBoqIndex = null, isReadOnly = false, budgetRange, onSuccess }: BoqBuilderModalProps) {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -58,6 +60,8 @@ export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingB
 
   const isEditing = editingBoqIndex !== null && editingBoqIndex !== undefined && editingBoqIndex >= 0 && Boolean(existingBoqs && existingBoqs[editingBoqIndex]);
   const targetBoq = isEditing ? existingBoqs[editingBoqIndex!] : null;
+
+  const boqsKey = existingBoqs ? JSON.stringify(existingBoqs) : '';
 
   React.useEffect(() => {
     if (isOpen) {
@@ -92,7 +96,7 @@ export function InteriorBoqBuilderModal({ isOpen, onClose, customerId, existingB
       setNotes('');
       setItems([]);
     }
-  }, [isOpen, editingBoqIndex, existingBoqs]);
+  }, [isOpen, editingBoqIndex, boqsKey]);
 
   const updateItemField = (index: number, field: string, value: any) => {
     setItems((prev) => {

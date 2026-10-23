@@ -43,6 +43,8 @@ import { useToast } from '@/providers/ToastContext';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
+const EMPTY_ARRAY: any[] = [];
+
 export default function InteriorCrmView() {
   const toast = useToast();
   const { hasPermission } = usePermissions();
@@ -407,6 +409,56 @@ export default function InteriorCrmView() {
     setIsReopenLeadOpen(true);
   };
 
+  const actionLead = React.useMemo(() => {
+    if (!actionLeadId) return null;
+    return leads.find((l) => l._id === actionLeadId) || null;
+  }, [leads, actionLeadId]);
+
+  const siteVisitInitialData = React.useMemo(() => {
+    if (!actionLead || !['Under Site Visit', 'Measurement Done'].includes(actionLead.status)) return null;
+    const assignedId = typeof actionLead.assignedSalesExecutive === 'object' && actionLead.assignedSalesExecutive !== null
+      ? actionLead.assignedSalesExecutive._id || actionLead.assignedSalesExecutive.id
+      : actionLead.assignedSalesExecutive;
+    if (actionLead.siteVisitScheduledDate || assignedId || actionLead.remarks) {
+      return {
+        scheduledDate: actionLead.siteVisitScheduledDate,
+        assignedSalesExecutive: assignedId || '',
+        remarks: actionLead.remarks || '',
+      };
+    }
+    return null;
+  }, [actionLead]);
+
+  const requirementsInitialData = React.useMemo(() => {
+    if (!actionLead || !['Under Requirement', 'Requirement Completed'].includes(actionLead.status)) return null;
+    const assignedId = typeof actionLead.designerAssigned === 'object' && actionLead.designerAssigned !== null
+      ? actionLead.designerAssigned._id || actionLead.designerAssigned.id
+      : actionLead.designerAssigned;
+    if (assignedId || actionLead.requirementScheduledDate || actionLead.remarks) {
+      return {
+        assignedMember: assignedId || '',
+        scheduledDate: actionLead.requirementScheduledDate,
+        remarks: actionLead.remarks || '',
+      };
+    }
+    return null;
+  }, [actionLead]);
+
+  const drawingInitialData = React.useMemo(() => {
+    if (!actionLead || !['Under Drawing', 'Design Approved'].includes(actionLead.status)) return null;
+    const assignedId = typeof actionLead.designerAssigned === 'object' && actionLead.designerAssigned !== null
+      ? actionLead.designerAssigned._id || actionLead.designerAssigned.id
+      : actionLead.designerAssigned;
+    if (assignedId || actionLead.drawingScheduledDate || actionLead.remarks) {
+      return {
+        assignedDesigner: assignedId || '',
+        scheduledDate: actionLead.drawingScheduledDate,
+        remarks: actionLead.remarks || '',
+      };
+    }
+    return null;
+  }, [actionLead]);
+
   const wonLeadsCount = leads.filter((l) => ['Won', 'Converted'].includes(l.status)).length;
 
   return (
@@ -551,8 +603,8 @@ export default function InteriorCrmView() {
         customerId={actionLeadId || ''}
         onSuccess={fetchLeads}
         users={users}
-        initialMeasurements={leads.find(l => l._id === actionLeadId)?.siteMeasurements}
-        initialPhotos={leads.find(l => l._id === actionLeadId)?.sitePhotos}
+        initialMeasurements={actionLead?.siteMeasurements}
+        initialPhotos={actionLead?.sitePhotos}
       />
 
       <InteriorLogRequirementsModal
@@ -561,10 +613,10 @@ export default function InteriorCrmView() {
         customerId={actionLeadId || ''}
         onSuccess={fetchLeads}
         users={users}
-        initialRequirements={leads.find(l => l._id === actionLeadId)?.requirements || []}
-        initialBudget={leads.find(l => l._id === actionLeadId)?.budgetRange || ''}
-        currentStatus={leads.find(l => l._id === actionLeadId)?.status || ''}
-        isReadOnly={['Won', 'Converted'].includes(leads.find(l => l._id === actionLeadId)?.status || '')}
+        initialRequirements={actionLead?.requirements}
+        initialBudget={actionLead?.budgetRange || ''}
+        currentStatus={actionLead?.status || ''}
+        isReadOnly={['Won', 'Converted'].includes(actionLead?.status || '')}
       />
 
       <InteriorUploadDesignModal
@@ -572,30 +624,16 @@ export default function InteriorCrmView() {
         onClose={() => setIsUploadDesignOpen(false)}
         customerId={actionLeadId || ''}
         onSuccess={fetchLeads}
-        existingFiles={leads.find(l => l._id === actionLeadId)?.designFiles || []}
+        existingFiles={actionLead?.designFiles || EMPTY_ARRAY}
       />
 
       <InteriorSendToSiteVisitModal
         isOpen={isSendToSiteVisitOpen}
         onClose={() => setIsSendToSiteVisitOpen(false)}
         customerId={actionLeadId || ''}
-        customerName={leads.find((l) => l._id === actionLeadId)?.name}
-        currentStatus={leads.find((l) => l._id === actionLeadId)?.status}
-        initialData={(() => {
-          const l = leads.find((l) => l._id === actionLeadId);
-          if (!l || !['Under Site Visit', 'Measurement Done'].includes(l.status)) return null;
-          const assignedId = typeof l.assignedSalesExecutive === 'object' && l.assignedSalesExecutive !== null
-            ? l.assignedSalesExecutive._id || l.assignedSalesExecutive.id
-            : l.assignedSalesExecutive;
-          if (l.siteVisitScheduledDate || assignedId || l.remarks) {
-            return {
-              scheduledDate: l.siteVisitScheduledDate,
-              assignedSalesExecutive: assignedId || '',
-              remarks: l.remarks || '',
-            };
-          }
-          return null;
-        })()}
+        customerName={actionLead?.name}
+        currentStatus={actionLead?.status}
+        initialData={siteVisitInitialData}
         onSuccess={fetchLeads}
         users={users}
       />
@@ -604,23 +642,9 @@ export default function InteriorCrmView() {
         isOpen={isSendToRequirementsOpen}
         onClose={() => setIsSendToRequirementsOpen(false)}
         customerId={actionLeadId || ''}
-        customerName={leads.find((l) => l._id === actionLeadId)?.name}
-        currentStatus={leads.find((l) => l._id === actionLeadId)?.status}
-        initialData={(() => {
-          const l = leads.find((l) => l._id === actionLeadId);
-          if (!l || !['Under Requirement', 'Requirement Completed'].includes(l.status)) return null;
-          const assignedId = typeof l.designerAssigned === 'object' && l.designerAssigned !== null
-            ? l.designerAssigned._id || l.designerAssigned.id
-            : l.designerAssigned;
-          if (assignedId || l.requirementScheduledDate || l.remarks) {
-            return {
-              assignedMember: assignedId || '',
-              scheduledDate: l.requirementScheduledDate,
-              remarks: l.remarks || '',
-            };
-          }
-          return null;
-        })()}
+        customerName={actionLead?.name}
+        currentStatus={actionLead?.status}
+        initialData={requirementsInitialData}
         onSuccess={fetchLeads}
         users={users}
       />
@@ -629,23 +653,9 @@ export default function InteriorCrmView() {
         isOpen={isSendToDrawingOpen}
         onClose={() => setIsSendToDrawingOpen(false)}
         customerId={actionLeadId || ''}
-        customerName={leads.find((l) => l._id === actionLeadId)?.name}
-        currentStatus={leads.find((l) => l._id === actionLeadId)?.status}
-        initialData={(() => {
-          const l = leads.find((l) => l._id === actionLeadId);
-          if (!l || !['Under Drawing', 'Design Approved'].includes(l.status)) return null;
-          const assignedId = typeof l.designerAssigned === 'object' && l.designerAssigned !== null
-            ? l.designerAssigned._id || l.designerAssigned.id
-            : l.designerAssigned;
-          if (assignedId || l.drawingScheduledDate || l.remarks) {
-            return {
-              assignedDesigner: assignedId || '',
-              scheduledDate: l.drawingScheduledDate,
-              remarks: l.remarks || '',
-            };
-          }
-          return null;
-        })()}
+        customerName={actionLead?.name}
+        currentStatus={actionLead?.status}
+        initialData={drawingInitialData}
         onSuccess={fetchLeads}
         users={users}
       />
@@ -654,7 +664,7 @@ export default function InteriorCrmView() {
         isOpen={isSendToBoqOpen}
         onClose={() => setIsSendToBoqOpen(false)}
         customerId={actionLeadId || ''}
-        lead={leads.find(l => l._id === actionLeadId)}
+        lead={actionLead}
         onSuccess={fetchLeads}
         users={users}
       />
@@ -666,17 +676,16 @@ export default function InteriorCrmView() {
           setEditingBoqIndex(null);
         }}
         customerId={actionLeadId || ''}
-        existingBoqs={leads.find(l => l._id === actionLeadId)?.boqs || []}
+        existingBoqs={actionLead?.boqs || EMPTY_ARRAY}
         editingBoqIndex={editingBoqIndex}
         isReadOnly={Boolean(
           (() => {
-            const currentLead = leads.find(l => l._id === actionLeadId);
-            if (!currentLead) return false;
-            const hasAcceptedQuote = currentLead.quotations && currentLead.quotations.some((q: any) => q.status === 'Accepted');
-            return hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(currentLead.status || '') || Boolean(currentLead.linkedProject);
+            if (!actionLead) return false;
+            const hasAcceptedQuote = actionLead.quotations && actionLead.quotations.some((q: any) => q.status === 'Accepted');
+            return hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(actionLead.status || '') || Boolean(actionLead.linkedProject);
           })()
         )}
-        budgetRange={leads.find(l => l._id === actionLeadId)?.budgetRange || ''}
+        budgetRange={actionLead?.budgetRange || ''}
         onSuccess={fetchLeads}
       />
 
@@ -685,7 +694,7 @@ export default function InteriorCrmView() {
         onClose={() => setIsDeleteBoqOpen(false)}
         customerId={actionLeadId || ''}
         customerName={actionLeadName}
-        existingBoqs={leads.find(l => l._id === actionLeadId)?.boqs || []}
+        existingBoqs={actionLead?.boqs || EMPTY_ARRAY}
         onSuccess={fetchLeads}
       />
 
@@ -697,7 +706,7 @@ export default function InteriorCrmView() {
         }}
         customerId={actionLeadId || ''}
         customerName={actionLeadName}
-        existingBoqs={leads.find(l => l._id === actionLeadId)?.boqs || []}
+        existingBoqs={actionLead?.boqs || EMPTY_ARRAY}
         boqIndex={boqIndexForAction}
         users={users}
         onSuccess={fetchLeads}
@@ -712,8 +721,8 @@ export default function InteriorCrmView() {
         }}
         customerId={actionLeadId || ''}
         customerName={actionLeadName}
-        budgetRange={leads.find(l => l._id === actionLeadId)?.budgetRange || ''}
-        existingBoqs={leads.find(l => l._id === actionLeadId)?.boqs || []}
+        budgetRange={actionLead?.budgetRange || ''}
+        existingBoqs={actionLead?.boqs || EMPTY_ARRAY}
         boqIndex={boqIndexForAction}
         initialAction={boqApprovalAction}
         onSuccess={fetchLeads}
@@ -731,8 +740,8 @@ export default function InteriorCrmView() {
         isOpen={isQuotationBuilderOpen}
         onClose={() => setIsQuotationBuilderOpen(false)}
         customerId={actionLeadId || ''}
-        customerEmail={leads.find(l => l._id === actionLeadId)?.email || ''}
-        existingQuotations={leads.find(l => l._id === actionLeadId)?.quotations || []}
+        customerEmail={actionLead?.email || ''}
+        existingQuotations={actionLead?.quotations || EMPTY_ARRAY}
         onSuccess={fetchLeads}
       />
 

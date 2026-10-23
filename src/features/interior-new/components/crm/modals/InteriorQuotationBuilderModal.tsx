@@ -22,7 +22,9 @@ interface QuotationBuilderModalProps {
   onSuccess: () => void;
 }
 
-export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, customerEmail = '', existingQuotations, onSuccess }: QuotationBuilderModalProps) {
+const EMPTY_QUOTATIONS: any[] = [];
+
+export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, customerEmail = '', existingQuotations = EMPTY_QUOTATIONS, onSuccess }: QuotationBuilderModalProps) {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -54,6 +56,7 @@ export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, cus
     }
   }, [isOpen]);
 
+  const quotationsKey = existingQuotations ? JSON.stringify(existingQuotations) : '';
 
   React.useEffect(() => {
     if (isOpen && existingQuotations && existingQuotations.length > 0) {
@@ -72,7 +75,7 @@ export function InteriorQuotationBuilderModal({ isOpen, onClose, customerId, cus
     if (customerEmail) {
       setRecipientEmail(customerEmail);
     }
-  }, [isOpen, existingQuotations, customerEmail]);
+  }, [isOpen, quotationsKey, customerEmail]);
 
   const subtotal = items.reduce((acc, item) => acc + item.total, 0);
   const tax = (subtotal * taxPercentage) / 100;

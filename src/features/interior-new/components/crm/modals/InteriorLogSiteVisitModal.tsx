@@ -34,38 +34,45 @@ interface Props {
   instructions?: string;
 }
 
+const EMPTY_PHOTOS: string[] = [];
+
+const DEFAULT_MEASUREMENTS = {
+  carpetArea: '',
+  roomDimensions: '',
+  ceilingHeight: '',
+  floorToCeilingHeight: '',
+  doorDimensions: '',
+  windowDimensions: '',
+  wallThickness: '',
+  columnBeamDimensions: '',
+  electricalPoints: '',
+  plumbingPoints: '',
+  acLocations: '',
+  furnitureDimensions: '',
+  siteConstraints: '',
+  rooms: '',
+  notes: ''
+};
+
 export const InteriorLogSiteVisitModal = ({
   isOpen,
   onClose,
   customerId,
   onSuccess,
   initialMeasurements,
-  initialPhotos = [],
+  initialPhotos = EMPTY_PHOTOS,
   instructions
 }: Props) => {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
 
-  const [measurements, setMeasurements] = useState({
-    carpetArea: '',
-    roomDimensions: '',
-    ceilingHeight: '',
-    floorToCeilingHeight: '',
-    doorDimensions: '',
-    windowDimensions: '',
-    wallThickness: '',
-    columnBeamDimensions: '',
-    electricalPoints: '',
-    plumbingPoints: '',
-    acLocations: '',
-    furnitureDimensions: '',
-    siteConstraints: '',
-    rooms: '',
-    notes: ''
-  });
+  const [measurements, setMeasurements] = useState(DEFAULT_MEASUREMENTS);
 
   const [photos, setPhotos] = useState<string[]>([]);
+
+  const measurementsKey = initialMeasurements ? JSON.stringify(initialMeasurements) : '';
+  const photosKey = initialPhotos ? JSON.stringify(initialPhotos) : '';
 
   useEffect(() => {
     if (isOpen) {
@@ -88,28 +95,12 @@ export const InteriorLogSiteVisitModal = ({
           notes: initialMeasurements.notes || ''
         });
       } else {
-        setMeasurements({
-          carpetArea: '',
-          roomDimensions: '',
-          ceilingHeight: '',
-          floorToCeilingHeight: '',
-          doorDimensions: '',
-          windowDimensions: '',
-          wallThickness: '',
-          columnBeamDimensions: '',
-          electricalPoints: '',
-          plumbingPoints: '',
-          acLocations: '',
-          furnitureDimensions: '',
-          siteConstraints: '',
-          rooms: '',
-          notes: ''
-        });
+        setMeasurements(DEFAULT_MEASUREMENTS);
       }
-      setPhotos(initialPhotos || []);
+      setPhotos(Array.isArray(initialPhotos) ? [...initialPhotos] : []);
       setErrors({});
     }
-  }, [isOpen, initialMeasurements, initialPhotos]);
+  }, [isOpen, customerId, measurementsKey, photosKey]);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
