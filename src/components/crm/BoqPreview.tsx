@@ -221,6 +221,27 @@ export function BoqPreview({
                 ? `Revisions required: "${boq.rejectionReason || 'Please review items'}"`
                 : "This estimation is in draft mode and requires manager approval before quotation."}
             </p>
+
+            {/* Version Metadata: Date & Creator */}
+            <div className="flex items-center gap-3 mt-1.5 flex-wrap text-[11px] text-slate-500 font-medium">
+              <span className="inline-flex items-center gap-1 bg-white px-2 py-0.5 rounded-md border border-slate-200 text-slate-700 font-bold shadow-2xs">
+                Version {boq.version || boqIndex + 1}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <Clock size={12} className="text-slate-400" />
+                <span>Created: <strong className="text-slate-800 font-semibold">{boq.createdAt ? new Date(boq.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recently'}</strong></span>
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <User size={12} className="text-slate-400" />
+                <span>By: <strong className="text-slate-800 font-semibold">{boq.createdByName || (boq.createdBy?.firstName ? `${boq.createdBy.firstName} ${boq.createdBy.lastName || ''}`.trim() : null) || 'Estimator'}</strong></span>
+              </span>
+              {boq.updatedAt && (
+                <span className="text-[10px] text-slate-400 italic">
+                  (Updated {new Date(boq.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}{boq.updatedByName ? ` by ${boq.updatedByName}` : ''})
+                </span>
+              )}
+            </div>
+
             {boq.submissionNotes && (
               <div className="mt-2 text-xs bg-white border border-amber-200 text-slate-800 px-3 py-1.5 rounded-xl flex items-start gap-2 max-w-xl shadow-xs">
                 <span className="font-extrabold text-amber-800 shrink-0 text-[11px]">Review Focus / Note:</span>

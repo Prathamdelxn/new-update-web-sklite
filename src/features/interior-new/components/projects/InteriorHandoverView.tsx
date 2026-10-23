@@ -33,6 +33,7 @@ import { useConfirm } from '@/providers/ConfirmContext';
 import { cn } from '@/lib/utils';
 import { uploadToCloudinary } from '@/lib/upload';
 import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
+import { sectionFromPath, useCanOpenSection } from '@/features/interior-new/lib/projectSectionAccess';
 
 interface InteriorHandoverViewProps {
   projectId: string;
@@ -363,7 +364,15 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
     }
   };
 
+  // Checklist items open other tabs — only those the user can view
+  const canOpen = useCanOpenSection(projectId);
+  const canOpenHref = (href: string) => href.startsWith('#') || canOpen(sectionFromPath(href, projectId)) !== false;
+
   const handleItemClick = (href: string) => {
+    if (!canOpenHref(href)) {
+      toast.error("You don't have permission to open this section");
+      return;
+    }
     if (href === '#closeout-docs') {
       const el = document.getElementById('closeout-docs');
       if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -467,8 +476,10 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
               <div
                 key={item.id}
                 onClick={() => handleItemClick(item.href)}
+                title={canOpenHref(item.href) ? undefined : "You don't have permission to open this section"}
                 className={cn(
                   'flex items-center justify-between p-3 px-3.5 rounded-lg border transition-all cursor-pointer group',
+                  !canOpenHref(item.href) && 'cursor-not-allowed opacity-70',
                   item.passed
                     ? 'border-emerald-200/80 bg-emerald-50/20 hover:bg-emerald-50/40'
                     : 'border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:bg-slate-50'

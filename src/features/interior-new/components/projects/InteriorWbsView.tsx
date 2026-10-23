@@ -477,6 +477,7 @@ const getAllDescendantIds = (node: any): string[] => {
       await interiorProjectService.updateTask(projectId, task._id || task.id, {
         status: newStatus,
         progress: newProgress,
+        completedAt: newStatus === 'completed' ? new Date().toISOString() : null,
       });
       toast.success(newStatus === 'completed' ? 'Activity completed!' : 'Activity reopened');
       fetchData();

@@ -751,26 +751,30 @@ const { hasPermission: canDo } = usePermissions();
                               <div>
                                 <div className="grid grid-cols-2 gap-2">
                                   {/* 1-Step Client Approved Button */}
-                                  <button
-                                    type="button"
-                                    disabled={isUpdatingStatus}
-                                    onClick={() => handleStatusUpdate('Accepted')}
-                                    className="py-2.5 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-98"
-                                  >
-                                    <CheckCircle2 size={14} />
-                                    <span>Client Approved</span>
-                                  </button>
+                                  {canDo('crm_quotations', 'approve') && (
+                                    <button
+                                      type="button"
+                                      disabled={isUpdatingStatus}
+                                      onClick={() => handleStatusUpdate('Accepted')}
+                                      className="py-2.5 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-98"
+                                    >
+                                      <CheckCircle2 size={14} />
+                                      <span>Client Approved</span>
+                                    </button>
+                                  )}
 
                                   {/* Mark Rejected */}
-                                  <button
-                                    type="button"
-                                    disabled={isUpdatingStatus}
-                                    onClick={() => handleStatusUpdate('Rejected')}
-                                    className="py-2.5 px-3 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-98"
-                                  >
-                                    <XCircle size={14} />
-                                    <span>Reject</span>
-                                  </button>
+                                  {canDo('crm_quotations', 'approve') && (
+                                    <button
+                                      type="button"
+                                      disabled={isUpdatingStatus}
+                                      onClick={() => handleStatusUpdate('Rejected')}
+                                      className="py-2.5 px-3 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-98"
+                                    >
+                                      <XCircle size={14} />
+                                      <span>Reject</span>
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             )}

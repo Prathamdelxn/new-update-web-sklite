@@ -216,7 +216,7 @@ const { hasPermission: canDo } = usePermissions();
 
                   {/* Actions Ribbon */}
                   <div className="flex items-center justify-between gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
-                    {(canDo('crm_requirements', 'update')) && (
+                    {(canDo('crm_requirements', 'create') || canDo('crm_requirements', 'update')) && (
                       <button
                         onClick={() => onLogRequirements(lead._id)}
                         className={cn(
@@ -358,7 +358,7 @@ const { hasPermission: canDo } = usePermissions();
                       {/* 5. Actions */}
                       <td className="px-4.5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1.5">
-                          {(canDo('crm_requirements', 'update')) && (
+                          {(canDo('crm_requirements', 'create') || canDo('crm_requirements', 'update')) && (
                             <button
                               onClick={() => onLogRequirements(lead._id)}
                               className={cn(
