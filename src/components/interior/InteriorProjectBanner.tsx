@@ -1,8 +1,8 @@
 'use client';
 
-// Port of interior-os-frontend's projects/[projectId]/layout.tsx banner + tab
-// nav, minus the permission-based tab filtering (no project-membership system
-// ported yet — all tabs are shown to any authenticated interior-os user).
+// Port of interior-os-frontend's projects/[projectId]/layout.tsx banner + tab nav.
+// Tabs are filtered by View permission (project role, or org role for the CRM
+// quote screens) — same as the mobile CategoryNav.
 
 import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -10,6 +10,8 @@ import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronRight, Folder, Calendar, MapPin, Building } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 interface InteriorProjectBannerProps {
   projectId: string;
@@ -85,6 +87,34 @@ const CATEGORIES = (projectId: string) => [
   },
 ];
 
+// View permission behind each tab; `org:` = org role (CRM data), others = project role
+const TAB_ACCESS: Record<string, string[]> = {
+  Overview: ['projects'],
+  'File Management': ['filemgt'],
+  'Site Details': ['projects'],
+  Quotation: ['org:crm_quotations'],
+  'Confirm Order': ['confirm_order'],
+  'Team & Members': ['users'],
+  Drawings: ['drawings'],
+  'Site Photos': ['photos'],
+  'RFIs Tracker': ['rfis'],
+  'Utility Checks': ['utilities'],
+  'WBS Hierarchy': ['wbs'],
+  'Activity / Tasks': ['tasks'],
+  Milestones: ['milestones'],
+  'DPR Log': ['dpr'],
+  'Weekly Reports': ['weekly_reports'],
+  MOM: ['mom'],
+  'Timeline (Gantt)': ['wbs', 'tasks'],
+  'Bills of Quantity (BOQ)': ['boq'],
+  'Variation Orders': ['variation_orders'],
+  Procurement: ['procurement', 'inventory'],
+  Payments: ['financials'],
+  'Snags Logger': ['snags'],
+  'Risks Matrix': ['risks'],
+  'Project Handover': ['handover'],
+};
+
 export function InteriorProjectBanner({ projectId, project, loading }: InteriorProjectBannerProps) {
   const pathname = usePathname();
   const [openCategory, setOpenCategory] = useState<string | null>(null);
@@ -100,7 +130,17 @@ export function InteriorProjectBanner({ projectId, project, loading }: InteriorP
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const categories = CATEGORIES(projectId);
+  const { can, loading: permsLoading } = useProjectPermissions(projectId);
+  const { hasPermission } = usePermissions();
+  // Only tabs the user can view (everything while permissions load, so nothing flickers away)
+  const canSee = (label: string) =>
+    permsLoading ||
+    (TAB_ACCESS[label] || ['projects']).some((key) =>
+      key.startsWith('org:') ? hasPermission(key.slice(4), 'read') : can(key, 'read')
+    );
+  const categories = CATEGORIES(projectId)
+    .map((cat) => ({ ...cat, items: cat.items.filter((item) => canSee(item.label)) }))
+    .filter((cat) => cat.items.length > 0);
 
   return (
     <div className="px-3.5 sm:px-6 pt-3.5 sm:pt-6 pb-0 lg:px-8 lg:pt-8 bg-[hsl(var(--card))] border-b border-[hsl(var(--border))] space-y-3 sm:space-y-4">

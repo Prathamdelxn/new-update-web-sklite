@@ -51,6 +51,34 @@ export const interiorCrmService = {
     interiorApiClient.delete(`/crm/customers/${customerId}/share`, {}).then((res) => res.data),
   getPublicDrawingData: (token: string) =>
     interiorApiClient.get(`/public/crm/${token}`).then((res) => res.data),
+  getClientRequirements: (token: string) =>
+    interiorApiClient.get(`/public/crm/${token}/requirements`).then((res) => res.data),
+  getRequirementsShareToken: (customerId: string) =>
+    interiorApiClient.get(`/crm/customers/${customerId}/requirements-token`).then((res) => res.data),
+  updateRequirementsLink: (
+    customerId: string,
+    data: {
+      isPublic?: boolean;
+      expiresDays?: number | null;
+      regenerate?: boolean;
+    }
+  ) =>
+    interiorApiClient.post(`/crm/customers/${customerId}/requirements-token`, data).then((res) => res.data),
+  revokeRequirementsLink: (customerId: string) =>
+    interiorApiClient.delete(`/crm/customers/${customerId}/requirements-token`).then((res) => res.data),
+  sendRequirementsEmail: (
+    customerId: string,
+    data: {
+      recipientEmail?: string;
+      customSubject?: string;
+      customMessage?: string;
+      requirementsUrl?: string;
+      expiresDays?: number | null;
+    }
+  ) =>
+    interiorApiClient.post(`/crm/customers/${customerId}/send-requirements-email`, data).then((res) => res.data),
+  submitClientRequirements: (token: string, data: any) =>
+    interiorApiClient.post(`/public/crm/${token}/requirements`, data).then((res) => res.data),
   submitClientFeedback: (token: string, data: { drawingId?: string; action: 'client_approved' | 'client_changes_requested'; clientFeedback?: string }) =>
     interiorApiClient.post(`/public/crm/${token}/feedback`, data).then((res) => res.data),
   approveDrawing: (customerId: string, drawingId: string, data: { action: 'approve' | 'reject'; versionNumber?: number; internalNotes?: string; assignedReviewer?: string }) =>

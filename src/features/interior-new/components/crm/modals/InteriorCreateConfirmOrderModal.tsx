@@ -62,9 +62,11 @@ interface Props {
   onClose: () => void;
   lead: any;
   onSuccess: () => void;
+  /** Project tab: save through the project Confirm Order endpoint (it also logs the activity). */
+  saveUpdates?: (updates: Record<string, any>) => Promise<unknown>;
 }
 
-export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSuccess }: Props) {
+export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSuccess, saveUpdates }: Props) {
   const toast = useToast();
   const { currencySymbol, formatExactCurrency } = useCurrency();
 
@@ -544,20 +546,32 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
         confirmedAt: new Date().toISOString(),
       };
 
-      // 3. Update customer in CRM
-      await interiorCrmService.updateCustomer(lead._id, {
-        quotations: updatedQuotations,
-        status: 'Booking Pending',
-        confirmedOrder: confirmedOrderPayload,
-      });
+      const activityRemarks = `Confirmed Order Created: "${confirmedOrderPayload.title}" (Ref #${confirmedOrderPayload.orderNumber}) | Value: ${currencySymbol} ${numAgreedAmount.toLocaleString()} | Linked Vendor Quotes: ${allVendorQuotesFlat.length} across ${allQuotations.length} quotation(s) | Attachments: ${attachments.length}`;
 
-      // 4. Log CRM activity
-      await interiorCrmService.createActivity({
-        customer: lead._id,
-        type: 'Status Change',
-        status: 'Completed',
-        remarks: `Confirmed Order Created: "${confirmedOrderPayload.title}" (Ref #${confirmedOrderPayload.orderNumber}) | Value: ${currencySymbol} ${numAgreedAmount.toLocaleString()} | Linked Vendor Quotes: ${allVendorQuotesFlat.length} across ${allQuotations.length} quotation(s) | Attachments: ${attachments.length}`,
-      });
+      if (saveUpdates) {
+        // Project tab: one call; the server sets Booking Pending and logs the activity
+        await saveUpdates({
+          quotations: updatedQuotations,
+          status: 'Booking Pending',
+          confirmedOrder: confirmedOrderPayload,
+          activityRemarks,
+        });
+      } else {
+        // 3. Update customer in CRM
+        await interiorCrmService.updateCustomer(lead._id, {
+          quotations: updatedQuotations,
+          status: 'Booking Pending',
+          confirmedOrder: confirmedOrderPayload,
+        });
+
+        // 4. Log CRM activity
+        await interiorCrmService.createActivity({
+          customer: lead._id,
+          type: 'Status Change',
+          status: 'Completed',
+          remarks: activityRemarks,
+        });
+      }
 
       toast.success('✅ Order confirmed and vendor documents linked successfully!');
       onSuccess();

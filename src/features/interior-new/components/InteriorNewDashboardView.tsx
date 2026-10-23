@@ -8,6 +8,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 import {
   FolderKanban,
   Bug,
@@ -198,6 +199,10 @@ function InteriorNewDashboardSkeleton() {
 
 export default function InteriorNewDashboardView() {
   const user = getInteriorUser();
+  // The dashboard shows org-wide figures → Dashboard: View (admins always)
+  const { isOrgAdmin, hasPermission, currentUser } = usePermissions();
+  const canSeeDashboard = isOrgAdmin || hasPermission('dashboard', 'read');
+  const navAccess = currentUser?.navAccess || {};
 
   const {
     data: data = null,
@@ -213,17 +218,49 @@ export default function InteriorNewDashboardView() {
           return res.data.data;
         }
         return null;
-      } catch (err) {
+      } catch (err: any) {
+        // Refused → the server says this role has no Dashboard access (the saved
+        // user can be out of date for a moment after login / switching backends)
+        if (err?.response?.status === 403) return { forbidden: true } as any;
         console.error('Failed to load interior-os dashboard', err);
         return null;
       }
     },
     staleTime: 5 * 60 * 1000,
+    enabled: canSeeDashboard,
   });
 
   const handleManualRefresh = async () => {
     await refetch();
   };
+
+  if (!canSeeDashboard || (data as any)?.forbidden) {
+    return (
+      <div className="interior-os-theme p-6 lg:p-8">
+        <div className="max-w-xl mx-auto mt-10 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-8 text-center space-y-4">
+          <FolderKanban className="w-10 h-10 mx-auto text-[hsl(var(--muted-foreground))]" />
+          <div>
+            <h2 className="text-lg font-bold text-[hsl(var(--foreground))]">Welcome{user?.firstName ? `, ${user.firstName}` : ''}</h2>
+            <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
+              Your role doesn&apos;t include the Dashboard. Open the sections you work in:
+            </p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {navAccess.projects !== false && (
+              <Link href="/interior-new/projects" className="px-4 py-2 rounded-lg text-sm font-semibold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]">
+                Projects
+              </Link>
+            )}
+            {navAccess.crm && (
+              <Link href="/interior-new/crm" className="px-4 py-2 rounded-lg text-sm font-semibold border border-[hsl(var(--border))] text-[hsl(var(--foreground))]">
+                CRM
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return <InteriorNewDashboardSkeleton />;

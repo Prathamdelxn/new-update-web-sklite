@@ -274,7 +274,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
                     <span>{survey.status}</span>
                   </div>
                 )}
-                {isAssignedSurveyor && survey.status !== 'Approved' && (
+                {((isAssignedSurveyor || isAdminOrManager || String((survey as any)?.surveyor?._id || (survey as any)?.surveyor) === String(user?.id || user?._id)) && (canUpdateSurvey || canCreateSurvey || isAdminOrManager)) && survey.status !== 'Approved' && (
                   <button
                     onClick={() => setIsModalOpen(true)}
                     className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer"

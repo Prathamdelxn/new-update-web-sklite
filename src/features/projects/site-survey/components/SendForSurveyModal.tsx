@@ -8,6 +8,8 @@ import { X, Loader2, Map, Search, UserCheck, Check } from 'lucide-react';
 import api from '@/services/api.client';
 import { useToast } from '@/providers/ToastContext';
 
+import { permissionListIncludes } from '@/lib/permissions';
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -33,7 +35,7 @@ export const SendForSurveyModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await api.get(`/users?permission=sitesurvey&projectId=${projectId}`);
+      const res = await api.get(`/users?permission=sitesurvey:create&projectId=${projectId}`);
       setUsers(Array.isArray(res.data) ? res.data : res.data?.users ?? []);
     } catch {
       toast.error('Failed to load eligible surveyors');
@@ -72,9 +74,30 @@ export const SendForSurveyModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
     return projectRoleName || u.role?.name || 'No role';
   };
 
+  const userHasSurveyCreate = (u: any): boolean => {
+    if (!u) return false;
+    const isGlobalAdmin = u.role?.name === 'Admin' || u.role?.isSystemRole || (u.role?.permissions || []).includes('*');
+    if (isGlobalAdmin || permissionListIncludes(u.role?.permissions, 'sitesurvey:create')) {
+      return true;
+    }
+    const assignment = (u.projects || []).find((p: any) =>
+      String(p.project?._id || p.project) === String(projectId)
+    );
+    if (assignment?.role) {
+      const pRole = assignment.role;
+      const isProjAdmin = pRole.name === 'Admin' || pRole.isSystemRole || (pRole.permissions || []).includes('*');
+      if (isProjAdmin || permissionListIncludes(pRole.permissions, 'sitesurvey:create')) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   const filtered = users.filter(u =>
-    u.name?.toLowerCase().includes(search.toLowerCase()) ||
-    u.email?.toLowerCase().includes(search.toLowerCase())
+    userHasSurveyCreate(u) && (
+      u.name?.toLowerCase().includes(search.toLowerCase()) ||
+      u.email?.toLowerCase().includes(search.toLowerCase())
+    )
   );
 
   return (
