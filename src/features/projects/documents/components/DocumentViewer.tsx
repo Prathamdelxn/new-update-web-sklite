@@ -273,12 +273,17 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 10 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className="relative z-10 flex rounded-2xl overflow-hidden shadow-2xl bg-white"
-            style={{ width: '95vw', maxWidth: 1120, height: '96vh', maxHeight: '96vh', minHeight: 640 }}
+            className="relative z-10 flex min-h-0 rounded-2xl overflow-hidden shadow-2xl bg-white"
+            style={{
+              width: 'min(96vw, 1440px)',
+              height: 'min(96dvh, calc(100dvh - 24px))',
+              maxHeight: 'calc(100dvh - 24px)',
+              minHeight: 0,
+            }}
             onClick={e => e.stopPropagation()}
           >
             {/* ════ LEFT: Document viewer ════ */}
-            <div className="flex flex-col flex-1 min-w-0">
+            <div className="flex flex-col flex-1 min-w-0 min-h-0">
 
               {/* Header bar */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-white shrink-0 gap-3">
@@ -353,7 +358,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
               {/* Image area */}
               <div
                 className={cn(
-                  'flex-1 bg-[#f0f2f5] flex items-center justify-center overflow-auto relative select-none',
+                  'flex-1 min-h-0 bg-[#f0f2f5] flex items-center justify-center overflow-auto relative select-none',
                   pinMode && 'cursor-crosshair'
                 )}
                 onClick={handleContainerClick}

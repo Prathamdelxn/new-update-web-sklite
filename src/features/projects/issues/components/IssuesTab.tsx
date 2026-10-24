@@ -427,9 +427,16 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
             <ClipboardList className="w-10 h-10" />
           </div>
           <h3 className="text-sm font-bold text-slate-900">Snagging Phase Not Started</h3>
-          <p className="text-xs text-slate-500 mt-1.5 max-w-sm">
-            The project stays <span className="font-semibold text-slate-700">Ongoing</span> until <span className="font-semibold text-slate-700">all milestones are completed</span>. Once the last milestone is completed, it moves into the snagging phase automatically and snags can be reported here.
-          </p>
+          {['Initialized', 'Planning', 'Site Survey'].includes(project?.status ?? '') ? (
+            // Snagging follows the Ongoing phase, which needs planning approved first
+            <p className="text-xs text-slate-500 mt-1.5 max-w-sm">
+              The project is still in <span className="font-semibold text-slate-700">{project?.status}</span>. It becomes <span className="font-semibold text-slate-700">Ongoing</span> once <span className="font-semibold text-slate-700">every plan and every BOQ item is approved</span> and it has at least one milestone. When all milestones are completed after that, it moves into the snagging phase.
+            </p>
+          ) : (
+            <p className="text-xs text-slate-500 mt-1.5 max-w-sm">
+              The project stays <span className="font-semibold text-slate-700">Ongoing</span> until <span className="font-semibold text-slate-700">all milestones are completed</span>. Once the last milestone is completed, it moves into the snagging phase automatically and snags can be reported here.
+            </p>
+          )}
           {milestoneProgress && milestoneProgress.total > 0 && (
             <p className="text-xs font-bold text-amber-700 mt-3">
               {milestoneProgress.completed} of {milestoneProgress.total} milestones completed
