@@ -22,8 +22,19 @@ export const interiorCrmService = {
     interiorApiClient.delete(`/crm/customers/${customerId}`).then((res) => res.data),
   convertCustomer: (customerId: string, data?: any) =>
     interiorApiClient.post(`/crm/customers/${customerId}/convert`, data).then((res) => res.data),
-  sendQuotationEmail: (customerId: string, data: { quotation: any; recipientEmail?: string }) =>
-    interiorApiClient.post(`/crm/customers/${customerId}/send-quotation-email`, data).then((res) => res.data),
+  sendQuotationEmail: (
+    customerId: string,
+    data: {
+      quotation: any;
+      recipientEmail?: string;
+      recipientType?: 'customer' | 'vendor' | 'other';
+      recipientName?: string;
+      customSubject?: string;
+      customMessage?: string;
+      quotationIndex?: number;
+    }
+  ) => interiorApiClient.post(`/crm/customers/${customerId}/send-quotation-email`, data).then((res) => res.data),
+  getVendors: () => interiorApiClient.get('/vendors').then((res) => res.data),
 
   // Drawing Share Links & Workflows
   generateShareLink: (
@@ -39,6 +50,16 @@ export const interiorCrmService = {
   ) => interiorApiClient.post(`/crm/customers/${customerId}/share`, data).then((res) => res.data),
   revokeShareLink: (customerId: string) =>
     interiorApiClient.delete(`/crm/customers/${customerId}/share`, {}).then((res) => res.data),
+  getRequirementsShareToken: (customerId: string) =>
+    interiorApiClient.get(`/crm/customers/${customerId}/share`).then((res) => res.data),
+  revokeRequirementsLink: (customerId: string) =>
+    interiorApiClient.delete(`/crm/customers/${customerId}/share`, {}).then((res) => res.data),
+  updateRequirementsLink: (
+    customerId: string,
+    data: { allowDownload?: boolean; allowComments?: boolean; allowApproval?: boolean; expiresAt?: string; allowRequirementsSubmission?: boolean }
+  ) => interiorApiClient.post(`/crm/customers/${customerId}/share`, data).then((res) => res.data),
+  sendRequirementsEmail: (customerId: string, data?: any) =>
+    interiorApiClient.post(`/crm/customers/${customerId}/share/email`, data || {}).then((res) => res.data),
   getPublicDrawingData: (token: string) =>
     interiorApiClient.get(`/public/crm/${token}`).then((res) => res.data),
   submitClientRequirements: (token: string, data: { requirements: any[]; notes?: string; budgetRange?: string }) =>

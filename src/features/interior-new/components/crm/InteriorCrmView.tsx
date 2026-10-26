@@ -37,6 +37,7 @@ import { InteriorQuotationBuilderModal } from './modals/InteriorQuotationBuilder
 import { InteriorDeleteLeadModal } from './modals/InteriorDeleteLeadModal';
 import { InteriorMarkAsLostModal } from './modals/InteriorMarkAsLostModal';
 import { InteriorReopenLeadModal } from './modals/InteriorReopenLeadModal';
+import { InteriorStageLeadPickerModal } from './modals/InteriorStageLeadPickerModal';
 import { Calendar, Lightbulb, Users, MapPin, FileText, Trophy, Plus, TrendingUp } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
@@ -45,11 +46,47 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const EMPTY_ARRAY: any[] = [];
 
+const TAB_MODULE: Record<InteriorCrmStage, string> = {
+  leads: 'crm_leads',
+  follow_ups: 'crm_followups',
+  site_visits: 'crm_site_visits',
+  requirement_design: 'crm_requirements',
+  drawing: 'crm_drawings',
+  boq: 'crm_boq',
+  quotations: 'crm_quotations',
+  won_projects: 'crm_leads',
+  lost_leads: 'crm_leads',
+  customers: 'crm_leads',
+};
+
+const STATUS_STAGE_INDEX: Record<string, number> = {
+  'New Lead': 0,
+  'Contacted': 1,
+  'Meeting Scheduled': 1,
+  'Under Site Visit': 2,
+  'Measurement Done': 2,
+  'Under Requirement': 3,
+  'Requirement Completed': 3,
+  'Under Drawing': 4,
+  'Design Approved': 4,
+  'Under BOQ Creation': 5,
+  'Under Quotation': 6,
+  'Quotation Pending': 6,
+  'Quotation Sent': 6,
+  'Negotiation': 6,
+  'Booking Pending': 6,
+};
+
 export default function InteriorCrmView() {
   const toast = useToast();
   const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<InteriorCrmStage>('leads');
+  const [selectedTab, setActiveTab] = useState<InteriorCrmStage>('leads');
+  // Users without "Leads: View" start on the first stage they can see
+  const firstVisibleTab = (Object.keys(TAB_MODULE) as InteriorCrmStage[]).find((t) => hasPermission(TAB_MODULE[t]!, 'read'));
+  const activeTab: InteriorCrmStage =
+    !TAB_MODULE[selectedTab] || hasPermission(TAB_MODULE[selectedTab]!, 'read') ? selectedTab : firstVisibleTab ?? selectedTab;
+  const [isStagePickerOpen, setIsStagePickerOpen] = useState(false);
   const [leads, setLeads] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -115,20 +152,41 @@ export default function InteriorCrmView() {
     }
   }, [leadsData]);
 
-  const fetchLeads = useCallback(async () => {
+  const optimisticUpdateLead = useCallback((leadId: string, updates: Record<string, any>) => {
+    if (!leadId) return;
+    setLeads((prev) =>
+      prev.map((l) => (l._id === leadId ? { ...l, ...updates } : l))
+    );
+  }, []);
+
+  const fetchLeads = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['crm-leads-list'] });
     queryClient.invalidateQueries({ queryKey: ['crm-follow-ups-all'] });
     queryClient.invalidateQueries({ queryKey: ['crm-follow-ups'] });
     queryClient.invalidateQueries({ queryKey: ['crm-pending-activities'] });
     queryClient.invalidateQueries({ queryKey: ['crm-won-projects'] });
-    await refetchLeads();
+    refetchLeads();
   }, [queryClient, refetchLeads]);
 
-  // Dynamic stage counts backed by high-speed MongoDB aggregation with local fallback
-  const stageCounts = React.useMemo(() => {
-    if (serverStats) {
-      return serverStats;
+  const handleLeadSuccess = useCallback((updatedLeadOrFields?: any, explicitLeadId?: string) => {
+    if (updatedLeadOrFields && typeof updatedLeadOrFields === 'object') {
+      const targetId = updatedLeadOrFields._id || explicitLeadId || actionLeadId || selectedLeadToEdit?._id;
+      if (targetId) {
+        setLeads((prev) => {
+          const exists = prev.some((l) => l._id === targetId);
+          if (exists) {
+            return prev.map((l) => (l._id === targetId ? { ...l, ...updatedLeadOrFields } : l));
+          }
+          // New lead created
+          return [updatedLeadOrFields, ...prev];
+        });
+      }
     }
+    fetchLeads();
+  }, [actionLeadId, selectedLeadToEdit, fetchLeads]);
+
+  // Dynamic stage counts calculated immediately from local leads state (0ms update)
+  const stageCounts = React.useMemo(() => {
     return {
       leads: leads.filter((l) => l.status !== 'Lost').length,
       follow_ups: leads.filter((l) => ['New Lead', 'Contacted', 'Meeting Scheduled'].includes(l.status)).length,
@@ -238,14 +296,18 @@ export default function InteriorCrmView() {
 
   const handleConfirmDeleteLead = async () => {
     if (!deletingLead) return;
+    const targetId = deletingLead.id;
     setIsDeletingLead(true);
+    // Optimistically remove from state immediately (0ms)
+    setLeads((prev) => prev.filter((l) => l._id !== targetId));
+    setDeletingLead(null);
     try {
-      await interiorCrmService.deleteCustomer(deletingLead.id);
+      await interiorCrmService.deleteCustomer(targetId);
       toast.success('Lead deleted successfully');
-      setDeletingLead(null);
       fetchLeads();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to delete lead');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to delete lead');
+      fetchLeads();
     } finally {
       setIsDeletingLead(false);
     }
@@ -461,6 +523,27 @@ export default function InteriorCrmView() {
 
   const wonLeadsCount = leads.filter((l) => ['Won', 'Converted'].includes(l.status)).length;
 
+  // "Add to <stage>": bring a lead into the current stage without going through the
+  // earlier tabs (users may have Create here but no access to the previous stage)
+  const STAGE_ADD: Partial<Record<InteriorCrmStage, { label: string; index: number; open: (leadId: string) => void }>> = {
+    follow_ups: { label: 'Schedule Follow-up', index: 1, open: openFollowUpModal },
+    site_visits: { label: 'Add to Site Visits', index: 2, open: openSendToSiteVisitModal },
+    requirement_design: { label: 'Add to Requirements', index: 3, open: openSendToRequirementsModal },
+    drawing: { label: 'Add to Drawings', index: 4, open: openSendToDrawingModal },
+    boq: { label: 'Add to BOQ', index: 5, open: openSendToBoqModal },
+    quotations: { label: 'Add to Quotations', index: 6, open: openSendToQuotationsModal },
+  };
+  const stageAdd = STAGE_ADD[activeTab];
+  const canAddToStage = !!stageAdd && hasPermission(TAB_MODULE[activeTab]!, 'create');
+  const stageCandidates = stageAdd
+    ? leads.filter((l) => {
+        const idx = STATUS_STAGE_INDEX[l.status];
+        if (idx === undefined) return false; // Lost / Won / Converted
+        // Follow-ups can be scheduled for any lead still in the follow-up stage
+        return activeTab === 'follow_ups' ? idx <= stageAdd.index : idx < stageAdd.index;
+      })
+    : [];
+
   return (
     <div className="interior-os-theme p-3 sm:p-6 lg:p-8 space-y-3.5 sm:space-y-6 pb-20 max-w-full overflow-x-hidden">
 
@@ -480,6 +563,15 @@ export default function InteriorCrmView() {
           </p>
         </div>
 
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        {canAddToStage && (
+          <button
+            onClick={() => setIsStagePickerOpen(true)}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 border border-[hsl(var(--primary)/0.4)] text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)] hover:bg-[hsl(var(--primary)/0.12)] px-4 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 cursor-pointer"
+          >
+            <Plus size={15} /> {stageAdd!.label}
+          </button>
+        )}
         {hasPermission('crm_leads', 'create') && (
           <button
             onClick={() => setIsCreateModalOpen(true)}
@@ -488,7 +580,16 @@ export default function InteriorCrmView() {
             <Plus size={15} /> Add New Lead
           </button>
         )}
+        </div>
       </div>
+
+      <InteriorStageLeadPickerModal
+        isOpen={isStagePickerOpen && !!stageAdd}
+        title={stageAdd?.label ?? ''}
+        leads={stageCandidates}
+        onClose={() => setIsStagePickerOpen(false)}
+        onPick={(leadId) => stageAdd?.open(leadId)}
+      />
 
       {/* CRM Flow Tabs */}
       <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">
@@ -573,29 +674,35 @@ export default function InteriorCrmView() {
         )}
       </div>
 
-      <InteriorCreateLeadModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={fetchLeads}
-        users={users}
-      />
+      {isCreateModalOpen && (
+        <InteriorCreateLeadModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSuccess={handleLeadSuccess}
+          users={users}
+        />
+      )}
 
-      <InteriorEditLeadModal
-        isOpen={isEditModalOpen}
-        onClose={() => { setIsEditModalOpen(false); setSelectedLeadToEdit(null); }}
-        lead={selectedLeadToEdit}
-        users={users}
-        onSuccess={fetchLeads}
-      />
+      {isEditModalOpen && (
+        <InteriorEditLeadModal
+          isOpen={isEditModalOpen}
+          onClose={() => { setIsEditModalOpen(false); setSelectedLeadToEdit(null); }}
+          lead={selectedLeadToEdit}
+          users={users}
+          onSuccess={handleLeadSuccess}
+        />
+      )}
 
-      <InteriorScheduleFollowUpModal
-        isOpen={isFollowUpOpen}
-        onClose={() => setIsFollowUpOpen(false)}
-        customerId={actionLeadId || ''}
-        customerName={actionLeadName}
-        onSuccess={fetchLeads}
-        users={users}
-      />
+      {isFollowUpOpen && (
+        <InteriorScheduleFollowUpModal
+          isOpen={isFollowUpOpen}
+          onClose={() => setIsFollowUpOpen(false)}
+          customerId={actionLeadId || ''}
+          customerName={actionLeadName}
+          onSuccess={() => handleLeadSuccess(undefined, actionLeadId || undefined)}
+          users={users}
+        />
+      )}
 
       <InteriorLogSiteVisitModal
         isOpen={isSiteVisitOpen}
@@ -728,13 +835,15 @@ export default function InteriorCrmView() {
         onSuccess={fetchLeads}
       />
 
-      <InteriorSendToQuotationsModal
-        isOpen={isSendToQuotationsOpen}
-        onClose={() => setIsSendToQuotationsOpen(false)}
-        customerId={actionLeadId || ''}
-        onSuccess={fetchLeads}
-        users={users}
-      />
+      {isSendToQuotationsOpen && (
+        <InteriorSendToQuotationsModal
+          isOpen={isSendToQuotationsOpen}
+          onClose={() => setIsSendToQuotationsOpen(false)}
+          customerId={actionLeadId || ''}
+          onSuccess={() => handleLeadSuccess(undefined, actionLeadId || undefined)}
+          users={users}
+        />
+      )}
 
       <InteriorQuotationBuilderModal
         isOpen={isQuotationBuilderOpen}
@@ -745,38 +854,46 @@ export default function InteriorCrmView() {
         onSuccess={fetchLeads}
       />
 
-      <InteriorConvertToProjectModal
-        isOpen={isConvertToProjectOpen}
-        onClose={() => setIsConvertToProjectOpen(false)}
-        customerId={actionLeadId || ''}
-        onSuccess={fetchLeads}
-      />
+      {isConvertToProjectOpen && (
+        <InteriorConvertToProjectModal
+          isOpen={isConvertToProjectOpen}
+          onClose={() => setIsConvertToProjectOpen(false)}
+          customerId={actionLeadId || ''}
+          onSuccess={() => handleLeadSuccess(undefined, actionLeadId || undefined)}
+        />
+      )}
 
-      <InteriorDeleteLeadModal
-        isOpen={!!deletingLead}
-        onClose={() => setDeletingLead(null)}
-        onConfirm={handleConfirmDeleteLead}
-        leadName={deletingLead?.name}
-        isLoading={isDeletingLead}
-      />
+      {!!deletingLead && (
+        <InteriorDeleteLeadModal
+          isOpen={!!deletingLead}
+          onClose={() => setDeletingLead(null)}
+          onConfirm={handleConfirmDeleteLead}
+          leadName={deletingLead?.name}
+          isLoading={isDeletingLead}
+        />
+      )}
 
-      <InteriorMarkAsLostModal
-        isOpen={isMarkAsLostOpen}
-        onClose={() => setIsMarkAsLostOpen(false)}
-        customerId={actionLeadId || ''}
-        leadName={actionLeadName}
-        onSuccess={fetchLeads}
-      />
+      {isMarkAsLostOpen && (
+        <InteriorMarkAsLostModal
+          isOpen={isMarkAsLostOpen}
+          onClose={() => setIsMarkAsLostOpen(false)}
+          customerId={actionLeadId || ''}
+          leadName={actionLeadName}
+          onSuccess={() => handleLeadSuccess(undefined, actionLeadId || undefined)}
+        />
+      )}
 
-      <InteriorReopenLeadModal
-        isOpen={isReopenLeadOpen}
-        onClose={() => setIsReopenLeadOpen(false)}
-        customerId={actionLeadId || ''}
-        leadName={actionLeadName}
-        leadData={leads.find((l) => l._id === actionLeadId)}
-        users={users}
-        onSuccess={fetchLeads}
-      />
+      {isReopenLeadOpen && (
+        <InteriorReopenLeadModal
+          isOpen={isReopenLeadOpen}
+          onClose={() => setIsReopenLeadOpen(false)}
+          customerId={actionLeadId || ''}
+          leadName={actionLeadName}
+          leadData={leads.find((l) => l._id === actionLeadId)}
+          users={users}
+          onSuccess={() => handleLeadSuccess(undefined, actionLeadId || undefined)}
+        />
+      )}
     </div>
   );
 }

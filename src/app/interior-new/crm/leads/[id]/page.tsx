@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { InteriorShell } from '@/components/interior/InteriorShell';
 import { useInteriorAuthGuard } from '@/lib/useInteriorAuthGuard';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
+import { useCurrency } from '@/hooks/useCurrency';
+import { useConfirm } from '@/providers/ConfirmContext';
 import {
   ArrowLeft,
   ArrowRight,
@@ -17,9 +19,15 @@ import {
   Activity,
   Plus,
   MessageSquare,
+  MessageCircle,
   X,
   CheckCircle2,
   XCircle,
+  ShieldCheck,
+  ShoppingBag,
+  Receipt,
+  Paperclip,
+  CheckCheck,
   Calendar,
   MapPin,
   Ruler,
@@ -41,6 +49,7 @@ import {
   Wind,
   Armchair,
   AlertTriangle,
+  AlertCircle,
   Layers,
   Palette,
   Sliders,
@@ -50,6 +59,7 @@ import {
   Archive,
   ExternalLink,
   Eye,
+  EyeOff,
   Lock,
   Copy,
   Check,
@@ -60,10 +70,12 @@ import {
   History,
   Share2,
   Globe,
-  MessageCircle,
   Send,
   CheckCircle,
+  FileSpreadsheet,
+  Download,
 } from 'lucide-react';
+import { exportBoqToExcel } from '@/lib/exportBoqExcel';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn, parseMaxBudget } from '@/lib/utils';
 import { InteriorLogSiteVisitModal } from '@/features/interior-new/components/crm/modals/InteriorLogSiteVisitModal';
@@ -78,11 +90,14 @@ import { InteriorScheduleFollowUpModal } from '@/features/interior-new/component
 import { InteriorLogRequirementsModal } from '@/features/interior-new/components/crm/modals/InteriorLogRequirementsModal';
 import { InteriorUploadDesignModal, detectFileType, getFileBadgeInfo } from '@/features/interior-new/components/crm/modals/InteriorUploadDesignModal';
 import { InteriorDrawingApprovalModal } from '@/features/interior-new/components/crm/modals/InteriorDrawingApprovalModal';
+import { InteriorDrawingConfirmApproveModal } from '@/features/interior-new/components/crm/modals/InteriorDrawingConfirmApproveModal';
 import { InteriorUploadRevisionModal } from '@/features/interior-new/components/crm/modals/InteriorUploadRevisionModal';
 import { InteriorSendDrawingForApprovalModal } from '@/features/interior-new/components/crm/modals/InteriorSendDrawingForApprovalModal';
 import { Interior3DViewerModal } from '@/features/interior-new/components/crm/modals/Interior3DViewerModal';
 import { InteriorCrmShareModal } from '@/features/interior-new/components/crm/modals/InteriorCrmShareModal';
 import { InteriorQuotationBuilderModal } from '@/features/interior-new/components/crm/modals/InteriorQuotationBuilderModal';
+import { InteriorQuotationPreviewModal } from '@/features/interior-new/components/crm/modals/InteriorQuotationPreviewModal';
+import { InteriorSendQuotationModal } from '@/features/interior-new/components/crm/modals/InteriorSendQuotationModal';
 import { InteriorEditLeadModal } from '@/features/interior-new/components/crm/modals/InteriorEditLeadModal';
 import { InteriorDeleteLeadModal } from '@/features/interior-new/components/crm/modals/InteriorDeleteLeadModal';
 import { InteriorMarkAsLostModal } from '@/features/interior-new/components/crm/modals/InteriorMarkAsLostModal';
@@ -92,20 +107,25 @@ import { InteriorBoqBuilderModal } from '@/features/interior-new/components/crm/
 import { InteriorDeleteBoqModal } from '@/features/interior-new/components/crm/modals/InteriorDeleteBoqModal';
 import { InteriorSendBoqForApprovalModal } from '@/features/interior-new/components/crm/modals/InteriorSendBoqForApprovalModal';
 import { InteriorBoqApprovalModal } from '@/features/interior-new/components/crm/modals/InteriorBoqApprovalModal';
+import { InteriorCreateConfirmOrderModal } from '@/features/interior-new/components/crm/modals/InteriorCreateConfirmOrderModal';
+import { InteriorConfirmedOrderStageView } from '@/features/interior-new/components/crm/InteriorConfirmedOrderStageView';
 import { InteriorLeadFollowUpsTab } from '@/features/interior-new/components/crm/InteriorLeadFollowUpsTab';
+import { InteriorComparativeRequirementsView } from '@/features/interior-new/components/crm/InteriorComparativeRequirementsView';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
+import { format } from 'date-fns';
 
 export default function Lead360View() {
+  const { currencySymbol, currencyCode, formatExactCurrency, formatCurrency } = useCurrency();
   const checked = useInteriorAuthGuard();
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
+const { hasPermission: canDo } = usePermissions();
+  const { confirm, prompt } = useConfirm();
   const queryClient = useQueryClient();
 
-  const [lead, setLead] = useState<any>(null);
-  const [activities, setActivities] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [copiedLocation, setCopiedLocation] = useState(false);
 
   const handleCopyLocation = (text: string) => {
@@ -137,6 +157,7 @@ export default function Lead360View() {
   const [isSendApprovalModalOpen, setIsSendApprovalModalOpen] = useState(false);
   const [selectedDrawingForRevision, setSelectedDrawingForRevision] = useState<any | null>(null);
   const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
+  const [viewRejectionReasonData, setViewRejectionReasonData] = useState<{ title: string; reason: string; version: number } | null>(null);
   const [drawingToDelete, setDrawingToDelete] = useState<any | null>(null);
   const [isDeletingDrawing, setIsDeletingDrawing] = useState(false);
   const [isBoqModalOpen, setIsBoqModalOpen] = useState(false);
@@ -146,13 +167,16 @@ export default function Lead360View() {
   const [boqApprovalAction, setBoqApprovalAction] = useState<'approve' | 'reject' | null>(null);
   const [boqIndexToDelete, setBoqIndexToDelete] = useState<number | null>(null);
   const [isQuotationModalOpen, setIsQuotationModalOpen] = useState(false);
+  const [editingQuotationIndex, setEditingQuotationIndex] = useState<number | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isMarkAsLostOpen, setIsMarkAsLostOpen] = useState(false);
   const [isDeletingLead, setIsDeletingLead] = useState(false);
-  const [activeQuotationIndex, setActiveQuotationIndex] = useState(0);
+  const [activeQuotationIndex, setActiveQuotationIndex] = useState<number | null>(null);
+  const [sendQuotationModalIndex, setSendQuotationModalIndex] = useState<number | null>(null);
   const [activeBoqIndex, setActiveBoqIndex] = useState(0);
   const [editingBoqIndex, setEditingBoqIndex] = useState<number | null>(null);
+  const [isConfirmOrderModalOpen, setIsConfirmOrderModalOpen] = useState(false);
 
   const handleDeleteDrawing = async () => {
     if (!drawingToDelete || !params.id) return;
@@ -171,6 +195,8 @@ export default function Lead360View() {
   };
 
   const [approvingDrawingId, setApprovingDrawingId] = useState<string | null>(null);
+  const [selectedDrawingForConfirmApprove, setSelectedDrawingForConfirmApprove] = useState<any | null>(null);
+  const [isConfirmApproveModalOpen, setIsConfirmApproveModalOpen] = useState(false);
 
   const handleDirectApproveDrawing = async (file: any) => {
     if (!params.id) return;
@@ -183,6 +209,8 @@ export default function Lead360View() {
         versionNumber
       });
       toast.success(`Drawing "${file.title || file.name || 'Drawing'}" approved successfully! Live to client.`);
+      setIsConfirmApproveModalOpen(false);
+      setSelectedDrawingForConfirmApprove(null);
       fetchData();
     } catch (err: any) {
       toast.error(err.response?.data?.error || err.message || 'Failed to approve drawing');
@@ -202,39 +230,60 @@ export default function Lead360View() {
   const [isFollowUpModalOpen, setIsFollowUpModalOpen] = useState(false);
   const [designSubTab, setDesignSubTab] = useState<'2d' | '3d'>('2d');
 
+  // 1. Lead Query with instant placeholder from CRM Leads List cache
   const {
     data: leadData,
+    isLoading: isLeadQueryLoading,
     refetch: refetchLead,
   } = useQuery({
     queryKey: ['crm-lead', params.id],
     queryFn: async () => {
-      const [leadRes, actRes, userRes] = await Promise.all([
-        interiorCrmService.getCustomerById(params.id as string),
-        interiorCrmService.getActivities(params.id as string),
-        interiorCrmService.getUsers(),
-      ]);
-
-      const singleLead = leadRes?.success && leadRes?.data ? leadRes.data : leadRes;
-      const activityList = actRes?.success && actRes?.data ? actRes.data : Array.isArray(actRes) ? actRes : [];
-      const userList = userRes?.success && userRes?.data ? userRes.data : Array.isArray(userRes) ? userRes : [];
-      return { lead: singleLead, activities: activityList, users: userList };
+      const res = await interiorCrmService.getCustomerById(params.id as string);
+      return res?.success && res?.data ? res.data : res;
+    },
+    placeholderData: () => {
+      const listData: any = queryClient.getQueryData(['crm-leads-list']);
+      const leads = listData?.leads || (Array.isArray(listData) ? listData : []);
+      return leads.find((c: any) => (c._id || c.id) === params.id);
     },
     enabled: Boolean(checked && params.id),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
   });
 
-  useEffect(() => {
-    if (leadData) {
-      if (leadData.lead) setLead(leadData.lead);
-      if (leadData.activities) setActivities(leadData.activities);
-      if (leadData.users) setUsers(leadData.users);
-      setIsLoading(false);
-    }
-  }, [leadData]);
+  // 2. Activities Query
+  const {
+    data: activitiesData,
+    refetch: refetchActivities,
+  } = useQuery({
+    queryKey: ['crm-lead-activities', params.id],
+    queryFn: async () => {
+      const res = await interiorCrmService.getActivities(params.id as string);
+      return res?.success && res?.data ? res.data : Array.isArray(res) ? res : [];
+    },
+    enabled: Boolean(checked && params.id),
+    staleTime: 60 * 1000,
+  });
+
+  // 3. Global Users Query (shared across entire CRM)
+  const { data: usersData } = useQuery({
+    queryKey: ['interior-users'],
+    queryFn: async () => {
+      const res = await interiorCrmService.getUsers();
+      return res?.success && res?.data ? res.data : Array.isArray(res) ? res : [];
+    },
+    enabled: Boolean(checked),
+    staleTime: 30 * 60 * 1000,
+  });
+
+  const lead: any = leadData || null;
+  const activities: any[] = (activitiesData as any[]) || [];
+  const users: any[] = (usersData as any[]) || [];
+  const isLoading = !lead && isLeadQueryLoading;
 
   const fetchData = async () => {
     queryClient.invalidateQueries({ queryKey: ['crm-lead', params.id] });
-    await refetchLead();
+    queryClient.invalidateQueries({ queryKey: ['crm-lead-activities', params.id] });
+    await Promise.all([refetchLead(), refetchActivities()]);
   };
 
   const handleActivitySubmit = async (e: React.FormEvent) => {
@@ -260,7 +309,103 @@ export default function Lead360View() {
     }
   };
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'followups' | 'site' | 'requirements' | 'designs' | 'boq' | 'quotations'>('overview');
+  const handleDeleteQuotationByIndex = async (idxToDelete: number) => {
+    if (!lead || !params.id) return;
+    const q = lead?.quotations?.[idxToDelete];
+    const quoteTitle = q?.title || `Quotation ${idxToDelete + 1}`;
+    const quoteAmount = q?.grandTotal || 0;
+
+    const ok = await confirm({
+      title: `Delete ${quoteTitle}`,
+      message: `Are you sure you want to delete "${quoteTitle}" (${currencySymbol} ${quoteAmount.toLocaleString()})? This action cannot be undone.`,
+      confirmText: 'Delete Quotation',
+      type: 'danger',
+    });
+    if (!ok) return;
+
+    try {
+      const updatedQuotations = (lead.quotations || []).filter((_: any, i: number) => i !== idxToDelete);
+      await interiorCrmService.updateCustomer(lead._id, {
+        quotations: updatedQuotations,
+      });
+
+      await interiorCrmService.createActivity({
+        customer: lead._id,
+        type: 'Status Change',
+        status: 'Completed',
+        remarks: `Deleted Quotation: ${quoteTitle}`,
+      });
+
+      toast.success(`${quoteTitle} deleted successfully.`);
+      fetchData();
+      setActiveQuotationIndex((prev) => {
+        if (prev === null) return null;
+        if (prev === idxToDelete) return null;
+        if (prev > idxToDelete) return prev - 1;
+        if (prev >= updatedQuotations.length) {
+          return updatedQuotations.length > 0 ? updatedQuotations.length - 1 : null;
+        }
+        return prev;
+      });
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || err.message || 'Failed to delete quotation');
+    }
+  };
+
+
+  const [selectedTab, setActiveTab] = useState<'overview' | 'followups' | 'site' | 'requirements' | 'designs' | 'boq' | 'quotations' | 'confirm_order'>(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get('tab');
+      if (tabParam) {
+        const normalized = tabParam.toLowerCase().trim();
+        if (['designs', 'design', 'drawing', 'drawings'].includes(normalized)) return 'designs';
+        if (['site', 'sitevisit', 'site-visit'].includes(normalized)) return 'site';
+        if (['requirements', 'req', 'requirement'].includes(normalized)) return 'requirements';
+        if (['boq', 'estimation'].includes(normalized)) return 'boq';
+        if (['quotations', 'quotes', 'quotation'].includes(normalized)) return 'quotations';
+        if (['confirm_order', 'confirm-order', 'confirmorder', 'confirmed_order', 'order', 'orders', 'booking'].includes(normalized)) return 'confirm_order';
+        if (['followups', 'followup', 'follow-up'].includes(normalized)) return 'followups';
+      }
+    }
+    return 'overview';
+  });
+  // Each stage tab needs that stage's View permission (Overview is always shown)
+  const LEAD_TAB_MODULE: Record<string, string> = {
+    followups: 'crm_followups',
+    site: 'crm_site_visits',
+    requirements: 'crm_requirements',
+    designs: 'crm_drawings',
+    boq: 'crm_boq',
+    quotations: 'crm_quotations',
+    confirm_order: 'crm_quotations',
+  };
+  const canViewLeadTab = (id: string) => !LEAD_TAB_MODULE[id] || canDo(LEAD_TAB_MODULE[id], 'read');
+  const activeTab = canViewLeadTab(selectedTab) ? selectedTab : 'overview';
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam) {
+      const normalized = tabParam.toLowerCase().trim();
+      if (['designs', 'design', 'drawing', 'drawings'].includes(normalized)) {
+        setActiveTab('designs');
+      } else if (['site', 'sitevisit', 'site-visit'].includes(normalized)) {
+        setActiveTab('site');
+      } else if (['requirements', 'req', 'requirement'].includes(normalized)) {
+        setActiveTab('requirements');
+      } else if (['boq', 'estimation'].includes(normalized)) {
+        setActiveTab('boq');
+      } else if (['quotations', 'quotes', 'quotation'].includes(normalized)) {
+        setActiveTab('quotations');
+      } else if (['confirm_order', 'confirm-order', 'confirmorder', 'confirmed_order', 'order', 'orders', 'booking'].includes(normalized)) {
+        setActiveTab('confirm_order');
+      } else if (['followups', 'followup', 'follow-up'].includes(normalized)) {
+        setActiveTab('followups');
+      } else if (normalized === 'overview') {
+        setActiveTab('overview');
+      }
+    }
+  }, [searchParams]);
 
   const siteVisitInfo = React.useMemo(() => {
     const siteVisitActivity = activities.find(
@@ -703,7 +848,12 @@ export default function Lead360View() {
     const currentBoq = lead?.boqs?.[activeBoqIndex] || lead?.boqs?.[0];
     const totalAmount = currentBoq?.totalAmount || (currentBoq?.items || []).reduce((acc: number, it: any) => acc + (Number(it.amount) || (Number(it.quantity) * Number(it.rate)) || 0), 0);
     const itemsCount = currentBoq?.items?.length || 0;
-    const categories = Array.from(new Set((currentBoq?.items || []).map((it: any) => it.category || 'General')));
+    const rawCategories: string[] = Array.from(new Set<string>((currentBoq?.items || []).map((it: any) => (it.category || 'General') as string)));
+    const sections = currentBoq?.sections && Array.isArray(currentBoq.sections) && currentBoq.sections.length > 0
+      ? currentBoq.sections
+      : rawCategories.map((c: any) => ({ sectionTitle: String(c) }));
+    const categoriesCount = sections.length;
+    const categorySummary = `${categoriesCount} ${categoriesCount === 1 ? 'Category' : 'Categories'}`;
 
     const maxBudget = parseMaxBudget(lead?.budgetRange || lead?.estimatedBudget || lead?.budget);
     const isOverBudget = Boolean(maxBudget && maxBudget > 0 && totalAmount > maxBudget);
@@ -716,7 +866,8 @@ export default function Lead360View() {
       currentBoq,
       totalAmount,
       itemsCount,
-      categoriesCount: categories.length,
+      categoriesCount,
+      categorySummary,
       maxBudget,
       isOverBudget,
       budgetExcessAmount,
@@ -725,7 +876,7 @@ export default function Lead360View() {
   }, [activities, lead, activeBoqIndex]);
 
   const quotationInfo = React.useMemo(() => {
-    const currentQuote = lead?.quotations?.[activeQuotationIndex] || lead?.quotations?.[0];
+    const currentQuote = (activeQuotationIndex !== null ? lead?.quotations?.[activeQuotationIndex] : null) || lead?.quotations?.[0];
 
     const quoteActivity = activities.find(
       (a) => a.type === 'Quotation Phase' || a.type === 'Quotation Handover'
@@ -802,8 +953,113 @@ export default function Lead360View() {
   if (isLoading) {
     return (
       <InteriorShell>
-        <div className="p-8 flex items-center justify-center text-[hsl(var(--muted-foreground))] min-h-[60vh] text-sm font-semibold animate-pulse">
-          Loading Lead Details...
+        <div className="w-full max-w-7xl mx-auto space-y-3 sm:space-y-4 pb-12 p-3 sm:p-4 md:p-6 overflow-x-hidden animate-pulse">
+          {/* --- 1. HEADER SKELETON --- */}
+          <div className="bg-[hsl(var(--card))] rounded-xl p-3 sm:p-4 border border-[hsl(var(--border))] flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+              <div className="w-8 h-8 rounded-lg bg-[hsl(var(--muted))] shrink-0" />
+              <div className="space-y-2 flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="h-6 w-48 bg-[hsl(var(--muted))] rounded-md" />
+                  <div className="h-4 w-16 bg-[hsl(var(--muted))] rounded" />
+                  <div className="h-4 w-20 bg-[hsl(var(--muted))] rounded" />
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="h-4 w-28 bg-[hsl(var(--muted))] rounded" />
+                  <div className="h-4 w-36 bg-[hsl(var(--muted))] rounded" />
+                  <div className="h-4 w-40 bg-[hsl(var(--muted))] rounded" />
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-[hsl(var(--border)/0.6)]">
+              <div className="h-6 w-24 bg-[hsl(var(--muted))] rounded-full" />
+              <div className="h-8 w-28 bg-[hsl(var(--muted))] rounded-lg" />
+            </div>
+          </div>
+
+          {/* --- 2. TABS SKELETON --- */}
+          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-1 flex items-center gap-1 overflow-x-hidden">
+            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+              <div key={i} className="h-8 w-24 bg-[hsl(var(--muted))] rounded-lg shrink-0" />
+            ))}
+          </div>
+
+          {/* --- 3. DASHBOARD CONTENT SKELETON --- */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Main 2-column area */}
+            <div className="lg:col-span-2 space-y-4">
+              {/* Quick Metrics */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3 space-y-2">
+                    <div className="h-3 w-16 bg-[hsl(var(--muted))] rounded" />
+                    <div className="h-6 w-20 bg-[hsl(var(--muted))] rounded" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Stage / Progress Card */}
+              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <div className="h-4 w-32 bg-[hsl(var(--muted))] rounded" />
+                  <div className="h-4 w-20 bg-[hsl(var(--muted))] rounded" />
+                </div>
+                <div className="h-2 w-full bg-[hsl(var(--muted))] rounded-full" />
+                <div className="grid grid-cols-3 gap-2 pt-2">
+                  <div className="h-12 bg-[hsl(var(--muted))] rounded-lg" />
+                  <div className="h-12 bg-[hsl(var(--muted))] rounded-lg" />
+                  <div className="h-12 bg-[hsl(var(--muted))] rounded-lg" />
+                </div>
+              </div>
+
+              {/* Main Stage Panel (Drawings / Requirements / BOQ) */}
+              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <div className="h-4 w-40 bg-[hsl(var(--muted))] rounded" />
+                  <div className="h-8 w-24 bg-[hsl(var(--muted))] rounded-lg" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <div className="h-36 bg-[hsl(var(--muted))] rounded-xl" />
+                  <div className="h-36 bg-[hsl(var(--muted))] rounded-xl" />
+                </div>
+              </div>
+            </div>
+
+            {/* Right sidebar area */}
+            <div className="space-y-4">
+              {/* Lead Metadata Card */}
+              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-4 space-y-3">
+                <div className="h-4 w-28 bg-[hsl(var(--muted))] rounded" />
+                <div className="space-y-2.5 pt-1">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="flex justify-between items-center py-1 border-b border-[hsl(var(--border)/0.5)]">
+                      <div className="h-3 w-20 bg-[hsl(var(--muted))] rounded" />
+                      <div className="h-3 w-28 bg-[hsl(var(--muted))] rounded" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Activities Card */}
+              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <div className="h-4 w-24 bg-[hsl(var(--muted))] rounded" />
+                  <div className="h-4 w-12 bg-[hsl(var(--muted))] rounded" />
+                </div>
+                <div className="space-y-3 pt-1">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-start gap-2.5">
+                      <div className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] shrink-0 mt-0.5" />
+                      <div className="space-y-1.5 flex-1">
+                        <div className="h-3 w-3/4 bg-[hsl(var(--muted))] rounded" />
+                        <div className="h-2.5 w-1/2 bg-[hsl(var(--muted))] rounded" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </InteriorShell>
     );
@@ -886,10 +1142,17 @@ export default function Lead360View() {
         const isUnlocked = currentStage >= 5 || (lead?.quotations && lead.quotations.length > 0);
         return { isLocked: !isUnlocked, requiredStage: 'Under Quotation', stageTitle: 'Quotations' };
       }
+      case 'confirm_order': {
+        const hasAcceptedQuote = Boolean(lead?.quotations && lead.quotations.some((q: any) => q.status === 'Accepted' || q.status === 'Approved'));
+        const isUnlocked = currentStage >= 5 || hasAcceptedQuote || isConverted || (lead?.quotations && lead.quotations.length > 0);
+        return { isLocked: !isUnlocked, requiredStage: 'Quotation Approved', stageTitle: 'Confirm Order' };
+      }
       default:
         return { isLocked: false, requiredStage: '', stageTitle: '' };
     }
   };
+
+  const hasAcceptedQuoteForTab = Boolean(lead?.quotations && lead.quotations.some((q: any) => q.status === 'Accepted' || q.status === 'Approved'));
 
   const TABS = [
     { id: 'overview', label: 'Overview' },
@@ -899,6 +1162,7 @@ export default function Lead360View() {
     { id: 'designs', label: '2D/3D Drawing', count: lead?.designFiles?.length || 0 },
     { id: 'boq', label: 'BOQ', count: lead?.boqs?.length || 0 },
     { id: 'quotations', label: 'Quotations', count: lead?.quotations?.length || 0 },
+    { id: 'confirm_order', label: 'Confirm Order', count: hasAcceptedQuoteForTab || isConverted ? 1 : 0 },
   ];
 
   return (
@@ -1046,25 +1310,29 @@ export default function Lead360View() {
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-500/10 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold">
                   <Lock size={12} /> Lead Lost
                 </span>
-                <button 
-                  onClick={() => setIsDeleteModalOpen(true)}
-                  className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg transition-all active:scale-95"
-                  title="Delete Lead"
-                >
-                  <Trash2 size={14} />
-                </button>
+                {(canDo('crm_leads', 'delete')) && (
+                  <button 
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg transition-all active:scale-95"
+                    title="Delete Lead"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </div>
             ) : (
               <>
                 {['Under Quotation', 'Quotation Pending', 'Quotation Sent', 'Negotiation', 'Booking Pending'].includes(lead.status) && (
                   ((lead.quotations && lead.quotations.some((q: any) => q.status === 'Accepted' || q.status === 'Approved')) || lead.status === 'Booking Pending') && (
-                    <button
-                      onClick={() => setIsConvertToProjectOpen(true)}
-                      className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95"
-                      title="Convert to Won Project"
-                    >
-                      <CheckCircle2 size={12} /> Convert to Project
-                    </button>
+                    (canDo('crm_quotations', 'approve')) && (
+                      <button
+                        onClick={() => setIsConvertToProjectOpen(true)}
+                        className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95"
+                        title="Convert to Won Project"
+                      >
+                        <CheckCircle2 size={12} /> Convert to Project
+                      </button>
+                    )
                   )
                 )}
 
@@ -1072,38 +1340,46 @@ export default function Lead360View() {
                   !hasFollowUp &&
                   !lead.siteMeasurements &&
                   (!lead.quotations || lead.quotations.length === 0) && (
-                    <button
-                      onClick={() => setIsFollowUpModalOpen(true)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
-                      title="Schedule Initial Follow-up"
-                    >
-                      <Calendar size={12} /> Follow-up
-                    </button>
+                    (canDo('crm_followups', 'create')) && (
+                      <button
+                        onClick={() => setIsFollowUpModalOpen(true)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
+                        title="Schedule Initial Follow-up"
+                      >
+                        <Calendar size={12} /> Follow-up
+                      </button>
+                    )
                   )}
 
-                <button
-                  onClick={() => setIsMarkAsLostOpen(true)}
-                  className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg transition-all active:scale-95"
-                  title="Mark Lead as Lost"
-                >
-                  <X size={14} />
-                </button>
+                {(canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_requirements', 'update') || canDo('crm_drawings', 'update') || canDo('crm_boq', 'update') || canDo('crm_quotations', 'update')) && (
+                  <button
+                    onClick={() => setIsMarkAsLostOpen(true)}
+                    className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg transition-all active:scale-95"
+                    title="Mark Lead as Lost"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
 
-                <button 
-                  onClick={() => setIsEditModalOpen(true)}
-                  className="p-1.5 bg-[hsl(var(--muted))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-lg transition-all active:scale-95"
-                  title="Edit Lead Details"
-                >
-                  <Pencil size={14} />
-                </button>
+                {(canDo('crm_leads', 'update')) && (
+                  <button 
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="p-1.5 bg-[hsl(var(--muted))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-lg transition-all active:scale-95"
+                    title="Edit Lead Details"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                )}
 
-                <button 
-                  onClick={() => setIsDeleteModalOpen(true)}
-                  className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg transition-all active:scale-95"
-                  title="Delete Lead"
-                >
-                  <Trash2 size={14} />
-                </button>
+                {(canDo('crm_leads', 'delete')) && (
+                  <button 
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg transition-all active:scale-95"
+                    title="Delete Lead"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </>
             )}
           </div>
@@ -1162,14 +1438,21 @@ export default function Lead360View() {
 
         {/* --- 3. HIGH DENSITY TAB NAVIGATION --- */}
         <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-1 flex items-center gap-1 overflow-x-auto scrollbar-none touch-pan-x">
-          {TABS.map((tab) => {
+          {TABS.filter((tab) => canViewLeadTab(tab.id)).map((tab) => {
             const { isLocked } = getTabLockState(tab.id);
             const isActive = activeTab === tab.id;
 
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => {
+                  setActiveTab(tab.id as any);
+                  if (typeof window !== 'undefined') {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('tab', tab.id);
+                    window.history.replaceState(null, '', url.toString());
+                  }
+                }}
                 className={cn(
                   "px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap outline-none flex items-center gap-1.5 cursor-pointer shrink-0",
                   isActive
@@ -1226,7 +1509,7 @@ export default function Lead360View() {
                     <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider truncate">Est. Budget</p>
                     <p className="font-bold text-xs truncate mt-0.5 text-emerald-600 dark:text-emerald-400">
                       {lead.quotations?.[lead.quotations.length - 1]?.grandTotal
-                        ? `₹${lead.quotations[lead.quotations.length - 1].grandTotal.toLocaleString('en-IN')}`
+                        ? `${currencySymbol} ${lead.quotations[lead.quotations.length - 1].grandTotal.toLocaleString()}`
                         : lead.budgetRange || 'Pending'}
                     </p>
                   </div>
@@ -1264,13 +1547,15 @@ export default function Lead360View() {
                         </div>
                       </div>
                       {!isReadOnly && (
-                        <button
-                          onClick={() => setIsEditModalOpen(true)}
-                          className="text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 px-2 py-0.5 rounded transition-colors flex items-center gap-1"
-                          title="Edit Location & Lead Details"
-                        >
-                          <Pencil size={11} /> Edit
-                        </button>
+                        (canDo('crm_leads', 'update')) && (
+                          <button
+                            onClick={() => setIsEditModalOpen(true)}
+                            className="text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 px-2 py-0.5 rounded transition-colors flex items-center gap-1"
+                            title="Edit Location & Lead Details"
+                          >
+                            <Pencil size={11} /> Edit
+                          </button>
+                        )
                       )}
                     </div>
 
@@ -1372,7 +1657,7 @@ export default function Lead360View() {
                         </span>
                         <span className="font-bold text-emerald-600 dark:text-emerald-400 break-words min-w-0">
                           {lead.quotations?.[lead.quotations.length - 1]?.grandTotal
-                            ? `₹${lead.quotations[lead.quotations.length - 1].grandTotal.toLocaleString('en-IN')}`
+                            ? `${currencySymbol} ${lead.quotations[lead.quotations.length - 1].grandTotal.toLocaleString()}`
                             : lead.budgetRange || 'Pending'}
                         </span>
                       </div>
@@ -1387,12 +1672,14 @@ export default function Lead360View() {
                       <Activity className="w-3.5 h-3.5 text-blue-500" /> Activity Timeline
                     </h3>
                     {!isReadOnly && (
-                      <button
-                        onClick={() => setIsActivityModalOpen(true)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
-                      >
-                        <Plus size={12} /> Log Note
-                      </button>
+                      (canDo('crm_followups', 'create')) && (
+                        <button
+                          onClick={() => setIsActivityModalOpen(true)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
+                        >
+                          <Plus size={12} /> Log Note
+                        </button>
+                      )
                     )}
                   </div>
                   
@@ -1504,6 +1791,15 @@ export default function Lead360View() {
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 max-w-md">
                     Complete initial follow-up and schedule a Site Visit to unlock measurement logging.
                   </p>
+                  {/* Bring the lead into this stage from here — no need for the previous stage's tab */}
+                  {!isReadOnly && (canDo('crm_site_visits', 'create') || canDo('crm_site_visits', 'update') || canDo('crm_followups', 'update') || canDo('crm_leads', 'update')) && (
+                    <button
+                      onClick={() => setIsSendToSiteVisitOpen(true)}
+                      className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 active:scale-95 transition-all"
+                    >
+                      Send to Site Visit <ArrowRight size={12} />
+                    </button>
+                  )}
                 </div>
               ) : (() => {
                 const isSiteVisitOverdue = Boolean(
@@ -1569,12 +1865,14 @@ export default function Lead360View() {
                             </button>
                           )}
                           {!isReadOnly && (
-                            <button
-                              onClick={() => setIsSendToSiteVisitOpen(true)}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
-                            >
-                              <Calendar size={12} /> Reschedule Visit
-                            </button>
+                            (canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_site_visits', 'create')) && (
+                              <button
+                                onClick={() => setIsSendToSiteVisitOpen(true)}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                              >
+                                <Calendar size={12} /> Reschedule Visit
+                              </button>
+                            )
                           )}
                         </div>
                       </div>
@@ -1629,35 +1927,43 @@ export default function Lead360View() {
                             <>
                               {lead.siteMeasurements ? (
                                 <>
-                                  <button
-                                    onClick={() => setIsSiteVisitModalOpen(true)}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
-                                  >
-                                    <Pencil size={12} /> Edit Measurements
-                                  </button>
-                                  {['Under Site Visit', 'Measurement Done'].includes(lead.status) && (
+                                  {(canDo('crm_site_visits', 'update')) && (
                                     <button
-                                      onClick={() => setIsSendToReqOpen(true)}
-                                      className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                                      onClick={() => setIsSiteVisitModalOpen(true)}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
                                     >
-                                      Pass to Requirements <ArrowRight size={12} />
+                                      <Pencil size={12} /> Edit Measurements
                                     </button>
+                                  )}
+                                  {['Under Site Visit', 'Measurement Done'].includes(lead.status) && (
+                                    (canDo('crm_site_visits', 'update') || canDo('crm_requirements', 'update') || canDo('crm_requirements', 'create')) && (
+                                      <button
+                                        onClick={() => setIsSendToReqOpen(true)}
+                                        className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                                      >
+                                        Pass to Requirements <ArrowRight size={12} />
+                                      </button>
+                                    )
                                   )}
                                 </>
                               ) : (
                                 <>
-                                  <button
-                                    onClick={() => setIsSendToSiteVisitOpen(true)}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
-                                  >
-                                    <Calendar size={12} /> Reschedule
-                                  </button>
-                                  <button
-                                    onClick={() => setIsSiteVisitModalOpen(true)}
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
-                                  >
-                                    <Plus size={13} /> Log Measurements
-                                  </button>
+                                  {(canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_site_visits', 'create')) && (
+                                    <button
+                                      onClick={() => setIsSendToSiteVisitOpen(true)}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
+                                    >
+                                      <Calendar size={12} /> Reschedule
+                                    </button>
+                                  )}
+                                  {(canDo('crm_site_visits', 'update')) && (
+                                    <button
+                                      onClick={() => setIsSiteVisitModalOpen(true)}
+                                      className="inline-flex items-center gap-1 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                                    >
+                                      <Plus size={13} /> Log Measurements
+                                    </button>
+                                  )}
                                 </>
                               )}
                             </>
@@ -1757,12 +2063,14 @@ export default function Lead360View() {
                           </p>
                         </div>
                         {!isReadOnly && (
-                          <button 
-                            onClick={() => setIsSiteVisitModalOpen(true)} 
-                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <Plus size={14} /> Log Site Visit & Measurements
-                          </button>
+                          (canDo('crm_site_visits', 'update')) && (
+                            <button 
+                              onClick={() => setIsSiteVisitModalOpen(true)} 
+                              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Plus size={14} /> Log Site Visit & Measurements
+                            </button>
+                          )
                         )}
                       </div>
                     ) : (
@@ -1954,6 +2262,15 @@ export default function Lead360View() {
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 max-w-md">
                     Complete the Site Visit & Measurements phase first to unlock requirement logging.
                   </p>
+                  {/* Bring the lead into this stage from here — no need for the previous stage's tab */}
+                  {!isReadOnly && (canDo('crm_requirements', 'create') || canDo('crm_requirements', 'update') || canDo('crm_site_visits', 'update')) && (
+                    <button
+                      onClick={() => setIsSendToReqOpen(true)}
+                      className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 active:scale-95 transition-all"
+                    >
+                      Send to Requirements <ArrowRight size={12} />
+                    </button>
+                  )}
                 </div>
               ) : (() => {
                 const hasRequirements = Boolean(normalizedRequirements && normalizedRequirements.length > 0);
@@ -2020,12 +2337,14 @@ export default function Lead360View() {
                           </div>
                         </div>
                         {!isReadOnly && (
-                          <button
-                            onClick={() => setIsSendToReqOpen(true)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shrink-0"
-                          >
-                            <Calendar size={12} /> Reschedule Session
-                          </button>
+                          (canDo('crm_requirements', 'update')) && (
+                            <button
+                              onClick={() => setIsSendToReqOpen(true)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shrink-0"
+                            >
+                              <Calendar size={12} /> Reschedule Session
+                            </button>
+                          )
                         )}
                       </div>
                     )}
@@ -2068,35 +2387,43 @@ export default function Lead360View() {
                           <div className="flex items-center gap-1.5 flex-wrap">
                             {hasRequirements ? (
                               <>
-                                <button
-                                  onClick={() => setIsReqModalOpen(true)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
-                                >
-                                  <Pencil size={12} /> Edit Requirements
-                                </button>
-                                {['Under Requirement', 'Requirement Completed'].includes(lead.status) && (
+                                {(canDo('crm_requirements', 'update')) && (
                                   <button
-                                    onClick={() => setIsSendToDrawingOpen(true)}
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                                    onClick={() => setIsReqModalOpen(true)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
                                   >
-                                    Pass to 2D/3D Drawing <ArrowRight size={12} />
+                                    <Pencil size={12} /> Edit Requirements
                                   </button>
+                                )}
+                                {['Under Requirement', 'Requirement Completed'].includes(lead.status) && (
+                                  (canDo('crm_requirements', 'update') || canDo('crm_drawings', 'update') || canDo('crm_drawings', 'create')) && (
+                                    <button
+                                      onClick={() => setIsSendToDrawingOpen(true)}
+                                      className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                                    >
+                                      Pass to 2D/3D Drawing <ArrowRight size={12} />
+                                    </button>
+                                  )
                                 )}
                               </>
                             ) : (
                               <>
-                                <button
-                                  onClick={() => setIsSendToReqOpen(true)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
-                                >
-                                  <Calendar size={12} /> Reschedule Session
-                                </button>
-                                <button
-                                  onClick={() => setIsReqModalOpen(true)}
-                                  className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
-                                >
-                                  <Plus size={13} /> Add Requirements
-                                </button>
+                                {(canDo('crm_requirements', 'update')) && (
+                                  <button
+                                    onClick={() => setIsSendToReqOpen(true)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
+                                  >
+                                    <Calendar size={12} /> Reschedule Session
+                                  </button>
+                                )}
+                                {(canDo('crm_requirements', 'create')) && (
+                                  <button
+                                    onClick={() => setIsReqModalOpen(true)}
+                                    className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                                  >
+                                    <Plus size={13} /> Add Requirements
+                                  </button>
+                                )}
                               </>
                             )}
                           </div>
@@ -2143,7 +2470,7 @@ export default function Lead360View() {
                             <DollarSign size={11} className="text-amber-500" /> Target Budget
                           </p>
                           <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
-                            {lead.budgetRange || (lead.budget ? `₹${Number(lead.budget).toLocaleString('en-IN')}` : 'Not specified')}
+                            {lead.budgetRange || (lead.budget ? `${currencySymbol} ${Number(lead.budget).toLocaleString()}` : 'Not specified')}
                           </p>
                         </div>
 
@@ -2236,20 +2563,17 @@ export default function Lead360View() {
                     </div>
 
                     {/* Top Overview Metric Cards */}
-                    {(hasRequirements || hasClientRequirements) && (
+                    {hasRequirements && (
                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
                         <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3 flex items-center gap-2.5">
                           <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
                             <DollarSign size={16} />
                           </div>
                           <div className="overflow-hidden min-w-0">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Budget Overview</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Estimated Budget</p>
                             <p className="text-xs font-bold text-[hsl(var(--foreground))] truncate mt-0.5">
-                              {lead.budgetRange || (lead.budget ? `₹${Number(lead.budget).toLocaleString('en-IN')}` : lead.clientRequirements?.estimatedBudget || 'Not specified')}
+                              {lead.budgetRange || (lead.budget ? `₹${Number(lead.budget).toLocaleString('en-IN')}` : 'Not specified')}
                             </p>
-                            {lead.clientRequirements?.estimatedBudget && lead.budgetRange && (
-                              <p className="text-[10px] text-teal-600 truncate">Client: {lead.clientRequirements.estimatedBudget}</p>
-                            )}
                           </div>
                         </div>
 
@@ -2258,7 +2582,7 @@ export default function Lead360View() {
                             <Building size={16} />
                           </div>
                           <div className="overflow-hidden min-w-0">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Interior Scope</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Interior Type</p>
                             <p className="text-xs font-bold text-[hsl(var(--foreground))] truncate mt-0.5">
                               {normalizedRequirements[0]?.interiorType || lead.propertyType || 'Residential'}
                             </p>
@@ -2270,13 +2594,10 @@ export default function Lead360View() {
                             <Palette size={16} />
                           </div>
                           <div className="overflow-hidden min-w-0">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Design Style</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Primary Style</p>
                             <p className="text-xs font-bold text-[hsl(var(--foreground))] truncate mt-0.5">
-                              {normalizedRequirements.find((r: any) => r.designStyle)?.designStyle || lead.clientRequirements?.overallStyle || 'Custom Style'}
+                              {normalizedRequirements.find((r: any) => r.designStyle)?.designStyle || normalizedRequirements[0]?.theme || 'Custom Style'}
                             </p>
-                            {lead.clientRequirements?.overallStyle && (
-                              <p className="text-[10px] text-teal-600 truncate">Client wishlist: {lead.clientRequirements.overallStyle}</p>
-                            )}
                           </div>
                         </div>
 
@@ -2285,9 +2606,9 @@ export default function Lead360View() {
                             <Layers size={16} />
                           </div>
                           <div className="overflow-hidden min-w-0">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Spaces Comparison</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Configured Spaces</p>
                             <p className="text-xs font-bold text-[hsl(var(--foreground))] truncate mt-0.5">
-                              Tech: {normalizedRequirements.length} | Client: {normalizedClientRequirements.length}
+                              {normalizedRequirements.length} {normalizedRequirements.length === 1 ? 'Room / Area' : 'Rooms / Areas'}
                             </p>
                           </div>
                         </div>
@@ -2323,565 +2644,270 @@ export default function Lead360View() {
                       </div>
                     )}
 
-                    {/* Requirements View Switcher & Action Bar */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1">
-                      <div className="flex items-center gap-1 bg-[hsl(var(--muted)/0.5)] p-1 rounded-xl border border-[hsl(var(--border))] w-fit flex-wrap">
-                        <button
-                          onClick={() => setRequirementsViewMode('side-by-side')}
-                          className={cn(
-                            "px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
-                            requirementsViewMode === 'side-by-side'
-                              ? "bg-indigo-600 text-white shadow-xs"
-                              : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
-                          )}
-                        >
-                          <Columns size={13} /> Side-by-Side Comparison
-                        </button>
-                        <button
-                          onClick={() => setRequirementsViewMode('technical')}
-                          className={cn(
-                            "px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
-                            requirementsViewMode === 'technical'
-                              ? "bg-emerald-600 text-white shadow-xs"
-                              : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
-                          )}
-                        >
-                          <PenTool size={13} /> Technical Team ({normalizedRequirements.length})
-                        </button>
-                        <button
-                          onClick={() => setRequirementsViewMode('client')}
-                          className={cn(
-                            "px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
-                            requirementsViewMode === 'client'
-                              ? "bg-teal-600 text-white shadow-xs"
-                              : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
-                          )}
-                        >
-                          <User size={13} /> Client Entered ({normalizedClientRequirements.length})
-                        </button>
-                      </div>
-
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {hasClientSubmitted && !isReadOnly && (
-                          <button
-                            onClick={handleImportClientRequirements}
-                            disabled={isImportingClientReqs}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-600/10 hover:bg-teal-600/20 text-teal-700 dark:text-teal-300 border border-teal-500/30 rounded-lg text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
-                            title="Import and merge all client wishlist spaces into technical team specifications"
-                          >
-                            <Sparkles size={13} className="text-teal-500" />
-                            {isImportingClientReqs ? 'Importing...' : 'Adopt Client Wishlist to Specs'}
-                          </button>
-                        )}
-                        {!isReadOnly && (
-                          <button
-                            onClick={() => setIsReqModalOpen(true)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
-                          >
-                            <Plus size={13} /> {hasRequirements ? 'Edit Technical Specs' : 'Add Technical Specs'}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* SIDE-BY-SIDE OR FOCUSED VIEW CONTAINER */}
-                    <div className={cn(
-                      "grid gap-4 items-start",
-                      requirementsViewMode === 'side-by-side' ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1"
-                    )}>
-                      {/* COLUMN 1: TECHNICAL PERSON / FIELD TEAM GATHERED DATA */}
-                      {(requirementsViewMode === 'side-by-side' || requirementsViewMode === 'technical') && (
-                        <div className="space-y-3">
-                          {/* Column Header Banner */}
-                          <div className="bg-emerald-500/[0.08] border border-emerald-500/30 rounded-xl p-3 flex items-center justify-between">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                                <PenTool size={15} />
-                              </div>
-                              <div>
-                                <h3 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">
-                                  Technical Person / Team Data
-                                </h3>
-                                <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                                  Gathered by {requirementsInfo.assignedName || 'Consultant / Field Staff'}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 border border-emerald-500/20">
-                                {normalizedRequirements.length} {normalizedRequirements.length === 1 ? 'Space' : 'Spaces'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {!hasRequirements ? (
-                            <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-6 text-center flex flex-col items-center space-y-3">
-                              <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-600">
-                                <PenTool size={20} />
-                              </div>
-                              <div className="max-w-xs space-y-1">
-                                <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">
-                                  No Technical Specifications Recorded
-                                </h4>
-                                <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                                  Capture room-by-room functional needs, spatial usage, MEP requirements, styles, and materials.
-                                </p>
-                              </div>
-                              {!isReadOnly && (
-                                <button
-                                  onClick={() => setIsReqModalOpen(true)}
-                                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
-                                >
-                                  <Plus size={13} /> Add Technical Specs
-                                </button>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="space-y-3">
-                              {normalizedRequirements.map((req: any, index: number) => {
-                                const hasFunctional = !!(req.roomUsage || req.furnitureRequirements || req.storage || req.electricalPoints || req.lightingRequirements || req.plumbingRequirements || req.circulation || req.dimensions);
-                                const hasAesthetic = !!(req.designStyle || req.theme || req.colours || req.materials || req.flooring || req.ceiling || req.wallFinishes || req.furnitureStyle);
-                                const matchesClient = normalizedClientRequirements.some((c: any) =>
-                                  c.roomName && req.roomName && c.roomName.trim().toLowerCase() === req.roomName.trim().toLowerCase()
-                                );
-
-                                const standardKeys = new Set([
-                                  'roomName', 'room', 'name', 'room_name', 'roomTitle',
-                                  'interiorType', 'type',
-                                  'designStyle', 'style', 'theme', 'design_style',
-                                  'description', 'notes', 'remarks', 'instructions', 'specialRequests', 'clientNotes',
-                                  'roomUsage', 'usage', 'purpose',
-                                  'furnitureRequirements', 'furniture', 'furniture_requirements', 'furnitureSpecs',
-                                  'storage', 'storageRequirements', 'wardrobes',
-                                  'electricalPoints', 'electrical', 'power_points', 'powerPoints',
-                                  'lightingRequirements', 'lighting', 'lighting_requirements', 'lights',
-                                  'plumbingRequirements', 'plumbing', 'plumbing_requirements', 'waterPoints',
-                                  'circulation', 'clearance', 'traffic_flow',
-                                  'colours', 'colors', 'colorPalette', 'colour_palette', 'color_palette', 'palette',
-                                  'materials', 'materialSpecs', 'finishes',
-                                  'flooring', 'flooringType', 'floor',
-                                  'ceiling', 'falseCeiling', 'ceiling_type', 'ceilingHeight',
-                                  'wallFinishes', 'walls', 'wall_finishes', 'wallDecor',
-                                  'furnitureStyle', 'furnishing_style',
-                                  'dimensions', 'carpetArea', 'area', 'size',
-                                  'budget', 'estimatedBudget', 'cost',
-                                  'timeline', 'duration',
-                                  'scopeOfWork', 'scope',
-                                  '_id', 'id', '__v'
-                                ]);
-
-                                const extraEntries = Object.entries(req).filter(([k, v]) => {
-                                  if (standardKeys.has(k)) return false;
-                                  if (v === null || v === undefined || v === '') return false;
-                                  if (typeof v === 'object' && Object.keys(v).length === 0) return false;
-                                  return true;
-                                });
-
-                                return (
-                                  <div key={index} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 sm:p-4 space-y-3 hover:border-emerald-500/30 transition-colors shadow-xs">
-                                    {/* Room Header */}
-                                    <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[hsl(var(--border))]">
-                                      <div className="flex items-center gap-2">
-                                        <span className="w-6 h-6 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                                          {index + 1}
-                                        </span>
-                                        <div>
-                                          <h4 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">{req.roomName}</h4>
-                                        </div>
-                                      </div>
-
-                                      <div className="flex items-center gap-1.5 flex-wrap">
-                                        {matchesClient && (
-                                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20 flex items-center gap-0.5">
-                                            <CheckCircle2 size={9} /> Matches Client Wishlist
-                                          </span>
-                                        )}
-                                        {req.dimensions && (
-                                          <span className="text-[10px] font-bold bg-blue-500/10 text-blue-600 border border-blue-500/20 px-2 py-0.5 rounded flex items-center gap-1">
-                                            <Maximize2 size={10} /> {req.dimensions}
-                                          </span>
-                                        )}
-                                        {req.budget && (
-                                          <span className="text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20 px-2 py-0.5 rounded flex items-center gap-1">
-                                            <DollarSign size={10} /> {req.budget}
-                                          </span>
-                                        )}
-                                        {req.interiorType && (
-                                          <span className="text-[10px] font-bold uppercase bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] px-2 py-0.5 rounded">
-                                            {req.interiorType}
-                                          </span>
-                                        )}
-                                        {req.designStyle && (
-                                          <span className="text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2 py-0.5 rounded flex items-center gap-1">
-                                            <Palette size={10} /> {req.designStyle}
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-
-                                    {/* Specific Instructions / Description */}
-                                    {req.description && (
-                                      <div className="bg-emerald-500/[0.04] border border-emerald-500/20 rounded-lg p-2.5">
-                                        <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 flex items-center gap-1 mb-1">
-                                          <Sparkles size={11} className="text-emerald-600" /> Technical Instructions & Notes
-                                        </p>
-                                        <p className="text-xs text-[hsl(var(--foreground))] font-medium leading-relaxed whitespace-pre-wrap">
-                                          {req.description}
-                                        </p>
-                                      </div>
-                                    )}
-
-                                    {/* Specs: Functional & Aesthetic */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                                      {/* Functional Requirements */}
-                                      <div className="bg-[hsl(var(--muted)/0.25)] border border-[hsl(var(--border))] rounded-lg p-2.5 space-y-1.5">
-                                        <h5 className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1 pb-1 border-b border-[hsl(var(--border))]">
-                                          <Sliders size={11} className="text-emerald-500" /> Functional Requirements
-                                        </h5>
-                                        <div className="space-y-1 text-xs">
-                                          {req.roomUsage && (
-                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
-                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Usage</span>
-                                              <span className="font-semibold text-[hsl(var(--foreground))]">{req.roomUsage}</span>
-                                            </div>
-                                          )}
-                                          {req.furnitureRequirements && (
-                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
-                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Furniture</span>
-                                              <span className="font-semibold text-[hsl(var(--foreground))]">{req.furnitureRequirements}</span>
-                                            </div>
-                                          )}
-                                          {req.storage && (
-                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
-                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Storage & Wardrobes</span>
-                                              <span className="font-semibold text-[hsl(var(--foreground))]">{req.storage}</span>
-                                            </div>
-                                          )}
-                                          {req.electricalPoints && (
-                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
-                                              <span className="text-[9px] font-bold uppercase text-amber-500 flex items-center gap-1"><Zap size={9} /> Electrical Points</span>
-                                              <span className="font-medium text-[hsl(var(--foreground))]">{req.electricalPoints}</span>
-                                            </div>
-                                          )}
-                                          {req.lightingRequirements && (
-                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
-                                              <span className="text-[9px] font-bold uppercase text-amber-500 flex items-center gap-1"><Sun size={9} /> Lighting</span>
-                                              <span className="font-medium text-[hsl(var(--foreground))]">{req.lightingRequirements}</span>
-                                            </div>
-                                          )}
-                                          {req.plumbingRequirements && (
-                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
-                                              <span className="text-[9px] font-bold uppercase text-cyan-500 flex items-center gap-1"><Droplets size={9} /> Plumbing</span>
-                                              <span className="font-medium text-[hsl(var(--foreground))]">{req.plumbingRequirements}</span>
-                                            </div>
-                                          )}
-                                          {req.circulation && (
-                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
-                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Circulation</span>
-                                              <span className="font-medium text-[hsl(var(--foreground))]">{req.circulation}</span>
-                                            </div>
-                                          )}
-                                          {!hasFunctional && (
-                                            <p className="text-[10px] text-[hsl(var(--muted-foreground))] italic p-1">No functional specs recorded.</p>
-                                          )}
-                                        </div>
-                                      </div>
-
-                                      {/* Aesthetic & Finishes */}
-                                      <div className="bg-[hsl(var(--muted)/0.25)] border border-[hsl(var(--border))] rounded-lg p-2.5 space-y-1.5">
-                                        <h5 className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1 pb-1 border-b border-[hsl(var(--border))]">
-                                          <Palette size={11} className="text-purple-500" /> Aesthetic & Finishes
-                                        </h5>
-                                        <div className="space-y-1 text-xs">
-                                          {req.designStyle && (
-                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
-                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Design Style</span>
-                                              <span className="font-semibold text-[hsl(var(--foreground))]">{req.designStyle}</span>
-                                            </div>
-                                          )}
-                                          {req.colours && (
-                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
-                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Color Palette</span>
-                                              <span className="font-semibold text-[hsl(var(--foreground))]">{req.colours}</span>
-                                            </div>
-                                          )}
-                                          {req.materials && (
-                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
-                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Materials & Finishes</span>
-                                              <span className="font-semibold text-[hsl(var(--foreground))]">{req.materials}</span>
-                                            </div>
-                                          )}
-                                          {req.flooring && (
-                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
-                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Flooring</span>
-                                              <span className="font-medium text-[hsl(var(--foreground))]">{req.flooring}</span>
-                                            </div>
-                                          )}
-                                          {req.ceiling && (
-                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
-                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Ceiling</span>
-                                              <span className="font-medium text-[hsl(var(--foreground))]">{req.ceiling}</span>
-                                            </div>
-                                          )}
-                                          {req.wallFinishes && (
-                                            <div className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
-                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Wall Finishes</span>
-                                              <span className="font-medium text-[hsl(var(--foreground))]">{req.wallFinishes}</span>
-                                            </div>
-                                          )}
-                                          {!hasAesthetic && (
-                                            <p className="text-[10px] text-[hsl(var(--muted-foreground))] italic p-1">No aesthetic specs recorded.</p>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-
-                                    {/* Custom Specifications */}
-                                    {extraEntries.length > 0 && (
-                                      <div className="bg-[hsl(var(--muted)/0.2)] border border-[hsl(var(--border))] rounded-lg p-2.5 space-y-1.5">
-                                        <h5 className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1 pb-1 border-b border-[hsl(var(--border))]">
-                                          <Box size={11} className="text-indigo-500" /> Additional Specifications
-                                        </h5>
-                                        <div className="grid grid-cols-2 gap-1.5 text-xs">
-                                          {extraEntries.map(([k, v]) => (
-                                            <div key={k} className="p-1 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.6)]">
-                                              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">
-                                                {k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}
-                                              </span>
-                                              <span className="font-semibold text-[hsl(var(--foreground))] truncate block">
-                                                {typeof v === 'object' ? JSON.stringify(v) : String(v)}
-                                              </span>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
+                    {/* Room by Room Cards */}
+                    {!hasRequirements ? (
+                      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-6 text-center flex flex-col items-center space-y-3">
+                        <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-600">
+                          <PenTool size={24} />
                         </div>
-                      )}
+                        <div className="max-w-md space-y-0.5">
+                          <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">
+                            Ready for Detailed Requirements Logging
+                          </h3>
+                          <p className="text-[hsl(var(--muted-foreground))] text-xs">
+                            Capture room-by-room functional needs, spatial usage, MEP requirements, styles, and materials.
+                          </p>
+                        </div>
+                        {!isReadOnly && (
+                          <button 
+                            onClick={() => setIsReqModalOpen(true)} 
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Plus size={14} /> Add Design Requirements
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {normalizedRequirements.map((req: any, index: number) => {
+                          const hasFunctional = !!(req.roomUsage || req.furnitureRequirements || req.storage || req.electricalPoints || req.lightingRequirements || req.plumbingRequirements || req.circulation || req.dimensions);
+                          const hasAesthetic = !!(req.designStyle || req.theme || req.colours || req.materials || req.flooring || req.ceiling || req.wallFinishes || req.furnitureStyle);
 
-                      {/* COLUMN 2: CLIENT ENTERED DATA & WISHLIST */}
-                      {(requirementsViewMode === 'side-by-side' || requirementsViewMode === 'client') && (
-                        <div className="space-y-3">
-                          {/* Column Header Banner */}
-                          <div className="bg-teal-500/[0.08] border border-teal-500/30 rounded-xl p-3 flex items-center justify-between">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-lg bg-teal-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                                <User size={15} />
-                              </div>
-                              <div>
-                                <h3 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">
-                                  Client Entered Data & Wishlist
-                                </h3>
-                                <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                                  {hasClientSubmitted
-                                    ? `Submitted on ${new Date(lead.clientRequirements?.submittedAt || lead.clientRequirementsSubmittedAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
-                                    : 'Client self-filled online form'}
-                                </p>
-                              </div>
-                            </div>
-                            <span className={cn(
-                              "text-[10px] font-bold px-2 py-0.5 rounded border",
-                              hasClientSubmitted
-                                ? "bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-500/25"
-                                : "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20"
-                            )}>
-                              {hasClientSubmitted
-                                ? `${normalizedClientRequirements.length} ${normalizedClientRequirements.length === 1 ? 'Space' : 'Spaces'} Submitted`
-                                : 'Pending Client'}
-                            </span>
-                          </div>
+                          // Find any custom extra fields not covered by standard keys
+                          const standardKeys = new Set([
+                            'roomName', 'room', 'name', 'room_name', 'roomTitle',
+                            'interiorType', 'type',
+                            'designStyle', 'style', 'theme', 'design_style',
+                            'description', 'notes', 'remarks', 'instructions', 'specialRequests', 'clientNotes',
+                            'roomUsage', 'usage', 'purpose',
+                            'furnitureRequirements', 'furniture', 'furniture_requirements', 'furnitureSpecs',
+                            'storage', 'storageRequirements', 'wardrobes',
+                            'electricalPoints', 'electrical', 'power_points', 'powerPoints',
+                            'lightingRequirements', 'lighting', 'lighting_requirements', 'lights',
+                            'plumbingRequirements', 'plumbing', 'plumbing_requirements', 'waterPoints',
+                            'circulation', 'clearance', 'traffic_flow',
+                            'colours', 'colors', 'colorPalette', 'colour_palette', 'color_palette', 'palette',
+                            'materials', 'materialSpecs', 'finishes',
+                            'flooring', 'flooringType', 'floor',
+                            'ceiling', 'falseCeiling', 'ceiling_type', 'ceilingHeight',
+                            'wallFinishes', 'walls', 'wall_finishes', 'wallDecor',
+                            'furnitureStyle', 'furnishing_style',
+                            'dimensions', 'carpetArea', 'area', 'size',
+                            'budget', 'estimatedBudget', 'cost',
+                            'timeline', 'duration',
+                            'scopeOfWork', 'scope',
+                            '_id', 'id', '__v'
+                          ]);
 
-                          {!hasClientSubmitted && normalizedClientRequirements.length === 0 ? (
-                            <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-6 text-center flex flex-col items-center space-y-3">
-                              <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center text-teal-600">
-                                <Globe size={20} />
-                              </div>
-                              <div className="max-w-xs space-y-1">
-                                <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">
-                                  Awaiting Client Submission
-                                </h4>
-                                <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                                  The client has not filled out their requirements form yet. Share the intake link with them to capture their wishlist directly.
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-2 pt-1 flex-wrap justify-center">
-                                <button
-                                  onClick={() => {
-                                    setShareModalMode('requirements');
-                                    setIsShareModalOpen(true);
-                                  }}
-                                  className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs"
-                                >
-                                  <Share2 size={13} /> Share Intake Form
-                                </button>
-                                {lead.shareSettings?.isPublic && lead.shareSettings?.shareToken && (
-                                  <a
-                                    href={`/share/requirements/${lead.shareSettings.shareToken}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--card))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all flex items-center gap-1"
-                                  >
-                                    <ExternalLink size={12} /> Preview Form
-                                  </a>
-                                )}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="space-y-3">
-                              {/* Client Overall Preferences Card */}
-                              {(lead.clientRequirements?.overallStyle || lead.clientRequirements?.estimatedBudget || lead.clientRequirements?.generalNotes || lead.clientRequirementsNotes) && (
-                                <div className="bg-teal-500/[0.04] border border-teal-500/20 rounded-xl p-3 space-y-2">
-                                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300 flex items-center gap-1 pb-1 border-b border-teal-500/20">
-                                    <Sparkles size={11} className="text-teal-600" /> Client Overall Preferences
-                                  </h4>
-                                  <div className="grid grid-cols-2 gap-2 text-xs">
-                                    {lead.clientRequirements?.overallStyle && (
-                                      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-2">
-                                        <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Preferred Style</span>
-                                        <span className="font-bold text-teal-700 dark:text-teal-300">{lead.clientRequirements.overallStyle}</span>
-                                      </div>
-                                    )}
-                                    {lead.clientRequirements?.estimatedBudget && (
-                                      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-2">
-                                        <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Stated Budget</span>
-                                        <span className="font-bold text-amber-600">{lead.clientRequirements.estimatedBudget}</span>
-                                      </div>
-                                    )}
+                          const extraEntries = Object.entries(req).filter(([k, v]) => {
+                            if (standardKeys.has(k)) return false;
+                            if (v === null || v === undefined || v === '') return false;
+                            if (typeof v === 'object' && Object.keys(v).length === 0) return false;
+                            return true;
+                          });
+
+                          return (
+                            <div key={index} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 sm:p-4 space-y-3 hover:border-emerald-500/30 transition-colors">
+                              {/* Room Header */}
+                              <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[hsl(var(--border))]">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-6 h-6 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                                    {index + 1}
+                                  </span>
+                                  <div>
+                                    <h3 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">{req.roomName}</h3>
                                   </div>
-                                  {(lead.clientRequirements?.generalNotes || lead.clientRequirementsNotes) && (
-                                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-2 text-xs">
-                                      <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block mb-0.5">Client General Notes</span>
-                                      <p className="font-medium text-[hsl(var(--foreground))] whitespace-pre-wrap">
-                                        {lead.clientRequirements?.generalNotes || lead.clientRequirementsNotes}
-                                      </p>
-                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {req.dimensions && (
+                                    <span className="text-[10px] font-bold bg-blue-500/10 text-blue-600 border border-blue-500/20 px-2 py-0.5 rounded flex items-center gap-1">
+                                      <Maximize2 size={10} /> {req.dimensions}
+                                    </span>
                                   )}
+                                  {req.budget && (
+                                    <span className="text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20 px-2 py-0.5 rounded flex items-center gap-1">
+                                      <DollarSign size={10} /> {req.budget}
+                                    </span>
+                                  )}
+                                  {req.interiorType && (
+                                    <span className="text-[10px] font-bold uppercase bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] px-2 py-0.5 rounded">
+                                      {req.interiorType}
+                                    </span>
+                                  )}
+                                  {req.designStyle && (
+                                    <span className="text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2 py-0.5 rounded flex items-center gap-1">
+                                      <Palette size={10} /> {req.designStyle}
+                                    </span>
+                                  )}
+                                  {req.theme && req.theme !== req.designStyle && (
+                                    <span className="text-[10px] font-bold uppercase bg-purple-500/10 text-purple-600 border border-purple-500/20 px-2 py-0.5 rounded flex items-center gap-1">
+                                      <Sparkles size={10} /> {req.theme}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Specific Instructions / Description */}
+                              {req.description && (
+                                <div className="bg-emerald-500/[0.04] border border-emerald-500/20 rounded-lg p-2.5">
+                                  <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 flex items-center gap-1 mb-1">
+                                    <Sparkles size={11} className="text-emerald-600" /> Room Instructions & Notes
+                                  </p>
+                                  <p className="text-xs text-[hsl(var(--foreground))] font-medium leading-relaxed whitespace-pre-wrap">
+                                    {req.description}
+                                  </p>
                                 </div>
                               )}
 
-                              {/* Client Room Wishlist Cards */}
-                              {normalizedClientRequirements.map((cr: any, idx: number) => {
-                                const matchesTech = normalizedRequirements.some((t: any) =>
-                                  t.roomName && cr.roomName && t.roomName.trim().toLowerCase() === cr.roomName.trim().toLowerCase()
-                                );
-
-                                return (
-                                  <div key={idx} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 sm:p-4 space-y-3 hover:border-teal-500/30 transition-colors shadow-xs">
-                                    {/* Client Room Header */}
-                                    <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[hsl(var(--border))]">
-                                      <div className="flex items-center gap-2">
-                                        <span className="w-6 h-6 rounded-lg bg-teal-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                                          {idx + 1}
-                                        </span>
-                                        <div>
-                                          <h4 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">{cr.roomName}</h4>
-                                        </div>
-                                      </div>
-
-                                      <div className="flex items-center gap-1.5 flex-wrap">
-                                        {matchesTech ? (
-                                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 flex items-center gap-1">
-                                            <CheckCircle2 size={9} /> In Technical Specs
-                                          </span>
-                                        ) : (
-                                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 flex items-center gap-1">
-                                            <Sparkles size={9} /> New Space Requested
-                                          </span>
-                                        )}
-                                        {cr.designStyle && (
-                                          <span className="text-[10px] font-bold uppercase bg-teal-500/10 text-teal-600 border border-teal-500/20 px-2 py-0.5 rounded flex items-center gap-1">
-                                            <Palette size={10} /> {cr.designStyle}
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-
-                                    {/* Client Room Notes & Remarks */}
-                                    {cr.description && (
-                                      <div className="bg-teal-500/[0.04] border border-teal-500/20 rounded-lg p-2.5">
-                                        <p className="text-[10px] font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300 flex items-center gap-1 mb-1">
-                                          <MessageSquare size={11} className="text-teal-600" /> Client Wishlist & Wishes
-                                        </p>
-                                        <p className="text-xs text-[hsl(var(--foreground))] font-medium leading-relaxed whitespace-pre-wrap">
-                                          {cr.description}
-                                        </p>
+                              {/* 2-Col Specs: Functional & Aesthetic */}
+                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                                {/* Functional Column */}
+                                <div className="bg-[hsl(var(--muted)/0.25)] border border-[hsl(var(--border))] rounded-lg p-3 space-y-2">
+                                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5 pb-1 border-b border-[hsl(var(--border))]">
+                                    <Sliders size={12} className="text-emerald-500" /> Functional Requirements
+                                  </h4>
+                                  <div className="space-y-1.5 text-xs">
+                                    {req.roomUsage && (
+                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
+                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Room Usage</span>
+                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.roomUsage}</span>
                                       </div>
                                     )}
-
-                                    {/* Client Details Grid */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                                      {cr.furnitureRequirements && (
-                                        <div className="p-2 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border))] space-y-1">
-                                          <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] flex items-center gap-1">
-                                            <Armchair size={10} className="text-teal-600" /> Furniture Wishlist
-                                          </span>
-                                          <span className="font-semibold text-[hsl(var(--foreground))] block leading-tight">
-                                            {cr.furnitureRequirements}
-                                          </span>
-                                        </div>
-                                      )}
-
-                                      {cr.storage && (
-                                        <div className="p-2 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border))] space-y-1">
-                                          <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] flex items-center gap-1">
-                                            <Archive size={10} className="text-purple-500" /> Storage Preferences
-                                          </span>
-                                          <span className="font-semibold text-[hsl(var(--foreground))] block leading-tight">
-                                            {cr.storage}
-                                          </span>
-                                        </div>
-                                      )}
-
-                                      {cr.lightingRequirements && (
-                                        <div className="p-2 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border))] space-y-1">
-                                          <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] flex items-center gap-1">
-                                            <Sun size={10} className="text-amber-500" /> Lighting Mood
-                                          </span>
-                                          <span className="font-semibold text-[hsl(var(--foreground))] block leading-tight">
-                                            {cr.lightingRequirements}
-                                          </span>
-                                        </div>
-                                      )}
-
-                                      {cr.colours && (
-                                        <div className="p-2 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border))] space-y-1">
-                                          <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] flex items-center gap-1">
-                                            <Palette size={10} className="text-pink-500" /> Color Choices
-                                          </span>
-                                          <span className="font-semibold text-[hsl(var(--foreground))] block leading-tight">
-                                            {cr.colours}
-                                          </span>
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    {/* Action to import single room into technical specs */}
-                                    {!isReadOnly && (
-                                      <div className="pt-1 flex items-center justify-end">
-                                        <button
-                                          onClick={() => handleImportSingleRoom(cr)}
-                                          disabled={isImportingClientReqs}
-                                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--card))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-                                          title={matchesTech ? 'Update existing space in technical specs with client preferences' : 'Add this space to technical specs'}
-                                        >
-                                          <Plus size={12} className="text-teal-600" />
-                                          {matchesTech ? 'Update in Technical Specs' : 'Add to Technical Specs'}
-                                        </button>
+                                    {req.furnitureRequirements && (
+                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
+                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Furniture Requirements</span>
+                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.furnitureRequirements}</span>
                                       </div>
+                                    )}
+                                    {req.storage && (
+                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
+                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Storage & Wardrobes</span>
+                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.storage}</span>
+                                      </div>
+                                    )}
+                                    {req.electricalPoints && (
+                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
+                                        <span className="text-[10px] font-bold uppercase text-amber-500 flex items-center gap-1"><Zap size={10} /> Electrical Points</span>
+                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.electricalPoints}</span>
+                                      </div>
+                                    )}
+                                    {req.lightingRequirements && (
+                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
+                                        <span className="text-[10px] font-bold uppercase text-amber-500 flex items-center gap-1"><Sun size={10} /> Lighting</span>
+                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.lightingRequirements}</span>
+                                      </div>
+                                    )}
+                                    {req.plumbingRequirements && (
+                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
+                                        <span className="text-[10px] font-bold uppercase text-cyan-500 flex items-center gap-1"><Droplets size={10} /> Plumbing</span>
+                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.plumbingRequirements}</span>
+                                      </div>
+                                    )}
+                                    {req.circulation && (
+                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
+                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Circulation & Clearance</span>
+                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.circulation}</span>
+                                      </div>
+                                    )}
+                                    {req.dimensions && (
+                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
+                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Dimensions / Carpet Area</span>
+                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.dimensions}</span>
+                                      </div>
+                                    )}
+                                    {!hasFunctional && (
+                                      <p className="text-[11px] text-[hsl(var(--muted-foreground))] italic p-1">No functional requirements specified.</p>
                                     )}
                                   </div>
-                                );
-                              })}
+                                </div>
+
+                                {/* Aesthetic Column */}
+                                <div className="bg-[hsl(var(--muted)/0.25)] border border-[hsl(var(--border))] rounded-lg p-3 space-y-2">
+                                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5 pb-1 border-b border-[hsl(var(--border))]">
+                                    <Palette size={12} className="text-purple-500" /> Aesthetic & Finishes
+                                  </h4>
+                                  <div className="space-y-1.5 text-xs">
+                                    {req.designStyle && (
+                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
+                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Design Style</span>
+                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.designStyle}</span>
+                                      </div>
+                                    )}
+                                    {req.theme && (
+                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
+                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Theme</span>
+                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.theme}</span>
+                                      </div>
+                                    )}
+                                    {req.colours && (
+                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
+                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Colours & Palette</span>
+                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.colours}</span>
+                                      </div>
+                                    )}
+                                    {req.materials && (
+                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
+                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Materials & Finishes</span>
+                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.materials}</span>
+                                      </div>
+                                    )}
+                                    {req.flooring && (
+                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
+                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Flooring</span>
+                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.flooring}</span>
+                                      </div>
+                                    )}
+                                    {req.ceiling && (
+                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
+                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Ceiling & False Ceiling</span>
+                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.ceiling}</span>
+                                      </div>
+                                    )}
+                                    {req.wallFinishes && (
+                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
+                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Wall Finishes</span>
+                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.wallFinishes}</span>
+                                      </div>
+                                    )}
+                                    {req.furnitureStyle && (
+                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
+                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Furniture Style</span>
+                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.furnitureStyle}</span>
+                                      </div>
+                                    )}
+                                    {!hasAesthetic && (
+                                      <p className="text-[11px] text-[hsl(var(--muted-foreground))] italic p-1">No aesthetic requirements specified.</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Additional Custom Specifications if any exist */}
+                              {extraEntries.length > 0 && (
+                                <div className="bg-[hsl(var(--muted)/0.2)] border border-[hsl(var(--border))] rounded-lg p-3 space-y-2">
+                                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5 pb-1 border-b border-[hsl(var(--border))]">
+                                    <Box size={12} className="text-indigo-500" /> Additional Specifications & Details
+                                  </h4>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                                    {extraEntries.map(([k, v]) => (
+                                      <div key={k} className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
+                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">
+                                          {k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}
+                                        </span>
+                                        <span className="font-semibold text-[hsl(var(--foreground))]">
+                                          {typeof v === 'object' ? JSON.stringify(v) : String(v)}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 );
               })()}
@@ -2903,6 +2929,15 @@ export default function Lead360View() {
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 max-w-md">
                     Complete the Client Requirements phase first to unlock drawing uploads.
                   </p>
+                  {/* Bring the lead into this stage from here — no need for the previous stage's tab */}
+                  {!isReadOnly && (canDo('crm_drawings', 'create') || canDo('crm_drawings', 'update') || canDo('crm_requirements', 'update')) && (
+                    <button
+                      onClick={() => setIsSendToDrawingOpen(true)}
+                      className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 active:scale-95 transition-all"
+                    >
+                      Send to Drawings <ArrowRight size={12} />
+                    </button>
+                  )}
                 </div>
               ) : (() => {
                 const designFilesList = lead.designFiles || [];
@@ -2922,22 +2957,68 @@ export default function Lead360View() {
 
                 const hasDesignFiles = Boolean(designFilesList && designFilesList.length > 0);
 
-                const draftDrawingsCount = designFilesList.filter((f: any) => {
-                  const s = f.approvalStatus || f.status || 'draft';
-                  return s === 'draft';
-                }).length;
+                const fileStatuses = designFilesList.map((f: any) => {
+                  const versions = f.versions || [];
+                  const latestVersion = versions.length > 0 ? versions[versions.length - 1] : null;
+                  const rawStatus = latestVersion?.approvalStatus || f.approvalStatus || f.status || 'draft';
+                  const approvalStatus = rawStatus === 'pending_internal_approval'
+                    ? 'pending_internal_approval'
+                    : rawStatus === 'internally_approved'
+                    ? 'internally_approved'
+                    : rawStatus === 'internally_rejected'
+                    ? 'internally_rejected'
+                    : 'draft';
+                  const clientStatus = latestVersion?.clientStatus || f.clientStatus;
+                  const isRejected = approvalStatus === 'internally_rejected' || clientStatus === 'client_changes_requested';
+                  const isApproved = approvalStatus === 'internally_approved' && !isRejected;
+                  const isPending = approvalStatus === 'pending_internal_approval' && !isRejected;
+                  const isDraft = !isApproved && !isPending && !isRejected;
+                  return { approvalStatus, clientStatus, isApproved, isPending, isRejected, isDraft };
+                });
 
-                const pendingDrawingsCount = designFilesList.filter((f: any) => {
-                  const s = f.approvalStatus || f.status || 'draft';
-                  return s === 'pending_internal_approval';
-                }).length;
+                const approvedDrawingsCount = fileStatuses.filter((s: any) => s.isApproved).length;
+                const pendingDrawingsCount = fileStatuses.filter((s: any) => s.isPending).length;
+                const rejectedDrawingsCount = fileStatuses.filter((s: any) => s.isRejected).length;
+                const draftDrawingsCount = fileStatuses.filter((s: any) => s.isDraft).length;
 
-                const rejectedDrawingsCount = designFilesList.filter((f: any) => {
-                  const s = f.approvalStatus || f.status || 'draft';
-                  return s === 'internally_rejected' || f.clientStatus === 'client_changes_requested';
-                }).length;
+                const allDrawingsApproved = hasDesignFiles && approvedDrawingsCount === designFilesList.length;
 
-                const allDrawingsApproved = hasDesignFiles && draftDrawingsCount === 0 && pendingDrawingsCount === 0 && rejectedDrawingsCount === 0;
+                const headerBadge = (() => {
+                  if (!hasDesignFiles) {
+                    return {
+                      text: "Upload Pending",
+                      className: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+                    };
+                  }
+                  if (allDrawingsApproved) {
+                    return {
+                      text: `✓ All Approved (${approvedDrawingsCount}/${designFilesList.length})`,
+                      className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+                    };
+                  }
+                  if (approvedDrawingsCount > 0) {
+                    return {
+                      text: `${approvedDrawingsCount}/${designFilesList.length} Approved`,
+                      className: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+                    };
+                  }
+                  if (pendingDrawingsCount > 0) {
+                    return {
+                      text: `${pendingDrawingsCount}/${designFilesList.length} Pending Approval`,
+                      className: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+                    };
+                  }
+                  if (rejectedDrawingsCount > 0) {
+                    return {
+                      text: `${rejectedDrawingsCount}/${designFilesList.length} Rejected`,
+                      className: "bg-rose-500/10 text-rose-600 border-rose-500/20",
+                    };
+                  }
+                  return {
+                    text: `${draftDrawingsCount} Draft${draftDrawingsCount > 1 ? 's' : ''}`,
+                    className: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20",
+                  };
+                })();
 
                 return (
                   <div className="space-y-3.5 sm:space-y-4">
@@ -2955,13 +3036,9 @@ export default function Lead360View() {
                               </h2>
                               <span className={cn(
                                 "text-[10px] font-bold px-2 py-0.5 rounded border shrink-0",
-                                allDrawingsApproved
-                                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                                  : hasDesignFiles
-                                  ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                                  : "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                                headerBadge.className
                               )}>
-                                {allDrawingsApproved ? "✓ All Approved" : hasDesignFiles ? `${designFilesList.length - pendingDrawingsCount - rejectedDrawingsCount}/${designFilesList.length} Approved` : "Upload Pending"}
+                                {headerBadge.text}
                               </span>
                             </div>
                           </div>
@@ -2971,25 +3048,34 @@ export default function Lead360View() {
                           <div className="flex items-center gap-1.5 flex-wrap">
                             {hasDesignFiles ? (
                               <>
-                                <button
-                                  onClick={() => setIsDesignModalOpen(true)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
-                                >
-                                  <Plus size={13} /> Upload More
-                                </button>
+                                {(canDo('crm_drawings', 'create')) && (
+                                  <button
+                                    onClick={() => setIsDesignModalOpen(true)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
+                                  >
+                                    <Plus size={13} /> Upload More
+                                  </button>
+                                )}
                                 {['Under Drawing', 'Design Approved'].includes(lead.status) && (
                                   <button
                                     onClick={() => {
-                                      const hasPending = pendingDrawingsCount > 0 || rejectedDrawingsCount > 0;
-                                      if (hasPending) {
-                                        toast.error('Cannot pass to BOQ: Drawing approval is still pending.');
+                                      if (!allDrawingsApproved) {
+                                        if (draftDrawingsCount > 0) {
+                                          toast.error('Cannot pass to BOQ: Drawing is in Draft and requires internal approval.');
+                                        } else if (pendingDrawingsCount > 0) {
+                                          toast.error('Cannot pass to BOQ: Drawing approval is still pending.');
+                                        } else if (rejectedDrawingsCount > 0) {
+                                          toast.error('Cannot pass to BOQ: Some drawings are rejected.');
+                                        } else {
+                                          toast.error('Cannot pass to BOQ: All drawings must be approved first.');
+                                        }
                                         return;
                                       }
                                       setIsSendToBoqOpen(true);
                                     }}
                                     className={cn(
                                       "inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold transition-all active:scale-95",
-                                      (pendingDrawingsCount === 0 && rejectedDrawingsCount === 0)
+                                      allDrawingsApproved
                                         ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                                         : "bg-slate-200 dark:bg-slate-800 text-slate-500"
                                     )}
@@ -2999,12 +3085,14 @@ export default function Lead360View() {
                                 )}
                               </>
                             ) : (
-                              <button
-                                onClick={() => setIsDesignModalOpen(true)}
-                                className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
-                              >
-                                <Plus size={13} /> Upload Drawings
-                              </button>
+                              (canDo('crm_drawings', 'create')) && (
+                                <button
+                                  onClick={() => setIsDesignModalOpen(true)}
+                                  className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                                >
+                                  <Plus size={13} /> Upload Drawings
+                                </button>
+                              )
                             )}
                           </div>
                         )}
@@ -3038,11 +3126,8 @@ export default function Lead360View() {
                               </a>
                             )}
                             <button
-                              onClick={() => {
-                                setShareModalMode('drawings');
-                                setIsShareModalOpen(true);
-                              }}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[11px] font-bold active:scale-95 cursor-pointer"
+                              onClick={() => setIsShareModalOpen(true)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[11px] font-bold active:scale-95"
                             >
                               <Share2 size={11} /> {lead.shareSettings?.isPublic ? 'Share Link' : 'Generate Link'}
                             </button>
@@ -3105,12 +3190,14 @@ export default function Lead360View() {
                           </p>
                         </div>
                         {!isReadOnly && (
-                          <button 
-                            onClick={() => setIsDesignModalOpen(true)} 
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <Plus size={14} /> Upload Drawings
-                          </button>
+                          (canDo('crm_drawings', 'create')) && (
+                            <button 
+                              onClick={() => setIsDesignModalOpen(true)} 
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Plus size={14} /> Upload Drawings
+                            </button>
+                          )
                         )}
                       </div>
                     ) : (
@@ -3222,8 +3309,26 @@ export default function Lead360View() {
                                     </div>
 
                                     {approvalStatus === 'internally_rejected' && rejectionReason && (
-                                      <div className="mt-1.5 p-1 bg-rose-500/10 border border-rose-500/20 rounded text-[9px] text-rose-700 dark:text-rose-300 line-clamp-1">
-                                        <strong>Rejected:</strong> {rejectionReason}
+                                      <div
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setViewRejectionReasonData({
+                                            title: file.title || file.name,
+                                            reason: rejectionReason,
+                                            version: versionNum
+                                          });
+                                        }}
+                                        className="mt-1.5 p-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-md text-[9px] text-rose-700 dark:text-rose-300 cursor-pointer transition-colors max-w-full overflow-hidden"
+                                        title="Click to view full rejection reason"
+                                      >
+                                        <div className="flex items-center justify-between gap-1 w-full overflow-hidden">
+                                          <p className="truncate flex-1 font-medium break-all">
+                                            <strong className="font-bold">Rejected:</strong> {rejectionReason}
+                                          </p>
+                                          <span className="text-[8px] font-bold text-rose-600 underline shrink-0 ml-1 hover:text-rose-800">
+                                            View
+                                          </span>
+                                        </div>
                                       </div>
                                     )}
                                   </div>
@@ -3241,16 +3346,19 @@ export default function Lead360View() {
                                               }}
                                               className="px-1.5 py-0.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 rounded text-[9px] font-bold"
                                             >
-                                              <Send size={9} className="inline mr-0.5" /> Approval
+                                              <Send size={9} className="inline mr-0.5" /> Send to Approval
                                             </button>
                                           )}
                                           {isPendingApproval && (
                                             <>
                                               <button
                                                 type="button"
-                                                onClick={() => handleDirectApproveDrawing(file)}
+                                                onClick={() => {
+                                                  setSelectedDrawingForConfirmApprove(file);
+                                                  setIsConfirmApproveModalOpen(true);
+                                                }}
                                                 disabled={approvingDrawingId === (file._id || file.id || file.title || file.name)}
-                                                className="px-1.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 rounded text-[9px] font-bold"
+                                                className="px-1.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 rounded text-[9px] font-bold cursor-pointer"
                                               >
                                                 Approve
                                               </button>
@@ -3284,19 +3392,21 @@ export default function Lead360View() {
 
                                     <div className="flex items-center gap-1">
                                       {!isReadOnly && (
-                                        <button
-                                          type="button"
-                                          onClick={() => setDrawingToDelete(file)}
-                                          className="p-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-600"
-                                          title="Delete"
-                                        >
-                                          <Trash2 size={11} />
-                                        </button>
+                                        canDo('crm_drawings', 'delete') && (
+                                          <button
+                                            type="button"
+                                            onClick={() => setDrawingToDelete(file)}
+                                            className="p-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-600"
+                                            title="Delete"
+                                          >
+                                            <Trash2 size={11} />
+                                          </button>
+                                        )
                                       )}
                                       <button
                                         type="button"
                                         onClick={() => router.push(`/interior-new/crm/leads/${params.id}/drawings/${encodeURIComponent(file._id || file.id || file.title || file.name)}`)}
-                                        className="p-1 px-1.5 rounded bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] flex items-center gap-0.5 text-[9px] font-bold"
+                                        className="p-1 px-1.5 rounded bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] flex items-center gap-0.5 text-[9px] font-bold"
                                       >
                                         <Eye size={11} />
                                         <span>View</span>
@@ -3331,6 +3441,15 @@ export default function Lead360View() {
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 max-w-md">
                     Complete and approve drawings to unlock BOQ creation and itemized estimations.
                   </p>
+                  {/* Bring the lead into this stage from here — no need for the previous stage's tab */}
+                  {!isReadOnly && (canDo('crm_boq', 'create') || canDo('crm_boq', 'update') || canDo('crm_drawings', 'update')) && (
+                    <button
+                      onClick={() => setIsSendToBoqOpen(true)}
+                      className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 active:scale-95 transition-all"
+                    >
+                      Send to BOQ <ArrowRight size={12} />
+                    </button>
+                  )}
                 </div>
               ) : (() => {
                 const hasBoqs = Boolean(lead.boqs && lead.boqs.length > 0);
@@ -3392,87 +3511,85 @@ export default function Lead360View() {
                               </span>
                             ) : hasBoqs ? (
                               <>
-                                <button
-                                  onClick={() => {
-                                    setEditingBoqIndex(activeBoqIndex);
-                                    setIsBoqModalOpen(true);
-                                  }}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
-                                >
-                                  <Pencil size={12} /> Edit BOQ
-                                </button>
-                                {isBoqApproved && (
+                                {canDo('crm_boq', 'update') && !isBoqApproved && (
                                   <button
                                     onClick={() => {
-                                      setEditingBoqIndex(null);
+                                      setEditingBoqIndex(activeBoqIndex);
                                       setIsBoqModalOpen(true);
                                     }}
                                     className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
                                   >
-                                    <Plus size={13} /> New Version
+                                    <Pencil size={12} /> Edit BOQ
                                   </button>
                                 )}
-                                <button
-                                  onClick={() => {
-                                    setBoqIndexToDelete(activeBoqIndex);
-                                    setIsDeleteBoqModalOpen(true);
-                                  }}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold transition-all active:scale-95"
-                                  title="Delete Active BOQ Version"
-                                >
-                                  <Trash2 size={12} /> Delete
-                                </button>
-
-                                {/* Approval Actions in Header */}
-                                {(isBoqDraft || isBoqRejected) && (
+                                {isBoqApproved && (
+                                  canDo('crm_boq', 'create') && (
+                                    <button
+                                      onClick={() => {
+                                        setEditingBoqIndex(null);
+                                        setIsBoqModalOpen(true);
+                                      }}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
+                                    >
+                                      <Plus size={13} /> New Version
+                                    </button>
+                                  )
+                                )}
+                                {canDo('crm_boq', 'delete') && (
                                   <button
-                                    onClick={() => setIsSendBoqApprovalOpen(true)}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-xs"
+                                    onClick={() => {
+                                      setBoqIndexToDelete(activeBoqIndex);
+                                      setIsDeleteBoqModalOpen(true);
+                                    }}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                                    title="Delete Active BOQ Version"
                                   >
-                                    <Send size={11} /> {isBoqRejected ? 'Resubmit' : 'Send for Approval'}
+                                    <Trash2 size={12} /> Delete
                                   </button>
                                 )}
 
-                                {isBoqPending && (
-                                  <>
-                                    <button
-                                      onClick={() => {
-                                        setBoqApprovalAction('approve');
-                                        setIsBoqApprovalOpen(true);
-                                      }}
-                                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-xs"
-                                    >
-                                      <CheckCircle2 size={11} /> Approve
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        setBoqApprovalAction('reject');
-                                        setIsBoqApprovalOpen(true);
-                                      }}
-                                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-xs"
-                                    >
-                                      <XCircle size={11} /> Reject
-                                    </button>
-                                  </>
+                                {canDo('crm_boq', 'export') && (
+                                  <button
+                                    onClick={() =>
+                                      exportBoqToExcel({
+                                        lead,
+                                        boqIndex: activeBoqIndex,
+                                        currencySymbol,
+                                        currencyCode,
+                                      })
+                                    }
+                                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-2xs cursor-pointer"
+                                    title="Export Bill of Quantities to Excel (.xlsx)"
+                                  >
+                                    <FileSpreadsheet size={13} /> Export Excel
+                                  </button>
                                 )}
+
+                              
+
+                              
 
                                 {['Under BOQ Creation', 'Design Approved', 'Under Drawing'].includes(lead.status) && isBoqApproved && (
-                                  <button
-                                    onClick={() => setIsSendToQuotationsOpen(true)}
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
-                                    title="Pass to Quotation Phase"
-                                  >
-                                    Pass to Quotation <ArrowRight size={12} />
-                                  </button>
+                                  (canDo('crm_boq', 'update') || canDo('crm_quotations', 'update') || canDo('crm_quotations', 'create')) && (
+                                    <button
+                                      onClick={() => setIsSendToQuotationsOpen(true)}
+                                      className="inline-flex items-center gap-1 px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
+                                      title="Pass to Quotation Phase"
+                                    >
+                                      Pass to Quotation <ArrowRight size={12} />
+                                    </button>
+                                  )
                                 )}
                               </>
                             ) : (
-                              <button
-                                onClick={() => setIsBoqModalOpen(true)}
-                                className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
-                              >
-                                <Plus size={13} /> Create BOQ
-                              </button>
+                              (canDo('crm_boq', 'create')) && (
+                                <button
+                                  onClick={() => setIsBoqModalOpen(true)}
+                                  className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                                >
+                                  <Plus size={13} /> Create BOQ
+                                </button>
+                              )
                             )}
                           </div>
                         )}
@@ -3483,12 +3600,14 @@ export default function Lead360View() {
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Total Amount</p>
                           <p className="font-bold text-xs text-indigo-600 dark:text-indigo-400 mt-0.5">
-                            {hasBoqs ? `₹${boqInfo.totalAmount.toLocaleString('en-IN')}` : '₹0'}
+                            {hasBoqs ? `${currencySymbol} ${boqInfo.totalAmount.toLocaleString()}` : `${currencySymbol} 0`}
                           </p>
                         </div>
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Line Items</p>
-                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5">{boqInfo.itemsCount} items</p>
+                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Scope Categories</p>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate" title={hasBoqs ? boqInfo.categorySummary : '0 Categories'}>
+                            {hasBoqs ? boqInfo.categorySummary : '0 Categories'}
+                          </p>
                         </div>
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Target Budget</p>
@@ -3515,34 +3634,66 @@ export default function Lead360View() {
                           </p>
                         </div>
                         {!isReadOnly && !isBoqLocked && (
-                          <button 
-                            onClick={() => setIsBoqModalOpen(true)} 
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <Plus size={14} /> Create Initial BOQ
-                          </button>
+                          (canDo('crm_boq', 'create')) && (
+                            <button 
+                              onClick={() => setIsBoqModalOpen(true)} 
+                              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Plus size={14} /> Create Initial BOQ
+                            </button>
+                          )
                         )}
                       </div>
                     ) : (
                       <div className="space-y-3">
                         {lead.boqs.length > 1 && (
-                          <div className="flex items-center justify-between gap-2 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-2 sm:p-2.5">
-                            <span className="text-xs font-bold text-[hsl(var(--muted-foreground))]">Versions:</span>
-                            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
-                              {lead.boqs.map((q: any, idx: number) => (
-                                <button
-                                  key={idx}
-                                  onClick={() => setActiveBoqIndex(idx)}
-                                  className={cn(
-                                    "px-2.5 py-1 rounded text-xs font-bold transition-all whitespace-nowrap cursor-pointer",
-                                    activeBoqIndex === idx 
-                                      ? "bg-indigo-600 text-white" 
-                                      : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))]"
-                                  )}
-                                >
-                                  Version {q.version || idx + 1}
-                                </button>
-                              ))}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-3 shadow-2xs">
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className="text-xs font-extrabold text-[hsl(var(--foreground))]">BOQ Versions ({lead.boqs.length}):</span>
+                            </div>
+                            <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin pb-1">
+                              {lead.boqs.map((q: any, idx: number) => {
+                                const isCurrent = activeBoqIndex === idx;
+                                const createdDateStr = q.createdAt
+                                  ? format(new Date(q.createdAt), 'MMM dd, yyyy')
+                                  : null;
+                                const creatorName =
+                                  q.createdByName ||
+                                  (q.createdBy?.firstName ? `${q.createdBy.firstName} ${q.createdBy.lastName || ''}`.trim() : null) ||
+                                  null;
+
+                                return (
+                                  <button
+                                    key={idx}
+                                    onClick={() => setActiveBoqIndex(idx)}
+                                    className={cn(
+                                      "px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 border text-left",
+                                      isCurrent
+                                        ? "bg-indigo-600 text-white border-indigo-700 shadow-xs ring-1 ring-indigo-500/30"
+                                        : "bg-[hsl(var(--card))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] border-[hsl(var(--border))]"
+                                    )}
+                                  >
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-extrabold">v{q.version || idx + 1}</span>
+                                      <span className={cn(
+                                        "text-[9px] uppercase px-1.5 py-0.2 rounded font-bold",
+                                        isCurrent ? "bg-white/20 text-white" : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]"
+                                      )}>
+                                        {q.status || 'Draft'}
+                                      </span>
+                                    </div>
+                                    {(createdDateStr || creatorName) && (
+                                      <span className={cn(
+                                        "text-[10px] flex items-center gap-1 opacity-90",
+                                        isCurrent ? "text-indigo-100" : "text-[hsl(var(--muted-foreground))]"
+                                      )}>
+                                        {createdDateStr && <span>• {createdDateStr}</span>}
+                                        {creatorName && <span>by <strong>{creatorName}</strong></span>}
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
                             </div>
                           </div>
                         )}
@@ -3551,24 +3702,24 @@ export default function Lead360View() {
                           lead={lead} 
                           boqIndex={activeBoqIndex} 
                           onSuccess={fetchData} 
-                          onEdit={isBoqLocked ? undefined : () => {
+                          onEdit={isBoqLocked || isBoqApproved || !canDo('crm_boq', 'update') ? undefined : () => {
                             setEditingBoqIndex(activeBoqIndex);
                             setIsBoqModalOpen(true);
                           }}
-                          onDelete={isBoqLocked ? undefined : (idx) => {
+                          onDelete={isBoqLocked || !canDo('crm_boq', 'delete') ? undefined : (idx) => {
                             setBoqIndexToDelete(idx);
                             setIsDeleteBoqModalOpen(true);
                           }}
-                          onSendForApproval={isBoqLocked ? undefined : (idx) => {
+                          onSendForApproval={isBoqLocked || !canDo('crm_boq', 'update') ? undefined : (idx) => {
                             setActiveBoqIndex(idx);
                             setIsSendBoqApprovalOpen(true);
                           }}
-                          onApprove={isBoqLocked ? undefined : (idx) => {
+                          onApprove={isBoqLocked || !canDo('crm_boq', 'approve') ? undefined : (idx) => {
                             setActiveBoqIndex(idx);
                             setBoqApprovalAction('approve');
                             setIsBoqApprovalOpen(true);
                           }}
-                          onReject={isBoqLocked ? undefined : (idx) => {
+                          onReject={isBoqLocked || !canDo('crm_boq', 'approve') ? undefined : (idx) => {
                             setActiveBoqIndex(idx);
                             setBoqApprovalAction('reject');
                             setIsBoqApprovalOpen(true);
@@ -3597,6 +3748,15 @@ export default function Lead360View() {
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 max-w-md">
                     Finalize the BOQ estimate first to unlock commercial proposals.
                   </p>
+                  {/* Bring the lead into this stage from here — no need for the previous stage's tab */}
+                  {!isReadOnly && (canDo('crm_quotations', 'create') || canDo('crm_quotations', 'update') || canDo('crm_boq', 'update')) && (
+                    <button
+                      onClick={() => setIsSendToQuotationsOpen(true)}
+                      className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 active:scale-95 transition-all"
+                    >
+                      Send to Quotations <ArrowRight size={12} />
+                    </button>
+                  )}
                 </div>
               ) : (() => {
                 const hasQuotations = Boolean(lead.quotations && lead.quotations.length > 0);
@@ -3607,21 +3767,21 @@ export default function Lead360View() {
                 const isQuoteLocked = isReadOnly || isQuotationApproved;
 
                 return (
-                  <div className="space-y-3.5 sm:space-y-4">
-                    {/* Header Card */}
-                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 sm:p-4 space-y-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-[hsl(var(--border))]">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border bg-rose-500/10 border-rose-500/20 text-rose-600">
-                            <FileText size={16} />
+                  <div className="space-y-4">
+                    {/* Header Summary Card */}
+                    <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-[hsl(var(--border))]">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400">
+                            <FileText size={20} />
                           </div>
                           <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h2 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">
+                            <div className="flex items-center gap-2.5 flex-wrap">
+                              <h2 className="text-sm sm:text-base font-bold text-[hsl(var(--foreground))]">
                                 Commercial Quotations & Proposals
                               </h2>
                               <span className={cn(
-                                "text-[10px] font-bold px-2 py-0.5 rounded border shrink-0",
+                                "text-[11px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 flex items-center gap-1.5",
                                 hasQuotations
                                   ? isLatestQuoteRejected
                                     ? "bg-rose-500/10 text-rose-600 border-rose-500/20"
@@ -3630,145 +3790,329 @@ export default function Lead360View() {
                                     : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                                   : "bg-amber-500/10 text-amber-600 border-amber-500/20"
                               )}>
-                                {hasQuotations ? `Quote Ready (${lead.quotations.length} ${lead.quotations.length === 1 ? 'Version' : 'Versions'})` : "Pending"}
+                                <span className={cn(
+                                  "w-1.5 h-1.5 rounded-full shrink-0",
+                                  hasQuotations
+                                    ? isLatestQuoteRejected
+                                      ? "bg-rose-500"
+                                      : hasAcceptedQuote
+                                      ? "bg-emerald-500"
+                                      : "bg-blue-500"
+                                    : "bg-amber-500"
+                                )} />
+                                {hasQuotations ? `${lead.quotations.length} ${lead.quotations.length === 1 ? 'Proposal' : 'Proposals'} Generated` : "Pending Creation"}
                               </span>
                             </div>
+                            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                              Generate commercial proposals, apply taxes, discounts and manage client approvals.
+                            </p>
                           </div>
                         </div>
 
                         {!isReadOnly && (
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            {hasQuotations ? (
-                              <>
-                                {isLatestQuoteRejected ? (
-                                  <button
-                                    onClick={() => setIsQuotationModalOpen(true)}
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
-                                  >
-                                    <Plus size={13} /> Add Version (v{(lead.quotations.length || 1) + 1})
-                                  </button>
-                                ) : latestQuote?.status === 'Draft' ? (
-                                  <button
-                                    onClick={() => setIsQuotationModalOpen(true)}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
-                                  >
-                                    <Plus size={13} /> Edit Draft Quote
-                                  </button>
-                                ) : (
-                                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-bold">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                                    <span>Version {latestQuote?.version || 1} {latestQuote?.status || 'Sent'}</span>
-                                  </div>
-                                )}
-
-                                {(hasAcceptedQuote || lead.status === 'Booking Pending') && !['Won', 'Converted'].includes(lead.status) && (
-                                  <button
-                                    onClick={() => setIsConvertToProjectOpen(true)}
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
-                                  >
-                                    <CheckCircle2 size={13} /> Convert to Project
-                                  </button>
-                                )}
-                              </>
-                            ) : (
-                              <button
-                                onClick={() => setIsQuotationModalOpen(true)}
-                                className="inline-flex items-center gap-1 px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
-                              >
-                                <Plus size={13} /> Create Quotation
-                              </button>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {hasQuotations && (hasAcceptedQuote || lead.status === 'Booking Pending') && !['Won', 'Converted'].includes(lead.status) && (
+                              (canDo('crm_quotations', 'approve')) && (
+                                <button
+                                  onClick={() => setIsConvertToProjectOpen(true)}
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs"
+                                >
+                                  <CheckCircle2 size={14} /> Convert to Project
+                                </button>
+                              )
                             )}
+
+                            <button
+                              onClick={() => {
+                                setEditingQuotationIndex(null);
+                                setIsQuotationModalOpen(true);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
+                            >
+                              <Plus size={14} /> Create Quotation
+                            </button>
                           </div>
                         )}
                       </div>
 
                       {/* Summary Metrics */}
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Grand Total</p>
-                          <p className="font-bold text-xs text-rose-600 dark:text-rose-400 mt-0.5">
-                            {hasQuotations ? `₹${quotationInfo.grandTotal.toLocaleString('en-IN')}` : 'Pending'}
+                          <p className="font-extrabold text-sm sm:text-base text-blue-600 dark:text-blue-400 mt-1">
+                            {hasQuotations ? `${currencySymbol} ${quotationInfo.grandTotal.toLocaleString()}` : '—'}
                           </p>
                         </div>
-                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
+                        <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Breakdown</p>
-                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
+                          <p className="font-bold text-xs sm:text-sm text-[hsl(var(--foreground))] mt-1 truncate">
                             {hasQuotations ? `${quotationInfo.taxPercentage}% Tax • ${quotationInfo.itemsCount} Items` : 'No items'}
                           </p>
                         </div>
-                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Status</p>
-                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5">{quotationInfo.currentQuote?.status || 'Draft'}</p>
+                        <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors">
+                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Latest Status</p>
+                          <p className="font-bold text-xs sm:text-sm text-[hsl(var(--foreground))] mt-1">{quotationInfo.currentQuote?.status || 'Generated'}</p>
                         </div>
-                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
+                        <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Target Budget</p>
-                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5">{lead.budgetRange || 'Not specified'}</p>
+                          <p className="font-bold text-xs sm:text-sm text-[hsl(var(--foreground))] mt-1">{lead.budgetRange || 'Not specified'}</p>
                         </div>
                       </div>
                     </div>
 
                     {!hasQuotations ? (
-                      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-6 text-center flex flex-col items-center space-y-3">
-                        <div className="w-12 h-12 bg-rose-500/10 rounded-xl flex items-center justify-center text-rose-600">
-                          <FileText size={24} />
+                      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-8 sm:p-12 text-center flex flex-col items-center space-y-3.5 shadow-2xs">
+                        <div className="w-14 h-14 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-blue-600">
+                          <FileText size={26} />
                         </div>
-                        <div className="max-w-md space-y-0.5">
-                          <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">
-                            Ready for Commercial Quotation
+                        <div className="max-w-md space-y-1">
+                          <h3 className="text-base font-bold text-[hsl(var(--foreground))]">
+                            No Quotations Created Yet
                           </h3>
                           <p className="text-[hsl(var(--muted-foreground))] text-xs">
-                            Generate itemized pricing proposals, apply taxes, and discounts.
+                            Generate itemized pricing proposals directly from the finalized BOQ, apply custom discounts and taxes.
                           </p>
                         </div>
                         {!isReadOnly && (
                           <button
-                            onClick={() => setIsQuotationModalOpen(true)}
-                            className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                            onClick={() => {
+                              setEditingQuotationIndex(null);
+                              setIsQuotationModalOpen(true);
+                            }}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer shadow-sm"
                           >
-                            <Plus size={14} /> Create Initial Quotation
+                            <Plus size={15} /> Create First Quotation
                           </button>
                         )}
                       </div>
                     ) : (
-                      <div className="space-y-3">
-                        {lead.quotations.length > 1 && (
-                          <div className="flex items-center justify-between gap-2 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-2 sm:p-2.5">
-                            <span className="text-xs font-bold text-[hsl(var(--muted-foreground))]">Versions:</span>
-                            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
-                              {lead.quotations.map((q: any, idx: number) => (
-                                <button
-                                  key={idx}
-                                  onClick={() => setActiveQuotationIndex(idx)}
-                                  className={cn(
-                                    "px-2.5 py-1 rounded text-xs font-bold transition-all whitespace-nowrap cursor-pointer",
-                                    activeQuotationIndex === idx
-                                      ? "bg-rose-600 text-white"
-                                      : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))]"
-                                  )}
-                                >
-                                  Version {q.version || idx + 1}
-                                </button>
-                              ))}
+                      <div className="space-y-4">
+                        {/* Table Card */}
+                        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl overflow-hidden shadow-xs">
+                          <div className="px-4 py-3 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.25)] flex items-center justify-between gap-3">
+                            <div>
+                              <h3 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
+                                <span>Quotation Versions & Options</span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                                  {lead.quotations.length}
+                                </span>
+                              </h3>
                             </div>
+                            <p className="text-[11px] text-[hsl(var(--muted-foreground))] hidden sm:block">
+                              Click &quot;View&quot; to inspect document preview or send to client
+                            </p>
                           </div>
-                        )}
 
-                        <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] overflow-hidden overflow-x-auto">
-                          <QuotationPreview
-                            lead={lead}
-                            quotationIndex={Math.min(activeQuotationIndex, Math.max(0, (lead.quotations?.length || 1) - 1))}
-                            onAddVersion={() => setIsQuotationModalOpen(true)}
-                            onSuccess={() => {
-                              fetchData();
-                              setActiveQuotationIndex((prev) => Math.max(0, Math.min(prev, (lead.quotations?.length || 1) - 2)));
-                            }}
-                          />
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left text-xs border-collapse">
+                              <thead>
+                                <tr className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.4)] text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wider text-[10px]">
+                                  <th className="py-3 px-4 w-12 text-center">#</th>
+                                  <th className="py-3 px-4">Quotation Title</th>
+                                  <th className="py-3 px-4">Scope / Items</th>
+                                  <th className="py-3 px-4">Subtotal & Tax</th>
+                                  <th className="py-3 px-4">Grand Total</th>
+                                  <th className="py-3 px-4 text-center">Status</th>
+                                  <th className="py-3 px-4 text-right">Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-[hsl(var(--border))]">
+                                {lead.quotations.map((q: any, idx: number) => {
+                                  const isSelected = activeQuotationIndex === idx;
+                                  const quoteTitle = q.title || `Quotation ${idx + 1}`;
+                                  const itemCount = q.items?.length || 0;
+                                  const status = q.status || 'Generated';
+
+                                  const getStatusBadge = (st: string) => {
+                                    switch (st) {
+                                      case 'Accepted':
+                                      case 'Approved':
+                                        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                                      case 'Rejected':
+                                        return 'bg-rose-50 text-rose-700 border-rose-200';
+                                      case 'Sent':
+                                        return 'bg-blue-50 text-blue-700 border-blue-200';
+                                      case 'Generated':
+                                        return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+                                      default:
+                                        return 'bg-slate-100 text-slate-700 border-slate-200';
+                                    }
+                                  };
+
+                                  return (
+                                    <tr
+                                      key={idx}
+                                      onClick={() => setActiveQuotationIndex(idx)}
+                                      className="group cursor-pointer transition-all hover:bg-[hsl(var(--muted)/0.4)]"
+                                    >
+                                      {/* Index */}
+                                      <td className="py-3.5 px-4 text-center font-mono text-[11px] text-[hsl(var(--muted-foreground))]">
+                                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-md font-semibold text-xs bg-slate-100 dark:bg-[hsl(var(--muted))] text-slate-600 dark:text-[hsl(var(--muted-foreground))]">
+                                          {idx + 1}
+                                        </span>
+                                      </td>
+
+                                      {/* Quotation Title */}
+                                      <td className="py-3.5 px-4 font-bold text-[hsl(var(--foreground))]">
+                                        <div className="flex items-center gap-3">
+                                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-all bg-blue-50 text-blue-600 border-blue-200 group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-500/10 dark:border-blue-500/20">
+                                            <FileText size={14} />
+                                          </div>
+                                          <div>
+                                            <span className="text-xs font-bold text-[hsl(var(--foreground))] block">
+                                              {quoteTitle}
+                                            </span>
+                                            <p className="text-[10px] text-[hsl(var(--muted-foreground))] font-normal">
+                                              Version {q.version || idx + 1}
+                                              {q.sourceBoqVersion && ` • BOQ v${q.sourceBoqVersion}`}
+                                              {Array.isArray(q.vendorQuotes) && q.vendorQuotes.length > 0 && (
+                                                <span className="text-indigo-600 dark:text-indigo-400 font-semibold ml-1.5">
+                                                  • {q.vendorQuotes.length} Vendor {q.vendorQuotes.length === 1 ? 'Quote' : 'Quotes'}
+                                                </span>
+                                              )}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      </td>
+
+                                      {/* Items / Scope */}
+                                      <td className="py-3.5 px-4 text-[11px] text-[hsl(var(--muted-foreground))] whitespace-nowrap">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="font-semibold text-slate-700 dark:text-[hsl(var(--foreground))] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-[hsl(var(--muted))] border border-slate-200/80 dark:border-[hsl(var(--border))]">
+                                            {itemCount} {itemCount === 1 ? 'item' : 'items'}
+                                          </span>
+                                        </div>
+                                      </td>
+
+                                      {/* Subtotal & Tax */}
+                                      <td className="py-3.5 px-4 text-[11px] text-[hsl(var(--muted-foreground))] whitespace-nowrap">
+                                        <div className="font-medium text-[hsl(var(--foreground))]">{currencySymbol} {(q.subtotal || 0).toLocaleString()}</div>
+                                        <div className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                                          Tax: {q.taxPercentage || 0}%
+                                          {Number(q.discountAmount || 0) > 0 && (
+                                            <span className="ml-1 text-emerald-600 font-semibold">
+                                              • Disc: {currencySymbol} {Number(q.discountAmount).toLocaleString()}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </td>
+
+                                      {/* Grand Total */}
+                                      <td className="py-3.5 px-4 whitespace-nowrap">
+                                        <span className="text-xs font-extrabold text-blue-600 dark:text-blue-400">
+                                          {currencySymbol} {(q.grandTotal || 0).toLocaleString()}
+                                        </span>
+                                      </td>
+
+                                      {/* Status */}
+                                      <td className="py-3.5 px-4 whitespace-nowrap text-center">
+                                        <span className={cn(
+                                          "text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wider inline-flex items-center gap-1",
+                                          getStatusBadge(status)
+                                        )}>
+                                          <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
+                                          {status}
+                                        </span>
+                                      </td>
+
+                                      {/* Actions */}
+                                      <td className="py-3.5 px-4 whitespace-nowrap text-right">
+                                        <div className="inline-flex items-center gap-1.5 justify-end" onClick={(e) => e.stopPropagation()}>
+                                          <button
+                                            type="button"
+                                            onClick={() => setActiveQuotationIndex(idx)}
+                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs bg-white hover:bg-blue-50 text-blue-700 border border-blue-500 dark:bg-[hsl(var(--card))] dark:text-blue-400"
+                                            title="View Quotation Modal"
+                                          >
+                                            <Eye size={13} /> View
+                                          </button>
+
+
+                                          {!isReadOnly && !isConverted && (
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                setEditingQuotationIndex(idx);
+                                                setIsQuotationModalOpen(true);
+                                              }}
+                                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-200 transition-colors cursor-pointer shadow-xs dark:bg-[hsl(var(--card))] dark:border-[hsl(var(--border))] dark:text-[hsl(var(--foreground))]"
+                                              title="Edit Quotation"
+                                            >
+                                              <Pencil size={12} /> Edit
+                                            </button>
+                                          )}
+
+                                          {!isReadOnly && !isConverted && (
+                                            (canDo('crm_quotations', 'delete')) && (
+                                              <button
+                                                type="button"
+                                                onClick={() => handleDeleteQuotationByIndex(idx)}
+                                                className="inline-flex items-center justify-center p-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors cursor-pointer shadow-xs dark:bg-[hsl(var(--card))] dark:border-[hsl(var(--border))] dark:text-[hsl(var(--muted-foreground))]"
+                                                title="Delete Quotation"
+                                              >
+                                                <Trash2 size={13} />
+                                              </button>
+                                            )
+                                          )}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
                       </div>
                     )}
                   </div>
                 );
               })()}
+            </motion.div>
+          )}
+
+          {activeTab === 'confirm_order' && (
+            <motion.div
+              key="confirm_order"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.15 }}
+              className="space-y-3.5 sm:space-y-4"
+            >
+              {getTabLockState('confirm_order').isLocked ? (
+                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-8 sm:p-12 text-center flex flex-col items-center shadow-xs">
+                  <div className="w-14 h-14 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 mb-3.5 border border-amber-500/20">
+                    <Lock size={24} />
+                  </div>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-xs font-bold uppercase tracking-wider mb-2">
+                    Phase Locked
+                  </div>
+                  <h3 className="text-base sm:text-lg font-bold text-[hsl(var(--foreground))]">Order Confirmation Stage is Locked</h3>
+                  <p className="text-[hsl(var(--muted-foreground))] text-xs sm:text-sm mt-1 max-w-md">
+                    Create and finalize a commercial proposal in the Quotations tab first to unlock the confirmed order workflow.
+                  </p>
+                  <button
+                    onClick={() => setActiveTab('quotations')}
+                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
+                  >
+                    <FileText size={14} /> Go to Quotations Tab
+                  </button>
+                </div>
+              ) : (
+                <InteriorConfirmedOrderStageView
+                  lead={lead}
+                  currencySymbol={currencySymbol}
+                  isReadOnly={isReadOnly}
+                  onRefresh={fetchData}
+                  onOpenConfirmModal={() => setIsConfirmOrderModalOpen(true)}
+                  onOpenQuotationModal={() => {
+                    setActiveTab('quotations');
+                    setEditingQuotationIndex(null);
+                    setIsQuotationModalOpen(true);
+                  }}
+                />
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -3870,12 +4214,42 @@ export default function Lead360View() {
       />
       <InteriorQuotationBuilderModal
         isOpen={isQuotationModalOpen}
-        onClose={() => setIsQuotationModalOpen(false)}
+        onClose={() => {
+          setIsQuotationModalOpen(false);
+          setEditingQuotationIndex(null);
+        }}
         customerId={params.id as string}
         customerEmail={lead?.email || ''}
         existingQuotations={lead?.quotations || []}
+        existingBoqs={lead?.boqs || []}
+        lead={lead}
+        editingQuotationIndex={editingQuotationIndex}
+        onSuccess={() => {
+          fetchData();
+          setEditingQuotationIndex(null);
+          setActiveQuotationIndex(null);
+        }}
+      />
+      <InteriorQuotationPreviewModal
+        isOpen={activeQuotationIndex !== null}
+        onClose={() => setActiveQuotationIndex(null)}
+        lead={lead}
+        quotationIndex={activeQuotationIndex}
         onSuccess={fetchData}
       />
+      {sendQuotationModalIndex !== null && lead?.quotations?.[sendQuotationModalIndex] && (
+        <InteriorSendQuotationModal
+          isOpen={sendQuotationModalIndex !== null}
+          onClose={() => setSendQuotationModalIndex(null)}
+          customerId={params.id as string}
+          customerName={lead?.name}
+          customerEmail={lead?.email}
+          customerPhone={lead?.phone}
+          quotation={lead.quotations[sendQuotationModalIndex]}
+          quotationIndex={sendQuotationModalIndex}
+          onSuccess={fetchData}
+        />
+      )}
       <InteriorDeleteLeadModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
@@ -3900,6 +4274,7 @@ export default function Lead360View() {
           Boolean(lead?.linkedProject)
         )}
         budgetRange={lead?.budgetRange || ''}
+        designFiles={lead?.designFiles || []}
         onSuccess={fetchData}
       />
       <InteriorDeleteBoqModal
@@ -4117,6 +4492,23 @@ export default function Lead360View() {
         onSuccess={fetchData}
         users={users}
       />
+      <InteriorDrawingConfirmApproveModal
+        isOpen={isConfirmApproveModalOpen}
+        onClose={() => {
+          if (!approvingDrawingId) {
+            setIsConfirmApproveModalOpen(false);
+            setSelectedDrawingForConfirmApprove(null);
+          }
+        }}
+        onConfirm={() => {
+          if (selectedDrawingForConfirmApprove) {
+            handleDirectApproveDrawing(selectedDrawingForConfirmApprove);
+          }
+        }}
+        drawing={selectedDrawingForConfirmApprove}
+        isSubmitting={Boolean(approvingDrawingId)}
+        leadName={lead?.name}
+      />
       <InteriorUploadRevisionModal
         isOpen={isRevisionModalOpen}
         onClose={() => {
@@ -4128,6 +4520,53 @@ export default function Lead360View() {
         onSuccess={fetchData}
         users={users}
       />
+      {viewRejectionReasonData && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
+          onClick={() => setViewRejectionReasonData(null)}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+          >
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-rose-50/50">
+              <div className="flex items-center gap-2 text-rose-800">
+                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900">Rejection Reason</h4>
+                  <p className="text-[11px] text-slate-500 font-medium truncate max-w-xs">
+                    {viewRejectionReasonData.title} (v{viewRejectionReasonData.version})
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewRejectionReasonData(null)}
+                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-5 max-h-[60vh] overflow-y-auto">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                Reviewer Feedback & Required Modifications
+              </p>
+              <div className="p-3.5 bg-rose-50/60 border border-rose-200/80 rounded-xl text-xs sm:text-sm text-slate-900 leading-relaxed font-normal whitespace-pre-wrap break-words">
+                {viewRejectionReasonData.reason}
+              </div>
+            </div>
+            <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setViewRejectionReasonData(null)}
+                className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <InteriorSendDrawingForApprovalModal
         isOpen={isSendApprovalModalOpen}
         onClose={() => {
@@ -4192,6 +4631,14 @@ export default function Lead360View() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Confirm Order Modal */}
+      <InteriorCreateConfirmOrderModal
+        isOpen={isConfirmOrderModalOpen}
+        onClose={() => setIsConfirmOrderModalOpen(false)}
+        lead={lead}
+        onSuccess={fetchData}
+      />
     </InteriorShell>
   );
 }
