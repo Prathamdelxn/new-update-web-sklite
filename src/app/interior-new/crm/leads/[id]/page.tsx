@@ -19,6 +19,7 @@ import {
   Activity,
   Plus,
   MessageSquare,
+  MessageCircle,
   X,
   CheckCircle2,
   XCircle,
@@ -146,6 +147,8 @@ const { hasPermission: canDo } = usePermissions();
   const [isReqModalOpen, setIsReqModalOpen] = useState(false);
   const [isDesignModalOpen, setIsDesignModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareModalMode, setShareModalMode] = useState<'drawings' | 'requirements'>('drawings');
+  const [requirementsViewMode, setRequirementsViewMode] = useState<'side-by-side' | 'technical' | 'client'>('side-by-side');
   const [selected3DFile, setSelected3DFile] = useState<any | null>(null);
   const [selectedDrawingForApproval, setSelectedDrawingForApproval] = useState<any | null>(null);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
@@ -518,7 +521,7 @@ const { hasPermission: canDo } = usePermissions();
 
   const normalizedRequirements = React.useMemo(() => {
     if (!lead) return [];
-    const raw = lead.requirements || (lead as any).requirementDetails || (lead as any).clientRequirements || (lead as any).designRequirements;
+    const raw = lead.requirements || (lead as any).requirementDetails || (lead as any).designRequirements;
     if (!raw) return [];
 
     // If already an array of room objects / names
@@ -607,6 +610,66 @@ const { hasPermission: canDo } = usePermissions();
     }
 
     return [];
+  }, [lead]);
+
+  const normalizedClientRequirements = React.useMemo(() => {
+    if (!lead) return [];
+    const clientReq = lead.clientRequirements;
+    if (!clientReq) return [];
+
+    const roomsList = Array.isArray(clientReq)
+      ? clientReq
+      : Array.isArray(clientReq.rooms)
+      ? clientReq.rooms
+      : clientReq.items || clientReq.spaces || [];
+
+    if (!Array.isArray(roomsList) || roomsList.length === 0) {
+      if (typeof clientReq === 'object' && (clientReq.overallStyle || clientReq.generalNotes || clientReq.estimatedBudget)) {
+        return [{
+          roomName: 'General Client Wishlist',
+          interiorType: lead.propertyType || 'Residential',
+          designStyle: clientReq.overallStyle || '',
+          theme: clientReq.overallStyle || '',
+          description: clientReq.generalNotes || '',
+          budget: clientReq.estimatedBudget || '',
+          furnitureRequirements: '',
+          storage: '',
+          lightingRequirements: '',
+          colours: '',
+        }];
+      }
+      return [];
+    }
+
+    return roomsList.map((r: any, idx: number) => {
+      if (typeof r === 'string') {
+        return {
+          roomName: r,
+          interiorType: lead.propertyType || 'Residential',
+          designStyle: clientReq.overallStyle || '',
+          theme: clientReq.overallStyle || '',
+          description: '',
+          furnitureRequirements: '',
+          storage: '',
+          lightingRequirements: '',
+          colours: '',
+          budget: clientReq.estimatedBudget || '',
+        };
+      }
+      return {
+        ...r,
+        roomName: r.name || r.roomName || r.room || `Space ${idx + 1}`,
+        interiorType: r.type || r.interiorType || lead.propertyType || 'Residential',
+        designStyle: r.style || r.designStyle || clientReq.overallStyle || '',
+        theme: r.style || r.theme || clientReq.overallStyle || '',
+        description: r.notes || r.description || r.remarks || '',
+        furnitureRequirements: Array.isArray(r.furniture) ? r.furniture.join(', ') : (r.furniture || r.furnitureRequirements || ''),
+        storage: r.storage || r.storageRequirements || '',
+        lightingRequirements: r.lighting || r.lightingRequirements || '',
+        colours: r.colors || r.colours || '',
+        budget: r.budget || clientReq.estimatedBudget || '',
+      };
+    });
   }, [lead]);
 
   const drawingInfo = React.useMemo(() => {
@@ -2100,6 +2163,12 @@ const { hasPermission: canDo } = usePermissions();
                 </div>
               ) : (() => {
                 const hasRequirements = Boolean(normalizedRequirements && normalizedRequirements.length > 0);
+                const hasClientRequirements = Boolean(normalizedClientRequirements && normalizedClientRequirements.length > 0);
+                const hasClientSubmitted = Boolean(
+                  lead.clientRequirementsSubmittedAt ||
+                  lead.clientRequirements?.submittedAt ||
+                  hasClientRequirements
+                );
                 const isReqOverdue = Boolean(
                   !hasRequirements &&
                   requirementsInfo.scheduledDate &&
@@ -2305,20 +2374,177 @@ const { hasPermission: canDo } = usePermissions();
                       </div>
                     </div>
 
-                    {/* Dual-Perspective Requirements View (Client Wishlist vs Team Technical Brief Side-by-Side) */}
+                    {/* Client Share Portal Ribbon (Same as Drawing Tab) */}
+                    <div className="bg-teal-500/[0.05] border border-teal-500/20 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-teal-500/15 text-teal-600 flex items-center justify-center shrink-0 border border-teal-500/25">
+                          <Globe size={16} />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-bold text-[hsl(var(--foreground))]">Client Requirements Intake Portal</span>
+                            <span className={cn(
+                              "text-[9px] font-bold px-1.5 py-0.5 rounded border",
+                              lead.shareSettings?.isPublic
+                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                                : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                            )}>
+                              {lead.shareSettings?.isPublic ? 'Active' : 'Unpublished'}
+                            </span>
+                            {hasClientSubmitted ? (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                                <CheckCircle2 size={10} /> Client Submitted
+                              </span>
+                            ) : (
+                              <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                                Awaiting Client
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-[hsl(var(--muted-foreground))] truncate mt-0.5">
+                            {hasClientSubmitted
+                              ? `Client submitted specifications on ${new Date(lead.clientRequirements?.submittedAt || lead.clientRequirementsSubmittedAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                              : 'Share this link so the client can self-fill their room preferences, style wishlist, and budget.'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                        {lead.shareSettings?.isPublic && lead.shareSettings?.shareToken && (
+                          <a
+                            href={`/share/requirements/${lead.shareSettings.shareToken}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all"
+                          >
+                            <ExternalLink size={12} /> Preview Form
+                          </a>
+                        )}
+                        <button
+                          onClick={() => {
+                            setShareModalMode('requirements');
+                            setIsShareModalOpen(true);
+                          }}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold shadow-xs active:scale-95 transition-all cursor-pointer"
+                        >
+                          <Share2 size={12} /> {lead.shareSettings?.isPublic ? 'Share Link' : 'Generate Link'}
+                        </button>
+                        {lead.shareSettings?.isPublic && lead.shareSettings?.shareToken && (
+                          <button
+                            onClick={() => {
+                              const origin = typeof window !== 'undefined' ? window.location.origin : '';
+                              const shareUrl = `${origin}/share/requirements/${lead.shareSettings.shareToken}`;
+                              const clientName = lead.name || 'Client';
+                              const text = encodeURIComponent(
+                                `Hello ${clientName},\n\nPlease fill out your interior design requirements & room wishlist using this link:\n${shareUrl}\n\nOur design team will review your preferences and specifications right away!`
+                              );
+                              const phone = (lead.mobileNumber || '').replace(/\D/g, '');
+                              const waUrl = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+                              window.open(waUrl, '_blank');
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs active:scale-95 transition-all cursor-pointer"
+                            title="Send intake link directly to WhatsApp"
+                          >
+                            <MessageCircle size={13} /> WhatsApp
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Top Overview Metric Cards */}
+                    {hasRequirements && (
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+                        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3 flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+                            <DollarSign size={16} />
+                          </div>
+                          <div className="overflow-hidden min-w-0">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Estimated Budget</p>
+                            <p className="text-xs font-bold text-[hsl(var(--foreground))] truncate mt-0.5">
+                              {lead.budgetRange || (lead.budget ? `₹${Number(lead.budget).toLocaleString('en-IN')}` : 'Not specified')}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3 flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
+                            <Building size={16} />
+                          </div>
+                          <div className="overflow-hidden min-w-0">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Interior Type</p>
+                            <p className="text-xs font-bold text-[hsl(var(--foreground))] truncate mt-0.5">
+                              {normalizedRequirements[0]?.interiorType || lead.propertyType || 'Residential'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3 flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0">
+                            <Palette size={16} />
+                          </div>
+                          <div className="overflow-hidden min-w-0">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Primary Style</p>
+                            <p className="text-xs font-bold text-[hsl(var(--foreground))] truncate mt-0.5">
+                              {normalizedRequirements.find((r: any) => r.designStyle)?.designStyle || normalizedRequirements[0]?.theme || 'Custom Style'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3 flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+                            <Layers size={16} />
+                          </div>
+                          <div className="overflow-hidden min-w-0">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] truncate">Configured Spaces</p>
+                            <p className="text-xs font-bold text-[hsl(var(--foreground))] truncate mt-0.5">
+                              {normalizedRequirements.length} {normalizedRequirements.length === 1 ? 'Room / Area' : 'Rooms / Areas'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Global Scope / Timeline / Special Requests Banner if present */}
+                    {(globalScopeOfWork || globalTimeline || globalSpecialRequests) && (
+                      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 sm:p-4 space-y-2.5">
+                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5 pb-2 border-b border-[hsl(var(--border))]">
+                          <Sliders size={13} className="text-blue-500" /> Overall Project Directives & Scope
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-xs">
+                          {globalScopeOfWork && (
+                            <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block">Scope of Work</span>
+                              <span className="font-semibold text-[hsl(var(--foreground))] mt-0.5 block">{globalScopeOfWork}</span>
+                            </div>
+                          )}
+                          {globalTimeline && (
+                            <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block">Target Timeline</span>
+                              <span className="font-semibold text-[hsl(var(--foreground))] mt-0.5 block">{globalTimeline}</span>
+                            </div>
+                          )}
+                          {globalSpecialRequests && (
+                            <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block">Special Requests</span>
+                              <span className="font-semibold text-[hsl(var(--foreground))] mt-0.5 block">{globalSpecialRequests}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Dual-Perspective Comparative Requirements View (Side-by-Side Customer & Technical Specifications) */}
                     <InteriorComparativeRequirementsView
                       lead={lead}
+                      technicalPersonName={requirementsInfo.assignedName}
                       isReadOnly={isReadOnly}
-                      canEdit={canDo('crm_requirements', 'update') || canDo('crm_requirements', 'create')}
-                      canSendToDrawings={
-                        ['Under Requirement', 'Requirement Completed'].includes(lead.status) &&
-                        (canDo('crm_requirements', 'update') || canDo('crm_drawings', 'update') || canDo('crm_drawings', 'create'))
-                      }
+                      canEdit={!isReadOnly && (canDo('crm_requirements', 'update') || canDo('crm_requirements', 'create'))}
+                      canSendToDrawings={['Under Requirement', 'Requirement Completed'].includes(lead.status)}
                       currencySymbol={currencySymbol}
                       onEditTeamRequirements={() => setIsReqModalOpen(true)}
                       onRescheduleSession={() => setIsSendToReqOpen(true)}
                       onPassToDrawings={() => setIsSendToDrawingOpen(true)}
-                      onRefresh={() => refetchLead()}
+                      onRefresh={fetchData}
                     />
                   </div>
                 );
@@ -3607,6 +3833,7 @@ const { hasPermission: canDo } = usePermissions();
         customerId={params.id as string}
         onSuccess={fetchData}
         users={users}
+        clientRequirements={normalizedClientRequirements || []}
         initialRequirements={normalizedRequirements || []}
         initialBudget={lead?.budgetRange || ''}
         currentStatus={lead?.status || ''}
@@ -3892,6 +4119,7 @@ const { hasPermission: canDo } = usePermissions();
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         lead={lead}
+        mode={shareModalMode}
         onUpdated={fetchData}
       />
       <InteriorDrawingApprovalModal

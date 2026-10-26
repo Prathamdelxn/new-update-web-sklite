@@ -44,40 +44,25 @@ export const interiorCrmService = {
       expiresDays?: number | null;
       allowDownload?: boolean;
       includeRequirements?: boolean;
+      mode?: 'drawings' | 'requirements';
       regenerate?: boolean;
     }
   ) => interiorApiClient.post(`/crm/customers/${customerId}/share`, data).then((res) => res.data),
   revokeShareLink: (customerId: string) =>
     interiorApiClient.delete(`/crm/customers/${customerId}/share`, {}).then((res) => res.data),
-  getPublicDrawingData: (token: string) =>
-    interiorApiClient.get(`/public/crm/${token}`).then((res) => res.data),
-  getClientRequirements: (token: string) =>
-    interiorApiClient.get(`/public/crm/${token}/requirements`).then((res) => res.data),
   getRequirementsShareToken: (customerId: string) =>
-    interiorApiClient.get(`/crm/customers/${customerId}/requirements-token`).then((res) => res.data),
+    interiorApiClient.get(`/crm/customers/${customerId}/share`).then((res) => res.data),
+  revokeRequirementsLink: (customerId: string) =>
+    interiorApiClient.delete(`/crm/customers/${customerId}/share`, {}).then((res) => res.data),
   updateRequirementsLink: (
     customerId: string,
-    data: {
-      isPublic?: boolean;
-      expiresDays?: number | null;
-      regenerate?: boolean;
-    }
-  ) =>
-    interiorApiClient.post(`/crm/customers/${customerId}/requirements-token`, data).then((res) => res.data),
-  revokeRequirementsLink: (customerId: string) =>
-    interiorApiClient.delete(`/crm/customers/${customerId}/requirements-token`).then((res) => res.data),
-  sendRequirementsEmail: (
-    customerId: string,
-    data: {
-      recipientEmail?: string;
-      customSubject?: string;
-      customMessage?: string;
-      requirementsUrl?: string;
-      expiresDays?: number | null;
-    }
-  ) =>
-    interiorApiClient.post(`/crm/customers/${customerId}/send-requirements-email`, data).then((res) => res.data),
-  submitClientRequirements: (token: string, data: any) =>
+    data: { allowDownload?: boolean; allowComments?: boolean; allowApproval?: boolean; expiresAt?: string; allowRequirementsSubmission?: boolean }
+  ) => interiorApiClient.post(`/crm/customers/${customerId}/share`, data).then((res) => res.data),
+  sendRequirementsEmail: (customerId: string, data?: any) =>
+    interiorApiClient.post(`/crm/customers/${customerId}/share/email`, data || {}).then((res) => res.data),
+  getPublicDrawingData: (token: string) =>
+    interiorApiClient.get(`/public/crm/${token}`).then((res) => res.data),
+  submitClientRequirements: (token: string, data: { requirements: any[]; notes?: string; budgetRange?: string }) =>
     interiorApiClient.post(`/public/crm/${token}/requirements`, data).then((res) => res.data),
   submitClientFeedback: (token: string, data: { drawingId?: string; action: 'client_approved' | 'client_changes_requested'; clientFeedback?: string }) =>
     interiorApiClient.post(`/public/crm/${token}/feedback`, data).then((res) => res.data),

@@ -63,6 +63,7 @@ interface Props {
   customerId: string;
   onSuccess?: (updatedData?: any) => void;
   users?: any[];
+  clientRequirements?: any[];
   initialRequirements?: RoomRequirement[];
   initialBudget?: string;
   isReadOnly?: boolean;
@@ -110,12 +111,15 @@ const DEFAULT_ROOM: RoomRequirement = {
   theme: '',
 };
 
+const EMPTY_REQUIREMENTS: RoomRequirement[] = [];
+
 export const InteriorLogRequirementsModal = ({
   isOpen,
   onClose,
   customerId,
   onSuccess,
-  initialRequirements = [],
+  clientRequirements = [],
+  initialRequirements = EMPTY_REQUIREMENTS,
   initialBudget = '',
   isReadOnly = false,
   currentStatus
@@ -148,6 +152,8 @@ export const InteriorLogRequirementsModal = ({
     { ...DEFAULT_ROOM, roomName: 'Living Room' }
   ]);
 
+  const requirementsKey = initialRequirements ? JSON.stringify(initialRequirements) : '';
+
   useEffect(() => {
     if (isOpen) {
       setBudgetRange(initialBudget || '');
@@ -167,7 +173,7 @@ export const InteriorLogRequirementsModal = ({
       setActiveSubTab({});
       setCollapsedRooms({});
     }
-  }, [isOpen, customerId]);
+  }, [isOpen, customerId, requirementsKey, initialBudget]);
 
   const addRoom = () => {
     setRequirements((prev) => [...prev, { ...DEFAULT_ROOM, roomName: '' }]);
@@ -346,6 +352,48 @@ export const InteriorLogRequirementsModal = ({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex flex-col gap-6 custom-scrollbar">
+          {/* Pre-fill from Client Submission Banner */}
+          {clientRequirements && clientRequirements.length > 0 && (
+            <div className="bg-purple-500/[0.08] border border-purple-500/25 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-purple-500/15 text-purple-600 flex items-center justify-center shrink-0 border border-purple-500/20">
+                  <Sparkles size={16} />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-[hsl(var(--foreground))] block">
+                    Client Submitted {clientRequirements.length} Space(s) through Online Intake Link
+                  </span>
+                  <span className="text-[11px] text-[hsl(var(--muted-foreground))] block">
+                    You can load the customer's requested rooms & aesthetic wishes directly into your technical specifications form.
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setRequirements(
+                    clientRequirements.map((cr: any) => ({
+                      ...DEFAULT_ROOM,
+                      roomName: cr.roomName || cr.name || cr.room || 'Space',
+                      interiorType: cr.interiorType || 'Residential',
+                      designStyle: cr.designStyle || '',
+                      theme: cr.designStyle || '',
+                      furnitureRequirements: cr.furnitureRequirements || '',
+                      storage: cr.storage || '',
+                      lightingRequirements: cr.lightingRequirements || '',
+                      colours: cr.colours || '',
+                      description: cr.description ? `[Client Wishlist]: ${cr.description}` : '',
+                    }))
+                  );
+                  toast.success(`Pre-filled ${clientRequirements.length} spaces from client wishlist!`);
+                }}
+                className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shrink-0 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <Copy size={13} /> Pre-fill from Client Wishlist
+              </button>
+            </div>
+          )}
+
           {/* Overall Project Scope & Estimated Budget */}
           <div className="bg-[hsl(var(--muted)/0.35)] border border-[hsl(var(--border))] rounded-3xl p-5 md:p-6 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[hsl(var(--border))]">

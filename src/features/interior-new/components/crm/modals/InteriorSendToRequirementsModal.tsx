@@ -74,6 +74,8 @@ export function InteriorSendToRequirementsModal({
   const [remarks, setRemarks] = useState('');
   const [errors, setErrors] = useState<{ assignedMember?: string | null; scheduledDate?: string | null }>({});
 
+  const initialDataKey = initialData ? JSON.stringify(initialData) : '';
+
   useEffect(() => {
     if (isOpen) {
       const isPast = initialData?.scheduledDate
@@ -90,7 +92,7 @@ export function InteriorSendToRequirementsModal({
       setRemarks('');
       setErrors({});
     }
-  }, [isOpen, customerId]);
+  }, [isOpen, initialDataKey]);
 
   if (!isOpen) return null;
 
