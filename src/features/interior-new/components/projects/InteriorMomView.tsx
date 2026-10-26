@@ -10,10 +10,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, Plus, X, Loader2, Users, CheckSquare, ClipboardList, Trash2 } from 'lucide-react';
+import { FileText, Plus, X, Loader2, Users, CheckSquare, ClipboardList, Trash2, Pencil } from 'lucide-react';
 import { Button, Input, Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 
 interface InteriorMomViewProps {
   projectId: string;
@@ -21,6 +23,8 @@ interface InteriorMomViewProps {
 
 export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
+  const { confirm } = useConfirm();
 
   const [moms, setMoms] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,6 +38,65 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
   const [agenda, setAgenda] = useState('');
   const [notes, setNotes] = useState('');
   const [actionItems, setActionItems] = useState<any[]>([{ description: '', status: 'open' }]);
+  // Set when the modal edits an existing MOM instead of logging a new one
+  const [editingMomId, setEditingMomId] = useState<string | null>(null);
+  const [deletingMomId, setDeletingMomId] = useState<string | null>(null);
+
+  const resetForm = () => {
+    setEditingMomId(null);
+    setTitle('');
+    setDate('');
+    setAttendees('');
+    setAgenda('');
+    setNotes('');
+    setActionItems([{ description: '', status: 'open' }]);
+  };
+
+  const openCreateModal = () => {
+    resetForm();
+    setIsManualModalOpen(true);
+  };
+
+  const openEditModal = (mom: any) => {
+    setEditingMomId(mom._id);
+    setTitle(mom.title || '');
+    setDate(mom.date ? String(mom.date).split('T')[0] : '');
+    setAttendees((mom.attendees || []).join(', '));
+    setAgenda(mom.agenda || '');
+    setNotes(mom.notes || '');
+    setActionItems(
+      mom.actionItems && mom.actionItems.length > 0
+        ? mom.actionItems.map((a: any) => ({ ...a }))
+        : [{ description: '', status: 'open' }]
+    );
+    setIsManualModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsManualModalOpen(false);
+    resetForm();
+  };
+
+  const handleDeleteMom = async (mom: any) => {
+    const ok = await confirm({
+      title: 'Delete Minutes of Meeting',
+      message: `Are you sure you want to delete "${mom.title}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      type: 'danger',
+    });
+    if (!ok) return;
+    try {
+      setDeletingMomId(mom._id);
+      await interiorProjectService.deleteMom(projectId, mom._id);
+      toast.success('Meeting minutes deleted');
+      setMoms((prev) => prev.filter((m) => m._id !== mom._id));
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to delete meeting minutes');
+    } finally {
+      setDeletingMomId(null);
+    }
+  };
 
   const fetchMoms = async () => {
     try {
@@ -72,26 +135,31 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
 
     try {
       setIsCreating(true);
-      await interiorProjectService.createMom(projectId, {
+      const payload = {
         title,
         date: date ? new Date(date) : undefined,
         attendees: attendees.split(',').map((s) => s.trim()).filter(Boolean),
         agenda,
         notes,
-        actionItems,
-      });
-      toast.success('Meeting Minutes logged successfully!');
+        // Blank action rows are dropped rather than blocking the save
+        actionItems: actionItems.filter((a) => String(a.description || '').trim()),
+      };
+      if (editingMomId) {
+        await interiorProjectService.updateMom(projectId, { momId: editingMomId, ...payload });
+        toast.success('Meeting minutes updated');
+      } else {
+        await interiorProjectService.createMom(projectId, payload);
+        toast.success('Meeting Minutes logged successfully!');
+      }
       setIsManualModalOpen(false);
-      setTitle('');
-      setDate('');
-      setAttendees('');
-      setAgenda('');
-      setNotes('');
-      setActionItems([{ description: '', status: 'open' }]);
+      resetForm();
       fetchMoms();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error('Failed to log meeting minutes');
+      toast.error(
+        err?.response?.data?.error || err?.response?.data?.message ||
+          (editingMomId ? 'Failed to update meeting minutes' : 'Failed to log meeting minutes')
+      );
     } finally {
       setIsCreating(false);
     }
@@ -108,10 +176,12 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button onClick={() => setIsManualModalOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Manual Log
-          </Button>
+          {canDo('mom', 'create') && (
+            <Button onClick={openCreateModal}>
+              <Plus className="w-4 h-4 mr-2" />
+              Manual Log
+            </Button>
+          )}
           {/* AI Bot invite/sync (inviteMomBot/syncMomBot) intentionally skipped — meeting-bot integration is out of scope */}
         </div>
       </div>
@@ -138,12 +208,35 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
                     </p>
                   </div>
                 </div>
-                {mom.attendees && mom.attendees.length > 0 && (
-                  <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--muted-foreground))] bg-[hsl(var(--card))] px-2.5 py-1 rounded-md border border-[hsl(var(--border))]">
-                    <Users className="w-3.5 h-3.5" />
-                    Attendees: <span className="font-semibold text-[hsl(var(--foreground))]">{mom.attendees.join(', ')}</span>
-                  </div>
-                )}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {mom.attendees && mom.attendees.length > 0 && (
+                    <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--muted-foreground))] bg-[hsl(var(--card))] px-2.5 py-1 rounded-md border border-[hsl(var(--border))]">
+                      <Users className="w-3.5 h-3.5" />
+                      Attendees: <span className="font-semibold text-[hsl(var(--foreground))]">{mom.attendees.join(', ')}</span>
+                    </div>
+                  )}
+                  {canDo('mom', 'update') && (
+                    <button
+                      type="button"
+                      onClick={() => openEditModal(mom)}
+                      title="Edit MOM"
+                      className="p-1.5 rounded-md text-[hsl(var(--muted-foreground))] hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
+                  {canDo('mom', 'delete') && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteMom(mom)}
+                      disabled={deletingMomId === mom._id}
+                      title="Delete MOM"
+                      className="p-1.5 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                    >
+                      {deletingMomId === mom._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                    </button>
+                  )}
+                </div>
               </div>
               <CardContent className="p-6 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -195,9 +288,9 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
                   <FileText className="w-4 h-4 text-[hsl(var(--primary))]" />
-                  Log Minutes of Meeting (MOM)
+                  {editingMomId ? 'Edit Minutes of Meeting (MOM)' : 'Log Minutes of Meeting (MOM)'}
                 </h3>
-                <button onClick={() => setIsManualModalOpen(false)} className="p-1 rounded hover:bg-[hsl(var(--muted))]">
+                <button onClick={closeModal} className="p-1 rounded hover:bg-[hsl(var(--muted))]">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -216,7 +309,7 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-semibold">Attendees (comma-separated)</label>
-                    <Input placeholder="e.g. Sameer PM, Consultant A, Client Rep" value={attendees} onChange={(e) => setAttendees(e.target.value)} />
+                    <Input placeholder="e.g. Alex Morgan (PM), Sarah Jenkins (Designer), Client Rep" value={attendees} onChange={(e) => setAttendees(e.target.value)} />
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-semibold">Meeting Agenda</label>
@@ -251,7 +344,7 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
                     </div>
                     {actionItems.map((item, idx) => (
                       <div key={idx} className="flex items-center gap-2">
-                        <Input required placeholder="Action Item description..." value={item.description} onChange={(e) => updateActionRow(idx, e.target.value)} />
+                        <Input placeholder="Action Item description..." value={item.description} onChange={(e) => updateActionRow(idx, e.target.value)} />
                         <button
                           type="button"
                           onClick={() => removeActionRow(idx)}
@@ -266,12 +359,12 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
                 </div>
 
                 <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
-                  <Button variant="outline" type="button" onClick={() => setIsManualModalOpen(false)}>
+                  <Button variant="outline" type="button" onClick={closeModal}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isCreating}>
                     {isCreating && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    Save MOM
+                    {editingMomId ? 'Save Changes' : 'Save MOM'}
                   </Button>
                 </div>
               </form>

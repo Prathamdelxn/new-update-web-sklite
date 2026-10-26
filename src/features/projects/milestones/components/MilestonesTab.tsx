@@ -6,7 +6,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Calendar, Plus, Loader2, Target, Flag, X,
+  Calendar, Loader2, Target, Flag, X,
   CheckCircle2, Circle, ChevronDown, ChevronUp,
   Trash2, LayoutGrid, List, AlignLeft, MoreVertical, Pencil,
   User, Clock, MessageSquare, ChevronRight, Camera, Image as ImageIcon, FileText, ShieldAlert
@@ -28,6 +28,7 @@ interface MilestonesTabProps {
 }
 
 type MilestoneStatus = 'Pending' | 'In Progress' | 'Completed' | 'On Hold';
+interface Member { _id: string; name: string }
 
 const STATUS_OPTIONS: MilestoneStatus[] = ['Pending', 'In Progress', 'Completed', 'On Hold'];
 
@@ -108,13 +109,48 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
   const canAssign = !isLocked && (isAdmin || hasProjectPermission(user, project, 'tasks:assign'));
   const canComplete = !isLocked && (isAdmin || hasProjectPermission(user, project, 'tasks:complete'));
 
+  const extractUsers = (sources: any[]): Member[] => {
+    const map = new Map<string, Member>();
+    sources.forEach(src => {
+      if (!src) return;
+      const list = Array.isArray(src)
+        ? src
+        : Array.isArray(src.users)
+          ? src.users
+          : Array.isArray(src.members)
+            ? src.members
+            : Array.isArray(src.data)
+              ? src.data
+              : [];
+
+      list.forEach((item: any) => {
+        if (!item) return;
+        const u = item.user && typeof item.user === 'object' ? item.user : item;
+        const id = u._id || u.id;
+        if (!id || typeof id !== 'string') return;
+        const name =
+          u.name ||
+          u.fullName ||
+          [u.firstName, u.lastName].filter(Boolean).join(' ') ||
+          u.email ||
+          'Member';
+        if (!map.has(id)) {
+          map.set(id, { _id: id, name });
+        }
+      });
+    });
+    return Array.from(map.values());
+  };
+
   // ── Data fetching ──────────────────────────────────────────────────────────
   const fetchData = async () => {
     try {
       setIsForbidden(false);
-      const [msRes, usersRes] = await Promise.all([
+      const [msRes, projRes, usersRes, allUsersRes] = await Promise.all([
         api.get(`/projects/${projectId}/milestones`),
-        api.get(`/users?projectId=${projectId}`),
+        api.get(`/projects/${projectId}`).catch(() => null),
+        api.get(`/users?projectId=${projectId}`).catch(() => null),
+        api.get('/users').catch(() => null),
       ]);
 
       const data = Array.isArray(msRes.data)
@@ -124,8 +160,13 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
           : [];
       setMilestones(data);
 
-      const rawUsers: any[] = Array.isArray(usersRes.data) ? usersRes.data : [];
-      setMembers(rawUsers.map((u: any) => ({ _id: u._id, name: u.name || 'Member' })));
+      const loadedMembers = extractUsers([
+        projRes?.data?.members,
+        project?.members,
+        usersRes?.data,
+        allUsersRes?.data,
+      ]);
+      setMembers(loadedMembers);
     } catch (error: any) {
       if (error.response?.status === 403) {
         setIsForbidden(true);
@@ -403,8 +444,8 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
 
   const memberName = (assignedTo: any) => {
     if (!assignedTo) return null;
-    const id = assignedTo?._id || assignedTo;
-    return members.find(m => m._id === id)?.name || assignedTo?.name || null;
+    const id = String(assignedTo?._id || assignedTo?.id || assignedTo);
+    return members.find(m => String(m._id) === id)?.name || assignedTo?.name || assignedTo?.fullName || null;
   };
 
   // ── Loading ────────────────────────────────────────────────────────────────
@@ -482,14 +523,6 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
               className="flex items-center space-x-1.5 bg-violet-50 border border-violet-200 text-violet-700 hover:bg-violet-100 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-2xs"
             >
               <FileText className="w-3.5 h-3.5" /><span>Import XER</span>
-            </button>
-          )}
-          {canCreate && (
-            <button
-              onClick={openCreateModal}
-              className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs"
-            >
-              <Plus className="w-3.5 h-3.5" /><span>New Milestone</span>
             </button>
           )}
         </div>
@@ -611,11 +644,6 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                     </button>
 
                     <div className="flex items-center space-x-1.5">
-                      {canUpdate && (
-                        <button onClick={() => openEditModal(milestone)} className="p-1.5 rounded-lg text-slate-400 hover:text-gray-900 hover:bg-gray-100 transition-all border border-gray-200 bg-white">
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                      )}
                       {canDelete && (
                         <button onClick={() => handleDelete(milestone._id, milestone.name)} className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all border border-gray-200 bg-white">
                           <Trash2 className="w-3.5 h-3.5" />
@@ -641,7 +669,21 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                               </button>
                               <div className="flex-1 min-w-0">
                                 <p className={cn('font-semibold', task.isCompleted ? 'line-through text-slate-400' : 'text-gray-800')}>{task.title}</p>
-                                {assignee && <p className="text-[10px] text-slate-400 mt-0.5">Assignee: {assignee}</p>}
+                                {assignee ? (
+                                  <p className="text-[10px] text-slate-500 mt-0.5 font-medium flex items-center gap-1">
+                                    <User className="w-3 h-3 text-blue-500" />{assignee}
+                                  </p>
+                                ) : (
+                                  !task.isCompleted && (canUpdate || canAssign) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => openEditTask(milestone, i)}
+                                      className="text-[10px] text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-1.5 py-0.5 rounded mt-1 font-semibold flex items-center gap-1 w-fit transition-colors"
+                                    >
+                                      <User className="w-2.5 h-2.5" />Assign
+                                    </button>
+                                  )
+                                )}
                               </div>
                               {!task.isCompleted && (canUpdate || canAssign) && (
                                 <button onClick={() => openEditTask(milestone, i)} className="text-slate-300 hover:text-blue-500 shrink-0">
@@ -726,15 +768,6 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                         </td> */}
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end space-x-1">
-                            {canUpdate && (
-                              <button
-                                onClick={() => openEditModal(milestone)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-gray-900 hover:bg-gray-100 transition-all"
-                                title="Edit Milestone"
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </button>
-                            )}
                             {canDelete && (
                               <button
                                 onClick={() => handleDelete(milestone._id, milestone.name)}
@@ -786,10 +819,20 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                                                   {task.endDate ? ` → ${new Date(task.endDate).toLocaleDateString()}` : ''}
                                                 </span>
                                               )}
-                                              {assignee && (
-                                                <span className="flex items-center gap-1">
-                                                  <User className="w-3 h-3" />{assignee}
+                                              {assignee ? (
+                                                <span className="flex items-center gap-1 text-slate-700 font-medium">
+                                                  <User className="w-3 h-3 text-blue-500" />{assignee}
                                                 </span>
+                                              ) : (
+                                                !task.isCompleted && (canUpdate || canAssign) && (
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => openEditTask(milestone, i)}
+                                                    className="flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-1.5 py-0.5 rounded font-semibold transition-colors"
+                                                  >
+                                                    <User className="w-2.5 h-2.5" />Assign
+                                                  </button>
+                                                )
                                               )}
                                             </div>
                                           </div>
@@ -1188,18 +1231,6 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
             style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 50 }}
             className="w-36 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
           >
-            {canUpdate && (
-              <button
-                onClick={() => {
-                  const ms = milestones.find(m => m._id === milestoneMenuId);
-                  if (ms) openEditModal(ms);
-                  setMilestoneMenuId(null); setMenuPos(null);
-                }}
-                className="w-full px-4 py-2.5 text-left text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2"
-              >
-                <Pencil className="w-3.5 h-3.5" /><span>Edit</span>
-              </button>
-            )}
             {canDelete && (
               <button
                 onClick={() => {

@@ -19,6 +19,7 @@ const getBaseUrl = (): string => {
 };
 
 import Cookies from 'js-cookie';
+import { markForbidden } from '@/lib/permissionErrors';
 
 export const interiorApiClient = axios.create({
   baseURL: `${getBaseUrl()}/api/v1`,
@@ -39,6 +40,10 @@ interiorApiClient.interceptors.request.use(
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
+    }
+    // Remove Content-Type if payload is FormData so browser/axios sets multipart/form-data with boundary
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
     }
     return config;
   },
@@ -68,6 +73,9 @@ interiorApiClient.interceptors.response.use(
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh');
+
+    // Lets the toast layer turn "Failed to …" into "You don't have permission to …"
+    if (error.response?.status === 403) markForbidden();
 
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       if (isRefreshing) {

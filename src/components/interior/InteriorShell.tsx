@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { InteriorSidebar } from '@/components/interior/InteriorSidebar';
 import { InteriorHeader } from '@/components/interior/InteriorHeader';
 import { getInteriorUser, isInteriorSession } from '@/lib/interiorAuth';
+import { useQueryClient } from '@tanstack/react-query';
+import { ensureFreshInteriorUser, PERMISSIONS_CHANGED_EVENT } from '@/features/interior-new/hooks/usePermissions';
 
 interface InteriorShellProps {
   children: React.ReactNode;
@@ -17,6 +19,19 @@ export function InteriorShell({ children }: InteriorShellProps) {
   const [user, setUser] = useState<ReturnType<typeof getInteriorUser>>(null);
   const [organizationName, setOrganizationName] = useState<string | undefined>(undefined);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const queryClient = useQueryClient();
+  // Bumped when an admin changes this user's permissions: the page re-mounts and
+  // re-loads its data with the new access (no browser refresh needed)
+  const [permissionsVersion, setPermissionsVersion] = useState(0);
+
+  useEffect(() => {
+    const onChange = () => {
+      queryClient.invalidateQueries();
+      setPermissionsVersion((v) => v + 1);
+    };
+    window.addEventListener(PERMISSIONS_CHANGED_EVENT, onChange);
+    return () => window.removeEventListener(PERMISSIONS_CHANGED_EVENT, onChange);
+  }, [queryClient]);
 
   useEffect(() => {
     const hasInterior = isInteriorSession();
@@ -32,8 +47,13 @@ export function InteriorShell({ children }: InteriorShellProps) {
       return;
     }
 
-    setIsAuthorized(true);
-    setUser(getInteriorUser());
+    let alive = true;
+    // Show the page only with the user's current permissions (see ensureFreshInteriorUser)
+    ensureFreshInteriorUser().then(() => {
+      if (!alive) return;
+      setIsAuthorized(true);
+      setUser(getInteriorUser());
+    });
     const org = localStorage.getItem('interiorOrganization');
     if (org) {
       try {
@@ -44,6 +64,9 @@ export function InteriorShell({ children }: InteriorShellProps) {
     }
     const stored = localStorage.getItem('sidebar-collapsed');
     if (stored === 'true') setCollapsed(true);
+    return () => {
+      alive = false;
+    };
   }, [router]);
 
   const handleToggleCollapse = () => {
@@ -74,7 +97,7 @@ export function InteriorShell({ children }: InteriorShellProps) {
 
       <div className="flex-1 flex flex-col min-h-screen min-w-0">
         <InteriorHeader user={user} onMobileMenuClick={() => setMobileOpen(true)} />
-        <main className="flex-1">{children}</main>
+        <main key={permissionsVersion} className="flex-1">{children}</main>
       </div>
     </div>
   );

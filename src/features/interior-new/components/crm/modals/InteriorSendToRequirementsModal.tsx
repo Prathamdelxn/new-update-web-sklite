@@ -34,7 +34,7 @@ interface Props {
     assignedMember?: string;
     remarks?: string;
   } | null;
-  onSuccess: () => void;
+  onSuccess?: (updatedData?: any) => void;
   users?: any[];
 }
 
@@ -139,26 +139,29 @@ export function InteriorSendToRequirementsModal({
         requirementScheduledDate: meetingDate.toISOString(),
       };
 
-      await interiorCrmService.updateCustomer(customerId, updatePayload);
-
-      await interiorCrmService.createActivity({
-        customer: customerId,
-        type: 'Requirement Gathering',
-        status: 'Pending',
-        scheduledDate: meetingDate.toISOString(),
-        remarks: trimmedRemarks || 'Requirement gathering session scheduled with member.',
-        user: assignedMember.trim() || undefined,
-      });
+      await Promise.all([
+        interiorCrmService.updateCustomer(customerId, updatePayload),
+        interiorCrmService.createActivity({
+          customer: customerId,
+          type: 'Requirement Gathering',
+          status: 'Pending',
+          scheduledDate: meetingDate.toISOString(),
+          remarks: trimmedRemarks || 'Requirement gathering session scheduled with member.',
+          user: assignedMember.trim() || undefined,
+        }),
+      ]);
 
       toast.success(
         isRescheduling
           ? 'Requirements session rescheduled successfully!'
           : 'Successfully scheduled & passed to Requirements!'
       );
-      onSuccess();
+      if (onSuccess) {
+        onSuccess({ _id: customerId, ...updatePayload });
+      }
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to send to requirements');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to send to requirements');
     } finally {
       setIsSubmitting(false);
     }

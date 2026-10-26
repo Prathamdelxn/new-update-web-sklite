@@ -22,6 +22,7 @@ import {
   Clock,
   AlertTriangle,
   AlertCircle,
+  CheckCircle2,
   X,
   Loader2,
   Pencil,
@@ -41,7 +42,10 @@ import { Button, Input, Card } from '@/components/interior/ui';
 import { cn } from '@/lib/utils';
 import interiorApiClient from '@/services/interiorApi.client';
 import { useToast } from '@/providers/ToastContext';
+import { useCurrency } from '@/hooks/useCurrency';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import InteriorProjectCard from './projects/InteriorProjectCard';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 const healthConfig = {
   'on-track': {
@@ -102,8 +106,105 @@ const emptyFormData = {
 type SortOption = 'newest' | 'budget-high' | 'budget-low' | 'progress-high' | 'progress-low' | 'name';
 type FilterStatus = 'all' | 'on-track' | 'at-risk' | 'delayed' | 'completed';
 
+function InteriorNewProjectsSkeleton() {
+  return (
+    <div className="interior-os-theme min-h-screen p-3 sm:p-4 lg:p-6 space-y-4 max-w-[1600px] mx-auto overflow-x-hidden animate-pulse font-sans">
+      {/* 1. Page Header Skeleton */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/80">
+        <div className="flex items-center gap-2.5">
+          <div className="w-10 h-10 rounded-xl bg-slate-200/90 shrink-0" />
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="h-7 w-48 bg-slate-200/90 rounded-lg" />
+              <div className="h-5 w-16 bg-slate-200/60 rounded-full" />
+            </div>
+            <div className="h-3.5 w-72 max-w-full bg-slate-200/60 rounded-md" />
+          </div>
+        </div>
+        <div className="h-9 w-32 bg-slate-200/80 rounded-xl shrink-0" />
+      </div>
+
+      {/* 2. Controls & Filter Bar Skeleton */}
+      <div className="p-3 sm:p-4 rounded-2xl bg-white border border-slate-200/90 space-y-3 shadow-xs">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5">
+          <div className="h-9 flex-1 bg-slate-100 rounded-xl border border-slate-200/60" />
+          <div className="flex items-center gap-2 overflow-hidden">
+            <div className="flex items-center gap-1.5">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-8 w-20 bg-slate-100 rounded-xl border border-slate-200/60" />
+              ))}
+            </div>
+            <div className="h-8 w-20 bg-slate-100 rounded-xl border border-slate-200/60" />
+            <div className="h-8 w-16 bg-slate-100 rounded-xl border border-slate-200/60" />
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Projects Grid Skeleton (6 cards) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {Array.from({ length: 6 }).map((_, idx) => (
+          <div
+            key={idx}
+            className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4"
+          >
+            {/* Top row */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-2 flex-1">
+                <div className="flex items-center gap-2">
+                  <div className="h-5 w-24 bg-slate-100 rounded-full" />
+                  <div className="h-5 w-20 bg-slate-100 rounded-full" />
+                </div>
+                <div className="h-5 w-3/4 bg-slate-200/90 rounded-md" />
+                <div className="h-3.5 w-1/2 bg-slate-200/60 rounded-md" />
+              </div>
+              <div className="w-8 h-8 rounded-xl bg-slate-100 shrink-0" />
+            </div>
+
+            {/* Middle Stats Grid */}
+            <div className="grid grid-cols-2 gap-3 py-3 border-y border-slate-100">
+              <div className="space-y-1.5">
+                <div className="h-3 w-16 bg-slate-200/50 rounded" />
+                <div className="h-4.5 w-24 bg-slate-200/80 rounded" />
+              </div>
+              <div className="space-y-1.5">
+                <div className="h-3 w-16 bg-slate-200/50 rounded" />
+                <div className="h-4.5 w-20 bg-slate-200/80 rounded" />
+              </div>
+            </div>
+
+            {/* Progress Bar Skeleton */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="h-3 w-20 bg-slate-200/50 rounded" />
+                <div className="h-3 w-10 bg-slate-200/70 rounded" />
+              </div>
+              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-slate-200/90 rounded-full"
+                  style={{ width: `${35 + ((idx * 17) % 50)}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Bottom Footer Row */}
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-slate-100" />
+                <div className="h-3.5 w-24 bg-slate-200/60 rounded" />
+              </div>
+              <div className="h-7 w-20 bg-slate-100 rounded-lg" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function InteriorNewProjectsView() {
   const toast = useToast();
+  const { hasPermission: canDo } = usePermissions();
+  const { currencySymbol, formatCurrency } = useCurrency();
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -336,10 +437,7 @@ export default function InteriorNewProjectsView() {
 
   const formatBudget = useCallback((amount: any) => {
     const num = typeof amount === 'number' ? amount : Number(amount) || 0;
-    if (!num || num <= 0) return '₹ 0';
-    if (num >= 10000000) return `₹ ${(num / 10000000).toFixed(2)} Cr`;
-    if (num >= 100000) return `₹ ${(num / 100000).toFixed(2)} Lakh`;
-    return `₹ ${num.toLocaleString('en-IN')}`;
+    return formatCurrency(num || 0);
   }, []);
 
   // Format date helper
@@ -441,165 +539,229 @@ export default function InteriorNewProjectsView() {
   }, [projects]);
 
   if (loading) {
-    return (
-      <div className="interior-os-theme flex flex-col items-center justify-center min-h-[65vh] gap-3">
-        <div className="relative flex items-center justify-center">
-          <div className="w-12 h-12 rounded-full border-4 border-[hsl(var(--primary)/0.2)] border-t-[hsl(var(--primary))] animate-spin" />
-          <Building2 className="w-5 h-5 text-[hsl(var(--primary))] absolute animate-pulse" />
-        </div>
-        <p className="text-xs font-semibold tracking-wider uppercase text-[hsl(var(--muted-foreground))]">Loading Project Portfolio...</p>
-      </div>
-    );
+    return <InteriorNewProjectsSkeleton />;
   }
 
   return (
-    <div className="interior-os-theme min-h-screen p-3 sm:p-4 lg:p-6 space-y-4 max-w-[1600px] mx-auto overflow-x-hidden">
+    <div className="interior-os-theme min-h-screen p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto overflow-x-hidden font-sans">
       
       {/* ── 1. Page Header & Primary Action ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[hsl(var(--border)/0.6)]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary)/0.7)] flex items-center justify-center text-white shrink-0">
-              <Building2 className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-[hsl(var(--foreground))]">
-                  Projects Portfolio
-                </h1>
-                <span className="px-2 py-0.5 text-xs font-bold font-mono rounded-full bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)]">
-                  {projects.length} Total
-                </span>
-              </div>
-              <p className="text-xs sm:text-sm text-[hsl(var(--muted-foreground))] mt-0.5">
-                Executive overview, tracking progress, commercial budgets, and fit-out delivery schedules.
-              </p>
-            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              Projects
+            </h1>
+            <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+              {projects.length} Total
+            </span>
           </div>
+          <p className="text-sm text-slate-500 mt-1">
+            Manage interior fit-out projects, contract budgets, execution progress, and milestones.
+          </p>
         </div>
 
-        <div className="flex items-center gap-2.5 w-full sm:w-auto">
-          <Button
-            onClick={() => {
-              handleCloseDialog();
-              setIsDialogOpen(true);
-            }}
-            className="w-full sm:w-auto font-semibold gap-2 py-2 text-xs sm:text-sm"
-          >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            New Project
-          </Button>
+        <div className="flex items-center gap-3">
+          {canDo('projects', 'create') && (
+            canDo('projects', 'create') && (
+              <button
+                onClick={() => {
+                  handleCloseDialog();
+                  setIsDialogOpen(true);
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium shadow-xs transition-all active:scale-[0.98]"
+              >
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <span>New Project</span>
+              </button>
+            )
+          )}
         </div>
       </div>
 
-      {/* ── 2. Controls & Filter Bar ── */}
-      <div className="p-3 sm:p-4 rounded-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] space-y-3">
-        {/* Top Control Line: Search Bar + Status Filter Tabs + Filter Toggle Button + View Switcher */}
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5">
+      {/* ── 2. Project Status Distribution Cards (Click to Filter) ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Card 1: All Projects */}
+        <button
+          type="button"
+          onClick={() => setStatusFilter('all')}
+          className={cn(
+            'bg-white border rounded-xl p-3 text-left transition-all duration-150 flex items-center gap-3 group',
+            statusFilter === 'all'
+              ? 'border-blue-600 shadow-[0_0_0_1px_rgba(37,99,235,1)] bg-blue-50/20'
+              : 'border-slate-200 shadow-2xs hover:border-slate-300'
+          )}
+        >
+          <div className={cn(
+            'w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors',
+            statusFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 group-hover:bg-blue-100'
+          )}>
+            <Building2 className="w-4.5 h-4.5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block leading-tight">Total</span>
+            <div className="flex items-baseline gap-1.5 mt-0.5">
+              <span className="text-xl font-bold text-slate-900">{stats.total}</span>
+              <span className="text-[11px] text-slate-500">projects</span>
+            </div>
+          </div>
+        </button>
+
+        {/* Card 2: On Track Projects */}
+        <button
+          type="button"
+          onClick={() => setStatusFilter('on-track')}
+          className={cn(
+            'bg-white border rounded-xl p-3 text-left transition-all duration-150 flex items-center gap-3 group',
+            statusFilter === 'on-track'
+              ? 'border-emerald-600 shadow-[0_0_0_1px_rgba(16,185,129,1)] bg-emerald-50/20'
+              : 'border-slate-200 shadow-2xs hover:border-slate-300'
+          )}
+        >
+          <div className={cn(
+            'w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors',
+            statusFilter === 'on-track' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100'
+          )}>
+            <TrendingUp className="w-4.5 h-4.5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block leading-tight">On Track</span>
+            <div className="flex items-baseline gap-1.5 mt-0.5">
+              <span className="text-xl font-bold text-slate-900">{stats.onTrackCount}</span>
+              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+                Active
+              </span>
+            </div>
+          </div>
+        </button>
+
+        {/* Card 3: At Risk / Delayed Projects */}
+        <button
+          type="button"
+          onClick={() => setStatusFilter('at-risk')}
+          className={cn(
+            'bg-white border rounded-xl p-3 text-left transition-all duration-150 flex items-center gap-3 group',
+            statusFilter === 'at-risk' || statusFilter === 'delayed'
+              ? 'border-amber-600 shadow-[0_0_0_1px_rgba(245,158,11,1)] bg-amber-50/20'
+              : 'border-slate-200 shadow-2xs hover:border-slate-300'
+          )}
+        >
+          <div className={cn(
+            'w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors',
+            statusFilter === 'at-risk' || statusFilter === 'delayed' ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-600 group-hover:bg-amber-100'
+          )}>
+            <AlertTriangle className="w-4.5 h-4.5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block leading-tight">At Risk</span>
+            <div className="flex items-baseline gap-1.5 mt-0.5">
+              <span className="text-xl font-bold text-slate-900">{stats.atRiskCount}</span>
+              <span className="text-[11px] text-slate-500">delayed</span>
+            </div>
+          </div>
+        </button>
+
+        {/* Card 4: Completed Projects */}
+        <button
+          type="button"
+          onClick={() => setStatusFilter('completed')}
+          className={cn(
+            'bg-white border rounded-xl p-3 text-left transition-all duration-150 flex items-center gap-3 group',
+            statusFilter === 'completed'
+              ? 'border-indigo-600 shadow-[0_0_0_1px_rgba(79,70,229,1)] bg-indigo-50/20'
+              : 'border-slate-200 shadow-2xs hover:border-slate-300'
+          )}
+        >
+          <div className={cn(
+            'w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors',
+            statusFilter === 'completed' ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100'
+          )}>
+            <CheckCircle2 className="w-4.5 h-4.5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block leading-tight">Completed</span>
+            <div className="flex items-baseline gap-1.5 mt-0.5">
+              <span className="text-xl font-bold text-slate-900">{stats.completedCount}</span>
+              <span className="text-[11px] text-slate-500">finished</span>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      {/* ── 3. Controls & Filter Bar ── */}
+      <div className="p-2.5 sm:p-3 rounded-xl bg-white border border-slate-200/90 space-y-3 shadow-[0_1px_3px_0_rgba(0,0,0,0.02)]">
+        {/* Top Control Line: Search Bar + Filter Toggle Button + View Switcher */}
+        <div className="flex items-center justify-between gap-3">
           
           {/* Search Box */}
-          <div className="relative flex-1 min-w-[220px]">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]" />
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search project name, code, client, city..."
+              placeholder="Search projects by name, code, client, city..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-1.5 focus:ring-[hsl(var(--primary))]"
+              className="w-full pl-9 pr-8 py-1.5 text-xs sm:text-sm rounded-lg border border-slate-200 bg-slate-50/70 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
             />
             {search && (
               <button
                 onClick={() => setSearch('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
 
-          <div className="flex items-center justify-between sm:justify-start gap-2 overflow-x-auto pb-1 lg:pb-0 scrollbar-none touch-pan-x flex-nowrap">
-            {/* Status Tab Pills */}
-            <div className="flex items-center gap-1.5 shrink-0">
-              {[
-                { id: 'all', label: 'All', count: projects.length },
-                { id: 'on-track', label: 'On Track', count: stats.onTrackCount },
-                { id: 'at-risk', label: 'At Risk', count: stats.atRiskCount },
-                { id: 'completed', label: 'Completed', count: stats.completedCount },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setStatusFilter(tab.id as FilterStatus)}
-                  className={cn(
-                    'px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 border shrink-0',
-                    statusFilter === tab.id
-                      ? 'bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]'
-                      : 'bg-[hsl(var(--background))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] border-[hsl(var(--border))] hover:border-[hsl(var(--border)/0.8)]'
-                  )}
-                >
-                  <span>{tab.label}</span>
-                  <span
-                    className={cn(
-                      'px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold',
-                      statusFilter === tab.id ? 'bg-white/20 text-white' : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
-                    )}
-                  >
-                    {tab.count}
-                  </span>
-                </button>
-              ))}
-            </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Senior UX: Filter Toggle Button */}
+            <button
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className={cn(
+                'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 border shrink-0',
+                isFilterOpen || activeFilterCount > 0
+                  ? 'bg-blue-50 text-blue-700 border-blue-200'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+              )}
+              title="Toggle Advanced Filters"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
+              <span className="hidden sm:inline">Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-semibold flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
+              )}
+              <ChevronDown className={cn('w-3.5 h-3.5 text-slate-400 transition-transform duration-200', isFilterOpen && 'rotate-180')} />
+            </button>
 
-            <div className="flex items-center gap-2 shrink-0">
-              {/* Senior UX: Filter Toggle Button */}
+            {/* View Switcher */}
+            <div className="flex items-center p-0.5 rounded-lg border border-slate-200 bg-slate-50">
               <button
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                onClick={() => setViewMode('grid')}
                 className={cn(
-                  'px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 sm:gap-2 border shrink-0',
-                  isFilterOpen || activeFilterCount > 0
-                    ? 'bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))] border-[hsl(var(--primary)/0.4)]'
-                    : 'bg-[hsl(var(--background))] text-[hsl(var(--foreground))] border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))]'
+                  'p-1.5 rounded-md transition-all',
+                  viewMode === 'grid'
+                    ? 'bg-white text-blue-600 shadow-xs font-semibold'
+                    : 'text-slate-400 hover:text-slate-700'
                 )}
-                title="Toggle Advanced Filters"
+                title="Grid Cards View"
               >
-                <SlidersHorizontal className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
-                <span className="hidden sm:inline">Filters</span>
-                {activeFilterCount > 0 && (
-                  <span className="w-4.5 h-4.5 px-1 rounded-full bg-[hsl(var(--primary))] text-white text-[10px] font-mono font-bold flex items-center justify-center">
-                    {activeFilterCount}
-                  </span>
-                )}
-                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', isFilterOpen && 'rotate-180')} />
+                <LayoutGrid className="w-4 h-4" />
               </button>
-
-              {/* View Switcher */}
-              <div className="flex items-center p-1 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)]">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={cn(
-                    'p-1.5 rounded-lg transition-all',
-                    viewMode === 'grid'
-                      ? 'bg-[hsl(var(--card))] text-[hsl(var(--primary))] font-bold'
-                      : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
-                  )}
-                  title="Grid Cards View"
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={cn(
-                    'p-1.5 rounded-lg transition-all',
-                    viewMode === 'list'
-                      ? 'bg-[hsl(var(--card))] text-[hsl(var(--primary))] font-bold'
-                      : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
-                  )}
-                  title="Table List View"
-                >
-                  <List className="w-4 h-4" />
-                </button>
-              </div>
+              <button
+                onClick={() => setViewMode('list')}
+                className={cn(
+                  'p-1.5 rounded-md transition-all',
+                  viewMode === 'list'
+                    ? 'bg-white text-blue-600 shadow-xs font-semibold'
+                    : 'text-slate-400 hover:text-slate-700'
+                )}
+                title="Table List View"
+              >
+                <List className="w-4 h-4" />
+              </button>
             </div>
-
           </div>
         </div>
 
@@ -611,19 +773,19 @@ export default function InteriorNewProjectsView() {
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="overflow-hidden border-t border-[hsl(var(--border)/0.6)] pt-3 mt-1 space-y-3"
+              className="overflow-hidden border-t border-slate-200/80 pt-3 mt-1 space-y-3"
             >
               <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 items-end">
                 {/* Project Category / Type Filter */}
                 <div className="md:col-span-6 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-[hsl(var(--foreground))]">
+                    <label className="text-xs font-semibold text-slate-700">
                       Project Category / Type
                     </label>
                     {typeFilter !== 'all' && (
                       <button
                         onClick={() => setTypeFilter('all')}
-                        className="text-[10px] font-semibold text-[hsl(var(--primary))] hover:underline"
+                        className="text-xs font-medium text-blue-600 hover:underline"
                       >
                         Reset Type
                       </button>
@@ -633,10 +795,10 @@ export default function InteriorNewProjectsView() {
                     <button
                       onClick={() => setTypeFilter('all')}
                       className={cn(
-                        'px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap border shrink-0',
+                        'px-3 py-1 rounded-md text-xs font-medium transition-all whitespace-nowrap border shrink-0',
                         typeFilter === 'all'
-                          ? 'bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]'
-                          : 'bg-[hsl(var(--background))] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] hover:text-[hsl(var(--foreground))]'
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                          : 'bg-white text-slate-600 border-slate-200 hover:text-slate-900 hover:bg-slate-50'
                       )}
                     >
                       All Types
@@ -646,10 +808,10 @@ export default function InteriorNewProjectsView() {
                         key={t}
                         onClick={() => setTypeFilter(t)}
                         className={cn(
-                          'px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap border shrink-0',
+                          'px-3 py-1 rounded-md text-xs font-medium transition-all whitespace-nowrap border shrink-0',
                           typeFilter === t
-                            ? 'bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]'
-                            : 'bg-[hsl(var(--background))] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] hover:text-[hsl(var(--foreground))]'
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                            : 'bg-white text-slate-600 border-slate-200 hover:text-slate-900 hover:bg-slate-50'
                         )}
                       >
                         {t}
@@ -660,13 +822,13 @@ export default function InteriorNewProjectsView() {
 
                 {/* Sort By Dropdown */}
                 <div className="md:col-span-4 space-y-1.5">
-                  <label className="text-xs font-bold text-[hsl(var(--foreground))]">
+                  <label className="text-xs font-semibold text-slate-700">
                     Sort Order
                   </label>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as SortOption)}
-                    className="w-full px-3 py-1.5 text-xs rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1.5 focus:ring-[hsl(var(--primary))]"
+                    className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white"
                   >
                     <option value="newest">Recently Added (Default)</option>
                     <option value="budget-high">Budget: High → Low</option>
@@ -685,13 +847,13 @@ export default function InteriorNewProjectsView() {
                         setTypeFilter('all');
                         setSortBy('newest');
                       }}
-                      className="w-full py-1.5 px-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-xs font-semibold text-[hsl(var(--muted-foreground))] transition-all flex items-center justify-center gap-1.5"
+                      className="w-full py-1.5 px-3 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-xs font-medium text-slate-600 transition-all flex items-center justify-center gap-1.5"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                       Reset Filters
                     </button>
                   ) : (
-                    <span className="text-[11px] text-[hsl(var(--muted-foreground))] text-right w-full">Default sorting applied</span>
+                    <span className="text-xs text-slate-400 text-right w-full">Default sorting applied</span>
                   )}
                 </div>
               </div>
@@ -701,30 +863,30 @@ export default function InteriorNewProjectsView() {
 
         {/* Active Filter Chips Line */}
         {(activeFilterCount > 0 || search || statusFilter !== 'all') && (
-          <div className="flex items-center gap-1.5 flex-wrap pt-1 text-xs border-t border-[hsl(var(--border)/0.4)]">
-            <span className="text-[11px] font-bold text-[hsl(var(--muted-foreground))]">Active:</span>
+          <div className="flex items-center gap-1.5 flex-wrap pt-1 text-xs border-t border-slate-200/60">
+            <span className="text-xs font-medium text-slate-400">Active:</span>
             {search && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] text-[11px] border border-[hsl(var(--border))]">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 text-xs border border-slate-200">
                 Search: &quot;{search}&quot;
-                <X className="w-3 h-3 cursor-pointer hover:text-rose-500" onClick={() => setSearch('')} />
+                <X className="w-3.5 h-3.5 cursor-pointer hover:text-rose-600" onClick={() => setSearch('')} />
               </span>
             )}
             {statusFilter !== 'all' && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] text-[11px] border border-[hsl(var(--primary)/0.2)]">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 text-xs border border-blue-200">
                 Status: {statusFilter.replace('-', ' ')}
-                <X className="w-3 h-3 cursor-pointer hover:text-rose-500" onClick={() => setStatusFilter('all')} />
+                <X className="w-3.5 h-3.5 cursor-pointer hover:text-rose-600" onClick={() => setStatusFilter('all')} />
               </span>
             )}
             {typeFilter !== 'all' && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] text-[11px] border border-[hsl(var(--primary)/0.2)]">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 text-xs border border-blue-200">
                 Type: {typeFilter}
-                <X className="w-3 h-3 cursor-pointer hover:text-rose-500" onClick={() => setTypeFilter('all')} />
+                <X className="w-3.5 h-3.5 cursor-pointer hover:text-rose-600" onClick={() => setTypeFilter('all')} />
               </span>
             )}
             {sortBy !== 'newest' && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] text-[11px] border border-[hsl(var(--primary)/0.2)]">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 text-xs border border-blue-200">
                 Sort: {sortBy.replace('-', ' ')}
-                <X className="w-3 h-3 cursor-pointer hover:text-rose-500" onClick={() => setSortBy('newest')} />
+                <X className="w-3.5 h-3.5 cursor-pointer hover:text-rose-600" onClick={() => setSortBy('newest')} />
               </span>
             )}
             <button
@@ -734,7 +896,7 @@ export default function InteriorNewProjectsView() {
                 setSortBy('newest');
                 setStatusFilter('all');
               }}
-              className="text-[11px] font-bold text-rose-500 hover:underline ml-1"
+              className="text-xs font-medium text-rose-600 hover:underline ml-1"
             >
               Clear all
             </button>
@@ -781,155 +943,24 @@ export default function InteriorNewProjectsView() {
           )}
         </div>
       ) : viewMode === 'grid' ? (
-        /* ── GRID CARDS VIEW ── */
+        /* ── BENTO GRID CARDS VIEW ── */
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
         >
-          {filteredProjects.map((project: any, i: number) => {
-            const healthType = project.status === 'completed' || project.progress === 100
-              ? 'completed'
-              : (project.health || 'on-track');
-            const health = (healthConfig as any)[healthType] || healthConfig['on-track'];
-            const budgetVal = getProjectBudget(project);
-            const progressVal = Math.round(project.progress || 0);
-            const city = project.location?.city || project.location?.address;
-
-            return (
-              <motion.div
-                key={project.id || project._id}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04, duration: 0.3 }}
-                whileHover={{ y: -3, transition: { duration: 0.2 } }}
-                onClick={() => openProject(project)}
-                className="cursor-pointer group h-full"
-              >
-                <div className="h-full flex flex-col justify-between rounded-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.45)] transition-all duration-200 overflow-hidden relative">
-                  <div className="p-3.5 sm:p-4.5 flex-1 flex flex-col justify-between space-y-3.5">
-                    
-                    {/* 1. Header Row: Icon + Code/Type + Health Badge */}
-                    <div>
-                      <div className="flex items-start justify-between gap-2.5">
-                        <div className="flex items-start gap-2.5 min-w-0">
-                          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[hsl(var(--primary)/0.15)] to-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.2)] flex items-center justify-center shrink-0 text-[hsl(var(--primary))] group-hover:scale-105 transition-transform">
-                            <Building2 className="w-4.5 h-4.5" />
-                          </div>
-
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                              <span className="px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase rounded-md bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))]">
-                                {project.code || 'PRJ'}
-                              </span>
-                              <span className="px-1.5 py-0.5 text-[9px] font-semibold rounded-md bg-[hsl(var(--primary)/0.08)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.15)] truncate max-w-[120px]">
-                                {project.type || 'Commercial Office'}
-                              </span>
-                            </div>
-
-                            <h3 className="text-sm sm:text-base font-bold text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))] transition-colors line-clamp-1 leading-snug tracking-tight">
-                              {project.name}
-                            </h3>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Client and City Meta */}
-                      <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))] mt-2 flex-wrap">
-                        {project.client && (
-                          <span className="truncate max-w-[140px] font-medium text-[hsl(var(--foreground)/0.8)]">
-                            {project.client}
-                          </span>
-                        )}
-                        {city && (
-                          <span className="flex items-center gap-1 truncate max-w-[140px]">
-                            <MapPin className="w-3 h-3 text-rose-500/80 shrink-0" />
-                            {city}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 2. Structured Middle Showcase Panel: Budget & Execution Progress */}
-                    <div className="rounded-xl bg-[hsl(var(--muted)/0.65)] border border-[hsl(var(--border)/0.9)] p-3 space-y-2.5">
-                      <div className="flex items-end justify-between gap-2">
-                        <div>
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block">
-                            Contract Budget
-                          </span>
-                          <span className="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 leading-tight">
-                            {formatBudget(budgetVal)}
-                          </span>
-                        </div>
-
-                        <div className="text-right">
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block">
-                            Progress
-                          </span>
-                          <span className="text-xs sm:text-sm font-black font-mono text-[hsl(var(--foreground))] leading-tight">
-                            {progressVal}%
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Smooth Progress Bar */}
-                      <div className="w-full h-1.5 rounded-full bg-[hsl(var(--muted))] overflow-hidden p-0.5 border border-[hsl(var(--border)/0.5)]">
-                        <motion.div
-                          className={cn('h-full rounded-full bg-gradient-to-r', health.barGradient)}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${Math.max(progressVal, 2)}%` }}
-                          transition={{ duration: 0.8, ease: 'easeOut' }}
-                        />
-                      </div>
-
-                      {/* Timeline Dates */}
-                      <div className="flex items-center justify-between text-[10px] text-[hsl(var(--muted-foreground))] pt-0.5">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-[hsl(var(--primary))]" />
-                          <span>Start: {formatDate(project.startDate || project.createdAt)}</span>
-                        </span>
-                        {project.endDate && (
-                          <span className="text-right">
-                            Target: {formatDate(project.endDate)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 4. Card Bottom Action Bar */}
-                  <div className="flex items-center justify-between px-3.5 sm:px-4 py-2.5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.2)] group-hover:bg-[hsl(var(--primary)/0.04)] transition-colors">
-                    <span className="text-xs font-bold text-[hsl(var(--primary))] flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                      <span className="bg-[hsl(var(--primary))] px-2.5 py-1 rounded-lg text-white text-[11px] font-bold">View Project</span> 
-                    </span>
-                    <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] flex items-center gap-1">
-                      <button
-                        title="Edit Project"
-                        className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--muted))] transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditProject(project);
-                        }}
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        title="Delete Project"
-                        className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteProject(project);
-                        }}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </span>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
+          {filteredProjects.map((project: any, i: number) => (
+            <InteriorProjectCard
+              key={project.id || project._id || i}
+              project={project}
+              index={i}
+              onOpen={openProject}
+              onEdit={handleEditProject}
+              onDelete={handleDeleteProject}
+              formatCurrency={formatCurrency}
+            />
+          ))}
         </motion.div>
       ) : (
         /* ── TABLE LIST VIEW ── */
@@ -1025,24 +1056,28 @@ export default function InteriorNewProjectsView() {
                       </td>
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <button
-                            className="p-1.5 rounded-lg hover:bg-blue-50 text-[hsl(var(--muted-foreground))] hover:text-blue-600 transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditProject(project);
-                            }}
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            className="p-1.5 rounded-lg hover:bg-rose-50 text-[hsl(var(--muted-foreground))] hover:text-rose-600 transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteProject(project);
-                            }}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          {canDo('projects', 'update') && (
+                            <button
+                              className="p-1.5 rounded-lg hover:bg-blue-50 text-[hsl(var(--muted-foreground))] hover:text-blue-600 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditProject(project);
+                              }}
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {canDo('projects', 'delete') && (
+                            <button
+                              className="p-1.5 rounded-lg hover:bg-rose-50 text-[hsl(var(--muted-foreground))] hover:text-rose-600 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteProject(project);
+                              }}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                           <ArrowUpRight className="w-4 h-4 ml-1 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] group-hover:translate-x-0.5 transition-all" />
                         </div>
                       </td>
@@ -1097,7 +1132,7 @@ export default function InteriorNewProjectsView() {
                       <Input
                         required
                         maxLength={80}
-                        placeholder="e.g. DLF Cyber Park Tower C — 4th Floor"
+                        placeholder="e.g. Skyline Tower C — 4th Floor"
                         value={formData.name}
                         onChange={(e) => updateFormField('name', e.target.value)}
                         className={cn(formErrors.name && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
@@ -1117,7 +1152,7 @@ export default function InteriorNewProjectsView() {
                       <Input
                         required
                         maxLength={60}
-                        placeholder="e.g. DLF Limited"
+                        placeholder="e.g. Horizon Commercial Ltd"
                         value={formData.client}
                         onChange={(e) => updateFormField('client', e.target.value)}
                         className={cn(formErrors.client && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
@@ -1192,14 +1227,14 @@ export default function InteriorNewProjectsView() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4 pt-2 border-t border-[hsl(var(--border)/0.5)]">
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1">
-                        <Wallet className="w-3.5 h-3.5 text-emerald-600" /> Contract Budget (INR) <span className="text-rose-500">*</span>
+                        <Wallet className="w-3.5 h-3.5 text-emerald-600" /> Contract Budget ({currencySymbol}) <span className="text-rose-500">*</span>
                       </label>
                       <Input
                         required
                         type="number"
                         min="1"
                         step="any"
-                        placeholder="e.g. 1500000"
+                        placeholder="e.g. 250000"
                         value={formData.budgetAmount}
                         onChange={(e) => updateFormField('budgetAmount', e.target.value)}
                         className={cn(formErrors.budgetAmount && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
@@ -1217,7 +1252,7 @@ export default function InteriorNewProjectsView() {
                       </label>
                       <Input
                         maxLength={50}
-                        placeholder="e.g. Gurugram"
+                        placeholder="e.g. New York"
                         value={formData.city}
                         onChange={(e) => updateFormField('city', e.target.value)}
                         className={cn(formErrors.city && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
@@ -1237,7 +1272,7 @@ export default function InteriorNewProjectsView() {
                     </label>
                     <Input
                       maxLength={120}
-                      placeholder="e.g. Cyber City, Building 10, Sector 24"
+                      placeholder="e.g. 100 Madison Ave, Floor 14"
                       value={formData.address}
                       onChange={(e) => updateFormField('address', e.target.value)}
                       className={cn(formErrors.address && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}

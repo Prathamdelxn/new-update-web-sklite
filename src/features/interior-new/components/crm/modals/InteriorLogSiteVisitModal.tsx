@@ -27,7 +27,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   customerId: string;
-  onSuccess: () => void;
+  onSuccess?: (updatedData?: any) => void;
   users?: any[];
   initialMeasurements?: any;
   initialPhotos?: string[];
@@ -173,7 +173,7 @@ export const InteriorLogSiteVisitModal = ({
       }
       case 'rooms': {
         if (!value || !value.trim()) {
-          return 'Rooms to Design is required (e.g. 3BHK or Living, Kitchen, Bed)';
+          return 'Rooms to Design is required (e.g. 3-Bed Apartment or Living, Kitchen, Bed)';
         }
         if (value.trim().length < 2) {
           return 'Rooms to Design must be at least 2 characters';
@@ -243,11 +243,13 @@ export const InteriorLogSiteVisitModal = ({
       }
 
       toast.success('Site visit measurements saved successfully!');
-      onSuccess();
+      if (onSuccess) {
+        onSuccess({ _id: customerId, ...updatePayload });
+      }
       onClose();
     } catch (error: any) {
       console.error('Failed to log site visit:', error);
-      toast.error(error?.response?.data?.message || error?.message || 'Failed to save site visit');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || error?.message || 'Failed to save site visit');
     } finally {
       setIsSubmitting(false);
     }
@@ -391,7 +393,7 @@ export const InteriorLogSiteVisitModal = ({
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5 flex items-center gap-1.5">
                   <Columns size={13} className="text-blue-500" />
-                  Rooms to Design (e.g. 3BHK) <span className="text-red-500">*</span>
+                  Rooms to Design (e.g. 3-Bed Apartment) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"

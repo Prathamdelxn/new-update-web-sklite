@@ -18,7 +18,7 @@ import {
   UploadCloud,
   XCircle,
   Share2,
-  Pencil,
+  Eye,
   CheckCircle2,
   Clock,
   AlertTriangle,
@@ -26,6 +26,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { InteriorCrmShareModal } from './modals/InteriorCrmShareModal';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 interface Props {
   leads: any[];
@@ -44,6 +45,7 @@ function displayUserName(u?: any) {
 
 export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMarkAsLost }: Props) => {
   const router = useRouter();
+const { hasPermission: canDo } = usePermissions();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterState, setFilterState] = useState<'all' | 'pending' | 'completed'>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -195,6 +197,16 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                   return !isApproved || isClientRejected;
                 });
                 const areAllDrawingsApproved = hasDrawings && pendingDrawings.length === 0;
+                const hasApprovedDrawing = hasDrawings && designFiles.some((f: any) => {
+                  const latestVersion = Array.isArray(f.versions) && f.versions.length > 0 
+                    ? f.versions[f.versions.length - 1] 
+                    : null;
+                  const rawStatus = f.status || f.approvalStatus || latestVersion?.approvalStatus || 'draft';
+                  const s = String(rawStatus).toLowerCase().trim();
+                  const isApproved = s === 'internally_approved' || s === 'client_approved' || s === 'approved';
+                  const isClientRejected = f.clientStatus === 'client_changes_requested' || latestVersion?.clientStatus === 'client_changes_requested';
+                  return isApproved && !isClientRejected;
+                });
 
                 const hasAcceptedQuote = Array.isArray(lead.quotations) && lead.quotations.some((q: any) => 
                   ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase())
@@ -212,7 +224,7 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                 return (
                   <div
                     key={lead._id}
-                    onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=design`)}
+                    onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=designs`)}
                     className="p-3.5 space-y-2.5 active:bg-[hsl(var(--accent))] transition-colors cursor-pointer"
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -268,53 +280,58 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                     {/* Actions Ribbon */}
                     <div className="flex items-center justify-between gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => onUploadDesign(lead._id)}
-                          className={cn(
-                            'inline-flex items-center justify-center rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
-                            hasDrawings
-                              ? 'p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
-                              : 'gap-1 px-2.5 py-1.5 bg-indigo-600 text-white'
-                          )}
-                          title={hasDrawings ? 'Edit Drawing Files' : 'Upload Drawings'}
-                        >
-                          {hasDrawings ? (
-                            <Pencil size={13} className="text-indigo-600" />
-                          ) : (
-                            <>
-                              <UploadCloud size={11} /> Upload
-                            </>
-                          )}
-                        </button>
-
-                        {hasDrawings && (
+                        {hasDrawings ? (
                           <button
-                            onClick={() => setShareLead(lead)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-500/10 text-indigo-600 border border-indigo-500/20 active:scale-95 shadow-sm cursor-pointer"
-                            title="Share Drawings with Client"
+                            onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=designs`)}
+                            className="p-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer"
+                            title="View Drawings"
                           >
-                            <Share2 size={11} /> Share
+                            <Eye size={13} className="text-indigo-600" />
                           </button>
+                        ) : (
+                          (canDo('crm_drawings', 'create')) && (
+                            <button
+                              onClick={() => onUploadDesign(lead._id)}
+                              className="inline-flex items-center justify-center rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer gap-1 px-2.5 py-1.5 bg-indigo-600 text-white"
+                              title="Upload Drawings"
+                            >
+                              <UploadCloud size={11} /> Upload
+                            </button>
+                          )
+                        )}
+
+                        {hasDrawings && hasApprovedDrawing && (
+                          (canDo('crm_drawings', 'update')) && (
+                            <button
+                              onClick={() => setShareLead(lead)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-500/10 text-indigo-600 border border-indigo-500/20 active:scale-95 shadow-sm cursor-pointer"
+                              title="Share Drawings with Client"
+                            >
+                              <Share2 size={11} /> Share
+                            </button>
+                          )
                         )}
                       </div>
 
                       {hasDrawings && onPassToBoq && !isPassedToNext && (
-                        <button
-                          onClick={() => onPassToBoq(lead._id)}
-                          className={cn(
-                            "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all",
-                            areAllDrawingsApproved
-                              ? "bg-indigo-600 hover:bg-indigo-700 text-white active:scale-95 cursor-pointer"
-                              : "bg-amber-500/10 text-amber-700 border border-amber-500/20 hover:bg-amber-500/20 cursor-pointer"
-                          )}
-                          title={
-                            areAllDrawingsApproved 
-                              ? "Pass to BOQ Estimation" 
-                              : `Cannot pass to BOQ: ${pendingDrawings.length} drawing(s) still pending approval`
-                          }
-                        >
-                          Pass to BOQ {areAllDrawingsApproved ? <ArrowRight size={11} /> : <AlertTriangle size={11} className="text-amber-600" />}
-                        </button>
+                        (canDo('crm_drawings', 'update') || canDo('crm_boq', 'update') || canDo('crm_boq', 'create')) && (
+                          <button
+                            onClick={() => onPassToBoq(lead._id)}
+                            className={cn(
+                              "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all",
+                              areAllDrawingsApproved
+                                ? "bg-indigo-600 hover:bg-indigo-700 text-white active:scale-95 cursor-pointer"
+                                : "bg-amber-500/10 text-amber-700 border border-amber-500/20 hover:bg-amber-500/20 cursor-pointer"
+                            )}
+                            title={
+                              areAllDrawingsApproved 
+                                ? "Pass to BOQ Estimation" 
+                                : `Cannot pass to BOQ: ${pendingDrawings.length} drawing(s) still pending approval`
+                            }
+                          >
+                            Pass to BOQ {areAllDrawingsApproved ? <ArrowRight size={11} /> : <AlertTriangle size={11} className="text-amber-600" />}
+                          </button>
+                        )
                       )}
                     </div>
                   </div>
@@ -349,6 +366,16 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                       return !isApproved || isClientRejected;
                     });
                     const areAllDrawingsApproved = hasDrawings && pendingDrawings.length === 0;
+                    const hasApprovedDrawing = hasDrawings && designFiles.some((f: any) => {
+                      const latestVersion = Array.isArray(f.versions) && f.versions.length > 0 
+                        ? f.versions[f.versions.length - 1] 
+                        : null;
+                      const rawStatus = f.status || f.approvalStatus || latestVersion?.approvalStatus || 'draft';
+                      const s = String(rawStatus).toLowerCase().trim();
+                      const isApproved = s === 'internally_approved' || s === 'client_approved' || s === 'approved';
+                      const isClientRejected = f.clientStatus === 'client_changes_requested' || latestVersion?.clientStatus === 'client_changes_requested';
+                      return isApproved && !isClientRejected;
+                    });
 
                     const hasAcceptedQuote = Array.isArray(lead.quotations) && lead.quotations.some((q: any) => 
                       ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase())
@@ -468,62 +495,69 @@ export const InteriorDrawingsView = ({ leads, onUploadDesign, onPassToBoq, onMar
                         {/* 5. Actions */}
                         <td className="px-4.5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              onClick={() => onUploadDesign(lead._id)}
-                              className={cn(
-                                "inline-flex items-center justify-center rounded-lg text-xs font-bold transition-all border cursor-pointer shadow-xs",
-                                hasDrawings
-                                  ? "p-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
-                                  : "gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
-                              )}
-                              title={hasDrawings ? 'Edit Drawing Files' : 'Upload Drawings'}
-                            >
-                              {hasDrawings ? (
-                                <Pencil size={13} className="text-indigo-600" />
-                              ) : (
-                                <>
-                                  <Upload size={11} className="text-indigo-600" /> Upload
-                                </>
-                              )}
-                            </button>
-
-                            {hasDrawings && (
+                            {hasDrawings ? (
                               <button
-                                onClick={() => setShareLead(lead)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 rounded-lg text-xs font-bold transition-all border border-indigo-500/20 cursor-pointer shadow-xs"
-                                title="Share Drawings Link"
+                                onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=designs`)}
+                                className="p-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                title="View Drawings"
                               >
-                                <Share2 size={11} /> Share
+                                <Eye size={13} className="text-indigo-600" />
                               </button>
+                            ) : (
+                              (canDo('crm_drawings', 'create')) && (
+                                <button
+                                  onClick={() => onUploadDesign(lead._id)}
+                                  className="inline-flex items-center justify-center rounded-lg text-xs font-bold transition-all border cursor-pointer shadow-xs gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
+                                  title="Upload Drawings"
+                                >
+                                  <Upload size={11} className="text-indigo-600" /> Upload
+                                </button>
+                              )
+                            )}
+
+                            {hasDrawings && hasApprovedDrawing && (
+                              (canDo('crm_drawings', 'update')) && (
+                                <button
+                                  onClick={() => setShareLead(lead)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 rounded-lg text-xs font-bold transition-all border border-indigo-500/20 cursor-pointer shadow-xs"
+                                  title="Share Drawings Link"
+                                >
+                                  <Share2 size={11} /> Share
+                                </button>
+                              )
                             )}
 
                             {hasDrawings && onPassToBoq && !isPassedToNext && (
-                              <button
-                                onClick={() => onPassToBoq(lead._id)}
-                                className={cn(
-                                  "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs",
-                                  areAllDrawingsApproved
-                                    ? "bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer active:scale-95"
-                                    : "bg-amber-500/10 text-amber-700 border border-amber-500/20 hover:bg-amber-500/20 cursor-pointer"
-                                )}
-                                title={
-                                  areAllDrawingsApproved 
-                                    ? "Pass to BOQ Estimation" 
-                                    : `Cannot pass to BOQ: ${pendingDrawings.length} drawing(s) still pending approval`
-                                }
-                              >
-                                Pass {areAllDrawingsApproved ? <ArrowRight size={11} /> : <AlertTriangle size={11} className="text-amber-600" />}
-                              </button>
+                              (canDo('crm_drawings', 'update') || canDo('crm_boq', 'update') || canDo('crm_boq', 'create')) && (
+                                <button
+                                  onClick={() => onPassToBoq(lead._id)}
+                                  className={cn(
+                                    "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs",
+                                    areAllDrawingsApproved
+                                      ? "bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer active:scale-95"
+                                      : "bg-amber-500/10 text-amber-700 border border-amber-500/20 hover:bg-amber-500/20 cursor-pointer"
+                                  )}
+                                  title={
+                                    areAllDrawingsApproved 
+                                      ? "Pass to BOQ Estimation" 
+                                      : `Cannot pass to BOQ: ${pendingDrawings.length} drawing(s) still pending approval`
+                                  }
+                                >
+                                  Pass {areAllDrawingsApproved ? <ArrowRight size={11} /> : <AlertTriangle size={11} className="text-amber-600" />}
+                                </button>
+                              )
                             )}
 
                             {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
-                                className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
-                                title="Mark as Lost"
-                              >
-                                <XCircle size={13} />
-                              </button>
+                              (canDo('crm_drawings', 'update') || canDo('crm_leads', 'update')) && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
+                                  className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
+                                  title="Mark as Lost"
+                                >
+                                  <XCircle size={13} />
+                                </button>
+                              )
                             )}
                           </div>
                         </td>

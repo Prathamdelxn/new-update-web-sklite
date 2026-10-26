@@ -59,11 +59,11 @@ function LoginForm() {
       return;
     }
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    if (!passwordRegex.test(password)) {
-      toast.error('Password must be at least 8 characters long, and contain at least one uppercase letter, one lowercase letter, one number, and one special symbol');
-      return;
-    }
+    // const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    // if (!passwordRegex.test(password)) {
+    //   toast.error('Password must be at least 8 characters long, and contain at least one uppercase letter, one lowercase letter, one number, and one special symbol');
+    //   return;
+    // }
 
     setIsLoading(true);
 

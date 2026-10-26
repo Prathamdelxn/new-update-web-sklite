@@ -48,9 +48,13 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
   const canEditPlans = !isLocked && (hasProjectPermission(user, project, 'plans:update') || hasProjectPermission(user, project, 'plans:edit'));
   const canApprovePlans = !isLocked && hasProjectPermission(user, project, 'plans:approve');
   const canAssignPlans = !isLocked && hasProjectPermission(user, project, 'plans:assign');
+  // Plan Annotations: counts and the Annotate button need View (or Create, to add the first pins)
+  const canViewAnnotations = hasProjectPermission(user, project, 'annotations:view');
+  const canOpenAnnotations = canViewAnnotations || (!isLocked && hasProjectPermission(user, project, 'annotations:create'));
   const isAdmin = user?.role?.name === 'Admin' || (user?.role?.permissions?.includes('*') ?? false);
 
   const fetchAnnotationCounts = useCallback(async () => {
+    if (!canViewAnnotations) { setAnnotationCounts({}); return; }
     try {
       const res = await api.get(`/projects/${projectId}/folders/${folder._id}/annotations`);
       const counts: Record<string, number> = {};
@@ -60,7 +64,7 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
       });
       setAnnotationCounts(counts);
     } catch { /* annotations are optional */ }
-  }, [projectId, folder._id]);
+  }, [projectId, folder._id, canViewAnnotations]);
 
   useEffect(() => {
     fetchAnnotationCounts();
@@ -215,7 +219,10 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
                       <Send className="w-3.5 h-3.5" />
                     </button>
                   )}
-                  {doc.approvalStatus === 'Pending' && canApprovePlans && (
+                  {/* Approve/Reject: Plan Management > Approve AND an assigned approver who hasn't responded (admins always, like the API) */}
+                  {doc.approvalStatus === 'Pending' && (isAdmin || (canApprovePlans && (doc.approvals || []).some((a: any) =>
+                    String(a.user?._id || a.user) === String((user as any)?._id || (user as any)?.id) && a.status === 'Pending'
+                  ))) && (
                     <>
                       <button
                         onClick={() => handleAction(doc._id, 'respond', { response: 'Approved', versionId: doc.versionId })}
@@ -248,7 +255,7 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
                   </button>
 
                   {/* Annotate — opens viewer in annotation mode */}
-                  {projectId && (
+                  {projectId && canOpenAnnotations && (
                     <button
                       onClick={() => setAnnotatingDoc(doc)}
                       className={cn(

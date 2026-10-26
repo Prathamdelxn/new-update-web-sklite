@@ -8,6 +8,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 import {
   FolderKanban,
   Bug,
@@ -65,8 +66,143 @@ function getGreeting() {
   return 'evening';
 }
 
+function InteriorNewDashboardSkeleton() {
+  return (
+    <div className="p-6 lg:p-8 space-y-8 min-h-full bg-slate-50/40 animate-pulse font-sans">
+      {/* Page Header Skeleton */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-2">
+          <div className="h-8 w-64 bg-slate-200/90 rounded-lg" />
+          <div className="h-4 w-96 max-w-full bg-slate-200/60 rounded-md" />
+        </div>
+        <div className="h-9 w-24 bg-slate-200/80 rounded-lg shrink-0" />
+      </div>
+
+      <div className="space-y-8">
+        {/* KPI Cards Row Skeleton (6 cards) */}
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+          {Array.from({ length: 6 }).map((_, idx) => (
+            <div key={idx} className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-xs">
+              <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200/60 mb-3" />
+              <div className="h-7 w-16 bg-slate-200/90 rounded-md mb-1.5" />
+              <div className="h-3.5 w-24 bg-slate-200/60 rounded-md" />
+            </div>
+          ))}
+        </div>
+
+        {/* Progress & Health Row Skeleton (2 major cards) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-white border border-slate-200/90 rounded-xl p-6 shadow-xs">
+            <div className="flex items-center justify-between mb-6">
+              <div className="h-5 w-36 bg-slate-200/90 rounded-md" />
+              <div className="flex items-center gap-3">
+                <div className="h-4 w-20 bg-slate-200/60 rounded-md" />
+                <div className="h-4 w-20 bg-slate-200/60 rounded-md" />
+              </div>
+            </div>
+            <div className="h-[280px] w-full bg-slate-50 border border-slate-100 rounded-xl flex items-end p-4 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex-1 bg-slate-200/80 rounded-t-md"
+                  style={{ height: `${30 + ((i * 13) % 55)}%` }}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-200/90 rounded-xl p-6 shadow-xs">
+            <div className="h-5 w-32 bg-slate-200/90 rounded-md mb-6" />
+            <div className="w-36 h-36 mx-auto rounded-full border-8 border-slate-100 flex items-center justify-center my-4">
+              <div className="w-16 h-16 rounded-full bg-slate-50" />
+            </div>
+            <div className="space-y-2.5 mt-6">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-slate-200" />
+                    <div className="h-4 w-20 bg-slate-200/60 rounded-md" />
+                  </div>
+                  <div className="h-4 w-8 bg-slate-200/80 rounded-md" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom 4 Cards Grid Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* CRM Pipeline */}
+          <div className="bg-white border border-slate-200/90 rounded-xl p-6 shadow-xs">
+            <div className="h-5 w-40 bg-slate-200/90 rounded-md mb-4" />
+            <div className="h-[200px] bg-slate-50 border border-slate-100 rounded-xl flex items-end p-4 gap-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex-1 bg-slate-200/80 rounded-t-md"
+                  style={{ height: `${40 + ((i * 15) % 50)}%` }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Procurement */}
+          <div className="bg-white border border-slate-200/90 rounded-xl p-6 shadow-xs">
+            <div className="h-5 w-32 bg-slate-200/90 rounded-md mb-4" />
+            <div className="h-[200px] bg-slate-50 border border-slate-100 rounded-xl flex items-end p-4 gap-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex-1 bg-slate-200/80 rounded-t-md"
+                  style={{ height: `${35 + ((i * 18) % 55)}%` }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Top Projects */}
+          <div className="bg-white border border-slate-200/90 rounded-xl p-6 shadow-xs">
+            <div className="h-5 w-28 bg-slate-200/90 rounded-md mb-4" />
+            <div className="space-y-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="space-y-1.5">
+                  <div className="flex justify-between">
+                    <div className="h-4 w-32 bg-slate-200/90 rounded-md" />
+                    <div className="h-4 w-8 bg-slate-200/60 rounded-md" />
+                  </div>
+                  <div className="h-2 w-full bg-slate-100 rounded-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="lg:col-span-3 bg-white border border-slate-200/90 rounded-xl p-6 shadow-xs">
+            <div className="h-5 w-36 bg-slate-200/90 rounded-md mb-4" />
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <div className="w-2.5 h-2.5 rounded-full bg-slate-200 mt-1 shrink-0" />
+                  <div className="space-y-1.5 flex-1">
+                    <div className="h-4 w-48 bg-slate-200/90 rounded-md" />
+                    <div className="h-3 w-32 bg-slate-200/60 rounded-md" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function InteriorNewDashboardView() {
   const user = getInteriorUser();
+  // The dashboard shows org-wide figures → Dashboard: View (admins always)
+  const { isOrgAdmin, hasPermission, currentUser } = usePermissions();
+  const canSeeDashboard = isOrgAdmin || hasPermission('dashboard', 'read');
+  const navAccess = currentUser?.navAccess || {};
 
   const {
     data: data = null,
@@ -82,24 +218,52 @@ export default function InteriorNewDashboardView() {
           return res.data.data;
         }
         return null;
-      } catch (err) {
+      } catch (err: any) {
+        // Refused → the server says this role has no Dashboard access (the saved
+        // user can be out of date for a moment after login / switching backends)
+        if (err?.response?.status === 403) return { forbidden: true } as any;
         console.error('Failed to load interior-os dashboard', err);
         return null;
       }
     },
     staleTime: 5 * 60 * 1000,
+    enabled: canSeeDashboard,
   });
 
   const handleManualRefresh = async () => {
     await refetch();
   };
 
-  if (loading) {
+  if (!canSeeDashboard || (data as any)?.forbidden) {
     return (
-      <div className="interior-os-theme flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-6 h-6 animate-spin text-[hsl(var(--primary))]" />
+      <div className="interior-os-theme p-6 lg:p-8">
+        <div className="max-w-xl mx-auto mt-10 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-8 text-center space-y-4">
+          <FolderKanban className="w-10 h-10 mx-auto text-[hsl(var(--muted-foreground))]" />
+          <div>
+            <h2 className="text-lg font-bold text-[hsl(var(--foreground))]">Welcome{user?.firstName ? `, ${user.firstName}` : ''}</h2>
+            <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
+              Your role doesn&apos;t include the Dashboard. Open the sections you work in:
+            </p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {navAccess.projects !== false && (
+              <Link href="/interior-new/projects" className="px-4 py-2 rounded-lg text-sm font-semibold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]">
+                Projects
+              </Link>
+            )}
+            {navAccess.crm && (
+              <Link href="/interior-new/crm" className="px-4 py-2 rounded-lg text-sm font-semibold border border-[hsl(var(--border))] text-[hsl(var(--foreground))]">
+                CRM
+              </Link>
+            )}
+          </div>
+        </div>
       </div>
     );
+  }
+
+  if (loading) {
+    return <InteriorNewDashboardSkeleton />;
   }
 
   const kpiCards = [

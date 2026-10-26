@@ -24,6 +24,7 @@ import {
 import { cn } from '@/lib/utils';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 
 interface InteriorChangeRequestsViewProps {
   projectId: string;
@@ -77,6 +78,7 @@ const getStatusBadge = (status: string) => {
 
 export default function InteriorChangeRequestsView({ projectId }: InteriorChangeRequestsViewProps) {
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
 
   const [changeRequests, setChangeRequests] = useState<any[]>([]);
   const [selectedCr, setSelectedCr] = useState<any>(null);
@@ -178,13 +180,15 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
             Evaluate, design-review, and forecast project variations before execution.
           </p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary)/0.9)] shadow-lg shadow-[hsl(var(--primary)/0.25)] transition-all cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          Request a Change
-        </button>
+        {canDo('change_requests', 'create') && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary)/0.9)] shadow-lg shadow-[hsl(var(--primary)/0.25)] transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            Request a Change
+          </button>
+        )}
       </div>
 
       {/* Main Panel layout */}
@@ -335,58 +339,70 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
                 {selectedCr.status !== 'approved' && selectedCr.status !== 'rejected' ? (
                   <div className="flex items-center gap-2">
                     {selectedCr.status === 'draft' && (
-                      <button
-                        onClick={() => handleStatusUpdate('submitted')}
-                        disabled={actionLoading}
-                        className="px-4 py-2 text-xs font-semibold border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] cursor-pointer disabled:opacity-50"
-                      >
-                        Submit for Review
-                      </button>
+                      canDo('change_requests', 'update') && (
+                        <button
+                          onClick={() => handleStatusUpdate('submitted')}
+                          disabled={actionLoading}
+                          className="px-4 py-2 text-xs font-semibold border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] cursor-pointer disabled:opacity-50"
+                        >
+                          Submit for Review
+                        </button>
+                      )
                     )}
                     {selectedCr.status === 'submitted' && (
-                      <button
-                        onClick={() => handleStatusUpdate('design_review')}
-                        disabled={actionLoading}
-                        className="px-4 py-2 text-xs font-semibold border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] cursor-pointer disabled:opacity-50"
-                      >
-                        Move to Design Review
-                      </button>
+                      canDo('change_requests', 'update') && (
+                        <button
+                          onClick={() => handleStatusUpdate('design_review')}
+                          disabled={actionLoading}
+                          className="px-4 py-2 text-xs font-semibold border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] cursor-pointer disabled:opacity-50"
+                        >
+                          Move to Design Review
+                        </button>
+                      )
                     )}
                     {selectedCr.status === 'design_review' && (
-                      <button
-                        onClick={() => handleStatusUpdate('pm_review')}
-                        disabled={actionLoading}
-                        className="px-4 py-2 text-xs font-semibold border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] cursor-pointer disabled:opacity-50"
-                      >
-                        Move to PM Review
-                      </button>
+                      canDo('change_requests', 'update') && (
+                        <button
+                          onClick={() => handleStatusUpdate('pm_review')}
+                          disabled={actionLoading}
+                          className="px-4 py-2 text-xs font-semibold border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] cursor-pointer disabled:opacity-50"
+                        >
+                          Move to PM Review
+                        </button>
+                      )
                     )}
                     {selectedCr.status === 'pm_review' && (
-                      <button
-                        onClick={() => handleStatusUpdate('commercial_review')}
-                        disabled={actionLoading}
-                        className="px-4 py-2 text-xs font-semibold border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] cursor-pointer disabled:opacity-50"
-                      >
-                        Move to Commercial Review
-                      </button>
+                      canDo('change_requests', 'update') && (
+                        <button
+                          onClick={() => handleStatusUpdate('commercial_review')}
+                          disabled={actionLoading}
+                          className="px-4 py-2 text-xs font-semibold border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] cursor-pointer disabled:opacity-50"
+                        >
+                          Move to Commercial Review
+                        </button>
+                      )
                     )}
                     {selectedCr.status === 'commercial_review' && (
-                      <button
-                        onClick={() => handleStatusUpdate('client_review')}
-                        disabled={actionLoading}
-                        className="px-4 py-2 text-xs font-semibold border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] cursor-pointer disabled:opacity-50"
-                      >
-                        Move to Client Review
-                      </button>
+                      canDo('change_requests', 'update') && (
+                        <button
+                          onClick={() => handleStatusUpdate('client_review')}
+                          disabled={actionLoading}
+                          className="px-4 py-2 text-xs font-semibold border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] cursor-pointer disabled:opacity-50"
+                        >
+                          Move to Client Review
+                        </button>
+                      )
                     )}
 
-                    <button
-                      onClick={() => handleStatusUpdate('rejected')}
-                      disabled={actionLoading}
-                      className="px-4 py-2 text-xs font-semibold border border-rose-200 text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 cursor-pointer disabled:opacity-50"
-                    >
-                      Reject Request
-                    </button>
+                    {canDo('change_requests', 'approve') && (
+                      <button
+                        onClick={() => handleStatusUpdate('rejected')}
+                        disabled={actionLoading}
+                        className="px-4 py-2 text-xs font-semibold border border-rose-200 text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 cursor-pointer disabled:opacity-50"
+                      >
+                        Reject Request
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--muted-foreground))]">
@@ -405,14 +421,16 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
                 )}
 
                 {selectedCr.status !== 'approved' && selectedCr.status !== 'rejected' && (
-                  <button
-                    onClick={handleApproveAndGenerateVo}
-                    disabled={actionLoading}
-                    className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 cursor-pointer shadow-lg shadow-emerald-500/10 disabled:opacity-50"
-                  >
-                    {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                    Approve & Generate VO
-                  </button>
+                  canDo('change_requests', 'approve') && (
+                    <button
+                      onClick={handleApproveAndGenerateVo}
+                      disabled={actionLoading}
+                      className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 cursor-pointer shadow-lg shadow-emerald-500/10 disabled:opacity-50"
+                    >
+                      {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                      Approve & Generate VO
+                    </button>
+                  )
                 )}
               </div>
             </div>

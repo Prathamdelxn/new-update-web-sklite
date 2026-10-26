@@ -45,7 +45,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
   const [isBudgetOpen, setIsBudgetOpen] = useState(false);
   const [budgetApprovers, setBudgetApprovers] = useState<any[]>([]);
   const [selectedApprover, setSelectedApprover] = useState<string | null>(null);
-  
+
   const [fetchingApprovers, setFetchingApprovers] = useState(false);
   const [sendingBudgetReq, setSendingBudgetReq] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -65,8 +65,14 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
     (user?.id === siteSurveyorId || user?._id === siteSurveyorId)
   );
 
-  const isAdminOrManager = !isProjectLocked(project) && hasProjectPermission(user, project, 'sitesurvey:manage');
-  const canView = hasProjectPermission(user, project, 'sitesurvey:view') || isAdminOrManager || isAssignedSurveyor;
+  // Each action follows its own Site Survey permission (role editor actions);
+  // the API enforces the same rules.
+  const isLocked = isProjectLocked(project);
+  const canView = hasProjectPermission(user, project, 'sitesurvey:view');
+  const canCreateSurvey = !isLocked && hasProjectPermission(user, project, 'sitesurvey:create');
+  const canUpdateSurvey = !isLocked && hasProjectPermission(user, project, 'sitesurvey:update');
+  const canApproveSurvey = !isLocked && hasProjectPermission(user, project, 'sitesurvey:approve');
+  const isAdminOrManager = (user as any)?.role === 'Admin' || (user as any)?.role === 'Manager' || (user as any)?.systemRole === 'Admin';
 
   const fetchSurvey = useCallback(async () => {
     if (!projectId) return;
@@ -178,9 +184,10 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
   // { user, role } subdocuments, so it must be matched on `m.user._id`, not
   // the subdocument's own `_id`; the matched user data lives on `.user`.
   const surveyorId = (survey?.surveyor as any)?._id || survey?.surveyor;
+  const isOwnSurvey = !!surveyorId && (String(surveyorId) === String(user?.id) || String(surveyorId) === String((user as any)?._id));
   const matchedMember: any = (project?.members as any[])?.find((m: any) => String(m.user?._id || m.user) === String(surveyorId));
   const surveyorUser = (matchedMember?.user && typeof matchedMember.user === 'object' ? matchedMember.user : null) ||
-                       ((project?.createdBy as any)?._id === surveyorId ? project?.createdBy : survey?.surveyor);
+    ((project?.createdBy as any)?._id === surveyorId ? project?.createdBy : survey?.surveyor);
 
   let surveyorName = 'Assigned Surveyor';
   if (surveyorUser?.name && (!surveyorUser.name.includes(':') || surveyorUser.name.length < 50)) {
@@ -194,7 +201,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
-      
+
       {/* ── Pending Action Reminder ── */}
       {showReminder && (
         <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -239,7 +246,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
         </div>
       ) : (
         <div className="space-y-6">
-          
+
           {/* ── 1. Executive Summary Hero Card ── */}
           <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-xs relative overflow-hidden space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-100">
@@ -267,7 +274,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
                     <span>{survey.status}</span>
                   </div>
                 )}
-                {isAssignedSurveyor && survey.status !== 'Approved' && (
+                {((isAssignedSurveyor || isAdminOrManager || String((survey as any)?.surveyor?._id || (survey as any)?.surveyor) === String(user?.id || user?._id)) && (canUpdateSurvey || canCreateSurvey || isAdminOrManager)) && survey.status !== 'Approved' && (
                   <button
                     onClick={() => setIsModalOpen(true)}
                     className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer"
@@ -386,7 +393,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
 
           {/* ── 3. Bento Section: MEP & Material Logistics ── */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
+
             {/* MEP Services Card */}
             <div className="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-xs space-y-4">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -550,7 +557,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
           )}
 
           {/* ── 7. Admin Executive Decision Bar ── */}
-          {isAdminOrManager && survey.status === 'Submitted' && (
+          {canApproveSurvey && survey.status === 'Submitted' && (
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
                 disabled={isProcessing}

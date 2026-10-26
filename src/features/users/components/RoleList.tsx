@@ -20,11 +20,13 @@ import {
 import { GlassCard } from '@/components/ui/GlassCard';
 import { cn } from '@/lib/utils';
 import api from '@/services/api.client';
+import { useUserManagementPermissions } from '@/features/users/components/UserManagementGate';
 import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { RoleModal } from '@/features/users/components/RoleModal';
 
 export const RoleList = () => {
+  const { canCreate, canUpdate, canDelete } = useUserManagementPermissions();
   const [roles, setRoles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -96,6 +98,7 @@ export const RoleList = () => {
           <Info className="w-4 h-4 text-slate-400 shrink-0" />
           <p className="text-xs font-medium text-slate-500">Manage Role-Based Access Control (RBAC) across all projects and features.</p>
         </div>
+        {canCreate && (
         <button
           onClick={() => setIsModalOpen(true)}
           className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs shrink-0"
@@ -103,6 +106,7 @@ export const RoleList = () => {
           <ShieldPlus className="w-3.5 h-3.5" />
           <span>Define New Role</span>
         </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -112,6 +116,7 @@ export const RoleList = () => {
               <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100/80 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-200 shadow-2xs">
                 <Shield className="w-4 h-4 transition-colors" />
               </div>
+              {(canUpdate || canDelete) && (
               <div className="relative" ref={roleMenuId === role._id ? menuRef : null}>
                 <button
                   onClick={() => setRoleMenuId(roleMenuId === role._id ? null : role._id)}
@@ -121,6 +126,7 @@ export const RoleList = () => {
                 </button>
                 {roleMenuId === role._id && (
                   <div className="absolute right-0 top-9 w-44 bg-white border border-slate-200/80 rounded-2xl shadow-card-hover z-20 overflow-hidden py-1">
+                    {canUpdate && (
                     <button
                       onClick={() => openEdit(role)}
                       className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
@@ -128,6 +134,8 @@ export const RoleList = () => {
                       <Pencil className="w-3.5 h-3.5 text-slate-400" />
                       <span>Edit Role</span>
                     </button>
+                    )}
+                    {canDelete && (
                     <button
                       onClick={() => handleDeleteRole(role)}
                       className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs font-bold text-red-600 hover:bg-red-50 transition-colors"
@@ -135,9 +143,11 @@ export const RoleList = () => {
                       <Trash2 className="w-3.5 h-3.5" />
                       <span>Delete Role</span>
                     </button>
+                    )}
                   </div>
                 )}
               </div>
+              )}
             </div>
 
             <h4 className="text-base font-bold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">{role.name}</h4>
@@ -149,6 +159,7 @@ export const RoleList = () => {
             </div>
 
             <div className="flex-1" />
+            {canUpdate && (
             <button
               onClick={() => openEdit(role)}
               className="w-full py-2 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all group/btn shadow-2xs"
@@ -158,6 +169,7 @@ export const RoleList = () => {
                 <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover/btn:translate-x-1" />
               </span>
             </button>
+            )}
           </div>
         ))}
 

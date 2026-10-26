@@ -298,12 +298,12 @@ export function ChatTab({ projectId }: ChatTabProps) {
                   </div>
                 )}
 
-                <div className={cn('flex flex-col max-w-[75%]', isMe ? 'items-end' : 'items-start')}>
+                <div className={cn('flex min-w-0 w-fit max-w-[75%] flex-col', isMe ? 'items-end' : 'items-start')}>
                   {!isMe && (
                     <span className="text-xs font-semibold text-slate-500 mb-1 ml-1">{msg.senderName}</span>
                   )}
 
-                  <div className="relative group/bubble" data-chat-menu>
+                  <div className="relative min-w-0 w-fit max-w-full group/bubble" data-chat-menu>
                     <div className={cn(
                       'px-4 py-2.5 rounded-2xl shadow-sm border relative z-10',
                       isMe
@@ -333,7 +333,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
                       ))}
 
                       {msg.content && (
-                        <p className={cn('text-[14px] leading-relaxed whitespace-pre-wrap break-words', isMe ? 'text-blue-50' : 'text-gray-700')}>
+                        <p className={cn('text-[14px] leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]', isMe ? 'text-blue-50' : 'text-gray-700')}>
                           {msg.content}
                         </p>
                       )}
@@ -380,8 +380,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
                     <button
                       onClick={() => setActiveMenuId(activeMenuId === msg._id ? null : msg._id)}
                       className={cn(
-                        'absolute top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-white shadow-md border border-gray-100 text-slate-400 hover:text-blue-600 transition-all z-30 opacity-0 group-hover/bubble:opacity-100 focus:opacity-100',
-                        isMe ? '-left-10' : '-right-10'
+                        'absolute right-2 bottom-2 p-1.5 rounded-full bg-white shadow-md border border-gray-100 text-slate-400 hover:text-blue-600 transition-all z-30 opacity-100 sm:opacity-0 sm:group-hover/bubble:opacity-100 focus:opacity-100'
                       )}
                     >
                       <MoreVertical className="w-4 h-4" />
@@ -392,7 +391,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
                       <div
                         data-chat-menu
                         className={cn(
-                          'absolute top-0 mt-8 bg-white rounded-xl shadow-xl border border-gray-100 w-64 z-50 overflow-hidden',
+                          'absolute bottom-0 bg-white rounded-xl shadow-xl border border-gray-100 w-64 z-50 overflow-hidden',
                           isMe ? 'right-full mr-2' : 'left-full ml-2'
                         )}
                       >

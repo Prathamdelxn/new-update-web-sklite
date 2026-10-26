@@ -5,11 +5,13 @@ import { Users, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserList } from '@/features/users/components/UserList';
 import { RoleList } from '@/features/users/components/RoleList';
+import { UserManagementGate } from '@/features/users/components/UserManagementGate';
 
 export default function UsersPage() {
   const [activeTab, setActiveTab] = useState<'users' | 'roles'>('users');
 
   return (
+    <UserManagementGate>
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -40,5 +42,6 @@ export default function UsersPage() {
         {activeTab === 'users' ? <UserList /> : <RoleList />}
       </div>
     </div>
+    </UserManagementGate>
   );
 }

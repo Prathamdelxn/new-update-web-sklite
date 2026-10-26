@@ -149,7 +149,6 @@ const { hasPermission: canDo } = usePermissions();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareModalMode, setShareModalMode] = useState<'drawings' | 'requirements'>('drawings');
   const [requirementsViewMode, setRequirementsViewMode] = useState<'side-by-side' | 'technical' | 'client'>('side-by-side');
-  const [isImportingClientReqs, setIsImportingClientReqs] = useState(false);
   const [selected3DFile, setSelected3DFile] = useState<any | null>(null);
   const [selectedDrawingForApproval, setSelectedDrawingForApproval] = useState<any | null>(null);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
@@ -672,116 +671,6 @@ const { hasPermission: canDo } = usePermissions();
       };
     });
   }, [lead]);
-
-  const handleImportClientRequirements = async () => {
-    const targetId = (params?.id as string) || lead?._id;
-    if (!targetId || !lead?.clientRequirements) return;
-    try {
-      setIsImportingClientReqs(true);
-      const clientRooms = normalizedClientRequirements;
-      if (clientRooms.length === 0) {
-        toast.error('No client rooms available to import');
-        return;
-      }
-
-      const existingReqs = Array.isArray(lead.requirements) ? [...lead.requirements] : [];
-      const updated = [...existingReqs];
-
-      for (const cr of clientRooms) {
-        const matchIndex = updated.findIndex((er: any) =>
-          (er.roomName || er.room || er.name || '').trim().toLowerCase() === cr.roomName.trim().toLowerCase()
-        );
-        if (matchIndex >= 0) {
-          updated[matchIndex] = {
-            ...updated[matchIndex],
-            furnitureRequirements: updated[matchIndex].furnitureRequirements || cr.furnitureRequirements,
-            storage: updated[matchIndex].storage || cr.storage,
-            lightingRequirements: updated[matchIndex].lightingRequirements || cr.lightingRequirements,
-            colours: updated[matchIndex].colours || cr.colours,
-            designStyle: updated[matchIndex].designStyle || cr.designStyle,
-            description: updated[matchIndex].description
-              ? `${updated[matchIndex].description}\n[Client Note]: ${cr.description}`
-              : cr.description,
-          };
-        } else {
-          updated.push({
-            roomName: cr.roomName,
-            interiorType: cr.interiorType || lead.propertyType || 'Residential',
-            designStyle: cr.designStyle || '',
-            furnitureRequirements: cr.furnitureRequirements || '',
-            storage: cr.storage || '',
-            lightingRequirements: cr.lightingRequirements || '',
-            colours: cr.colours || '',
-            description: cr.description ? `[Client Wishlist]: ${cr.description}` : '',
-            budget: cr.budget || '',
-          });
-        }
-      }
-
-      const res = await interiorCrmService.updateCustomer(targetId, {
-        requirements: updated,
-      });
-
-      if (res.success || res.data) {
-        toast.success('Successfully imported client requirements into technical specifications!');
-        fetchData();
-      } else {
-        toast.error(res.message || 'Failed to import requirements');
-      }
-    } catch (err: any) {
-      console.error('Error importing client requirements:', err);
-      toast.error(err.response?.data?.message || err.message || 'Failed to import requirements');
-    } finally {
-      setIsImportingClientReqs(false);
-    }
-  };
-
-  const handleImportSingleRoom = async (cr: any) => {
-    const targetId = (params?.id as string) || lead?._id;
-    if (!targetId) return;
-    try {
-      setIsImportingClientReqs(true);
-      const existingReqs = Array.isArray(lead.requirements) ? [...lead.requirements] : [];
-      const updated = [...existingReqs];
-
-      const matchIndex = updated.findIndex((er: any) =>
-        (er.roomName || er.room || er.name || '').trim().toLowerCase() === cr.roomName.trim().toLowerCase()
-      );
-      if (matchIndex >= 0) {
-        updated[matchIndex] = {
-          ...updated[matchIndex],
-          furnitureRequirements: updated[matchIndex].furnitureRequirements || cr.furnitureRequirements,
-          storage: updated[matchIndex].storage || cr.storage,
-          lightingRequirements: updated[matchIndex].lightingRequirements || cr.lightingRequirements,
-          colours: updated[matchIndex].colours || cr.colours,
-          designStyle: updated[matchIndex].designStyle || cr.designStyle,
-          description: updated[matchIndex].description
-            ? `${updated[matchIndex].description}\n[Client Note]: ${cr.description}`
-            : cr.description,
-        };
-      } else {
-        updated.push({
-          roomName: cr.roomName,
-          interiorType: cr.interiorType || lead.propertyType || 'Residential',
-          designStyle: cr.designStyle || '',
-          furnitureRequirements: cr.furnitureRequirements || '',
-          storage: cr.storage || '',
-          lightingRequirements: cr.lightingRequirements || '',
-          colours: cr.colours || '',
-          description: cr.description ? `[Client Wishlist]: ${cr.description}` : '',
-          budget: cr.budget || '',
-        });
-      }
-
-      await interiorCrmService.updateCustomer(targetId, { requirements: updated });
-      toast.success(`Imported "${cr.roomName}" into technical specifications!`);
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to copy room');
-    } finally {
-      setIsImportingClientReqs(false);
-    }
-  };
 
   const drawingInfo = React.useMemo(() => {
     const handoverActivity = activities.find(
@@ -2644,270 +2533,19 @@ const { hasPermission: canDo } = usePermissions();
                       </div>
                     )}
 
-                    {/* Room by Room Cards */}
-                    {!hasRequirements ? (
-                      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-6 text-center flex flex-col items-center space-y-3">
-                        <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-600">
-                          <PenTool size={24} />
-                        </div>
-                        <div className="max-w-md space-y-0.5">
-                          <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">
-                            Ready for Detailed Requirements Logging
-                          </h3>
-                          <p className="text-[hsl(var(--muted-foreground))] text-xs">
-                            Capture room-by-room functional needs, spatial usage, MEP requirements, styles, and materials.
-                          </p>
-                        </div>
-                        {!isReadOnly && (
-                          <button 
-                            onClick={() => setIsReqModalOpen(true)} 
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <Plus size={14} /> Add Design Requirements
-                          </button>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {normalizedRequirements.map((req: any, index: number) => {
-                          const hasFunctional = !!(req.roomUsage || req.furnitureRequirements || req.storage || req.electricalPoints || req.lightingRequirements || req.plumbingRequirements || req.circulation || req.dimensions);
-                          const hasAesthetic = !!(req.designStyle || req.theme || req.colours || req.materials || req.flooring || req.ceiling || req.wallFinishes || req.furnitureStyle);
-
-                          // Find any custom extra fields not covered by standard keys
-                          const standardKeys = new Set([
-                            'roomName', 'room', 'name', 'room_name', 'roomTitle',
-                            'interiorType', 'type',
-                            'designStyle', 'style', 'theme', 'design_style',
-                            'description', 'notes', 'remarks', 'instructions', 'specialRequests', 'clientNotes',
-                            'roomUsage', 'usage', 'purpose',
-                            'furnitureRequirements', 'furniture', 'furniture_requirements', 'furnitureSpecs',
-                            'storage', 'storageRequirements', 'wardrobes',
-                            'electricalPoints', 'electrical', 'power_points', 'powerPoints',
-                            'lightingRequirements', 'lighting', 'lighting_requirements', 'lights',
-                            'plumbingRequirements', 'plumbing', 'plumbing_requirements', 'waterPoints',
-                            'circulation', 'clearance', 'traffic_flow',
-                            'colours', 'colors', 'colorPalette', 'colour_palette', 'color_palette', 'palette',
-                            'materials', 'materialSpecs', 'finishes',
-                            'flooring', 'flooringType', 'floor',
-                            'ceiling', 'falseCeiling', 'ceiling_type', 'ceilingHeight',
-                            'wallFinishes', 'walls', 'wall_finishes', 'wallDecor',
-                            'furnitureStyle', 'furnishing_style',
-                            'dimensions', 'carpetArea', 'area', 'size',
-                            'budget', 'estimatedBudget', 'cost',
-                            'timeline', 'duration',
-                            'scopeOfWork', 'scope',
-                            '_id', 'id', '__v'
-                          ]);
-
-                          const extraEntries = Object.entries(req).filter(([k, v]) => {
-                            if (standardKeys.has(k)) return false;
-                            if (v === null || v === undefined || v === '') return false;
-                            if (typeof v === 'object' && Object.keys(v).length === 0) return false;
-                            return true;
-                          });
-
-                          return (
-                            <div key={index} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 sm:p-4 space-y-3 hover:border-emerald-500/30 transition-colors">
-                              {/* Room Header */}
-                              <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[hsl(var(--border))]">
-                                <div className="flex items-center gap-2">
-                                  <span className="w-6 h-6 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                                    {index + 1}
-                                  </span>
-                                  <div>
-                                    <h3 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">{req.roomName}</h3>
-                                  </div>
-                                </div>
-
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  {req.dimensions && (
-                                    <span className="text-[10px] font-bold bg-blue-500/10 text-blue-600 border border-blue-500/20 px-2 py-0.5 rounded flex items-center gap-1">
-                                      <Maximize2 size={10} /> {req.dimensions}
-                                    </span>
-                                  )}
-                                  {req.budget && (
-                                    <span className="text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20 px-2 py-0.5 rounded flex items-center gap-1">
-                                      <DollarSign size={10} /> {req.budget}
-                                    </span>
-                                  )}
-                                  {req.interiorType && (
-                                    <span className="text-[10px] font-bold uppercase bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] px-2 py-0.5 rounded">
-                                      {req.interiorType}
-                                    </span>
-                                  )}
-                                  {req.designStyle && (
-                                    <span className="text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2 py-0.5 rounded flex items-center gap-1">
-                                      <Palette size={10} /> {req.designStyle}
-                                    </span>
-                                  )}
-                                  {req.theme && req.theme !== req.designStyle && (
-                                    <span className="text-[10px] font-bold uppercase bg-purple-500/10 text-purple-600 border border-purple-500/20 px-2 py-0.5 rounded flex items-center gap-1">
-                                      <Sparkles size={10} /> {req.theme}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Specific Instructions / Description */}
-                              {req.description && (
-                                <div className="bg-emerald-500/[0.04] border border-emerald-500/20 rounded-lg p-2.5">
-                                  <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 flex items-center gap-1 mb-1">
-                                    <Sparkles size={11} className="text-emerald-600" /> Room Instructions & Notes
-                                  </p>
-                                  <p className="text-xs text-[hsl(var(--foreground))] font-medium leading-relaxed whitespace-pre-wrap">
-                                    {req.description}
-                                  </p>
-                                </div>
-                              )}
-
-                              {/* 2-Col Specs: Functional & Aesthetic */}
-                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                                {/* Functional Column */}
-                                <div className="bg-[hsl(var(--muted)/0.25)] border border-[hsl(var(--border))] rounded-lg p-3 space-y-2">
-                                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5 pb-1 border-b border-[hsl(var(--border))]">
-                                    <Sliders size={12} className="text-emerald-500" /> Functional Requirements
-                                  </h4>
-                                  <div className="space-y-1.5 text-xs">
-                                    {req.roomUsage && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Room Usage</span>
-                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.roomUsage}</span>
-                                      </div>
-                                    )}
-                                    {req.furnitureRequirements && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Furniture Requirements</span>
-                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.furnitureRequirements}</span>
-                                      </div>
-                                    )}
-                                    {req.storage && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Storage & Wardrobes</span>
-                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.storage}</span>
-                                      </div>
-                                    )}
-                                    {req.electricalPoints && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-amber-500 flex items-center gap-1"><Zap size={10} /> Electrical Points</span>
-                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.electricalPoints}</span>
-                                      </div>
-                                    )}
-                                    {req.lightingRequirements && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-amber-500 flex items-center gap-1"><Sun size={10} /> Lighting</span>
-                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.lightingRequirements}</span>
-                                      </div>
-                                    )}
-                                    {req.plumbingRequirements && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-cyan-500 flex items-center gap-1"><Droplets size={10} /> Plumbing</span>
-                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.plumbingRequirements}</span>
-                                      </div>
-                                    )}
-                                    {req.circulation && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Circulation & Clearance</span>
-                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.circulation}</span>
-                                      </div>
-                                    )}
-                                    {req.dimensions && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Dimensions / Carpet Area</span>
-                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.dimensions}</span>
-                                      </div>
-                                    )}
-                                    {!hasFunctional && (
-                                      <p className="text-[11px] text-[hsl(var(--muted-foreground))] italic p-1">No functional requirements specified.</p>
-                                    )}
-                                  </div>
-                                </div>
-
-                                {/* Aesthetic Column */}
-                                <div className="bg-[hsl(var(--muted)/0.25)] border border-[hsl(var(--border))] rounded-lg p-3 space-y-2">
-                                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5 pb-1 border-b border-[hsl(var(--border))]">
-                                    <Palette size={12} className="text-purple-500" /> Aesthetic & Finishes
-                                  </h4>
-                                  <div className="space-y-1.5 text-xs">
-                                    {req.designStyle && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Design Style</span>
-                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.designStyle}</span>
-                                      </div>
-                                    )}
-                                    {req.theme && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Theme</span>
-                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.theme}</span>
-                                      </div>
-                                    )}
-                                    {req.colours && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Colours & Palette</span>
-                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.colours}</span>
-                                      </div>
-                                    )}
-                                    {req.materials && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Materials & Finishes</span>
-                                        <span className="font-semibold text-[hsl(var(--foreground))]">{req.materials}</span>
-                                      </div>
-                                    )}
-                                    {req.flooring && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Flooring</span>
-                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.flooring}</span>
-                                      </div>
-                                    )}
-                                    {req.ceiling && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Ceiling & False Ceiling</span>
-                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.ceiling}</span>
-                                      </div>
-                                    )}
-                                    {req.wallFinishes && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Wall Finishes</span>
-                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.wallFinishes}</span>
-                                      </div>
-                                    )}
-                                    {req.furnitureStyle && (
-                                      <div className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Furniture Style</span>
-                                        <span className="font-medium text-[hsl(var(--foreground))]">{req.furnitureStyle}</span>
-                                      </div>
-                                    )}
-                                    {!hasAesthetic && (
-                                      <p className="text-[11px] text-[hsl(var(--muted-foreground))] italic p-1">No aesthetic requirements specified.</p>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Additional Custom Specifications if any exist */}
-                              {extraEntries.length > 0 && (
-                                <div className="bg-[hsl(var(--muted)/0.2)] border border-[hsl(var(--border))] rounded-lg p-3 space-y-2">
-                                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5 pb-1 border-b border-[hsl(var(--border))]">
-                                    <Box size={12} className="text-indigo-500" /> Additional Specifications & Details
-                                  </h4>
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-xs">
-                                    {extraEntries.map(([k, v]) => (
-                                      <div key={k} className="p-1.5 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.7)]">
-                                        <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">
-                                          {k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}
-                                        </span>
-                                        <span className="font-semibold text-[hsl(var(--foreground))]">
-                                          {typeof v === 'object' ? JSON.stringify(v) : String(v)}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                    {/* Dual-Perspective Comparative Requirements View (Side-by-Side Customer & Technical Specifications) */}
+                    <InteriorComparativeRequirementsView
+                      lead={lead}
+                      technicalPersonName={requirementsInfo.assignedName}
+                      isReadOnly={isReadOnly}
+                      canEdit={!isReadOnly && (canDo('crm_requirements', 'update') || canDo('crm_requirements', 'create'))}
+                      canSendToDrawings={['Under Requirement', 'Requirement Completed'].includes(lead.status)}
+                      currencySymbol={currencySymbol}
+                      onEditTeamRequirements={() => setIsReqModalOpen(true)}
+                      onRescheduleSession={() => setIsSendToReqOpen(true)}
+                      onPassToDrawings={() => setIsSendToDrawingOpen(true)}
+                      onRefresh={fetchData}
+                    />
                   </div>
                 );
               })()}
@@ -3125,12 +2763,14 @@ const { hasPermission: canDo } = usePermissions();
                                 <ExternalLink size={11} /> Preview
                               </a>
                             )}
-                            <button
-                              onClick={() => setIsShareModalOpen(true)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[11px] font-bold active:scale-95"
-                            >
-                              <Share2 size={11} /> {lead.shareSettings?.isPublic ? 'Share Link' : 'Generate Link'}
-                            </button>
+                            {(canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_requirements', 'update') || canDo('crm_drawings', 'update') || canDo('crm_boq', 'update') || canDo('crm_quotations', 'update')) && (
+                              <button
+                                onClick={() => setIsShareModalOpen(true)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[11px] font-bold active:scale-95"
+                              >
+                                <Share2 size={11} /> {lead.shareSettings?.isPublic ? 'Share Link' : 'Generate Link'}
+                              </button>
+                            )}
                           </div>
                         </div>
                       )}
@@ -4193,6 +3833,7 @@ const { hasPermission: canDo } = usePermissions();
         customerId={params.id as string}
         onSuccess={fetchData}
         users={users}
+        clientRequirements={normalizedClientRequirements || []}
         initialRequirements={normalizedRequirements || []}
         initialBudget={lead?.budgetRange || ''}
         currentStatus={lead?.status || ''}

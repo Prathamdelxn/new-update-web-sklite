@@ -37,14 +37,20 @@ import {
 import { InteriorLogSiteVisitModal } from '@/features/interior-new/components/crm/modals/InteriorLogSiteVisitModal';
 import { InteriorLogRequirementsModal } from '@/features/interior-new/components/crm/modals/InteriorLogRequirementsModal';
 import { cn } from '@/lib/utils';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 type TabType = 'measurements' | 'requirements' | 'photos' | 'all';
 
 export default function InteriorSiteDetailsView() {
   const { projectId } = useParams() as { projectId: string };
   const toast = useToast();
+  const { hasPermission: canDo } = usePermissions();
   const [loading, setLoading] = useState(true);
   const [customerData, setCustomerData] = useState<any>(null);
+  const [allCustomers, setAllCustomers] = useState<any[]>([]);
+  const [projectInfo, setProjectInfo] = useState<any>(null);
+  const [selectedCustomerIdToLink, setSelectedCustomerIdToLink] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('measurements');
   const [isSiteVisitModalOpen, setIsSiteVisitModalOpen] = useState(false);
   const [isReqModalOpen, setIsReqModalOpen] = useState(false);
@@ -53,8 +59,21 @@ export default function InteriorSiteDetailsView() {
     try {
       setLoading(true);
       // Fetch CRM customers to find the original lead linked to this project
-      const custRes = await interiorApiClient.get(`/crm/customers`);
-      const customers = custRes.data?.data || custRes.data || [];
+      const [custRes, projRes] = await Promise.allSettled([
+        interiorApiClient.get(`/crm/customers`),
+        interiorApiClient.get(`/projects/${projectId}`)
+      ]);
+
+      let customers: any[] = [];
+      if (custRes.status === 'fulfilled') {
+        customers = custRes.value.data?.data || custRes.value.data || [];
+        setAllCustomers(customers);
+      }
+
+      if (projRes.status === 'fulfilled') {
+        const p = projRes.value.data?.data || projRes.value.data;
+        setProjectInfo(p);
+      }
 
       const customer = customers.find((c: any) => {
         if (!c.linkedProject) return false;
@@ -78,6 +97,49 @@ export default function InteriorSiteDetailsView() {
     loadSiteDetails();
   }, [loadSiteDetails]);
 
+  const handleLinkExistingCustomer = async () => {
+    if (!selectedCustomerIdToLink) {
+      toast.error('Please select a customer to link');
+      return;
+    }
+    try {
+      setActionLoading(true);
+      await interiorApiClient.patch(`/crm/customers/${selectedCustomerIdToLink}`, {
+        linkedProject: projectId,
+      });
+      toast.success('Successfully linked customer to this project');
+      await loadSiteDetails();
+    } catch (err: any) {
+      console.error('Failed to link customer', err);
+      toast.error(err.response?.data?.error || err.message || 'Failed to link customer');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleInitializeSiteProfile = async () => {
+    try {
+      setActionLoading(true);
+      const projName = projectInfo?.name || 'Interior Project';
+      const cleanName = projName.replace(/[^a-zA-Z\s'.-]/g, '').trim() || 'Project Client';
+      const payload = {
+        name: cleanName,
+        mobileNumber: '9876543210',
+        leadSource: 'Existing Customer',
+        status: 'Won',
+        linkedProject: projectId,
+      };
+      await interiorApiClient.post(`/crm/customers`, payload);
+      toast.success('Initialized site measurements profile for this project');
+      await loadSiteDetails();
+    } catch (err: any) {
+      console.error('Failed to initialize site profile', err);
+      toast.error(err.response?.data?.error || err.message || 'Failed to initialize site profile');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-16">
@@ -88,14 +150,60 @@ export default function InteriorSiteDetailsView() {
 
   if (!customerData) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 border border-dashed border-[hsl(var(--border))] rounded-3xl bg-[hsl(var(--card))] max-w-xl mx-auto mt-6 text-center space-y-4 shadow-sm">
-        <div className="w-16 h-16 bg-[hsl(var(--muted))] rounded-full flex items-center justify-center text-[hsl(var(--muted-foreground))]">
-          <ClipboardList size={32} />
+      <div className="flex flex-col items-center justify-center p-8 border border-dashed border-[hsl(var(--border))] rounded-3xl bg-[hsl(var(--card))] max-w-xl mx-auto mt-6 text-center space-y-5 shadow-sm">
+        <div className="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center text-purple-600">
+          <Ruler size={32} />
         </div>
-        <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">No CRM Link Found</h3>
-        <p className="text-sm text-[hsl(var(--muted-foreground))] max-w-sm">
-          This project doesn't have an associated CRM lead record or site visit data linked yet.
-        </p>
+        <div className="space-y-1">
+          <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">No Site Profile Linked</h3>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-sm mx-auto">
+            Link an existing client lead or initialize a new site profile to log room dimensions, structural observations, and requirements.
+          </p>
+        </div>
+
+        {allCustomers.length > 0 && (
+          <div className="w-full max-w-sm space-y-2 pt-2 text-left">
+            <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Link Existing CRM Client</label>
+            <div className="flex gap-2">
+              <select
+                value={selectedCustomerIdToLink}
+                onChange={(e) => setSelectedCustomerIdToLink(e.target.value)}
+                className="flex-1 px-3 py-2 text-xs rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:outline-none"
+              >
+                <option value="">-- Choose client to link --</option>
+                {allCustomers.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name} {c.mobileNumber ? `(${c.mobileNumber})` : ''}
+                  </option>
+                ))}
+              </select>
+              {canDo('crm_leads', 'update') && (
+                <button
+                  type="button"
+                  disabled={actionLoading || !selectedCustomerIdToLink}
+                  onClick={handleLinkExistingCustomer}
+                  className="px-3 py-2 text-xs font-bold rounded-xl bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 transition-colors"
+                >
+                  Link
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="pt-2">
+          {canDo('crm_leads', 'create') && (
+            <button
+              type="button"
+              disabled={actionLoading}
+              onClick={handleInitializeSiteProfile}
+              className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-white shadow-sm flex items-center gap-1.5 transition-all"
+            >
+              {actionLoading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+              Initialize New Site Details Profile
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -116,18 +224,22 @@ export default function InteriorSiteDetailsView() {
           The original CRM lead does not have any recorded requirements, measurements, or site photos.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <button
-            onClick={() => setIsSiteVisitModalOpen(true)}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 shadow-md shadow-purple-600/20"
-          >
-            <Plus size={15} /> Log Site Measurements
-          </button>
-          <button
-            onClick={() => setIsReqModalOpen(true)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 shadow-md shadow-emerald-600/20"
-          >
-            <Plus size={15} /> Add Requirements
-          </button>
+          {canDo('crm_site_visits', 'update') && (
+            <button
+              onClick={() => setIsSiteVisitModalOpen(true)}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 shadow-md shadow-purple-600/20"
+            >
+              <Plus size={15} /> Log Site Measurements
+            </button>
+          )}
+          {canDo('crm_requirements', 'update') && (
+            <button
+              onClick={() => setIsReqModalOpen(true)}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 shadow-md shadow-emerald-600/20"
+            >
+              <Plus size={15} /> Add Requirements
+            </button>
+          )}
         </div>
 
         {customerData && (
@@ -176,18 +288,22 @@ export default function InteriorSiteDetailsView() {
         </div>
 
         <div className="flex items-center flex-wrap gap-2.5 shrink-0">
-          <button
-            onClick={() => setIsSiteVisitModalOpen(true)}
-            className="inline-flex items-center justify-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-purple-600/20"
-          >
-            <Pencil size={13} /> Edit Measurements & Photos
-          </button>
-          <button
-            onClick={() => setIsReqModalOpen(true)}
-            className="inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-emerald-600/20"
-          >
-            <PenTool size={13} /> Edit Requirements
-          </button>
+          {canDo('crm_site_visits', 'update') && (
+            <button
+              onClick={() => setIsSiteVisitModalOpen(true)}
+              className="inline-flex items-center justify-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-purple-600/20"
+            >
+              <Pencil size={13} /> Edit Measurements & Photos
+            </button>
+          )}
+          {canDo('crm_requirements', 'update') && (
+            <button
+              onClick={() => setIsReqModalOpen(true)}
+              className="inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-emerald-600/20"
+            >
+              <PenTool size={13} /> Edit Requirements
+            </button>
+          )}
         </div>
       </div>
 
@@ -275,28 +391,34 @@ export default function InteriorSiteDetailsView() {
 
         <div className="hidden md:flex items-center gap-2 pr-2">
           {activeTab === 'measurements' && (
-            <button
-              onClick={() => setIsSiteVisitModalOpen(true)}
-              className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-600 hover:text-purple-700 bg-purple-500/10 hover:bg-purple-500/20 px-2.5 py-1 rounded-lg transition-colors"
-            >
-              <Pencil size={11} /> Edit Dimensions
-            </button>
+            canDo('crm_site_visits', 'update') && (
+              <button
+                onClick={() => setIsSiteVisitModalOpen(true)}
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-600 hover:text-purple-700 bg-purple-500/10 hover:bg-purple-500/20 px-2.5 py-1 rounded-lg transition-colors"
+              >
+                <Pencil size={11} /> Edit Dimensions
+              </button>
+            )
           )}
           {activeTab === 'requirements' && (
-            <button
-              onClick={() => setIsReqModalOpen(true)}
-              className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-lg transition-colors"
-            >
-              <PenTool size={11} /> Edit Specs
-            </button>
+            canDo('crm_requirements', 'update') && (
+              <button
+                onClick={() => setIsReqModalOpen(true)}
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-lg transition-colors"
+              >
+                <PenTool size={11} /> Edit Specs
+              </button>
+            )
           )}
           {activeTab === 'photos' && (
-            <button
-              onClick={() => setIsSiteVisitModalOpen(true)}
-              className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 px-2.5 py-1 rounded-lg transition-colors"
-            >
-              <Plus size={11} /> Add Photos
-            </button>
+            canDo('crm_site_visits', 'update') && (
+              <button
+                onClick={() => setIsSiteVisitModalOpen(true)}
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 px-2.5 py-1 rounded-lg transition-colors"
+              >
+                <Plus size={11} /> Add Photos
+              </button>
+            )
           )}
         </div>
       </div>
@@ -317,12 +439,14 @@ export default function InteriorSiteDetailsView() {
                 <Ruler size={16} className="text-purple-600" />
                 Spatial & Structural Measurements
               </h3>
-              <button
-                onClick={() => setIsSiteVisitModalOpen(true)}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-600 hover:text-purple-700 bg-purple-500/10 hover:bg-purple-500/20 px-3 py-1.5 rounded-xl border border-purple-500/20 transition-all active:scale-95"
-              >
-                <Pencil size={12} /> Edit Measurements
-              </button>
+              {canDo('crm_site_visits', 'update') && (
+                <button
+                  onClick={() => setIsSiteVisitModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-600 hover:text-purple-700 bg-purple-500/10 hover:bg-purple-500/20 px-3 py-1.5 rounded-xl border border-purple-500/20 transition-all active:scale-95"
+                >
+                  <Pencil size={12} /> Edit Measurements
+                </button>
+              )}
             </div>
 
             {(customerData.remarks || customerData.siteMeasurements?.notes || customerData.siteVisitScheduledDate) && (
@@ -546,12 +670,14 @@ export default function InteriorSiteDetailsView() {
                 <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-sm mx-auto">
                   Log carpet area, ceiling heights, door/window openings, and MEP utilities.
                 </p>
-                <button
-                  onClick={() => setIsSiteVisitModalOpen(true)}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md shadow-purple-600/20"
-                >
-                  <Plus size={13} /> Log Measurements Now
-                </button>
+                {canDo('crm_site_visits', 'update') && (
+                  <button
+                    onClick={() => setIsSiteVisitModalOpen(true)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md shadow-purple-600/20"
+                  >
+                    <Plus size={13} /> Log Measurements Now
+                  </button>
+                )}
               </div>
             )}
           </motion.div>
@@ -581,12 +707,14 @@ export default function InteriorSiteDetailsView() {
                   <span className="text-xs font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl">
                     {requirements.length} Spaces to Execute
                   </span>
-                  <button
-                    onClick={() => setIsReqModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 rounded-xl border border-emerald-500/20 transition-all active:scale-95"
-                  >
-                    <PenTool size={12} /> Edit Requirements
-                  </button>
+                  {canDo('crm_requirements', 'update') && (
+                    <button
+                      onClick={() => setIsReqModalOpen(true)}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 rounded-xl border border-emerald-500/20 transition-all active:scale-95"
+                    >
+                      <PenTool size={12} /> Edit Requirements
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -807,12 +935,14 @@ export default function InteriorSiteDetailsView() {
                   <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-sm mx-auto">
                     Configure room-by-room functional and aesthetic specifications for this project.
                   </p>
-                  <button
-                    onClick={() => setIsReqModalOpen(true)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md shadow-emerald-600/20"
-                  >
-                    <Plus size={13} /> Add Room Requirements
-                  </button>
+                  {canDo('crm_requirements', 'update') && (
+                    <button
+                      onClick={() => setIsReqModalOpen(true)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md shadow-emerald-600/20"
+                    >
+                      <Plus size={13} /> Add Room Requirements
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -839,12 +969,14 @@ export default function InteriorSiteDetailsView() {
                     {sitePhotos.length} Photos
                   </span>
                 </div>
-                <button
-                  onClick={() => setIsSiteVisitModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 rounded-xl border border-blue-500/20 transition-all active:scale-95"
-                >
-                  <Pencil size={12} /> Manage Photos
-                </button>
+                {canDo('crm_site_visits', 'update') && (
+                  <button
+                    onClick={() => setIsSiteVisitModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 rounded-xl border border-blue-500/20 transition-all active:scale-95"
+                  >
+                    <Pencil size={12} /> Manage Photos
+                  </button>
+                )}
               </div>
 
               {hasPhotos ? (
@@ -873,12 +1005,14 @@ export default function InteriorSiteDetailsView() {
                   <ImageIcon className="w-8 h-8 text-[hsl(var(--muted-foreground))] opacity-60" />
                   <p className="text-xs font-bold text-[hsl(var(--foreground))]">No Site Photos Uploaded</p>
                   <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Upload site inspection photos & progress views.</p>
-                  <button
-                    onClick={() => setIsSiteVisitModalOpen(true)}
-                    className="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md shadow-blue-600/20"
-                  >
-                    <Plus size={12} /> Upload Site Photos
-                  </button>
+                  {canDo('crm_site_visits', 'update') && (
+                    <button
+                      onClick={() => setIsSiteVisitModalOpen(true)}
+                      className="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md shadow-blue-600/20"
+                    >
+                      <Plus size={12} /> Upload Site Photos
+                    </button>
+                  )}
                 </div>
               )}
             </div>

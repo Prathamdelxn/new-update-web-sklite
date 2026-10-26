@@ -6,6 +6,7 @@ import React, { useState, useMemo } from 'react';
 import { ArrowRight, User, FileText, PenTool, Pencil, Search, ChevronLeft, ChevronRight, XCircle, Home, Layers } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 interface Props {
   leads: any[];
@@ -24,6 +25,7 @@ export const InteriorRequirementDesignView = ({
   onMarkAsLost,
 }: Props) => {
   const router = useRouter();
+const { hasPermission: canDo } = usePermissions();
   const handlePassToNext = onPassToDrawing || onPassToQuotations;
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -214,24 +216,26 @@ export const InteriorRequirementDesignView = ({
 
                   {/* Actions Ribbon */}
                   <div className="flex items-center justify-between gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => onLogRequirements(lead._id)}
-                      className={cn(
-                        'inline-flex items-center justify-center rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
-                        lead.requirements && lead.requirements.length > 0
-                          ? 'p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
-                          : 'gap-1 px-2.5 py-1.5 bg-emerald-600 text-white'
-                      )}
-                      title="Configure Rooms & Scope"
-                    >
-                      {lead.requirements && lead.requirements.length > 0 ? (
-                        <Pencil size={13} className="text-emerald-600" />
-                      ) : (
-                        <>
-                          <Layers size={11} /> Log Scope
-                        </>
-                      )}
-                    </button>
+                    {(canDo('crm_requirements', 'create') || canDo('crm_requirements', 'update')) && (
+                      <button
+                        onClick={() => onLogRequirements(lead._id)}
+                        className={cn(
+                          'inline-flex items-center justify-center rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
+                          lead.requirements && lead.requirements.length > 0
+                            ? 'p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
+                            : 'gap-1 px-2.5 py-1.5 bg-emerald-600 text-white'
+                        )}
+                        title="Configure Rooms & Scope"
+                      >
+                        {lead.requirements && lead.requirements.length > 0 ? (
+                          <Pencil size={13} className="text-emerald-600" />
+                        ) : (
+                          <>
+                            <Layers size={11} /> Log Scope
+                          </>
+                        )}
+                      </button>
+                    )}
 
                     {lead.requirements && lead.requirements.length > 0 && handlePassToNext && (
                       (Boolean(Array.isArray(lead.quotations) && lead.quotations.some((q: any) => ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase()))) ||
@@ -241,12 +245,14 @@ export const InteriorRequirementDesignView = ({
                           Passed 
                         </span>
                       ) : (
-                        <button
-                          onClick={() => handlePassToNext(lead._id)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
-                        >
-                          Pass to Drawing <ArrowRight size={11} />
-                        </button>
+                        (canDo('crm_requirements', 'update') || canDo('crm_drawings', 'update') || canDo('crm_drawings', 'create')) && (
+                          <button
+                            onClick={() => handlePassToNext(lead._id)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                          >
+                            Pass to Drawing <ArrowRight size={11} />
+                          </button>
+                        )
                       )
                     )}
                   </div>
@@ -352,22 +358,24 @@ export const InteriorRequirementDesignView = ({
                       {/* 5. Actions */}
                       <td className="px-4.5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            onClick={() => onLogRequirements(lead._id)}
-                            className={cn(
-                              "inline-flex items-center justify-center rounded-lg text-xs font-bold transition-all border cursor-pointer shadow-xs",
-                              lead.requirements && lead.requirements.length > 0
-                                ? "p-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
-                                : "gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
-                            )}
-                            title="Configure Rooms & Scope"
-                          >
-                            {lead.requirements && lead.requirements.length > 0 ? (
-                              <Pencil size={13} className="text-emerald-600" />
-                            ) : (
-                              '+ Rooms'
-                            )}
-                          </button>
+                          {(canDo('crm_requirements', 'create') || canDo('crm_requirements', 'update')) && (
+                            <button
+                              onClick={() => onLogRequirements(lead._id)}
+                              className={cn(
+                                "inline-flex items-center justify-center rounded-lg text-xs font-bold transition-all border cursor-pointer shadow-xs",
+                                lead.requirements && lead.requirements.length > 0
+                                  ? "p-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
+                                  : "gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
+                              )}
+                              title="Configure Rooms & Scope"
+                            >
+                              {lead.requirements && lead.requirements.length > 0 ? (
+                                <Pencil size={13} className="text-emerald-600" />
+                              ) : (
+                                '+ Rooms'
+                              )}
+                            </button>
+                          )}
                           {lead.requirements &&
                             lead.requirements.length > 0 &&
                             handlePassToNext &&
@@ -381,23 +389,27 @@ export const InteriorRequirementDesignView = ({
                                 Passed 
                               </span>
                             ) : (
-                              <button
-                                onClick={() => handlePassToNext(lead._id)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                title="Pass to 2D & 3D Drawings"
-                              >
-                                Pass <ArrowRight size={11} />
-                              </button>
+                              (canDo('crm_requirements', 'update') || canDo('crm_drawings', 'update') || canDo('crm_drawings', 'create')) && (
+                                <button
+                                  onClick={() => handlePassToNext(lead._id)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                  title="Pass to 2D & 3D Drawings"
+                                >
+                                  Pass <ArrowRight size={11} />
+                                </button>
+                              )
                             ))}
                           
                           {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
-                              className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
-                              title="Mark as Lost"
-                            >
-                              <XCircle size={13} />
-                            </button>
+                            (canDo('crm_requirements', 'update') || canDo('crm_leads', 'update')) && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
+                                className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
+                                title="Mark as Lost"
+                              >
+                                <XCircle size={13} />
+                              </button>
+                            )
                           )}
                         </div>
                       </td>

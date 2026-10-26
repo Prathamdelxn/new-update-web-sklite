@@ -36,6 +36,8 @@ import interiorApiClient from '@/services/interiorApi.client';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
+import { useCurrency } from '@/hooks/useCurrency';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 
 interface POItemInput {
   name: string;
@@ -50,7 +52,9 @@ interface InteriorProcurementViewProps {
 
 export default function InteriorProcurementView({ projectId }: InteriorProcurementViewProps) {
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
   const { confirm } = useConfirm();
+  const { currencySymbol, formatExactCurrency } = useCurrency();
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<'procurement' | 'inventory'>('procurement');
@@ -99,6 +103,9 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
     referenceNo: '',
     remarks: '',
     paymentDate: new Date().toISOString().split('T')[0],
+    projectName: '',
+    projectLocation: '',
+    invoiceNo: '',
   });
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
 
@@ -106,7 +113,54 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [updatingPo, setUpdatingPo] = useState(false);
   const [isSendRFQOpen, setIsSendRFQOpen] = useState(false);
+  const [sentEmailVendorIdsByPo, setSentEmailVendorIdsByPo] = useState<Record<string, Set<string>>>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('interior_rfq_sent_vendors');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          const result: Record<string, Set<string>> = {};
+          for (const [poId, vendorArray] of Object.entries(parsed)) {
+            if (Array.isArray(vendorArray)) {
+              result[poId] = new Set(vendorArray);
+            }
+          }
+          return result;
+        }
+      } catch (e) {
+        console.error('Failed to parse saved sent vendors', e);
+      }
+    }
+    return {};
+  });
+
+  useEffect(() => {
+    try {
+      const toSave: Record<string, string[]> = {};
+      for (const [poId, vendorSet] of Object.entries(sentEmailVendorIdsByPo)) {
+        toSave[poId] = Array.from(vendorSet);
+      }
+      localStorage.setItem('interior_rfq_sent_vendors', JSON.stringify(toSave));
+    } catch (e) {
+      console.error('Failed to save sent vendors', e);
+    }
+  }, [sentEmailVendorIdsByPo]);
   const [isGRNOpen, setIsGRNOpen] = useState(false);
+
+  const [isLinkActive, setIsLinkActive] = useState(true);
+  const [linkExpiry, setLinkExpiry] = useState('12h');
+
+  // Sync link active state with selected PO
+  useEffect(() => {
+    if (selectedPo) {
+      if (selectedPo.materialName && selectedPo.materialName.includes('||CLOSED||')) {
+        setIsLinkActive(false);
+      } else {
+        setIsLinkActive(true);
+      }
+    }
+  }, [selectedPo]);
+
 
   const [selectedStock, setSelectedStock] = useState<any>(null);
   const [isInstallOpen, setIsInstallOpen] = useState(false);
@@ -122,7 +176,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   const [newMaterialUnit, setNewMaterialUnit] = useState('');
   const [newMaterialStock, setNewMaterialStock] = useState<number | ''>(0);
   const [editingMaterialId, setEditingMaterialId] = useState<string | null>(null);
-  const [viewingImages, setViewingImages] = useState<{proofUrl?: string, invoiceUrl?: string} | null>(null);
+  const [viewingImages, setViewingImages] = useState<{ proofUrl?: string, invoiceUrl?: string } | null>(null);
 
   const invalidateProcurementData = () => {
     queryClient.invalidateQueries({ queryKey: ['project-materials', projectId] });
@@ -145,12 +199,15 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
         type: 'outgoing',
         poNo: payingPo.poNumber || payingPo._id,
         vendorName: payingPo.vendorName || payingPo.vendorId?.name || 'Vendor',
-        category: payingPo.materialName || 'Wood & Plywood',
+        category: payingPo.materialName?.replace(' ||CLOSED||', '') || 'Wood & Plywood',
         amount: parseFloat(paymentForm.amount),
         paymentDate: paymentForm.paymentDate,
         paymentMethod: paymentForm.paymentMethod,
         referenceNo: paymentForm.referenceNo.trim(),
         remarks: paymentForm.remarks.trim(),
+        projectName: paymentForm.projectName?.trim(),
+        projectLocation: paymentForm.projectLocation?.trim(),
+        invoiceNo: paymentForm.invoiceNo?.trim(),
       });
       toast.success('Vendor payment recorded successfully in Payments Outflow!');
       setIsPayModalOpen(false);
@@ -200,13 +257,13 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       setCreatingMaterial(true);
       if (editingMaterialId) {
         await interiorProjectService.updateInventoryMaterial(projectId, editingMaterialId, {
-          productName: newMaterialName,
+          productName: newMaterialName?.replace(' ||CLOSED||', ''),
           unit: newMaterialUnit,
         });
         toast.success('Material updated successfully');
       } else {
         await interiorProjectService.createInventoryMaterial(projectId, {
-          productName: newMaterialName,
+          productName: newMaterialName?.replace(' ||CLOSED||', ''),
           unit: newMaterialUnit,
           initialStock: newMaterialStock === '' ? 0 : Number(newMaterialStock),
         });
@@ -298,11 +355,67 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
     if (!selectedPo) return;
     try {
       setUpdatingPo(true);
-      setSelectedPo({ ...selectedPo, vendorName, status: 'approved' });
-      await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { vendorName, status: 'approved' });
-      toast.success('Vendor selected and PO approved!');
+
+      // Find the selected quote
+      const quote = selectedPo.quotes?.find((q: any) => q.vendorName === vendorName);
+
+      let updatedItems = selectedPo.items || [];
+      let totalAmount = selectedPo.amount || 0;
+
+      if (quote && quote.rates && quote.rates.length > 0) {
+        // Update items with the new unit prices
+        updatedItems = updatedItems.map((item: any) => {
+          const rateInfo = quote.rates.find((r: any) => r.itemId === (item._id || item.id) || r.name === item.name);
+          return {
+            ...item,
+            unitPrice: rateInfo ? rateInfo.unitPrice : item.unitPrice,
+            totalPrice: rateInfo ? (rateInfo.unitPrice * (item.quantity || 1)) : item.totalPrice
+          };
+        });
+
+        // Recalculate total amount
+        totalAmount = updatedItems.reduce((sum: number, item: any) => sum + (item.totalPrice || 0), 0);
+      }
+
+      const updatedPoPayload = {
+        vendorName,
+        status: 'approved',
+        items: updatedItems,
+        amount: totalAmount
+      };
+
+      setSelectedPo({ ...selectedPo, ...updatedPoPayload });
+      await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, updatedPoPayload);
+      
+      const vendorInfo = vendors?.find((v: any) => v.name === vendorName);
+      const targetEmail = quote?.email || quote?.vendorEmail || quote?.vendorContact || vendorInfo?.email;
+      const targetPhone = quote?.phoneNumber || quote?.phone || vendorInfo?.phoneNumber || vendorInfo?.phone;
+      const poLink = `${window.location.origin}/rfq/${selectedPo._id}`;
+
+      if (targetEmail) {
+        try {
+          await interiorProjectService.sendAwardEmail(projectId, selectedPo._id, {
+            email: targetEmail,
+            vendorName: vendorName,
+            materialName: selectedPo.materialName?.replace(' ||CLOSED||', '').trim(),
+            poLink: poLink
+          });
+          toast.success('Vendor selected, PO approved, and Email Sent automatically!');
+        } catch (emailErr) {
+          console.error('Failed to send automated email', emailErr);
+          toast.error('PO approved, but failed to send automated email.');
+        }
+      } else if (targetPhone) {
+        // Fallback to WhatsApp if no email is found but a phone number is present
+        const waMessage = encodeURIComponent(`Hello ${vendorName},\n\nWe are pleased to inform you that you have been awarded the Purchase Order for ${selectedPo.materialName?.replace(' ||CLOSED||', '').trim()}.\n\nPlease review your PO details here:\n${poLink}\n\nThank you.`);
+        window.open(`https://wa.me/${targetPhone}?text=${waMessage}`, '_blank');
+        toast.success('Vendor selected and PO approved! Opened WhatsApp.');
+      } else {
+        toast.success('Vendor selected and PO approved!');
+      }
+
       setIsDetailOpen(false);
-      await autoCreatePaymentForPo({ ...selectedPo, vendorName, status: 'approved' });
+      await autoCreatePaymentForPo({ ...selectedPo, ...updatedPoPayload });
       invalidateProcurementData();
     } catch (err) {
       console.error('Failed to update vendor', err);
@@ -333,13 +446,13 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
         invoiceUrl,
         receivedAt: new Date().toISOString()
       };
-      
+
       let currentGrns = selectedPo.grns;
       if (!currentGrns && selectedPo.grnData?.allGrns) {
-        try { currentGrns = JSON.parse(selectedPo.grnData.allGrns); } catch(e) {}
+        try { currentGrns = JSON.parse(selectedPo.grnData.allGrns); } catch (e) { }
       }
       if (!currentGrns) currentGrns = selectedPo.grnData ? [selectedPo.grnData] : [];
-      
+
       const updatedGrns = [...currentGrns, newGrn];
 
       // Calculate if fully delivered
@@ -356,13 +469,13 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
       const newStatus = fullyDelivered ? 'delivered' : 'partially_delivered';
       const updatedPo = { ...selectedPo, status: newStatus, grns: updatedGrns, grnData: { allGrns: JSON.stringify(updatedGrns) } };
-      
-      await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { 
+
+      await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, {
         status: newStatus,
         grns: updatedGrns,
         grnData: { allGrns: JSON.stringify(updatedGrns) }
       });
-      
+
       setSelectedPo(updatedPo);
       await autoCreatePaymentForPo(updatedPo);
       invalidateProcurementData();
@@ -376,9 +489,9 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
   const handleSaveRates = async () => {
     if (!selectedPo) return;
-    
+
     if (selectedPo.status === 'approved') {
-      const formattedAmount = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(selectedPo.amount || 0);
+      const formattedAmount = formatCost(selectedPo.amount || 0);
       const ok = await confirm({
         title: 'Approve & Lock PO',
         message: `You are about to assign this PO to ${selectedPo.vendorName || 'the vendor'} and lock in the final rates at ${formattedAmount}. This cannot be easily undone. Do you want to proceed?`,
@@ -390,20 +503,20 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
     try {
       setUpdatingPo(true);
-      await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { 
+      await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, {
         vendorName: selectedPo.vendorName,
         status: selectedPo.status,
-        items: selectedPo.items, 
-        amount: selectedPo.amount 
+        items: selectedPo.items,
+        amount: selectedPo.amount
       });
       if (selectedPo.status === 'approved') {
         await autoCreatePaymentForPo(selectedPo);
       }
       toast.success('PO Details saved successfully');
       invalidateProcurementData();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save PO details', err);
-      toast.error('Failed to save details');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to save details');
     } finally {
       setUpdatingPo(false);
     }
@@ -467,15 +580,15 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
   const pipelines = [
     { key: 'requested', label: 'Material Request', icon: FileText, color: 'text-purple-500' },
+    { key: 'rfq', label: 'RFQ', icon: FileText, color: 'text-indigo-400' },
     { key: 'pending', label: 'Purchase Order', icon: Clock, color: 'text-slate-500' },
     { key: 'approved', label: 'Approved PO', icon: ShoppingCart, color: 'text-blue-500' },
-    { key: 'dispatched', label: 'In Transit', icon: Truck, color: 'text-indigo-500' },
     { key: 'partially_delivered', label: 'Partial Delivery', icon: AlertCircle, color: 'text-yellow-500' },
     { key: 'delivered', label: 'Delivered', icon: Wrench, color: 'text-emerald-500' },
   ];
 
   const formatCost = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount || 0);
+    return formatExactCurrency(amount || 0);
   };
 
   if (loading) {
@@ -509,7 +622,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
           <div>
             <p className="text-xs text-[hsl(var(--muted-foreground))]">Active Purchase Orders</p>
             <p className="text-xl font-bold mt-1">
-              {pos.filter((po: any) => ['approved', 'dispatched'].includes(po.status)).length} POs
+              {pos.filter((po: any) => ['approved'].includes(po.status)).length} POs
             </p>
           </div>
           <Truck className="w-8 h-8 text-amber-500/20" />
@@ -554,29 +667,35 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
           {activeTab === 'procurement' ? (
             <>
               {activePipeline === 'requested' && (
-                <Button onClick={() => setIsAddPoOpen(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Request Material
-                </Button>
+                canDo('procurement', 'create') && (
+                  <Button onClick={() => setIsAddPoOpen(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Request Material
+                  </Button>
+                )
               )}
               {activePipeline === 'pending' && (
-                <Button onClick={() => setIsAddPoOpen(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create PO
-                </Button>
+                canDo('procurement', 'create') && (
+                  <Button onClick={() => setIsAddPoOpen(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create PO
+                  </Button>
+                )
               )}
             </>
           ) : (
-            <Button onClick={() => {
-              setEditingMaterialId(null);
-              setNewMaterialName('');
-              setNewMaterialUnit('');
-              setNewMaterialStock(0);
-              setIsCreateMaterialOpen(true);
-            }}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Material
-            </Button>
+            canDo('inventory', 'create') && (
+              <Button onClick={() => {
+                setEditingMaterialId(null);
+                setNewMaterialName('');
+                setNewMaterialUnit('');
+                setNewMaterialStock(0);
+                setIsCreateMaterialOpen(true);
+              }}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Material
+              </Button>
+            )
           )}
         </div>
       </div>
@@ -639,7 +758,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                 let receivedValue = 0;
                 let parsedGrns = item.grns;
                 if (!parsedGrns && item.grnData?.allGrns) {
-                  try { parsedGrns = JSON.parse(item.grnData.allGrns); } catch(e) {}
+                  try { parsedGrns = JSON.parse(item.grnData.allGrns); } catch (e) { }
                 }
                 if (!parsedGrns && item.grnData) {
                   parsedGrns = [item.grnData];
@@ -653,7 +772,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                     receivedValue += (totalReceived * (poItem.unitPrice || 0));
                   });
                 }
-                
+
                 let suggestedPayment = remainingBalance;
                 if (receivedValue > 0) {
                   suggestedPayment = Math.max(0, receivedValue - poPaidAmount);
@@ -681,7 +800,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                             </span>
                           ) : isPartiallyPaid ? (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                              Part Paid (₹{poPaidAmount})
+                              Part Paid ({currencySymbol} {poPaidAmount})
                             </span>
                           ) : (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
@@ -691,7 +810,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         </div>
                         <span className="font-bold text-[hsl(var(--foreground))] text-sm">{formatCost(item.amount)}</span>
                       </div>
-                      <h4 className="text-base font-bold text-[hsl(var(--foreground))] line-clamp-1">{item.materialName}</h4>
+                      <h4 className="text-base font-bold text-[hsl(var(--foreground))] line-clamp-1">{item.materialName?.replace(' ||CLOSED||', '')}</h4>
                       {item.status !== 'requested' && item.vendorName && item.vendorName !== 'Unassigned' && (
                         <p className="text-xs text-[hsl(var(--muted-foreground))] truncate mt-1">Vendor: {item.vendorName}</p>
                       )}
@@ -705,54 +824,71 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         </span>
                       )}
                     </div>
-                    
+
                     {activePipeline === 'requested' && (
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedPo(item);
-                          setIsSendRFQOpen(true);
-                        }}
-                        className="w-full mt-2"
-                        size="sm"
-                      >
-                        Create PO
-                      </Button>
+                      canDo('procurement', 'update') && (
+                        <Button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            try {
+                              await interiorProjectService.updatePurchaseOrder(projectId, item._id, { status: 'rfq' });
+                              setActivePipeline('rfq'); // Automatically jump to the RFQ tab
+                              setSelectedPo({ ...item, status: 'rfq' });
+                              setIsDetailOpen(true);
+                              invalidateProcurementData();
+                            } catch (err) {
+                              console.error('Failed to update status to RFQ', err);
+                              toast.error((err as any)?.response?.data?.message || 'Failed to update RFQ status');
+                            }
+                          }}
+                          className="w-full mt-2"
+                          size="sm"
+                        >
+                          Request for RFQ
+                        </Button>
+                      )
                     )}
-                    {(activePipeline === 'dispatched' || activePipeline === 'partially_delivered') && (
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedPo(item);
-                          setIsGRNOpen(true);
-                        }}
-                        className="w-full mt-2 bg-emerald-500 hover:bg-emerald-600 text-white"
-                        size="sm"
-                      >
-                        Receive Material
-                      </Button>
+                    {(activePipeline === 'partially_delivered') && (
+                      canDo('procurement', 'update') && (
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedPo(item);
+                            setIsGRNOpen(true);
+                          }}
+                          className="w-full mt-2 bg-emerald-500 hover:bg-emerald-600 text-white"
+                          size="sm"
+                        >
+                          Receive Material
+                        </Button>
+                      )
                     )}
-                    {!isFullyPaid && ['approved', 'dispatched', 'partially_delivered', 'delivered'].includes(item.status) && (
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setPayingPo(item);
-                          setPaymentForm({
-                            amount: suggestedPayment.toString(),
-                            paymentMethod: 'Bank Transfer',
-                            referenceNo: '',
-                            remarks: `Payment for PO ${item.poNumber} (${item.materialName})`,
-                            paymentDate: new Date().toISOString().split('T')[0],
-                          });
-                          setIsPayModalOpen(true);
-                        }}
-                        variant="outline"
-                        size="sm"
-                        className="w-full mt-2 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 cursor-pointer flex items-center justify-center gap-1.5"
-                      >
-                        <CreditCard className="w-3.5 h-3.5" />
-                        Pay Vendor (₹{suggestedPayment.toLocaleString('en-IN')})
-                      </Button>
+                    {!isFullyPaid && ['approved', 'partially_delivered', 'delivered'].includes(item.status) && (
+                      canDo('financials', 'create') && (
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPayingPo(item);
+                            setPaymentForm({
+                              amount: suggestedPayment.toString(),
+                              paymentMethod: 'Bank Transfer',
+                              referenceNo: '',
+                              remarks: `Payment for PO ${item.poNumber} (${item.materialName?.replace(' ||CLOSED||', '')})`,
+                              paymentDate: new Date().toISOString().split('T')[0],
+                              projectName: '',
+                              projectLocation: '',
+                              invoiceNo: '',
+                            });
+                            setIsPayModalOpen(true);
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="w-full mt-2 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                          <CreditCard className="w-3.5 h-3.5" />
+                          Pay Vendor ({currencySymbol} {suggestedPayment.toLocaleString()})
+                        </Button>
+                      )
                     )}
                   </motion.div>
                 );
@@ -799,32 +935,38 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                               Unit: <span className="font-semibold text-[hsl(var(--foreground))]">{item.unit}</span>
                             </p>
                             <div className="flex items-center gap-1">
-                              <button onClick={() => {
-                                setEditingMaterialId(item._id);
-                                setNewMaterialName(item.productName);
-                                setNewMaterialUnit(item.unit);
-                                setNewMaterialStock(''); // Not updated on edit
-                                setIsCreateMaterialOpen(true);
-                              }} className="p-1 text-[hsl(var(--muted-foreground))] hover:text-blue-500 rounded hover:bg-blue-50 transition-colors" title="Edit Material">
-                                <Pencil className="w-3.5 h-3.5" />
-                              </button>
-                              <button onClick={() => handleDeleteMaterial(item)} className="p-1 text-[hsl(var(--muted-foreground))] hover:text-red-500 rounded hover:bg-red-50 transition-colors" title="Delete Material">
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                              {canDo('inventory', 'update') && (
+                                <button onClick={() => {
+                                  setEditingMaterialId(item._id);
+                                  setNewMaterialName(item.productName);
+                                  setNewMaterialUnit(item.unit);
+                                  setNewMaterialStock(''); // Not updated on edit
+                                  setIsCreateMaterialOpen(true);
+                                }} className="p-1 text-[hsl(var(--muted-foreground))] hover:text-blue-500 rounded hover:bg-blue-50 transition-colors" title="Edit Material">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              {canDo('inventory', 'delete') && (
+                                <button onClick={() => handleDeleteMaterial(item)} className="p-1 text-[hsl(var(--muted-foreground))] hover:text-red-500 rounded hover:bg-red-50 transition-colors" title="Delete Material">
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                             </div>
                           </div>
                         </div>
-                        <Button
-                          disabled={available <= 0}
-                          onClick={() => {
-                            setSelectedStock(item);
-                            setIsInstallOpen(true);
-                          }}
-                          size="sm"
-                          className="text-xs h-8 px-3 shrink-0"
-                        >
-                          <Wrench className="w-3 h-3 mr-1.5" /> Log Used
-                        </Button>
+                        {canDo('inventory', 'create') && (
+                          <Button
+                            disabled={available <= 0}
+                            onClick={() => {
+                              setSelectedStock(item);
+                              setIsInstallOpen(true);
+                            }}
+                            size="sm"
+                            className="text-xs h-8 px-3 shrink-0"
+                          >
+                            <Wrench className="w-3 h-3 mr-1.5" /> Log Used
+                          </Button>
+                        )}
                       </div>
 
                       <div className="grid grid-cols-3 gap-2 text-center bg-[hsl(var(--card))] p-3 rounded-lg border border-[hsl(var(--border))]">
@@ -943,16 +1085,16 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                           value={newItem.quantity || ''}
                           onChange={(e) => setNewItem({ ...newItem, quantity: parseInt(e.target.value) || 0 })}
                         />
-                        <Input 
-                          placeholder="Unit" 
-                          value={newItem.unit} 
-                          disabled 
+                        <Input
+                          placeholder="Unit"
+                          value={newItem.unit}
+                          disabled
                           className="bg-slate-50 opacity-70 cursor-not-allowed"
                         />
                         <Input
                           type="number"
                           min="0"
-                          placeholder="Rate (₹)"
+                          placeholder={`Rate (${currencySymbol})`}
                           value={newItem.unitPrice || ''}
                           onChange={(e) => setNewItem({ ...newItem, unitPrice: parseFloat(e.target.value) || 0 })}
                         />
@@ -1028,17 +1170,19 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       {/* PO Detail & Status Update Drawer */}
       <AnimatePresence>
         {isDetailOpen && selectedPo && (
-          <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              className="w-full max-w-md border-l border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-2xl flex flex-col h-full overflow-hidden"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-4xl border border-[hsl(var(--border))] rounded-2xl bg-[hsl(var(--card))] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <div>
                   <span className="text-[10px] font-mono font-bold bg-[hsl(var(--muted))] px-2 py-0.5 rounded-full uppercase">{selectedPo.poNumber}</span>
-                  <h3 className="text-base font-bold mt-1 text-[hsl(var(--foreground))]">Purchase Order Details</h3>
+                  <h3 className="text-base font-bold mt-1 text-[hsl(var(--foreground))]">
+                    {selectedPo.status === 'requested' ? 'Material Request Details' : selectedPo.status === 'rfq' ? 'RFQ Details' : 'Purchase Order Details'}
+                  </h3>
                 </div>
                 <button onClick={() => setIsDetailOpen(false)} className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">
                   <X className="w-4 h-4" />
@@ -1046,8 +1190,406 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
               </div>
 
               <div className="p-5 space-y-6 flex-1 overflow-y-auto">
-                {(() => {
-                  const isApprovedOrLocked = ['approved', 'dispatched', 'partially_delivered', 'delivered'].includes(selectedPo.status);
+                {selectedPo.status === 'requested' ? (
+                  <div className="space-y-6">
+                    <div className="space-y-0.5 border border-[hsl(var(--border))] rounded-lg p-3 bg-[hsl(var(--muted)/0.1)]">
+                      <span className="font-semibold text-[hsl(var(--muted-foreground))] block uppercase text-[10px]">Target Delivery Date</span>
+                      <span className="font-bold text-[hsl(var(--foreground))]">
+                        {selectedPo.deliveryDate ? new Date(selectedPo.deliveryDate).toLocaleDateString() : 'Not specified'}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider flex items-center gap-1.5">
+                          Requested Materials
+                        </span>
+                      </div>
+                      <div className="border border-[hsl(var(--border))] rounded-lg divide-y divide-[hsl(var(--border))]">
+                        {selectedPo.items && selectedPo.items.length > 0 ? (
+                          selectedPo.items.map((item: any, idx: number) => (
+                            <div key={idx} className="p-3 flex items-center justify-between text-xs bg-[hsl(var(--card))]">
+                              <div>
+                                <p className="font-bold text-[hsl(var(--foreground))]">{item.name}</p>
+                              </div>
+                              <span className="font-bold font-mono text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.3)] px-2 py-1 rounded">
+                                {item.quantity} {item.unit}
+                              </span>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-3 flex items-center justify-between text-xs bg-[hsl(var(--card))]">
+                            <div>
+                              <p className="font-bold text-[hsl(var(--foreground))]">{selectedPo.materialName?.replace(' ||CLOSED||', '')}</p>
+                            </div>
+                            <span className="font-bold font-mono text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.3)] px-2 py-1 rounded">
+                              1 unit
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : selectedPo.status === 'rfq' ? (
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider flex items-center gap-1.5">
+                          Requested Materials
+                        </span>
+                      </div>
+                      <div className="border border-[hsl(var(--border))] rounded-lg divide-y divide-[hsl(var(--border))]">
+                        {selectedPo.items && selectedPo.items.length > 0 ? (
+                          selectedPo.items.map((item: any, idx: number) => (
+                            <div key={idx} className="p-3 flex items-center justify-between text-xs bg-[hsl(var(--card))]">
+                              <div>
+                                <p className="font-bold text-[hsl(var(--foreground))]">{item.name}</p>
+                              </div>
+                              <span className="font-bold font-mono text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.3)] px-2 py-1 rounded">
+                                {item.quantity} {item.unit}
+                              </span>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-3 flex items-center justify-between text-xs bg-[hsl(var(--card))]">
+                            <div>
+                              <p className="font-bold text-[hsl(var(--foreground))]">{selectedPo.materialName?.replace(' ||CLOSED||', '')}</p>
+                            </div>
+                            <span className="font-bold font-mono text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.3)] px-2 py-1 rounded">
+                              1 unit
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Link & Expiration Info */}
+                    <div className="p-4 bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30 rounded-xl space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[10px] uppercase font-bold flex items-center gap-1.5 ${isLinkActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500'}`}>
+                          <FileText className="w-3.5 h-3.5" />
+                          {isLinkActive ? 'Public RFQ Link Active' : 'RFQ Link Expired'}
+                        </span>
+
+                        {isLinkActive ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-rose-500 bg-rose-50 dark:bg-rose-950/30 px-2 py-1 rounded border border-rose-100 dark:border-rose-900/30">
+                              Expires in:
+                            </span>
+                            <select
+                              value={linkExpiry}
+                              onChange={(e) => setLinkExpiry(e.target.value)}
+                              className="text-xs bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-800 rounded px-1 py-0.5 text-rose-600 focus:outline-none"
+                            >
+                              <option value="12h">12 Hours</option>
+                              <option value="1d">1 Day</option>
+                              <option value="2d">2 Days</option>
+                            </select>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                            Deactivated
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <input
+                          readOnly
+                          value={`${window.location.origin}/rfq/${selectedPo._id}`}
+                          className="w-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-md px-3 py-1.5 text-xs text-[hsl(var(--muted-foreground))] font-mono"
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="shrink-0 h-7"
+                          disabled={!isLinkActive}
+                          onClick={() => {
+                            const url = `${window.location.origin}/rfq/${selectedPo._id}`;
+                            navigator.clipboard.writeText(url);
+                            toast.success('Link copied!');
+                          }}
+                        >
+                          Copy
+                        </Button>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-indigo-100 dark:border-indigo-900/30">
+                        <span className="text-[10px] text-indigo-600/70 dark:text-indigo-400/70">
+                          {isLinkActive ? 'Vendors can currently submit quotes' : 'No longer accepting quotes'}
+                        </span>
+                        {canDo('procurement', 'update') && (
+                          <Button
+                            size="sm"
+                            variant={isLinkActive ? 'destructive' : 'outline'}
+                            className="h-6 text-[10px] px-2"
+                            onClick={async () => { const newIsLinkActive = !isLinkActive; setIsLinkActive(newIsLinkActive); if (selectedPo) { try { let newMaterialName = selectedPo.materialName.replace(' ||CLOSED||', '').trim(); if (!newIsLinkActive) { newMaterialName += ' ||CLOSED||'; } await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { materialName: newMaterialName }); setSelectedPo((prev: any) => prev ? { ...prev, materialName: newMaterialName } : prev); invalidateProcurementData(); toast.success(newIsLinkActive ? 'Link reactivated' : 'Link manually expired'); } catch (err) { toast.error('Failed to update link status'); setIsLinkActive(!newIsLinkActive); } } }}
+                          >
+                            {isLinkActive ? 'Force Expire Now' : 'Reactivate Link'}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    {isLinkActive && vendors && vendors.length > 0 && (
+                      <div className="space-y-3">
+                        <span className="text-[10px] uppercase font-bold text-[hsl(var(--foreground))] tracking-wider flex items-center gap-1.5">
+                          <Mail className="w-3.5 h-3.5" /> Share RFQ Link with Vendors
+                        </span>
+                        <div className="border border-[hsl(var(--border))] rounded-lg divide-y divide-[hsl(var(--border))] bg-[hsl(var(--card))] max-h-48 overflow-y-auto">
+                          {vendors.map((vendor: any) => {
+                            const rfqUrl = `${window.location.origin}/rfq/${selectedPo._id}`;
+                            const waMessage = encodeURIComponent(`Hello ${vendor.name},\n\nPlease submit your quotation for our requirement by clicking the following link:\n${rfqUrl}\n\nThank you.`);
+                            const emailSubject = encodeURIComponent(`Request for Quotation: ${selectedPo.materialName?.replace(' ||CLOSED||', '')}`);
+                            const emailBody = encodeURIComponent(`Hello ${vendor.name},\n\nPlease submit your quotation for our requirement by clicking the following link:\n${rfqUrl}\n\nThank you.`);
+
+                            return (
+                              <div key={vendor._id} className="p-3 flex items-center justify-between text-xs hover:bg-[hsl(var(--muted)/0.3)] transition-colors">
+                                <div>
+                                  <p className="font-bold text-[hsl(var(--foreground))]">{vendor.name}</p>
+                                  <p className="text-[9px] text-[hsl(var(--muted-foreground))]">{vendor.email || vendor.phoneNumber || 'No contact info'}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-[10px] flex items-center gap-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-900/50 dark:text-emerald-400 dark:hover:bg-emerald-900/20"
+                                    onClick={() => window.open(`https://wa.me/${(vendor.phoneNumber || '').replace(/[^0-9]/g, '')}?text=${waMessage}`, '_blank')}
+                                    disabled={!vendor.phoneNumber}
+                                  >
+                                    WhatsApp
+                                  </Button>
+                                  {canDo('procurement', 'update') && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 text-[10px] flex items-center gap-1"
+                                      onClick={async () => {
+                                        try {
+                                          await interiorApiClient.post('/procurement/send-rfq', {
+                                            poId: selectedPo._id,
+                                            vendorIds: [vendor._id],
+                                            notes: '',
+                                            rfqLink: `${window.location.origin}/rfq/${selectedPo._id}`
+                                          });
+                                          setSentEmailVendorIdsByPo(prev => {
+                                            const newSet = new Set(prev[selectedPo._id] || []);
+                                            newSet.add(vendor._id);
+                                            return { ...prev, [selectedPo._id]: newSet };
+                                          });
+                                          toast.success(`RFQ sent to ${vendor.name} via email!`);
+                                        } catch (err) {
+                                          console.error('Failed to send RFQ email', err);
+                                          toast.error(`Failed to send email to ${vendor.name}`);
+                                        }
+                                      }}
+                                      disabled={!vendor.email || sentEmailVendorIdsByPo[selectedPo._id]?.has(vendor._id)}
+                                    >
+                                      {sentEmailVendorIdsByPo[selectedPo._id]?.has(vendor._id) ? (
+                                        <><CheckCircle2 className="w-3 h-3 text-green-500" /> Sent</>
+                                      ) : (
+                                        <><Mail className="w-3 h-3" /> Email</>
+                                      )}
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {isLinkActive ? (
+                      <div className="space-y-3">
+                        <span className="text-[10px] uppercase font-bold text-[hsl(var(--foreground))] tracking-wider flex items-center gap-1.5">
+                          <History className="w-3.5 h-3.5" /> Quotes Received So Far
+                        </span>
+                        <div className="space-y-2">
+                          {selectedPo.quotes && selectedPo.quotes.length > 0 ? (
+                            selectedPo.quotes.map((quote: any, idx: number) => {
+                              const myTotal = quote.rates?.reduce((sum: number, r: any) => {
+                                const item = selectedPo.items?.find((i: any) => (i._id || i.id) === r.itemId || i.name === r.name);
+                                return sum + ((r.unitPrice || 0) * (item?.quantity || 1));
+                              }, 0) || 0;
+
+                              return (
+                                <div key={idx} className="border border-[hsl(var(--border))] rounded-lg overflow-hidden bg-[hsl(var(--card))] shadow-sm">
+                                  <div className="p-3 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--muted)/0.2)]">
+                                    <div>
+                                      <p className="font-bold text-xs">{quote.vendorName}</p>
+                                      <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                                        Submitted {new Date(quote.submittedAt).toLocaleDateString()}
+                                      </p>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="font-mono font-bold text-sm text-[hsl(var(--foreground))]">
+                                        {currencySymbol} {myTotal.toLocaleString()}
+                                      </p>
+                                      <span className="text-[9px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-bold border border-indigo-100">Quote Received</span>
+                                    </div>
+                                  </div>
+                                  <div className="p-3 space-y-3">
+                                    <div className="space-y-1.5">
+                                      <p className="text-[9px] uppercase font-bold text-[hsl(var(--muted-foreground))]">Item Rates</p>
+                                      <div className="divide-y divide-[hsl(var(--border))] bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-md">
+                                        {(selectedPo.items && selectedPo.items.length > 0 ? selectedPo.items : [{ _id: 'item-1', name: selectedPo.materialName?.replace(' ||CLOSED||', '') || 'Material', quantity: 1, unit: 'unit' }]).map((item: any, itemIdx: number) => {
+                                          const rate = quote.rates?.find((r: any) => r.itemId === (item._id || item.id) || r.name === item.name);
+                                          return (
+                                            <div key={itemIdx} className="p-2 flex items-center justify-between text-[10px]">
+                                              <span className="font-medium text-[hsl(var(--foreground))]">{item.name}</span>
+                                              <span className="font-mono text-[hsl(var(--muted-foreground))]">{currencySymbol}{rate?.unitPrice || 0}</span>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                    {(quote.notes || quote.remarks) && (
+                                      <div className="bg-amber-50 dark:bg-amber-950/20 p-2 rounded-md border border-amber-100 dark:border-amber-900/30">
+                                        <p className="text-[9px] uppercase font-bold text-amber-800 dark:text-amber-500 mb-0.5">Remarks</p>
+                                        <p className="text-[10px] text-amber-900/80 dark:text-amber-200/70 whitespace-pre-wrap">{quote.notes || quote.remarks}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <div className="p-3 border border-dashed border-[hsl(var(--border))] rounded-lg flex items-center justify-center bg-[hsl(var(--muted)/0.3)] opacity-70">
+                              <p className="text-[10px] text-[hsl(var(--muted-foreground))] italic">Waiting for vendors to submit quotes...</p>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-[9px] text-[hsl(var(--muted-foreground))] text-center mt-2 leading-relaxed">
+                          Wait for the link to expire, or force expire it to view the detailed comparison matrix.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] uppercase font-bold text-[hsl(var(--foreground))] tracking-wider flex items-center gap-1.5">
+                            <History className="w-3.5 h-3.5" /> Vendor Quotation Comparison
+                          </span>
+                          <span className="text-[10px] bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-2 py-0.5 rounded-full font-bold">
+                            {selectedPo.quotes?.length || 0} Quotes
+                          </span>
+                        </div>
+
+                        {selectedPo.quotes && selectedPo.quotes.length > 0 ? (
+                          <div className="space-y-3">
+                            {(() => {
+                              // Calculate totals for all quotes to find the lowest
+                              const quoteTotals = selectedPo.quotes.map((q: any) =>
+                                q.rates?.reduce((sum: number, r: any) => {
+                                  const item = selectedPo.items?.find((i: any) => (i._id || i.id) === r.itemId || i.name === r.name);
+                                  return sum + ((r.unitPrice || 0) * (item?.quantity || 1));
+                                }, 0) || 0
+                              );
+                              const minTotal = Math.min(...quoteTotals.filter((t: number) => t > 0));
+
+                              return selectedPo.quotes.map((quote: any, idx: number) => {
+                                const myTotal = quoteTotals[idx];
+                                const isLowest = (myTotal === minTotal && myTotal > 0 && selectedPo.quotes.length > 1);
+
+                                return (
+                                  <div
+                                    key={idx}
+                                    className={`border rounded-xl overflow-hidden shadow-sm transition-all ${isLowest
+                                        ? 'border-emerald-500/50 bg-emerald-50/10 dark:bg-emerald-950/10 shadow-emerald-500/10'
+                                        : 'border-[hsl(var(--border))] bg-[hsl(var(--card))]'
+                                      }`}
+                                  >
+                                    <div className={`p-4 border-b flex items-start justify-between ${isLowest ? 'border-emerald-500/20 bg-emerald-50/30 dark:bg-emerald-900/20' : 'border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]'}`}>
+                                      <div>
+                                        <div className="flex items-center gap-2">
+                                          <h4 className="font-bold text-sm text-[hsl(var(--foreground))]">{quote.vendorName}</h4>
+                                          {isLowest && (
+                                            <span className="text-[9px] font-bold uppercase bg-emerald-100 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded-md dark:bg-emerald-900/40 dark:text-emerald-400 dark:border-emerald-800">
+                                              Lowest Bid
+                                            </span>
+                                          )}
+                                        </div>
+                                        <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-0.5">
+                                          Submitted on {new Date(quote.submittedAt).toLocaleDateString()}
+                                        </p>
+                                      </div>
+                                      <div className="text-right">
+                                        <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase font-bold mb-0.5">Total Cost</p>
+                                        <p className={`font-mono font-bold text-base ${isLowest ? 'text-emerald-600 dark:text-emerald-400' : 'text-[hsl(var(--foreground))]'}`}>
+                                          {currencySymbol} {myTotal.toLocaleString()}
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    <div className="p-4 space-y-4">
+                                      <div className="space-y-2">
+                                        <p className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))]">Item Breakdown</p>
+                                        <div className="border border-[hsl(var(--border))] rounded-lg divide-y divide-[hsl(var(--border))] bg-[hsl(var(--background))]">
+                                          {(selectedPo.items && selectedPo.items.length > 0 ? selectedPo.items : [{ _id: 'item-1', name: selectedPo.materialName?.replace(' ||CLOSED||', '') || 'Material', quantity: 1, unit: 'unit' }]).map((item: any, itemIdx: number) => {
+                                            const rate = quote.rates?.find((r: any) => r.itemId === (item._id || item.id) || r.name === item.name);
+                                            const itemTotal = (rate?.unitPrice || 0) * (item.quantity || 1);
+                                            return (
+                                              <div key={itemIdx} className="p-2.5 flex items-center justify-between text-xs">
+                                                <div className="min-w-0 flex-1 pr-4">
+                                                  <p className="font-semibold text-[hsl(var(--foreground))] truncate">{item.name}</p>
+                                                  <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                                                    {item.quantity} {item.unit} &times; {currencySymbol}{rate?.unitPrice || 0}
+                                                  </p>
+                                                </div>
+                                                <div className="font-mono font-medium text-[hsl(var(--foreground))] shrink-0">
+                                                  {currencySymbol} {itemTotal.toLocaleString()}
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+
+                                      {(quote.notes || quote.remarks) && (
+                                        <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-lg border border-amber-100 dark:border-amber-900/30">
+                                          <p className="text-[10px] uppercase font-bold text-amber-800 dark:text-amber-500 mb-1">Vendor Remarks</p>
+                                          <p className="text-xs text-amber-900/80 dark:text-amber-200/70 whitespace-pre-wrap">{quote.notes || quote.remarks}</p>
+                                        </div>
+                                      )}
+
+                                      {canDo('procurement', 'update') && (
+                                        <Button
+                                          size="sm"
+                                          className={`w-full text-xs font-bold ${isLowest ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 shadow-lg' : ''}`}
+                                          variant={isLowest ? 'default' : 'outline'}
+                                          disabled={updatingPo}
+                                          onClick={() => handleUpdateVendor(quote.vendorName)}
+                                        >
+                                          {isLowest ? (
+                                            <><CheckCircle2 className="w-4 h-4 mr-2" /> Award PO to {quote.vendorName}</>
+                                          ) : (
+                                            `Award PO to ${quote.vendorName}`
+                                          )}
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              });
+                            })()}
+                          </div>
+                        ) : (
+                          <div className="p-6 border border-dashed border-[hsl(var(--border))] rounded-xl flex flex-col items-center justify-center bg-[hsl(var(--muted)/0.2)]">
+                            <History className="w-8 h-8 text-[hsl(var(--muted-foreground))] opacity-20 mb-2" />
+                            <p className="text-sm font-semibold text-[hsl(var(--foreground))]">No quotes submitted yet</p>
+                            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1 text-center max-w-[250px]">
+                              Vendors haven't submitted any quotes. You can send them a reminder using the share links above.
+                            </p>
+                          </div>
+                        )}
+                        <p className="text-[9px] text-[hsl(var(--muted-foreground))] text-center mt-4 leading-relaxed max-w-sm mx-auto">
+                          Awarding a PO will automatically convert this request to an Approved Purchase Order and lock in the winning rates.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (() => {
+                  const isApprovedOrLocked = ['approved', 'partially_delivered', 'delivered'].includes(selectedPo.status);
                   return (
                     <>
                       <div className="grid grid-cols-2 gap-4 text-xs">
@@ -1091,7 +1633,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         <div className="relative">
                           <select
                             value={selectedPo.status}
-                            disabled={updatingPo}
+                            disabled={updatingPo || !canDo('procurement', 'update')}
                             onChange={(e) => {
                               if (e.target.value === 'delivered' || e.target.value === 'partially_delivered') {
                                 setIsGRNOpen(true);
@@ -1102,8 +1644,8 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                             className="w-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-xs font-semibold text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                           >
                             <option value="pending">Planned (Pending)</option>
+                            <option value="rfq">RFQ (Quotation Stage)</option>
                             <option value="approved">Approved PO</option>
-                            <option value="dispatched">In Transit (Dispatched)</option>
                             <option value="partially_delivered">Partially Delivered</option>
                             <option value="delivered">Delivered (Loads to Inventory)</option>
                             <option value="rejected">Rejected</option>
@@ -1118,7 +1660,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                       {(() => {
                         let parsedGrns = selectedPo.grns;
                         if (!parsedGrns && selectedPo.grnData?.allGrns) {
-                          try { parsedGrns = JSON.parse(selectedPo.grnData.allGrns); } catch(e) {}
+                          try { parsedGrns = JSON.parse(selectedPo.grnData.allGrns); } catch (e) { }
                         }
                         if (!parsedGrns && selectedPo.grnData) {
                           parsedGrns = [selectedPo.grnData];
@@ -1150,7 +1692,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                   </div>
                                   {(grn.proofUrl || grn.invoiceUrl) && (
                                     <div className="shrink-0 ml-2">
-                                      <button 
+                                      <button
                                         type="button"
                                         onClick={(e) => {
                                           e.stopPropagation();
@@ -1182,9 +1724,11 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                             )}
                           </span>
                           {!isApprovedOrLocked && (
-                            <button onClick={handleSaveRates} disabled={updatingPo} className="text-[10px] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] px-2 py-1 rounded font-bold hover:bg-[hsl(var(--primary)/0.2)] flex items-center gap-1 transition-colors">
-                              {updatingPo ? <Loader2 className="w-3 h-3 animate-spin" /> : null} Save Rates
-                            </button>
+                            canDo('procurement', 'update') && (
+                              <button onClick={handleSaveRates} disabled={updatingPo} className="text-[10px] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] px-2 py-1 rounded font-bold hover:bg-[hsl(var(--primary)/0.2)] flex items-center gap-1 transition-colors">
+                                {updatingPo ? <Loader2 className="w-3 h-3 animate-spin" /> : null} Save Rates
+                              </button>
+                            )
                           )}
                         </div>
                         <div className="border border-[hsl(var(--border))] rounded-lg divide-y divide-[hsl(var(--border))]">
@@ -1196,14 +1740,14 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                   <div className="flex items-center gap-1 mt-1 text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
                                     <span>{item.quantity} {item.unit} @ </span>
                                     {isApprovedOrLocked ? (
-                                      <span className="font-bold text-[hsl(var(--foreground))]">₹{item.unitPrice || 0}</span>
+                                      <span className="font-bold text-[hsl(var(--foreground))]">{currencySymbol} {item.unitPrice || 0}</span>
                                     ) : (
                                       <>
-                                        <span>₹</span>
-                                        <input 
-                                          type="number" 
-                                          min="0" 
-                                          value={item.unitPrice || ''} 
+                                        <span>{currencySymbol}</span>
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          value={item.unitPrice || ''}
                                           onChange={(e) => handleLocalRateChange(idx, parseFloat(e.target.value) || 0)}
                                           className="w-16 px-1 py-0.5 border border-[hsl(var(--border))] rounded bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:border-[hsl(var(--primary))] text-right"
                                         />
@@ -1218,18 +1762,18 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                           ) : (
                             <div className="p-3 flex items-center justify-between text-xs bg-[hsl(var(--card))]">
                               <div>
-                                <p className="font-bold text-[hsl(var(--foreground))]">{selectedPo.materialName}</p>
+                                <p className="font-bold text-[hsl(var(--foreground))]">{selectedPo.materialName?.replace(' ||CLOSED||', '')}</p>
                                 <div className="flex items-center gap-1 mt-1 text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
                                   <span>1 unit @ </span>
                                   {isApprovedOrLocked ? (
-                                    <span className="font-bold text-[hsl(var(--foreground))]">₹{selectedPo.amount || 0}</span>
+                                    <span className="font-bold text-[hsl(var(--foreground))]">{currencySymbol} {selectedPo.amount || 0}</span>
                                   ) : (
                                     <>
-                                      <span>₹</span>
-                                      <input 
-                                        type="number" 
-                                        min="0" 
-                                        value={selectedPo.amount || ''} 
+                                      <span>{currencySymbol}</span>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        value={selectedPo.amount || ''}
                                         onChange={(e) => {
                                           const newAmount = parseFloat(e.target.value) || 0;
                                           setSelectedPo({ ...selectedPo, amount: newAmount });
@@ -1250,26 +1794,34 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                   );
                 })()}
 
-                <div className="p-4 border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--muted)/0.25)] flex items-center justify-between text-xs font-bold">
-                  <span className="text-[hsl(var(--muted-foreground))] uppercase">Total Amount</span>
-                  <span className="text-sm font-extrabold text-[hsl(var(--foreground))] font-mono">{formatCost(selectedPo.amount)}</span>
-                </div>
+                {selectedPo.status !== 'requested' && selectedPo.status !== 'rfq' && (
+                  <div className="p-4 border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--muted)/0.25)] flex items-center justify-between text-xs font-bold">
+                    <span className="text-[hsl(var(--muted-foreground))] uppercase">Total Amount</span>
+                    <span className="text-sm font-extrabold text-[hsl(var(--foreground))] font-mono">{formatCost(selectedPo.amount)}</span>
+                  </div>
+                )}
               </div>
 
               <div className="p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)] flex items-center gap-3">
-                <Button onClick={handleDeletePO} variant="outline" className="w-full text-red-500 hover:bg-red-50 hover:text-red-700 border-red-200">
-                  <Trash2 className="w-4 h-4 mr-2" /> Delete PO
-                </Button>
-                <Button 
-                  onClick={async () => {
-                    await handleSaveRates();
-                    setIsDetailOpen(false);
-                  }} 
-                  className="w-full"
-                  disabled={updatingPo}
-                >
-                  {updatingPo ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} Submit Details
-                </Button>
+                {canDo('procurement', 'delete') && (
+                  <Button onClick={handleDeletePO} variant="outline" className="w-full text-red-500 hover:bg-red-50 hover:text-red-700 border-red-200">
+                    <Trash2 className="w-4 h-4 mr-2" /> {selectedPo.status === 'requested' ? 'Delete Request' : 'Delete PO'}
+                  </Button>
+                )}
+                {selectedPo.status !== 'requested' && selectedPo.status !== 'rfq' && (
+                  canDo('procurement', 'update') && (
+                    <Button
+                      onClick={async () => {
+                        await handleSaveRates();
+                        setIsDetailOpen(false);
+                      }}
+                      className="w-full"
+                      disabled={updatingPo}
+                    >
+                      {updatingPo ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} Submit Details
+                    </Button>
+                  )
+                )}
               </div>
             </motion.div>
           </div>
@@ -1401,9 +1953,9 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-md border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] shadow-2xl overflow-hidden"
+              className="w-full max-w-md border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
             >
-              <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
+              <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))] shrink-0">
                 <div>
                   <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
                     <CreditCard className="w-5 h-5 text-emerald-500" /> Record Vendor Payment
@@ -1417,17 +1969,17 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                 </button>
               </div>
 
-              <form onSubmit={handleRecordPaymentSubmit}>
-                <div className="p-5 space-y-4">
+              <form onSubmit={handleRecordPaymentSubmit} className="flex flex-col overflow-hidden">
+                <div className="p-5 space-y-4 overflow-y-auto">
                   <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-lg text-xs space-y-1">
-                    <p className="font-bold text-emerald-800 dark:text-emerald-400">Material: {payingPo.materialName}</p>
+                    <p className="font-bold text-emerald-800 dark:text-emerald-400">Material: {payingPo.materialName?.replace(' ||CLOSED||', '')}</p>
                     <p className="text-emerald-700 dark:text-emerald-500">
-                      Total PO Amount: <span className="font-bold">₹{(payingPo.amount || 0).toLocaleString('en-IN')}</span>
+                      Total PO Amount: <span className="font-bold">{currencySymbol} {(payingPo.amount || 0).toLocaleString()}</span>
                     </p>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Payment Amount (₹) *</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Payment Amount ({currencySymbol}) *</label>
                     <Input
                       required
                       type="number"
@@ -1466,10 +2018,10 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Ref / UTR / Cheque No. *</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Ref / Transaction / Cheque No. *</label>
                     <Input
                       required
-                      placeholder="e.g. UTR-982109283"
+                      placeholder="e.g. TXN-982109283"
                       value={paymentForm.referenceNo}
                       onChange={(e) => setPaymentForm({ ...paymentForm, referenceNo: e.target.value })}
                     />
@@ -1478,14 +2030,41 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Remarks / Notes</label>
                     <Input
-                      placeholder="e.g. 50% advance for plywood delivery"
+                      placeholder="e.g. 50% advance for material delivery"
                       value={paymentForm.remarks}
                       onChange={(e) => setPaymentForm({ ...paymentForm, remarks: e.target.value })}
                     />
                   </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Project Name</label>
+                    <Input
+                      placeholder="e.g. Skyline Residency"
+                      value={paymentForm.projectName}
+                      onChange={(e) => setPaymentForm({ ...paymentForm, projectName: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Project Location</label>
+                    <Input
+                      placeholder="e.g. Mumbai, MH"
+                      value={paymentForm.projectLocation}
+                      onChange={(e) => setPaymentForm({ ...paymentForm, projectLocation: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Invoice No.</label>
+                    <Input
+                      placeholder="e.g. INV-2023-001"
+                      value={paymentForm.invoiceNo}
+                      onChange={(e) => setPaymentForm({ ...paymentForm, invoiceNo: e.target.value })}
+                    />
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
+                <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)] shrink-0">
                   <Button variant="outline" type="button" onClick={() => setIsPayModalOpen(false)}>
                     Cancel
                   </Button>
@@ -1530,7 +2109,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                     No Delivery Proof Uploaded
                   </div>
                 )}
-                
+
                 {viewingImages.invoiceUrl ? (
                   <div className="space-y-2">
                     <h4 className="text-sm font-bold text-center text-[hsl(var(--foreground))]">Invoice</h4>
@@ -1547,12 +2126,15 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
         )}
       </AnimatePresence>
 
-      <SendRFQModal 
-        isOpen={isSendRFQOpen} 
-        onClose={() => setIsSendRFQOpen(false)} 
-        po={selectedPo} 
-        vendors={vendors} 
-        onSuccess={() => handleUpdateStatus('pending')}
+      <SendRFQModal
+        isOpen={isSendRFQOpen}
+        onClose={() => setIsSendRFQOpen(false)}
+        po={selectedPo}
+        vendors={vendors}
+        onSuccess={() => {
+          handleUpdateStatus('rfq');
+          setActivePipeline('rfq');
+        }}
       />
       <InteriorGRNModal
         isOpen={isGRNOpen}

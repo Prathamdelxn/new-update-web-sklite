@@ -12,7 +12,8 @@ import {
   MessageSquare,
   ShieldCheck,
   History,
-  UserCheck
+  UserCheck,
+  Loader2
 } from 'lucide-react';
 import { useToast } from '@/providers/ToastContext';
 import { interiorCrmService } from '@/services/interiorCrm.service';
@@ -38,6 +39,7 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
   const toast = useToast();
   const [rejectionReason, setRejectionReason] = useState('');
   const [isRejectMode, setIsRejectMode] = useState(false);
+  const [showApproveConfirm, setShowApproveConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
@@ -47,9 +49,11 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
       setRejectionReason('');
       setActionType(null);
       setIsRejectMode(false);
+      setShowApproveConfirm(false);
     } else {
       const startInReject = drawing?.initialAction === 'reject';
       setIsRejectMode(startInReject);
+      setShowApproveConfirm(false);
       if (startInReject) {
         setTimeout(() => {
           textareaRef.current?.focus();
@@ -320,6 +324,19 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
                 />
               </div>
             )}
+
+            {/* Approval Confirmation Banner (When Confirming Approval) */}
+            {showApproveConfirm && (
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2 animate-in fade-in zoom-in-95 duration-150">
+                <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs uppercase tracking-wide">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  Confirm Drawing Approval & Client Publishing
+                </div>
+                <p className="text-xs text-emerald-950 leading-relaxed bg-white p-3 rounded-lg border border-emerald-200 shadow-2xs">
+                  Are you sure you want to approve <strong className="text-emerald-900">"{drawingTitle}" (Version v{currentVersion})</strong>? This drawing will be marked as internally verified and immediately made viewable on the client's shared portal.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Footer Actions */}
@@ -328,11 +345,11 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
               <>
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={() => setIsRejectMode(false)}
                   disabled={isSubmitting}
                   className="px-4 py-2 text-sm font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl shadow-2xs transition cursor-pointer"
                 >
-                  Cancel
+                  Back to Review
                 </button>
 
                 <button
@@ -341,8 +358,47 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
                   disabled={isSubmitting || !rejectionReason.trim()}
                   className="inline-flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 active:bg-rose-800 shadow-sm shadow-rose-600/20 rounded-xl transition disabled:opacity-50 cursor-pointer"
                 >
-                  <XCircle className="w-4 h-4" />
-                  {isSubmitting && actionType === 'reject' ? 'Rejecting...' : 'Confirm Rejection'}
+                  {isSubmitting && actionType === 'reject' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Rejecting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="w-4 h-4" />
+                      <span>Confirm Rejection</span>
+                    </>
+                  )}
+                </button>
+              </>
+            ) : showApproveConfirm ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowApproveConfirm(false)}
+                  disabled={isSubmitting}
+                  className="px-4 py-2 text-sm font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl shadow-2xs transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleAction('approve')}
+                  disabled={isSubmitting}
+                  className="inline-flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 shadow-sm shadow-emerald-600/20 rounded-xl transition disabled:opacity-50 cursor-pointer"
+                >
+                  {isSubmitting && actionType === 'approve' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Approving Drawing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Yes, Confirm Approval</span>
+                    </>
+                  )}
                 </button>
               </>
             ) : (
@@ -372,12 +428,12 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
 
                   <button
                     type="button"
-                    onClick={() => handleAction('approve')}
+                    onClick={() => setShowApproveConfirm(true)}
                     disabled={isSubmitting}
                     className="inline-flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 shadow-sm shadow-emerald-600/20 rounded-xl transition disabled:opacity-50 cursor-pointer"
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                    {isSubmitting && actionType === 'approve' ? 'Approving...' : 'Approve & Publish to Client'}
+                    <span>Approve & Publish to Client</span>
                   </button>
                 </div>
               </>

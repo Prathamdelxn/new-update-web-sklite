@@ -127,6 +127,17 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
       toast.error('Please enter at least a name and email.');
       return;
     }
+
+    const cleanPhone = formData.mobile.trim().replace(/[\s-]/g, '');
+    if (!cleanPhone) {
+      toast.error('Please enter a mobile number.');
+      return;
+    }
+    if (!/^\+?[0-9]{7,15}$/.test(cleanPhone)) {
+      toast.error('Please enter a valid mobile number (digits only, e.g. +91 9876543210).');
+      return;
+    }
+
     setIsLoading(true);
     try {
       const payload: any = {
@@ -139,17 +150,17 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
           role: projectRoles[p._id] || undefined
         })),
       };
-      if (formData.password) payload.password = formData.password;
-
       if (isEditing) {
+        if (formData.password?.trim()) payload.password = formData.password.trim();
         await api.patch(`/users/${initialData._id}`, payload);
         toast.success('Member updated successfully!');
         onSuccess();
         onClose();
       } else {
-        payload.password = formData.password;
+        const finalPassword = formData.password?.trim() || 'welcome123';
+        payload.password = finalPassword;
         await api.post('/users', payload);
-        setCreatedCreds({ name: formData.name, email: formData.email, password: formData.password });
+        setCreatedCreds({ name: formData.name, email: formData.email, password: finalPassword });
         onSuccess();
       }
     } catch (error: any) {

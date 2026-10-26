@@ -17,7 +17,8 @@ export const interiorProjectService = {
 
   // Members
   getProjectMembers: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/members`).then((res) => res.data),
-  addProjectMember: (projectId: string, data: { userId: string; projectRole: string }) =>
+  // roleId links an org role as the member's project role (preferred); projectRole is the legacy preset
+  addProjectMember: (projectId: string, data: { userId: string; roleId?: string; projectRole?: string }) =>
     interiorApiClient.post(`/projects/${projectId}/members`, data).then((res) => res.data),
   inviteProjectMember: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/members/invite`, data).then((res) => res.data),
   updateProjectMember: (projectId: string, memberId: string, data: any) =>
@@ -71,6 +72,8 @@ export const interiorProjectService = {
     interiorApiClient.put(`/projects/${projectId}/procurement/${poId}`, data).then((res) => res.data),
   deletePurchaseOrder: (projectId: string, poId: string) =>
     interiorApiClient.delete(`/projects/${projectId}/procurement/${poId}`).then((res) => res.data),
+  sendAwardEmail: (projectId: string, poId: string, data: any) =>
+    interiorApiClient.post(`/projects/${projectId}/procurement/${poId}/send-award-email`, data).then((res) => res.data),
 
   // Vendors
   getVendors: () => interiorApiClient.get(`/vendors`).then((res) => res.data),
@@ -99,6 +102,7 @@ export const interiorProjectService = {
   getRfis: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/rfis`).then((res) => res.data),
   createRfi: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/rfis`, data).then((res) => res.data),
   updateRfi: (projectId: string, data: any) => interiorApiClient.put(`/projects/${projectId}/rfis`, data).then((res) => res.data),
+  deleteRfi: (projectId: string, rfiId: string) => interiorApiClient.delete(`/projects/${projectId}/rfis?rfiId=${rfiId}`).then((res) => res.data),
 
   // Risks
   getRisks: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/risks`).then((res) => res.data),
@@ -112,12 +116,6 @@ export const interiorProjectService = {
   updateSnag: (projectId: string, data: any) => interiorApiClient.put(`/projects/${projectId}/snags`, data).then((res) => res.data),
   deleteSnag: (projectId: string, snagId: string) => interiorApiClient.delete(`/projects/${projectId}/snags?snagId=${snagId}`).then((res) => res.data),
 
-  // NCRs
-  getNcrs: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/ncrs`).then((res) => res.data),
-  createNcr: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/ncrs`, data).then((res) => res.data),
-  updateNcr: (projectId: string, data: any) => interiorApiClient.put(`/projects/${projectId}/ncrs`, data).then((res) => res.data),
-  deleteNcr: (projectId: string, ncrId: string) => interiorApiClient.delete(`/projects/${projectId}/ncrs?ncrId=${ncrId}`).then((res) => res.data),
-
   // Utilities
   getUtilities: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/utilities`).then((res) => res.data),
   updateUtility: (projectId: string, data: any) => interiorApiClient.put(`/projects/${projectId}/utilities`, data).then((res) => res.data),
@@ -125,6 +123,7 @@ export const interiorProjectService = {
   // Photos
   getPhotos: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/photos`).then((res) => res.data),
   createPhoto: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/photos`, data).then((res) => res.data),
+  deletePhoto: (projectId: string, photoId: string) => interiorApiClient.delete(`/projects/${projectId}/photos?photoId=${photoId}`).then((res) => res.data),
   uploadPhotoFile: (projectId: string, formData: FormData) =>
     interiorApiClient.post(`/projects/${projectId}/photos/upload`, formData).then((res) => res.data),
 
@@ -160,6 +159,11 @@ export const interiorProjectService = {
   approveChangeRequest: (projectId: string, crId: string) => interiorApiClient.post(`/projects/${projectId}/change-requests/${crId}/approve`).then((res) => res.data),
 
   // Variation Orders
+  // Confirm Order (the linked CRM lead's confirmed order — project "Confirm Order" permission)
+  getProjectConfirmOrder: (projectId: string) =>
+    interiorApiClient.get(`/projects/${projectId}/confirm-order`).then((res) => res.data),
+  updateProjectConfirmOrder: (projectId: string, data: any) =>
+    interiorApiClient.patch(`/projects/${projectId}/confirm-order`, data).then((res) => res.data),
   getVariationOrders: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/variation-orders`).then((res) => res.data),
   getVariationOrderDetail: (projectId: string, voId: string) => interiorApiClient.get(`/projects/${projectId}/variation-orders/${voId}`).then((res) => res.data),
   createVariationOrder: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/variation-orders`, data).then((res) => res.data),
@@ -170,6 +174,8 @@ export const interiorProjectService = {
   // MOM
   getMoms: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/mom`).then((res) => res.data),
   createMom: (projectId: string, data: any) => interiorApiClient.post(`/projects/${projectId}/mom`, data).then((res) => res.data),
+  updateMom: (projectId: string, data: any) => interiorApiClient.put(`/projects/${projectId}/mom`, data).then((res) => res.data),
+  deleteMom: (projectId: string, momId: string) => interiorApiClient.delete(`/projects/${projectId}/mom?momId=${momId}`).then((res) => res.data),
 
   // Payments (Incoming / Outgoing / Debit Notes)
   getPayments: (projectId: string, type?: 'incoming' | 'outgoing' | 'debit_note') =>
@@ -225,4 +231,8 @@ export const interiorProjectService = {
 
   createRole: (data: { name: string; description?: string; permissions?: any[] }) =>
     interiorApiClient.post('/roles', data).then((res) => res.data),
+  updateRole: (roleId: string, data: { name?: string; description?: string; permissions?: any[] }) =>
+    interiorApiClient.patch(`/roles/${roleId}`, data).then((res) => res.data),
+  deleteRole: (roleId: string) =>
+    interiorApiClient.delete(`/roles/${roleId}`).then((res) => res.data),
 };

@@ -153,7 +153,7 @@ export default function ProfilePage() {
                   value={profileForm.phone}
                   onChange={e => setProfileForm(f => ({ ...f, phone: e.target.value }))}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
-                  placeholder="+91 98765 43210"
+                  placeholder="+1 (555) 234-5678"
                 />
               </div>
               <div className="space-y-2">

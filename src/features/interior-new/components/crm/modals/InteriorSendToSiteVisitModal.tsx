@@ -30,7 +30,7 @@ interface SendToSiteVisitModalProps {
   customerName?: string;
   projectLocation?: string;
   currentStatus?: string;
-  onSuccess: () => void;
+  onSuccess?: (updatedData?: any) => void;
   users?: any[];
   initialData?: {
     scheduledDate?: string | Date;
@@ -129,42 +129,44 @@ export function InteriorSendToSiteVisitModal({
         remarks: trimmedRemarks || undefined,
       };
 
-      await interiorCrmService.updateCustomer(customerId, updatePayload);
+      await Promise.all([
+        interiorCrmService.updateCustomer(customerId, updatePayload),
+        interiorCrmService.createActivity({
+          customer: customerId,
+          type: 'Site Visit',
+          status: 'Pending',
+          scheduledDate: visitDate.toISOString(),
+          remarks: trimmedRemarks || 'Lead passed to Site Visit and assigned to site team.',
+          user: assignedSalesExecutive.trim() || undefined,
+        }),
+      ]);
 
-      await interiorCrmService.createActivity({
-        customer: customerId,
-        type: 'Site Visit',
-        status: 'Pending',
-        scheduledDate: visitDate.toISOString(),
-        remarks: trimmedRemarks || 'Lead passed to Site Visit and assigned to site team.',
-        user: assignedSalesExecutive.trim() || undefined,
-      });
-
-      // Automatically complete any pending follow-up activities for this customer
-      try {
-        const activitiesRes = await interiorCrmService.getActivities();
+      // Complete any pending follow-up activities in the background asynchronously
+      interiorCrmService.getActivities().then(activitiesRes => {
         const acts = activitiesRes?.data || (Array.isArray(activitiesRes) ? activitiesRes : []);
         const pendingFollowUps = acts.filter((a: any) => {
           const cId = a.customer?._id || a.customer?.id || a.customer;
           return cId === customerId && a.status === 'Pending' && a.type !== 'Site Visit';
         });
 
-        for (const act of pendingFollowUps) {
-          await interiorCrmService.updateActivity(act._id, {
-            status: 'Completed',
-            completedDate: new Date(),
-          });
-        }
-      } catch (actErr) {
-        console.warn('Failed to auto-complete pending follow-ups:', actErr);
-      }
+        Promise.all(
+          pendingFollowUps.map((act: any) =>
+            interiorCrmService.updateActivity(act._id, {
+              status: 'Completed',
+              completedDate: new Date(),
+            }).catch(() => {})
+          )
+        );
+      }).catch(() => {});
 
       toast.success(isRescheduling ? 'Site visit rescheduled successfully!' : 'Follow-up completed & scheduled for Site Visit!');
-      onSuccess();
+      if (onSuccess) {
+        onSuccess({ _id: customerId, ...updatePayload });
+      }
       onClose();
       setErrors({});
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to send to site visit');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to send to site visit');
     } finally {
       setIsSubmitting(false);
     }

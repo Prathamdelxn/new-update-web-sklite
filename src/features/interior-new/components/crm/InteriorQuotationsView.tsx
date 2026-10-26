@@ -6,7 +6,9 @@ import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { FileText, ArrowRight, Phone, Trophy, Search, ChevronLeft, ChevronRight, Edit3, XCircle, Building2, Eye, Home, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useCurrency } from '@/hooks/useCurrency';
 import { InteriorLead } from './InteriorLeadsTable';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 export function InteriorQuotationsView({
   leads,
@@ -20,6 +22,8 @@ export function InteriorQuotationsView({
   onMarkAsLost?: (leadId: string) => void;
 }) {
   const router = useRouter();
+const { hasPermission: canDo } = usePermissions();
+  const { currencySymbol } = useCurrency();
   const [searchTerm, setSearchTerm] = useState('');
   const [quoteFilter, setQuoteFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -214,7 +218,7 @@ export function InteriorQuotationsView({
                       {latestQuote ? (
                         <>
                           <span className="font-bold text-emerald-600">
-                            Grand Total: ₹{latestQuote.grandTotal?.toLocaleString('en-IN') || 0}
+                            Grand Total: {currencySymbol} {latestQuote.grandTotal?.toLocaleString() || 0}
                           </span>
                           <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))]">
                             v{latestQuote.version}
@@ -228,30 +232,36 @@ export function InteriorQuotationsView({
                     {/* Actions */}
                     <div className="flex items-center justify-between gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
                       {!latestQuote ? (
-                        <button
-                          onClick={() => onCreateQuotation(lead._id)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer shadow-xs"
-                        >
-                          <FileText size={11} /> Create Quote
-                        </button>
+                        (canDo('crm_quotations', 'create')) && (
+                          <button
+                            onClick={() => onCreateQuotation(lead._id)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer shadow-xs"
+                          >
+                            <FileText size={11} /> Create Quote
+                          </button>
+                        )
                       ) : (
                         <div className="flex items-center gap-1.5">
                           {latestQuote.status === 'Rejected' ? (
-                            <button
-                              onClick={() => onCreateQuotation(lead._id)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer shadow-xs"
-                              title="Create next quotation version"
-                            >
-                              <Edit3 size={11} /> New Version
-                            </button>
+                            (canDo('crm_quotations', 'create')) && (
+                              <button
+                                onClick={() => onCreateQuotation(lead._id)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer shadow-xs"
+                                title="Create next quotation version"
+                              >
+                                <Edit3 size={11} /> New Version
+                              </button>
+                            )
                           ) : latestQuote.status === 'Draft' ? (
-                            <button
-                              onClick={() => onCreateQuotation(lead._id)}
-                              className="p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold active:scale-95 cursor-pointer inline-flex items-center justify-center"
-                              title="Edit draft quotation"
-                            >
-                              <Edit3 size={13} className="text-indigo-600" />
-                            </button>
+                            (canDo('crm_quotations', 'update')) && (
+                              <button
+                                onClick={() => onCreateQuotation(lead._id)}
+                                className="p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold active:scale-95 cursor-pointer inline-flex items-center justify-center"
+                                title="Edit draft quotation"
+                              >
+                                <Edit3 size={13} className="text-indigo-600" />
+                              </button>
+                            )
                           ) : null}
                           <button
                             onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=quotation`)}
@@ -269,12 +279,14 @@ export function InteriorQuotationsView({
                             Converted 
                           </span>
                         ) : (
-                          <button
-                            onClick={() => onConvertToProject(lead._id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
-                          >
-                            <Trophy size={11} /> Convert
-                          </button>
+                          (canDo('crm_quotations', 'approve')) && (
+                            <button
+                              onClick={() => onConvertToProject(lead._id)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                            >
+                              <Trophy size={11} /> Convert
+                            </button>
+                          )
                         ))}
                     </div>
                   </div>
@@ -352,7 +364,7 @@ export function InteriorQuotationsView({
                             <div className="space-y-0.5 min-w-0">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className="text-xs font-black text-[hsl(var(--foreground))]">
-                                  ₹{latestQuote.grandTotal?.toLocaleString('en-IN') || 0}
+                                  {currencySymbol} {latestQuote.grandTotal?.toLocaleString() || 0}
                                 </span>
                                 <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-0.5">
                                   <FileText size={9} /> V{latestQuote.version}
@@ -411,30 +423,36 @@ export function InteriorQuotationsView({
                         >
                           <div className="flex items-center justify-end gap-1.5">
                             {!latestQuote ? (
-                              <button
-                                onClick={() => onCreateQuotation(lead._id)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                              >
-                                <FileText size={11} /> + Quote
-                              </button>
+                              (canDo('crm_quotations', 'create')) && (
+                                <button
+                                  onClick={() => onCreateQuotation(lead._id)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                >
+                                  <FileText size={11} /> + Quote
+                                </button>
+                              )
                             ) : (
                               <>
                                 {latestQuote.status === 'Rejected' ? (
-                                  <button
-                                    onClick={() => onCreateQuotation(lead._id)}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                    title="Create next quotation version"
-                                  >
-                                    <Edit3 size={11} /> + Rev
-                                  </button>
+                                  (canDo('crm_quotations', 'create')) && (
+                                    <button
+                                      onClick={() => onCreateQuotation(lead._id)}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                      title="Create next quotation version"
+                                    >
+                                      <Edit3 size={11} /> + Rev
+                                    </button>
+                                  )
                                 ) : latestQuote.status === 'Draft' ? (
-                                  <button
-                                    onClick={() => onCreateQuotation(lead._id)}
-                                    className="p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs inline-flex items-center justify-center"
-                                    title="Edit draft quotation"
-                                  >
-                                    <Edit3 size={13} className="text-indigo-600" />
-                                  </button>
+                                  (canDo('crm_quotations', 'update')) && (
+                                    <button
+                                      onClick={() => onCreateQuotation(lead._id)}
+                                      className="p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs inline-flex items-center justify-center"
+                                      title="Edit draft quotation"
+                                    >
+                                      <Edit3 size={13} className="text-indigo-600" />
+                                    </button>
+                                  )
                                 ) : null}
                                 <button
                                   onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=quotation`)}
@@ -455,23 +473,27 @@ export function InteriorQuotationsView({
                                   <Trophy size={11} /> Converted 
                                 </span>
                               ) : (
-                                <button
-                                  onClick={() => onConvertToProject(lead._id)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-500 text-white hover:bg-amber-600 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                  title="Convert to Project"
-                                >
-                                  <Trophy size={11} /> Convert
-                                </button>
+                                (canDo('crm_quotations', 'approve')) && (
+                                  <button
+                                    onClick={() => onConvertToProject(lead._id)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-500 text-white hover:bg-amber-600 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                    title="Convert to Project"
+                                  >
+                                    <Trophy size={11} /> Convert
+                                  </button>
+                                )
                               ))}
                             
                             {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
-                                className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
-                                title="Mark as Lost"
-                              >
-                                <XCircle size={13} />
-                              </button>
+                              (canDo('crm_quotations', 'update') || canDo('crm_leads', 'update')) && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
+                                  className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
+                                  title="Mark as Lost"
+                                >
+                                  <XCircle size={13} />
+                                </button>
+                              )
                             )}
                           </div>
                         </td>

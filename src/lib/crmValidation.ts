@@ -74,7 +74,7 @@ export function validateMobileNumber(mobile?: string, isRequired = true): string
   }
   const phoneRegex = /^\+?[0-9\s-]{10,18}$/;
   if (!phoneRegex.test(cleaned)) {
-    return 'Please enter a valid phone number format (e.g., +91 9876543210)';
+    return 'Please enter a valid phone number format (e.g., +1 555-019-2834)';
   }
   return null;
 }

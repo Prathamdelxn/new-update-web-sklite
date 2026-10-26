@@ -6,7 +6,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, FolderKanban, Users, Bell, Settings, ChevronLeft, ChevronRight, Building2, UsersRound, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Users, Bell, Settings, ChevronLeft, ChevronRight, Building2, UsersRound, ShieldCheck, Truck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
@@ -23,8 +23,10 @@ const navigation: NavItem[] = [
   { label: 'Dashboard', href: '/interior-new', icon: LayoutDashboard, wired: true },
   { label: 'CRM', href: '/interior-new/crm', icon: Users, wired: true },
   { label: 'Projects', href: '/interior-new/projects', icon: FolderKanban, wired: true },
+  { label: 'Vendor Management', href: '/interior-new/vendors', icon: Truck, wired: true },
   { label: 'Users & Roles', href: '/interior-new/users-roles', icon: UsersRound, wired: true },
   { label: 'Audit Management', href: '/interior-new/audit', icon: ShieldCheck, wired: true },
+  { label: 'Settings', href: '/interior-new/settings', icon: Settings, wired: true },
 ];
 
 const bottomNavigation: NavItem[] = [];
@@ -40,12 +42,23 @@ interface InteriorSidebarProps {
 export function InteriorSidebar({ organizationName, collapsed, onToggleCollapse, mobileOpen, onCloseMobile }: InteriorSidebarProps) {
   const pathname = usePathname();
   const toast = useToast();
-  const { isOrgAdmin } = usePermissions();
+  const { isOrgAdmin, currentUser } = usePermissions();
+
+  // Sections the server says this user can open (GET /auth/me → navAccess)
+  const navAccess: Record<string, boolean> | undefined = currentUser?.navAccess;
+  const NAV_ACCESS_KEY: Record<string, string> = {
+    '/interior-new/crm': 'crm',
+    '/interior-new/projects': 'projects',
+    '/interior-new/vendors': 'vendors',
+    '/interior-new/users-roles': 'usersRoles',
+  };
 
   const filteredNavigation = navigation.filter((item) => {
     if (item.href === '/interior-new/audit' || item.label === 'Audit Management') {
       return isOrgAdmin;
     }
+    const key = NAV_ACCESS_KEY[item.href];
+    if (!isOrgAdmin && key && navAccess && navAccess[key] === false) return false;
     return true;
   });
 

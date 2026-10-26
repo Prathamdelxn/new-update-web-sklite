@@ -12,7 +12,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   customerId: string;
-  onSuccess: () => void;
+  onSuccess?: (updatedData?: any) => void;
   users?: any[];
 }
 
@@ -64,22 +64,25 @@ export function InteriorSendToQuotationsModal({ isOpen, onClose, customerId, onS
         assignedSalesExecutive: assignedSalesExecutive,
       };
 
-      await interiorCrmService.updateCustomer(customerId, updatePayload);
-
       const assignedUserObj = users.find(u => (u._id || u.id) === assignedSalesExecutive);
       const assignedInfo = assignedUserObj ? `Assigned Member: ${userLabel(assignedUserObj)}.` : '';
       const finalRemarks = [remarks.trim(), assignedInfo].filter(Boolean).join(' | ');
 
-      await interiorCrmService.createActivity({
-        customer: customerId,
-        type: 'Status Change',
-        status: 'Completed',
-        remarks: finalRemarks,
-        completedDate: new Date()
-      });
+      await Promise.all([
+        interiorCrmService.updateCustomer(customerId, updatePayload),
+        interiorCrmService.createActivity({
+          customer: customerId,
+          type: 'Status Change',
+          status: 'Completed',
+          remarks: finalRemarks,
+          completedDate: new Date()
+        }),
+      ]);
 
       toast.success('Successfully passed to Quotation phase!');
-      onSuccess();
+      if (onSuccess) {
+        onSuccess({ _id: customerId, ...updatePayload });
+      }
       onClose();
     } catch (error: any) {
       toast.error('Failed to pass to quotations');

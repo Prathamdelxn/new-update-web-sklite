@@ -43,7 +43,7 @@ interface IssuesTabProps {
 const STATUS_FILTERS = ['All', 'Open', 'In Progress', 'Escalated', 'Resolved', 'Closed', 'My Task'] as const;
 type StatusFilter = typeof STATUS_FILTERS[number];
 
-export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = 'Issue' }) => {
+export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = 'Snag' }) => {
   const [issues, setIssues] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeType, setActiveType] = useState<'Issue' | 'Snag'>(initialType);
@@ -61,6 +61,8 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
   const [completingSnag, setCompletingSnag] = useState<any>(null);
   const [bulkSubmitting, setBulkSubmitting] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
+  const [startingSnagging, setStartingSnagging] = useState(false);
+  const [milestoneProgress, setMilestoneProgress] = useState<{ total: number; completed: number } | null>(null);
 
   const toast = useToast();
   const { confirm } = useConfirm();
@@ -79,6 +81,21 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
       toast.error(`Failed to load ${activeType.toLowerCase()}s`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMilestoneProgress = async () => {
+    try {
+      const response = await api.get(`/projects/${projectId}/milestones`);
+      const milestonesList: any[] = Array.isArray(response.data)
+        ? response.data
+        : (response.data?.milestones || []);
+      setMilestoneProgress({
+        total: milestonesList.length,
+        completed: milestonesList.filter((m: any) => m.status === 'Completed').length,
+      });
+    } catch (error) {
+      console.error('Failed to load milestone progress:', error);
     }
   };
 
@@ -104,7 +121,38 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
       setStatusFilter('All');
     }
     fetchIssues();
+    if (activeType === 'Snag') {
+      fetchMilestoneProgress();
+    }
   }, [projectId, activeType]);
+
+  const handleStartSnagging = async () => {
+    if (isProjectLocked(project)) { toast.error('This project is locked and can no longer be modified.'); return; }
+    const ok = await confirm({
+      title: 'Start Snagging Phase',
+      message: 'Are you sure you want to transition this project to the Snagging phase? This will allow defects to be reported and resolved.',
+      confirmText: 'Start Snagging',
+      type: 'info',
+    });
+    if (!ok) return;
+
+    setStartingSnagging(true);
+    try {
+      await api.patch(`/projects/${projectId}`, {
+        status: 'Under Snagging',
+        auditAction: 'StatusChange',
+        auditDetails: 'Snagging phase initiated manually.'
+      });
+
+      toast.success('Project moved to Under Snagging phase successfully!');
+      fetchIssues();
+      fetchProject();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to start snagging phase');
+    } finally {
+      setStartingSnagging(false);
+    }
+  };
 
   const handleDeleteIssue = async (e: React.MouseEvent, issueId: string) => {
     e.stopPropagation();
@@ -294,8 +342,8 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
   const canCreate = !isLocked && (isAdmin || hasProjectPermission(user, project, 'snags:create'));
   const canUpdate = !isLocked && (isAdmin || hasProjectPermission(user, project, 'snags:update'));
   const canDelete = !isLocked && (isAdmin || hasProjectPermission(user, project, 'snags:delete'));
-  const canAssignSnagging = !isLocked && (isAdmin || hasProjectPermission(user, project, 'snag:assign'));
-  const canCompleteSnag = !isLocked && (isAdmin || hasProjectPermission(user, project, 'snag:complete'));
+  const canAssignSnagging = !isLocked && (isAdmin || hasProjectPermission(user, project, 'snags:assign'));
+  const canCompleteSnag = !isLocked && (isAdmin || hasProjectPermission(user, project, 'snags:complete'));
   const isSnaggingActive = project?.status === 'Under Snagging' || project?.status === 'Snagging Completed';
 
   if (!canView) {
@@ -304,7 +352,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
         <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
           <Lock className="w-6 h-6 text-gray-400" />
         </div>
-        <p className="text-sm font-bold text-slate-500">You don't have permission to view the Snags & Issues Management module.</p>
+        <p className="text-sm font-bold text-slate-500">You don't have permission to view the Snag Management module.</p>
       </div>
     );
   }
@@ -379,9 +427,37 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
             <ClipboardList className="w-10 h-10" />
           </div>
           <h3 className="text-sm font-bold text-slate-900">Snagging Phase Not Started</h3>
-          <p className="text-xs text-slate-500 mt-1.5 max-w-sm">
-            The snagging inspection phase has not commenced for this project. Once initiated, quality tracking records will appear here.
+          {['Initialized', 'Planning', 'Site Survey'].includes(project?.status ?? '') ? (
+            // Snagging follows the Ongoing phase, which needs planning approved first
+            <p className="text-xs text-slate-500 mt-1.5 max-w-sm">
+              The project is still in <span className="font-semibold text-slate-700">{project?.status}</span>. It becomes <span className="font-semibold text-slate-700">Ongoing</span> once <span className="font-semibold text-slate-700">every plan and every BOQ item is approved</span> and it has at least one milestone. When all milestones are completed after that, it moves into the snagging phase.
+            </p>
+          ) : (
+            <p className="text-xs text-slate-500 mt-1.5 max-w-sm">
+              The project stays <span className="font-semibold text-slate-700">Ongoing</span> until <span className="font-semibold text-slate-700">all milestones are completed</span>. Once the last milestone is completed, it moves into the snagging phase automatically and snags can be reported here.
+            </p>
+          )}
+          {milestoneProgress && milestoneProgress.total > 0 && (
+            <p className="text-xs font-bold text-amber-700 mt-3">
+              {milestoneProgress.completed} of {milestoneProgress.total} milestones completed
+            </p>
+          )}
+          {milestoneProgress && milestoneProgress.total === 0 && (
+            <p className="text-xs font-bold text-amber-700 mt-3">No milestones yet — add milestones to track progress toward snagging.</p>
+          )}
+          <p className="text-[11px] text-slate-400 mt-2 max-w-sm">
+            Construction finished early? Users with Project Management → Update can start snagging manually.
           </p>
+          {project?.status === 'Ongoing' && !isLocked && hasProjectPermission(user, project, 'projects:update') && (
+            <button
+              onClick={handleStartSnagging}
+              disabled={startingSnagging}
+              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl transition-all shadow-xs disabled:opacity-50"
+            >
+              {startingSnagging ? <Loader2 className="w-4 h-4 animate-spin" /> : <ClipboardList className="w-4 h-4" />}
+              Start Snagging Phase
+            </button>
+          )}
         </div>
       ) : (
         <>
@@ -568,7 +644,8 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                             </button>
                           )}
 
-                          {item.status === 'Draft' && isInspector && (canUpdate || canDelete) && (
+                          {/* Edit / Delete follow Snag Management > Update / Delete (any status, not just the inspector's drafts) */}
+                          {(canUpdate || canDelete) && (
                             <div className="flex items-center space-x-1">
                               {canUpdate && (
                                 <button
@@ -596,7 +673,8 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                             </div>
                           )}
 
-                          {item.status === 'In Progress' && !isLocked && (isAssignee || canCompleteSnag) && (
+                          {/* Snag Management > Complete decides — being the assignee isn't enough */}
+                          {item.status === 'In Progress' && !isLocked && canCompleteSnag && (
                             <button
                               onClick={() => setCompletingSnag(item)}
                               className="flex items-center space-x-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-xl px-3 py-1.5 text-[10px] font-bold text-emerald-600 transition-all shrink-0 shadow-sm"

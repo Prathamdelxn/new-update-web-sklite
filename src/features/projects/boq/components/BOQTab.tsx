@@ -4,7 +4,7 @@ import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Plus, Search, Edit2, Trash2, History, Download, Upload,
+  Plus, Search, Edit2, Trash2, History, Download, Upload, Eye, EyeOff,
   CheckCircle2, Loader2, GitBranch, FileText,
   DollarSign, ChevronLeft, Clock, Send, XCircle, RefreshCw,
   TrendingUp, BarChart3, ChevronRight, Lock,
@@ -63,15 +63,18 @@ const StatusBadge = ({ status, size = 'sm' }: { status: string; size?: 'xs' | 's
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 const StatCard = ({
-  label, value, icon: Icon, accent, bg, sub,
-}: { label: string; value: string | number; icon: React.ElementType; accent: string; bg: string; sub?: string }) => (
+  label, value, icon: Icon, accent, bg, sub, action,
+}: { label: string; value: string | number; icon: React.ElementType; accent: string; bg: string; sub?: string; action?: React.ReactNode }) => (
   <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 flex items-center gap-3 sm:gap-4 min-w-0 transition-colors duration-200 hover:border-blue-200">
     <div className={cn('w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0', bg)}>
       <Icon className={cn('w-5 h-5', accent)} />
     </div>
     <div className="min-w-0 flex-1">
       <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">{label}</p>
-      <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-0.5 leading-none truncate">{value}</p>
+      <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
+        <p className="min-w-0 flex-1 text-lg sm:text-2xl font-bold text-gray-900 leading-tight">{value}</p>
+        {action}
+      </div>
       {sub && <p className="text-[10px] text-slate-400 mt-0.5">{sub}</p>}
     </div>
   </div>
@@ -107,6 +110,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
   const [selectedGroupName, setSelectedGroupName] = useState<string | null>(null);
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
   const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
+  const [isApprovedTotalVisible, setIsApprovedTotalVisible] = useState(true);
 
   const toast = useToast();
   const { user } = useAuth();
@@ -310,11 +314,22 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             label="Approved Grand Total"
-            value={formatCurrency(totalBOQAmount, project?.currency || '$')}
+            value={isApprovedTotalVisible ? formatCurrency(totalBOQAmount, project?.currency || '$') : '••••••'}
             icon={DollarSign}
             accent="text-blue-600"
             bg="bg-blue-50"
             sub={`${approvedCount} approved items`}
+            action={
+              <button
+                type="button"
+                onClick={() => setIsApprovedTotalVisible(visible => !visible)}
+                className="flex-shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                aria-label={isApprovedTotalVisible ? 'Hide approved total' : 'Show approved total'}
+                title={isApprovedTotalVisible ? 'Hide amount' : 'Show amount'}
+              >
+                {isApprovedTotalVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+              </button>
+            }
           />
           <StatCard
             label="BOQ Groups"
@@ -428,18 +443,18 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
             ───────────────────────────────────────────────────────────────── */}
             <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
               <div className="overflow-x-auto">
-                <table className="min-w-full text-sm text-left">
+                <table className="w-full min-w-[980px] table-fixed text-sm text-left">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-200">
-                      <th className="w-12 px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">#</th>
-                      <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item No.</th>
-                      <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider min-w-[240px]">Item Description</th>
-                      <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">Unit</th>
-                      <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Qty</th>
-                      <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Rate</th>
-                      <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Total</th>
-                      <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">Status</th>
-                      <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                      <th className="w-[4%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">#</th>
+                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item No.</th>
+                      <th className="w-[29%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item Description</th>
+                      <th className="w-[7%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">Unit</th>
+                      <th className="w-[8%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Qty</th>
+                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Rate</th>
+                      <th className="w-[11%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Total</th>
+                      <th className="w-[11%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">Status</th>
+                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -455,19 +470,19 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
                         <React.Fragment key={groupName}>
                           {/* Group Header Row */}
                           <tr className="bg-gray-50/50 group border-b border-gray-200">
-                            <td colSpan={6} className="px-4 py-3">
+                            <td colSpan={6} className="px-2 sm:px-3 py-3">
                               <div className="flex items-center gap-3">
                                 <div className="w-1 h-5 bg-blue-500 rounded-sm" />
                                 <span className="font-semibold text-gray-900 text-sm uppercase tracking-wide">{groupName}</span>
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-right font-semibold text-gray-900">
+                            <td className="px-1 sm:px-2 py-3 text-right font-semibold text-gray-900 whitespace-nowrap text-xs sm:text-sm">
                               {formatCurrency(totalCost, project?.currency || '$')}
                             </td>
-                            <td className="px-4 py-3 text-center">
+                            <td className="px-2 sm:px-3 py-3 text-center">
                               <StatusBadge status={status} size="xs" />
                             </td>
-                            <td className="px-4 py-3">
+                            <td className="px-2 sm:px-3 py-3">
                               <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 {canDelete && (
                                   <button
@@ -491,13 +506,13 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
   
                             return (
                               <tr key={item._id} className={cn('transition-colors group/item hover:bg-gray-50/80', rowStyle)}>
-                                <td className="px-4 py-3 text-slate-500 text-xs font-mono">{idx + 1}</td>
-                                <td className="px-4 py-3">
+                                <td className="px-2 sm:px-3 py-3 text-slate-500 text-xs font-mono">{idx + 1}</td>
+                                <td className="px-2 sm:px-3 py-3">
                                   {item.itemNumber
                                     ? <span className="font-mono text-xs font-medium text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md">{item.itemNumber}</span>
                                     : <span className="text-slate-300 text-xs">—</span>}
                                 </td>
-                                <td className="px-4 py-3 min-w-[200px] max-w-md">
+                                <td className="px-2 sm:px-3 py-3 min-w-0">
                                   <div className="flex items-center gap-2">
                                     <p className="font-medium text-gray-900 break-words [overflow-wrap:anywhere]">{item.itemDescription}</p>
                                     {(item as any).version > 1 && (
@@ -539,20 +554,20 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
                                     </p>
                                   )}
                                 </td>
-                                <td className="px-4 py-3 text-center text-slate-500 text-xs">{item.unit || '—'}</td>
-                                <td className="px-4 py-3 text-right font-medium text-gray-900">
+                                <td className="px-2 sm:px-3 py-3 text-center text-slate-500 text-xs">{item.unit || '—'}</td>
+                                <td className="px-2 sm:px-3 py-3 text-right font-medium text-gray-900">
                                   {Number(item.quantity).toLocaleString('en-IN')}
                                 </td>
-                                <td className="px-4 py-3 text-right text-slate-600">
+                                <td className="px-2 sm:px-3 py-3 text-right text-slate-600">
                                   {formatCurrency(Number(item.unitCost), project?.currency || '$')}
                                 </td>
-                                <td className="px-4 py-3 text-right font-semibold text-gray-900">
+                                <td className="px-2 sm:px-3 py-3 text-right font-semibold text-gray-900">
                                   {formatCurrency(Number(item.totalCost || 0), project?.currency || '$')}
                                 </td>
-                                <td className="px-4 py-3 text-center">
+                                <td className="px-2 sm:px-3 py-3 text-center">
                                   <StatusBadge status={item.status} />
                                 </td>
-                                <td className="px-4 py-3">
+                                <td className="px-2 sm:px-3 py-3">
                                   <div className="flex items-center justify-end gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
                                     {isUpdating ? (
                                       <Loader2 className="w-4 h-4 animate-spin text-blue-500 mx-2" />

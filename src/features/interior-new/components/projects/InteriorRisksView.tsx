@@ -10,6 +10,7 @@ import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { cn } from '@/lib/utils';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 
 interface InteriorRisksViewProps {
   projectId: string;
@@ -17,6 +18,7 @@ interface InteriorRisksViewProps {
 
 export default function InteriorRisksView({ projectId }: InteriorRisksViewProps) {
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
   const { confirm } = useConfirm();
   const [risks, setRisks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -156,10 +158,12 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
             Log execution, procurement, design, and vendor threats with probability-impact heatmap mitigation plans.
           </p>
         </div>
-        <Button onClick={openNewModal}>
-          <Plus className="w-4 h-4 mr-2" />
-          Log Risk
-        </Button>
+        {canDo('risks', 'create') && (
+          <Button onClick={openNewModal}>
+            <Plus className="w-4 h-4 mr-2" />
+            Log Risk
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -217,20 +221,24 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
                       Severity Score: {risk.score} ({risk.probability} × {risk.impact})
                     </span>
                     <div className="flex items-center gap-2 ml-auto">
-                      <button
-                        onClick={() => openEditModal(risk)}
-                        className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-blue-500 hover:bg-blue-50 rounded transition-colors"
-                        title="Edit Risk"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteRisk(risk._id)}
-                        className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                        title="Delete Risk"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {canDo('risks', 'update') && (
+                        <button
+                          onClick={() => openEditModal(risk)}
+                          className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-blue-500 hover:bg-blue-50 rounded transition-colors"
+                          title="Edit Risk"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      )}
+                      {canDo('risks', 'delete') && (
+                        <button
+                          onClick={() => handleDeleteRisk(risk._id)}
+                          className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                          title="Delete Risk"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                   <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">{risk.description}</h3>

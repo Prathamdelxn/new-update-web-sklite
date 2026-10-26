@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Truck, User, Phone, Mail, Building, FileText, CreditCard, Landmark, AlignLeft } from 'lucide-react';
+import { X, Truck, User, Phone, Mail, Building, FileText, AlignLeft } from 'lucide-react';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
 
@@ -22,11 +22,6 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess, initialVendor }:
     email: '',
     gstNumber: '',
     address: '',
-    paymentTerms: 'Standard',
-    accountName: '',
-    accountNumber: '',
-    ifscCode: '',
-    bankName: '',
   });
 
   React.useEffect(() => {
@@ -39,11 +34,6 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess, initialVendor }:
         email: initialVendor.email || '',
         gstNumber: initialVendor.gstNumber || '',
         address: initialVendor.address || '',
-        paymentTerms: initialVendor.paymentTerms || 'Standard',
-        accountName: initialVendor.bankDetails?.accountName || '',
-        accountNumber: initialVendor.bankDetails?.accountNumber || '',
-        ifscCode: initialVendor.bankDetails?.ifscCode || '',
-        bankName: initialVendor.bankDetails?.bankName || '',
       });
     } else {
       setFormData({
@@ -54,11 +44,6 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess, initialVendor }:
         email: '',
         gstNumber: '',
         address: '',
-        paymentTerms: 'Standard',
-        accountName: '',
-        accountNumber: '',
-        ifscCode: '',
-        bankName: '',
       });
     }
   }, [initialVendor, isOpen]);
@@ -78,15 +63,7 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess, initialVendor }:
 
     try {
       setIsSubmitting(true);
-      const payload = {
-        ...formData,
-        bankDetails: {
-          accountName: formData.accountName,
-          accountNumber: formData.accountNumber,
-          ifscCode: formData.ifscCode,
-          bankName: formData.bankName,
-        }
-      };
+      const payload = { ...formData };
 
       if (initialVendor?._id) {
         await interiorProjectService.updateVendor(initialVendor._id, payload);
@@ -156,7 +133,7 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess, initialVendor }:
                       value={formData.name}
                       onChange={handleChange}
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
-                      placeholder="e.g., BuildTech Suppliers"
+                      placeholder="e.g., Apex Materials & Supply Co."
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -176,7 +153,7 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess, initialVendor }:
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                      <FileText size={14} className="text-slate-400" /> GST No.
+                      <FileText size={14} className="text-slate-400" /> Tax ID / VAT / GST No.
                     </label>
                     <input
                       type="text"
@@ -184,7 +161,7 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess, initialVendor }:
                       value={formData.gstNumber}
                       onChange={handleChange}
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all uppercase"
-                      placeholder="e.g., 27AAAAA0000A1Z5"
+                      placeholder="e.g., TAX-ID-992810 / VAT-991823"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -217,7 +194,7 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess, initialVendor }:
                       value={formData.contactPerson}
                       onChange={handleChange}
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
-                      placeholder="e.g., Ramesh"
+                      placeholder="e.g., David Miller"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -230,7 +207,7 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess, initialVendor }:
                       value={formData.phoneNumber}
                       onChange={handleChange}
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
-                      placeholder="+91..."
+                      placeholder="e.g., +91 98765 43210"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -243,7 +220,7 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess, initialVendor }:
                       value={formData.email}
                       onChange={handleChange}
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
-                      placeholder="supplier@mail.com"
+                      placeholder="e.g., sales@apexsupply.com"
                     />
                   </div>
                 </div>

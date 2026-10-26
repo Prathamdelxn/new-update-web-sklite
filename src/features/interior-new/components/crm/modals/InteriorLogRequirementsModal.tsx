@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/providers/ToastContext';
 import { interiorCrmService } from '@/services/interiorCrm.service';
+import { useCurrency } from '@/hooks/useCurrency';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export interface RoomRequirement {
@@ -60,8 +61,9 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   customerId: string;
-  onSuccess: () => void;
+  onSuccess?: (updatedData?: any) => void;
   users?: any[];
+  clientRequirements?: any[];
   initialRequirements?: RoomRequirement[];
   initialBudget?: string;
   isReadOnly?: boolean;
@@ -116,12 +118,29 @@ export const InteriorLogRequirementsModal = ({
   onClose,
   customerId,
   onSuccess,
+  clientRequirements = [],
   initialRequirements = EMPTY_REQUIREMENTS,
   initialBudget = '',
   isReadOnly = false,
   currentStatus
 }: Props) => {
   const toast = useToast();
+  const { currencyCode, currencySymbol } = useCurrency();
+  const isINR = currencyCode === 'INR';
+  const quickPresets = isINR
+    ? ['₹3L - ₹5L', '₹5L - ₹10L', '₹10L - ₹15L', '₹15L - ₹25L', '₹25L - ₹50L', '₹50L+']
+    : [
+        `${currencySymbol} 25k - 50k`,
+        `${currencySymbol} 50k - 100k`,
+        `${currencySymbol} 100k - 250k`,
+        `${currencySymbol} 250k - 500k`,
+        `${currencySymbol} 500k - 1M`,
+        `${currencySymbol} 1M+`,
+      ];
+  const budgetPlaceholder = isINR
+    ? 'e.g. ₹5L - ₹10L or ₹15,00,000'
+    : `e.g. ${currencySymbol} 50,000 - ${currencySymbol} 150,000 or ${currencySymbol} 250,000`;
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [budgetRange, setBudgetRange] = useState(initialBudget || '');
   const [budgetError, setBudgetError] = useState<string | null>(null);
@@ -285,11 +304,13 @@ export const InteriorLogRequirementsModal = ({
       }
 
       toast.success('Design requirements saved successfully!');
-      onSuccess();
+      if (onSuccess) {
+        onSuccess({ _id: customerId, ...updatePayload });
+      }
       onClose();
     } catch (error: any) {
       console.error('Failed to save requirements:', error);
-      toast.error(error?.response?.data?.message || error?.message || 'Failed to save requirements');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || error?.message || 'Failed to save requirements');
     } finally {
       setIsSubmitting(false);
     }
@@ -331,6 +352,48 @@ export const InteriorLogRequirementsModal = ({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex flex-col gap-6 custom-scrollbar">
+          {/* Pre-fill from Client Submission Banner */}
+          {clientRequirements && clientRequirements.length > 0 && (
+            <div className="bg-purple-500/[0.08] border border-purple-500/25 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-purple-500/15 text-purple-600 flex items-center justify-center shrink-0 border border-purple-500/20">
+                  <Sparkles size={16} />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-[hsl(var(--foreground))] block">
+                    Client Submitted {clientRequirements.length} Space(s) through Online Intake Link
+                  </span>
+                  <span className="text-[11px] text-[hsl(var(--muted-foreground))] block">
+                    You can load the customer's requested rooms & aesthetic wishes directly into your technical specifications form.
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setRequirements(
+                    clientRequirements.map((cr: any) => ({
+                      ...DEFAULT_ROOM,
+                      roomName: cr.roomName || cr.name || cr.room || 'Space',
+                      interiorType: cr.interiorType || 'Residential',
+                      designStyle: cr.designStyle || '',
+                      theme: cr.designStyle || '',
+                      furnitureRequirements: cr.furnitureRequirements || '',
+                      storage: cr.storage || '',
+                      lightingRequirements: cr.lightingRequirements || '',
+                      colours: cr.colours || '',
+                      description: cr.description ? `[Client Wishlist]: ${cr.description}` : '',
+                    }))
+                  );
+                  toast.success(`Pre-filled ${clientRequirements.length} spaces from client wishlist!`);
+                }}
+                className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shrink-0 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <Copy size={13} /> Pre-fill from Client Wishlist
+              </button>
+            </div>
+          )}
+
           {/* Overall Project Scope & Estimated Budget */}
           <div className="bg-[hsl(var(--muted)/0.35)] border border-[hsl(var(--border))] rounded-3xl p-5 md:p-6 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[hsl(var(--border))]">
@@ -359,7 +422,7 @@ export const InteriorLogRequirementsModal = ({
                     setBudgetRange(e.target.value);
                     if (budgetError) setBudgetError(null);
                   }}
-                  placeholder="e.g. ₹5L - ₹10L or ₹15,00,000"
+                  placeholder={budgetPlaceholder}
                   className={`w-full bg-[hsl(var(--background))] border rounded-2xl pl-9 pr-4 py-2.5 text-xs font-bold text-[hsl(var(--foreground))] outline-none transition-all ${
                     budgetError
                       ? 'border-red-500 focus:ring-2 focus:ring-red-500/20'
@@ -374,7 +437,7 @@ export const InteriorLogRequirementsModal = ({
               {!isReadOnly && (
                 <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
                   <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] mr-1">Quick Presets:</span>
-                  {['₹3L - ₹5L', '₹5L - ₹10L', '₹10L - ₹15L', '₹15L - ₹25L', '₹25L - ₹50L', '₹50L+'].map((chip) => (
+                  {quickPresets.map((chip) => (
                     <button
                       key={chip}
                       type="button"

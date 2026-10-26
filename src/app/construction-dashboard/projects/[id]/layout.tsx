@@ -32,7 +32,6 @@ const ALL_TABS = [
   { id: 'issues',       name: 'Snags',          icon: AlertCircle },
   { id: 'risks',        name: 'Risk',           icon: ShieldAlert },
   { id: 'transactions', name: 'Transactions',   icon: CreditCard },
-  { id: 'payments',     name: 'Payments',       icon: CreditCard },
   { id: 'reports',      name: 'Reports',        icon: TrendingUp },
   { id: 'audit',        name: 'Audit',          icon: History },
   { id: 'handover',     name: 'Handover',       icon: ClipboardCheck },
@@ -52,7 +51,7 @@ type TabGroup = {
 const TAB_GROUPS: TabGroup[] = [
   { id: 'overview',  label: 'Overview',  icon: LayoutDashboard, tabIds: [ 'details'] },
   { id: 'work',      label: 'Work',      icon: Calendar,        tabIds: ['boq', 'milestones', 'reports'] },
-  { id: 'finance',   label: 'Finance',   icon: DollarSign,      tabIds: ['transactions', 'payments'] },
+  { id: 'finance',   label: 'Finance',   icon: DollarSign,      tabIds: ['transactions'] },
   { id: 'site',      label: 'Site',      icon: Map,             tabIds: ['plans', 'documents', 'materials', 'site-survey', 'attendance'] },
   { id: 'quality',   label: 'Quality',   icon: ShieldAlert,     tabIds: ['issues', 'risks', 'handover', 'audit'] },
   { id: 'chat',      label: 'Chat',      icon: MessageSquare,   tabIds: ['chat'] },
@@ -89,7 +88,7 @@ const RESTRICTED_TABS = [
 
 // ── Inner layout ───────────────────────────────────────────────
 function LayoutInner({ children }: { children: React.ReactNode }) {
-  const { project, loading, fetchProject, projectId } = useProjectContext();
+  const { project, loading, accessDenied, fetchProject, projectId } = useProjectContext();
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuth();
@@ -150,8 +149,12 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
     <SkeletonLoader loading={loading} preset="detail">
       {!project && !loading ? (
         <div className="text-center py-20 bg-white border border-slate-200 rounded-3xl p-8 shadow-card">
-          <h2 className="text-2xl font-bold text-slate-900">Project not found</h2>
-          <p className="text-slate-500 text-sm mt-1">This project does not exist or has been removed.</p>
+          <h2 className="text-2xl font-bold text-slate-900">{accessDenied ? 'Access denied' : 'Project not found'}</h2>
+          <p className="text-slate-500 text-sm mt-1">
+            {accessDenied
+              ? "You don't have permission to view this project."
+              : 'This project does not exist or has been removed.'}
+          </p>
           <button
             onClick={() => router.push(projectsListRoute)}
             className="mt-5 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-xs shadow-sm hover:bg-blue-500 transition-colors"

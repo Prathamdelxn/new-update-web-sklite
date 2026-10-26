@@ -93,8 +93,8 @@ export function QuotationBuilderModal({ isOpen, onClose, customerId, existingQuo
     if (discount > subtotal + tax) {
       return toast.error("Discount cannot exceed subtotal plus tax.");
     }
-    if (grandTotal <= 0) {
-      return toast.error("Grand total amount must be greater than zero.");
+    if (grandTotal < 0) {
+      return toast.error("Grand total amount cannot be negative.");
     }
 
     setIsSubmitting(true);

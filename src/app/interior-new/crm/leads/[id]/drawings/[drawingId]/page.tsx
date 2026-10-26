@@ -6,7 +6,7 @@
 // =============================================================================
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { InteriorShell } from '@/components/interior/InteriorShell';
 import { useInteriorAuthGuard } from '@/lib/useInteriorAuthGuard';
@@ -49,6 +49,7 @@ import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
 import { cn } from '@/lib/utils';
 import { InteriorDrawingApprovalModal } from '@/features/interior-new/components/crm/modals/InteriorDrawingApprovalModal';
+import { InteriorDrawingConfirmApproveModal } from '@/features/interior-new/components/crm/modals/InteriorDrawingConfirmApproveModal';
 import { InteriorUploadRevisionModal } from '@/features/interior-new/components/crm/modals/InteriorUploadRevisionModal';
 import { InteriorSendDrawingForApprovalModal } from '@/features/interior-new/components/crm/modals/InteriorSendDrawingForApprovalModal';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -57,6 +58,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 export function detectFileType(
   fileName: string = '',
@@ -137,10 +139,21 @@ export default function DrawingViewerPage() {
   const params = useParams();
   const router = useRouter();
   const toast = useToast();
+const { hasPermission: canDo } = usePermissions();
 
   const customerId = (params?.id || '') as string;
   const rawDrawingId = (params?.drawingId || '') as string;
   const drawingId = decodeURIComponent(rawDrawingId);
+
+  const searchParams = useSearchParams();
+  const fromTab = searchParams?.get('from') || searchParams?.get('returnTab') || 'designs';
+  const returnHref = `/interior-new/crm/leads/${customerId}?tab=${fromTab}`;
+  const sectionLabel =
+    fromTab === 'boq' || fromTab === 'estimation'
+      ? 'BOQ Estimation'
+      : fromTab === 'quotations' || fromTab === 'quotes'
+      ? 'Quotations'
+      : '2D/3D Drawings';
 
   const [loading, setLoading] = useState(true);
   const [lead, setLead] = useState<any>(null);
@@ -181,6 +194,7 @@ export default function DrawingViewerPage() {
 
   // Modal States
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+  const [isConfirmApproveModalOpen, setIsConfirmApproveModalOpen] = useState(false);
   const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
   const [isSendApprovalModalOpen, setIsSendApprovalModalOpen] = useState(false);
   const [approvingDirect, setApprovingDirect] = useState(false);
@@ -193,38 +207,65 @@ export default function DrawingViewerPage() {
   } = useQuery({
     queryKey: ['crm-lead', customerId],
     queryFn: async () => {
-      const [leadRes, usersRes, actRes] = await Promise.all([
-        interiorCrmService.getCustomerById(customerId),
-        interiorCrmService.getUsers().catch(() => ({ data: [] })),
-        interiorCrmService.getActivities(customerId).catch(() => ({ data: [] }))
-      ]);
-
-      const customerData = leadRes?.data || leadRes;
-      const usersData = usersRes?.data || [];
-      const actData = actRes?.success && actRes?.data ? actRes.data : Array.isArray(actRes) ? actRes : [];
-      return { lead: customerData, users: usersData, activities: actData };
+      const res = await interiorCrmService.getCustomerById(customerId);
+      return res?.data || res;
+    },
+    placeholderData: () => {
+      const cached = queryClient.getQueryData(['crm-lead', customerId]);
+      if (cached) return (cached as any)?.lead || cached;
+      const listData: any = queryClient.getQueryData(['crm-leads-list']);
+      const leads = listData?.leads || (Array.isArray(listData) ? listData : []);
+      return leads.find((c: any) => (c._id || c.id) === customerId);
     },
     enabled: Boolean(customerId && drawingId),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
+  });
+
+  const { data: cachedUsersData } = useQuery({
+    queryKey: ['interior-users'],
+    queryFn: async () => {
+      const res = await interiorCrmService.getUsers();
+      return res?.success && res?.data ? res.data : Array.isArray(res) ? res : [];
+    },
+    staleTime: 30 * 60 * 1000,
+  });
+
+  const { data: cachedActivitiesData } = useQuery({
+    queryKey: ['crm-lead-activities', customerId],
+    queryFn: async () => {
+      const res = await interiorCrmService.getActivities(customerId);
+      return res?.success && res?.data ? res.data : Array.isArray(res) ? res : [];
+    },
+    enabled: Boolean(customerId),
+    staleTime: 60 * 1000,
   });
 
   useEffect(() => {
     if (drawingLeadData) {
-      const customerData = drawingLeadData.lead;
+      const customerData = (drawingLeadData as any)?.lead || drawingLeadData;
       setLead(customerData);
-      setUsers(drawingLeadData.users);
-      setActivities(drawingLeadData.activities);
+      if (cachedUsersData) setUsers(cachedUsersData);
+      if (cachedActivitiesData) setActivities(cachedActivitiesData);
 
-      const allFiles = customerData?.designFiles || (customerData as any)?.designs || [];
+      const boqAttachments = (customerData?.boqs || []).flatMap((b: any) =>
+        (b.sections || []).flatMap((s: any) => s.attachments || [])
+      );
+      const allFiles = [
+        ...(customerData?.designFiles || customerData?.designs || []),
+        ...boqAttachments,
+      ];
       const found = allFiles.find(
         (d: any, idx: number) =>
           d._id?.toString() === drawingId ||
           d.id?.toString() === drawingId ||
+          d.drawingId?.toString() === drawingId ||
           String(d._id) === String(drawingId) ||
           String(d.id) === String(drawingId) ||
+          String(d.drawingId) === String(drawingId) ||
           d.name === drawingId ||
           d.title === drawingId ||
           d.url === drawingId ||
+          decodeURIComponent(d.url || '') === drawingId ||
           String(idx) === String(drawingId)
       );
 
@@ -538,29 +579,39 @@ export default function DrawingViewerPage() {
 
   const viewport2DRef = useRef<HTMLDivElement>(null);
 
-  // Professional Smooth Wheel Zoom toward mouse focal point (Figma / Miro style)
-  const handleWheel = (e: React.WheelEvent) => {
-    if (!isImageFormat) return;
-    
-    // Zoom factor based on wheel direction
-    const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
-    const newZoom = Math.min(10, Math.max(0.1, Number((zoomLevel * zoomFactor).toFixed(3))));
+  // Professional Smooth Wheel Zoom toward mouse focal point with non-passive preventDefault (prevents webpage zoom)
+  useEffect(() => {
+    const el = viewport2DRef.current;
+    if (!el) return;
 
-    if (viewport2DRef.current) {
-      const rect = viewport2DRef.current.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left - rect.width / 2;
-      const mouseY = e.clientY - rect.top - rect.height / 2;
+    const handleNativeWheel = (e: WheelEvent) => {
+      if (!isImageFormat) return;
+      e.preventDefault();
+      e.stopPropagation();
 
-      // Keep the point under the mouse cursor stable during zoom
-      const scaleChange = newZoom / zoomLevel;
-      const newPanX = mouseX - (mouseX - panPosition.x) * scaleChange;
-      const newPanY = mouseY - (mouseY - panPosition.y) * scaleChange;
+      const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
 
-      setPanPosition({ x: newPanX, y: newPanY });
-    }
+      setZoomLevel((prevZoom) => {
+        const newZoom = Math.min(10, Math.max(0.1, Number((prevZoom * zoomFactor).toFixed(3))));
+        const rect = el.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left - rect.width / 2;
+        const mouseY = e.clientY - rect.top - rect.height / 2;
 
-    setZoomLevel(newZoom);
-  };
+        const scaleChange = newZoom / prevZoom;
+        setPanPosition((prevPan) => ({
+          x: mouseX - (mouseX - prevPan.x) * scaleChange,
+          y: mouseY - (mouseY - prevPan.y) * scaleChange,
+        }));
+
+        return newZoom;
+      });
+    };
+
+    el.addEventListener('wheel', handleNativeWheel, { passive: false });
+    return () => {
+      el.removeEventListener('wheel', handleNativeWheel);
+    };
+  }, [isImageFormat]);
 
   // Professional Smooth Drag & Pan Handlers (Any zoom level / middle click / left click)
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -676,20 +727,31 @@ export default function DrawingViewerPage() {
             
             {/* Left: Breadcrumbs & Title */}
             <div className="flex items-center gap-3 min-w-0">
-              <Link
-                href={`/interior-new/crm/leads/${customerId}`}
-                className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors shrink-0"
-                title="Return to Lead"
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== 'undefined' && window.history.length > 1) {
+                    router.back();
+                  } else {
+                    router.push(returnHref);
+                  }
+                }}
+                className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors shrink-0 cursor-pointer"
+                title={`Return to ${sectionLabel}`}
               >
                 <ArrowLeft size={15} />
-              </Link>
+              </button>
 
               <div className="flex items-center gap-2 min-w-0">
                 <nav className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
                   <Link href="/interior-new/crm" className="hover:text-slate-900 transition-colors">CRM</Link>
                   <ChevronRight size={11} className="text-slate-400 shrink-0" />
-                  <Link href={`/interior-new/crm/leads/${customerId}`} className="hover:text-slate-900 transition-colors truncate max-w-[130px]">
+                  <Link href={returnHref} className="hover:text-slate-900 transition-colors truncate max-w-[130px]">
                     {lead?.name || 'Lead'}
+                  </Link>
+                  <ChevronRight size={11} className="text-slate-400 shrink-0" />
+                  <Link href={returnHref} className="text-slate-500 hover:text-slate-900 transition-colors">
+                    {sectionLabel}
                   </Link>
                   <ChevronRight size={11} className="text-slate-400 shrink-0" />
                   <span className="text-slate-900 font-semibold truncate max-w-[240px]">{activeTitle}</span>
@@ -715,43 +777,51 @@ export default function DrawingViewerPage() {
               </button>
 
               {isCurrentVersionDraft && (
-                <button
-                  type="button"
-                  onClick={() => setIsSendApprovalModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
-                >
-                  <Send size={13} /> Send for Approval
-                </button>
+                canDo('crm_drawings', 'update') && (
+                  <button
+                    type="button"
+                    onClick={() => setIsSendApprovalModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
+                  >
+                    <Send size={13} /> Send for Approval
+                  </button>
+                )
               )}
 
               {isCurrentVersionPending && (
                 <>
-                  <button
-                    type="button"
-                    onClick={() => setIsApprovalModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors cursor-pointer"
-                  >
-                    <XCircle size={13} /> Rejected
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDirectApprove}
-                    disabled={approvingDirect}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer disabled:opacity-50"
-                  >
-                    <CheckCircle2 size={13} /> {approvingDirect ? 'Approving...' : 'Approve (v' + activeVersionNum + ')'}
-                  </button>
+                  {canDo('crm_drawings', 'approve') && (
+                    <button
+                      type="button"
+                      onClick={() => setIsApprovalModalOpen(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors cursor-pointer"
+                    >
+                      <XCircle size={13} /> Rejected
+                    </button>
+                  )}
+                  {canDo('crm_drawings', 'approve') && (
+                    <button
+                      type="button"
+                      onClick={() => setIsConfirmApproveModalOpen(true)}
+                      disabled={approvingDirect}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      <CheckCircle2 size={13} /> Approve (v{activeVersionNum})
+                    </button>
+                  )}
                 </>
               )}
 
               {isCurrentVersionRejected && (
-                <button
-                  type="button"
-                  onClick={() => setIsRevisionModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
-                >
-                  <UploadCloud size={13} /> + Upload Revision (v{allVersions.length + 1})
-                </button>
+                canDo('crm_drawings', 'update') && (
+                  <button
+                    type="button"
+                    onClick={() => setIsRevisionModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
+                  >
+                    <UploadCloud size={13} /> + Upload Revision (v{allVersions.length + 1})
+                  </button>
+                )
               )}
             </div>
           </div>
@@ -845,18 +915,22 @@ export default function DrawingViewerPage() {
                 </div>
               </div>
 
-              {/* Viewport Canvas Body (Slight Greyish Studio Theme - Pro Interactive Zoom & Pan) */}
+              {/* Viewport Canvas Body (Clean Drafting Studio Workspace - Pro Interactive Zoom & Pan) */}
               <div
                 ref={viewport2DRef}
-                onWheel={handleWheel}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
                 onDoubleClick={handleDoubleClick}
-                className={`w-full h-full flex items-center justify-center relative bg-[radial-gradient(#cbd5e1_1.5px,transparent_1.5px)] [background-size:24px_24px] bg-slate-100 select-none overflow-hidden touch-none ${
+                className={`w-full h-full flex items-center justify-center relative bg-slate-100 select-none overflow-hidden touch-none ${
                   isImageFormat ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'
                 }`}
+                style={{
+                  backgroundColor: '#f8fafc',
+                  backgroundImage: 'radial-gradient(#cbd5e1 1.5px, transparent 1.5px)',
+                  backgroundSize: '24px 24px',
+                }}
               >
                 {isDirect3DFormat ? (
                   <>
@@ -883,7 +957,7 @@ export default function DrawingViewerPage() {
                     )}
                   </>
                 ) : isImageFormat ? (
-                  <div className="w-full h-full flex items-center justify-center p-8 sm:p-12 overflow-hidden relative pointer-events-none">
+                  <div className="w-full h-full flex items-center justify-center p-4 overflow-hidden relative pointer-events-none">
                     <img
                       src={activeUrl}
                       alt={activeTitle}
@@ -893,7 +967,7 @@ export default function DrawingViewerPage() {
                         transformOrigin: 'center center',
                         transition: isDragging ? 'none' : 'transform 0.08s cubic-bezier(0.2, 0, 0, 1)'
                       }}
-                      className="max-w-[75%] max-h-[65vh] object-contain select-none pointer-events-none will-change-transform"
+                      className="max-w-full max-h-[85vh] object-contain select-none pointer-events-none will-change-transform border border-slate-300/80 bg-white"
                     />
                   </div>
                 ) : isPdfFormat ? (
@@ -1300,6 +1374,22 @@ export default function DrawingViewerPage() {
         </div>
 
         {/* Modals for Direct Actions on this Page */}
+        {isConfirmApproveModalOpen && (
+          <InteriorDrawingConfirmApproveModal
+            isOpen={isConfirmApproveModalOpen}
+            onClose={() => {
+              if (!approvingDirect) setIsConfirmApproveModalOpen(false);
+            }}
+            onConfirm={async () => {
+              await handleDirectApprove();
+              setIsConfirmApproveModalOpen(false);
+            }}
+            drawing={{ ...drawing, title: activeTitle, currentVersion: activeVersionNum }}
+            isSubmitting={approvingDirect}
+            leadName={lead?.name}
+          />
+        )}
+
         {isApprovalModalOpen && (
           <InteriorDrawingApprovalModal
             isOpen={isApprovalModalOpen}

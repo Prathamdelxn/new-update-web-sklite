@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/providers/ToastContext';
 import interiorApiClient from '@/services/interiorApi.client';
+import { useCurrency } from '@/hooks/useCurrency';
 import { motion } from 'framer-motion';
 
 export interface RoomRequirement {
@@ -111,6 +112,22 @@ export const LogRequirementsModal = ({
   isReadOnly = false
 }: Props) => {
   const toast = useToast();
+  const { currencyCode, currencySymbol } = useCurrency();
+  const isINR = currencyCode === 'INR';
+  const quickPresets = isINR
+    ? ['₹3L - ₹5L', '₹5L - ₹10L', '₹10L - ₹15L', '₹15L - ₹25L', '₹25L - ₹50L', '₹50L+']
+    : [
+        `${currencySymbol} 25k - 50k`,
+        `${currencySymbol} 50k - 100k`,
+        `${currencySymbol} 100k - 250k`,
+        `${currencySymbol} 250k - 500k`,
+        `${currencySymbol} 500k - 1M`,
+        `${currencySymbol} 1M+`,
+      ];
+  const budgetPlaceholder = isINR
+    ? 'e.g. ₹5L - ₹10L or ₹15,00,000'
+    : `e.g. ${currencySymbol} 50,000 - ${currencySymbol} 150,000 or ${currencySymbol} 250,000`;
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [budgetRange, setBudgetRange] = useState(initialBudget || '');
   const [budgetError, setBudgetError] = useState<string | null>(null);
@@ -337,7 +354,7 @@ export const LogRequirementsModal = ({
                     setBudgetRange(e.target.value);
                     if (budgetError) setBudgetError(null);
                   }}
-                  placeholder="e.g. ₹5L - ₹10L or ₹15,00,000"
+                  placeholder={budgetPlaceholder}
                   className={`w-full bg-white border rounded-2xl pl-9 pr-4 py-2.5 text-xs font-bold text-slate-800 outline-none transition-all ${
                     budgetError
                       ? 'border-red-500 focus:ring-2 focus:ring-red-500/20'
@@ -351,7 +368,7 @@ export const LogRequirementsModal = ({
               {!isReadOnly && (
                 <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
                   <span className="text-[10px] font-bold text-slate-400 mr-1">Quick Presets:</span>
-                  {['₹3L - ₹5L', '₹5L - ₹10L', '₹10L - ₹15L', '₹15L - ₹25L', '₹25L - ₹50L', '₹50L+'].map((chip) => (
+                  {quickPresets.map((chip) => (
                     <button
                       key={chip}
                       type="button"

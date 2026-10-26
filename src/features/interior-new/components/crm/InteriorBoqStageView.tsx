@@ -27,6 +27,9 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useCurrency } from '@/hooks/useCurrency';
+import { exportBoqToExcel } from '@/lib/exportBoqExcel';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 interface Props {
   leads: any[];
@@ -50,6 +53,8 @@ export const InteriorBoqStageView = ({
   onRejectBoq,
 }: Props) => {
   const router = useRouter();
+const { hasPermission: canDo } = usePermissions();
+  const { currencySymbol, currencyCode } = useCurrency();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterState, setFilterState] = useState<'all' | 'pending' | 'completed'>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -261,9 +266,16 @@ export const InteriorBoqStageView = ({
                         <span className="truncate text-[hsl(var(--foreground))]">{lead.propertyType || 'Residential'}</span>
                       </div>
                       <div className="text-[10px] text-emerald-600 font-bold shrink-0">
-                        {hasBoqs ? `₹${(latestBoq?.totalAmount || 0).toLocaleString('en-IN')}` : 'No estimate'}
+                        {hasBoqs ? `${currencySymbol} ${(latestBoq?.totalAmount || 0).toLocaleString()}` : 'No estimate'}
                       </div>
                     </div>
+
+                    {hasBoqs && (
+                      <div className="flex items-center justify-between text-[10px] text-[hsl(var(--muted-foreground))] px-1">
+                        <span>v{lead.boqs.length} • {latestBoq?.createdAt ? new Date(latestBoq.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Recent'}</span>
+                        <span className="truncate max-w-[130px]">by {latestBoq?.createdByName || (latestBoq?.createdBy?.firstName ? `${latestBoq.createdBy.firstName} ${latestBoq.createdBy.lastName || ''}`.trim() : null) || 'Team'}</span>
+                      </div>
+                    )}
 
                     {/* Actions Ribbon */}
                     <div className="flex items-center justify-between gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
@@ -278,65 +290,93 @@ export const InteriorBoqStageView = ({
                             {hasBoqs && latestBoq?.status === 'pending_approval' && (
                               <>
                                 {onApproveBoq && (
-                                  <button
-                                    onClick={() => onApproveBoq(lead._id)}
-                                    className="inline-flex items-center gap-0.5 px-2 py-1.5 bg-emerald-600 text-white rounded-lg text-[11px] font-bold active:scale-95 cursor-pointer"
-                                    title="Approve BOQ"
-                                  >
-                                    <CheckCircle2 size={10} /> Approve
-                                  </button>
+                                  (canDo('crm_boq', 'approve')) && (
+                                    <button
+                                      onClick={() => onApproveBoq(lead._id)}
+                                      className="inline-flex items-center gap-0.5 px-2 py-1.5 bg-emerald-600 text-white rounded-lg text-[11px] font-bold active:scale-95 cursor-pointer"
+                                      title="Approve BOQ"
+                                    >
+                                      <CheckCircle2 size={10} /> Approve
+                                    </button>
+                                  )
                                 )}
                                 {onRejectBoq && (
-                                  <button
-                                    onClick={() => onRejectBoq(lead._id)}
-                                    className="inline-flex items-center gap-0.5 px-2 py-1.5 bg-rose-600 text-white rounded-lg text-[11px] font-bold active:scale-95 cursor-pointer"
-                                    title="Reject / Request Changes"
-                                  >
-                                    <XCircle size={10} /> Reject
-                                  </button>
+                                  (canDo('crm_boq', 'approve')) && (
+                                    <button
+                                      onClick={() => onRejectBoq(lead._id)}
+                                      className="inline-flex items-center gap-0.5 px-2 py-1.5 bg-rose-600 text-white rounded-lg text-[11px] font-bold active:scale-95 cursor-pointer"
+                                      title="Reject / Request Changes"
+                                    >
+                                      <XCircle size={10} /> Reject
+                                    </button>
+                                  )
                                 )}
                               </>
                             )}
 
                             {hasBoqs && (!latestBoq?.status || latestBoq?.status === 'draft' || latestBoq?.status === 'rejected') && onSendForApproval && (
-                              <button
-                                onClick={() => onSendForApproval(lead._id)}
-                                className="inline-flex items-center gap-1 px-2 py-1.5 bg-indigo-600 text-white rounded-lg text-[11px] font-bold active:scale-95 cursor-pointer"
-                                title="Send BOQ for Approval"
-                              >
-                                <Send size={10} /> Send Approval
-                              </button>
+                              (canDo('crm_boq', 'update')) && (
+                                <button
+                                  onClick={() => onSendForApproval(lead._id)}
+                                  className="inline-flex items-center gap-1 px-2 py-1.5 bg-indigo-600 text-white rounded-lg text-[11px] font-bold active:scale-95 cursor-pointer"
+                                  title="Send BOQ for Approval"
+                                >
+                                  <Send size={10} /> Send Approval
+                                </button>
+                              )
                             )}
 
                             {/* 2. Edit BOQ */}
-                            <button
-                              onClick={() => onAddBoq(lead._id, hasBoqs ? (lead.boqs.length - 1) : undefined)}
-                              className={cn(
-                                'inline-flex items-center justify-center rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
-                                hasBoqs
-                                  ? 'p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
-                                  : 'gap-1 px-2.5 py-1.5 bg-blue-600 text-white'
-                              )}
-                              title={hasBoqs ? 'Edit BOQ' : 'Create BOQ'}
-                            >
-                            {hasBoqs ? (
-                              <Pencil size={13} className="text-blue-600" />
-                            ) : (
-                              <>
-                                <Plus size={11} /> Create BOQ
-                              </>
-                            )}
-                            </button>
-
-                            {/* 3. Delete BOQ */}
-                            {hasBoqs && onDeleteBoq && !isQuotationApproved && (
+                            {((hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? canDo('crm_boq', 'update') : canDo('crm_boq', 'create')) && (
                               <button
-                                onClick={() => onDeleteBoq(lead._id)}
-                                className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
-                                title="Delete BOQ"
+                                onClick={() => onAddBoq(lead._id, (hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? (lead.boqs.length - 1) : undefined)}
+                                className={cn(
+                                  'inline-flex items-center justify-center rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
+                                  (hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved')
+                                    ? 'p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
+                                    : 'gap-1 px-2.5 py-1.5 bg-blue-600 text-white'
+                                )}
+                                title={(hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? 'Edit BOQ' : hasBoqs ? 'Approved BOQs are final — create a new version' : 'Create BOQ'}
                               >
-                                <Trash2 size={13} />
+                              {(hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? (
+                                <Pencil size={13} className="text-blue-600" />
+                              ) : (
+                                <>
+                                  <Plus size={11} /> {hasBoqs ? 'New Version' : 'Create BOQ'}
+                                </>
+                              )}
                               </button>
+                            )}
+
+                            {/* 3. Export Excel */}
+                            {hasBoqs && canDo('crm_boq', 'export') && (
+                              <button
+                                onClick={() =>
+                                  exportBoqToExcel({
+                                    lead,
+                                    boqIndex: lead.boqs.length - 1,
+                                    currencySymbol,
+                                    currencyCode,
+                                  })
+                                }
+                                className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 border border-emerald-500/20 rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                                title="Export BOQ to Excel (.xlsx)"
+                              >
+                                <FileSpreadsheet size={13} />
+                              </button>
+                            )}
+
+                            {/* 4. Delete BOQ */}
+                            {hasBoqs && onDeleteBoq && !isQuotationApproved && (
+                              (canDo('crm_boq', 'delete')) && (
+                                <button
+                                  onClick={() => onDeleteBoq(lead._id)}
+                                  className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                                  title="Delete BOQ"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              )
                             )}
                           </div>
 
@@ -347,13 +387,15 @@ export const InteriorBoqStageView = ({
                                 Passed 
                               </span>
                             ) : latestBoq?.status === 'approved' ? (
-                              <button
-                                onClick={() => onPassToQuotations(lead._id)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition-all bg-blue-600 text-white cursor-pointer shadow-xs"
-                                title="Pass to Quotation"
-                              >
-                                Pass <ArrowRight size={11} />
-                              </button>
+                              (canDo('crm_boq', 'update') || canDo('crm_quotations', 'update') || canDo('crm_quotations', 'create')) && (
+                                <button
+                                  onClick={() => onPassToQuotations(lead._id)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition-all bg-blue-600 text-white cursor-pointer shadow-xs"
+                                  title="Pass to Quotation"
+                                >
+                                  Pass <ArrowRight size={11} />
+                                </button>
+                              )
                             ) : null)}
                         </div>
                       )}
@@ -468,10 +510,18 @@ export const InteriorBoqStageView = ({
                                 </span>
                               </div>
                               {latestBoq?.totalAmount ? (
-                                <div className="text-xs font-extrabold text-emerald-600">
-                                  ₹{latestBoq.totalAmount.toLocaleString('en-IN')}
+                                <div className="text-xs font-extrabold text-emerald-600 flex items-center justify-between gap-1">
+                                  <span>{currencySymbol} {latestBoq.totalAmount.toLocaleString()}</span>
+                                  <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-normal">
+                                    {latestBoq.createdAt ? new Date(latestBoq.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''}
+                                  </span>
                                 </div>
                               ) : null}
+                              {(latestBoq?.createdByName || latestBoq?.createdBy?.firstName) && (
+                                <div className="text-[10px] text-[hsl(var(--muted-foreground))] truncate" title={`Created by ${latestBoq.createdByName || `${latestBoq.createdBy.firstName} ${latestBoq.createdBy.lastName || ''}`.trim()}`}>
+                                  by <span className="font-semibold text-[hsl(var(--foreground))]">{latestBoq.createdByName || `${latestBoq.createdBy.firstName} ${latestBoq.createdBy.lastName || ''}`.trim()}</span>
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <span className="text-[11px] text-[hsl(var(--muted-foreground))] italic">No BOQ generated</span>
@@ -508,65 +558,93 @@ export const InteriorBoqStageView = ({
                                 {hasBoqs && isBoqPending && (
                                   <>
                                     {onApproveBoq && (
-                                      <button
-                                        onClick={() => onApproveBoq(lead._id)}
-                                        className="p-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                        title="Approve BOQ"
-                                      >
-                                        <CheckCircle2 size={13} />
-                                      </button>
+                                      (canDo('crm_boq', 'approve')) && (
+                                        <button
+                                          onClick={() => onApproveBoq(lead._id)}
+                                          className="p-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                          title="Approve BOQ"
+                                        >
+                                          <CheckCircle2 size={13} />
+                                        </button>
+                                      )
                                     )}
                                     {onRejectBoq && (
-                                      <button
-                                        onClick={() => onRejectBoq(lead._id)}
-                                        className="p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                        title="Reject / Request Changes"
-                                      >
-                                        <XCircle size={13} />
-                                      </button>
+                                      (canDo('crm_boq', 'approve')) && (
+                                        <button
+                                          onClick={() => onRejectBoq(lead._id)}
+                                          className="p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                          title="Reject / Request Changes"
+                                        >
+                                          <XCircle size={13} />
+                                        </button>
+                                      )
                                     )}
                                   </>
                                 )}
 
                                 {hasBoqs && (isBoqDraft || isBoqRejected) && onSendForApproval && (
-                                  <button
-                                    onClick={() => onSendForApproval(lead._id)}
-                                    className="inline-flex items-center gap-1 px-2 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                    title="Send BOQ for Approval"
-                                  >
-                                    <Send size={11} /> Approval
-                                  </button>
+                                  (canDo('crm_boq', 'update')) && (
+                                    <button
+                                      onClick={() => onSendForApproval(lead._id)}
+                                      className="inline-flex items-center gap-1 px-2 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                      title="Send BOQ for Approval"
+                                    >
+                                      <Send size={11} /> Approval
+                                    </button>
+                                  )
                                 )}
 
                                 {/* 2. Edit BOQ */}
-                                <button
-                                  onClick={() => onAddBoq(lead._id, hasBoqs ? (lead.boqs.length - 1) : undefined)}
-                                  className={cn(
-                                    "inline-flex items-center justify-center rounded-lg text-xs font-bold transition-all border cursor-pointer shadow-xs",
-                                    hasBoqs
-                                      ? "p-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
-                                      : "gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
-                                  )}
-                                  title={hasBoqs ? 'Edit BOQ' : 'Create BOQ'}
-                                >
-                                  {hasBoqs ? (
-                                    <Pencil size={13} className="text-blue-600" />
-                                  ) : (
-                                    <>
-                                      <Plus size={11} className="text-blue-600" />BOQ
-                                    </>
-                                  )}
-                                </button>
-
-                                {/* 3. Delete BOQ */}
-                                {hasBoqs && onDeleteBoq && !isQuotationApproved && (
+                                {((hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? canDo('crm_boq', 'update') : canDo('crm_boq', 'create')) && (
                                   <button
-                                    onClick={() => onDeleteBoq(lead._id)}
-                                    className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                    title="Delete BOQ"
+                                    onClick={() => onAddBoq(lead._id, (hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? (lead.boqs.length - 1) : undefined)}
+                                    className={cn(
+                                      "inline-flex items-center justify-center rounded-lg text-xs font-bold transition-all border cursor-pointer shadow-xs",
+                                      (hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved')
+                                        ? "p-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
+                                        : "gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
+                                    )}
+                                    title={(hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? 'Edit BOQ' : hasBoqs ? 'Approved BOQs are final — create a new version' : 'Create BOQ'}
                                   >
-                                    <Trash2 size={13} />
+                                    {(hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? (
+                                      <Pencil size={13} className="text-blue-600" />
+                                    ) : (
+                                      <>
+                                        <Plus size={11} className="text-blue-600" />{hasBoqs ? 'New Version' : 'BOQ'}
+                                      </>
+                                    )}
                                   </button>
+                                )}
+
+                                {/* 3. Export Excel */}
+                                {hasBoqs && canDo('crm_boq', 'export') && (
+                                  <button
+                                    onClick={() =>
+                                      exportBoqToExcel({
+                                        lead,
+                                        boqIndex: lead.boqs.length - 1,
+                                        currencySymbol,
+                                        currencyCode,
+                                      })
+                                    }
+                                    className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 border border-emerald-500/20 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                    title="Export BOQ to Excel (.xlsx)"
+                                  >
+                                    <FileSpreadsheet size={13} />
+                                  </button>
+                                )}
+
+                                {/* 4. Delete BOQ */}
+                                {hasBoqs && onDeleteBoq && !isQuotationApproved && (
+                                  (canDo('crm_boq', 'delete')) && (
+                                    <button
+                                      onClick={() => onDeleteBoq(lead._id)}
+                                      className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                      title="Delete BOQ"
+                                    >
+                                      <Trash2 size={13} />
+                                    </button>
+                                  )
                                 )}
 
                                 {hasBoqs &&
@@ -579,25 +657,29 @@ export const InteriorBoqStageView = ({
                                       Passed 
                                     </span>
                                   ) : isBoqApproved ? (
-                                    <button
-                                      onClick={() => onPassToQuotations(lead._id)}
-                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
-                                      title="Pass to Quotation Phase"
-                                    >
-                                      Pass <ArrowRight size={11} />
-                                    </button>
+                                    (canDo('crm_boq', 'update') || canDo('crm_quotations', 'update') || canDo('crm_quotations', 'create')) && (
+                                      <button
+                                        onClick={() => onPassToQuotations(lead._id)}
+                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
+                                        title="Pass to Quotation Phase"
+                                      >
+                                        Pass <ArrowRight size={11} />
+                                      </button>
+                                    )
                                   ) : null)}
                               </>
                             )}
                             
                             {onMarkAsLost && !['Lost', 'Won', 'Converted'].includes(lead.status) && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
-                                className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
-                                title="Mark as Lost"
-                              >
-                                <XCircle size={13} />
-                              </button>
+                              (canDo('crm_boq', 'update') || canDo('crm_leads', 'update')) && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
+                                  className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
+                                  title="Mark as Lost"
+                                >
+                                  <XCircle size={13} />
+                                </button>
+                              )
                             )}
                           </div>
                         </td>

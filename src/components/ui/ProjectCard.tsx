@@ -31,7 +31,7 @@ interface ProjectCardProps {
 
 const statusConfig: Record<string, { color: string; bg: string; border: string; icon: any }> = {
   'Initialized': { color: '#64748b', bg: '#f1f5f9', border: '#e2e8f0', icon: Clock },
-  'Planning': { color: '#4f46e5', bg: '#eef2ff', border: '#c7d2fe', icon: Target },
+  'Planning': { color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe', icon: Target },
   'Site Survey': { color: '#0284c7', bg: '#f0f9ff', border: '#bae6fd', icon: MapPin },
   'Ongoing': { color: '#059669', bg: '#ecfdf5', border: '#a7f3d0', icon: Briefcase },
   'Under Snagging': { color: '#d97706', bg: '#fffbeb', border: '#fde68a', icon: AlertCircle },
@@ -76,9 +76,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   const isAssignedSurveyor = !!(surveyorId && (user?.id === surveyorId || user?._id === surveyorId));
 
   const statusStyle = statusConfig[project.status] || {
-    color: '#4f46e5',
-    bg: '#eef2ff',
-    border: '#c7d2fe',
+    color: '#2563eb',
+    bg: '#eff6ff',
+    border: '#bfdbfe',
     icon: Target
   };
   const StatusIcon = statusStyle.icon;
@@ -98,7 +98,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     <div className="group relative bg-white rounded-xl border border-slate-200/90 hover:border-indigo-400/80 hover:shadow-md transition-all duration-200 flex flex-col h-full overflow-hidden">
       
       {/* Top Accent Stripe on hover */}
-      <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
       <Link href={`${basePath}/${project._id}`} className="flex flex-col flex-1 p-4 pb-3 outline-none">
         
@@ -106,8 +106,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         <div className="flex items-start justify-between gap-2.5 mb-3">
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
             {/* Building Icon Avatar */}
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-50 via-slate-50 to-blue-50 border border-indigo-100/90 flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:border-indigo-300 group-hover:bg-indigo-50 transition-all shadow-2xs">
-              <Building2 className="w-4 h-4 text-indigo-600 group-hover:text-indigo-700 transition-colors" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-50 via-slate-50 to-blue-50 border border-blue-100/90 flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:border-blue-300 group-hover:bg-blue-50 transition-all shadow-2xs">
+              <Building2 className="w-4 h-4 text-blue-600 group-hover:text-blue-700 transition-colors" />
             </div>
             
             {/* Title & Category Subtitle */}
@@ -186,7 +186,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Progress</span>
             <span className={cn(
               "font-extrabold tabular-nums text-xs",
-              isFinished ? "text-emerald-600" : "text-indigo-600"
+              isFinished ? "text-emerald-600" : "text-blue-600"
             )}>
               {Math.round(progress)}%
             </span>
@@ -198,7 +198,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 'h-full rounded-full transition-all duration-500',
                 isFinished
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
-                  : 'bg-gradient-to-r from-indigo-500 via-indigo-600 to-blue-600'
+                  : 'bg-gradient-to-r from-blue-500 via-blue-600 to-blue-600'
               )}
               style={{ width: `${Math.max(4, progress)}%` }}
             />

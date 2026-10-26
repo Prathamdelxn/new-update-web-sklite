@@ -10,7 +10,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   customerId: string;
-  onSuccess: () => void;
+  onSuccess?: (updatedData?: any) => void;
   users?: any[];
   lead?: any;
 }
@@ -74,22 +74,25 @@ export function InteriorSendToBoqModal({ isOpen, onClose, customerId, onSuccess,
         status: 'Under BOQ Creation',
       };
 
-      await interiorCrmService.updateCustomer(customerId, updatePayload);
-
       const assignedUserObj = users.find(u => (u._id || u.id || u.clerkUserId) === assignedEstimator);
       const estimatorInfo = assignedUserObj ? `Assigned Estimator: ${userLabel(assignedUserObj)}.` : '';
       const finalRemarks = [remarks, estimatorInfo].filter(Boolean).join(' | ') || 'Lead passed to BOQ phase with approved drawings.';
 
-      await interiorCrmService.createActivity({
-        customer: customerId,
-        type: 'Status Change',
-        status: 'Completed',
-        remarks: finalRemarks,
-        completedDate: new Date()
-      });
+      await Promise.all([
+        interiorCrmService.updateCustomer(customerId, updatePayload),
+        interiorCrmService.createActivity({
+          customer: customerId,
+          type: 'Status Change',
+          status: 'Completed',
+          remarks: finalRemarks,
+          completedDate: new Date()
+        }),
+      ]);
 
       toast.success('Lead successfully passed to BOQ Creation!');
-      onSuccess();
+      if (onSuccess) {
+        onSuccess({ _id: customerId, ...updatePayload });
+      }
       onClose();
     } catch (error: any) {
       toast.error('Failed to send to BOQ');

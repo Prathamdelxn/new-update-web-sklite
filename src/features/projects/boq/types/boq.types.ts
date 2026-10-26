@@ -9,6 +9,8 @@ export interface BOQItem {
   quantity: number;
   unitCost: number;
   totalCost: number;
+  brandMakes?: string;
+  sectionTitle?: string;
   remark?: string;
   version: number;
   isLatest: boolean;

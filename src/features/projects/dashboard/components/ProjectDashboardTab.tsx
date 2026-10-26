@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Calendar, Users, DollarSign, TrendingUp, AlertCircle, ShieldAlert,
@@ -110,7 +110,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
   const quickLinks = [
     { label: 'Chat', icon: MessageSquare, tab: 'chat', color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
     { label: 'Milestones', icon: CheckCircle2, tab: 'milestones', color: 'text-blue-600 bg-blue-50 border-blue-200' },
-    { label: 'Issues', icon: AlertCircle, tab: 'issues', color: 'text-amber-600 bg-amber-50 border-amber-200' },
+    { label: 'Snags', icon: AlertCircle, tab: 'issues', color: 'text-amber-600 bg-amber-50 border-amber-200' },
     { label: 'Documents', icon: FileText, tab: 'documents', color: 'text-purple-600 bg-purple-50 border-purple-200' },
     { label: 'Plans', icon: Map, tab: 'plans', color: 'text-cyan-600 bg-cyan-50 border-cyan-200' },
     { label: 'Materials', icon: Package, tab: 'materials', color: 'text-orange-600 bg-orange-50 border-orange-200' },

@@ -24,6 +24,8 @@ import {
 import { cn } from '@/lib/utils';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
+import { useCurrency } from '@/hooks/useCurrency';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 
 interface InteriorVariationOrdersViewProps {
   projectId: string;
@@ -31,6 +33,8 @@ interface InteriorVariationOrdersViewProps {
 
 export default function InteriorVariationOrdersView({ projectId }: InteriorVariationOrdersViewProps) {
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
+  const { currencySymbol, formatExactCurrency } = useCurrency();
 
   const [variationOrders, setVariationOrders] = useState<any[]>([]);
   const [selectedVo, setSelectedVo] = useState<any>(null);
@@ -78,12 +82,19 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
   const fetchVoData = async () => {
     try {
       setLoading(true);
-      const projRes = await interiorProjectService.getProjectDetails(projectId);
+      // The budget comes from Project Config — optional, so users with only
+      // Variation Orders access still get their list
+      const [projResult, voResult] = await Promise.allSettled([
+        interiorProjectService.getProjectDetails(projectId),
+        interiorProjectService.getVariationOrders(projectId),
+      ]);
+      const projRes = projResult.status === 'fulfilled' ? projResult.value : null;
       if (projRes && projRes.success && projRes.data) {
         setProjectBudget(projRes.data.budget?.amount || 500000);
       }
+      if (voResult.status === 'rejected') throw voResult.reason;
 
-      const res = await interiorProjectService.getVariationOrders(projectId);
+      const res = voResult.value;
       let list: any[] = [];
       if (res && res.success && res.data) {
         list = res.data;
@@ -224,13 +235,15 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
             Formally approve design variations, track cost margins, and view live database synchronization updates.
           </p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary)/0.9)] shadow-lg shadow-[hsl(var(--primary)/0.25)] transition-all cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          Create Variation Order
-        </button>
+        {canDo('variation_orders', 'create') && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary)/0.9)] shadow-lg shadow-[hsl(var(--primary)/0.25)] transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            Create Variation Order
+          </button>
+        )}
       </div>
 
       {/* KPI Metrics Widgets */}
@@ -264,7 +277,7 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
             Additional Revenue
           </span>
           <span className="text-2xl font-black text-emerald-500 mt-2">
-            ₹{metrics.additionalRevenueGenerated.toLocaleString('en-IN')}
+            {currencySymbol} {metrics.additionalRevenueGenerated.toLocaleString()}
           </span>
         </div>
 
@@ -311,7 +324,7 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
                     {vo.type?.replace('_', ' ')}
                   </span>
                   <span className="font-extrabold text-[hsl(var(--foreground))]">
-                    ₹{(vo.financialSummary?.netDifference || 0).toLocaleString('en-IN')}
+                    {currencySymbol} {(vo.financialSummary?.netDifference || 0).toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -364,21 +377,21 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
                     <div className="p-4 bg-[hsl(var(--muted)/0.2)] border border-[hsl(var(--border))] rounded-lg">
                       <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Original Approved Cost</span>
                       <span className="text-base font-extrabold text-[hsl(var(--foreground))]">
-                        ₹{(selectedVo.financialSummary?.originalCost || 0).toLocaleString('en-IN')}
+                        {currencySymbol} {(selectedVo.financialSummary?.originalCost || 0).toLocaleString()}
                       </span>
                     </div>
 
                     <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-lg">
                       <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-wider block mb-1">Variation Cost (Net Diff)</span>
                       <span className="text-base font-extrabold text-emerald-500">
-                        ₹{(selectedVo.financialSummary?.netDifference || 0).toLocaleString('en-IN')}
+                        {currencySymbol} {(selectedVo.financialSummary?.netDifference || 0).toLocaleString()}
                       </span>
                     </div>
 
                     <div className="p-4 bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.2)] rounded-lg">
                       <span className="text-[9px] font-bold text-[hsl(var(--primary))] uppercase tracking-wider block mb-1">Revised Project Cost</span>
                       <span className="text-base font-extrabold text-[hsl(var(--primary))]">
-                        ₹{(selectedVo.financialSummary?.revisedProjectCost || 0).toLocaleString('en-IN')}
+                        {currencySymbol} {(selectedVo.financialSummary?.revisedProjectCost || 0).toLocaleString()}
                       </span>
                     </div>
                   </div>
@@ -393,7 +406,7 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
                       </div>
                       <div>
                         <span className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Material</span>
-                        <span className="text-xs font-bold">₹{(selectedVo.impactAnalysis?.materialCost || 0).toLocaleString('en-IN')}</span>
+                        <span className="text-xs font-bold">{currencySymbol} {(selectedVo.impactAnalysis?.materialCost || 0).toLocaleString()}</span>
                       </div>
                     </div>
 
@@ -403,7 +416,7 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
                       </div>
                       <div>
                         <span className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Labor Cost</span>
-                        <span className="text-xs font-bold">₹{(selectedVo.impactAnalysis?.laborCost || 0).toLocaleString('en-IN')}</span>
+                        <span className="text-xs font-bold">{currencySymbol} {(selectedVo.impactAnalysis?.laborCost || 0).toLocaleString()}</span>
                       </div>
                     </div>
 
@@ -413,7 +426,7 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
                       </div>
                       <div>
                         <span className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Vendor cost</span>
-                        <span className="text-xs font-bold">₹{(selectedVo.impactAnalysis?.vendorCost || 0).toLocaleString('en-IN')}</span>
+                        <span className="text-xs font-bold">{currencySymbol} {(selectedVo.impactAnalysis?.vendorCost || 0).toLocaleString()}</span>
                       </div>
                     </div>
 
@@ -423,7 +436,7 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
                       </div>
                       <div>
                         <span className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Overhead</span>
-                        <span className="text-xs font-bold">₹{(selectedVo.impactAnalysis?.overheadCost || 0).toLocaleString('en-IN')}</span>
+                        <span className="text-xs font-bold">{currencySymbol} {(selectedVo.impactAnalysis?.overheadCost || 0).toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
@@ -541,14 +554,16 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
               {/* Detail Footer Actions */}
               {selectedVo.status !== 'approved' && (
                 <div className="p-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.15)] flex justify-end">
-                  <button
-                    onClick={handleApproveVo}
-                    disabled={actionLoading}
-                    className="flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 cursor-pointer shadow-lg shadow-emerald-500/10 disabled:opacity-50"
-                  >
-                    {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                    Approve & Run Auto Impact Updates
-                  </button>
+                  {canDo('variation_orders', 'approve') && (
+                    <button
+                      onClick={handleApproveVo}
+                      disabled={actionLoading}
+                      className="flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 cursor-pointer shadow-lg shadow-emerald-500/10 disabled:opacity-50"
+                    >
+                      {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                      Approve & Run Auto Impact Updates
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -626,7 +641,7 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
-                    Material Cost Impact (₹)
+                    Material Cost Impact ({currencySymbol})
                   </label>
                   <input
                     type="number"
@@ -639,7 +654,7 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
-                    Labor Cost Impact (₹)
+                    Labor Cost Impact ({currencySymbol})
                   </label>
                   <input
                     type="number"
@@ -652,7 +667,7 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
-                    Vendor Cost Impact (₹)
+                    Vendor Cost Impact ({currencySymbol})
                   </label>
                   <input
                     type="number"
@@ -665,7 +680,7 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
-                    Overhead Cost Impact (₹)
+                    Overhead Cost Impact ({currencySymbol})
                   </label>
                   <input
                     type="number"

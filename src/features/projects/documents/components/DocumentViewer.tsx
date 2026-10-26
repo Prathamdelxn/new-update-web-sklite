@@ -89,11 +89,15 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const { user } = useAuth();
   const { project } = useProjectContext();
   const isAdmin = user?.role?.name === 'Admin' || (user?.role?.permissions?.includes('*') ?? false);
-  const canAnnotate = isAdmin || hasProjectPermission(user, project, 'annotations:create') || hasProjectPermission(user, project, 'annotations:update');
+  // This viewer only adds and removes pins, so: View to see them, Create to
+  // add, Delete to remove (the API enforces the same).
+  const canViewAnnotations = isAdmin || hasProjectPermission(user, project, 'annotations:view');
+  const canAnnotate = isAdmin || hasProjectPermission(user, project, 'annotations:create');
   const canDeleteAnnotation = isAdmin || hasProjectPermission(user, project, 'annotations:delete');
 
   const loadAnnotations = useCallback(async () => {
     if (!projectId || !document?._id) return;
+    if (!canViewAnnotations) { setAnnotations([]); return; }
     try {
       if (folderId) {
         const res = await api.get(`/projects/${projectId}/folders/${folderId}/annotations?documentId=${document._id}`);
@@ -110,7 +114,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         })));
       }
     } catch { /* silent — annotations are optional */ }
-  }, [projectId, document?._id, folderId]);
+  }, [projectId, document?._id, folderId, canViewAnnotations]);
 
   useEffect(() => {
     if (isOpen) {
@@ -141,7 +145,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   // array (matching PlanAnnotator), so both save and delete below build the
   // full updated array and PATCH it in one call.
   const toFolderPayload = (list: Annotation[]) => list.map(a => ({
-    clientId: (a as any).clientId,
+    // Older pins were saved without a clientId; their _id identifies them instead
+    clientId: (a as any).clientId || a._id,
     documentId: document._id,
     x: a.x,
     y: a.y,
@@ -268,12 +273,17 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 10 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className="relative z-10 flex rounded-2xl overflow-hidden shadow-2xl bg-white"
-            style={{ width: '95vw', maxWidth: 1120, height: '96vh', maxHeight: '96vh', minHeight: 640 }}
+            className="relative z-10 flex min-h-0 rounded-2xl overflow-hidden shadow-2xl bg-white"
+            style={{
+              width: 'min(96vw, 1440px)',
+              height: 'min(96dvh, calc(100dvh - 24px))',
+              maxHeight: 'calc(100dvh - 24px)',
+              minHeight: 0,
+            }}
             onClick={e => e.stopPropagation()}
           >
             {/* ════ LEFT: Document viewer ════ */}
-            <div className="flex flex-col flex-1 min-w-0">
+            <div className="flex flex-col flex-1 min-w-0 min-h-0">
 
               {/* Header bar */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-white shrink-0 gap-3">
@@ -348,7 +358,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
               {/* Image area */}
               <div
                 className={cn(
-                  'flex-1 bg-[#f0f2f5] flex items-center justify-center overflow-auto relative select-none',
+                  'flex-1 min-h-0 bg-[#f0f2f5] flex items-center justify-center overflow-auto relative select-none',
                   pinMode && 'cursor-crosshair'
                 )}
                 onClick={handleContainerClick}
@@ -552,7 +562,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                     ) : (
                       <div className="divide-y divide-gray-100">
                         {annotations.map((ann, idx) => {
-                          const canDelete = canDeleteAnnotation || ann.createdBy === (user as any)?._id;
+                          // Removing a pin needs Delete, even for the person who placed it
+                          const canDelete = canDeleteAnnotation;
                           const isActive = activePin === ann._id;
                           return (
                             <div

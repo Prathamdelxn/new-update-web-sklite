@@ -12,6 +12,7 @@ import { interiorProjectService } from '@/services/interiorProject.service';
 import { CreateVendorModal } from '@/components/modals/CreateVendorModal';
 import { useToast } from '@/providers/ToastContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 interface InteriorVendorsViewProps {
   projectId: string;
@@ -19,6 +20,7 @@ interface InteriorVendorsViewProps {
 
 export default function InteriorVendorsView({ projectId }: InteriorVendorsViewProps) {
   const toast = useToast();
+  const { hasPermission: canDo } = usePermissions();
   const [dbVendors, setDbVendors] = useState<any[]>([]);
   const [pos, setPos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,10 +89,10 @@ export default function InteriorVendorsView({ projectId }: InteriorVendorsViewPr
     const name = vendor.name;
     const stats = vendorsMap.get(name) || { count: 0, totalValue: 0 };
     
-    const rating = [4.8, 4.2, 4.6, 3.9][index % 4] || 4.5;
-    const compliance = [95, 88, 92, 75][index % 4] || 90;
-    const onTime = [98, 80, 94, 70][index % 4] || 92;
-    const trade = vendor.vendorCategory || ['Acoustic & Glazing', 'MEP Pipes', 'Interior Slabs', 'Finishes & Drywalls'][index % 4] || 'Fit-out Trades';
+    const rating = typeof vendor.rating === 'number' ? vendor.rating : null;
+    const compliance = typeof vendor.complianceScore === 'number' ? vendor.complianceScore : null;
+    const onTime = typeof vendor.onTimeDelivery === 'number' ? vendor.onTimeDelivery : null;
+    const trade = vendor.vendorCategory || 'General Fit-out';
     const gstNumber = vendor.gstNumber;
 
     return {
@@ -129,15 +131,17 @@ export default function InteriorVendorsView({ projectId }: InteriorVendorsViewPr
             Review active trade partners and contract values.
           </p>
         </div>
-        <button
-          onClick={() => {
-            setEditingVendor(null);
-            setIsAddVendorOpen(true);
-          }}
-          className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all cursor-pointer"
-        >
-          + Add Vendor
-        </button>
+        {canDo('vendors', 'create') && (
+          <button
+            onClick={() => {
+              setEditingVendor(null);
+              setIsAddVendorOpen(true);
+            }}
+            className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all cursor-pointer"
+          >
+            + Add Vendor
+          </button>
+        )}
       </div>
 
       {vendors.length === 0 ? (
@@ -169,20 +173,24 @@ export default function InteriorVendorsView({ projectId }: InteriorVendorsViewPr
 
                   {/* Actions */}
                   <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      onClick={() => setEditingVendor(vendor.raw)}
-                      title="Edit Vendor"
-                      className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--muted))] transition-colors cursor-pointer"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setVendorToDelete(vendor.raw)}
-                      title="Delete Vendor"
-                      className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {canDo('vendors', 'update') && (
+                      <button
+                        onClick={() => setEditingVendor(vendor.raw)}
+                        title="Edit Vendor"
+                        className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--muted))] transition-colors cursor-pointer"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
+                    {canDo('vendors', 'delete') && (
+                      <button
+                        onClick={() => setVendorToDelete(vendor.raw)}
+                        title="Delete Vendor"
+                        className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
 

@@ -39,7 +39,6 @@ import {
   FileText,
   Calendar,
   Building,
-  CheckSquare,
   Mail,
   Ban,
   RotateCw,
@@ -53,6 +52,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface Props {
   lead: any;
+  technicalPersonName?: string;
   isReadOnly?: boolean;
   canEdit?: boolean;
   canSendToDrawings?: boolean;
@@ -65,6 +65,7 @@ interface Props {
 
 export function InteriorComparativeRequirementsView({
   lead,
+  technicalPersonName,
   isReadOnly = false,
   canEdit = true,
   canSendToDrawings = false,
@@ -75,6 +76,9 @@ export function InteriorComparativeRequirementsView({
   onRefresh,
 }: Props) {
   const toast = useToast();
+  const techPerson = technicalPersonName ||
+    (typeof lead?.designerAssigned === 'object' && lead?.designerAssigned?.fullName) ||
+    (typeof lead?.designerAssigned === 'string' && lead?.designerAssigned ? lead.designerAssigned : 'Technical Consultant');
   const [viewMode, setViewMode] = useState<'side_by_side' | 'client_only' | 'team_only'>('side_by_side');
   const [copiedLink, setCopiedLink] = useState(false);
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
@@ -94,17 +98,59 @@ export function InteriorComparativeRequirementsView({
     : 'No expiry';
 
   const clientWishlist = lead.clientWishlist;
+
+  // Normalize client submission from public intake portal (lead.clientRequirements) or wishlist (lead.clientWishlist)
+  const rawClientRooms: any[] = React.useMemo(() => {
+    if (Array.isArray(lead?.clientRequirements)) return lead.clientRequirements;
+    if (Array.isArray(lead?.clientRequirements?.rooms)) return lead.clientRequirements.rooms;
+    if (Array.isArray(lead?.clientWishlist?.rooms)) return lead.clientWishlist.rooms;
+    return [];
+  }, [lead?.clientRequirements, lead?.clientWishlist]);
+
+  const clientRooms = React.useMemo(() => {
+    return rawClientRooms.map((r: any, idx: number) => ({
+      roomName: (r.roomName || r.name || r.room || `Space ${idx + 1}`).trim(),
+      designStyle: r.designStyle || r.style || '',
+      interiorType: r.interiorType || r.type || '',
+      wishedItems: r.furnitureRequirements || r.wishedItems || (Array.isArray(r.furniture) ? r.furniture.join(', ') : (r.furniture || '')),
+      aestheticNotes: r.aestheticNotes || r.description || r.notes || r.remarks || '',
+      priority: r.priority || '',
+      roomUsage: r.roomUsage || r.usage || '',
+      storage: r.storage || r.storageRequirements || '',
+      electricalPoints: r.electricalPoints || '',
+      lightingRequirements: r.lightingRequirements || '',
+      plumbingRequirements: r.plumbingRequirements || '',
+      colours: r.colours || r.colors || '',
+      materials: r.materials || '',
+      flooring: r.flooring || '',
+      ceiling: r.ceiling || '',
+      budget: r.budget || '',
+      dimensions: r.dimensions || '',
+    }));
+  }, [rawClientRooms]);
+
+  const clientPreferredStyles: string[] = React.useMemo(() => {
+    if (clientWishlist?.preferredStyles && Array.isArray(clientWishlist.preferredStyles) && clientWishlist.preferredStyles.length > 0) {
+      return clientWishlist.preferredStyles;
+    }
+    const fromRooms = Array.from(new Set(clientRooms.map((r: any) => r.designStyle).filter(Boolean)));
+    return fromRooms as string[];
+  }, [clientWishlist, clientRooms]);
+
+  const clientSubmittedAt = lead?.clientRequirementsSubmittedAt || lead?.clientRequirements?.submittedAt || lead?.clientWishlist?.submittedAt;
+  const clientNotes = lead?.clientRequirementsNotes || lead?.clientWishlist?.overallVibe || lead?.clientWishlist?.generalNotes || '';
   const hasClientWishlist = Boolean(
-    clientWishlist && (
-      (clientWishlist.preferredStyles && clientWishlist.preferredStyles.length > 0) ||
-      (clientWishlist.rooms && clientWishlist.rooms.length > 0) ||
-      clientWishlist.overallVibe ||
-      clientWishlist.mustHaves ||
-      (clientWishlist.inspirationImages && clientWishlist.inspirationImages.length > 0)
-    )
+    clientRooms.length > 0 ||
+    clientSubmittedAt ||
+    clientNotes ||
+    (clientWishlist && (
+      (clientWishlist?.preferredStyles && clientWishlist.preferredStyles.length > 0) ||
+      clientWishlist?.mustHaves ||
+      (clientWishlist?.inspirationImages && clientWishlist.inspirationImages.length > 0)
+    ))
   );
 
-  const teamRequirements: any[] = Array.isArray(lead.requirements) ? lead.requirements : [];
+  const teamRequirements: any[] = Array.isArray(lead?.requirements) ? lead.requirements : [];
   const hasTeamRequirements = teamRequirements.length > 0;
 
   // Build the public link URL
@@ -188,9 +234,11 @@ export function InteriorComparativeRequirementsView({
   const handleReactivateLink = async () => {
     try {
       setIsRevokingLink(true);
-      const res = await interiorCrmService.updateRequirementsLink(lead._id, {
-        isPublic: true,
-        expiresDays: 7, // default 7 days extension
+      const res = await interiorCrmService.generateShareLink(lead._id, {
+        expiresDays: 7,
+        includeRequirements: true,
+        mode: 'requirements',
+        regenerate: true,
       });
       if (res.success) {
         toast.success('Requirements intake link reactivated for 7 days!');
@@ -206,12 +254,14 @@ export function InteriorComparativeRequirementsView({
   };
 
   // Compile unique room names from both Client and Team
-  const allRoomNames = Array.from(
-    new Set([
-      ...(clientWishlist?.rooms || []).map((r: any) => r.roomName),
-      ...teamRequirements.map((r: any) => r.roomName),
-    ])
-  ).filter(Boolean);
+  const allRoomNames = React.useMemo(() => {
+    return Array.from(
+      new Set([
+        ...clientRooms.map((r: any) => r.roomName),
+        ...teamRequirements.map((r: any) => (r.roomName || r.room || r.name || '').trim()),
+      ])
+    ).filter(Boolean);
+  }, [clientRooms, teamRequirements]);
 
   return (
     <div className="space-y-4">
@@ -387,6 +437,112 @@ export function InteriorComparativeRequirementsView({
         </div>
       </div>
 
+      {/* ── DUAL PERSPECTIVE SUMMARY: CLIENT (VIA LINK) VS OUR TECHNICAL PERSON ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        {/* Client Submission Card */}
+        <div className="bg-[hsl(var(--card))] border border-purple-500/20 rounded-2xl p-4 space-y-3 relative overflow-hidden shadow-2xs">
+          <div className="flex items-center justify-between pb-2.5 border-b border-[hsl(var(--border))]">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0 border border-purple-500/20">
+                <User size={16} />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 block">Submitted via Client Link</span>
+                <h4 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">{lead?.name || 'Client'}</h4>
+              </div>
+            </div>
+            {hasClientWishlist ? (
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                <CheckCircle2 size={11} /> Details Received
+              </span>
+            ) : (
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                Awaiting Submission
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="p-2 rounded-lg bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))]">
+              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Submission Date</span>
+              <span className="font-semibold text-[hsl(var(--foreground))] text-[11px] truncate block">
+                {clientSubmittedAt
+                  ? new Date(clientSubmittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                  : 'Pending client'}
+              </span>
+            </div>
+            <div className="p-2 rounded-lg bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))]">
+              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Customer Spaces</span>
+              <span className="font-semibold text-[hsl(var(--foreground))] text-[11px]">
+                {clientRooms.length} {clientRooms.length === 1 ? 'Room Requested' : 'Rooms Requested'}
+              </span>
+            </div>
+          </div>
+
+          {clientNotes && (
+            <div className="p-2.5 rounded-xl bg-purple-500/[0.04] border border-purple-500/15 text-xs">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 block mb-0.5">
+                Client Stated Directives:
+              </span>
+              <p className="text-[hsl(var(--foreground))] italic leading-relaxed line-clamp-2">
+                &ldquo;{clientNotes}&rdquo;
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Technical Person Card */}
+        <div className="bg-[hsl(var(--card))] border border-emerald-500/20 rounded-2xl p-4 space-y-3 relative overflow-hidden shadow-2xs">
+          <div className="flex items-center justify-between pb-2.5 border-b border-[hsl(var(--border))]">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-500/20">
+                <Wrench size={16} />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block">Our Technical Person</span>
+                <h4 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">{techPerson}</h4>
+              </div>
+            </div>
+            {hasTeamRequirements ? (
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                <CheckCircle2 size={11} /> Specs Recorded
+              </span>
+            ) : (
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                Survey Pending
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="p-2 rounded-lg bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))]">
+              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Surveyed Spaces</span>
+              <span className="font-semibold text-[hsl(var(--foreground))] text-[11px]">
+                {teamRequirements.length} {teamRequirements.length === 1 ? 'Room Configured' : 'Rooms Configured'}
+              </span>
+            </div>
+            <div className="p-2 rounded-lg bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))]">
+              <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Primary Style</span>
+              <span className="font-semibold text-[hsl(var(--foreground))] text-[11px] truncate block">
+                {teamRequirements.find((r: any) => r.designStyle)?.designStyle || 'Turnkey Modern'}
+              </span>
+            </div>
+          </div>
+
+          {canEdit && !isReadOnly && (
+            <div className="flex items-center justify-end pt-1">
+              <button
+                type="button"
+                onClick={onEditTeamRequirements}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs transition-all active:scale-95 cursor-pointer"
+              >
+                <Pencil size={11} /> {hasTeamRequirements ? 'Edit Technical Specs' : 'Log Technical Specs'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* ── CLIENT SUBMISSION STATUS NOTIFICATION BANNER ── */}
       {!hasClientWishlist ? (
         <div className="bg-indigo-50/70 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800/50 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -434,19 +590,19 @@ export function InteriorComparativeRequirementsView({
           </div>
         </div>
       ) : (
-        <div className="bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl p-3.5 flex items-center justify-between gap-3">
+        <div className="bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-emerald-600/10 text-emerald-600 flex items-center justify-center shrink-0">
               <CheckCircle2 size={17} />
             </div>
             <div>
               <span className="text-xs font-bold text-emerald-950 dark:text-emerald-200 block">
-                Client Submitted Online Wishlist
+                Client Submitted Online Requirements
               </span>
               <span className="text-[10px] text-emerald-800/70 dark:text-emerald-400 block mt-0.5">
                 Submitted on{' '}
-                {clientWishlist.submittedAt
-                  ? new Date(clientWishlist.submittedAt).toLocaleString('en-US', {
+                {clientSubmittedAt
+                  ? new Date(clientSubmittedAt).toLocaleString('en-US', {
                       month: 'short',
                       day: 'numeric',
                       year: 'numeric',
@@ -454,19 +610,21 @@ export function InteriorComparativeRequirementsView({
                       minute: '2-digit',
                     })
                   : 'Recent'}{' '}
-                • {clientWishlist.rooms?.length || 0} Room(s) Specified
+                • {clientRooms.length} Room(s) Configured by Client
               </span>
             </div>
           </div>
 
-          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-600 text-white shrink-0">
-            Client Verified
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-600 text-white shrink-0">
+              Client Verified
+            </span>
+          </div>
         </div>
       )}
 
       {/* ── OVERALL PROJECT DIRECTIVES COMPARISON ── */}
-      {(viewMode === 'side_by_side' || viewMode === 'client_only') && hasClientWishlist && (
+      {(viewMode === 'side_by_side' || viewMode === 'client_only') && (hasClientWishlist || clientNotes) && (
         <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 sm:p-5 space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
             <h3 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
@@ -478,6 +636,18 @@ export function InteriorComparativeRequirementsView({
             </span>
           </div>
 
+          {/* Client General Notes / Directives */}
+          {(clientNotes || clientWishlist?.overallVibe) && (
+            <div className="p-3 rounded-xl bg-purple-500/[0.04] border border-purple-500/20">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 block mb-1">
+                Client Stated Vision & Instructions:
+              </span>
+              <p className="text-xs font-medium text-[hsl(var(--foreground))] leading-relaxed italic whitespace-pre-wrap">
+                &ldquo;{clientNotes || clientWishlist?.overallVibe}&rdquo;
+              </p>
+            </div>
+          )}
+
           {/* Style Pills & Family Profile */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {/* Preferred Styles */}
@@ -486,8 +656,8 @@ export function InteriorComparativeRequirementsView({
                 <Palette size={11} className="text-purple-500" /> Preferred Styles
               </span>
               <div className="flex flex-wrap gap-1 mt-1">
-                {clientWishlist.preferredStyles && clientWishlist.preferredStyles.length > 0 ? (
-                  clientWishlist.preferredStyles.map((s: string) => (
+                {clientPreferredStyles.length > 0 ? (
+                  clientPreferredStyles.map((s: string) => (
                     <span
                       key={s}
                       className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/20"
@@ -507,7 +677,7 @@ export function InteriorComparativeRequirementsView({
                 <User size={11} className="text-blue-500" /> Household Profile
               </span>
               <p className="text-xs font-semibold text-[hsl(var(--foreground))] mt-1 leading-relaxed">
-                {clientWishlist.familyComposition || 'Not specified by client'}
+                {clientWishlist?.familyComposition || 'Not specified by client'}
               </p>
             </div>
 
@@ -517,7 +687,7 @@ export function InteriorComparativeRequirementsView({
                 <Armchair size={11} className="text-amber-500" /> Lifestyle Priorities
               </span>
               <div className="flex flex-wrap gap-1 mt-1">
-                {clientWishlist.lifestylePriorities && clientWishlist.lifestylePriorities.length > 0 ? (
+                {clientWishlist?.lifestylePriorities && clientWishlist.lifestylePriorities.length > 0 ? (
                   clientWishlist.lifestylePriorities.map((lp: string) => (
                     <span
                       key={lp}
@@ -534,38 +704,38 @@ export function InteriorComparativeRequirementsView({
           </div>
 
           {/* Overall Vibe & Notes */}
-          {clientWishlist.overallVibe && (
+          {clientWishlist?.overallVibe && (
             <div className="p-3 rounded-xl bg-purple-500/[0.04] border border-purple-500/20">
               <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 block mb-1">
                 Client&apos;s Own Words (Desired Vibe):
               </span>
               <p className="text-xs font-medium text-[hsl(var(--foreground))] leading-relaxed italic">
-                &ldquo;{clientWishlist.overallVibe}&rdquo;
+                &ldquo;{clientWishlist?.overallVibe}&rdquo;
               </p>
             </div>
           )}
 
           {/* Must Haves vs Must Avoids */}
-          {(clientWishlist.mustHaves || clientWishlist.mustAvoids) && (
+          {(clientWishlist?.mustHaves || clientWishlist?.mustAvoids) && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-              {clientWishlist.mustHaves && (
+              {clientWishlist?.mustHaves && (
                 <div className="p-3 rounded-xl bg-emerald-500/[0.04] border border-emerald-500/20">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 flex items-center gap-1 mb-1">
                     <CheckCircle2 size={12} className="text-emerald-600" /> Must-Haves (Client Priorities):
                   </span>
                   <p className="text-xs font-semibold text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed">
-                    {clientWishlist.mustHaves}
+                    {clientWishlist?.mustHaves}
                   </p>
                 </div>
               )}
 
-              {clientWishlist.mustAvoids && (
+              {clientWishlist?.mustAvoids && (
                 <div className="p-3 rounded-xl bg-rose-500/[0.04] border border-rose-500/20">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300 flex items-center gap-1 mb-1">
                     <X size={12} className="text-rose-600" /> Must-Avoids (Disliked Items):
                   </span>
                   <p className="text-xs font-semibold text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed">
-                    {clientWishlist.mustAvoids}
+                    {clientWishlist?.mustAvoids}
                   </p>
                 </div>
               )}
@@ -573,10 +743,10 @@ export function InteriorComparativeRequirementsView({
           )}
 
           {/* Inspiration Gallery */}
-          {clientWishlist.inspirationImages && clientWishlist.inspirationImages.length > 0 && (
+          {clientWishlist?.inspirationImages && clientWishlist.inspirationImages.length > 0 && (
             <div className="pt-2">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1 mb-2">
-                <Sparkles size={11} className="text-pink-500" /> Client Inspiration Moodboard ({clientWishlist.inspirationImages.length} Photos)
+                <Sparkles size={11} className="text-pink-500" /> Client Inspiration Moodboard ({clientWishlist?.inspirationImages?.length || 0} Photos)
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
                 {clientWishlist.inspirationImages.map((img: string, iIdx: number) => (
@@ -623,11 +793,11 @@ export function InteriorComparativeRequirementsView({
           </div>
         ) : (
           allRoomNames.map((roomName: string, idx: number) => {
-            const clientRoom = (clientWishlist?.rooms || []).find(
-              (r: any) => r.roomName?.toLowerCase() === roomName.toLowerCase()
+            const clientRoom = clientRooms.find(
+              (r: any) => r.roomName?.toLowerCase().trim() === roomName.toLowerCase().trim()
             );
             const teamRoom = teamRequirements.find(
-              (r: any) => r.roomName?.toLowerCase() === roomName.toLowerCase()
+              (r: any) => (r.roomName || r.room || r.name || '').toLowerCase().trim() === roomName.toLowerCase().trim()
             );
 
             return (
@@ -674,7 +844,7 @@ export function InteriorComparativeRequirementsView({
                     <div className="space-y-3 pb-3 lg:pb-0 lg:pr-2">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 flex items-center gap-1.5">
-                          <User size={12} /> Homeowner / Client Wishlist
+                          <User size={12} /> Submitted by Client through Link ({lead?.name || 'Client'})
                         </span>
                         {clientRoom ? (
                           <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">
@@ -689,6 +859,19 @@ export function InteriorComparativeRequirementsView({
 
                       {clientRoom ? (
                         <div className="space-y-2 text-xs">
+                          {clientRoom.designStyle && (
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[10px] font-bold uppercase bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20 px-2 py-0.5 rounded">
+                                {clientRoom.designStyle}
+                              </span>
+                              {clientRoom.budget && (
+                                <span className="text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded">
+                                  {currencySymbol} {clientRoom.budget}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
                           {clientRoom.wishedItems && (
                             <div className="p-2.5 rounded-xl bg-purple-500/[0.04] border border-purple-500/15">
                               <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 block mb-0.5">
@@ -703,11 +886,40 @@ export function InteriorComparativeRequirementsView({
                           {clientRoom.aestheticNotes && (
                             <div className="p-2.5 rounded-xl bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))]">
                               <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block mb-0.5">
-                                Client Aesthetic / Mood Notes:
+                                Client Notes & Preferences:
                               </span>
                               <p className="text-[hsl(var(--foreground))] italic leading-relaxed">
                                 &ldquo;{clientRoom.aestheticNotes}&rdquo;
                               </p>
+                            </div>
+                          )}
+
+                          {(clientRoom.storage || clientRoom.lightingRequirements || clientRoom.colours || clientRoom.materials) && (
+                            <div className="grid grid-cols-2 gap-1.5 text-[11px] pt-1">
+                              {clientRoom.storage && (
+                                <div className="p-1.5 rounded bg-[hsl(var(--muted)/0.25)] border border-[hsl(var(--border))]">
+                                  <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Storage</span>
+                                  <span className="font-semibold text-[hsl(var(--foreground))]">{clientRoom.storage}</span>
+                                </div>
+                              )}
+                              {clientRoom.lightingRequirements && (
+                                <div className="p-1.5 rounded bg-[hsl(var(--muted)/0.25)] border border-[hsl(var(--border))]">
+                                  <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Lighting</span>
+                                  <span className="font-semibold text-[hsl(var(--foreground))]">{clientRoom.lightingRequirements}</span>
+                                </div>
+                              )}
+                              {clientRoom.colours && (
+                                <div className="p-1.5 rounded bg-[hsl(var(--muted)/0.25)] border border-[hsl(var(--border))]">
+                                  <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Colours</span>
+                                  <span className="font-semibold text-[hsl(var(--foreground))]">{clientRoom.colours}</span>
+                                </div>
+                              )}
+                              {clientRoom.materials && (
+                                <div className="p-1.5 rounded bg-[hsl(var(--muted)/0.25)] border border-[hsl(var(--border))]">
+                                  <span className="text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] block">Materials</span>
+                                  <span className="font-semibold text-[hsl(var(--foreground))]">{clientRoom.materials}</span>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
@@ -724,7 +936,7 @@ export function InteriorComparativeRequirementsView({
                     <div className="space-y-3 pt-3 lg:pt-0 lg:pl-2">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1.5">
-                          <Wrench size={12} /> Team Technical & Spatial Specifications
+                          <Wrench size={12} /> Filled by Our Technical Person ({techPerson})
                         </span>
                         {teamRoom ? (
                           <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">

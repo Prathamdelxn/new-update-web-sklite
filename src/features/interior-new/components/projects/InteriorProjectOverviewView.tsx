@@ -11,6 +11,8 @@ import { Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useQuery } from '@tanstack/react-query';
 
+import { useCurrency } from '@/hooks/useCurrency';
+
 interface InteriorProjectOverviewViewProps {
   projectId: string;
 }
@@ -22,8 +24,56 @@ const getMockMetrics = () => ({
   quality: { openSnags: 0, openRFIs: 0, criticalRisks: 0 },
 });
 
+function InteriorProjectOverviewSkeleton() {
+  return (
+    <div className="p-3.5 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 overflow-x-hidden animate-pulse font-sans">
+      {/* 4 KPI Cards Skeleton */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+        {Array.from({ length: 4 }).map((_, idx) => (
+          <div key={idx} className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="h-3 w-20 bg-slate-200/60 rounded" />
+              <div className="w-4 h-4 rounded bg-slate-100" />
+            </div>
+            <div className="h-7 w-24 bg-slate-200/90 rounded-md" />
+            <div className="h-1.5 w-full bg-slate-100 rounded-full" />
+          </div>
+        ))}
+      </div>
+
+      {/* 2 Big Cards Row Skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-xs space-y-4">
+          <div className="h-5 w-32 bg-slate-200/90 rounded-md" />
+          <div className="space-y-2.5">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between">
+                <div className="h-3.5 w-24 bg-slate-200/60 rounded" />
+                <div className="h-3.5 w-8 bg-slate-200/80 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-xs space-y-4">
+          <div className="h-5 w-36 bg-slate-200/90 rounded-md" />
+          <div className="space-y-2.5">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100">
+                <div className="h-4 w-32 bg-slate-200/70 rounded" />
+                <div className="h-4 w-12 bg-slate-200/90 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function InteriorProjectOverviewView({ projectId }: InteriorProjectOverviewViewProps) {
   const router = useRouter();
+  const { currencySymbol, formatCurrency } = useCurrency();
 
   const {
     data: metricsData = null,
@@ -46,18 +96,11 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
 
   const formatBudget = (amount: any) => {
     const num = typeof amount === 'number' ? amount : Number(amount) || 0;
-    if (!num || num <= 0) return '₹ 0';
-    if (num >= 10000000) return `₹ ${(num / 10000000).toFixed(2)} Cr`;
-    if (num >= 100000) return `₹ ${(num / 100000).toFixed(2)} Lakh`;
-    return `₹ ${num.toLocaleString('en-IN')}`;
+    return formatCurrency(num);
   };
 
   if (loading && !metricsData) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-[hsl(var(--primary))]" />
-      </div>
-    );
+    return <InteriorProjectOverviewSkeleton />;
   }
 
   const data = metricsData || getMockMetrics();
@@ -92,7 +135,7 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
         </div>
 
         <div className="h-full">
-          <Card onClick={() => router.push(`/interior-new/projects/${projectId}/tasks`)} className="cursor-pointer hover:border-[hsl(var(--primary)/0.3)] h-full flex flex-col border border-[hsl(var(--border))]">
+          <Card onClick={() => router.push(`/interior-new/projects/${projectId}/wbs`)} className="cursor-pointer hover:border-[hsl(var(--primary)/0.3)] h-full flex flex-col border border-[hsl(var(--border))]">
             <CardContent className="p-3.5 sm:p-5 flex-1 flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] sm:text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Tasks Status</span>

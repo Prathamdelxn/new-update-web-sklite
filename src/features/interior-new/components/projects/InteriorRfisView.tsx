@@ -5,11 +5,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Plus, X, Loader2, Calendar, Send, CheckCircle } from 'lucide-react';
+import { MessageSquare, Plus, X, Loader2, Calendar, Send, CheckCircle, Trash2 } from 'lucide-react';
 import { Button, Input, Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
+import { useConfirm } from '@/providers/ConfirmContext';
 import { cn } from '@/lib/utils';
+import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 
 interface InteriorRfisViewProps {
   projectId: string;
@@ -17,6 +19,8 @@ interface InteriorRfisViewProps {
 
 export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
   const toast = useToast();
+  const { can: canDo } = useProjectPermissions(projectId);
+  const { confirm } = useConfirm();
 
   const [rfis, setRfis] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,6 +123,27 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
     }
   };
 
+  const handleDeleteRFI = async (rfiId: string) => {
+    const ok = await confirm({
+      title: 'Delete RFI',
+      message: 'Are you sure you want to delete this RFI and its responses? This action cannot be undone.',
+      confirmText: 'Delete',
+      type: 'danger',
+    });
+    if (!ok) return;
+    try {
+      const res = await interiorProjectService.deleteRfi(projectId, rfiId);
+      if (res.success) {
+        toast.success('RFI deleted');
+        setSelectedRfi(null);
+        fetchRFIs();
+      }
+    } catch (err: any) {
+      console.error('Delete RFI failed', err);
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to delete RFI');
+    }
+  };
+
   const getPriorityStyle = (p: string) => {
     switch (p) {
       case 'critical':
@@ -139,10 +164,12 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
             Clarify design discrepancies, drawings mismatches, or site coordinates with consultants.
           </p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Raise RFI
-        </Button>
+        {canDo('rfis', 'create') && (
+          <Button onClick={() => setIsModalOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Raise RFI
+          </Button>
+        )}
       </div>
 
       {loading ? (
@@ -301,28 +328,45 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
                   </div>
                 </div>
 
-                {selectedRfi.status !== 'closed' && (
-                  <div className="flex items-center gap-2">
+                {selectedRfi.response && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Official Response / Clarification</h4>
+                    <div className="p-4 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 text-sm whitespace-pre-wrap text-emerald-950 dark:text-emerald-200">
+                      {selectedRfi.response}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  {selectedRfi.status !== 'closed' && canDo('rfis', 'update') && (
                     <Button variant="outline" className="text-emerald-600 border-emerald-200" onClick={() => handleCloseRFI(selectedRfi._id)}>
                       <CheckCircle className="w-4 h-4 mr-1.5" />
                       Mark Resolved & Close
                     </Button>
-                  </div>
-                )}
+                  )}
+                  {canDo('rfis', 'delete') && (
+                    <Button variant="outline" className="text-red-600 border-red-200 ml-auto" onClick={() => handleDeleteRFI(selectedRfi._id)}>
+                      <Trash2 className="w-4 h-4 mr-1.5" />
+                      Delete RFI
+                    </Button>
+                  )}
+                </div>
               </div>
 
               {selectedRfi.status !== 'closed' && (
-                <form onSubmit={handlePostResponse} className="p-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.15)] flex gap-2 shrink-0">
-                  <Input
-                    required
-                    placeholder="Type consultant response or clarification note..."
-                    value={responseText}
-                    onChange={(e) => setResponseText(e.target.value)}
-                  />
-                  <Button type="submit" disabled={submitting}>
-                    {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  </Button>
-                </form>
+                canDo('rfis', 'update') && (
+                  <form onSubmit={handlePostResponse} className="p-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.15)] flex gap-2 shrink-0">
+                    <Input
+                      required
+                      placeholder="Type consultant response or clarification note..."
+                      value={responseText}
+                      onChange={(e) => setResponseText(e.target.value)}
+                    />
+                    <Button type="submit" disabled={submitting}>
+                      {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    </Button>
+                  </form>
+                )
               )}
             </motion.div>
           </div>

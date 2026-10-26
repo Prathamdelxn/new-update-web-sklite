@@ -10,7 +10,7 @@ import { SurveyModal } from '@/features/projects/plans/components/SurveyModal';
 import {
   Plus, Search, Filter, FolderOpen, RefreshCw, LayoutGrid, List,
   Briefcase, CheckCircle2, Clock, AlertTriangle, ArrowUpRight,
-  MapPin, Calendar, Users, Building2, ChevronRight, X, Layers
+  MapPin, Calendar, Users, Building2, ChevronRight, X, Layers, ShieldAlert
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -19,7 +19,7 @@ import { Project } from '@/types';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
 import { useAuth } from '@/providers/AuthContext';
-import { hasProjectPermission } from '@/lib/permissions';
+import { hasProjectPermission, canCreateProjects, canViewAnyProject } from '@/lib/permissions';
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<(Project & { hasPendingPlans?: boolean })[]>([]);
@@ -39,7 +39,10 @@ export default function ProjectsPage() {
   const toast = useToast();
   const pathname = usePathname();
   const { user } = useAuth();
-  const canCreateProject = hasProjectPermission(user, null, 'projects:create');
+  const canCreateProject = canCreateProjects(user);
+  // No Project Management > View on any role: the list is empty for that
+  // reason, so tell the user what to ask their admin for.
+  const lacksProjectView = !canViewAnyProject(user);
 
   const fetchProjects = async (showRefresh = false) => {
     try {
@@ -151,7 +154,7 @@ export default function ProjectsPage() {
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-              Projects <span className="text-indigo-600">Portfolio</span>
+              Projects <span className="text-blue-600">Portfolio</span>
             </h1>
           </div>
           <p className="text-xs font-semibold text-slate-500 mt-0.5">
@@ -166,14 +169,14 @@ export default function ProjectsPage() {
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-all text-xs font-bold shadow-2xs cursor-pointer"
             title="Refresh projects"
           >
-            <RefreshCw className={cn("w-3.5 h-3.5", (isRefreshing || loading) && "animate-spin text-indigo-600")} />
+            <RefreshCw className={cn("w-3.5 h-3.5", (isRefreshing || loading) && "animate-spin text-blue-600")} />
             <span className="hidden sm:inline">Refresh</span>
           </button>
 
           {canCreateProject && (
             <button
               onClick={() => { setEditingProject(null); setIsModalOpen(true); }}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-blue-700 hover:from-indigo-700 hover:to-blue-800 text-white font-bold text-xs border border-slate-300 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-xs border border-slate-300 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>Create Project</span>
@@ -210,16 +213,16 @@ export default function ProjectsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-300 p-3  hover:border-indigo-300 transition-all">
+        <div className="bg-white rounded-xl border border-slate-300 p-3  hover:border-blue-300 transition-all">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Planning & Survey</span>
-            <div className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-150 flex items-center justify-center shrink-0">
+            <div className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 border border-blue-150 flex items-center justify-center shrink-0">
               <Clock className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="mt-1 flex items-baseline gap-1.5">
-            <span className="text-xl font-extrabold text-indigo-600 tabular-nums">{kpiStats.planningOrSurvey}</span>
-            <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.2 rounded">Pre-con</span>
+            <span className="text-xl font-extrabold text-blue-600 tabular-nums">{kpiStats.planningOrSurvey}</span>
+            <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded">Pre-con</span>
           </div>
         </div>
 
@@ -249,7 +252,7 @@ export default function ProjectsPage() {
               placeholder="Search projects, clients, codes or sites..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-8 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+              className="w-full pl-9 pr-8 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             />
             {searchQuery && (
               <button
@@ -267,7 +270,7 @@ export default function ProjectsPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="bg-slate-50 border border-slate-200/80 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer"
+              className="bg-slate-50 border border-slate-200/80 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
             >
               <option value="date">Sort: Newest First</option>
               <option value="name">Sort: Project Name</option>
@@ -281,7 +284,7 @@ export default function ProjectsPage() {
                 className={cn(
                   "p-1 rounded-md text-xs font-bold transition-all cursor-pointer",
                   viewMode === 'grid'
-                    ? "bg-white text-indigo-600 border border-slate-300"
+                    ? "bg-white text-blue-600 border border-slate-300"
                     : "text-slate-400 hover:text-slate-700"
                 )}
                 title="Grid view"
@@ -293,7 +296,7 @@ export default function ProjectsPage() {
                 className={cn(
                   "p-1 rounded-md text-xs font-bold transition-all cursor-pointer",
                   viewMode === 'list'
-                    ? "bg-white text-indigo-600 border border-slate-300"
+                    ? "bg-white text-blue-600 border border-slate-300"
                     : "text-slate-400 hover:text-slate-700"
                 )}
                 title="List view"
@@ -317,7 +320,7 @@ export default function ProjectsPage() {
                 className={cn(
                   "whitespace-nowrap px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
                   isSelected
-                    ? "bg-indigo-600 text-white "
+                    ? "bg-blue-600 text-white "
                     : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60"
                 )}
               >
@@ -348,8 +351,8 @@ export default function ProjectsPage() {
                   project={project}
                   onEdit={hasProjectPermission(user, project, 'projects:update') ? (p) => { setEditingProject(p); setIsModalOpen(true); } : undefined}
                   onDelete={hasProjectPermission(user, project, 'projects:delete') ? (p) => setDeletingProject(p) : undefined}
-                  onSendForSurvey={hasProjectPermission(user, project, 'sitesurvey:manage') ? (p) => { setSurveyProject(p); setIsSurveyAssignOpen(true); } : undefined}
-                  onCompleteSurvey={(p) => { setSurveyProject(p); setIsSurveyModalOpen(true); }}
+                  onSendForSurvey={hasProjectPermission(user, project, 'sitesurvey:assign') ? (p) => { setSurveyProject(p); setIsSurveyAssignOpen(true); } : undefined}
+                  onCompleteSurvey={hasProjectPermission(user, project, 'sitesurvey:create') || hasProjectPermission(user, project, 'sitesurvey:update') ? (p) => { setSurveyProject(p); setIsSurveyModalOpen(true); } : undefined}
                 />
               ))}
             </div>
@@ -385,7 +388,7 @@ export default function ProjectsPage() {
                         'General Construction';
 
                       return (
-                        <tr key={project._id} className="hover:bg-indigo-50/30 transition-colors group">
+                        <tr key={project._id} className="hover:bg-blue-50/30 transition-colors group">
                           {/* Project Name & Code */}
                           <td className="py-3.5 px-5">
                             <Link href={`/construction-dashboard/projects/${project._id}`} className="flex items-center gap-3">
@@ -443,7 +446,7 @@ export default function ProjectsPage() {
                               </div>
                               <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                                 <div
-                                  className="h-full bg-gradient-to-r from-indigo-500 to-blue-600 rounded-full"
+                                  className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"
                                   style={{ width: `${progressVal}%` }}
                                 />
                               </div>
@@ -459,7 +462,7 @@ export default function ProjectsPage() {
                           <td className="py-3.5 px-5 text-right">
                             <Link
                               href={`/construction-dashboard/projects/${project._id}`}
-                              className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-600 transition-all"
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-600 transition-all"
                               title="Open Project"
                             >
                               <ArrowUpRight className="w-4 h-4" />
@@ -473,10 +476,25 @@ export default function ProjectsPage() {
               </div>
             </div>
           )
+        ) : lacksProjectView && projects.length === 0 ? (
+          /* No project access — explain which permission is missing */
+          <div className="flex flex-col items-center justify-center py-20 text-center bg-white border border-dashed border-amber-300 rounded-3xl p-8">
+            <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mb-4">
+              <ShieldAlert className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">You don't have access to projects</h3>
+            <p className="text-slate-500 text-xs font-semibold max-w-md">
+              Your role doesn't include <span className="text-slate-700">Project Management → View</span>, so no projects are shown.
+              Your other permissions (like Site Survey) only work inside a project you can view.
+            </p>
+            <p className="text-slate-500 text-xs font-semibold max-w-md mt-2">
+              Ask your admin to enable <span className="text-slate-700">Project Management → View</span> on your role.
+            </p>
+          </div>
         ) : (
           /* Empty State */
           <div className="flex flex-col items-center justify-center py-20 text-center bg-white border border-dashed border-slate-300 rounded-3xl p-8 ">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mb-4 ">
+            <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 mb-4 ">
               <FolderOpen className="w-8 h-8" />
             </div>
             <h3 className="text-lg font-bold text-slate-900 mb-1">
@@ -490,7 +508,7 @@ export default function ProjectsPage() {
             {canCreateProject && (
               <button
                 onClick={() => { setEditingProject(null); setIsModalOpen(true); }}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white text-xs font-bold border border-slate-300 transition-all active:scale-95 cursor-pointer"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-600 hover:from-blue-700 hover:to-blue-700 text-white text-xs font-bold border border-slate-300 transition-all active:scale-95 cursor-pointer"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
                 <span>Create New Project</span>
