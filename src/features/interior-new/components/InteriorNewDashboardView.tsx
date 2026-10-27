@@ -334,9 +334,9 @@ export default function InteriorNewDashboardView() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="h-[280px]">
+                <div className="h-[280px] outline-none focus:outline-none [&_*]:outline-none">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={data?.progressTrend || []} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
+                    <AreaChart style={{ outline: 'none' }} data={data?.progressTrend || []} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
                       <defs>
                         <linearGradient id="plannedGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="hsl(221.2, 83.2%, 53.3%)" stopOpacity={0.2} />
@@ -374,9 +374,9 @@ export default function InteriorNewDashboardView() {
                 <CardTitle className="text-base font-semibold">Project Health</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[200px]">
+                <div className="h-[200px] outline-none focus:outline-none [&_*]:outline-none">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
+                    <PieChart style={{ outline: 'none' }}>
                       <Pie
                         data={
                           data?.projectHealth && data.projectHealth.length > 0
@@ -385,16 +385,17 @@ export default function InteriorNewDashboardView() {
                         }
                         cx="50%"
                         cy="50%"
-                        innerRadius={55}
+                        innerRadius={0}
                         outerRadius={80}
-                        paddingAngle={4}
+                        paddingAngle={0}
+                        stroke="none"
                         dataKey="value"
                       >
                         {(data?.projectHealth && data.projectHealth.length > 0
                           ? data.projectHealth
                           : [{ name: 'No Projects', value: 1, color: 'hsl(var(--muted))' }]
                         ).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                          <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                         ))}
                       </Pie>
                       <Tooltip
@@ -435,9 +436,9 @@ export default function InteriorNewDashboardView() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[200px]">
+                <div className="h-[200px] outline-none focus:outline-none [&_*]:outline-none">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data?.leadsPipeline || []} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
+                    <BarChart style={{ outline: 'none' }} data={data?.leadsPipeline || []} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                       <XAxis dataKey="stage" tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
                       <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
@@ -466,9 +467,9 @@ export default function InteriorNewDashboardView() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[200px]">
+                <div className="h-[200px] outline-none focus:outline-none [&_*]:outline-none">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data?.procurementData || []} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
+                    <BarChart style={{ outline: 'none' }} data={data?.procurementData || []} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                       <XAxis dataKey="status" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
                       <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />

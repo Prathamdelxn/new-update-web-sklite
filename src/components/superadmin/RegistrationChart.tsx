@@ -37,11 +37,11 @@ export default function RegistrationChart({
 
       </div>
 
-      <div className="h-80">
+      <div className="h-80 outline-none focus:outline-none [&_*]:outline-none">
 
         <ResponsiveContainer width="100%" height="100%">
 
-          <LineChart data={data}>
+          <LineChart style={{ outline: 'none' }} data={data}>
 
             <CartesianGrid strokeDasharray="3 3" />
 

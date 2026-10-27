@@ -162,3 +162,33 @@
   background: #94A3B8;
 }
 
+/* =============================================================================
+   Recharts Click Focus Outline Fix:
+   Prevents browsers from showing a black rectangle border / focus ring around
+   charts (PieChart, BarChart, AreaChart, SVG surface) when clicked.
+   ============================================================================= */
+.recharts-responsive-container,
+.recharts-responsive-container *,
+.recharts-responsive-container *:focus,
+.recharts-responsive-container *:focus-visible,
+.recharts-wrapper,
+.recharts-wrapper *,
+.recharts-wrapper:focus,
+.recharts-wrapper:focus-visible,
+.recharts-surface,
+.recharts-surface:focus,
+.recharts-surface:focus-visible,
+svg.recharts-surface,
+svg.recharts-surface:focus,
+svg.recharts-surface:focus-visible,
+.recharts-sector,
+.recharts-sector:focus,
+.recharts-sector:focus-visible,
+.recharts-layer,
+.recharts-layer:focus,
+.recharts-layer:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
