@@ -12,7 +12,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 interface Props {
-  onPassToSiteVisit: (leadId: string) => void;
+  onPassToSiteVisit?: (leadId: string) => void;
+  onPassToRequirements?: (leadId: string) => void;
   refreshTrigger?: any;
   onMarkAsLost?: (leadId: string) => void;
 }
@@ -25,14 +26,22 @@ function displayUserName(u?: any) {
   return u.name || 'Assigned';
 }
 
-export const InteriorFollowUpsView = ({ onPassToSiteVisit, refreshTrigger, onMarkAsLost }: Props) => {
+export const InteriorFollowUpsView = ({ onPassToSiteVisit, onPassToRequirements, refreshTrigger, onMarkAsLost }: Props) => {
   const router = useRouter();
   const toast = useToast();
-const { hasPermission: canDo } = usePermissions();
+  const { hasPermission: canDo } = usePermissions();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'completed'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [completingId, setCompletingId] = useState<string | null>(null);
+
+  const handlePass = (leadId: string) => {
+    if (onPassToRequirements) {
+      onPassToRequirements(leadId);
+    } else if (onPassToSiteVisit) {
+      onPassToSiteVisit(leadId);
+    }
+  };
 
   const {
     data: allActivities = [],
@@ -270,14 +279,14 @@ const { hasPermission: canDo } = usePermissions();
                     </div>
                     <div className="flex items-center gap-1.5">
                       {act.status !== 'Completed' && (
-                        (canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_site_visits', 'create')) && (
+                        (canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_requirements', 'create') || canDo('crm_site_visits', 'update')) && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              onPassToSiteVisit(act.customer?._id || act.customer?.id);
+                              handlePass(act.customer?._id || act.customer?.id);
                             }}
                             className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer shadow-sm"
-                            title="Complete Follow-up and Send to Site Visit"
+                            title="Complete Follow-up and Send to Requirements"
                           >
                             <CheckCircle2 size={12} /> Done
                           </button>
@@ -388,14 +397,14 @@ const { hasPermission: canDo } = usePermissions();
                       <td className="px-4.5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1.5">
                           {act.status === 'Pending' && (
-                            (canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_site_visits', 'create')) && (
+                            (canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_requirements', 'create') || canDo('crm_site_visits', 'update')) && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  onPassToSiteVisit(act.customer?._id || act.customer?.id);
+                                  handlePass(act.customer?._id || act.customer?.id);
                                 }}
                                 className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                title="Complete Follow-up and Send to Site Visit"
+                                title="Complete Follow-up and Send to Requirements"
                               >
                                 <CheckCircle2 size={12} /> Complete
                               </button>

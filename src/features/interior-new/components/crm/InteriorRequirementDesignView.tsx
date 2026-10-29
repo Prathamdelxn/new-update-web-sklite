@@ -12,6 +12,7 @@ interface Props {
   leads: any[];
   onLogRequirements: (leadId: string) => void;
   onUploadDesign?: (leadId: string) => void;
+  onPassToSiteVisit?: (leadId: string) => void;
   onPassToDrawing?: (leadId: string) => void;
   onPassToQuotations?: (leadId: string) => void;
   onMarkAsLost?: (leadId: string) => void;
@@ -20,25 +21,40 @@ interface Props {
 export const InteriorRequirementDesignView = ({
   leads,
   onLogRequirements,
+  onPassToSiteVisit,
   onPassToDrawing,
   onPassToQuotations,
   onMarkAsLost,
 }: Props) => {
   const router = useRouter();
 const { hasPermission: canDo } = usePermissions();
-  const handlePassToNext = onPassToDrawing || onPassToQuotations;
+  const handlePassToNext = onPassToSiteVisit || onPassToDrawing || onPassToQuotations;
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterState, setFilterState] = useState<'all' | 'pending' | 'completed'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
+  const hasReqs = (l: any) =>
+    Boolean(
+      (l.requirements && l.requirements.length > 0) ||
+      (l.clientRequirements && l.clientRequirements.length > 0) ||
+      (l.clientRequirements?.rooms && l.clientRequirements.rooms.length > 0)
+    );
+
+  const getLeadRooms = (l: any): any[] => {
+    if (Array.isArray(l.requirements) && l.requirements.length > 0) return l.requirements;
+    if (Array.isArray(l.clientRequirements) && l.clientRequirements.length > 0) return l.clientRequirements;
+    if (Array.isArray(l.clientRequirements?.rooms) && l.clientRequirements.rooms.length > 0) return l.clientRequirements.rooms;
+    return [];
+  };
+
   const pendingCount = useMemo(
-    () => leads.filter((l) => !l.requirements || l.requirements.length === 0).length,
+    () => leads.filter((l) => !hasReqs(l)).length,
     [leads]
   );
   const completedCount = useMemo(
-    () => leads.filter((l) => l.requirements && l.requirements.length > 0).length,
+    () => leads.filter((l) => hasReqs(l)).length,
     [leads]
   );
 
@@ -46,9 +62,9 @@ const { hasPermission: canDo } = usePermissions();
     let result = [...leads];
 
     if (filterState === 'completed') {
-      result = result.filter((l) => l.requirements && l.requirements.length > 0);
+      result = result.filter((l) => hasReqs(l));
     } else if (filterState === 'pending') {
-      result = result.filter((l) => !l.requirements || l.requirements.length === 0);
+      result = result.filter((l) => !hasReqs(l));
     }
 
     if (searchTerm.trim()) {
@@ -194,12 +210,12 @@ const { hasPermission: canDo } = usePermissions();
                     <span
                       className={cn(
 'shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border',
-                        lead.requirements && lead.requirements.length > 0
+                        hasReqs(lead)
                           ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                           : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
                       )}
                     >
-                      {lead.requirements && lead.requirements.length > 0 ? 'Documented ' : 'Pending'}
+                      {hasReqs(lead) ? 'Documented ' : 'Pending'}
                     </span>
                   </div>
 
@@ -210,7 +226,7 @@ const { hasPermission: canDo } = usePermissions();
                     </div>
                     <div className="truncate text-[hsl(var(--muted-foreground))] flex items-center gap-1">
                       <Layers size={11} className="shrink-0 text-emerald-500" />
-                      <span className="truncate">{lead.requirements?.length ? `${lead.requirements.length} rooms mapped` : 'No rooms'}</span>
+                      <span className="truncate">{getLeadRooms(lead).length ? `${getLeadRooms(lead).length} rooms mapped${!lead.requirements?.length && lead.clientRequirements?.length ? ' (Client)' : ''}` : 'No rooms'}</span>
                     </div>
                   </div>
 
@@ -221,13 +237,13 @@ const { hasPermission: canDo } = usePermissions();
                         onClick={() => onLogRequirements(lead._id)}
                         className={cn(
                           'inline-flex items-center justify-center rounded-lg text-xs font-bold active:scale-95 shadow-sm cursor-pointer',
-                          lead.requirements && lead.requirements.length > 0
+                          hasReqs(lead)
                             ? 'p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
                             : 'gap-1 px-2.5 py-1.5 bg-emerald-600 text-white'
                         )}
                         title="Configure Rooms & Scope"
                       >
-                        {lead.requirements && lead.requirements.length > 0 ? (
+                        {hasReqs(lead) ? (
                           <Pencil size={13} className="text-emerald-600" />
                         ) : (
                           <>
@@ -237,20 +253,20 @@ const { hasPermission: canDo } = usePermissions();
                       </button>
                     )}
 
-                    {lead.requirements && lead.requirements.length > 0 && handlePassToNext && (
+                    {hasReqs(lead) && handlePassToNext && (
                       (Boolean(Array.isArray(lead.quotations) && lead.quotations.some((q: any) => ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase()))) ||
-                       ['Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) ||
+                       ['Under Site Visit', 'Measurement Done', 'Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) ||
                        Boolean((lead as any).linkedProject)) ? (
                         <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
                           Passed 
                         </span>
                       ) : (
-                        (canDo('crm_requirements', 'update') || canDo('crm_drawings', 'update') || canDo('crm_drawings', 'create')) && (
+                        (canDo('crm_requirements', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_site_visits', 'create') || canDo('crm_drawings', 'update') || canDo('crm_drawings', 'create')) && (
                           <button
                             onClick={() => handlePassToNext(lead._id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
                           >
-                            Pass to Drawing <ArrowRight size={11} />
+                            Pass to Site Visit <ArrowRight size={11} />
                           </button>
                         )
                       )
@@ -318,25 +334,28 @@ const { hasPermission: canDo } = usePermissions();
 
                       {/* 3. Room Requirements Summary */}
                       <td className="px-4 py-3">
-                        {lead.requirements && lead.requirements.length > 0 ? (
-                          <div className="flex flex-wrap gap-1 max-w-[240px]">
-                            {lead.requirements.slice(0, 3).map((req: any, i: number) => (
-                              <span
-                                key={i}
-                                className="inline-flex items-center px-1.5 py-0.2 rounded-md bg-[hsl(var(--muted))] border border-[hsl(var(--border))] text-[10px] font-bold text-[hsl(var(--foreground))]"
-                              >
-                                {req.roomName || `Room ${i + 1}`}
-                              </span>
-                            ))}
-                            {lead.requirements.length > 3 && (
-                              <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-bold self-center">
-                                +{lead.requirements.length - 3} more
-                              </span>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-[11px] text-[hsl(var(--muted-foreground))] italic">No rooms added</span>
-                        )}
+                        {(() => {
+                          const rooms = getLeadRooms(lead);
+                          return rooms.length > 0 ? (
+                            <div className="flex flex-wrap gap-1 max-w-[240px]">
+                              {rooms.slice(0, 3).map((req: any, i: number) => (
+                                <span
+                                  key={i}
+                                  className="inline-flex items-center px-1.5 py-0.2 rounded-md bg-[hsl(var(--muted))] border border-[hsl(var(--border))] text-[10px] font-bold text-[hsl(var(--foreground))]"
+                                >
+                                  {req.roomName || req.name || `Room ${i + 1}`}
+                                </span>
+                              ))}
+                              {rooms.length > 3 && (
+                                <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-bold self-center">
+                                  +{rooms.length - 3} more
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-[hsl(var(--muted-foreground))] italic">No rooms added</span>
+                          );
+                        })()}
                       </td>
 
                       {/* 4. Status */}
@@ -344,13 +363,13 @@ const { hasPermission: canDo } = usePermissions();
                         <span
                           className={cn(
                             'inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold tracking-tight uppercase border',
-                            lead.requirements && lead.requirements.length > 0
+                            hasReqs(lead)
                               ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                               : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
                           )}
                         >
-                          {lead.requirements && lead.requirements.length > 0
-                            ? `${lead.requirements.length} Rooms`
+                          {hasReqs(lead)
+                            ? `${getLeadRooms(lead).length} Rooms${!lead.requirements?.length && lead.clientRequirements?.length ? ' (Client)' : ''}`
                             : 'Pending'}
                         </span>
                       </td>
@@ -363,37 +382,36 @@ const { hasPermission: canDo } = usePermissions();
                               onClick={() => onLogRequirements(lead._id)}
                               className={cn(
                                 "inline-flex items-center justify-center rounded-lg text-xs font-bold transition-all border cursor-pointer shadow-xs",
-                                lead.requirements && lead.requirements.length > 0
+                                hasReqs(lead)
                                   ? "p-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
                                   : "gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
                               )}
                               title="Configure Rooms & Scope"
                             >
-                              {lead.requirements && lead.requirements.length > 0 ? (
+                              {hasReqs(lead) ? (
                                 <Pencil size={13} className="text-emerald-600" />
                               ) : (
                                 '+ Rooms'
                               )}
                             </button>
                           )}
-                          {lead.requirements &&
-                            lead.requirements.length > 0 &&
+                          {hasReqs(lead) &&
                             handlePassToNext &&
                             ((Boolean(Array.isArray(lead.quotations) && lead.quotations.some((q: any) => ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase()))) ||
-                              ['Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) ||
+                              ['Under Site Visit', 'Measurement Done', 'Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) ||
                               Boolean((lead as any).linkedProject)) ? (
                               <span
                                 className="inline-flex items-center gap-1 px-2 py-1 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[11px] font-bold"
-                                title="Passed to Drawings"
+                                title="Passed to Site Visit"
                               >
                                 Passed 
                               </span>
                             ) : (
-                              (canDo('crm_requirements', 'update') || canDo('crm_drawings', 'update') || canDo('crm_drawings', 'create')) && (
+                              (canDo('crm_requirements', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_site_visits', 'create') || canDo('crm_drawings', 'update') || canDo('crm_drawings', 'create')) && (
                                 <button
                                   onClick={() => handlePassToNext(lead._id)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                  title="Pass to 2D & 3D Drawings"
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                  title="Pass to Site Visit"
                                 >
                                   Pass <ArrowRight size={11} />
                                 </button>

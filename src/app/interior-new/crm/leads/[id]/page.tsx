@@ -19,6 +19,7 @@ import {
   Activity,
   Plus,
   MessageSquare,
+  MessageCircle,
   X,
   CheckCircle2,
   XCircle,
@@ -146,6 +147,8 @@ const { hasPermission: canDo } = usePermissions();
   const [isReqModalOpen, setIsReqModalOpen] = useState(false);
   const [isDesignModalOpen, setIsDesignModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareModalMode, setShareModalMode] = useState<'drawings' | 'requirements'>('drawings');
+  const [requirementsViewMode, setRequirementsViewMode] = useState<'side-by-side' | 'technical' | 'client'>('side-by-side');
   const [selected3DFile, setSelected3DFile] = useState<any | null>(null);
   const [selectedDrawingForApproval, setSelectedDrawingForApproval] = useState<any | null>(null);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
@@ -403,6 +406,61 @@ const { hasPermission: canDo } = usePermissions();
     }
   }, [searchParams]);
 
+  // Cross-tab synchronization for requirements, drawings, and lead changes
+  useEffect(() => {
+    if (!params.id) return;
+
+    let channel: BroadcastChannel | null = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        channel = new BroadcastChannel('crm_requirement_channel');
+        channel.onmessage = (event) => {
+          const data = event.data;
+          if (!data?.leadId || data.leadId === params.id) {
+            fetchData();
+          }
+        };
+      }
+    } catch {}
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === 'crm_requirement_sync' && event.newValue) {
+        try {
+          const parsed = JSON.parse(event.newValue);
+          if (!parsed.leadId || parsed.leadId === params.id) {
+            fetchData();
+          }
+        } catch {
+          fetchData();
+        }
+      }
+    };
+
+    const handleWindowFocus = () => {
+      // If user switches back to this tab and is on requirements, refresh immediately
+      if (activeTab === 'requirements') {
+        fetchData();
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleStorage);
+      window.addEventListener('focus', handleWindowFocus);
+    }
+
+    return () => {
+      if (channel) {
+        try {
+          channel.close();
+        } catch {}
+      }
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('storage', handleStorage);
+        window.removeEventListener('focus', handleWindowFocus);
+      }
+    };
+  }, [params.id, activeTab]);
+
   const siteVisitInfo = React.useMemo(() => {
     const siteVisitActivity = activities.find(
       (a) => a.type === 'Site Visit' && (a.status === 'Pending' || a.remarks)
@@ -518,7 +576,7 @@ const { hasPermission: canDo } = usePermissions();
 
   const normalizedRequirements = React.useMemo(() => {
     if (!lead) return [];
-    const raw = lead.requirements || (lead as any).requirementDetails || (lead as any).clientRequirements || (lead as any).designRequirements;
+    const raw = lead.requirements || (lead as any).requirementDetails || (lead as any).designRequirements;
     if (!raw) return [];
 
     // If already an array of room objects / names
@@ -560,37 +618,57 @@ const { hasPermission: canDo } = usePermissions();
     }
 
     // If raw is an Object (e.g. from crm-lead schema or key-value format)
-    if (typeof raw === 'object' && raw !== null) {
+    if (typeof raw === 'object' && raw !== null && !Array.isArray(raw)) {
       const roomsList = raw.rooms || raw.items || raw.list || raw.spaces;
-      if (Array.isArray(roomsList) && roomsList.length > 0) {
-        return roomsList.map((roomItem: any, idx: number) => {
-          if (typeof roomItem === 'string') {
+      if (Array.isArray(roomsList)) {
+        if (roomsList.length > 0) {
+          return roomsList.map((roomItem: any, idx: number) => {
+            if (typeof roomItem === 'string') {
+              return {
+                roomName: roomItem,
+                interiorType: raw.interiorType || lead.propertyType || 'Residential',
+                designStyle: raw.style || raw.designStyle || '',
+                theme: raw.theme || raw.style || '',
+                description: raw.specialRequests || raw.notes || raw.description || '',
+                materials: Array.isArray(raw.materials) ? raw.materials.join(', ') : raw.materials || '',
+                timeline: raw.timeline || '',
+                scopeOfWork: Array.isArray(raw.scopeOfWork) ? raw.scopeOfWork.join(', ') : raw.scopeOfWork || '',
+                colours: raw.preferences?.colorPalette ? (Array.isArray(raw.preferences.colorPalette) ? raw.preferences.colorPalette.join(', ') : raw.preferences.colorPalette) : '',
+                lightingRequirements: raw.preferences?.lightingType || '',
+                flooring: raw.preferences?.flooringType || '',
+                ceiling: typeof raw.preferences?.falseCeiling === 'boolean' ? (raw.preferences.falseCeiling ? 'False Ceiling Required' : 'Standard') : '',
+              };
+            }
             return {
-              roomName: roomItem,
-              interiorType: raw.interiorType || lead.propertyType || 'Residential',
-              designStyle: raw.style || raw.designStyle || '',
-              theme: raw.theme || raw.style || '',
-              description: raw.specialRequests || raw.notes || raw.description || '',
-              materials: Array.isArray(raw.materials) ? raw.materials.join(', ') : raw.materials || '',
-              timeline: raw.timeline || '',
-              scopeOfWork: Array.isArray(raw.scopeOfWork) ? raw.scopeOfWork.join(', ') : raw.scopeOfWork || '',
-              colours: raw.preferences?.colorPalette ? (Array.isArray(raw.preferences.colorPalette) ? raw.preferences.colorPalette.join(', ') : raw.preferences.colorPalette) : '',
-              lightingRequirements: raw.preferences?.lightingType || '',
-              flooring: raw.preferences?.flooringType || '',
-              ceiling: typeof raw.preferences?.falseCeiling === 'boolean' ? (raw.preferences.falseCeiling ? 'False Ceiling Required' : 'Standard') : '',
+              ...raw,
+              ...roomItem,
+              roomName: roomItem.roomName || roomItem.room || roomItem.name || `Space ${idx + 1}`,
             };
-          }
-          return {
-            ...raw,
-            ...roomItem,
-            roomName: roomItem.roomName || roomItem.room || roomItem.name || `Space ${idx + 1}`,
-          };
-        });
+          });
+        }
+        return [];
       }
 
-      // Single requirements object fallback
+      // Check if the object actually has any real requirements content
+      const hasMeaningfulContent = Boolean(
+        raw.description ||
+        raw.specialRequests ||
+        raw.notes ||
+        raw.roomName ||
+        raw.scopeOfWork ||
+        raw.timeline ||
+        raw.style ||
+        raw.designStyle ||
+        (Array.isArray(raw.materials) && raw.materials.length > 0)
+      );
+
+      if (!hasMeaningfulContent) {
+        return [];
+      }
+
+      // Single requirements object fallback only when actual content exists
       return [{
-        roomName: 'General Project Requirements',
+        roomName: raw.roomName || 'General Project Requirements',
         interiorType: raw.interiorType || lead.propertyType || 'Residential',
         designStyle: raw.style || raw.designStyle || '',
         theme: raw.theme || raw.style || '',
@@ -607,6 +685,76 @@ const { hasPermission: canDo } = usePermissions();
     }
 
     return [];
+  }, [lead]);
+
+  const normalizedClientRequirements = React.useMemo(() => {
+    if (!lead) return [];
+    const clientReq = lead.clientRequirements;
+    if (!clientReq) return [];
+
+    const roomsList = Array.isArray(clientReq)
+      ? clientReq
+      : Array.isArray(clientReq.rooms)
+      ? clientReq.rooms
+      : clientReq.items || clientReq.spaces || [];
+
+    if (!Array.isArray(roomsList) || roomsList.length === 0) {
+      if (typeof clientReq === 'object' && (clientReq.overallStyle || clientReq.generalNotes || clientReq.estimatedBudget)) {
+        return [{
+          roomName: 'General Client Wishlist',
+          interiorType: lead.propertyType || 'Residential',
+          designStyle: clientReq.overallStyle || '',
+          theme: clientReq.overallStyle || '',
+          description: clientReq.generalNotes || '',
+          budget: clientReq.estimatedBudget || '',
+          furnitureRequirements: '',
+          storage: '',
+          lightingRequirements: '',
+          colours: '',
+        }];
+      }
+      return [];
+    }
+
+    return roomsList.map((r: any, idx: number) => {
+      if (typeof r === 'string') {
+        return {
+          roomName: r,
+          interiorType: lead.propertyType || 'Residential',
+          designStyle: clientReq.overallStyle || '',
+          theme: clientReq.overallStyle || '',
+          description: '',
+          furnitureRequirements: '',
+          storage: '',
+          lightingRequirements: '',
+          colours: '',
+          budget: clientReq.estimatedBudget || '',
+        };
+      }
+      return {
+        ...r,
+        roomName: (r.roomName || r.name || r.room || `Space ${idx + 1}`).trim(),
+        interiorType: r.interiorType || r.type || lead.propertyType || 'Residential',
+        designStyle: r.designStyle || r.style || clientReq.overallStyle || '',
+        theme: r.theme || r.designStyle || r.style || clientReq.overallStyle || '',
+        description: r.description || r.notes || r.remarks || '',
+        roomUsage: r.roomUsage || r.usage || '',
+        furnitureRequirements: r.furnitureRequirements || (Array.isArray(r.furniture) ? r.furniture.join(', ') : (r.furniture || '')),
+        storage: r.storage || r.storageRequirements || '',
+        electricalPoints: r.electricalPoints || r.electrical || '',
+        lightingRequirements: r.lightingRequirements || r.lighting || '',
+        plumbingRequirements: r.plumbingRequirements || r.plumbing || '',
+        circulation: r.circulation || '',
+        colours: r.colours || r.colors || '',
+        materials: r.materials || '',
+        flooring: r.flooring || '',
+        ceiling: r.ceiling || '',
+        wallFinishes: r.wallFinishes || '',
+        furnitureStyle: r.furnitureStyle || '',
+        dimensions: r.dimensions || '',
+        budget: r.budget || clientReq.estimatedBudget || '',
+      };
+    });
   }, [lead]);
 
   const drawingInfo = React.useMemo(() => {
@@ -916,10 +1064,10 @@ const { hasPermission: canDo } = usePermissions();
     'New Lead': 0,
     'Contacted': 0,
     'Meeting Scheduled': 0,
-    'Under Site Visit': 1,
-    'Measurement Done': 1,
-    'Under Requirement': 2,
-    'Requirement Completed': 2,
+    'Under Requirement': 1,
+    'Requirement Completed': 1,
+    'Under Site Visit': 2,
+    'Measurement Done': 2,
     'Under Drawing': 3,
     'Design Approved': 3,
     'Under BOQ Creation': 4,
@@ -936,6 +1084,14 @@ const { hasPermission: canDo } = usePermissions();
   const isConverted = lead?.status === 'Won' || lead?.status === 'Converted' || !!lead?.linkedProject;
   const isLost = lead?.status === 'Lost';
   const isReadOnly = isConverted || isLost;
+  const hasPassedToSiteVisit = (STAGE_ORDER[lead?.status || ''] ?? 0) >= 2 ||
+    Boolean(lead?.siteMeasurements) ||
+    Boolean(lead?.sitePhotos && lead.sitePhotos.length > 0) ||
+    activities.some((a) => a.type === 'Site Visit') ||
+    Boolean(lead?.designFiles && lead.designFiles.length > 0) ||
+    Boolean(lead?.boqs && lead.boqs.length > 0) ||
+    Boolean(lead?.quotations && lead.quotations.length > 0) ||
+    Boolean(lead?.linkedProject);
 
   const getTabLockState = (tabId: string) => {
     if (isReadOnly) {
@@ -948,13 +1104,13 @@ const { hasPermission: canDo } = usePermissions();
         return { isLocked: false, requiredStage: 'New Lead', stageTitle: 'Overview' };
       case 'followups':
         return { isLocked: false, requiredStage: '', stageTitle: 'Follow-ups' };
-      case 'site': {
-        const isUnlocked = currentStage >= 1 || !!lead?.siteMeasurements || (lead?.sitePhotos && lead.sitePhotos.length > 0);
-        return { isLocked: !isUnlocked, requiredStage: 'Under Site Visit', stageTitle: 'Site Visit' };
-      }
       case 'requirements': {
-        const isUnlocked = currentStage >= 2 || normalizedRequirements.length > 0 || Boolean(lead?.requirements);
+        const isUnlocked = currentStage >= 1 || normalizedRequirements.length > 0;
         return { isLocked: !isUnlocked, requiredStage: 'Under Requirement', stageTitle: 'Requirements' };
+      }
+      case 'site': {
+        const isUnlocked = currentStage >= 2 || !!lead?.siteMeasurements || (lead?.sitePhotos && lead.sitePhotos.length > 0);
+        return { isLocked: !isUnlocked, requiredStage: 'Under Site Visit', stageTitle: 'Site Visit' };
       }
       case 'designs': {
         const isUnlocked = currentStage >= 3 || (lead?.designFiles && lead.designFiles.length > 0);
@@ -978,17 +1134,15 @@ const { hasPermission: canDo } = usePermissions();
     }
   };
 
-  const hasAcceptedQuoteForTab = Boolean(lead?.quotations && lead.quotations.some((q: any) => q.status === 'Accepted' || q.status === 'Approved'));
-
   const TABS = [
     { id: 'overview', label: 'Overview' },
-    { id: 'followups', label: 'Follow-ups', count: activities.filter(a => a.status === 'Pending').length },
-    { id: 'site', label: 'Site Visits', count: lead?.siteMeasurements ? 1 : 0 },
-    { id: 'requirements', label: 'Requirements', count: normalizedRequirements.length },
-    { id: 'designs', label: '2D/3D Drawing', count: lead?.designFiles?.length || 0 },
-    { id: 'boq', label: 'BOQ', count: lead?.boqs?.length || 0 },
-    { id: 'quotations', label: 'Quotations', count: lead?.quotations?.length || 0 },
-    { id: 'confirm_order', label: 'Confirm Order', count: hasAcceptedQuoteForTab || isConverted ? 1 : 0 },
+    { id: 'followups', label: 'Follow-ups' },
+    { id: 'requirements', label: 'Requirements' },
+    { id: 'site', label: 'Site Visits' },
+    { id: 'designs', label: '2D/3D Drawing' },
+    { id: 'boq', label: 'BOQ' },
+    { id: 'quotations', label: 'Quotations' },
+    { id: 'confirm_order', label: 'Confirm Order' },
   ];
 
   return (
@@ -1289,16 +1443,6 @@ const { hasPermission: canDo } = usePermissions();
                 )}
               >
                 <span>{tab.label}</span>
-                {typeof tab.count === 'number' && tab.count > 0 && (
-                  <span className={cn(
-                    "text-[10px] px-1.5 py-0.2 rounded-full font-bold",
-                    isActive
-                      ? "bg-white/20 text-white"
-                      : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))]"
-                  )}>
-                    {tab.count}
-                  </span>
-                )}
                 {isLocked && (
                   <Lock size={11} className="opacity-60 shrink-0" />
                 )}
@@ -1596,7 +1740,8 @@ const { hasPermission: canDo } = usePermissions();
                 onRefresh={fetchData}
                 onScheduleFollowUp={() => setIsFollowUpModalOpen(true)}
                 onLogActivity={() => setIsActivityModalOpen(true)}
-                onSendToSiteVisit={() => setIsSendToSiteVisitOpen(true)}
+                onSendToSiteVisit={() => setIsSendToReqOpen(true)}
+                onSendToRequirements={() => setIsSendToReqOpen(true)}
                 isConverted={isReadOnly}
               />
             </motion.div>
@@ -1615,10 +1760,10 @@ const { hasPermission: canDo } = usePermissions();
                   </div>
                   <h3 className="text-base font-bold text-[hsl(var(--foreground))]">Site Visit Stage is Locked</h3>
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 max-w-md">
-                    Complete initial follow-up and schedule a Site Visit to unlock measurement logging.
+                    Complete the Requirements phase first to unlock site visit and measurement logging.
                   </p>
                   {/* Bring the lead into this stage from here — no need for the previous stage's tab */}
-                  {!isReadOnly && (canDo('crm_site_visits', 'create') || canDo('crm_site_visits', 'update') || canDo('crm_followups', 'update') || canDo('crm_leads', 'update')) && (
+                  {!isReadOnly && (canDo('crm_site_visits', 'create') || canDo('crm_site_visits', 'update') || canDo('crm_requirements', 'update') || canDo('crm_leads', 'update')) && (
                     <button
                       onClick={() => setIsSendToSiteVisitOpen(true)}
                       className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 active:scale-95 transition-all"
@@ -1762,12 +1907,12 @@ const { hasPermission: canDo } = usePermissions();
                                     </button>
                                   )}
                                   {['Under Site Visit', 'Measurement Done'].includes(lead.status) && (
-                                    (canDo('crm_site_visits', 'update') || canDo('crm_requirements', 'update') || canDo('crm_requirements', 'create')) && (
+                                    (canDo('crm_site_visits', 'update') || canDo('crm_drawings', 'update') || canDo('crm_drawings', 'create') || canDo('crm_requirements', 'update')) && (
                                       <button
-                                        onClick={() => setIsSendToReqOpen(true)}
+                                        onClick={() => setIsSendToDrawingOpen(true)}
                                         className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
                                       >
-                                        Pass to Requirements <ArrowRight size={12} />
+                                        Pass to 2D/3D Drawing <ArrowRight size={12} />
                                       </button>
                                     )
                                   )}
@@ -2086,10 +2231,10 @@ const { hasPermission: canDo } = usePermissions();
                   </div>
                   <h3 className="text-base font-bold text-[hsl(var(--foreground))]">Requirements Stage is Locked</h3>
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 max-w-md">
-                    Complete the Site Visit & Measurements phase first to unlock requirement logging.
+                    Complete initial follow-up to unlock requirement logging.
                   </p>
                   {/* Bring the lead into this stage from here — no need for the previous stage's tab */}
-                  {!isReadOnly && (canDo('crm_requirements', 'create') || canDo('crm_requirements', 'update') || canDo('crm_site_visits', 'update')) && (
+                  {!isReadOnly && (canDo('crm_requirements', 'create') || canDo('crm_requirements', 'update') || canDo('crm_followups', 'update') || canDo('crm_leads', 'update')) && (
                     <button
                       onClick={() => setIsSendToReqOpen(true)}
                       className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 active:scale-95 transition-all"
@@ -2099,7 +2244,19 @@ const { hasPermission: canDo } = usePermissions();
                   )}
                 </div>
               ) : (() => {
-                const hasRequirements = Boolean(normalizedRequirements && normalizedRequirements.length > 0);
+                const hasRequirements = Boolean(
+                  (normalizedRequirements && normalizedRequirements.length > 0) ||
+                  (normalizedClientRequirements && normalizedClientRequirements.length > 0)
+                );
+                const totalConfiguredSpaces = (normalizedRequirements?.length || 0) > 0
+                  ? normalizedRequirements.length
+                  : (normalizedClientRequirements?.length || 0);
+                const hasClientRequirements = Boolean(normalizedClientRequirements && normalizedClientRequirements.length > 0);
+                const hasClientSubmitted = Boolean(
+                  lead.clientRequirementsSubmittedAt ||
+                  lead.clientRequirements?.submittedAt ||
+                  hasClientRequirements
+                );
                 const isReqOverdue = Boolean(
                   !hasRequirements &&
                   requirementsInfo.scheduledDate &&
@@ -2197,7 +2354,9 @@ const { hasPermission: canDo } = usePermissions();
                                   ? "bg-rose-500/15 text-rose-600 border-rose-500/30 font-black"
                                   : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                               )}>
-                                {hasRequirements ? `Configured (${normalizedRequirements.length} ${normalizedRequirements.length === 1 ? 'Space' : 'Spaces'})` : "Discussion Pending"}
+                                {hasRequirements
+                                  ? `Configured (${totalConfiguredSpaces} ${totalConfiguredSpaces === 1 ? 'Space' : 'Spaces'}${!normalizedRequirements?.length && normalizedClientRequirements?.length ? ' - Client Intake' : ''})`
+                                  : "Discussion Pending"}
                               </span>
                             </div>
                           </div>
@@ -2216,12 +2375,12 @@ const { hasPermission: canDo } = usePermissions();
                                   </button>
                                 )}
                                 {['Under Requirement', 'Requirement Completed'].includes(lead.status) && (
-                                  (canDo('crm_requirements', 'update') || canDo('crm_drawings', 'update') || canDo('crm_drawings', 'create')) && (
+                                  (canDo('crm_requirements', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_site_visits', 'create')) && (
                                     <button
-                                      onClick={() => setIsSendToDrawingOpen(true)}
-                                      className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                                      onClick={() => setIsSendToSiteVisitOpen(true)}
+                                      className="inline-flex items-center gap-1 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
                                     >
-                                      Pass to 2D/3D Drawing <ArrowRight size={12} />
+                                      Pass to Site Visit <ArrowRight size={12} />
                                     </button>
                                   )
                                 )}
@@ -2305,20 +2464,50 @@ const { hasPermission: canDo } = usePermissions();
                       </div>
                     </div>
 
-                    {/* Dual-Perspective Requirements View (Client Wishlist vs Team Technical Brief Side-by-Side) */}
+                    {/* Global Scope / Timeline / Special Requests Banner if present */}
+                    {(globalScopeOfWork || globalTimeline || globalSpecialRequests) && (
+                      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 sm:p-4 space-y-2.5">
+                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5 pb-2 border-b border-[hsl(var(--border))]">
+                          <Sliders size={13} className="text-blue-500" /> Overall Project Directives & Scope
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-xs">
+                          {globalScopeOfWork && (
+                            <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block">Scope of Work</span>
+                              <span className="font-semibold text-[hsl(var(--foreground))] mt-0.5 block">{globalScopeOfWork}</span>
+                            </div>
+                          )}
+                          {globalTimeline && (
+                            <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block">Target Timeline</span>
+                              <span className="font-semibold text-[hsl(var(--foreground))] mt-0.5 block">{globalTimeline}</span>
+                            </div>
+                          )}
+                          {globalSpecialRequests && (
+                            <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block">Special Requests</span>
+                              <span className="font-semibold text-[hsl(var(--foreground))] mt-0.5 block">{globalSpecialRequests}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Dual-Perspective Comparative Requirements View (Side-by-Side Customer & Technical Specifications) */}
                     <InteriorComparativeRequirementsView
                       lead={lead}
+                      technicalPersonName={requirementsInfo.assignedName}
                       isReadOnly={isReadOnly}
-                      canEdit={canDo('crm_requirements', 'update') || canDo('crm_requirements', 'create')}
-                      canSendToDrawings={
-                        ['Under Requirement', 'Requirement Completed'].includes(lead.status) &&
-                        (canDo('crm_requirements', 'update') || canDo('crm_drawings', 'update') || canDo('crm_drawings', 'create'))
-                      }
+                      canEdit={!isReadOnly && (canDo('crm_requirements', 'update') || canDo('crm_requirements', 'create'))}
+                      hasPassedToSiteVisit={hasPassedToSiteVisit}
                       currencySymbol={currencySymbol}
                       onEditTeamRequirements={() => setIsReqModalOpen(true)}
                       onRescheduleSession={() => setIsSendToReqOpen(true)}
-                      onPassToDrawings={() => setIsSendToDrawingOpen(true)}
-                      onRefresh={() => refetchLead()}
+                      onRefresh={fetchData}
+                      onOpenShareModal={() => {
+                        setShareModalMode('requirements');
+                        setIsShareModalOpen(true);
+                      }}
                     />
                   </div>
                 );
@@ -2339,7 +2528,7 @@ const { hasPermission: canDo } = usePermissions();
                   </div>
                   <h3 className="text-base font-bold text-[hsl(var(--foreground))]">2D & 3D Drawings Stage is Locked</h3>
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 max-w-md">
-                    Complete the Client Requirements phase first to unlock drawing uploads.
+                    Complete the Site Visit & Measurements phase first to unlock drawing uploads.
                   </p>
                   {/* Bring the lead into this stage from here — no need for the previous stage's tab */}
                   {!isReadOnly && (canDo('crm_drawings', 'create') || canDo('crm_drawings', 'update') || canDo('crm_requirements', 'update')) && (
@@ -3607,9 +3796,11 @@ const { hasPermission: canDo } = usePermissions();
         customerId={params.id as string}
         onSuccess={fetchData}
         users={users}
+        clientRequirements={normalizedClientRequirements || []}
         initialRequirements={normalizedRequirements || []}
         initialBudget={lead?.budgetRange || ''}
         currentStatus={lead?.status || ''}
+        hasPassedToSiteVisit={hasPassedToSiteVisit}
         isReadOnly={['Won', 'Converted'].includes(lead?.status || '')}
       />
       <InteriorUploadDesignModal
@@ -3892,6 +4083,7 @@ const { hasPermission: canDo } = usePermissions();
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         lead={lead}
+        mode={shareModalMode}
         onUpdated={fetchData}
       />
       <InteriorDrawingApprovalModal

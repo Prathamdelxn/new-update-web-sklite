@@ -1077,6 +1077,11 @@ const { hasPermission: canDo } = usePermissions();
                                       <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-1.5 flex-wrap">
                                           <span className="font-bold text-slate-900 truncate">{vName}</span>
+                                          {(v.vendorCode || v._id) && (
+                                            <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 border border-purple-200 shrink-0">
+                                              {v.vendorCode || `VND-${String(v._id).slice(-3).toUpperCase()}`}
+                                            </span>
+                                          )}
                                           <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-semibold shrink-0">
                                             {vCat}
                                           </span>

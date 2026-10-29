@@ -1346,7 +1346,14 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                             return (
                               <div key={vendor._id} className="p-3 flex items-center justify-between text-xs hover:bg-[hsl(var(--muted)/0.3)] transition-colors">
                                 <div>
-                                  <p className="font-bold text-[hsl(var(--foreground))]">{vendor.name}</p>
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-bold text-[hsl(var(--foreground))]">{vendor.name}</p>
+                                    {(vendor.vendorCode || vendor._id) && (
+                                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800 shrink-0">
+                                        {vendor.vendorCode || `VND-${String(vendor._id).slice(-3).toUpperCase()}`}
+                                      </span>
+                                    )}
+                                  </div>
                                   <p className="text-[9px] text-[hsl(var(--muted-foreground))]">{vendor.email || vendor.phoneNumber || 'No contact info'}</p>
                                 </div>
                                 <div className="flex items-center gap-2">

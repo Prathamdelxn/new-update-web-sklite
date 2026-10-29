@@ -44,35 +44,36 @@ import { useToast } from '@/providers/ToastContext';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-// Permission module behind each tab (same keys as InteriorCrmFlowTabs), in tab order
-const TAB_MODULE: Partial<Record<InteriorCrmStage, string>> = {
+const EMPTY_ARRAY: any[] = [];
+
+const TAB_MODULE: Record<InteriorCrmStage, string> = {
   leads: 'crm_leads',
   follow_ups: 'crm_followups',
-  site_visits: 'crm_site_visits',
   requirement_design: 'crm_requirements',
+  site_visits: 'crm_site_visits',
   drawing: 'crm_drawings',
   boq: 'crm_boq',
   quotations: 'crm_quotations',
+  won_projects: 'crm_leads',
   lost_leads: 'crm_leads',
-  won_projects: 'crm_quotations',
+  customers: 'crm_leads',
 };
 
-// Pipeline position of each status, to know which leads can still enter a stage
 const STATUS_STAGE_INDEX: Record<string, number> = {
   'New Lead': 0,
-  Contacted: 1,
+  'Contacted': 1,
   'Meeting Scheduled': 1,
-  'Under Site Visit': 2,
-  'Measurement Done': 2,
-  'Under Requirement': 3,
-  'Requirement Completed': 3,
+  'Under Requirement': 2,
+  'Requirement Completed': 2,
+  'Under Site Visit': 3,
+  'Measurement Done': 3,
   'Under Drawing': 4,
   'Design Approved': 4,
   'Under BOQ Creation': 5,
   'Under Quotation': 6,
   'Quotation Pending': 6,
   'Quotation Sent': 6,
-  Negotiation: 6,
+  'Negotiation': 6,
   'Booking Pending': 6,
 };
 
@@ -470,14 +471,64 @@ export default function InteriorCrmView() {
     setIsReopenLeadOpen(true);
   };
 
+  const actionLead = React.useMemo(() => {
+    if (!actionLeadId) return null;
+    return leads.find((l) => l._id === actionLeadId) || null;
+  }, [leads, actionLeadId]);
+
+  const siteVisitInitialData = React.useMemo(() => {
+    if (!actionLead || !['Under Site Visit', 'Measurement Done'].includes(actionLead.status)) return null;
+    const assignedId = typeof actionLead.assignedSalesExecutive === 'object' && actionLead.assignedSalesExecutive !== null
+      ? actionLead.assignedSalesExecutive._id || actionLead.assignedSalesExecutive.id
+      : actionLead.assignedSalesExecutive;
+    if (actionLead.siteVisitScheduledDate || assignedId || actionLead.remarks) {
+      return {
+        scheduledDate: actionLead.siteVisitScheduledDate,
+        assignedSalesExecutive: assignedId || '',
+        remarks: actionLead.remarks || '',
+      };
+    }
+    return null;
+  }, [actionLead]);
+
+  const requirementsInitialData = React.useMemo(() => {
+    if (!actionLead || !['Under Requirement', 'Requirement Completed'].includes(actionLead.status)) return null;
+    const assignedId = typeof actionLead.designerAssigned === 'object' && actionLead.designerAssigned !== null
+      ? actionLead.designerAssigned._id || actionLead.designerAssigned.id
+      : actionLead.designerAssigned;
+    if (assignedId || actionLead.requirementScheduledDate || actionLead.remarks) {
+      return {
+        assignedMember: assignedId || '',
+        scheduledDate: actionLead.requirementScheduledDate,
+        remarks: actionLead.remarks || '',
+      };
+    }
+    return null;
+  }, [actionLead]);
+
+  const drawingInitialData = React.useMemo(() => {
+    if (!actionLead || !['Under Drawing', 'Design Approved'].includes(actionLead.status)) return null;
+    const assignedId = typeof actionLead.designerAssigned === 'object' && actionLead.designerAssigned !== null
+      ? actionLead.designerAssigned._id || actionLead.designerAssigned.id
+      : actionLead.designerAssigned;
+    if (assignedId || actionLead.drawingScheduledDate || actionLead.remarks) {
+      return {
+        assignedDesigner: assignedId || '',
+        scheduledDate: actionLead.drawingScheduledDate,
+        remarks: actionLead.remarks || '',
+      };
+    }
+    return null;
+  }, [actionLead]);
+
   const wonLeadsCount = leads.filter((l) => ['Won', 'Converted'].includes(l.status)).length;
 
   // "Add to <stage>": bring a lead into the current stage without going through the
   // earlier tabs (users may have Create here but no access to the previous stage)
   const STAGE_ADD: Partial<Record<InteriorCrmStage, { label: string; index: number; open: (leadId: string) => void }>> = {
     follow_ups: { label: 'Schedule Follow-up', index: 1, open: openFollowUpModal },
-    site_visits: { label: 'Add to Site Visits', index: 2, open: openSendToSiteVisitModal },
-    requirement_design: { label: 'Add to Requirements', index: 3, open: openSendToRequirementsModal },
+    requirement_design: { label: 'Add to Requirements', index: 2, open: openSendToRequirementsModal },
+    site_visits: { label: 'Add to Site Visits', index: 3, open: openSendToSiteVisitModal },
     drawing: { label: 'Add to Drawings', index: 4, open: openSendToDrawingModal },
     boq: { label: 'Add to BOQ', index: 5, open: openSendToBoqModal },
     quotations: { label: 'Add to Quotations', index: 6, open: openSendToQuotationsModal },
@@ -548,20 +599,22 @@ export default function InteriorCrmView() {
       {/* Tab Content */}
       <div className="w-full">
         {activeTab === 'follow_ups' ? (
-          <InteriorFollowUpsView onPassToSiteVisit={openSendToSiteVisitModal} refreshTrigger={leads} onMarkAsLost={openMarkAsLostModal} />
-        ) : activeTab === 'site_visits' ? (
-          <InteriorSiteVisitsView
-            leads={getFilteredLeads()}
-            onLogSiteVisit={openSiteVisitModal}
-            onPassToRequirements={openSendToRequirementsModal}
-            onMarkAsLost={openMarkAsLostModal}
-          />
+          <InteriorFollowUpsView onPassToRequirements={openSendToRequirementsModal} refreshTrigger={leads} onMarkAsLost={openMarkAsLostModal} />
         ) : activeTab === 'requirement_design' ? (
           <InteriorRequirementDesignView
             leads={getFilteredLeads()}
             onLogRequirements={openRequirementsModal}
             onUploadDesign={() => {}} // Not used anymore
-            onPassToQuotations={openSendToDrawingModal} // Flow changes to pass to drawing
+            onPassToSiteVisit={openSendToSiteVisitModal}
+            onPassToDrawing={openSendToSiteVisitModal}
+            onPassToQuotations={openSendToSiteVisitModal}
+            onMarkAsLost={openMarkAsLostModal}
+          />
+        ) : activeTab === 'site_visits' ? (
+          <InteriorSiteVisitsView
+            leads={getFilteredLeads()}
+            onLogSiteVisit={openSiteVisitModal}
+            onPassToDrawing={openSendToDrawingModal}
             onMarkAsLost={openMarkAsLostModal}
           />
         ) : activeTab === 'drawing' ? (
@@ -648,7 +701,7 @@ export default function InteriorCrmView() {
           onClose={() => setIsFollowUpOpen(false)}
           customerId={actionLeadId || ''}
           customerName={actionLeadName}
-          onSuccess={(updated) => handleLeadSuccess(updated, actionLeadId || undefined)}
+          onSuccess={() => handleLeadSuccess(undefined, actionLeadId || undefined)}
           users={users}
         />
       )}
@@ -658,10 +711,10 @@ export default function InteriorCrmView() {
           isOpen={isSiteVisitOpen}
           onClose={() => setIsSiteVisitOpen(false)}
           customerId={actionLeadId || ''}
-          onSuccess={(updated) => handleLeadSuccess(updated, actionLeadId || undefined)}
+          onSuccess={fetchLeads}
           users={users}
-          initialMeasurements={leads.find(l => l._id === actionLeadId)?.siteMeasurements}
-          initialPhotos={leads.find(l => l._id === actionLeadId)?.sitePhotos}
+          initialMeasurements={actionLead?.siteMeasurements}
+          initialPhotos={actionLead?.sitePhotos}
         />
       )}
 
@@ -670,215 +723,149 @@ export default function InteriorCrmView() {
           isOpen={isRequirementsOpen}
           onClose={() => setIsRequirementsOpen(false)}
           customerId={actionLeadId || ''}
-          onSuccess={(updated) => handleLeadSuccess(updated, actionLeadId || undefined)}
+          onSuccess={fetchLeads}
           users={users}
-          initialRequirements={leads.find(l => l._id === actionLeadId)?.requirements || []}
-          initialBudget={leads.find(l => l._id === actionLeadId)?.budgetRange || ''}
-          currentStatus={leads.find(l => l._id === actionLeadId)?.status || ''}
-          isReadOnly={['Won', 'Converted'].includes(leads.find(l => l._id === actionLeadId)?.status || '')}
+          initialRequirements={actionLead?.requirements}
+          initialBudget={actionLead?.budgetRange || ''}
+          currentStatus={actionLead?.status || ''}
+          isReadOnly={['Won', 'Converted'].includes(actionLead?.status || '')}
         />
       )}
 
-      {isUploadDesignOpen && (
-        <InteriorUploadDesignModal
-          isOpen={isUploadDesignOpen}
-          onClose={() => setIsUploadDesignOpen(false)}
-          customerId={actionLeadId || ''}
-          onSuccess={(updated) => handleLeadSuccess(updated, actionLeadId || undefined)}
-          existingFiles={leads.find(l => l._id === actionLeadId)?.designFiles || []}
-        />
-      )}
+      <InteriorUploadDesignModal
+        isOpen={isUploadDesignOpen}
+        onClose={() => setIsUploadDesignOpen(false)}
+        customerId={actionLeadId || ''}
+        onSuccess={fetchLeads}
+        existingFiles={actionLead?.designFiles || EMPTY_ARRAY}
+      />
 
-      {isSendToSiteVisitOpen && (
-        <InteriorSendToSiteVisitModal
-          isOpen={isSendToSiteVisitOpen}
-          onClose={() => setIsSendToSiteVisitOpen(false)}
-          customerId={actionLeadId || ''}
-          customerName={leads.find((l) => l._id === actionLeadId)?.name}
-          currentStatus={leads.find((l) => l._id === actionLeadId)?.status}
-          initialData={(() => {
-            const l = leads.find((l) => l._id === actionLeadId);
-            if (!l || !['Under Site Visit', 'Measurement Done'].includes(l.status)) return null;
-            const assignedId = typeof l.assignedSalesExecutive === 'object' && l.assignedSalesExecutive !== null
-              ? l.assignedSalesExecutive._id || l.assignedSalesExecutive.id
-              : l.assignedSalesExecutive;
-            if (l.siteVisitScheduledDate || assignedId || l.remarks) {
-              return {
-                scheduledDate: l.siteVisitScheduledDate,
-                assignedSalesExecutive: assignedId || '',
-                remarks: l.remarks || '',
-              };
-            }
-            return null;
-          })()}
-          onSuccess={(updated) => handleLeadSuccess(updated, actionLeadId || undefined)}
-          users={users}
-        />
-      )}
+      <InteriorSendToSiteVisitModal
+        isOpen={isSendToSiteVisitOpen}
+        onClose={() => setIsSendToSiteVisitOpen(false)}
+        customerId={actionLeadId || ''}
+        customerName={actionLead?.name}
+        currentStatus={actionLead?.status}
+        initialData={siteVisitInitialData}
+        onSuccess={fetchLeads}
+        users={users}
+      />
 
-      {isSendToRequirementsOpen && (
-        <InteriorSendToRequirementsModal
-          isOpen={isSendToRequirementsOpen}
-          onClose={() => setIsSendToRequirementsOpen(false)}
-          customerId={actionLeadId || ''}
-          customerName={leads.find((l) => l._id === actionLeadId)?.name}
-          currentStatus={leads.find((l) => l._id === actionLeadId)?.status}
-          initialData={(() => {
-            const l = leads.find((l) => l._id === actionLeadId);
-            if (!l || !['Under Requirement', 'Requirement Completed'].includes(l.status)) return null;
-            const assignedId = typeof l.designerAssigned === 'object' && l.designerAssigned !== null
-              ? l.designerAssigned._id || l.designerAssigned.id
-              : l.designerAssigned;
-            if (assignedId || l.requirementScheduledDate || l.remarks) {
-              return {
-                assignedMember: assignedId || '',
-                scheduledDate: l.requirementScheduledDate,
-                remarks: l.remarks || '',
-              };
-            }
-            return null;
-          })()}
-          onSuccess={(updated) => handleLeadSuccess(updated, actionLeadId || undefined)}
-          users={users}
-        />
-      )}
+      <InteriorSendToRequirementsModal
+        isOpen={isSendToRequirementsOpen}
+        onClose={() => setIsSendToRequirementsOpen(false)}
+        customerId={actionLeadId || ''}
+        customerName={actionLead?.name}
+        currentStatus={actionLead?.status}
+        initialData={requirementsInitialData}
+        onSuccess={fetchLeads}
+        users={users}
+      />
 
-      {isSendToDrawingOpen && (
-        <InteriorSendToDrawingModal
-          isOpen={isSendToDrawingOpen}
-          onClose={() => setIsSendToDrawingOpen(false)}
-          customerId={actionLeadId || ''}
-          customerName={leads.find((l) => l._id === actionLeadId)?.name}
-          currentStatus={leads.find((l) => l._id === actionLeadId)?.status}
-          initialData={(() => {
-            const l = leads.find((l) => l._id === actionLeadId);
-            if (!l || !['Under Drawing', 'Design Approved'].includes(l.status)) return null;
-            const assignedId = typeof l.designerAssigned === 'object' && l.designerAssigned !== null
-              ? l.designerAssigned._id || l.designerAssigned.id
-              : l.designerAssigned;
-            if (assignedId || l.drawingScheduledDate || l.remarks) {
-              return {
-                assignedDesigner: assignedId || '',
-                scheduledDate: l.drawingScheduledDate,
-                remarks: l.remarks || '',
-              };
-            }
-            return null;
-          })()}
-          onSuccess={(updated) => handleLeadSuccess(updated, actionLeadId || undefined)}
-          users={users}
-        />
-      )}
+      <InteriorSendToDrawingModal
+        isOpen={isSendToDrawingOpen}
+        onClose={() => setIsSendToDrawingOpen(false)}
+        customerId={actionLeadId || ''}
+        customerName={actionLead?.name}
+        currentStatus={actionLead?.status}
+        initialData={drawingInitialData}
+        onSuccess={fetchLeads}
+        users={users}
+      />
 
-      {isSendToBoqOpen && (
-        <InteriorSendToBoqModal
-          isOpen={isSendToBoqOpen}
-          onClose={() => setIsSendToBoqOpen(false)}
-          customerId={actionLeadId || ''}
-          lead={leads.find(l => l._id === actionLeadId)}
-          onSuccess={(updated) => handleLeadSuccess(updated, actionLeadId || undefined)}
-          users={users}
-        />
-      )}
+      <InteriorSendToBoqModal
+        isOpen={isSendToBoqOpen}
+        onClose={() => setIsSendToBoqOpen(false)}
+        customerId={actionLeadId || ''}
+        lead={actionLead}
+        onSuccess={fetchLeads}
+        users={users}
+      />
 
-      {isAddBoqOpen && (
-        <InteriorBoqBuilderModal
-          isOpen={isAddBoqOpen}
-          onClose={() => {
-            setIsAddBoqOpen(false);
-            setEditingBoqIndex(null);
-          }}
-          customerId={actionLeadId || ''}
-          existingBoqs={leads.find(l => l._id === actionLeadId)?.boqs || []}
-          editingBoqIndex={editingBoqIndex}
-          isReadOnly={Boolean(
-            (() => {
-              const currentLead = leads.find(l => l._id === actionLeadId);
-              if (!currentLead) return false;
-              const hasAcceptedQuote = currentLead.quotations && currentLead.quotations.some((q: any) => q.status === 'Accepted');
-              return hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(currentLead.status || '') || Boolean(currentLead.linkedProject);
-            })()
-          )}
-          budgetRange={leads.find(l => l._id === actionLeadId)?.budgetRange || ''}
-          designFiles={leads.find(l => l._id === actionLeadId)?.designFiles || []}
-          onSuccess={handleLeadSuccess}
-        />
-      )}
+      <InteriorBoqBuilderModal
+        isOpen={isAddBoqOpen}
+        onClose={() => {
+          setIsAddBoqOpen(false);
+          setEditingBoqIndex(null);
+        }}
+        customerId={actionLeadId || ''}
+        existingBoqs={actionLead?.boqs || EMPTY_ARRAY}
+        editingBoqIndex={editingBoqIndex}
+        isReadOnly={Boolean(
+          (() => {
+            if (!actionLead) return false;
+            const hasAcceptedQuote = actionLead.quotations && actionLead.quotations.some((q: any) => q.status === 'Accepted');
+            return hasAcceptedQuote || ['Booking Pending', 'Won', 'Converted'].includes(actionLead.status || '') || Boolean(actionLead.linkedProject);
+          })()
+        )}
+        budgetRange={actionLead?.budgetRange || ''}
+        onSuccess={fetchLeads}
+      />
 
-      {isDeleteBoqOpen && (
-        <InteriorDeleteBoqModal
-          isOpen={isDeleteBoqOpen}
-          onClose={() => setIsDeleteBoqOpen(false)}
-          customerId={actionLeadId || ''}
-          customerName={actionLeadName}
-          existingBoqs={leads.find(l => l._id === actionLeadId)?.boqs || []}
-          onSuccess={handleLeadSuccess}
-        />
-      )}
+      <InteriorDeleteBoqModal
+        isOpen={isDeleteBoqOpen}
+        onClose={() => setIsDeleteBoqOpen(false)}
+        customerId={actionLeadId || ''}
+        customerName={actionLeadName}
+        existingBoqs={actionLead?.boqs || EMPTY_ARRAY}
+        onSuccess={fetchLeads}
+      />
 
-      {isSendBoqApprovalOpen && (
-        <InteriorSendBoqForApprovalModal
-          isOpen={isSendBoqApprovalOpen}
-          onClose={() => {
-            setIsSendBoqApprovalOpen(false);
-            setBoqIndexForAction(null);
-          }}
-          customerId={actionLeadId || ''}
-          customerName={actionLeadName}
-          existingBoqs={leads.find(l => l._id === actionLeadId)?.boqs || []}
-          boqIndex={boqIndexForAction}
-          users={users}
-          onSuccess={handleLeadSuccess}
-        />
-      )}
+      <InteriorSendBoqForApprovalModal
+        isOpen={isSendBoqApprovalOpen}
+        onClose={() => {
+          setIsSendBoqApprovalOpen(false);
+          setBoqIndexForAction(null);
+        }}
+        customerId={actionLeadId || ''}
+        customerName={actionLeadName}
+        existingBoqs={actionLead?.boqs || EMPTY_ARRAY}
+        boqIndex={boqIndexForAction}
+        users={users}
+        onSuccess={fetchLeads}
+      />
 
-      {isBoqApprovalOpen && (
-        <InteriorBoqApprovalModal
-          isOpen={isBoqApprovalOpen}
-          onClose={() => {
-            setIsBoqApprovalOpen(false);
-            setBoqApprovalAction(null);
-            setBoqIndexForAction(null);
-          }}
-          customerId={actionLeadId || ''}
-          customerName={actionLeadName}
-          budgetRange={leads.find(l => l._id === actionLeadId)?.budgetRange || ''}
-          existingBoqs={leads.find(l => l._id === actionLeadId)?.boqs || []}
-          boqIndex={boqIndexForAction}
-          initialAction={boqApprovalAction}
-          onSuccess={handleLeadSuccess}
-        />
-      )}
+      <InteriorBoqApprovalModal
+        isOpen={isBoqApprovalOpen}
+        onClose={() => {
+          setIsBoqApprovalOpen(false);
+          setBoqApprovalAction(null);
+          setBoqIndexForAction(null);
+        }}
+        customerId={actionLeadId || ''}
+        customerName={actionLeadName}
+        budgetRange={actionLead?.budgetRange || ''}
+        existingBoqs={actionLead?.boqs || EMPTY_ARRAY}
+        boqIndex={boqIndexForAction}
+        initialAction={boqApprovalAction}
+        onSuccess={fetchLeads}
+      />
 
       {isSendToQuotationsOpen && (
         <InteriorSendToQuotationsModal
           isOpen={isSendToQuotationsOpen}
           onClose={() => setIsSendToQuotationsOpen(false)}
           customerId={actionLeadId || ''}
-          onSuccess={(updated) => handleLeadSuccess(updated, actionLeadId || undefined)}
+          onSuccess={() => handleLeadSuccess(undefined, actionLeadId || undefined)}
           users={users}
         />
       )}
 
-      {isQuotationBuilderOpen && (
-        <InteriorQuotationBuilderModal
-          isOpen={isQuotationBuilderOpen}
-          onClose={() => setIsQuotationBuilderOpen(false)}
-          customerId={actionLeadId || ''}
-          customerEmail={leads.find(l => l._id === actionLeadId)?.email || ''}
-          existingQuotations={leads.find(l => l._id === actionLeadId)?.quotations || []}
-          existingBoqs={leads.find(l => l._id === actionLeadId)?.boqs || []}
-          lead={leads.find(l => l._id === actionLeadId)}
-          onSuccess={handleLeadSuccess}
-        />
-      )}
+      <InteriorQuotationBuilderModal
+        isOpen={isQuotationBuilderOpen}
+        onClose={() => setIsQuotationBuilderOpen(false)}
+        customerId={actionLeadId || ''}
+        customerEmail={actionLead?.email || ''}
+        existingQuotations={actionLead?.quotations || EMPTY_ARRAY}
+        onSuccess={fetchLeads}
+      />
 
       {isConvertToProjectOpen && (
         <InteriorConvertToProjectModal
           isOpen={isConvertToProjectOpen}
           onClose={() => setIsConvertToProjectOpen(false)}
           customerId={actionLeadId || ''}
-          onSuccess={(updated) => handleLeadSuccess(updated, actionLeadId || undefined)}
+          onSuccess={() => handleLeadSuccess(undefined, actionLeadId || undefined)}
         />
       )}
 
@@ -898,7 +885,7 @@ export default function InteriorCrmView() {
           onClose={() => setIsMarkAsLostOpen(false)}
           customerId={actionLeadId || ''}
           leadName={actionLeadName}
-          onSuccess={(updated) => handleLeadSuccess(updated, actionLeadId || undefined)}
+          onSuccess={() => handleLeadSuccess(undefined, actionLeadId || undefined)}
         />
       )}
 
@@ -910,7 +897,7 @@ export default function InteriorCrmView() {
           leadName={actionLeadName}
           leadData={leads.find((l) => l._id === actionLeadId)}
           users={users}
-          onSuccess={(updated) => handleLeadSuccess(updated, actionLeadId || undefined)}
+          onSuccess={() => handleLeadSuccess(undefined, actionLeadId || undefined)}
         />
       )}
     </div>

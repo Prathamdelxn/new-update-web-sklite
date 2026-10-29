@@ -74,6 +74,8 @@ export function InteriorSendToSiteVisitModal({
   const [scheduledDate, setScheduledDate] = useState('');
   const [remarks, setRemarks] = useState('');
 
+  const initialDataKey = initialData ? JSON.stringify(initialData) : '';
+
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
@@ -91,7 +93,7 @@ export function InteriorSendToSiteVisitModal({
       }
       setErrors({});
     }
-  }, [isOpen, customerId]);
+  }, [isOpen, initialDataKey]);
 
   if (!isOpen) return null;
 

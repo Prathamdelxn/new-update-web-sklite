@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   X,
   PenTool,
@@ -63,10 +63,12 @@ interface Props {
   customerId: string;
   onSuccess?: (updatedData?: any) => void;
   users?: any[];
+  clientRequirements?: any[];
   initialRequirements?: RoomRequirement[];
   initialBudget?: string;
   isReadOnly?: boolean;
   currentStatus?: string;
+  hasPassedToSiteVisit?: boolean;
 }
 
 const INTERIOR_TYPES = [
@@ -110,16 +112,42 @@ const DEFAULT_ROOM: RoomRequirement = {
   theme: '',
 };
 
+const EMPTY_REQUIREMENTS: RoomRequirement[] = [];
+const EMPTY_CLIENT_REQUIREMENTS: any[] = [];
+
 export const InteriorLogRequirementsModal = ({
   isOpen,
   onClose,
   customerId,
   onSuccess,
-  initialRequirements = [],
+  clientRequirements = EMPTY_CLIENT_REQUIREMENTS,
+  initialRequirements = EMPTY_REQUIREMENTS,
   initialBudget = '',
   isReadOnly = false,
-  currentStatus
+  currentStatus,
+  hasPassedToSiteVisit: hasPassedToSiteVisitProp,
 }: Props) => {
+  const POST_REQUIREMENT_STAGES = [
+    'Under Site Visit',
+    'Measurement Done',
+    'Under Drawing',
+    'Design Approved',
+    'Under BOQ Creation',
+    'Under Quotation',
+    'Quotation Pending',
+    'Quotation Sent',
+    'Negotiation',
+    'Booking Pending',
+    'Won',
+    'Converted',
+  ];
+
+  const hasPassedToSiteVisit = Boolean(
+    hasPassedToSiteVisitProp !== undefined
+      ? hasPassedToSiteVisitProp
+      : currentStatus && POST_REQUIREMENT_STAGES.includes(currentStatus)
+  );
+
   const toast = useToast();
   const { currencyCode, currencySymbol } = useCurrency();
   const isINR = currencyCode === 'INR';
@@ -148,26 +176,71 @@ export const InteriorLogRequirementsModal = ({
     { ...DEFAULT_ROOM, roomName: 'Living Room' }
   ]);
 
+  const requirementsKey = useMemo(() => {
+    try {
+      return initialRequirements ? JSON.stringify(initialRequirements) : '';
+    } catch {
+      return '';
+    }
+  }, [initialRequirements]);
+
+  const clientRequirementsKey = useMemo(() => {
+    try {
+      return clientRequirements ? JSON.stringify(clientRequirements) : '';
+    } catch {
+      return '';
+    }
+  }, [clientRequirements]);
+
   useEffect(() => {
     if (isOpen) {
       setBudgetRange(initialBudget || '');
       setBudgetError(null);
       setRoomErrors({});
-      if (initialRequirements && initialRequirements.length > 0) {
-        setRequirements(
-          initialRequirements.map((r) => ({
-            ...DEFAULT_ROOM,
-            ...r,
-            interiorType: r.interiorType || 'Residential'
-          }))
-        );
+
+      const hasMeaningfulInitial = initialRequirements && initialRequirements.length > 0 && initialRequirements.some((r: any) =>
+        Boolean(r.furnitureRequirements || r.storage || r.electricalPoints || r.lightingRequirements || r.plumbingRequirements || r.circulation || r.designStyle || r.materials || r.flooring || r.ceiling || r.wallFinishes || r.description || (r.roomName && r.roomName !== 'Living Room'))
+      );
+
+      const normalizeRequirementItem = (r: any) => ({
+        ...DEFAULT_ROOM,
+        ...r,
+        roomName: (r.roomName || r.name || r.room || 'Space').trim(),
+        interiorType: r.interiorType || r.type || 'Residential',
+        designStyle: r.designStyle || r.style || r.theme || '',
+        theme: r.theme || r.designStyle || r.style || '',
+        roomUsage: r.roomUsage || r.usage || '',
+        furnitureRequirements:
+          r.furnitureRequirements ||
+          r.wishedItems ||
+          (Array.isArray(r.furniture) ? r.furniture.join(', ') : r.furniture || ''),
+        storage: r.storage || r.storageRequirements || '',
+        electricalPoints: r.electricalPoints || r.electrical || '',
+        lightingRequirements: r.lightingRequirements || r.lighting || '',
+        plumbingRequirements: r.plumbingRequirements || r.plumbing || '',
+        circulation: r.circulation || '',
+        colours: r.colours || r.colors || (Array.isArray(r.colorPalette) ? r.colorPalette.join(', ') : r.colorPalette) || '',
+        materials: r.materials || r.materialSpecs || (Array.isArray(r.materials) ? r.materials.join(', ') : '') || '',
+        flooring: r.flooring || r.flooringType || '',
+        ceiling: r.ceiling || (typeof r.falseCeiling === 'boolean' ? (r.falseCeiling ? 'False Ceiling Required' : '') : r.falseCeiling) || '',
+        wallFinishes: r.wallFinishes || r.walls || r.wallDecor || '',
+        furnitureStyle: r.furnitureStyle || r.furniture_style || '',
+        description: r.description || r.notes || r.remarks || r.specialRequests || '',
+      });
+
+      if (hasMeaningfulInitial) {
+        setRequirements(initialRequirements.map(normalizeRequirementItem));
+      } else if (clientRequirements && clientRequirements.length > 0) {
+        setRequirements(clientRequirements.map(normalizeRequirementItem));
+      } else if (initialRequirements && initialRequirements.length > 0) {
+        setRequirements(initialRequirements.map(normalizeRequirementItem));
       } else {
         setRequirements([{ ...DEFAULT_ROOM, roomName: 'Living Room' }]);
       }
       setActiveSubTab({});
       setCollapsedRooms({});
     }
-  }, [isOpen, customerId]);
+  }, [isOpen, customerId, requirementsKey, initialBudget, clientRequirementsKey]);
 
   const addRoom = () => {
     setRequirements((prev) => [...prev, { ...DEFAULT_ROOM, roomName: '' }]);
@@ -214,6 +287,37 @@ export const InteriorLogRequirementsModal = ({
 
   const setSubTab = (index: number, tab: 'functional' | 'aesthetic' | 'notes') => {
     setActiveSubTab((prev) => ({ ...prev, [index]: tab }));
+  };
+
+  const handleDiscardSaved = async () => {
+    if (hasPassedToSiteVisit) {
+      toast.error('Cannot discard requirements after lead has been passed to Site Visit.');
+      return;
+    }
+    if (!confirm('Are you sure you want to discard all logged requirements for this lead? All rooms will be cleared.')) {
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await interiorCrmService.updateCustomer(customerId, {
+        requirements: [],
+        clientRequirements: null,
+      });
+      await interiorCrmService.createActivity({
+        customer: customerId,
+        type: 'Requirement Gathering',
+        status: 'Completed',
+        remarks: 'Discarded/reset all room requirements.',
+        completedDate: new Date(),
+      });
+      toast.success('Requirements discarded successfully.');
+      onClose();
+      if (onSuccess) onSuccess();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || err.message || 'Failed to discard requirements');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -346,6 +450,58 @@ export const InteriorLogRequirementsModal = ({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex flex-col gap-6 custom-scrollbar">
+          {/* Pre-fill from Client Submission Banner */}
+          {clientRequirements && clientRequirements.length > 0 && (
+            <div className="bg-purple-500/[0.08] border border-purple-500/25 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-purple-500/15 text-purple-600 flex items-center justify-center shrink-0 border border-purple-500/20">
+                  <Sparkles size={16} />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-[hsl(var(--foreground))] block">
+                    Client Submitted {clientRequirements.length} Space(s) through Online Intake Link
+                  </span>
+                  <span className="text-[11px] text-[hsl(var(--muted-foreground))] block">
+                    You can load the customer's requested rooms & aesthetic wishes directly into your technical specifications form.
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setRequirements(
+                    clientRequirements.map((cr: any) => ({
+                      ...DEFAULT_ROOM,
+                      ...cr,
+                      roomName: (cr.roomName || cr.name || cr.room || 'Space').trim(),
+                      interiorType: cr.interiorType || cr.type || 'Residential',
+                      designStyle: cr.designStyle || cr.style || '',
+                      theme: cr.theme || cr.designStyle || cr.style || '',
+                      roomUsage: cr.roomUsage || cr.usage || '',
+                      furnitureRequirements: cr.furnitureRequirements || cr.wishedItems || (Array.isArray(cr.furniture) ? cr.furniture.join(', ') : (cr.furniture || '')),
+                      storage: cr.storage || cr.storageRequirements || '',
+                      electricalPoints: cr.electricalPoints || cr.electrical || '',
+                      lightingRequirements: cr.lightingRequirements || cr.lighting || '',
+                      plumbingRequirements: cr.plumbingRequirements || cr.plumbing || '',
+                      circulation: cr.circulation || '',
+                      colours: cr.colours || cr.colors || '',
+                      materials: cr.materials || '',
+                      flooring: cr.flooring || '',
+                      ceiling: cr.ceiling || '',
+                      wallFinishes: cr.wallFinishes || '',
+                      furnitureStyle: cr.furnitureStyle || '',
+                      description: cr.description || cr.notes || cr.remarks || '',
+                    }))
+                  );
+                  toast.success(`Pre-filled ${clientRequirements.length} spaces from client wishlist!`);
+                }}
+                className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shrink-0 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <Copy size={13} /> Pre-fill from Client Wishlist
+              </button>
+            </div>
+          )}
+
           {/* Overall Project Scope & Estimated Budget */}
           <div className="bg-[hsl(var(--muted)/0.35)] border border-[hsl(var(--border))] rounded-3xl p-5 md:p-6 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[hsl(var(--border))]">
@@ -837,7 +993,19 @@ export const InteriorLogRequirementsModal = ({
           )}
 
           {/* Action Footer */}
-          <div className="pt-4 flex gap-3 mt-auto border-t border-[hsl(var(--border))]">
+          <div className="pt-4 flex items-center gap-3 mt-auto border-t border-[hsl(var(--border))]">
+            {!isReadOnly && !hasPassedToSiteVisit && initialRequirements && initialRequirements.length > 0 && (
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={handleDiscardSaved}
+                className="px-3.5 py-2.5 rounded-xl font-bold text-xs text-rose-600 hover:text-rose-700 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 transition-colors inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                title="Discard all saved requirements"
+              >
+                <Trash2 size={13} />
+                <span>Discard All</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={onClose}
@@ -849,7 +1017,7 @@ export const InteriorLogRequirementsModal = ({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 px-4 py-2.5 rounded-xl font-bold text-xs text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] transition-colors disabled:opacity-50 .2)]"
+                className="flex-1 px-4 py-2.5 rounded-xl font-bold text-xs text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] transition-colors disabled:opacity-50"
               >
                 {isSubmitting ? 'Saving Requirements...' : 'Save Design Requirements'}
               </button>

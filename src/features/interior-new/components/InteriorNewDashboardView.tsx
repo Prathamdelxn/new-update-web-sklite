@@ -266,6 +266,13 @@ export default function InteriorNewDashboardView() {
     return <InteriorNewDashboardSkeleton />;
   }
 
+  // Only non-empty slices are drawn (zero counts used to leave gaps or an empty
+  // ring); with no projects at all a grey placeholder ring is shown
+  const healthSlices = (() => {
+    const nonEmpty = (data?.projectHealth || []).filter((h) => h.value > 0);
+    return nonEmpty.length > 0 ? nonEmpty : [{ name: 'No Projects', value: 1, color: 'hsl(var(--muted))' }];
+  })();
+
   const kpiCards = [
     { title: 'Total Leads', value: data?.kpis?.totalLeads || 0, icon: Users, color: 'hsl(217.2, 91.2%, 59.8%)', bgColor: 'hsl(217.2, 91.2%, 59.8% / 0.1)' },
     { title: 'New Leads', value: data?.kpis?.newLeads || 0, icon: UserCheck, color: 'hsl(271.5, 81.3%, 55.9%)', bgColor: 'hsl(271.5, 81.3%, 55.9% / 0.1)' },
@@ -378,11 +385,7 @@ export default function InteriorNewDashboardView() {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart style={{ outline: 'none' }}>
                       <Pie
-                        data={
-                          data?.projectHealth && data.projectHealth.length > 0
-                            ? data.projectHealth
-                            : [{ name: 'No Projects', value: 1, color: 'hsl(var(--muted))' }]
-                        }
+                        data={healthSlices}
                         cx="50%"
                         cy="50%"
                         innerRadius={0}

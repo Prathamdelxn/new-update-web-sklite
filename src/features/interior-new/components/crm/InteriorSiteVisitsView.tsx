@@ -26,11 +26,12 @@ import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 interface Props {
   leads: any[];
   onLogSiteVisit: (leadId: string) => void;
-  onPassToRequirements: (leadId: string) => void;
+  onPassToRequirements?: (leadId: string) => void;
+  onPassToDrawing?: (leadId: string) => void;
   onMarkAsLost?: (leadId: string) => void;
 }
 
-export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirements, onMarkAsLost }: Props) => {
+export const InteriorSiteVisitsView = ({ leads, onLogSiteVisit, onPassToRequirements, onPassToDrawing, onMarkAsLost }: Props) => {
   const router = useRouter();
 const { hasPermission: canDo } = usePermissions();
   const [searchTerm, setSearchTerm] = useState('');
@@ -289,16 +290,17 @@ const { hasPermission: canDo } = usePermissions();
 
                       {lead.siteMeasurements && (
                         (Boolean(Array.isArray(lead.quotations) && lead.quotations.some((q: any) => ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase()))) ||
-                         ['Under Requirement', 'Requirement Completed', 'Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) ||
+                         ['Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) ||
                          Boolean((lead as any).linkedProject)) ? (
                           <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
                             Passed 
                           </span>
                         ) : (
-                          (canDo('crm_site_visits', 'update') || canDo('crm_requirements', 'update') || canDo('crm_requirements', 'create')) && (
+                          (canDo('crm_site_visits', 'update') || canDo('crm_drawing', 'update') || canDo('crm_drawing', 'create') || canDo('crm_requirements', 'update')) && (
                             <button
-                              onClick={() => onPassToRequirements(lead._id)}
+                              onClick={() => (onPassToDrawing ? onPassToDrawing(lead._id) : onPassToRequirements?.(lead._id))}
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                              title="Pass to 2D/3D Drawing"
                             >
                               Pass <ArrowRight size={11} />
                             </button>
@@ -454,20 +456,20 @@ const { hasPermission: canDo } = usePermissions();
                             )}
                             {lead.siteMeasurements &&
                               ((Boolean(Array.isArray(lead.quotations) && lead.quotations.some((q: any) => ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase()))) ||
-                               ['Under Requirement', 'Requirement Completed', 'Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) ||
+                               ['Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) ||
                                Boolean((lead as any).linkedProject)) ? (
                                 <span
                                   className="inline-flex items-center gap-1 px-2 py-1 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[11px] font-bold"
-                                  title="Passed to Requirements"
+                                  title="Passed to 2D/3D Drawing"
                                 >
                                   Passed 
                                 </span>
                               ) : (
-                                (canDo('crm_site_visits', 'update') || canDo('crm_requirements', 'update') || canDo('crm_requirements', 'create')) && (
+                                (canDo('crm_site_visits', 'update') || canDo('crm_drawing', 'update') || canDo('crm_drawing', 'create') || canDo('crm_requirements', 'update')) && (
                                   <button
-                                    onClick={() => onPassToRequirements(lead._id)}
+                                    onClick={() => (onPassToDrawing ? onPassToDrawing(lead._id) : onPassToRequirements?.(lead._id))}
                                     className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                    title="Pass to Requirements & Design"
+                                    title="Pass to 2D/3D Drawing"
                                   >
                                     Pass <ArrowRight size={11} />
                                   </button>

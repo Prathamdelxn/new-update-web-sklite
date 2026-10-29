@@ -23,6 +23,7 @@ import {
   Check,
   ChevronRight,
   ExternalLink,
+  PenTool,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
@@ -38,6 +39,7 @@ interface InteriorLeadFollowUpsTabProps {
   onScheduleFollowUp: () => void;
   onLogActivity?: () => void;
   onSendToSiteVisit: () => void;
+  onSendToRequirements?: () => void;
   isConverted?: boolean;
 }
 
@@ -48,6 +50,7 @@ export const InteriorLeadFollowUpsTab: React.FC<InteriorLeadFollowUpsTabProps> =
   onRefresh,
   onScheduleFollowUp,
   onSendToSiteVisit,
+  onSendToRequirements,
   isConverted = false,
 }) => {
   const toast = useToast();
@@ -325,13 +328,13 @@ const { hasPermission: canDo } = usePermissions();
                     </button>
                   )}
                   {!isOverdue && canSendToSiteVisit && (
-                    (canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_site_visits', 'create')) && (
+                    (canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_requirements', 'create') || canDo('crm_site_visits', 'update') || canDo('crm_site_visits', 'create')) && (
                       <button
-                        onClick={onSendToSiteVisit}
+                        onClick={onSendToRequirements || onSendToSiteVisit}
                         className="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
-                        title="Complete follow-up & send lead to Site Visit stage"
+                        title="Complete follow-up & send lead to Requirements stage"
                       >
-                        <MapPin size={13} /> Complete & Send to Site Visit
+                        <PenTool size={13} /> Complete & Send to Requirements
                       </button>
                     )
                   )}

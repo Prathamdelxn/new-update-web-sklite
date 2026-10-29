@@ -98,9 +98,16 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess, initialVendor }:
                 <Truck size={20} />
               </div>
               <div>
-                <h2 className="text-xl font-extrabold text-slate-900">
-                  {initialVendor ? 'Edit Vendor' : 'Add New Vendor'}
-                </h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-extrabold text-slate-900">
+                    {initialVendor ? 'Edit Vendor' : 'Add New Vendor'}
+                  </h2>
+                  {initialVendor?.vendorCode && (
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-purple-100 text-purple-700 border border-purple-200">
+                      {initialVendor.vendorCode}
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-slate-500 font-medium">
                   {initialVendor ? 'Update supplier or subcontractor details' : 'Register a supplier or subcontractor'}
                 </p>

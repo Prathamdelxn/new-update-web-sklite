@@ -6,13 +6,22 @@
 // (Contracts Held and Total Contract Value) for each vendor.
 
 import React, { useEffect, useState } from 'react';
-import { Truck, Star, ShieldCheck, Clock, Loader2, Pencil, Trash2, AlertTriangle, X } from 'lucide-react';
+import { Truck, Star, ShieldCheck, Clock, Loader2, Pencil, Trash2, AlertTriangle, X, Mail, Phone, MessageCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { CreateVendorModal } from '@/components/modals/CreateVendorModal';
 import { useToast } from '@/providers/ToastContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
+
+function getInitials(name: string) {
+  if (!name) return 'VN';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+}
 
 interface InteriorVendorsViewProps {
   projectId: string;
@@ -94,10 +103,12 @@ export default function InteriorVendorsView({ projectId }: InteriorVendorsViewPr
     const onTime = typeof vendor.onTimeDelivery === 'number' ? vendor.onTimeDelivery : null;
     const trade = vendor.vendorCategory || 'General Fit-out';
     const gstNumber = vendor.gstNumber;
+    const vendorCode = vendor.vendorCode || (vendor._id ? `VND-${String(vendor._id).slice(-3).toUpperCase()}` : `VND-${String(index + 1).padStart(3, '0')}`);
 
     return {
       _id: vendor._id,
       name,
+      vendorCode,
       trade,
       gstNumber,
       contractsCount: stats.count,
@@ -150,63 +161,120 @@ export default function InteriorVendorsView({ projectId }: InteriorVendorsViewPr
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {vendors.map((vendor) => (
-            <Card key={vendor._id || vendor.name} className="hover:shadow-md hover:border-[hsl(var(--primary)/0.3)] transition-all">
-              <CardContent className="p-5 space-y-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-lg bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center shrink-0">
-                      <Truck className="w-5 h-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="text-base font-bold text-[hsl(var(--foreground))] truncate">{vendor.name}</h3>
-                      <div className="flex items-center gap-2 flex-wrap mt-0.5">
-                        <span className="text-xs text-[hsl(var(--muted-foreground))]">{vendor.trade}</span>
-                        {vendor.gstNumber && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded uppercase">
-                            GST: {vendor.gstNumber}
+          {vendors.map((vendor, index) => {
+            const raw = vendor.raw || {};
+            const vendorCode = vendor.vendorCode || `VND-${String(index + 1).padStart(3, '0')}`;
+
+            return (
+              <div
+                key={vendor._id || vendor.name}
+                className="bg-white border border-slate-200 rounded-2xl shadow-xs hover:shadow-md hover:border-blue-300 transition-all p-5 flex flex-col justify-between"
+              >
+                <div>
+                  {/* Top Header */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+                        <Truck className="w-5 h-5" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-base font-bold text-slate-900 truncate" title={vendor.name}>
+                            {vendor.name}
+                          </h3>
+                          <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
+                            {vendorCode}
                           </span>
-                        )}
+                        </div>
+
+                        <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
+                            {vendor.trade}
+                          </span>
+
+                          {vendor.gstNumber && (
+                            <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 border border-slate-200">
+                              GST: {vendor.gstNumber}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {canDo('vendors', 'update') && (
+                        <button
+                          onClick={() => setEditingVendor(vendor.raw)}
+                          title="Edit Vendor"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                      )}
+                      {canDo('vendors', 'delete') && (
+                        <button
+                          onClick={() => setVendorToDelete(vendor.raw)}
+                          title="Delete Vendor"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-1 shrink-0">
-                    {canDo('vendors', 'update') && (
-                      <button
-                        onClick={() => setEditingVendor(vendor.raw)}
-                        title="Edit Vendor"
-                        className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--muted))] transition-colors cursor-pointer"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                    )}
-                    {canDo('vendors', 'delete') && (
-                      <button
-                        onClick={() => setVendorToDelete(vendor.raw)}
-                        title="Delete Vendor"
-                        className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
+                  {/* Project Vendor Stats Box (Pure Light Theme) */}
+                  <div className="mt-4 bg-slate-50 border border-slate-100 rounded-xl p-3.5 grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <p className="text-[11px] text-slate-400 font-medium">Contracts Held</p>
+                      <p className="font-bold text-slate-800 text-sm mt-0.5">{vendor.contractsCount} PO{vendor.contractsCount === 1 ? '' : 's'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-slate-400 font-medium">Total Contract Value</p>
+                      <p className="font-bold text-blue-600 text-sm mt-0.5">{formatCost(vendor.totalValue)}</p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-xs border-t border-[hsl(var(--border))] pt-4 mt-2">
-                  <div>
-                    <p className="text-[hsl(var(--muted-foreground))]">Contracts Held</p>
-                    <p className="font-semibold mt-0.5">{vendor.contractsCount} Purchase Orders</p>
+                {/* Footer (Pure Light Theme) */}
+                <div className="pt-3.5 mt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span className="text-xs font-medium text-emerald-700">
+                      Active Partner
+                    </span>
                   </div>
-                  <div>
-                    <p className="text-[hsl(var(--muted-foreground))]">Total Contract Value</p>
-                    <p className="font-semibold text-[hsl(var(--primary))] mt-0.5">{formatCost(vendor.totalValue)}</p>
+
+                  <div className="flex items-center gap-2">
+                    {raw.phoneNumber && (
+                      <a
+                        href={`https://wa.me/${raw.phoneNumber.replace(/[^0-9]/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Chat on WhatsApp"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        <span>WhatsApp</span>
+                      </a>
+                    )}
+                    {raw.email && (
+                      <a
+                        href={`mailto:${raw.email}`}
+                        title="Send Email"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors"
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                        <span>Email</span>
+                      </a>
+                    )}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            );
+          })}
         </div>
       )}
 

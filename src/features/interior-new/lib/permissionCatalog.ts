@@ -34,8 +34,8 @@ export const PERMISSION_MODULES: { key: string; label: string; category: ModuleC
   // CRM — labels match the CRM tab names
   { key: 'crm_leads', label: 'Leads', category: 'CRM Pipeline', actions: ['read', 'create', 'update', 'delete', 'export'] },
   { key: 'crm_followups', label: 'Follow-ups', category: 'CRM Pipeline', actions: ['read', 'create', 'update'] },
-  { key: 'crm_site_visits', label: 'Site Visits', category: 'CRM Pipeline', actions: ['read', 'create', 'update'] },
   { key: 'crm_requirements', label: 'Requirements', category: 'CRM Pipeline', actions: ['read', 'create', 'update'] },
+  { key: 'crm_site_visits', label: 'Site Visits', category: 'CRM Pipeline', actions: ['read', 'create', 'update'] },
   { key: 'crm_drawings', label: 'Drawings (2D/3D)', category: 'CRM Pipeline', actions: ['read', 'create', 'update', 'delete', 'approve'] },
   { key: 'crm_boq', label: 'BOQ', category: 'CRM Pipeline' },
   { key: 'crm_quotations', label: 'Quotations', category: 'CRM Pipeline' },

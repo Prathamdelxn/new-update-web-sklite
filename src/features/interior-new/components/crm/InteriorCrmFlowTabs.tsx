@@ -35,8 +35,8 @@ interface InteriorCrmFlowTabsProps {
 const FLOW_STAGES: { id: InteriorCrmStage; label: string; icon: React.ElementType; moduleKey: string }[] = [
   { id: 'leads', label: 'All Leads', icon: Users, moduleKey: 'crm_leads' },
   { id: 'follow_ups', label: 'Follow-ups', icon: PhoneCall, moduleKey: 'crm_followups' },
-  { id: 'site_visits', label: 'Site Visits', icon: MapPin, moduleKey: 'crm_site_visits' },
   { id: 'requirement_design', label: 'Requirements', icon: PenTool, moduleKey: 'crm_requirements' },
+  { id: 'site_visits', label: 'Site Visits', icon: MapPin, moduleKey: 'crm_site_visits' },
   { id: 'drawing', label: 'Drawings', icon: Ruler, moduleKey: 'crm_drawings' },
   { id: 'boq', label: 'BOQ', icon: Calculator, moduleKey: 'crm_boq' },
   { id: 'quotations', label: 'Quotations', icon: FileText, moduleKey: 'crm_quotations' },

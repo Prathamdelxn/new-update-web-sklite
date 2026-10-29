@@ -54,6 +54,8 @@ export function InteriorSendToDrawingModal({
   const [remarks, setRemarks] = useState('');
   const [errors, setErrors] = useState<{ assignedDesigner?: string | null }>({});
 
+  const initialDataKey = initialData ? JSON.stringify(initialData) : '';
+
   useEffect(() => {
     if (isOpen) {
       setAssignedDesigner(initialData?.assignedDesigner || '');
@@ -64,7 +66,7 @@ export function InteriorSendToDrawingModal({
       setRemarks('');
       setErrors({});
     }
-  }, [isOpen, customerId]);
+  }, [isOpen, initialDataKey]);
 
   if (!isOpen) return null;
 
