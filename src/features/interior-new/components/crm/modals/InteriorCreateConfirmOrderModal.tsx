@@ -484,7 +484,11 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
   // Submit Confirmed Order
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!lead || !lead._id) return;
+    const targetLeadId = lead?._id || lead?.id;
+    if (!lead || !targetLeadId) {
+      toast.error('Lead identifier not found');
+      return;
+    }
 
     if (allQuotations.length === 0) {
       toast.error('No quotation found for this lead. Please create a quotation first.');
@@ -558,7 +562,7 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
         });
       } else {
         // 3. Update customer in CRM
-        await interiorCrmService.updateCustomer(lead._id, {
+        await interiorCrmService.updateCustomer(targetLeadId, {
           quotations: updatedQuotations,
           status: 'Booking Pending',
           confirmedOrder: confirmedOrderPayload,
@@ -566,7 +570,7 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
 
         // 4. Log CRM activity
         await interiorCrmService.createActivity({
-          customer: lead._id,
+          customer: targetLeadId,
           type: 'Status Change',
           status: 'Completed',
           remarks: activityRemarks,

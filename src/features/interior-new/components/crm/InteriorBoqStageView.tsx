@@ -384,7 +384,7 @@ const { hasPermission: canDo } = usePermissions();
                             onPassToQuotations &&
                             (isPassedToNext ? (
                               <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
-                                Passed 
+                                Passed
                               </span>
                             ) : latestBoq?.status === 'approved' ? (
                               (canDo('crm_boq', 'update') || canDo('crm_quotations', 'update') || canDo('crm_quotations', 'create')) && (
@@ -654,7 +654,7 @@ const { hasPermission: canDo } = usePermissions();
                                       className="inline-flex items-center gap-1 px-2 py-1 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[11px] font-bold"
                                       title="Passed to Quotations"
                                     >
-                                      Passed 
+                                      Passed
                                     </span>
                                   ) : isBoqApproved ? (
                                     (canDo('crm_boq', 'update') || canDo('crm_quotations', 'update') || canDo('crm_quotations', 'create')) && (

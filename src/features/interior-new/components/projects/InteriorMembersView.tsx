@@ -481,7 +481,11 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <AnimatePresence>
             {filteredMembers.map((member) => {
-              const permCount = member.permissions?.reduce((acc, p) => acc + p.actions.length, 0) || 0;
+              const linkedRole = member.roleId && typeof member.roleId === 'object' ? member.roleId : null;
+              const effectivePerms = (linkedRole && Array.isArray(linkedRole.permissions) && linkedRole.permissions.length > 0)
+                ? linkedRole.permissions
+                : member.permissions;
+              const permCount = effectivePerms?.reduce((acc: number, p: any) => acc + (p.actions?.length || 0), 0) || 0;
               return (
                 <motion.div
                   key={member._id}

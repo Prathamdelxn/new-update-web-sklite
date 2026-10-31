@@ -153,7 +153,9 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   // Sync link active state with selected PO
   useEffect(() => {
     if (selectedPo) {
-      if (selectedPo.materialName && selectedPo.materialName.includes('||CLOSED||')) {
+      if (selectedPo.isLinkActive !== undefined) {
+        setIsLinkActive(Boolean(selectedPo.isLinkActive));
+      } else if (selectedPo.materialName && selectedPo.materialName.includes('||CLOSED||')) {
         setIsLinkActive(false);
       } else {
         setIsLinkActive(true);
@@ -1323,7 +1325,25 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                             size="sm"
                             variant={isLinkActive ? 'destructive' : 'outline'}
                             className="h-6 text-[10px] px-2"
-                            onClick={async () => { const newIsLinkActive = !isLinkActive; setIsLinkActive(newIsLinkActive); if (selectedPo) { try { let newMaterialName = selectedPo.materialName.replace(' ||CLOSED||', '').trim(); if (!newIsLinkActive) { newMaterialName += ' ||CLOSED||'; } await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, { materialName: newMaterialName }); setSelectedPo((prev: any) => prev ? { ...prev, materialName: newMaterialName } : prev); invalidateProcurementData(); toast.success(newIsLinkActive ? 'Link reactivated' : 'Link manually expired'); } catch (err) { toast.error('Failed to update link status'); setIsLinkActive(!newIsLinkActive); } } }}
+                            onClick={async () => {
+                              const newIsLinkActive = !isLinkActive;
+                              setIsLinkActive(newIsLinkActive);
+                              if (selectedPo) {
+                                try {
+                                  const cleanMaterialName = selectedPo.materialName?.replace(' ||CLOSED||', '').trim() || selectedPo.materialName;
+                                  await interiorProjectService.updatePurchaseOrder(projectId, selectedPo._id, {
+                                    isLinkActive: newIsLinkActive,
+                                    materialName: cleanMaterialName,
+                                  });
+                                  setSelectedPo((prev: any) => prev ? { ...prev, isLinkActive: newIsLinkActive, materialName: cleanMaterialName } : prev);
+                                  invalidateProcurementData();
+                                  toast.success(newIsLinkActive ? 'Link reactivated' : 'Link manually expired');
+                                } catch (err) {
+                                  toast.error('Failed to update link status');
+                                  setIsLinkActive(!newIsLinkActive);
+                                }
+                              }
+                            }}
                           >
                             {isLinkActive ? 'Force Expire Now' : 'Reactivate Link'}
                           </Button>

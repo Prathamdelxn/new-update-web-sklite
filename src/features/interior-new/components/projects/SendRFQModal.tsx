@@ -40,12 +40,12 @@ export const SendRFQModal = ({ isOpen, onClose, po, vendors, onSuccess }: SendRF
 
     try {
       setSending(true);
+      const rfqLink = typeof window !== 'undefined' ? `${window.location.origin}/rfq/${po._id}` : undefined;
       await interiorApiClient.post('/procurement/send-rfq', {
         poId: po._id,
         vendorIds: selectedVendors,
-        notes: notes
-      }).catch(err => {
-        console.warn('Backend endpoint /procurement/send-rfq may not exist yet.', err);
+        notes: notes,
+        rfqLink,
       });
       
       po.rfqSent = true;
@@ -57,7 +57,7 @@ export const SendRFQModal = ({ isOpen, onClose, po, vendors, onSuccess }: SendRF
       onSuccess?.();
     } catch (err: any) {
       console.error('Failed to send RFQ', err);
-      toast.error('Failed to send quotation requests.');
+      toast.error(err?.response?.data?.message || err?.message || 'Failed to send quotation requests.');
     } finally {
       setSending(false);
     }

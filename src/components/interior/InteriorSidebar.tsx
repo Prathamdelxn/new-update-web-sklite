@@ -42,7 +42,7 @@ interface InteriorSidebarProps {
 export function InteriorSidebar({ organizationName, collapsed, onToggleCollapse, mobileOpen, onCloseMobile }: InteriorSidebarProps) {
   const pathname = usePathname();
   const toast = useToast();
-  const { isOrgAdmin, currentUser } = usePermissions();
+  const { isOrgAdmin, currentUser, hasPermission } = usePermissions();
 
   // Sections the server says this user can open (GET /auth/me → navAccess)
   const navAccess: Record<string, boolean> | undefined = currentUser?.navAccess;
@@ -51,11 +51,12 @@ export function InteriorSidebar({ organizationName, collapsed, onToggleCollapse,
     '/interior-new/projects': 'projects',
     '/interior-new/vendors': 'vendors',
     '/interior-new/users-roles': 'usersRoles',
+    '/interior-new/audit': 'audit',
   };
 
   const filteredNavigation = navigation.filter((item) => {
     if (item.href === '/interior-new/audit' || item.label === 'Audit Management') {
-      return isOrgAdmin;
+      return isOrgAdmin || hasPermission('audit_logs', 'read') || navAccess?.audit === true;
     }
     const key = NAV_ACCESS_KEY[item.href];
     if (!isOrgAdmin && key && navAccess && navAccess[key] === false) return false;

@@ -50,6 +50,8 @@ interface InteriorProjectCardProps {
   onOpen: (project: InteriorProject) => void;
   onEdit?: (project: InteriorProject) => void;
   onDelete?: (project: InteriorProject) => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
   formatCurrency?: (amount: number) => string;
 }
 
@@ -63,7 +65,7 @@ const healthConfig = {
   },
   'at-risk': {
     label: 'At Risk',
-    badge: 'bg-amber-50 text-amber-800 border-amber-200/80',
+    badge: 'bg-amber-50 text-amber-700 border-amber-200/80',
     dot: 'bg-amber-500',
     bar: 'bg-amber-500',
   },
@@ -87,6 +89,8 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
   onOpen,
   onEdit,
   onDelete,
+  canEdit = true,
+  canDelete = true,
   formatCurrency,
 }) => {
   // Extract budget number
@@ -276,7 +280,7 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
           </button>
 
           <div className="flex items-center gap-1">
-            {onEdit && (
+            {canEdit && onEdit && (
               <button
                 type="button"
                 aria-label={`Edit project ${project.name}`}
@@ -291,7 +295,7 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
               </button>
             )}
 
-            {onDelete && (
+            {canDelete && onDelete && (
               <button
                 type="button"
                 aria-label={`Delete project ${project.name}`}

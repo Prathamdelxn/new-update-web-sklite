@@ -41,10 +41,12 @@ type SettingsTab = 'general' | 'profile' | 'localization' | 'security';
 export default function InteriorSettingsView() {
   const toast = useToast();
   const [selectedTab, setActiveTab] = useState<SettingsTab>('general');
-  // Company profile and regional settings are org-wide → admins only (PATCH /organizations/settings)
-  const { isOrgAdmin } = usePermissions();
+  // Company profile and regional settings are org-wide
+  const { isOrgAdmin, hasPermission } = usePermissions();
+  const canReadSettings = isOrgAdmin || hasPermission('settings', 'read');
+  const canUpdateSettings = isOrgAdmin || hasPermission('settings', 'update');
   const activeTab: SettingsTab =
-    !isOrgAdmin && (selectedTab === 'general' || selectedTab === 'localization') ? 'profile' : selectedTab;
+    !canReadSettings && (selectedTab === 'general' || selectedTab === 'localization') ? 'profile' : selectedTab;
   const [loading, setLoading] = useState(true);
 
   // User State
@@ -321,7 +323,9 @@ export default function InteriorSettingsView() {
     { id: 'profile', label: 'Personal Account', icon: User },
     { id: 'localization', label: 'Currency & Regional', icon: Globe2 },
     { id: 'security', label: 'Security & Access', icon: Lock },
-  ] as { id: SettingsTab; label: string; icon: React.ElementType; badge?: string }[]).filter((item) => isOrgAdmin || (item.id !== 'general' && item.id !== 'localization'));
+  ] as { id: SettingsTab; label: string; icon: React.ElementType; badge?: string }[]).filter(
+    (item) => canReadSettings || (item.id !== 'general' && item.id !== 'localization')
+  );
 
   return (
     <InteriorShell>
@@ -452,11 +456,14 @@ export default function InteriorSettingsView() {
                         </p>
                       </div>
 
-                      <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
+                      <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                        {!canUpdateSettings && (
+                          <p className="text-xs text-amber-600 font-medium">Read-only view. Organization admin or settings update permission required to modify.</p>
+                        )}
                         <button
                           type="submit"
-                          disabled={savingOrg}
-                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+                          disabled={savingOrg || !canUpdateSettings}
+                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-xs transition-all disabled:opacity-50 cursor-pointer ml-auto"
                         >
                           {savingOrg ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                           {savingOrg ? 'Saving...' : 'Save Changes'}
@@ -614,11 +621,14 @@ export default function InteriorSettingsView() {
                         </div>
                       </div>
 
-                      <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
+                      <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                        {!canUpdateSettings && (
+                          <p className="text-xs text-amber-600 font-medium">Read-only view. Organization admin or settings update permission required to modify.</p>
+                        )}
                         <button
                           type="submit"
-                          disabled={savingOrg}
-                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+                          disabled={savingOrg || !canUpdateSettings}
+                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-xs transition-all disabled:opacity-50 cursor-pointer ml-auto"
                         >
                           {savingOrg ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                           {savingOrg ? 'Saving...' : 'Apply Regional Settings'}

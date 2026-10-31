@@ -31,6 +31,7 @@ import {
 import { cn } from '@/lib/utils';
 import interiorApiClient from '@/services/interiorApi.client';
 import { interiorCrmService } from '@/services/interiorCrm.service';
+import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { useCurrency } from '@/hooks/useCurrency';
@@ -118,28 +119,39 @@ export default function InteriorProjectQuotationView() {
     try {
       setLoading(true);
 
-      // 1. Fetch Project Details
+      // 1. Fetch Project Details & linked CRM lead in parallel
       let projectData: any = null;
-      try {
-        const prjRes = await interiorApiClient.get(`/projects/${projectId}`);
-        projectData = prjRes?.data?.data || prjRes?.data || null;
+      let matchedCustomer: any = null;
+
+      const [prjResult, orderResult] = await Promise.allSettled([
+        interiorApiClient.get(`/projects/${projectId}`),
+        interiorProjectService.getProjectConfirmOrder(projectId),
+      ]);
+
+      if (prjResult.status === 'fulfilled') {
+        projectData = prjResult.value?.data?.data || prjResult.value?.data || null;
         setProject(projectData);
-      } catch (e) {
-        console.warn('Could not fetch project details', e);
       }
 
-      // 2. Fetch CRM Customers / Leads to find the linked customer
-      const custRes = await interiorApiClient.get('/crm/customers');
-      const customers = custRes?.data?.data || custRes?.data || [];
-
-      const matchedCustomer = customers.find((c: any) => {
-        if (!c.linkedProject) return false;
-        const linkedId =
-          typeof c.linkedProject === 'object' && c.linkedProject !== null && c.linkedProject._id
-            ? String(c.linkedProject._id)
-            : String(c.linkedProject);
-        return linkedId === String(projectId);
-      });
+      if (orderResult.status === 'fulfilled' && orderResult.value?.data) {
+        matchedCustomer = orderResult.value.data;
+      } else {
+        // Fallback: search crm customers if user has CRM access
+        try {
+          const custRes = await interiorApiClient.get('/crm/customers');
+          const customers = custRes?.data?.data || custRes?.data || [];
+          matchedCustomer = customers.find((c: any) => {
+            if (!c.linkedProject) return false;
+            const linkedId =
+              typeof c.linkedProject === 'object' && c.linkedProject !== null && c.linkedProject._id
+                ? String(c.linkedProject._id)
+                : String(c.linkedProject);
+            return linkedId === String(projectId);
+          });
+        } catch {
+          // Ignore CRM access failure
+        }
+      }
 
       if (matchedCustomer) {
         setLead(matchedCustomer);
@@ -214,7 +226,19 @@ export default function InteriorProjectQuotationView() {
     try {
       const updatedQuotations = quotations.filter((_: any, i: number) => i !== idxToDelete);
 
-      if (lead?._id && !String(lead._id).startsWith('proj-')) {
+      if (projectId) {
+        try {
+          await interiorProjectService.updateProjectConfirmOrder(projectId, {
+            quotations: updatedQuotations,
+          });
+        } catch {
+          if (lead?._id && !String(lead._id).startsWith('proj-')) {
+            await interiorCrmService.updateCustomer(lead._id, {
+              quotations: updatedQuotations,
+            });
+          }
+        }
+      } else if (lead?._id && !String(lead._id).startsWith('proj-')) {
         await interiorCrmService.updateCustomer(lead._id, {
           quotations: updatedQuotations,
         });

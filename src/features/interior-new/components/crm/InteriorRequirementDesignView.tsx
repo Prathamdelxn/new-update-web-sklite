@@ -258,16 +258,30 @@ const { hasPermission: canDo } = usePermissions();
                        ['Under Site Visit', 'Measurement Done', 'Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) ||
                        Boolean((lead as any).linkedProject)) ? (
                         <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
-                          Passed 
+                          Passed
                         </span>
                       ) : (
                         (canDo('crm_requirements', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_site_visits', 'create') || canDo('crm_drawings', 'update') || canDo('crm_drawings', 'create')) && (
-                          <button
-                            onClick={() => handlePassToNext(lead._id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
-                          >
-                            Pass to Site Visit <ArrowRight size={11} />
-                          </button>
+                          <div className="flex items-center gap-1">
+                            {onPassToSiteVisit && (
+                              <button
+                                onClick={() => onPassToSiteVisit(lead._id)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                                title="Pass to Site Visit"
+                              >
+                                Site Visit <ArrowRight size={11} />
+                              </button>
+                            )}
+                            {onPassToDrawing && (
+                              <button
+                                onClick={() => onPassToDrawing(lead._id)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                                title="Pass to 2D/3D Drawing"
+                              >
+                                Drawing <ArrowRight size={11} />
+                              </button>
+                            )}
+                          </div>
                         )
                       )
                     )}
@@ -402,19 +416,32 @@ const { hasPermission: canDo } = usePermissions();
                               Boolean((lead as any).linkedProject)) ? (
                               <span
                                 className="inline-flex items-center gap-1 px-2 py-1 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[11px] font-bold"
-                                title="Passed to Site Visit"
+                                title="Passed to next stage"
                               >
-                                Passed 
+                                Passed
                               </span>
                             ) : (
                               (canDo('crm_requirements', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_site_visits', 'create') || canDo('crm_drawings', 'update') || canDo('crm_drawings', 'create')) && (
-                                <button
-                                  onClick={() => handlePassToNext(lead._id)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                  title="Pass to Site Visit"
-                                >
-                                  Pass <ArrowRight size={11} />
-                                </button>
+                                <div className="flex items-center gap-1">
+                                  {onPassToSiteVisit && (
+                                    <button
+                                      onClick={() => onPassToSiteVisit(lead._id)}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                      title="Pass to Site Visit"
+                                    >
+                                      Site Visit <ArrowRight size={11} />
+                                    </button>
+                                  )}
+                                  {onPassToDrawing && (
+                                    <button
+                                      onClick={() => onPassToDrawing(lead._id)}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                      title="Pass to 2D/3D Drawing"
+                                    >
+                                      Drawing <ArrowRight size={11} />
+                                    </button>
+                                  )}
+                                </div>
                               )
                             ))}
                           

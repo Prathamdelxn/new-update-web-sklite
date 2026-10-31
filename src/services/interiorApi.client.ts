@@ -31,7 +31,8 @@ export const interiorApiClient = axios.create({
 
 interiorApiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    if (typeof window !== 'undefined') {
+    const isPublic = config.url?.includes('/public/') || config.url?.startsWith('/public');
+    if (!isPublic && typeof window !== 'undefined') {
       const token =
         localStorage.getItem('interiorAccessToken') ||
         localStorage.getItem('token') ||
@@ -72,12 +73,13 @@ interiorApiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh');
+    const isPublicEndpoint = originalRequest?.url?.includes('/public/') || originalRequest?.url?.startsWith('/public');
+    const isAuthEndpoint = originalRequest?.url?.includes('/auth/login') || originalRequest?.url?.includes('/auth/refresh');
 
     // Lets the toast layer turn "Failed to …" into "You don't have permission to …"
     if (error.response?.status === 403) markForbidden();
 
-    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+    if (error.response?.status === 401 && !originalRequest?._retry && !isAuthEndpoint && !isPublicEndpoint) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -120,7 +122,14 @@ interiorApiClient.interceptors.response.use(
         localStorage.removeItem('interiorOrganization');
 
         if (typeof window !== 'undefined') {
-          window.location.href = '/login';
+          const currentPath = window.location.pathname;
+          const isPublicPage =
+            currentPath.startsWith('/share/') ||
+            currentPath.startsWith('/rfq/') ||
+            currentPath.startsWith('/public/');
+          if (!isPublicPage) {
+            window.location.href = '/login';
+          }
         }
 
         return Promise.reject(refreshError);

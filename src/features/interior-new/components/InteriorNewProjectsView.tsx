@@ -958,6 +958,8 @@ export default function InteriorNewProjectsView() {
               onOpen={openProject}
               onEdit={handleEditProject}
               onDelete={handleDeleteProject}
+              canEdit={canDo('projects', 'update')}
+              canDelete={canDo('projects', 'delete')}
               formatCurrency={formatCurrency}
             />
           ))}

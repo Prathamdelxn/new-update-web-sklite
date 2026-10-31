@@ -119,6 +119,7 @@ interface BoqBuilderModalProps {
   isReadOnly?: boolean;
   budgetRange?: string;
   designFiles?: any[]; // Uploaded drawings from CRM Lead
+  leadStatus?: string;
   onSuccess: () => void;
 }
 
@@ -131,6 +132,7 @@ export function InteriorBoqBuilderModal({
   isReadOnly = false,
   budgetRange,
   designFiles = [],
+  leadStatus,
   onSuccess,
 }: BoqBuilderModalProps) {
   const toast = useToast();
@@ -576,10 +578,40 @@ export function InteriorBoqBuilderModal({
         });
       }
 
-      await interiorCrmService.updateCustomer(customerId, {
+      const updatePayload: Record<string, any> = {
         boqs: updatedBoqs,
-        status: 'Under BOQ Creation',
-      });
+      };
+
+      const stagesPastOrAtBoq = [
+        'Under BOQ Creation',
+        'Under Quotation',
+        'Under Negotiation',
+        'Confirmed Order',
+        'Won',
+        'Converted to Project',
+        'Converted',
+        'Lost',
+      ];
+
+      if (!isEditing) {
+        if (leadStatus) {
+          if (!stagesPastOrAtBoq.includes(leadStatus)) {
+            updatePayload.status = 'Under BOQ Creation';
+          }
+        } else {
+          try {
+            const custRes = await interiorCrmService.getCustomerById(customerId);
+            const currentStatus = custRes.data?.status;
+            if (currentStatus && !stagesPastOrAtBoq.includes(currentStatus)) {
+              updatePayload.status = 'Under BOQ Creation';
+            }
+          } catch {
+            // Retain existing status if fetch fails
+          }
+        }
+      }
+
+      await interiorCrmService.updateCustomer(customerId, updatePayload);
 
       await interiorCrmService.createActivity({
         customer: customerId,
