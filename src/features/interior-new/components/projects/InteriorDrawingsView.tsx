@@ -33,13 +33,18 @@ import {
   Check,
   AlertCircle,
   UploadCloud,
-  Pin
+  Pin,
+  Send,
+  UserCheck
 } from 'lucide-react';
 import { Button, Input, Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
 import { cn } from '@/lib/utils';
 import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
+import { InteriorProjectUploadDrawingModal } from './modals/InteriorProjectUploadDrawingModal';
+import { InteriorProjectSendDrawingForApprovalModal } from './modals/InteriorProjectSendDrawingForApprovalModal';
+import { InteriorProjectDrawingApprovalModal } from './modals/InteriorProjectDrawingApprovalModal';
 
 interface InteriorDrawingsViewProps {
   projectId: string;
@@ -155,6 +160,13 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
   const [revChanges, setRevChanges] = useState('');
   const [selectedRevFile, setSelectedRevFile] = useState<File | null>(null);
 
+  // Approval Flow States
+  const [projectUsers, setProjectUsers] = useState<any[]>([]);
+  const [isSendApprovalModalOpen, setIsSendApprovalModalOpen] = useState(false);
+  const [selectedDrawingForApproval, setSelectedDrawingForApproval] = useState<any | null>(null);
+  const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+  const [approvalInitialAction, setApprovalInitialAction] = useState<'approve' | 'reject' | null>(null);
+
   const closeCreateModal = () => {
     setIsModalOpen(false);
     setNewUploadFiles([]);
@@ -181,7 +193,47 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
   };
 
   useEffect(() => {
-    if (projectId) fetchDrawings();
+    if (!projectId) return;
+    fetchDrawings();
+
+    const fetchUsers = async () => {
+      try {
+        const [membersRes, orgUsersRes] = await Promise.allSettled([
+          interiorProjectService.getProjectMembers(projectId),
+          interiorProjectService.getOrgUsers(),
+        ]);
+        let userList: any[] = [];
+        if (membersRes.status === 'fulfilled' && membersRes.value?.success && Array.isArray(membersRes.value.data)) {
+          userList = membersRes.value.data.map((m: any) => ({
+            id: String(m.userId?._id || m.userId?.id || m.userId || m._id || ''),
+            _id: String(m.userId?._id || m.userId?.id || m.userId || m._id || ''),
+            name: m.userId?.firstName
+              ? `${m.userId.firstName} ${m.userId.lastName || ''}`.trim()
+              : m.userId?.fullName || m.userId?.email || m.name || m.email || 'Team Member',
+            fullName: m.userId?.firstName
+              ? `${m.userId.firstName} ${m.userId.lastName || ''}`.trim()
+              : m.userId?.fullName || m.userId?.email || m.name || m.email || 'Team Member',
+            email: m.userId?.email || m.email || '',
+            role: m.role?.name || m.projectRole || m.role || 'Member',
+          }));
+        }
+        if (userList.length === 0 && orgUsersRes.status === 'fulfilled') {
+          const raw = orgUsersRes.value?.data || (Array.isArray(orgUsersRes.value) ? orgUsersRes.value : []);
+          userList = raw.map((u: any) => ({
+            id: String(u._id || u.id || ''),
+            _id: String(u._id || u.id || ''),
+            name: u.fullName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.name || 'Team Member',
+            fullName: u.fullName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.name || 'Team Member',
+            email: u.email || '',
+            role: u.role?.name || u.role || 'Reviewer',
+          }));
+        }
+        setProjectUsers(userList);
+      } catch (err) {
+        console.warn('Failed to load project members for approval', err);
+      }
+    };
+    fetchUsers();
   }, [projectId]);
 
   // Helper to infer 2D vs 3D if legacy drawing item doesn't have drawingType explicitly set
@@ -326,6 +378,7 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
           drawingType: item.category,
           fileType,
           fileUrl,
+          status: 'draft',
         });
       }
 
@@ -425,7 +478,14 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
     }
   };
 
-  const getStatusBadge = (s: string) => {
+  const getStatusBadge = (s: string, hasReviewer?: boolean) => {
+    if ((s === 'draft' || s === 'submitted' || !s) && !hasReviewer) {
+      return {
+        label: 'Draft',
+        classes: 'bg-slate-500/10 text-slate-600 border-slate-500/20 font-bold',
+        icon: AlertCircle,
+      };
+    }
     switch (s) {
       case 'approved':
         return {
@@ -584,7 +644,7 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
             const currentRev = dwg.revisions?.[dwg.revisions.length - 1] || { revision: 'Rev 0', url: '' };
             const type = inferType(dwg);
             const badge = getFileTypeBadge(dwg.title, currentRev.url, type);
-            const statusInfo = getStatusBadge(dwg.status);
+            const statusInfo = getStatusBadge(dwg.status, Boolean(dwg.assignedReviewer));
             const isImage = detectDrawingFileType(dwg.title, currentRev.url) === 'image';
             const StatusIcon = statusInfo.icon;
             const BadgeIcon = badge.icon;
@@ -692,14 +752,80 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
 
                 {/* Card Body */}
                 <div className="p-3.5 flex-1 flex flex-col justify-between space-y-3">
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     <h3 className="text-xs font-black text-[hsl(var(--foreground))] line-clamp-2" title={dwg.title}>
                       {dwg.title}
                     </h3>
+                    {dwg.assignedReviewerName && (
+                      <div className="flex items-center gap-1 text-[10px] text-amber-700 font-medium bg-amber-50 px-2 py-0.5 rounded border border-amber-200/60 truncate">
+                        <UserCheck size={11} className="shrink-0" />
+                        <span className="truncate">Reviewer: {dwg.assignedReviewerName}</span>
+                      </div>
+                    )}
+                    {dwg.status === 'rejected' && dwg.rejectionReason && (
+                      <p className="text-[10px] text-rose-600 line-clamp-1 italic bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100" title={dwg.rejectionReason}>
+                        Changes: {dwg.rejectionReason}
+                      </p>
+                    )}
                   </div>
 
                   {/* Actions Bar */}
                   <div className="pt-2.5 border-t border-[hsl(var(--border))] space-y-2">
+                    {/* Approval Action Buttons */}
+                    {(!dwg.assignedReviewer && dwg.status !== 'approved' && dwg.status !== 'rejected') && canDo('drawings', 'update') && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedDrawingForApproval(dwg);
+                          setIsSendApprovalModalOpen(true);
+                        }}
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold rounded-lg transition-all shadow-2xs cursor-pointer"
+                      >
+                        <Send size={12} /> Send for Approval
+                      </button>
+                    )}
+
+                    {(Boolean(dwg.assignedReviewer) && (dwg.status === 'under_review' || dwg.status === 'submitted')) && (
+                      <div className="flex items-center gap-1.5">
+                        {canDo('drawings', 'approve') && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedDrawingForApproval(dwg);
+                              setApprovalInitialAction('approve');
+                              setIsApprovalModalOpen(true);
+                            }}
+                            className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold rounded-lg transition-all shadow-2xs cursor-pointer"
+                          >
+                            <CheckCircle2 size={12} /> Approve
+                          </button>
+                        )}
+                        {canDo('drawings', 'approve') && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedDrawingForApproval(dwg);
+                              setApprovalInitialAction('reject');
+                              setIsApprovalModalOpen(true);
+                            }}
+                            className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-[11px] font-bold rounded-lg transition-all cursor-pointer"
+                          >
+                            <XCircle size={12} /> Reject
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {dwg.status === 'rejected' && canDo('drawings', 'update') && (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenRevModal(dwg)}
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold rounded-lg transition-all shadow-2xs cursor-pointer"
+                      >
+                        <UploadCloud size={12} /> Upload Revision
+                      </button>
+                    )}
+
                     <div className="flex items-center justify-between gap-1.5">
                       <button
                         type="button"
@@ -727,198 +853,14 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
         </div>
       )}
 
-      {/* ── 5. Modal: Register / Upload 2D & 3D Drawings (Matching Lead Upload Modal) ── */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[92vh]"
-            >
-              {/* Header */}
-              <div className="flex justify-between items-center p-6 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600">
-                    <UploadCloud size={20} />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-black text-[hsl(var(--foreground))] tracking-tight flex items-center gap-2">
-                      2D Drawings & 3D Models Management
-                    </h2>
-                    <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                      Upload CAD (.dwg, .dxf), 3D Models (.skp, .obj, .fbx, .blend, .rvt), Renders & PDFs.
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={closeCreateModal}
-                  className="p-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-full transition-colors"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              {/* Form Body */}
-              <form onSubmit={handleSubmitDrawing} className="p-6 overflow-y-auto flex flex-col gap-6 custom-scrollbar">
-                {/* Upload Dropzones */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* 2D Drawings & Layouts Dropzone */}
-                  <div>
-                    <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))] mb-2 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-blue-500" /> 2D Working Drawings & Layouts
-                    </h3>
-                    <div className="border-2 border-dashed border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 rounded-2xl p-6 text-center transition-all relative cursor-pointer group">
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*,application/pdf,.pdf,.dxf,.zip,.rar"
-                        onChange={(e) => handleFileUpload(e, '2D')}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                      />
-                      <div className="bg-[hsl(var(--card))] w-12 h-12 rounded-2xl border border-blue-500/20 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                        <UploadCloud className="text-blue-500" size={22} />
-                      </div>
-                      <p className="text-xs font-bold text-[hsl(var(--foreground))]">Click or Drag 2D Layouts</p>
-                      <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1">Floor plans, RCP, Electrical, PDF, JPG, PNG</p>
-                    </div>
-                  </div>
-
-                  {/* 3D Models, 3D DWG & Realistic Renders Dropzone */}
-                  <div>
-                    <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))] mb-2 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-purple-500" /> 3D Models, 3D DWG & Renders
-                    </h3>
-                    <div className="border-2 border-dashed border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10 rounded-2xl p-6 text-center transition-all relative cursor-pointer group">
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*,application/pdf,.pdf,.dwg,.dxf,.skp,.obj,.fbx,.3ds,.dae,.blend,.rvt,.rfa,.ifc,.gltf,.glb,.max,.zip,.rar"
-                        onChange={(e) => handleFileUpload(e, '3D')}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                      />
-                      <div className="bg-[hsl(var(--card))] w-12 h-12 rounded-2xl border border-purple-500/20 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                        <Box className="text-purple-500" size={22} />
-                      </div>
-                      <p className="text-xs font-bold text-[hsl(var(--foreground))]">Click or Drag 3D DWG / Models</p>
-                      <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1">.DWG, .SKP, .OBJ, .FBX, .BLEND, .RVT, Renders</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* New Files to be Uploaded */}
-                {newUploadFiles.length > 0 && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-black uppercase tracking-wider text-emerald-600 flex items-center gap-1.5">
-                        <CheckCircle2 size={14} /> New Files to Upload ({newUploadFiles.length})
-                      </h3>
-                      <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))]">Configure drawing titles</span>
-                    </div>
-
-                    <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-                      {newUploadFiles.map((file) => {
-                        const type = file.fileType || detectDrawingFileType(file.name);
-                        const badge = getFileTypeBadge(file.name, file.url, file.category);
-                        const BadgeIcon = badge.icon;
-
-                        return (
-                          <div
-                            key={file.id}
-                            className="p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl group transition-all space-y-2"
-                          >
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="flex items-center gap-3 overflow-hidden flex-1">
-                                {type === 'image' && file.url ? (
-                                  <div className="w-10 h-10 rounded-xl overflow-hidden bg-black/5 shrink-0 border border-[hsl(var(--border))]">
-                                    <img src={file.url} alt={file.name} className="w-full h-full object-cover" />
-                                  </div>
-                                ) : (
-                                  <div
-                                    className={cn(
-                                      'w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
-                                      file.category === '3D' ? 'bg-purple-500/10 text-purple-600' : 'bg-blue-500/10 text-blue-600'
-                                    )}
-                                  >
-                                    <BadgeIcon size={18} />
-                                  </div>
-                                )}
-
-                                <div className="flex flex-col overflow-hidden flex-1">
-                                  <input
-                                    type="text"
-                                    value={file.title}
-                                    onChange={(e) => updateUploadFile(file.id, 'title', e.target.value)}
-                                    placeholder="Enter drawing title..."
-                                    className="text-xs font-bold text-[hsl(var(--foreground))] bg-[hsl(var(--background))] px-2.5 py-1.5 rounded-lg border border-[hsl(var(--border))] focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                  />
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <span className={cn('text-[9px] font-black uppercase px-2 py-0.5 rounded-md border', badge.color)}>
-                                      {badge.label}
-                                    </span>
-                                    <span className="text-[9px] font-medium text-[hsl(var(--muted-foreground))] truncate max-w-xs">
-                                      {file.name}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-2 shrink-0">
-                                {type === 'image' && file.url && (
-                                  <a
-                                    href={file.url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] rounded-xl transition-colors inline-flex items-center justify-center"
-                                    title="Preview image"
-                                  >
-                                    <Eye size={15} />
-                                  </a>
-                                )}
-                                <button
-                                  type="button"
-                                  onClick={() => removeUploadFile(file.id)}
-                                  className="p-2 text-[hsl(var(--muted-foreground))] hover:text-rose-600 hover:bg-rose-500/10 rounded-xl transition-colors"
-                                  title="Remove file"
-                                >
-                                  <Trash2 size={15} />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Action Footer */}
-                <div className="pt-4 flex gap-3 mt-auto border-t border-[hsl(var(--border))]">
-                  <button
-                    type="button"
-                    onClick={closeCreateModal}
-                    className="flex-1 px-4 py-2.5 rounded-xl font-bold text-xs text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submitting || newUploadFiles.length === 0}
-                    className="flex-1 px-4 py-2.5 rounded-xl font-bold text-xs text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                    {submitting
-                      ? 'Uploading...'
-                      : `Upload ${newUploadFiles.length} ${newUploadFiles.length === 1 ? 'Drawing / Model' : 'Drawings / Models'}`}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* ── 5. Modal: Register / Upload 2D & 3D Drawings (CRM-style Modal) ── */}
+      <InteriorProjectUploadDrawingModal
+        isOpen={isModalOpen}
+        onClose={closeCreateModal}
+        projectId={projectId}
+        existingDrawings={drawings}
+        onSuccess={fetchDrawings}
+      />
 
       {/* ── 6. Modal: Upload Revision ── */}
       <AnimatePresence>
@@ -989,6 +931,32 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
           </div>
         )}
       </AnimatePresence>
+
+      {/* ── 6. Modals: Send Drawing for Approval & Approval Review ── */}
+      <InteriorProjectSendDrawingForApprovalModal
+        isOpen={isSendApprovalModalOpen}
+        onClose={() => {
+          setIsSendApprovalModalOpen(false);
+          setSelectedDrawingForApproval(null);
+        }}
+        projectId={projectId}
+        drawing={selectedDrawingForApproval}
+        users={projectUsers}
+        onSuccess={fetchDrawings}
+      />
+
+      <InteriorProjectDrawingApprovalModal
+        isOpen={isApprovalModalOpen}
+        onClose={() => {
+          setIsApprovalModalOpen(false);
+          setSelectedDrawingForApproval(null);
+          setApprovalInitialAction(null);
+        }}
+        projectId={projectId}
+        drawing={selectedDrawingForApproval}
+        initialAction={approvalInitialAction}
+        onSuccess={fetchDrawings}
+      />
     </div>
   );
 }

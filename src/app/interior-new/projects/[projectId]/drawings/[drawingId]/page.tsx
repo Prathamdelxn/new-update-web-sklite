@@ -74,6 +74,8 @@ import {
   Square,
   Music,
   Pause,
+  Send,
+  UserCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { interiorProjectService } from '@/services/interiorProject.service';
@@ -88,6 +90,8 @@ import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
+import { InteriorProjectSendDrawingForApprovalModal } from '@/features/interior-new/components/projects/modals/InteriorProjectSendDrawingForApprovalModal';
+import { InteriorProjectDrawingApprovalModal } from '@/features/interior-new/components/projects/modals/InteriorProjectDrawingApprovalModal';
 
 export interface AnnotationAttachment {
   name: string;
@@ -276,6 +280,54 @@ const { can: canDo } = useProjectPermissions(projectId);
   const [revChanges, setRevChanges] = useState('');
   const [selectedRevFile, setSelectedRevFile] = useState<File | null>(null);
   const [isSubmittingRev, setIsSubmittingRev] = useState(false);
+
+  // Approval Flow States
+  const [projectUsers, setProjectUsers] = useState<any[]>([]);
+  const [isSendApprovalModalOpen, setIsSendApprovalModalOpen] = useState(false);
+  const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+  const [approvalInitialAction, setApprovalInitialAction] = useState<'approve' | 'reject' | null>(null);
+
+  useEffect(() => {
+    if (!projectId) return;
+    const fetchUsers = async () => {
+      try {
+        const [membersRes, orgUsersRes] = await Promise.allSettled([
+          interiorProjectService.getProjectMembers(projectId),
+          interiorProjectService.getOrgUsers(),
+        ]);
+        let userList: any[] = [];
+        if (membersRes.status === 'fulfilled' && membersRes.value?.success && Array.isArray(membersRes.value.data)) {
+          userList = membersRes.value.data.map((m: any) => ({
+            id: String(m.userId?._id || m.userId?.id || m.userId || m._id || ''),
+            _id: String(m.userId?._id || m.userId?.id || m.userId || m._id || ''),
+            name: m.userId?.firstName
+              ? `${m.userId.firstName} ${m.userId.lastName || ''}`.trim()
+              : m.userId?.fullName || m.userId?.email || m.name || m.email || 'Team Member',
+            fullName: m.userId?.firstName
+              ? `${m.userId.firstName} ${m.userId.lastName || ''}`.trim()
+              : m.userId?.fullName || m.userId?.email || m.name || m.email || 'Team Member',
+            email: m.userId?.email || m.email || '',
+            role: m.role?.name || m.projectRole || m.role || 'Member',
+          }));
+        }
+        if (userList.length === 0 && orgUsersRes.status === 'fulfilled') {
+          const raw = orgUsersRes.value?.data || (Array.isArray(orgUsersRes.value) ? orgUsersRes.value : []);
+          userList = raw.map((u: any) => ({
+            id: String(u._id || u.id || ''),
+            _id: String(u._id || u.id || ''),
+            name: u.fullName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.name || 'Team Member',
+            fullName: u.fullName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.name || 'Team Member',
+            email: u.email || '',
+            role: u.role?.name || u.role || 'Reviewer',
+          }));
+        }
+        setProjectUsers(userList);
+      } catch (err) {
+        console.warn('Failed to load project members for approval in studio', err);
+      }
+    };
+    fetchUsers();
+  }, [projectId]);
 
   // Fetch Project Details
   const { data: projectDetails } = useQuery({
@@ -1449,6 +1501,59 @@ const { can: canDo } = useProjectPermissions(projectId);
 
         {/* Right Header Controls */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Approval Action Controls */}
+          {(!drawing?.assignedReviewer && activeStatus !== 'approved' && activeStatus !== 'rejected') && canDo('drawings', 'update') && (
+            <button
+              type="button"
+              onClick={() => setIsSendApprovalModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-xs cursor-pointer"
+            >
+              <Send size={13} />
+              <span>Send for Approval</span>
+            </button>
+          )}
+
+          {(Boolean(drawing?.assignedReviewer) && (activeStatus === 'under_review' || activeStatus === 'submitted')) && (
+            <div className="flex items-center gap-1.5">
+              {canDo('drawings', 'approve') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setApprovalInitialAction('approve');
+                    setIsApprovalModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-xs cursor-pointer"
+                >
+                  <CheckCircle2 size={13} />
+                  <span>Approve (v{activeVersionNum})</span>
+                </button>
+              )}
+              {canDo('drawings', 'approve') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setApprovalInitialAction('reject');
+                    setIsApprovalModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 transition-all cursor-pointer"
+                >
+                  <XCircle size={13} />
+                  <span>Reject</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {activeStatus === 'rejected' && canDo('drawings', 'update') && (
+            <button
+              type="button"
+              onClick={() => setIsRevisionModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white transition-all shadow-xs cursor-pointer"
+            >
+              <UploadCloud size={13} />
+              <span>+ Upload Revision (v{allVersions.length + 1})</span>
+            </button>
+          )}
 
           <button
             onClick={() => {
@@ -1528,6 +1633,11 @@ const { can: canDo } = useProjectPermissions(projectId);
 
         {/* Right: Status Tag */}
         <div className="flex items-center gap-2 shrink-0">
+          {drawing?.assignedReviewerName && (
+            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
+              <UserCheck size={11} /> Reviewer: {drawing.assignedReviewerName}
+            </span>
+          )}
           <span className="text-xs text-slate-400 font-medium">Approval:</span>
           <span
             className={cn(
@@ -3037,6 +3147,34 @@ const { can: canDo } = useProjectPermissions(projectId);
           </div>
         )}
       </AnimatePresence>
+
+      {/* Approval Modals */}
+      <InteriorProjectSendDrawingForApprovalModal
+        isOpen={isSendApprovalModalOpen}
+        onClose={() => setIsSendApprovalModalOpen(false)}
+        projectId={projectId}
+        drawing={drawing}
+        users={projectUsers}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['interior-project-drawings', projectId] });
+          refetchDrawings();
+        }}
+      />
+
+      <InteriorProjectDrawingApprovalModal
+        isOpen={isApprovalModalOpen}
+        onClose={() => {
+          setIsApprovalModalOpen(false);
+          setApprovalInitialAction(null);
+        }}
+        projectId={projectId}
+        drawing={drawing}
+        initialAction={approvalInitialAction}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['interior-project-drawings', projectId] });
+          refetchDrawings();
+        }}
+      />
     </div>
   );
 }

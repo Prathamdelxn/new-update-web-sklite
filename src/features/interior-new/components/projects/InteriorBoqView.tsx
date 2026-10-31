@@ -25,6 +25,10 @@ import {
   Sparkles,
   Download,
   Eye,
+  Send,
+  CheckCircle2,
+  XCircle,
+  UserCheck,
 } from 'lucide-react';
 import { Button, Input, Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
@@ -35,6 +39,8 @@ import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { InteriorProjectBoqBuilderModal } from '@/features/interior-new/components/projects/modals/InteriorProjectBoqBuilderModal';
 import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
+import { InteriorProjectSendBoqForApprovalModal } from './modals/InteriorProjectSendBoqForApprovalModal';
+import { InteriorProjectBoqApprovalModal } from './modals/InteriorProjectBoqApprovalModal';
 
 interface InteriorBoqViewProps {
   projectId: string;
@@ -61,10 +67,66 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
 
-  // Rejection modal
-  const [isRejectOpen, setIsRejectOpen] = useState(false);
-  const [rejectReason, setRejectReason] = useState('');
-  const [submittingAction, setSubmittingAction] = useState(false);
+  // Approval Modals State
+  const [isSendBoqApprovalOpen, setIsSendBoqApprovalOpen] = useState(false);
+  const [isBoqApprovalOpen, setIsBoqApprovalOpen] = useState(false);
+  const [boqApprovalInitialAction, setBoqApprovalInitialAction] = useState<'approve' | 'reject' | null>(null);
+  const [projectUsers, setProjectUsers] = useState<any[]>([]);
+
+  // Fetch Project Details for Budget comparison
+  const { data: projectDetails } = useQuery({
+    queryKey: ['interior-project', projectId],
+    queryFn: async () => {
+      if (!projectId) return null;
+      const res = await interiorProjectService.getProjectDetails(projectId);
+      return res?.success && res?.data ? res.data : null;
+    },
+    enabled: Boolean(projectId),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch Project Members / Org Users
+  useEffect(() => {
+    if (!projectId) return;
+    const fetchUsers = async () => {
+      try {
+        const [membersRes, orgUsersRes] = await Promise.allSettled([
+          interiorProjectService.getProjectMembers(projectId),
+          interiorProjectService.getOrgUsers(),
+        ]);
+        let userList: any[] = [];
+        if (membersRes.status === 'fulfilled' && membersRes.value?.success && Array.isArray(membersRes.value.data)) {
+          userList = membersRes.value.data.map((m: any) => ({
+            id: String(m.userId?._id || m.userId?.id || m.userId || m._id || ''),
+            _id: String(m.userId?._id || m.userId?.id || m.userId || m._id || ''),
+            name: m.userId?.firstName
+              ? `${m.userId.firstName} ${m.userId.lastName || ''}`.trim()
+              : m.userId?.fullName || m.userId?.email || m.name || m.email || 'Team Member',
+            fullName: m.userId?.firstName
+              ? `${m.userId.firstName} ${m.userId.lastName || ''}`.trim()
+              : m.userId?.fullName || m.userId?.email || m.name || m.email || 'Team Member',
+            email: m.userId?.email || m.email || '',
+            role: m.role?.name || m.projectRole || m.role || 'Member',
+          }));
+        }
+        if (userList.length === 0 && orgUsersRes.status === 'fulfilled') {
+          const raw = orgUsersRes.value?.data || (Array.isArray(orgUsersRes.value) ? orgUsersRes.value : []);
+          userList = raw.map((u: any) => ({
+            id: String(u._id || u.id || ''),
+            _id: String(u._id || u.id || ''),
+            name: u.fullName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.name || 'Team Member',
+            fullName: u.fullName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.name || 'Team Member',
+            email: u.email || '',
+            role: u.role?.name || u.role || 'Reviewer',
+          }));
+        }
+        setProjectUsers(userList);
+      } catch (err) {
+        console.warn('Failed to load project members for BOQ approval', err);
+      }
+    };
+    fetchUsers();
+  }, [projectId]);
 
   // 1. BOQs list query
   const {
@@ -148,12 +210,9 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
   const handleApprovalAction = async (action: 'submit' | 'approve' | 'reject', reason?: string) => {
     if (!selectedBoq) return;
     try {
-      setSubmittingAction(true);
       const res = await interiorProjectService.boqApprovalAction(projectId, selectedBoq._id, { action, reason });
       if (res.success) {
         toast.success(`BOQ successfully ${action}ed`);
-        setIsRejectOpen(false);
-        setRejectReason('');
         queryClient.invalidateQueries({ queryKey: ['project-boq', projectId] });
         queryClient.invalidateQueries({ queryKey: ['project-boq-detail', projectId, selectedBoq._id] });
         await refetchBoqs();
@@ -162,8 +221,6 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
     } catch (err: any) {
       console.error(err);
       toast.error(err.response?.data?.error || `Failed to ${action} BOQ`);
-    } finally {
-      setSubmittingAction(false);
     }
   };
 
@@ -395,6 +452,22 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                     </span>
                   </div>
 
+                  {selectedBoq.assignedReviewerName && (
+                    <div className="flex items-center gap-1.5 text-xs text-amber-700 font-bold bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
+                      <UserCheck size={13} className="shrink-0" />
+                      <span>Reviewer: {selectedBoq.assignedReviewerName}</span>
+                    </div>
+                  )}
+
+                  {selectedBoq.status === 'rejected' && selectedBoq.rejectionReason && (
+                    <div className="flex items-center gap-1.5 text-xs text-rose-700 font-semibold bg-rose-50 px-2.5 py-1 rounded-xl border border-rose-200">
+                      <XCircle size={13} className="shrink-0 text-rose-600" />
+                      <span className="truncate max-w-sm" title={selectedBoq.rejectionReason}>
+                        Changes Requested: {selectedBoq.rejectionReason}
+                      </span>
+                    </div>
+                  )}
+
                   {selectedBoq.notes && (
                     <div className="flex items-center gap-1.5 max-w-md">
                       <span className="text-[hsl(var(--muted-foreground))] text-[11px] shrink-0">Scope & Terms:</span>
@@ -413,20 +486,20 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                         size="sm"
                         variant="outline"
                         onClick={() => handleOpenEditBuilder(selectedBoq)}
-                        className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50"
+                        className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50 cursor-pointer"
                       >
                         <Pencil className="w-3.5 h-3.5 mr-1" /> Edit in Builder
                       </Button>
                     )
                   )}
-                  {selectedBoq.status === 'draft' && (
+                  {(selectedBoq.status === 'draft' || !selectedBoq.status) && (
                     canDo('boq', 'update') && (
                       <Button
                         size="sm"
-                        className="h-8 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
-                        onClick={() => handleApprovalAction('submit')}
+                        className="h-8 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-2xs"
+                        onClick={() => setIsSendBoqApprovalOpen(true)}
                       >
-                        Submit for Approval
+                        <Send className="w-3.5 h-3.5 mr-1" /> Submit for Approval
                       </Button>
                     )
                   )}
@@ -435,19 +508,25 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                       {canDo('boq', 'approve') && (
                         <Button
                           size="sm"
-                          className="h-8 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
-                          onClick={() => handleApprovalAction('approve')}
+                          className="h-8 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-2xs"
+                          onClick={() => {
+                            setBoqApprovalInitialAction('approve');
+                            setIsBoqApprovalOpen(true);
+                          }}
                         >
-                          Approve
+                          <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Approve
                         </Button>
                       )}
                       {canDo('boq', 'approve') && (
                         <Button
                           size="sm"
-                          className="h-8 text-xs font-bold bg-red-600 hover:bg-red-700 text-white"
-                          onClick={() => setIsRejectOpen(true)}
+                          className="h-8 text-xs font-bold bg-red-600 hover:bg-red-700 text-white cursor-pointer shadow-2xs"
+                          onClick={() => {
+                            setBoqApprovalInitialAction('reject');
+                            setIsBoqApprovalOpen(true);
+                          }}
                         >
-                          Reject
+                          <XCircle className="w-3.5 h-3.5 mr-1" /> Reject
                         </Button>
                       )}
                     </>
@@ -457,7 +536,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50"
+                        className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50 cursor-pointer"
                         onClick={handleCreateRevision}
                       >
                         <Plus className="w-3.5 h-3.5 mr-1" /> Create New Revision
@@ -710,49 +789,42 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
       </AnimatePresence>
 
       {/* ========================================================================= */}
-      {/* MODAL 3: Rejection Reason */}
+      {/* MODAL 3 & 4: Send for Approval & Approval Verification Modals */}
       {/* ========================================================================= */}
-      <AnimatePresence>
-        {isRejectOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-md border border-[hsl(var(--border))] rounded-2xl bg-[hsl(var(--card))] shadow-2xl overflow-hidden"
-            >
-              <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
-                <h3 className="text-sm font-black text-[hsl(var(--foreground))]">Specify Rejection Reason</h3>
-                <button onClick={() => setIsRejectOpen(false)} className="p-1 rounded hover:bg-[hsl(var(--muted))] cursor-pointer">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+      <InteriorProjectSendBoqForApprovalModal
+        isOpen={isSendBoqApprovalOpen}
+        onClose={() => setIsSendBoqApprovalOpen(false)}
+        projectId={projectId}
+        projectName={projectDetails?.name || 'Project'}
+        projectBudget={projectDetails?.budget}
+        boq={selectedBoq}
+        users={projectUsers}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['project-boq', projectId] });
+          queryClient.invalidateQueries({ queryKey: ['project-boq-detail', projectId, selectedBoq?._id] });
+          refetchBoqs();
+          refetchDetail();
+        }}
+      />
 
-              <div className="p-5 space-y-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold">Comments</label>
-                  <textarea
-                    rows={3}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    placeholder="Enter reason for rejecting this BOQ version draft..."
-                    value={rejectReason}
-                    onChange={(e) => setRejectReason(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
-                <Button variant="outline" type="button" onClick={() => setIsRejectOpen(false)}>
-                  Cancel
-                </Button>
-                <Button className="bg-red-600 hover:bg-red-700 text-white cursor-pointer" disabled={!rejectReason || submittingAction} onClick={() => handleApprovalAction('reject', rejectReason)}>
-                  {submittingAction && <Loader2 className="w-4 h-4 animate-spin mr-2" />} Reject BOQ
-                </Button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <InteriorProjectBoqApprovalModal
+        isOpen={isBoqApprovalOpen}
+        onClose={() => {
+          setIsBoqApprovalOpen(false);
+          setBoqApprovalInitialAction(null);
+        }}
+        projectId={projectId}
+        projectName={projectDetails?.name || 'Project'}
+        projectBudget={projectDetails?.budget}
+        boq={selectedBoq}
+        initialAction={boqApprovalInitialAction}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['project-boq', projectId] });
+          queryClient.invalidateQueries({ queryKey: ['project-boq-detail', projectId, selectedBoq?._id] });
+          refetchBoqs();
+          refetchDetail();
+        }}
+      />
     </div>
   );
 }
