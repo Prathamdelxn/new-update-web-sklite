@@ -188,12 +188,14 @@ interface AddUserForm {
   email: string;
   password: string;
   phone: string;
+  designation: string;
+  department: string;
   roleId: string;
 }
 
 const INITIAL_FORM: AddUserForm = {
   firstName: '', lastName: '', email: '', password: '',
-  phone: '', roleId: '',
+  phone: '', designation: '', department: '', roleId: '',
 };
 
 const isNonAdminRole = (r: OrgRole) => {
@@ -219,7 +221,9 @@ function AddUserModal({
   onSuccess: () => void;
 }) {
   const toast = useToast();
-  const availableRoles = (roles && roles.length > 0 ? roles : DEFAULT_ORG_ROLES).filter(isNonAdminRole);
+  const { isOrgAdmin } = usePermissions();
+  const roleFilterFn = isOrgAdmin ? () => true : isNonAdminRole;
+  const availableRoles = (roles && roles.length > 0 ? roles : DEFAULT_ORG_ROLES).filter(roleFilterFn);
   const [modalRoles, setModalRoles] = useState<OrgRole[]>(() => availableRoles);
   const [form, setForm] = useState<AddUserForm>(() => ({
     ...INITIAL_FORM,
@@ -235,7 +239,7 @@ function AddUserModal({
       .then((res) => {
         const raw = res?.data ?? res ?? [];
         const list = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : []);
-        const filtered = list.filter(isNonAdminRole);
+        const filtered = list.filter(roleFilterFn);
         if (filtered.length > 0) {
           setModalRoles(filtered);
           setForm((prev) => {
@@ -245,7 +249,7 @@ function AddUserModal({
         }
       })
       .catch((e) => console.error('AddUserModal fetch roles error:', e));
-  }, []);
+  }, [isOrgAdmin]);
 
   const set = (field: keyof AddUserForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -266,6 +270,8 @@ function AddUserModal({
         lastName: form.lastName.trim(),
         email: form.email.trim(),
         role: form.roleId || undefined,
+        designation: form.designation.trim() || undefined,
+        department: form.department.trim() || undefined,
         systemRole,
       };
       if (form.password.trim())  payload.password = form.password.trim();
@@ -291,7 +297,7 @@ function AddUserModal({
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 16 }}
-        className="relative w-full max-w-md bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl z-10 overflow-hidden"
+        className="relative w-full max-w-md bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl z-10 overflow-hidden max-h-[90vh] flex flex-col"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--border))]">
@@ -310,7 +316,7 @@ function AddUserModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
           {/* Name row */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
@@ -365,6 +371,18 @@ function AddUserModal({
             </div>
           </div>
 
+          {/* Designation & Department row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Designation</label>
+              <input value={form.designation} onChange={set('designation')} placeholder="e.g. Senior Architect" className={fieldCls} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Department</label>
+              <input value={form.department} onChange={set('department')} placeholder="e.g. Design / Site" className={fieldCls} />
+            </div>
+          </div>
+
           {/* Role (Fetched from Organization) */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Role *</label>
@@ -404,6 +422,8 @@ interface EditUserForm {
   email: string;
   password?: string;
   phone?: string;
+  designation?: string;
+  department?: string;
   roleId: string;
   status: string;
 }
@@ -420,7 +440,10 @@ function EditUserModal({
   onSuccess: () => void;
 }) {
   const toast = useToast();
-  const availableRoles = (roles && roles.length > 0 ? roles : DEFAULT_ORG_ROLES).filter(isNonAdminRole);
+  const { isOrgAdmin } = usePermissions();
+  const isEditingAdmin = isOrgAdmin || user.systemRole === 'org_admin' || user.systemRole === 'super_admin' || user.role?.slug === 'admin';
+  const roleFilterFn = isEditingAdmin ? () => true : isNonAdminRole;
+  const availableRoles = (roles && roles.length > 0 ? roles : DEFAULT_ORG_ROLES).filter(roleFilterFn);
   const [modalRoles, setModalRoles] = useState<OrgRole[]>(() => availableRoles);
   const matchedRole = user.role?._id 
     ? availableRoles.find(r => r._id === user.role?._id) 
@@ -432,6 +455,8 @@ function EditUserModal({
     email: user.email || '',
     password: '',
     phone: user.phone || '',
+    designation: user.designation || '',
+    department: user.department || '',
     roleId: matchedRole?._id || matchedRole?.slug || availableRoles[0]?._id || 'project_manager',
     status: user.status || 'active',
   });
@@ -444,11 +469,11 @@ function EditUserModal({
       .then((res) => {
         const raw = res?.data ?? res ?? [];
         const list = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : []);
-        const filtered = list.filter(isNonAdminRole);
+        const filtered = list.filter(roleFilterFn);
         if (filtered.length > 0) setModalRoles(filtered);
       })
       .catch((e) => console.error('EditUserModal fetch roles error:', e));
-  }, []);
+  }, [isEditingAdmin]);
 
   const set = (field: keyof EditUserForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -469,6 +494,8 @@ function EditUserModal({
         lastName: form.lastName.trim(),
         email: form.email.trim(),
         role: form.roleId || undefined,
+        designation: form.designation?.trim() || undefined,
+        department: form.department?.trim() || undefined,
         systemRole,
         status: form.status,
       };
@@ -565,6 +592,18 @@ function EditUserModal({
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
               <input value={form.phone} onChange={set('phone')} placeholder="+1 (555) 234-5678" className={`${fieldCls} pl-9`} />
+            </div>
+          </div>
+
+          {/* Designation & Department row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Designation</label>
+              <input value={form.designation} onChange={set('designation')} placeholder="e.g. Senior Architect" className={fieldCls} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Department</label>
+              <input value={form.department} onChange={set('department')} placeholder="e.g. Design / Site" className={fieldCls} />
             </div>
           </div>
 
@@ -743,7 +782,13 @@ function UserRow({ user, roles, onUserUpdated }: { user: UserWithProjects; roles
   const [selectedAssignment, setSelectedAssignment] = useState<ProjectAssignment | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-const { isOrgAdmin: canManageUsers } = usePermissions();
+  const { isOrgAdmin, hasPermission, currentUser } = usePermissions();
+  const canManageUsers = isOrgAdmin || hasPermission('users', 'update');
+  const canDeleteUsers = isOrgAdmin || hasPermission('users', 'delete');
+  const isSelf = currentUser && (
+    String((currentUser as any).id || (currentUser as any)._id) === String(user._id) ||
+    (currentUser as any).email?.toLowerCase() === user.email?.toLowerCase()
+  );
   const initials = getInitials(user.firstName, user.lastName);
   const avatarBg = getAvatarColor(user.firstName + user.lastName);
   const sysRole = SYSTEM_ROLE_LABELS[user.systemRole] ?? { label: user.systemRole, color: 'bg-slate-100 text-slate-600' };
@@ -812,7 +857,7 @@ const { isOrgAdmin: canManageUsers } = usePermissions();
                   <Edit3 className="w-3.5 h-3.5" />
                 </button>
               )}
-              {canManageUsers && (
+              {canDeleteUsers && !isSelf && (
                 <button
                   type="button"
                   onClick={(e) => {
@@ -892,10 +937,10 @@ const { isOrgAdmin: canManageUsers } = usePermissions();
 // ---------------------------------------------------------------------------
 export default function InteriorUsersRolesView() {
   const toast = useToast();
-  // Managing users is admin-only on the server; the Roles tab needs Roles → View
   const { isOrgAdmin, hasPermission } = usePermissions();
-  const showUsersTab = isOrgAdmin;
+  const showUsersTab = isOrgAdmin || hasPermission('users', 'read');
   const showRolesTab = isOrgAdmin || hasPermission('roles', 'read');
+  const canAddUsers = isOrgAdmin || hasPermission('users', 'create');
   const [selectedTab, setActiveTab] = useState<'users' | 'roles'>('users');
   const activeTab: 'users' | 'roles' | null =
     selectedTab === 'users' && showUsersTab ? 'users' : showRolesTab ? 'roles' : showUsersTab ? 'users' : null;
@@ -905,7 +950,6 @@ export default function InteriorUsersRolesView() {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('All');
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
-const { isOrgAdmin: canAddUsers } = usePermissions();
 
   const loadRoles = useCallback(async () => {
     try {
@@ -921,7 +965,7 @@ const { isOrgAdmin: canAddUsers } = usePermissions();
   }, []);
 
   const loadUsers = useCallback(async () => {
-    if (!isOrgAdmin) { setIsLoading(false); return; } // Users tab is admin-only
+    if (!showUsersTab) { setIsLoading(false); return; }
     try {
       setIsLoading(true);
       const res = await interiorProjectService.getUsersWithProjects();
@@ -931,7 +975,7 @@ const { isOrgAdmin: canAddUsers } = usePermissions();
     } finally {
       setIsLoading(false);
     }
-  }, [isOrgAdmin]);
+  }, [showUsersTab]);
 
   useEffect(() => {
     loadUsers();

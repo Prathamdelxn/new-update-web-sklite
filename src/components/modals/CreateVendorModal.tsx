@@ -63,7 +63,45 @@ export const CreateVendorModal = ({ isOpen, onClose, onSuccess, initialVendor }:
 
     try {
       setIsSubmitting(true);
-      const payload = { ...formData };
+      const payload: any = { ...formData };
+      if (payload.name) payload.name = payload.name.trim();
+
+      if (payload.contactPerson) {
+        payload.contactPerson = payload.contactPerson.trim();
+        if (!payload.contactPerson) delete payload.contactPerson;
+      }
+
+      if (!payload.email || !payload.email.trim()) {
+        delete payload.email;
+      } else {
+        payload.email = payload.email.trim();
+      }
+
+      const phoneVal = (payload.phoneNumber || payload.phone || '').trim();
+      if (!phoneVal) {
+        delete payload.phoneNumber;
+        delete payload.phone;
+      } else {
+        payload.phoneNumber = phoneVal;
+        delete payload.phone;
+      }
+
+      const gstVal = (payload.gstNumber || payload.gstin || '').trim();
+      if (!gstVal) {
+        delete payload.gstNumber;
+        delete payload.gstin;
+      } else {
+        payload.gstNumber = gstVal;
+        delete payload.gstin;
+      }
+
+      if (payload.address) {
+        payload.address = payload.address.trim();
+        if (!payload.address) delete payload.address;
+      }
+      if (payload.pan && !payload.pan.trim()) {
+        delete payload.pan;
+      }
 
       if (initialVendor?._id) {
         await interiorProjectService.updateVendor(initialVendor._id, payload);

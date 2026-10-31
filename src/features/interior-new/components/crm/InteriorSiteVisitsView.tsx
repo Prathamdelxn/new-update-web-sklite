@@ -293,7 +293,7 @@ const { hasPermission: canDo } = usePermissions();
                          ['Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) ||
                          Boolean((lead as any).linkedProject)) ? (
                           <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
-                            Passed 
+                            Passed
                           </span>
                         ) : (
                           (canDo('crm_site_visits', 'update') || canDo('crm_drawing', 'update') || canDo('crm_drawing', 'create') || canDo('crm_requirements', 'update')) && (
@@ -462,7 +462,7 @@ const { hasPermission: canDo } = usePermissions();
                                   className="inline-flex items-center gap-1 px-2 py-1 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[11px] font-bold"
                                   title="Passed to 2D/3D Drawing"
                                 >
-                                  Passed 
+                                  Passed
                                 </span>
                               ) : (
                                 (canDo('crm_site_visits', 'update') || canDo('crm_drawing', 'update') || canDo('crm_drawing', 'create') || canDo('crm_requirements', 'update')) && (

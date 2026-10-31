@@ -88,8 +88,9 @@ export function InteriorConfirmedOrderStageView({
   const toast = useToast();
   const { hasPermission: canDo } = usePermissions();
   const canEditOrder = canEdit ?? canDo('crm_quotations', 'update');
+  const leadId = lead?._id || lead?.id || '';
   const saveLeadUpdates = (updates: Record<string, any>) =>
-    saveUpdates ? saveUpdates(updates) : interiorCrmService.updateCustomer(lead._id, updates);
+    saveUpdates ? saveUpdates(updates) : interiorCrmService.updateCustomer(leadId, updates);
   const allQuotations: any[] = useMemo(() => lead?.quotations || [], [lead?.quotations]);
 
   // State of all vendor quotes grouped by quotation index

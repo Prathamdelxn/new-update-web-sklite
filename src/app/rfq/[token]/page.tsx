@@ -9,111 +9,119 @@ import axios from 'axios';
 // Since this is a public link, we cannot use the authenticated interceptors
 // We'll create a basic axios instance to hit the public API
 const publicApi = axios.create({
- baseURL: process.env.NEXT_PUBLIC_INTERIOR_API_URL || 'http://localhost:3000',
+  baseURL: process.env.NEXT_PUBLIC_INTERIOR_API_URL || 'http://localhost:3002',
 });
 
 export default function PublicRFQPage({ params }: { params: Promise<{ token: string }> }) {
- const unwrappedParams = use(params);
- const token = unwrappedParams.token;
+  const unwrappedParams = use(params);
+  const token = unwrappedParams.token;
 
- const [loading, setLoading] = useState(true);
- const [submitted, setSubmitted] = useState(false);
- const [submitting, setSubmitting] = useState(false);
- const [error, setError] = useState<string | null>(null);
- 
- const [vendorInfo, setVendorInfo] = useState({ name: '', email: '', phone: '', remarks: '' });
- const [rfqData, setRfqData] = useState<any>(null);
- const [rates, setRates] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  const [vendorInfo, setVendorInfo] = useState({ name: '', email: '', phone: '', remarks: '' });
+  const [rfqData, setRfqData] = useState<any>(null);
+  const [rates, setRates] = useState<Record<string, string>>({});
 
- useEffect(() => {
- const fetchRfq = async () => {
- try {
- const response = await publicApi.get(`/api/v1/public/rfq/${token}`);
- if (response.data.success) {
- setRfqData(response.data.data);
- } else {
- setError(response.data.message || 'Invalid or expired RFQ link');
- }
- } catch (err: any) {
- setError(err.response?.data?.message || 'Failed to load RFQ details');
- } finally {
- setLoading(false);
- }
- };
- fetchRfq();
- }, [token]);
+  useEffect(() => {
+    const fetchRfq = async () => {
+      try {
+        const response = await publicApi.get(`/api/v1/public/rfq/${token}`);
+        if (response.data.success) {
+          setRfqData(response.data.data);
+        } else {
+          setError(response.data.message || 'Invalid or expired RFQ link');
+        }
+      } catch (err: any) {
+        setError(err.response?.data?.message || 'Failed to load RFQ details');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRfq();
+  }, [token]);
 
- const handleSubmit = async (e: React.FormEvent) => {
- e.preventDefault();
- setSubmitting(true);
- setError(null);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
 
- try {
- // Map rates to the schema array
- const ratesArray = Object.keys(rates).map(itemId => {
- const itemDef = rfqData.items.find((i: any) => i._id === itemId || i.id === itemId || i.name === itemId);
- return {
- itemId: itemId,
- name: itemDef ? itemDef.name : itemId,
- unitPrice: Number(rates[itemId])
- };
- });
+    try {
+      // Map rates to the schema array
+      const ratesArray = Object.keys(rates).map(itemId => {
+        const itemDef = rfqData.items?.find((i: any) => i._id === itemId || i.id === itemId || i.name === itemId);
+        return {
+          itemId: itemId,
+          name: itemDef ? itemDef.name : itemId,
+          unitPrice: Number(rates[itemId])
+        };
+      });
 
- const payload = {
- vendorName: vendorInfo.name,
- contactInfo: vendorInfo.email || vendorInfo.phone,
- remarks: vendorInfo.remarks,
- rates: ratesArray
- };
+      const payload = {
+        vendorName: vendorInfo.name,
+        contactInfo: vendorInfo.email || vendorInfo.phone,
+        remarks: vendorInfo.remarks,
+        rates: ratesArray
+      };
 
- await publicApi.post(`/api/v1/public/rfq/${token}`, payload);
- setSubmitted(true);
- } catch (err: any) {
- setError(err.response?.data?.message || 'Failed to submit quotation. Please try again.');
- } finally {
- setSubmitting(false);
- }
- };
+      await publicApi.post(`/api/v1/public/rfq/${token}`, payload);
+      setSubmitted(true);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to submit quotation. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
- if (loading) {
- return (
- <div className="min-h-screen flex items-center justify-center bg-slate-50 ">
- <div className="flex flex-col items-center gap-4">
- <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
- <p className="text-sm text-slate-500 font-medium">Loading Quotation Request...</p>
- </div>
- </div>
- );
- }
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 ">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+          <p className="text-sm text-slate-500 font-medium">Loading Quotation Request...</p>
+        </div>
+      </div>
+    );
+  }
 
- const isClosedByStatus = rfqData?.status && ['approved', 'partially_delivered', 'delivered'].includes(rfqData.status);
- const isManuallyClosed = rfqData?.materialName?.includes('||CLOSED||');
+  const isClosedByStatus = rfqData?.status && ['approved', 'ordered', 'partially_delivered', 'delivered'].includes(rfqData.status);
+  const isManuallyClosed = rfqData?.isLinkActive === false || rfqData?.materialName?.includes('||CLOSED||');
   const isClosed = error || !rfqData || isClosedByStatus || isManuallyClosed;
- 
- if (isClosed && !loading) {
- const isAwarded = isClosedByStatus;
- const displayMessage = error || (isAwarded 
- ? 'This Request for Quotation has concluded and the contract has already been awarded to a successful vendor. Thank you for your interest.' 
- : 'This Request for Quotation has expired and is no longer accepting new submissions.');
+  
+  if (isClosed && !loading) {
+    const isAwarded = isClosedByStatus;
+    const title = error ? 'Request Error' : isAwarded ? 'Quotation Awarded' : 'Request Closed';
+    const displayMessage = error || (isAwarded 
+      ? `This Request for Quotation for "${rfqData?.materialName || 'materials'}" has concluded and the order has been awarded. Thank you for your interest.` 
+      : 'This Request for Quotation is currently inactive and is no longer accepting new submissions.');
 
- return (
- <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
- <motion.div 
- initial={{ opacity: 0, y: 20 }}
- animate={{ opacity: 1, y: 0 }}
- className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-200 p-8 text-center space-y-4"
- >
- <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-6">
- <AlertCircle className="w-8 h-8 text-rose-600 " />
- </div>
- <h2 className="text-2xl font-bold text-slate-900 ">Request Closed</h2>
- <p className="text-slate-500 text-sm leading-relaxed">
- {displayMessage}
- </p>
- </motion.div>
- </div>
- );
- }
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-200 p-8 text-center space-y-4"
+        >
+          <div className={`w-16 h-16 ${isAwarded ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'} rounded-full flex items-center justify-center mx-auto mb-6`}>
+            {isAwarded ? <CheckCircle2 className="w-8 h-8" /> : <AlertCircle className="w-8 h-8" />}
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
+          <p className="text-slate-500 text-sm leading-relaxed">
+            {displayMessage}
+          </p>
+          {rfqData?.poNumber && (
+            <div className="pt-2">
+              <span className="text-xs font-mono bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg border border-slate-200 font-bold">
+                Ref: {rfqData.poNumber}
+              </span>
+            </div>
+          )}
+        </motion.div>
+      </div>
+    );
+  }
 
  if (submitted) {
  return (

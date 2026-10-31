@@ -3880,6 +3880,7 @@ const { hasPermission: canDo } = usePermissions();
         )}
         budgetRange={lead?.budgetRange || ''}
         designFiles={lead?.designFiles || []}
+        leadStatus={lead?.status}
         onSuccess={fetchData}
       />
       <InteriorDeleteBoqModal

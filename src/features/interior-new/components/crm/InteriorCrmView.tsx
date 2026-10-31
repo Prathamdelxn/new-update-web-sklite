@@ -198,7 +198,8 @@ export default function InteriorCrmView() {
       requirement_design: leads.filter(
         (l) =>
           ['Under Requirement', 'Requirement Completed'].includes(l.status) ||
-          (l.requirements && l.requirements.length > 0)
+          (l.requirements && l.requirements.length > 0) ||
+          (l.clientRequirements && l.clientRequirements.length > 0)
       ).length,
       drawing: leads.filter(
         (l) =>
@@ -246,7 +247,8 @@ export default function InteriorCrmView() {
       return leads.filter(
         (l) =>
           ['Under Requirement', 'Requirement Completed'].includes(l.status) ||
-          (l.requirements && l.requirements.length > 0)
+          (l.requirements && l.requirements.length > 0) ||
+          (l.clientRequirements && l.clientRequirements.length > 0)
       );
     }
     if (activeTab === 'drawing') {
@@ -606,8 +608,8 @@ export default function InteriorCrmView() {
             onLogRequirements={openRequirementsModal}
             onUploadDesign={() => {}} // Not used anymore
             onPassToSiteVisit={openSendToSiteVisitModal}
-            onPassToDrawing={openSendToSiteVisitModal}
-            onPassToQuotations={openSendToSiteVisitModal}
+            onPassToDrawing={openSendToDrawingModal}
+            onPassToQuotations={openSendToQuotationsModal}
             onMarkAsLost={openMarkAsLostModal}
           />
         ) : activeTab === 'site_visits' ? (
@@ -799,6 +801,7 @@ export default function InteriorCrmView() {
           })()
         )}
         budgetRange={actionLead?.budgetRange || ''}
+        leadStatus={actionLead?.status}
         onSuccess={fetchLeads}
       />
 

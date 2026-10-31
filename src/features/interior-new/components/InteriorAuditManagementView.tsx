@@ -154,7 +154,8 @@ const QUICK_SEGMENTS = [
 
 export default function InteriorAuditManagementView() {
   const toast = useToast();
-  const { isOrgAdmin, currentUser } = usePermissions();
+  const { isOrgAdmin, hasPermission, currentUser } = usePermissions();
+  const canReadAudit = isOrgAdmin || hasPermission('audit_logs', 'read');
 
   // Pagination & Filters
   const [page, setPage] = useState<number>(1);
@@ -218,7 +219,7 @@ export default function InteriorAuditManagementView() {
   } = useQuery({
     queryKey: ['crm-audit-logs', queryParams],
     queryFn: async () => {
-      if (currentUser && !isOrgAdmin) {
+      if (currentUser && !canReadAudit) {
         return { logs: [], stats: null, meta: { total: 0, totalPages: 1 } };
       }
       try {
@@ -256,13 +257,13 @@ export default function InteriorAuditManagementView() {
     return [1, '...', page - 1, page, page + 1, '...', totalPages];
   }, [page, totalPages]);
 
-  if (currentUser && !isOrgAdmin) {
+  if (currentUser && !canReadAudit) {
     return (
       <div className="p-12 text-center bg-card rounded-2xl border border-border">
         <AlertTriangle className="w-12 h-12 text-rose-500 mx-auto mb-3" />
         <h3 className="text-lg font-bold text-foreground">Access Restricted</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          Only administrators have permission to view the audit management section.
+          You do not have permission to view the audit management section.
         </p>
       </div>
     );
