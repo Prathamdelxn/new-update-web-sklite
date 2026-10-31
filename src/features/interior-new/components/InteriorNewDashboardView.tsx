@@ -270,8 +270,11 @@ export default function InteriorNewDashboardView() {
   // ring); with no projects at all a grey placeholder ring is shown
   const healthSlices = (() => {
     const nonEmpty = (data?.projectHealth || []).filter((h) => h.value > 0);
-    return nonEmpty.length > 0 ? nonEmpty : [{ name: 'No Projects', value: 1, color: 'hsl(var(--muted))' }];
+    // Visible grey placeholder ring (--muted is near-white and read as a blank "white line")
+    return nonEmpty.length > 0 ? nonEmpty : [{ name: 'No Projects', value: 1, color: '#E2E8F0' }];
   })();
+
+  const healthTotal = (data?.projectHealth || []).reduce((sum, h) => sum + (Number(h.value) || 0), 0);
 
   const kpiCards = [
     { title: 'Total Leads', value: data?.kpis?.totalLeads || 0, icon: Users, color: 'hsl(217.2, 91.2%, 59.8%)', bgColor: 'hsl(217.2, 91.2%, 59.8% / 0.1)' },
@@ -393,6 +396,8 @@ export default function InteriorNewDashboardView() {
                         paddingAngle={0}
                         stroke="none"
                         dataKey="value"
+                        
+                        isAnimationActive={healthTotal > 0}
                       >
                         {(data?.projectHealth && data.projectHealth.length > 0
                           ? data.projectHealth
@@ -411,6 +416,13 @@ export default function InteriorNewDashboardView() {
                       />
                     </PieChart>
                   </ResponsiveContainer>
+                  {/* Centre label: number of active projects counted */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-2xl font-bold text-[hsl(var(--foreground))]">{healthTotal}</span>
+                    <span className="text-[11px] text-[hsl(var(--muted-foreground))]">
+                      {healthTotal === 1 ? 'Project' : 'Projects'}
+                    </span>
+                  </div>
                 </div>
                 <div className="space-y-2 mt-2">
                   {(data?.projectHealth || []).map((item) => (
