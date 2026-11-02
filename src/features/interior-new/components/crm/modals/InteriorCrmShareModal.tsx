@@ -227,6 +227,14 @@ export function InteriorCrmShareModal({
       toast.error('Sharing is not allowed until at least one drawing is approved');
       return;
     }
+    if (!isPublic) {
+      toast.error('This link is currently stopped. Click "Activate Link" below to re-enable it.');
+      return;
+    }
+    if (isLinkExpired) {
+      toast.error('This link has expired. Click "Renew Link" above to re-enable it.');
+      return;
+    }
     if (!shareUrl) {
       toast.error('Please wait for share link to generate');
       return;
@@ -246,6 +254,14 @@ export function InteriorCrmShareModal({
       toast.error('Sharing is not allowed until at least one drawing is approved');
       return;
     }
+    if (!isPublic) {
+      toast.error('This link is currently stopped. Click "Activate Link" below to re-enable it.');
+      return;
+    }
+    if (isLinkExpired) {
+      toast.error('This link has expired. Click "Renew Link" above to re-enable it.');
+      return;
+    }
     if (!shareUrl) return;
     const clientName = lead?.name || 'Client';
     const text = mode === 'requirements'
@@ -263,6 +279,14 @@ export function InteriorCrmShareModal({
   const handleEmailShare = () => {
     if (mode === 'drawings' && approvedCount === 0) {
       toast.error('Sharing is not allowed until at least one drawing is approved');
+      return;
+    }
+    if (!isPublic) {
+      toast.error('This link is currently stopped. Click "Activate Link" below to re-enable it.');
+      return;
+    }
+    if (isLinkExpired) {
+      toast.error('This link has expired. Click "Renew Link" above to re-enable it.');
       return;
     }
     if (!shareUrl) return;
@@ -432,28 +456,34 @@ export function InteriorCrmShareModal({
                     <input
                       type="text"
                       readOnly
-                      value={shareUrl || 'Generating secure link...'}
-                      onClick={(e) => (e.target as HTMLInputElement).select()}
-                      className="flex-1 bg-transparent px-2 py-1 text-xs font-mono text-slate-700 outline-none truncate select-all cursor-pointer"
+                      value={!isPublic ? 'Link Stopped / Disabled (Activate below)' : isLinkExpired ? 'Link Expired (Renew below)' : (shareUrl || 'Generating secure link...')}
+                      onClick={(e) => isPublic && !isLinkExpired && (e.target as HTMLInputElement).select()}
+                      className={cn(
+                        "flex-1 bg-transparent px-2 py-1 text-xs font-mono outline-none truncate select-all",
+                        !isPublic ? "text-rose-600 font-semibold italic" : isLinkExpired ? "text-amber-600 italic" : "text-slate-700 cursor-pointer"
+                      )}
                     />
 
                     <button
                       type="button"
+                      disabled={!isPublic || isLinkExpired}
                       onClick={handleCopy}
                       className={cn(
-                        "inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 shadow-2xs active:scale-95",
-                        copied
-                          ? "bg-emerald-700 text-white shadow-emerald-700/20"
+                        "inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 shadow-2xs active:scale-95",
+                        !isPublic || isLinkExpired
+                          ? "bg-slate-200 text-slate-400 cursor-not-allowed opacity-60"
+                          : copied
+                          ? "bg-emerald-700 text-white shadow-emerald-700/20 cursor-pointer"
                           : mode === 'requirements'
-                          ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/15"
-                          : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/15"
+                          ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/15 cursor-pointer"
+                          : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/15 cursor-pointer"
                       )}
                     >
                       {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                       <span>{copied ? 'Copied!' : 'Copy'}</span>
                     </button>
 
-                    {shareUrl && (
+                    {isPublic && !isLinkExpired && shareUrl && (
                       <a
                         href={shareUrl}
                         target="_blank"
@@ -471,8 +501,9 @@ export function InteriorCrmShareModal({
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
+                    disabled={!isPublic || isLinkExpired}
                     onClick={handleWhatsAppShare}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-emerald-50 hover:bg-emerald-100/80 text-emerald-800 border border-emerald-200/80 rounded-2xl text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer"
+                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-emerald-50 hover:bg-emerald-100/80 text-emerald-800 border border-emerald-200/80 rounded-2xl text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                     title="Send intake link directly via WhatsApp"
                   >
                     <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -481,8 +512,9 @@ export function InteriorCrmShareModal({
 
                   <button
                     type="button"
+                    disabled={!isPublic || isLinkExpired}
                     onClick={handleEmailShare}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-blue-50 hover:bg-blue-100/80 text-blue-800 border border-blue-200/80 rounded-2xl text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer"
+                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-blue-50 hover:bg-blue-100/80 text-blue-800 border border-blue-200/80 rounded-2xl text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                     title="Send intake link via Email"
                   >
                     <Mail className="w-4 h-4 text-blue-600 shrink-0" />

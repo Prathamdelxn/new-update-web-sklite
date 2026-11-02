@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import interiorApiClient from '@/services/interiorApi.client';
 import { useToast } from '@/providers/ToastContext';
@@ -32,10 +32,25 @@ import {
   DollarSign,
   Camera,
   CheckCircle2,
-  ExternalLink
+  ExternalLink,
+  UploadCloud,
+  Share2,
+  Copy,
+  Check,
+  MessageCircle,
+  Mail,
+  Clock,
+  PowerOff,
+  RotateCcw,
+  Settings,
+  Edit3,
 } from 'lucide-react';
+import { uploadToCloudinary } from '@/lib/upload';
+import { interiorCrmService } from '@/services/interiorCrm.service';
 import { InteriorLogSiteVisitModal } from '@/features/interior-new/components/crm/modals/InteriorLogSiteVisitModal';
 import { InteriorLogRequirementsModal } from '@/features/interior-new/components/crm/modals/InteriorLogRequirementsModal';
+import { InteriorCrmShareModal } from '@/features/interior-new/components/crm/modals/InteriorCrmShareModal';
+import { InteriorSendRequirementsModal } from '@/features/interior-new/components/crm/modals/InteriorSendRequirementsModal';
 import { cn } from '@/lib/utils';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
@@ -45,15 +60,47 @@ export default function InteriorSiteDetailsView() {
   const { projectId } = useParams() as { projectId: string };
   const toast = useToast();
   const { hasPermission: canDo } = usePermissions();
+  const canEditReq = canDo('crm_requirements', 'update') || canDo('projects', 'update') || canDo('projects', 'create');
+  const canEditSiteVisit = canDo('crm_site_visits', 'update') || canDo('projects', 'update') || canDo('projects', 'create');
+  const canEditPhotos = canDo('photos', 'create') || canDo('photos', 'update') || canDo('crm_site_visits', 'update') || canDo('projects', 'update');
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [loading, setLoading] = useState(true);
   const [customerData, setCustomerData] = useState<any>(null);
-  const [allCustomers, setAllCustomers] = useState<any[]>([]);
   const [projectInfo, setProjectInfo] = useState<any>(null);
-  const [selectedCustomerIdToLink, setSelectedCustomerIdToLink] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('requirements');
   const [isSiteVisitModalOpen, setIsSiteVisitModalOpen] = useState(false);
   const [isReqModalOpen, setIsReqModalOpen] = useState(false);
+
+  const ensureSiteProfile = useCallback(async (project: any) => {
+    if (!project) return null;
+    try {
+      setActionLoading(true);
+      const clientName = (project.client || project.name || 'Project Client').trim();
+      const payload = {
+        name: clientName,
+        mobileNumber: '9876543210',
+        leadSource: 'Existing Customer',
+        status: 'Won',
+        linkedProject: projectId,
+        projectLocation: project.location?.city || project.location?.address || '',
+        budgetRange: project.budget?.amount ? String(project.budget.amount) : '',
+      };
+      const res = await interiorApiClient.post('/crm/customers', payload);
+      const newCust = res.data?.data || res.data;
+      if (newCust) {
+        setCustomerData(newCust);
+        return newCust;
+      }
+    } catch (err: any) {
+      console.warn('Auto initialize site profile fallback error:', err);
+    } finally {
+      setActionLoading(false);
+    }
+    return null;
+  }, [projectId]);
 
   const loadSiteDetails = useCallback(async () => {
     try {
@@ -93,7 +140,6 @@ export default function InteriorSiteDetailsView() {
       let customers: any[] = [];
       if (allCustRes.status === 'fulfilled') {
         customers = allCustRes.value.data?.data || allCustRes.value.data || [];
-        setAllCustomers(customers);
       }
 
       if (!customer && customers.length > 0) {
@@ -107,8 +153,26 @@ export default function InteriorSiteDetailsView() {
         });
       }
 
-      // 4. Ensure we fetch the single customer detail if sitePhotos is missing or empty
-      if (customer?._id && (!customer.sitePhotos || customer.sitePhotos.length === 0)) {
+      // 4. If still not found and we have project, auto-ensure site profile
+      if (!customer && project) {
+        customer = await ensureSiteProfile(project);
+      }
+
+      // 5. Fallback object if network creation delayed
+      if (!customer && project) {
+        customer = {
+          _id: project._id,
+          name: project.client || project.name || 'Project Client',
+          leadNumber: project.code || 'PRJ',
+          requirements: [],
+          siteMeasurements: null,
+          sitePhotos: [],
+          linkedProject: projectId,
+        };
+      }
+
+      // 6. Ensure we fetch the single customer detail if sitePhotos is missing or empty
+      if (customer?._id && customer._id !== project?._id && (!customer.sitePhotos || customer.sitePhotos.length === 0)) {
         try {
           const detailRes = await interiorApiClient.get(`/crm/customers/${customer._id}`);
           const fullCustomer = detailRes.data?.data || detailRes.data;
@@ -120,7 +184,7 @@ export default function InteriorSiteDetailsView() {
         }
       }
 
-      // 5. Merge any project execution photos (/projects/:id/photos) into sitePhotos list
+      // 7. Merge any project execution photos (/projects/:id/photos) into sitePhotos list
       if (customer) {
         let extraPhotos: string[] = [];
         if (projPhotosRes.status === 'fulfilled') {
@@ -144,52 +208,354 @@ export default function InteriorSiteDetailsView() {
     } finally {
       setLoading(false);
     }
-  }, [projectId, toast]);
+  }, [projectId, toast, ensureSiteProfile]);
+
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isSendEmailModalOpen, setIsSendEmailModalOpen] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [isUpdatingExpiry, setIsUpdatingExpiry] = useState(false);
+  const [isStoppingLink, setIsStoppingLink] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     loadSiteDetails();
   }, [loadSiteDetails]);
 
-  const handleLinkExistingCustomer = async () => {
-    if (!selectedCustomerIdToLink) {
-      toast.error('Please select a customer to link');
-      return;
+  // Share Settings & Link Expiry Status
+  const shareSettings = customerData?.shareSettings || projectInfo?.linkedCustomer?.shareSettings;
+  const isLinkStopped = shareSettings?.isPublic === false;
+  const isLinkExpired = Boolean(
+    shareSettings?.expiresAt && new Date(shareSettings.expiresAt).getTime() < Date.now()
+  );
+  const isLinkActive = Boolean(shareSettings?.shareToken && !isLinkStopped && !isLinkExpired);
+
+  const getExpiryDisplay = () => {
+    if (isLinkStopped) return { label: 'Link Stopped / Disabled', isWarning: true };
+    if (isLinkExpired) return { label: 'Link Expired', isWarning: true };
+    if (!shareSettings?.expiresAt) return { label: 'No Expiry (Always Active)', isWarning: false };
+
+    const diffMs = new Date(shareSettings.expiresAt).getTime() - Date.now();
+    if (diffMs <= 0) return { label: 'Link Expired', isWarning: true };
+    const hours = Math.round(diffMs / (1000 * 60 * 60));
+    if (hours < 1) {
+      const mins = Math.max(1, Math.round(diffMs / (1000 * 60)));
+      return { label: `Expires in ${mins}m`, isWarning: true };
     }
+    if (hours < 24) {
+      return { label: `Expires in ${hours}h`, isWarning: hours <= 3 };
+    }
+    const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
+    const expDateStr = new Date(shareSettings.expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return { label: `Expires in ${days}d (${expDateStr})`, isWarning: false };
+  };
+
+  const currentExpiry = getExpiryDisplay();
+
+  const origin =
+    (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_APP_URL
+      ? process.env.NEXT_PUBLIC_APP_URL.replace(/\/+$/, '')
+      : '') || (typeof window !== 'undefined' ? window.location.origin : '');
+
+  const shareToken = shareSettings?.shareToken;
+  const clientFormUrl = shareToken && !isLinkStopped && !isLinkExpired ? `${origin}/share/requirements/${shareToken}` : '';
+
+  const getOrFetchUrl = async (): Promise<string | null> => {
+    if (isLinkStopped) {
+      toast.error('Sharing link is currently stopped. Click "Reactivate" to enable it.');
+      return null;
+    }
+    if (isLinkExpired) {
+      toast.error('Sharing link has expired. Click "Reactivate" to enable it.');
+      return null;
+    }
+    if (clientFormUrl) return clientFormUrl;
+
+    let cust = customerData;
+    if (!cust?._id && projectInfo) {
+      cust = await ensureSiteProfile(projectInfo);
+    }
+    const customerId = cust?._id;
+    if (!customerId) {
+      toast.error('Site profile ID is missing.');
+      return null;
+    }
+
     try {
-      setActionLoading(true);
-      await interiorApiClient.patch(`/crm/customers/${selectedCustomerIdToLink}`, {
-        linkedProject: projectId,
+      setIsGeneratingLink(true);
+      const res = await interiorCrmService.generateShareLink(customerId, {
+        mode: 'requirements',
+        includeRequirements: true,
+        allowDownload: false,
       });
-      toast.success('Successfully linked customer to this project');
-      await loadSiteDetails();
+
+      const token = res?.data?.shareToken || res?.shareToken;
+      if (token) {
+        await loadSiteDetails();
+        return `${origin}/share/requirements/${token}`;
+      }
+      throw new Error(res?.error || res?.message || 'Failed to generate share link');
     } catch (err: any) {
-      console.error('Failed to link customer', err);
-      toast.error(err.response?.data?.error || err.message || 'Failed to link customer');
+      console.error('Error generating share link:', err);
+      toast.error(err?.response?.data?.error || err?.message || 'Failed to create share link');
+      return null;
     } finally {
-      setActionLoading(false);
+      setIsGeneratingLink(false);
     }
   };
 
-  const handleInitializeSiteProfile = async () => {
+  const handleCopyLink = async () => {
+    const url = await getOrFetchUrl();
+    if (!url) return;
+
     try {
-      setActionLoading(true);
-      const projName = projectInfo?.name || 'Interior Project';
-      const cleanName = projName.replace(/[^a-zA-Z\s'.-]/g, '').trim() || 'Project Client';
-      const payload = {
-        name: cleanName,
-        mobileNumber: '9876543210',
-        leadSource: 'Existing Customer',
-        status: 'Won',
-        linkedProject: projectId,
-      };
-      await interiorApiClient.post(`/crm/customers`, payload);
-      toast.success('Initialized site measurements profile for this project');
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const input = document.createElement('input');
+        input.value = url;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+      }
+      setCopiedLink(true);
+      toast.success('Shareable Client Intake Link copied to clipboard!');
+      setTimeout(() => setCopiedLink(false), 2500);
+    } catch {
+      toast.error('Failed to copy to clipboard.');
+    }
+  };
+
+  const handleShareWhatsApp = async () => {
+    const url = await getOrFetchUrl();
+    if (!url) return;
+    const clientName = (projectInfo?.client || customerData?.name || 'there').split(' ')[0];
+    const message = encodeURIComponent(
+      `Hi ${clientName}! Please share your interior design preferences & room requirements using this interactive questionnaire: ${url}\n\nOur design team will review your wishlist and prepare tailored 2D & 3D plans!`
+    );
+    const phone = (customerData?.mobileNumber || '').replace(/[^0-9]/g, '');
+    const waUrl = phone && phone !== '9876543210' ? `https://wa.me/${phone}?text=${message}` : `https://wa.me/?text=${message}`;
+    window.open(waUrl, '_blank');
+  };
+
+  const handleStopLink = async () => {
+    let cust = customerData;
+    if (!cust?._id && projectInfo) {
+      cust = await ensureSiteProfile(projectInfo);
+    }
+    const customerId = cust?._id;
+    if (!customerId) return;
+
+    if (!confirm('Stop Client Intake Link? The link will be deactivated immediately and clients opening it will be blocked.')) {
+      return;
+    }
+
+    setIsStoppingLink(true);
+    try {
+      await interiorCrmService.revokeShareLink(customerId);
+      toast.success('Client intake link stopped.');
       await loadSiteDetails();
     } catch (err: any) {
-      console.error('Failed to initialize site profile', err);
-      toast.error(err.response?.data?.error || err.message || 'Failed to initialize site profile');
+      toast.error(err?.response?.data?.message || err?.message || 'Failed to stop link');
     } finally {
-      setActionLoading(false);
+      setIsStoppingLink(false);
+    }
+  };
+
+  const handleChangeExpiry = async (hours: number | null) => {
+    let cust = customerData;
+    if (!cust?._id && projectInfo) {
+      cust = await ensureSiteProfile(projectInfo);
+    }
+    const customerId = cust?._id;
+    if (!customerId) return;
+
+    setIsUpdatingExpiry(true);
+    try {
+      await interiorCrmService.generateShareLink(customerId, {
+        mode: 'requirements',
+        includeRequirements: true,
+        allowDownload: false,
+        expiresHours: hours,
+      });
+      const label =
+        hours === null
+          ? 'Never expire'
+          : hours === 24
+          ? '24 hours'
+          : hours === 72
+          ? '3 days'
+          : hours === 168
+          ? '7 days'
+          : hours === 720
+          ? '30 days'
+          : `${hours} hours`;
+      toast.success(`Link expiry set to ${label}.`);
+      await loadSiteDetails();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'Failed to update link expiry');
+    } finally {
+      setIsUpdatingExpiry(false);
+    }
+  };
+
+  const handleReactivateLink = async (hours: number | null = 168) => {
+    let cust = customerData;
+    if (!cust?._id && projectInfo) {
+      cust = await ensureSiteProfile(projectInfo);
+    }
+    const customerId = cust?._id;
+    if (!customerId) return;
+
+    setIsUpdatingExpiry(true);
+    try {
+      await interiorCrmService.generateShareLink(customerId, {
+        mode: 'requirements',
+        includeRequirements: true,
+        allowDownload: false,
+        expiresHours: hours,
+      });
+      toast.success('Client intake link reactivated!');
+      await loadSiteDetails();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'Failed to reactivate link');
+    } finally {
+      setIsUpdatingExpiry(false);
+    }
+  };
+
+  const handleOpenShareModal = async () => {
+    let cust = customerData;
+    if (!cust?._id && projectInfo) {
+      cust = await ensureSiteProfile(projectInfo);
+    }
+    setIsShareModalOpen(true);
+  };
+
+  const handleOpenEmailModal = async () => {
+    let cust = customerData;
+    if (!cust?._id && projectInfo) {
+      cust = await ensureSiteProfile(projectInfo);
+    }
+    setIsSendEmailModalOpen(true);
+  };
+
+  // Cross-tab synchronization & auto-polling when awaiting client input
+  useEffect(() => {
+    const custId = customerData?._id;
+    const currentToken = shareSettings?.shareToken;
+
+    let channel: BroadcastChannel | null = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        channel = new BroadcastChannel('crm_requirement_channel');
+        channel.onmessage = (event) => {
+          const data = event.data;
+          if (
+            data?.type === 'REQUIREMENT_SUBMITTED' &&
+            (!data.leadId || data.leadId === custId || !data.token || data.token === currentToken)
+          ) {
+            loadSiteDetails();
+          }
+        };
+      }
+    } catch (e) {}
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === 'crm_requirement_sync' && event.newValue) {
+        loadSiteDetails();
+      }
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleStorage);
+    }
+
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible' && isLinkActive && !customerData?.clientRequirementsSubmittedAt) {
+        loadSiteDetails();
+      }
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', handleVisibilityOrFocus);
+      document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    }
+
+    return () => {
+      if (channel) {
+        try {
+          channel.close();
+        } catch {}
+      }
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('storage', handleStorage);
+        window.removeEventListener('focus', handleVisibilityOrFocus);
+        document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      }
+    };
+  }, [customerData?._id, shareSettings?.shareToken, isLinkActive, customerData?.clientRequirementsSubmittedAt, loadSiteDetails]);
+
+  const handleOpenReqModal = async () => {
+    let cust = customerData;
+    if (!cust?._id && projectInfo) {
+      cust = await ensureSiteProfile(projectInfo);
+    }
+    setIsReqModalOpen(true);
+  };
+
+  const handleOpenSiteVisitModal = async () => {
+    let cust = customerData;
+    if (!cust?._id && projectInfo) {
+      cust = await ensureSiteProfile(projectInfo);
+    }
+    setIsSiteVisitModalOpen(true);
+  };
+
+  const handleDirectPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    try {
+      setUploadingPhotos(true);
+      const fileList = Array.from(files);
+      const uploadPromises = fileList.map(async (file) => {
+        return await uploadToCloudinary(file);
+      });
+      const newUrls = await Promise.all(uploadPromises);
+      const validUrls = newUrls.filter((u): u is string => typeof u === 'string' && u.length > 0);
+
+      if (validUrls.length > 0) {
+        // 1. Post to project execution photos
+        for (const url of validUrls) {
+          try {
+            await interiorApiClient.post(`/projects/${projectId}/photos`, {
+              url,
+              category: 'site_visit',
+            });
+          } catch {}
+        }
+
+        // 2. Update CRM customer if customerId exists
+        let currentCust = customerData;
+        if (!currentCust?._id && projectInfo) {
+          currentCust = await ensureSiteProfile(projectInfo);
+        }
+        if (currentCust?._id && currentCust._id !== projectInfo?._id) {
+          const existing = Array.isArray(currentCust.sitePhotos) ? currentCust.sitePhotos : [];
+          const updated = Array.from(new Set([...existing, ...validUrls]));
+          await interiorApiClient.patch(`/crm/customers/${currentCust._id}`, {
+            sitePhotos: updated,
+          });
+        }
+        toast.success(`Successfully uploaded ${validUrls.length} photo${validUrls.length > 1 ? 's' : ''}`);
+        await loadSiteDetails();
+      }
+    } catch (err: any) {
+      console.error('Failed to upload photos:', err);
+      toast.error('Failed to upload some or all photos');
+    } finally {
+      setUploadingPhotos(false);
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -274,129 +640,24 @@ export default function InteriorSiteDetailsView() {
     );
   }
 
-  if (!customerData) {
-    return (
-      <div className="flex flex-col items-center justify-center p-8 border border-dashed border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] max-w-xl mx-auto mt-6 text-center space-y-5">
-        <div className="w-14 h-14 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-600">
-          <Ruler size={28} />
-        </div>
-        <div className="space-y-1">
-          <h3 className="text-base font-bold text-[hsl(var(--foreground))]">No Site Profile Linked</h3>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-sm mx-auto">
-            Link an existing client lead or initialize a new site profile to log room dimensions, structural observations, and requirements.
-          </p>
-        </div>
-
-        {allCustomers.length > 0 && (
-          <div className="w-full max-w-sm space-y-2 pt-2 text-left">
-            <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Link Existing CRM Client</label>
-            <div className="flex gap-2">
-              <select
-                value={selectedCustomerIdToLink}
-                onChange={(e) => setSelectedCustomerIdToLink(e.target.value)}
-                className="flex-1 px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:outline-none focus:border-purple-500 transition-colors"
-              >
-                <option value="">-- Choose client to link --</option>
-                {allCustomers.map((c) => (
-                  <option key={c._id} value={c._id}>
-                    {c.name} {c.mobileNumber ? `(${c.mobileNumber})` : ''}
-                  </option>
-                ))}
-              </select>
-              {canDo('crm_leads', 'update') && (
-                <button
-                  type="button"
-                  disabled={actionLoading || !selectedCustomerIdToLink}
-                  onClick={handleLinkExistingCustomer}
-                  className="px-3.5 py-2 text-xs font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 transition-colors active:scale-[0.98]"
-                >
-                  Link
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        <div className="pt-2">
-          {canDo('crm_leads', 'create') && (
-            <button
-              type="button"
-              disabled={actionLoading}
-              onClick={handleInitializeSiteProfile}
-              className="px-4 py-2 rounded-lg text-xs font-semibold bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-white flex items-center gap-1.5 transition-colors active:scale-[0.98]"
-            >
-              {actionLoading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-              Initialize New Site Details Profile
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
+  const activeCustomer = customerData || {
+    _id: projectInfo?._id || projectId,
+    name: projectInfo?.client || projectInfo?.name || 'Project Client',
+    leadNumber: projectInfo?.code || 'PRJ',
+    requirements: [],
+    siteMeasurements: null,
+    sitePhotos: [],
+    linkedProject: projectId,
+  };
 
   const requirements = effectiveRequirements;
   const isClientSubmittedOnly = teamRequirements.length === 0 && clientRequirements.length > 0;
   const isClientSubmitted = clientRequirements.length > 0;
 
-  const { siteMeasurements, sitePhotos = [] } = customerData;
+  const { siteMeasurements, sitePhotos = [] } = activeCustomer;
   const hasRequirements = requirements.length > 0;
   const hasMeasurements = !!siteMeasurements;
   const hasPhotos = sitePhotos.length > 0;
-
-  if (!hasRequirements && !hasMeasurements && !hasPhotos) {
-    return (
-      <div className="flex flex-col items-center justify-center p-10 border border-dashed border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] max-w-xl mx-auto mt-6 text-center space-y-4">
-        <div className="w-14 h-14 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-600">
-          <Ruler size={28} />
-        </div>
-        <h3 className="text-base font-bold text-[hsl(var(--foreground))]">No Site Details Logged</h3>
-        <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-sm">
-          The original CRM lead does not have any recorded requirements, measurements, or site photos.
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
-          {canDo('crm_requirements', 'update') && (
-            <button
-              onClick={() => setIsReqModalOpen(true)}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold text-xs transition-colors active:scale-[0.98] flex items-center gap-1.5"
-            >
-              <Plus size={14} /> Add Requirements
-            </button>
-          )}
-          {canDo('crm_site_visits', 'update') && (
-            <button
-              onClick={() => setIsSiteVisitModalOpen(true)}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold text-xs transition-colors active:scale-[0.98] flex items-center gap-1.5"
-            >
-              <Plus size={14} /> Log Site Visit & Measurements
-            </button>
-          )}
-        </div>
-
-        {customerData && (
-          <>
-            <InteriorLogSiteVisitModal
-              isOpen={isSiteVisitModalOpen}
-              onClose={() => setIsSiteVisitModalOpen(false)}
-              customerId={customerData._id}
-              onSuccess={loadSiteDetails}
-              initialMeasurements={customerData.siteMeasurements}
-              initialPhotos={customerData.sitePhotos}
-              instructions={customerData.remarks || customerData.siteMeasurements?.notes}
-            />
-            <InteriorLogRequirementsModal
-              isOpen={isReqModalOpen}
-              onClose={() => setIsReqModalOpen(false)}
-              customerId={customerData._id}
-              onSuccess={loadSiteDetails}
-              initialRequirements={teamRequirements.length > 0 ? teamRequirements : effectiveRequirements}
-              clientRequirements={clientRequirements}
-              initialBudget={customerData?.budgetRange || ''}
-            />
-          </>
-        )}
-      </div>
-    );
-  }
 
   const showRequirements = activeTab === 'all' || activeTab === 'requirements';
   const showMeasurements = activeTab === 'all' || activeTab === 'measurements';
@@ -404,39 +665,15 @@ export default function InteriorSiteDetailsView() {
 
   return (
     <div className="space-y-5 max-w-7xl pb-12">
-      {/* Header Bar with Info & Primary Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-5 md:px-6">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h2 className="text-lg font-bold text-[hsl(var(--foreground))] tracking-tight">Site Inspection & Specifications</h2>
-            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-600 border border-purple-500/20">
-              Lead: {customerData.leadNumber || 'LD-CRM'}
-            </span>
-          </div>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
-            Toggle between client design requirements, site visit measurements, and on-site photos.
-          </p>
-        </div>
-
-        <div className="flex items-center flex-wrap gap-2.5 shrink-0">
-          {canDo('crm_requirements', 'update') && (
-            <button
-              onClick={() => setIsReqModalOpen(true)}
-              className="inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors active:scale-[0.98]"
-            >
-              <PenTool size={13} /> Edit Requirements
-            </button>
-          )}
-          {canDo('crm_site_visits', 'update') && (
-            <button
-              onClick={() => setIsSiteVisitModalOpen(true)}
-              className="inline-flex items-center justify-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors active:scale-[0.98]"
-            >
-              <Pencil size={13} /> Edit Site Visit & Photos
-            </button>
-          )}
-        </div>
-      </div>
+      {/* Hidden file input for direct photo upload */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleDirectPhotoUpload}
+        multiple
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        className="hidden"
+      />
 
       {/* ── Tabs / Toggle Bar ── */}
       <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 bg-[hsl(var(--muted)/0.3)] p-1.5 rounded-xl border border-[hsl(var(--border))]">
@@ -547,44 +784,238 @@ export default function InteriorSiteDetailsView() {
                   <span className="text-xs font-semibold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-md">
                     {requirements.length} Spaces to Execute
                   </span>
-                  {canDo('crm_requirements', 'update') && (
+                  {isLinkActive ? (
                     <button
-                      onClick={() => setIsReqModalOpen(true)}
+                      onClick={handleCopyLink}
+                      disabled={isGeneratingLink}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-500/10 hover:bg-indigo-500/20 px-2.5 py-1 rounded-md border border-indigo-500/20 transition-colors active:scale-[0.98] cursor-pointer"
+                      title="Copy shareable client intake link"
+                    >
+                      {copiedLink ? <Check size={11} className="text-emerald-500" /> : <Share2 size={11} />}
+                      {copiedLink ? 'Copied' : 'Share Intake Link'}
+                    </button>
+                  ) : (isLinkStopped || isLinkExpired) ? (
+                    <button
+                      onClick={() => handleReactivateLink(168)}
+                      disabled={isUpdatingExpiry}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400 hover:text-amber-800 bg-amber-500/10 hover:bg-amber-500/20 px-2.5 py-1 rounded-md border border-amber-500/20 transition-colors active:scale-[0.98] cursor-pointer"
+                      title="Reactivate intake link"
+                    >
+                      <RotateCcw size={11} />
+                      Reactivate Link
+                    </button>
+                  ) : null}
+                  {canEditReq && (
+                    <button
+                      onClick={handleOpenReqModal}
                       className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-md border border-emerald-500/20 transition-colors active:scale-[0.98]"
                     >
-                      <PenTool size={11} /> Edit Requirements
+                      <PenTool size={11} /> {hasRequirements ? 'Edit Requirements' : '+ Add Requirements'}
                     </button>
                   )}
                 </div>
               </div>
 
-              {/* Client Intake Banner if submitted via link */}
-              {isClientSubmitted && (
-                <div className="bg-emerald-500/[0.06] border border-emerald-500/20 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                  <div className="flex items-start sm:items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
-                      <Sparkles size={16} />
+              {/* Dedicated Shareable Link & Client Intake Status Card */}
+              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-4 space-y-3 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center border border-indigo-500/20 shrink-0">
+                      <Share2 size={16} />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
-                        {isClientSubmittedOnly
-                          ? 'Requirements Received via Online Client Intake Link'
-                          : 'Enriched with Client Online Wishlist Intake'}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">
+                          Shareable Client Intake & Questionnaire Link
+                        </h4>
+                        {activeCustomer?.clientRequirementsSubmittedAt ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 inline-flex items-center gap-1">
+                            <CheckCircle2 size={10} /> Client Wishlist Received
+                          </span>
+                        ) : isLinkActive ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 inline-flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                            Awaiting Client Input
+                          </span>
+                        ) : isLinkStopped ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20 inline-flex items-center gap-1">
+                            <PowerOff size={10} />
+                            Link Stopped
+                          </span>
+                        ) : isLinkExpired ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 inline-flex items-center gap-1">
+                            <Clock size={10} />
+                            Link Expired
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-600 border border-slate-500/20">
+                            Not Active
+                          </span>
+                        )}
+
+                        {isLinkActive && (
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border",
+                              currentExpiry.isWarning
+                                ? "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20"
+                                : "bg-teal-500/10 text-teal-700 dark:text-teal-400 border-teal-500/20"
+                            )}
+                          >
+                            <Clock size={10} />
+                            {currentExpiry.label}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-0.5">
+                        {activeCustomer?.clientRequirementsSubmittedAt
+                          ? `Client submitted wishlist on ${new Date(activeCustomer.clientRequirementsSubmittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                          : isLinkStopped
+                          ? 'This questionnaire link has been stopped. Reactivate it to allow the client to access and fill the form.'
+                          : isLinkExpired
+                          ? 'This questionnaire link has expired. Reactivate it to set a new expiry window.'
+                          : isLinkActive
+                          ? 'Clients can open this link on mobile or desktop to choose styles, upload inspiration images, and specify room requirements.'
+                          : 'Generate an interactive intake form so the client can submit their preferences online.'}
                       </p>
-                      {customerData.clientRequirementsSubmittedAt && (
-                        <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                          Submitted on {new Date(customerData.clientRequirementsSubmittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      )}
                     </div>
                   </div>
-                  {customerData.clientRequirementsNotes && (
-                    <div className="text-xs text-[hsl(var(--foreground))] italic bg-[hsl(var(--card))] px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] max-w-md">
-                      Client Notes: "{customerData.clientRequirementsNotes}"
-                    </div>
-                  )}
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {isLinkActive ? (
+                      <>
+                        <button
+                          type="button"
+                          disabled={isGeneratingLink}
+                          onClick={handleCopyLink}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-semibold transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                          title="Copy public link"
+                        >
+                          {copiedLink ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                          <span>{copiedLink ? 'Copied' : 'Copy Link'}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={isGeneratingLink}
+                          onClick={handleShareWhatsApp}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                          title="Send link on WhatsApp"
+                        >
+                          <MessageCircle size={12} />
+                          <span className="hidden sm:inline">WhatsApp</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleOpenEmailModal}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-all active:scale-95 cursor-pointer"
+                          title="Email Questionnaire to Client"
+                        >
+                          <Mail size={12} />
+                          <span className="hidden sm:inline">Email</span>
+                        </button>
+
+                        {clientFormUrl && (
+                          <a
+                            href={clientFormUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-semibold transition-all"
+                            title="Preview Client Intake Form in New Tab"
+                          >
+                            <ExternalLink size={12} />
+                          </a>
+                        )}
+
+                        {/* Expiry Dropdown Selector if link is active */}
+                        <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted)/0.5)] border border-[hsl(var(--border))] rounded-lg text-xs">
+                          <Clock size={11} className="text-amber-500 shrink-0" />
+                          <select
+                            disabled={isUpdatingExpiry}
+                            value={
+                              shareSettings?.expiresAt === null || shareSettings?.expiresAt === undefined
+                                ? 'never'
+                                : (() => {
+                                    const diffMs = new Date(shareSettings.expiresAt).getTime() - Date.now();
+                                    const h = Math.round(diffMs / (1000 * 60 * 60));
+                                    if (Math.abs(h - 24) <= 4) return '24';
+                                    if (Math.abs(h - 72) <= 8) return '72';
+                                    if (Math.abs(h - 168) <= 24) return '168';
+                                    if (Math.abs(h - 720) <= 48) return '720';
+                                    return 'custom';
+                                  })()
+                            }
+                            onChange={(e) => {
+                              const val = e.target.value === 'never' ? null : Number(e.target.value);
+                              handleChangeExpiry(val);
+                            }}
+                            className="bg-transparent text-[11px] font-semibold text-[hsl(var(--foreground))] outline-none cursor-pointer"
+                            title="Schedule link expiry duration"
+                          >
+                            <option value="24" className="bg-[hsl(var(--card))]">24h</option>
+                            <option value="72" className="bg-[hsl(var(--card))]">3d</option>
+                            <option value="168" className="bg-[hsl(var(--card))]">7d</option>
+                            <option value="720" className="bg-[hsl(var(--card))]">30d</option>
+                            <option value="never" className="bg-[hsl(var(--card))]">Never</option>
+                            <option value="custom" disabled hidden className="bg-[hsl(var(--card))]">Custom</option>
+                          </select>
+                        </div>
+
+                        <button
+                          type="button"
+                          disabled={isStoppingLink}
+                          onClick={handleStopLink}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                          title="Deactivate link"
+                        >
+                          <PowerOff size={11} />
+                          <span className="hidden sm:inline">Stop</span>
+                        </button>
+                      </>
+                    ) : (isLinkStopped || isLinkExpired) ? (
+                      <button
+                        type="button"
+                        disabled={isUpdatingExpiry}
+                        onClick={() => handleReactivateLink(168)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 transition-all active:scale-95 cursor-pointer"
+                        title="Reactivate client link"
+                      >
+                        <RotateCcw size={12} />
+                        <span>Reactivate Link</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={isGeneratingLink}
+                        onClick={handleCopyLink}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                        title="Generate and copy shareable client link"
+                      >
+                        <Share2 size={12} />
+                        <span>Generate Link</span>
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={handleOpenShareModal}
+                      className="p-1.5 bg-[hsl(var(--muted)/0.5)] hover:bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg transition-all active:scale-95 cursor-pointer"
+                      title="Link Settings, Permissions & QR Code"
+                    >
+                      <Settings size={13} />
+                    </button>
+                  </div>
                 </div>
-              )}
+
+                {activeCustomer?.clientRequirementsNotes && (
+                  <div className="text-xs text-[hsl(var(--foreground))] italic bg-[hsl(var(--muted)/0.3)] px-3 py-2 rounded-lg border border-[hsl(var(--border))]">
+                    <span className="font-semibold not-italic text-emerald-600">Client Note: </span>
+                    "{activeCustomer.clientRequirementsNotes}"
+                  </div>
+                )}
+              </div>
 
               {/* Budget & Overview Highlights */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -595,7 +1026,7 @@ export default function InteriorSiteDetailsView() {
                   <div className="overflow-hidden min-w-0">
                     <p className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Estimated Budget</p>
                     <p className="font-bold text-xs text-[hsl(var(--foreground))] truncate mt-0.5">
-                      {customerData?.budgetRange || 'Not recorded'}
+                      {activeCustomer?.budgetRange || (projectInfo?.budget?.amount ? `₹${projectInfo.budget.amount.toLocaleString()}` : 'Not recorded')}
                     </p>
                   </div>
                 </div>
@@ -607,7 +1038,7 @@ export default function InteriorSiteDetailsView() {
                   <div className="overflow-hidden min-w-0">
                     <p className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Interior Type</p>
                     <p className="font-bold text-xs text-[hsl(var(--foreground))] truncate mt-0.5">
-                      {requirements[0]?.interiorType || customerData.propertyType || 'Residential'}
+                      {requirements[0]?.interiorType || activeCustomer?.propertyType || projectInfo?.type || 'Residential'}
                     </p>
                   </div>
                 </div>
@@ -812,9 +1243,9 @@ export default function InteriorSiteDetailsView() {
                   <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-sm mx-auto">
                     Configure room-by-room functional and aesthetic specifications for this project.
                   </p>
-                  {canDo('crm_requirements', 'update') && (
+                  {canEditReq && (
                     <button
-                      onClick={() => setIsReqModalOpen(true)}
+                      onClick={handleOpenReqModal}
                       className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-colors active:scale-[0.98]"
                     >
                       <Plus size={13} /> Add Room Requirements
@@ -840,32 +1271,32 @@ export default function InteriorSiteDetailsView() {
                 <Ruler size={16} className="text-purple-600" />
                 Site Visit & Spatial Measurements
               </h3>
-              {canDo('crm_site_visits', 'update') && (
+              {canEditSiteVisit && (
                 <button
-                  onClick={() => setIsSiteVisitModalOpen(true)}
+                  onClick={handleOpenSiteVisitModal}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-600 hover:text-purple-700 bg-purple-500/10 hover:bg-purple-500/20 px-3 py-1.5 rounded-lg border border-purple-500/20 transition-colors active:scale-[0.98]"
                 >
-                  <Pencil size={12} /> Edit Measurements
+                  <Pencil size={12} /> {hasMeasurements ? 'Edit Measurements' : '+ Log Measurements'}
                 </button>
               )}
             </div>
 
-            {(customerData.remarks || customerData.siteMeasurements?.notes || customerData.siteVisitScheduledDate) && (
+            {(activeCustomer?.remarks || siteMeasurements?.notes || activeCustomer?.siteVisitScheduledDate) && (
               <div className="bg-purple-500/[0.04] border border-purple-500/20 rounded-xl p-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 flex items-center gap-1.5">
                     <FileText size={13} className="text-purple-600" />
                     Site Visit Briefing & Notes
                   </p>
-                  {customerData.siteVisitScheduledDate && (
+                  {activeCustomer?.siteVisitScheduledDate && (
                     <span className="text-[10px] font-semibold text-purple-700 dark:text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20">
-                      Scheduled: {new Date(customerData.siteVisitScheduledDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      Scheduled: {new Date(activeCustomer.siteVisitScheduledDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
                   )}
                 </div>
-                {(customerData.remarks || customerData.siteMeasurements?.notes) && (
+                {(activeCustomer?.remarks || siteMeasurements?.notes) && (
                   <p className="text-xs font-medium text-[hsl(var(--foreground))] leading-relaxed bg-[hsl(var(--background))] border border-purple-500/20 rounded-lg p-3 break-words [overflow-wrap:anywhere]">
-                    {customerData.remarks || customerData.siteMeasurements?.notes}
+                    {activeCustomer?.remarks || siteMeasurements?.notes}
                   </p>
                 )}
               </div>
@@ -1071,9 +1502,9 @@ export default function InteriorSiteDetailsView() {
                 <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-sm mx-auto">
                   Log carpet area, ceiling heights, door/window openings, and MEP utilities.
                 </p>
-                {canDo('crm_site_visits', 'update') && (
+                {canEditSiteVisit && (
                   <button
-                    onClick={() => setIsSiteVisitModalOpen(true)}
+                    onClick={handleOpenSiteVisitModal}
                     className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-colors active:scale-[0.98]"
                   >
                     <Plus size={13} /> Log Measurements Now
@@ -1104,14 +1535,26 @@ export default function InteriorSiteDetailsView() {
                     {sitePhotos.length} Photos
                   </span>
                 </div>
-                {canDo('crm_site_visits', 'update') && (
-                  <button
-                    onClick={() => setIsSiteVisitModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 rounded-lg border border-blue-500/20 transition-colors active:scale-[0.98]"
-                  >
-                    <Pencil size={12} /> Manage Photos
-                  </button>
-                )}
+                <div className="flex items-center gap-2">
+                  {canEditPhotos && (
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingPhotos}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 rounded-lg border border-blue-500/20 transition-colors active:scale-[0.98] disabled:opacity-50"
+                    >
+                      {uploadingPhotos ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
+                      {uploadingPhotos ? 'Uploading...' : 'Upload Photos'}
+                    </button>
+                  )}
+                  {canEditSiteVisit && (
+                    <button
+                      onClick={handleOpenSiteVisitModal}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] hover:bg-[hsl(var(--muted)/0.8)] px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] transition-colors active:scale-[0.98]"
+                    >
+                      <Pencil size={12} /> Manage in Visit
+                    </button>
+                  )}
+                </div>
               </div>
 
               {hasPhotos ? (
@@ -1144,12 +1587,14 @@ export default function InteriorSiteDetailsView() {
                   <ImageIcon className="w-8 h-8 text-[hsl(var(--muted-foreground))] opacity-60" />
                   <p className="text-xs font-bold text-[hsl(var(--foreground))]">No Site Photos Uploaded</p>
                   <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Upload site inspection photos & progress views.</p>
-                  {canDo('crm_site_visits', 'update') && (
+                  {canEditPhotos && (
                     <button
-                      onClick={() => setIsSiteVisitModalOpen(true)}
-                      className="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-colors active:scale-[0.98]"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingPhotos}
+                      className="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-colors active:scale-[0.98] disabled:opacity-50"
                     >
-                      <Plus size={12} /> Upload Site Photos
+                      {uploadingPhotos ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                      {uploadingPhotos ? 'Uploading...' : 'Upload Site Photos'}
                     </button>
                   )}
                 </div>
@@ -1159,25 +1604,39 @@ export default function InteriorSiteDetailsView() {
         )}
       </AnimatePresence>
 
-      {/* Modals for Editing */}
-      {customerData && (
+      {/* Modals for Editing & Sharing */}
+      {activeCustomer?._id && (
         <>
           <InteriorLogSiteVisitModal
             isOpen={isSiteVisitModalOpen}
             onClose={() => setIsSiteVisitModalOpen(false)}
-            customerId={customerData._id}
+            customerId={activeCustomer._id}
             onSuccess={loadSiteDetails}
-            initialMeasurements={customerData.siteMeasurements}
-            initialPhotos={customerData.sitePhotos}
+            initialMeasurements={activeCustomer.siteMeasurements}
+            initialPhotos={activeCustomer.sitePhotos}
+            instructions={activeCustomer.remarks || activeCustomer.siteMeasurements?.notes}
           />
           <InteriorLogRequirementsModal
             isOpen={isReqModalOpen}
             onClose={() => setIsReqModalOpen(false)}
-            customerId={customerData._id}
+            customerId={activeCustomer._id}
             onSuccess={loadSiteDetails}
             initialRequirements={teamRequirements.length > 0 ? teamRequirements : effectiveRequirements}
             clientRequirements={clientRequirements}
-            initialBudget={customerData?.budgetRange || ''}
+            initialBudget={activeCustomer?.budgetRange || (projectInfo?.budget?.amount ? String(projectInfo.budget.amount) : '')}
+          />
+          <InteriorCrmShareModal
+            isOpen={isShareModalOpen}
+            onClose={() => setIsShareModalOpen(false)}
+            lead={activeCustomer}
+            mode="requirements"
+            onUpdated={loadSiteDetails}
+          />
+          <InteriorSendRequirementsModal
+            isOpen={isSendEmailModalOpen}
+            onClose={() => setIsSendEmailModalOpen(false)}
+            lead={activeCustomer}
+            onSuccess={loadSiteDetails}
           />
         </>
       )}
