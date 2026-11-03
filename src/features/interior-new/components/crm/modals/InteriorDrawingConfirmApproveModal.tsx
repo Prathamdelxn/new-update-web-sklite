@@ -39,7 +39,7 @@ export const InteriorDrawingConfirmApproveModal: React.FC<Props> = ({
 
   const drawingTitle = drawing.title || drawing.name || 'Drawing File';
   const versionNum = drawing.currentVersion || (drawing.versions && drawing.versions.length) || 1;
-  const badgeInfo = getFileBadgeInfo(drawing.name || drawingTitle, drawing.category || 'Drawing');
+  const badgeInfo = getFileBadgeInfo(drawing.name, drawing.category || 'Drawing', drawing.url, drawing.fileType);
 
   return (
     <AnimatePresence>

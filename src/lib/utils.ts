@@ -51,6 +51,105 @@ export function formatCurrency(num: number, currency: string = '$'): string {
   return `${isNegative ? '-' : ''}${symbol}${separator}${formatCompact(absNum)}`;
 }
 
+export function formatInternational(num: number, minDecimals: number = 0, maxDecimals: number = 2): string {
+  if (num == null || isNaN(num)) return '0';
+  return Intl.NumberFormat('en-US', {
+    minimumFractionDigits: minDecimals,
+    maximumFractionDigits: maxDecimals,
+  }).format(num);
+}
+
+/**
+ * Formats a number with standard Millions (M), Billions (B), Trillions (T):
+ * - If number < threshold (default 1,000,000 / 1 Million):
+ *     Formats with international commas (en-US, e.g. 1,500.00, 250,000)
+ * - If number >= 1,000,000:
+ *     Formats as Millions / Billions / Trillions
+ *     e.g. 1,500,000 -> "1.50M" (or "1.50 Million" if fullWord is true)
+ *     e.g. 2,312,341,230 -> "2.31B" (or "2.31 Billion")
+ *     e.g. 54,108,784,878,487 -> "54.11T" (or "54.11 Trillion")
+ */
+export function formatMillionBillion(
+  num: number,
+  options?: {
+    threshold?: number;
+    decimals?: number;
+    fullWord?: boolean;
+  }
+): string {
+  if (num == null || isNaN(num)) return '0';
+  if (num === 0) return '0';
+
+  const sign = num < 0 ? '-' : '';
+  const absNum = Math.abs(num);
+  const threshold = options?.threshold ?? 1_000_000;
+  const decimals = options?.decimals ?? 2;
+  const fullWord = options?.fullWord ?? false;
+
+  if (absNum < threshold) {
+    return sign + formatInternational(absNum, 0, 2);
+  }
+
+  const scales = [
+    { value: 1e12, short: 'T', long: 'Trillion' },
+    { value: 1e9, short: 'B', long: 'Billion' },
+    { value: 1e6, short: 'M', long: 'Million' },
+  ];
+
+  for (const { value, short, long } of scales) {
+    if (absNum >= value) {
+      const quotient = absNum / value;
+      if (short === 'T' && quotient >= 1000) {
+        return `${sign}>999T`;
+      }
+      const formattedQuotient = quotient.toLocaleString('en-US', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      });
+      const suffix = fullWord ? ` ${long}` : short;
+      return `${sign}${formattedQuotient}${suffix}`;
+    }
+  }
+
+  return sign + formatInternational(absNum, 0, 2);
+}
+
+/**
+ * Returns formatted smart currency with Millions / Billions representation,
+ * plus exact formatted value for tooltips.
+ */
+export function formatSmartCurrency(
+  num: number,
+  currency: string = '$',
+  options?: {
+    threshold?: number;
+    decimals?: number;
+    fullWord?: boolean;
+  }
+): {
+  display: string;
+  exact: string;
+  isLarge: boolean;
+  compactText: string;
+} {
+  const symbol = currency || '$';
+  const separator = symbol.length > 1 ? ' ' : '';
+  const absNum = Math.abs(num || 0);
+  const isLarge = absNum >= (options?.threshold ?? 1_000_000);
+  const sign = (num || 0) < 0 ? '-' : '';
+
+  const exactFormatted = `${sign}${symbol}${separator}${formatInternational(absNum, 2, 2)}`;
+  const compactText = formatMillionBillion(num, options);
+  const display = `${sign}${symbol}${separator}${compactText}`;
+
+  return {
+    display,
+    exact: exactFormatted,
+    isLarge,
+    compactText,
+  };
+}
+
 export function formatExact(num: number): string {
   if (num == null || isNaN(num)) return '0';
   return Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(num);

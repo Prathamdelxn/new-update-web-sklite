@@ -6,6 +6,7 @@ import { X, Plus, Trash2, Calculator, Save, AlertTriangle } from 'lucide-react';
 import api from '@/services/api.client';
 import interiorApiClient from '@/services/interiorApi.client';
 import { useToast } from '@/providers/ToastContext';
+import { formatSmartCurrency } from '@/lib/utils';
 
 interface Item {
   description: string;
@@ -95,6 +96,9 @@ export function QuotationBuilderModal({ isOpen, onClose, customerId, existingQuo
     }
     if (grandTotal < 0) {
       return toast.error("Grand total amount cannot be negative.");
+    }
+    if (notes && notes.length > 500) {
+      return toast.error("Quotation notes cannot exceed 500 characters.");
     }
 
     setIsSubmitting(true);
@@ -230,6 +234,7 @@ export function QuotationBuilderModal({ isOpen, onClose, customerId, existingQuo
                         <input 
                           type="text" 
                           required
+                          maxLength={150}
                           value={item.description}
                           onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                           placeholder="e.g. Modular Kitchen - Acrylic Finish"
@@ -239,7 +244,7 @@ export function QuotationBuilderModal({ isOpen, onClose, customerId, existingQuo
                       <div className="col-span-2">
                         <input 
                           type="number" 
-                          required min="1"
+                          required min="1" max="999999"
                           value={item.quantity || ''}
                           onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value) || 0)}
                           className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-indigo-500 outline-none text-center"
@@ -248,14 +253,17 @@ export function QuotationBuilderModal({ isOpen, onClose, customerId, existingQuo
                       <div className="col-span-2">
                         <input 
                           type="number" 
-                          required min="0"
+                          required min="0" max="999999999"
                           value={item.unitPrice || ''}
                           onChange={(e) => handleItemChange(index, 'unitPrice', parseInt(e.target.value) || 0)}
                           className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-indigo-500 outline-none text-right"
                         />
                       </div>
-                      <div className="col-span-2 text-right font-bold text-slate-800 flex items-center justify-end pr-2">
-                        ₹{item.total.toLocaleString('en-IN')}
+                      <div 
+                        className="col-span-2 text-right font-bold text-slate-800 flex items-center justify-end pr-2 min-w-0 truncate"
+                        title={formatSmartCurrency(item.total, '₹').exact}
+                      >
+                        {formatSmartCurrency(item.total, '₹').display}
                       </div>
                     </div>
                   ))}
@@ -273,9 +281,15 @@ export function QuotationBuilderModal({ isOpen, onClose, customerId, existingQuo
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Left Side - Notes */}
                 <div>
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 block">Client Notes / Terms</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">Client Notes / Terms</label>
+                    <span className={`text-[10px] font-mono ${notes.length >= 500 ? 'text-rose-500 font-bold' : 'text-slate-400'}`}>
+                      {notes.length}/500
+                    </span>
+                  </div>
                   <textarea 
                     rows={4}
+                    maxLength={500}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="E.g., 50% advance required before production begins. Valid for 15 days."
@@ -284,14 +298,19 @@ export function QuotationBuilderModal({ isOpen, onClose, customerId, existingQuo
                 </div>
 
                 {/* Right Side - Totals */}
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-4">
-                  <div className="flex justify-between items-center text-sm font-semibold text-slate-600">
-                    <span>Subtotal</span>
-                    <span>₹{subtotal.toLocaleString('en-IN')}</span>
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-4 min-w-0 overflow-hidden">
+                  <div className="flex justify-between items-center text-sm font-semibold text-slate-600 gap-2">
+                    <span className="shrink-0">Subtotal</span>
+                    <span 
+                      className="font-bold text-slate-800 truncate text-right"
+                      title={formatSmartCurrency(subtotal, '₹').exact}
+                    >
+                      {formatSmartCurrency(subtotal, '₹').display}
+                    </span>
                   </div>
                   
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="font-semibold text-slate-600 flex items-center gap-2">
+                  <div className="flex justify-between items-center text-sm gap-2">
+                    <span className="font-semibold text-slate-600 flex items-center gap-2 shrink-0">
                       Tax (GST) %
                       <input 
                         type="number" 
@@ -300,11 +319,16 @@ export function QuotationBuilderModal({ isOpen, onClose, customerId, existingQuo
                         className="w-16 px-2 py-1 text-xs rounded border border-slate-200 text-center focus:border-indigo-500 outline-none"
                       />
                     </span>
-                    <span className="font-semibold text-slate-600">+ ₹{tax.toLocaleString('en-IN')}</span>
+                    <span 
+                      className="font-semibold text-slate-600 truncate text-right"
+                      title={formatSmartCurrency(tax, '₹').exact}
+                    >
+                      + {formatSmartCurrency(tax, '₹').display}
+                    </span>
                   </div>
 
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="font-semibold text-slate-600 flex items-center gap-2">
+                  <div className="flex justify-between items-center text-sm gap-2">
+                    <span className="font-semibold text-slate-600 flex items-center gap-2 shrink-0">
                       Discount (₹)
                     </span>
                     <input 
@@ -316,9 +340,24 @@ export function QuotationBuilderModal({ isOpen, onClose, customerId, existingQuo
                     />
                   </div>
 
-                  <div className="pt-4 border-t border-slate-200 flex justify-between items-center">
-                    <span className="text-lg font-black text-slate-900">Grand Total</span>
-                    <span className="text-2xl font-black text-indigo-700">₹{grandTotal.toLocaleString('en-IN')}</span>
+                  <div className="pt-4 border-t border-slate-200 flex justify-between items-center gap-3 min-w-0">
+                    <span className="text-lg font-black text-slate-900 shrink-0">Grand Total</span>
+                    <div className="min-w-0 text-right">
+                      <span 
+                        className="text-2xl font-black text-indigo-700 font-mono truncate block"
+                        title={formatSmartCurrency(grandTotal, '₹').exact}
+                      >
+                        {formatSmartCurrency(grandTotal, '₹').display}
+                      </span>
+                      {formatSmartCurrency(grandTotal, '₹').isLarge && (
+                        <span 
+                          className="text-[10px] font-mono text-slate-500 truncate block"
+                          title={formatSmartCurrency(grandTotal, '₹').exact}
+                        >
+                          ({formatSmartCurrency(grandTotal, '₹').exact})
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

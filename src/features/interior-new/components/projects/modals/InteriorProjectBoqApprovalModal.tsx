@@ -99,6 +99,12 @@ export function InteriorProjectBoqApprovalModal({
       return;
     }
 
+    if (rejectionReason.trim().length > 500) {
+      toast.error('Rejection reason cannot exceed 500 characters.');
+      textareaRef.current?.focus();
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await interiorProjectService.boqApprovalAction(projectId, boq._id, {
@@ -223,25 +229,31 @@ export function InteriorProjectBoqApprovalModal({
 
           {/* Submission notes if provided */}
           {boq.submissionNotes && (
-            <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-100 text-xs text-blue-900">
+            <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-100 text-xs text-blue-900 min-w-0 overflow-hidden">
               <span className="font-bold flex items-center gap-1 mb-0.5 text-blue-700">
                 <MessageSquare size={12} /> Estimator Submission Remarks:
               </span>
-              <p className="text-slate-700 leading-relaxed">{boq.submissionNotes}</p>
+              <p className="text-slate-700 leading-relaxed break-all [word-break:break-word] [overflow-wrap:anywhere]">{boq.submissionNotes}</p>
             </div>
           )}
 
           {/* Rejection Mode View */}
           {actionType === 'reject' ? (
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                <MessageSquare className="w-3.5 h-3.5 text-rose-600" />
-                Reason for Rejection / Adjustments Required <span className="text-rose-500">*</span>
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <MessageSquare className="w-3.5 h-3.5 text-rose-600" />
+                  Reason for Rejection / Adjustments Required <span className="text-rose-500">*</span>
+                </label>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  {rejectionReason.length}/500
+                </span>
+              </div>
               <textarea
                 ref={textareaRef}
                 required
                 rows={4}
+                maxLength={500}
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="Explain what needs to be changed (e.g., reduce rate for carpentry, trim false ceiling scope to meet target budget)..."

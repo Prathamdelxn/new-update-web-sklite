@@ -48,39 +48,86 @@ interface Props {
   requirements?: any[];
 }
 
-export function detectFileType(fileName: string): 'image' | 'pdf' | 'cad' | '3d-model' | 'archive' | 'document' {
-  const ext = (fileName.split('.').pop() || '').toLowerCase();
-  if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'bmp', 'tiff', 'hdr', 'exr'].includes(ext)) return 'image';
-  if (['pdf'].includes(ext)) return 'pdf';
-  if (['dwg', 'skp', 'obj', 'fbx', '3ds', 'dae', 'blend', 'rvt', 'rfa', 'ifc', 'gltf', 'glb', 'max'].includes(ext)) return '3d-model';
-  if (['dxf'].includes(ext)) return 'cad';
-  if (['zip', 'rar', '7z', 'tar'].includes(ext)) return 'archive';
+function extractExtension(str?: string): string {
+  if (!str) return '';
+  const clean = str.split('?')[0].split('#')[0];
+  const parts = clean.split('.');
+  if (parts.length < 2) return '';
+  const candidate = parts.pop()?.trim().toLowerCase() || '';
+  if (/^[a-z0-9]{2,5}$/.test(candidate)) {
+    return candidate;
+  }
+  return '';
+}
+
+const IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'bmp', 'tiff', 'hdr', 'exr'];
+const MODEL_3D_EXTS = ['dwg', 'skp', 'obj', 'fbx', '3ds', 'dae', 'blend', 'rvt', 'rfa', 'ifc', 'gltf', 'glb', 'max'];
+const CAD_EXTS = ['dxf', 'dwg'];
+const ARCHIVE_EXTS = ['zip', 'rar', '7z', 'tar'];
+
+export function detectFileType(
+  fileName?: string,
+  fileUrl?: string,
+  explicitType?: string
+): 'image' | 'pdf' | 'cad' | '3d-model' | 'archive' | 'document' {
+  if (explicitType && ['image', 'pdf', 'cad', '3d-model', 'archive', 'document'].includes(explicitType)) {
+    return explicitType as any;
+  }
+  const ext = extractExtension(fileName) || extractExtension(fileUrl);
+  if (IMAGE_EXTS.includes(ext)) return 'image';
+  if (ext === 'pdf') return 'pdf';
+  if (MODEL_3D_EXTS.includes(ext)) return '3d-model';
+  if (CAD_EXTS.includes(ext)) return 'cad';
+  if (ARCHIVE_EXTS.includes(ext)) return 'archive';
   return 'document';
 }
 
-export function getFileBadgeInfo(fileName: string, category: string) {
-  const ext = (fileName.split('.').pop() || '').toUpperCase();
-  const type = detectFileType(fileName);
+export function getFileBadgeInfo(
+  fileName?: string,
+  category?: string,
+  fileUrl?: string,
+  fileType?: string
+): { label: string; color: string } {
+  const normCategory = (category || '').toUpperCase();
+  const ext = (extractExtension(fileName) || extractExtension(fileUrl)).toUpperCase();
+  const type = detectFileType(fileName, fileUrl, fileType);
 
   if (ext === 'DWG') {
-    return { label: '3D DWG', color: 'bg-purple-500/10 text-purple-600 border-purple-500/20' };
+    return { label: 'DWG', color: 'bg-purple-500/10 text-purple-600 border-purple-500/20' };
   }
   if (type === 'image') {
-    return { label: ext || 'IMAGE', color: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' };
+    return {
+      label: ext && IMAGE_EXTS.includes(ext.toLowerCase()) ? ext : 'IMAGE',
+      color: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+    };
   }
   if (type === 'pdf') {
-    return { label: 'PDF DOC', color: 'bg-red-500/10 text-red-600 border-red-500/20' };
+    return { label: 'PDF', color: 'bg-red-500/10 text-red-600 border-red-500/20' };
   }
   if (type === '3d-model') {
-    return { label: ext || '3D MODEL', color: 'bg-purple-500/10 text-purple-600 border-purple-500/20' };
+    return {
+      label: ext && MODEL_3D_EXTS.includes(ext.toLowerCase()) ? ext : '3D MODEL',
+      color: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
+    };
   }
   if (type === 'cad') {
-    return { label: ext || '2D CAD', color: 'bg-blue-500/10 text-blue-600 border-blue-500/20' };
+    return {
+      label: ext && CAD_EXTS.includes(ext.toLowerCase()) ? ext : '2D CAD',
+      color: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+    };
   }
   if (type === 'archive') {
-    return { label: ext || 'ARCHIVE', color: 'bg-cyan-500/10 text-cyan-600 border-cyan-500/20' };
+    return {
+      label: ext && ARCHIVE_EXTS.includes(ext.toLowerCase()) ? ext : 'ARCHIVE',
+      color: 'bg-cyan-500/10 text-cyan-600 border-cyan-500/20',
+    };
   }
-  return { label: ext || category, color: 'bg-blue-500/10 text-blue-600 border-blue-500/20' };
+
+  // Fallback for document or unknown format - clean 2D or 3D badge, NEVER the raw filename/title
+  if (normCategory.includes('3D')) {
+    return { label: '3D', color: 'bg-purple-500/10 text-purple-600 border-purple-500/20' };
+  }
+  return { label: '2D', color: 'bg-blue-500/10 text-blue-600 border-blue-500/20' };
 }
 
 function sanitizeTitle(fileName: string): string {

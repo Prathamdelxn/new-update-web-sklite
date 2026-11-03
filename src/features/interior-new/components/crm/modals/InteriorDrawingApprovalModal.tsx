@@ -74,7 +74,7 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
   const pastRejectionReason = drawing.rejectionReason || drawing.internalNotes || latestVersion?.rejectionReason || latestVersion?.internalNotes;
   const assignedReviewerName = drawing.assignedReviewerName || latestVersion?.assignedReviewerName;
   const drawingTitle = drawing.title || drawing.name || 'Drawing';
-  const badgeInfo = getFileBadgeInfo(drawing.name || drawingTitle, drawing.category || 'Drawing');
+  const badgeInfo = getFileBadgeInfo(drawing.name, drawing.category || 'Drawing', drawing.url, drawing.fileType);
 
   const handleAction = async (action: 'approve' | 'reject') => {
     if (action === 'reject') {

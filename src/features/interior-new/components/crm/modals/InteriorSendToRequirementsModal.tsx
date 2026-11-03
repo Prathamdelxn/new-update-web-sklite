@@ -112,18 +112,25 @@ export function InteriorSendToRequirementsModal({
     : null;
 
   const validateForm = () => {
-    const newErrors: { assignedMember?: string | null; scheduledDate?: string | null } = {
+    const newErrors: { assignedMember?: string | null; scheduledDate?: string | null; remarks?: string | null } = {
       assignedMember: validateNonEmpty(assignedMember, 'Assign team member'),
       scheduledDate: validateFutureDate(scheduledDate, 'Discussion date & time'),
     };
-    setErrors(newErrors);
-    return !newErrors.assignedMember && !newErrors.scheduledDate;
+    if (remarks.trim().length > 500) {
+      newErrors.remarks = 'Handover notes cannot exceed 500 characters.';
+    }
+    setErrors(newErrors as any);
+    return !newErrors.assignedMember && !newErrors.scheduledDate && !newErrors.remarks;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
-      toast.error('Please fill in all required fields');
+      if (remarks.trim().length > 500) {
+        toast.error('Handover notes cannot exceed 500 characters.');
+      } else {
+        toast.error('Please fill in all required fields');
+      }
       return;
     }
 
@@ -353,11 +360,14 @@ export function InteriorSendToRequirementsModal({
                   <FileText size={13} className="text-emerald-600" />
                   Requirement Handover & Brief Notes
                 </label>
-               
+                <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
+                  {remarks.length}/500
+                </span>
               </div>
 
               <textarea
                 rows={3}
+                maxLength={500}
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
                 placeholder="Add client preferences, specific design style expectations, budget focus, or notes from site visit..."

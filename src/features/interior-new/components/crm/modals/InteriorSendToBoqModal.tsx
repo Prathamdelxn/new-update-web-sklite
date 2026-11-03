@@ -67,6 +67,11 @@ export function InteriorSendToBoqModal({ isOpen, onClose, customerId, onSuccess,
       return;
     }
 
+    if (remarks.trim().length > 500) {
+      toast.error('Handover remarks cannot exceed 500 characters.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -202,10 +207,13 @@ export function InteriorSendToBoqModal({ isOpen, onClose, customerId, onSuccess,
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-800 flex items-center justify-between">
                 <span>Handover Remarks / Costing Notes</span>
-                <span className="text-slate-400 font-normal text-[11px]">(Optional)</span>
+                <span className="text-slate-400 font-normal text-[11px] font-mono">
+                  {remarks.length}/500
+                </span>
               </label>
               <textarea
                 rows={3}
+                maxLength={500}
                 value={remarks}
                 onChange={e => setRemarks(e.target.value)}
                 placeholder="Specific instructions for estimation..."

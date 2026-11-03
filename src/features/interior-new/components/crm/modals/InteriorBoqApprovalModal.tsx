@@ -17,7 +17,7 @@ import {
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
 import { useCurrency } from '@/hooks/useCurrency';
-import { cn, parseMaxBudget } from '@/lib/utils';
+import { cn, parseMaxBudget, formatMillionBillion, formatInternational } from '@/lib/utils';
 
 interface Props {
   isOpen: boolean;
@@ -119,6 +119,10 @@ export function InteriorBoqApprovalModal({
   const handleReject = async () => {
     if (!rejectionReason.trim()) {
       toast.error('Please specify the rejection reason and required changes.');
+      return;
+    }
+    if (rejectionReason.trim().length > 500) {
+      toast.error('Rejection reason cannot exceed 500 characters.');
       return;
     }
     if (!customerId || !targetBoq) return;
@@ -309,9 +313,9 @@ export function InteriorBoqApprovalModal({
                 </div>
               )}
               {targetBoq.submissionNotes && (
-                <div className="pt-2 border-t border-slate-200 text-[11px]">
+                <div className="pt-2 border-t border-slate-200 text-[11px] min-w-0 overflow-hidden">
                   <span className="font-bold text-slate-700">Estimator Focus / Handover Note:</span>
-                  <p className="text-slate-950 italic mt-0.5 whitespace-pre-wrap font-semibold">
+                  <p className="text-slate-950 italic mt-0.5 whitespace-pre-wrap font-semibold break-all [word-break:break-word] [overflow-wrap:anywhere]">
                     "{targetBoq.submissionNotes}"
                   </p>
                 </div>
@@ -324,9 +328,9 @@ export function InteriorBoqApprovalModal({
             <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-2.5 text-xs text-amber-950">
               <AlertTriangle size={16} className="shrink-0 mt-0.5 text-amber-600" />
               <div className="leading-relaxed">
-                <strong className="font-bold text-amber-900">Over Target Budget:</strong> BOQ total of {currencySymbol} {totalBoqAmount.toLocaleString()}{' '}
-                exceeds client's target budget of {currencySymbol} {maxBudget?.toLocaleString()} by{' '}
-                <strong className="font-black text-amber-950">{currencySymbol} {excessAmount.toLocaleString()}</strong>.
+                <strong className="font-bold text-amber-900">Over Target Budget:</strong> BOQ total of {currencySymbol} {formatMillionBillion(totalBoqAmount)}{' '}
+                exceeds client's target budget of {currencySymbol} {formatMillionBillion(maxBudget || 0)} by{' '}
+                <strong className="font-black text-amber-950">{currencySymbol} {formatMillionBillion(excessAmount)}</strong>.
               </div>
             </div>
           )}
@@ -334,11 +338,17 @@ export function InteriorBoqApprovalModal({
           {/* Reject Reason Field (Mandatory) */}
           {isRejectMode && (
             <div className="space-y-1.5 animate-fadeIn">
-              <label className="text-xs font-bold text-rose-600 flex items-center gap-1.5">
-                <AlertCircle size={13} /> Rejection Reason / Required Revisions <span className="text-rose-500">*</span>
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-rose-600 flex items-center gap-1.5">
+                  <AlertCircle size={13} /> Rejection Reason / Required Revisions <span className="text-rose-500">*</span>
+                </label>
+                <span className="text-[10px] text-rose-500 font-mono">
+                  {rejectionReason.length}/500
+                </span>
+              </div>
               <textarea
                 rows={3}
+                maxLength={500}
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="e.g. Rate for ceiling panelling is incorrect; please update hardware fittings to Hafele."

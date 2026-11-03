@@ -170,16 +170,16 @@ export const ConfirmProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex flex-col items-center text-center">
-                <div className="mb-4 p-4 rounded-2xl bg-[hsl(var(--muted))] border border-[hsl(var(--border))] flex items-center justify-center">
+              <div className="flex flex-col items-center text-center w-full min-w-0">
+                <div className="mb-4 p-4 rounded-2xl bg-[hsl(var(--muted))] border border-[hsl(var(--border))] flex items-center justify-center shrink-0">
                   {getIcon()}
                 </div>
 
-                <h3 className="text-xl font-extrabold text-[hsl(var(--foreground))] tracking-tight mb-2">
+                <h3 className="text-xl font-extrabold text-[hsl(var(--foreground))] tracking-tight mb-2 w-full min-w-0 break-words [overflow-wrap:anywhere] break-all px-2">
                   {modalState.title}
                 </h3>
 
-                <p className="text-sm text-[hsl(var(--muted-foreground))] leading-relaxed mb-5">
+                <p className="text-sm text-[hsl(var(--muted-foreground))] leading-relaxed mb-5 w-full min-w-0 break-words [overflow-wrap:anywhere] break-all px-2">
                   {modalState.message}
                 </p>
 

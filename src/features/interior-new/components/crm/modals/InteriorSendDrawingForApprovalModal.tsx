@@ -55,7 +55,7 @@ export const InteriorSendDrawingForApprovalModal: React.FC<Props> = ({
   const drawingId = drawing._id || drawing.id;
   const currentVersion = drawing.currentVersion || 1;
   const drawingTitle = drawing.title || drawing.name || 'Drawing';
-  const badgeInfo = getFileBadgeInfo(drawing.name || drawingTitle, drawing.category || 'Drawing');
+  const badgeInfo = getFileBadgeInfo(drawing.name, drawing.category || 'Drawing', drawing.url, drawing.fileType);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

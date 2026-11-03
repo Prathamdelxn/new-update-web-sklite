@@ -1010,7 +1010,7 @@ export default function InteriorSiteDetailsView() {
                 </div>
 
                 {activeCustomer?.clientRequirementsNotes && (
-                  <div className="text-xs text-[hsl(var(--foreground))] italic bg-[hsl(var(--muted)/0.3)] px-3 py-2 rounded-lg border border-[hsl(var(--border))]">
+                  <div className="text-xs text-[hsl(var(--foreground))] italic bg-[hsl(var(--muted)/0.3)] px-3 py-2 rounded-lg border border-[hsl(var(--border))] break-words [overflow-wrap:anywhere]">
                     <span className="font-semibold not-italic text-emerald-600">Client Note: </span>
                     "{activeCustomer.clientRequirementsNotes}"
                   </div>

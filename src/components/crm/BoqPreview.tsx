@@ -34,7 +34,7 @@ import {
   X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn, parseMaxBudget } from '@/lib/utils';
+import { cn, parseMaxBudget, formatInternational, formatMillionBillion, formatSmartCurrency } from '@/lib/utils';
 import { useCurrency } from '@/hooks/useCurrency';
 import { exportBoqToExcel } from '@/lib/exportBoqExcel';
 import { BoqDrawingViewerModal } from '@/components/crm/BoqDrawingViewerModal';
@@ -180,9 +180,9 @@ export function BoqPreview({
           ? "bg-rose-500/[0.06] border-rose-500/30"
           : "bg-slate-500/[0.06] border-[hsl(var(--border))]"
       )}>
-        <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex items-start gap-2.5 min-w-0 flex-1">
           <div className={cn(
-            "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-bold border",
+            "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-bold border mt-0.5",
             isApproved
               ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
               : isPendingApproval
@@ -194,7 +194,7 @@ export function BoqPreview({
             {isApproved ? <ShieldCheck size={16} /> : isPendingApproval ? <Clock size={16} /> : isRejected ? <XCircle size={16} /> : <FileText size={16} />}
           </div>
 
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1 space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-extrabold text-slate-900">
                 {isApproved ? "Internal Approval: Approved" : isPendingApproval ? "Internal Approval: Pending Review" : isRejected ? "Internal Approval: Changes Requested" : "Internal Approval: Draft"}
@@ -212,15 +212,27 @@ export function BoqPreview({
                 {isApproved ? "Approved" : isPendingApproval ? "Pending Review" : isRejected ? "Rejected" : "Draft"}
               </span>
             </div>
-            <p className="text-xs text-slate-600 mt-0.5">
-              {isApproved
-                ? `BOQ estimation approved${boq.approvedByName ? ` by ${boq.approvedByName}` : ''}. Ready for Quotations.`
-                : isPendingApproval
-                ? `Submitted to ${boq.assignedReviewerName || 'Manager'} for review.`
-                : isRejected
-                ? `Revisions required: "${boq.rejectionReason || 'Please review items'}"`
-                : "This estimation is in draft mode and requires manager approval before quotation."}
-            </p>
+            {isRejected && boq.rejectionReason ? (
+              <div className="mt-2 text-xs bg-rose-50 border border-rose-200/90 text-rose-950 px-3 py-1.5 rounded-xl flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2 max-w-2xl min-w-0 shadow-2xs overflow-hidden">
+                <span className="font-extrabold text-rose-800 shrink-0 text-[11px] select-none flex items-center gap-1">
+                  <XCircle size={12} className="text-rose-600 shrink-0" />
+                  Revisions Required:
+                </span>
+                <p className="font-medium leading-relaxed break-all [word-break:break-word] [overflow-wrap:anywhere] text-rose-950 italic text-[11px] min-w-0 flex-1">
+                  "{boq.rejectionReason}"
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-600 mt-0.5 leading-relaxed break-all [word-break:break-word] [overflow-wrap:anywhere] max-w-2xl min-w-0">
+                {isApproved
+                  ? `BOQ estimation approved${boq.approvedByName ? ` by ${boq.approvedByName}` : ''}. Ready for Quotations.`
+                  : isPendingApproval
+                  ? `Submitted to ${boq.assignedReviewerName || 'Manager'} for review.`
+                  : isRejected
+                  ? "Revisions requested by manager. Please review items and resubmit."
+                  : "This estimation is in draft mode and requires manager approval before quotation."}
+              </p>
+            )}
 
             {/* Version Metadata: Date & Creator */}
             <div className="flex items-center gap-3 mt-1.5 flex-wrap text-[11px] text-slate-500 font-medium">
@@ -243,9 +255,14 @@ export function BoqPreview({
             </div>
 
             {boq.submissionNotes && (
-              <div className="mt-2 text-xs bg-white border border-amber-200 text-slate-800 px-3 py-1.5 rounded-xl flex items-start gap-2 max-w-xl shadow-xs">
-                <span className="font-extrabold text-amber-800 shrink-0 text-[11px]">Review Focus / Note:</span>
-                <span className="font-medium leading-relaxed break-words text-slate-900 italic text-[11px]">"{boq.submissionNotes}"</span>
+              <div className="mt-2 text-xs bg-white/95 border border-amber-200 text-slate-800 px-3 py-1.5 rounded-xl flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2 max-w-2xl min-w-0 shadow-2xs overflow-hidden">
+                <span className="font-extrabold text-amber-800 shrink-0 text-[11px] select-none flex items-center gap-1">
+                  <FileText size={12} className="text-amber-600 shrink-0" />
+                  Review Focus / Note:
+                </span>
+                <p className="font-medium leading-relaxed break-all [word-break:break-word] [overflow-wrap:anywhere] text-slate-900 italic text-[11px] min-w-0 flex-1">
+                  "{boq.submissionNotes}"
+                </p>
               </div>
             )}
           </div>
@@ -297,15 +314,18 @@ export function BoqPreview({
             <div
               key={cat.name}
               className={cn(
-                "px-3 py-1.5 rounded-xl border text-[11px] font-bold flex items-center gap-2 shrink-0 bg-white shadow-2xs",
+                "px-3 py-1.5 rounded-xl border text-[11px] font-bold flex items-center gap-2 shrink-0 bg-white shadow-2xs max-w-xs",
                 getCategoryBadgeClass(cat.name)
               )}
             >
-              <Tag size={12} />
-              <span>{cat.name}</span>
-              <span className="opacity-60 text-[10px]">({cat.count})</span>
-              <span className="font-extrabold text-slate-900 font-mono">
-                {currencySymbol} {cat.total.toLocaleString()}
+              <Tag size={12} className="shrink-0" />
+              <span className="truncate max-w-[150px]" title={cat.name}>{cat.name}</span>
+              <span className="opacity-60 text-[10px] shrink-0">({cat.count})</span>
+              <span
+                className="font-extrabold text-slate-900 font-mono shrink-0 whitespace-nowrap"
+                title={`${currencySymbol} ${formatInternational(cat.total, 2, 2)}`}
+              >
+                {currencySymbol} {formatMillionBillion(cat.total)}
               </span>
             </div>
           ))}
@@ -321,11 +341,11 @@ export function BoqPreview({
           >
             {/* Section Header Band */}
             <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-              <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 <span className="px-2 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-blue-700 font-mono text-[11px] font-bold shrink-0">
                   Sec {section.sectionNumber || secIdx + 1}
                 </span>
-                <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate max-w-sm sm:max-w-md">
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate max-w-xs sm:max-w-md min-w-0" title={section.sectionTitle}>
                   {section.sectionTitle}
                 </h3>
                 <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full shrink-0">
@@ -335,8 +355,11 @@ export function BoqPreview({
 
               <div className="text-right shrink-0">
                 <span className="text-[11px] font-semibold text-slate-500 mr-2">Section Subtotal:</span>
-                <span className="text-xs font-bold font-mono text-slate-900">
-                  {currencySymbol} {section.subTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                <span
+                  className="text-xs font-bold font-mono text-slate-900 whitespace-nowrap"
+                  title={`${currencySymbol} ${formatInternational(section.subTotal, 2, 2)}`}
+                >
+                  {currencySymbol} {formatMillionBillion(section.subTotal)}
                 </span>
               </div>
             </div>
@@ -351,7 +374,7 @@ export function BoqPreview({
                       <FileText size={13} className="text-blue-600 shrink-0" />
                       <span>Section Scope of Work / Overview Note</span>
                     </div>
-                    <p className="text-xs text-slate-900 font-normal leading-relaxed whitespace-pre-wrap break-all">
+                    <p className="text-xs text-slate-900 font-normal leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                       {section.scopeDescription}
                     </p>
                   </div>
@@ -394,17 +417,17 @@ export function BoqPreview({
             )}
 
             {/* Section Items Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left border-collapse table-fixed">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full min-w-[960px] text-xs text-left border-collapse table-fixed">
                 <thead>
                   <tr className="bg-slate-50 text-slate-600 font-bold text-[11px] uppercase tracking-wider border-b border-slate-200">
-                    <th className="p-3 w-14 text-center">Sr. No</th>
-                    <th className="p-3 w-[40%] min-w-[200px]">Item Description & Technical Specifications</th>
-                    <th className="p-3 text-center w-20">Unit</th>
-                    <th className="p-3 text-center w-20">Quantity</th>
-                    <th className="p-3 text-right w-24">Rate ({currencySymbol})</th>
-                    <th className="p-3 text-right w-28">Amount ({currencySymbol})</th>
-                    <th className="p-3 w-[22%] min-w-[140px]">Remarks / Disposal</th>
+                    <th className="p-3 w-14 text-center shrink-0">Sr. No</th>
+                    <th className="p-3 w-[38%] min-w-[260px]">Item Description & Technical Specifications</th>
+                    <th className="p-3 text-center w-20 shrink-0">Unit</th>
+                    <th className="p-3 text-center w-20 shrink-0">Quantity</th>
+                    <th className="p-3 text-right w-28 shrink-0">Rate ({currencySymbol})</th>
+                    <th className="p-3 text-right w-32 shrink-0">Amount ({currencySymbol})</th>
+                    <th className="p-3 w-[24%] min-w-[160px]">Remarks / Disposal</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
@@ -422,11 +445,11 @@ export function BoqPreview({
                         {/* Description & Technical Specs */}
                         <td
                           onClick={() => toggleExpandItem(itemId)}
-                          className="p-3 space-y-1 cursor-pointer select-text transition-all duration-300 max-w-full overflow-hidden"
+                          className="p-3 space-y-1 cursor-pointer select-text transition-all duration-300 overflow-hidden"
                           title="Click or hover to expand/collapse full specification"
                         >
                           <div className="flex items-start justify-between gap-1.5">
-                            <div className="font-bold text-xs text-slate-900 group-hover:text-blue-600 transition-colors break-words [overflow-wrap:anywhere] leading-snug">
+                            <div className="font-bold text-xs text-slate-900 group-hover:text-blue-600 transition-colors break-all [word-break:break-word] [overflow-wrap:anywhere] leading-snug">
                               {item.itemName}
                             </div>
                             {item.description && (
@@ -442,13 +465,13 @@ export function BoqPreview({
                           {item.description && (
                             <div
                               className={cn(
-                                "text-[11px] text-slate-600 leading-relaxed break-words [overflow-wrap:anywhere] transition-[max-height,opacity] duration-300 ease-in-out overflow-hidden",
+                                "text-[11px] text-slate-600 leading-relaxed break-all [word-break:break-word] [overflow-wrap:anywhere] transition-[max-height,opacity] duration-300 ease-in-out overflow-hidden",
                                 isExpanded
                                   ? "max-h-[600px] opacity-100"
                                   : "max-h-[1.35rem] group-hover:max-h-[600px] opacity-80 group-hover:opacity-100"
                               )}
                             >
-                              <p className="whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
+                              <p className="whitespace-pre-wrap leading-relaxed break-all [word-break:break-word] [overflow-wrap:anywhere]">
                                 {item.description}
                               </p>
                             </div>
@@ -456,29 +479,49 @@ export function BoqPreview({
                         </td>
 
                         {/* Unit */}
-                        <td className="p-3 text-center align-top">
-                          <span className="inline-block px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-700 uppercase tracking-wider whitespace-nowrap">
+                        <td className="p-3 text-center align-top w-20 shrink-0 overflow-hidden">
+                          <span className="inline-block max-w-[70px] truncate px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-700 uppercase tracking-wider" title={item.unit || 'Nos'}>
                             {item.unit || 'Nos'}
                           </span>
                         </td>
 
                         {/* Quantity */}
-                        <td className="p-3 text-center font-mono font-bold text-xs text-slate-900 whitespace-nowrap align-top">
-                          {Number(item.quantity || 0).toLocaleString()}
+                        <td className="p-3 text-center font-mono font-bold text-xs text-slate-900 align-top w-20 shrink-0 overflow-hidden">
+                          <span className="truncate block max-w-full" title={formatInternational(Number(item.quantity || 0))}>
+                            {formatMillionBillion(Number(item.quantity || 0), { threshold: 1_000_000 })}
+                          </span>
                         </td>
 
                         {/* Rate */}
-                        <td className="p-3 text-right font-mono font-bold text-xs text-slate-700 whitespace-nowrap align-top">
-                          {currencySymbol} {Number(item.rate || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                        <td className="p-3 text-right font-mono font-bold text-xs text-slate-700 align-top w-28 shrink-0 tabular-nums overflow-hidden">
+                          {(() => {
+                            const smartRate = formatSmartCurrency(Number(item.rate || 0), currencySymbol, { threshold: 1_000_000 });
+                            return (
+                              <div className="flex flex-col items-end min-w-0" title={smartRate.exact}>
+                                <span className="truncate max-w-full font-bold">
+                                  {smartRate.display}
+                                </span>
+                              </div>
+                            );
+                          })()}
                         </td>
 
                         {/* Amount */}
-                        <td className="p-3 text-right font-mono font-black text-xs text-slate-900 whitespace-nowrap align-top">
-                          {currencySymbol} {Number(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                        <td className="p-3 text-right font-mono font-black text-xs text-slate-900 align-top w-32 shrink-0 tabular-nums overflow-hidden">
+                          {(() => {
+                            const smartAmt = formatSmartCurrency(Number(item.amount || 0), currencySymbol, { threshold: 1_000_000 });
+                            return (
+                              <div className="flex flex-col items-end min-w-0" title={smartAmt.exact}>
+                                <span className="truncate max-w-full font-black text-slate-900">
+                                  {smartAmt.display}
+                                </span>
+                              </div>
+                            );
+                          })()}
                         </td>
 
                         {/* Remarks */}
-                        <td className="p-3 text-[11px] text-slate-600 italic break-words [overflow-wrap:anywhere] align-top max-w-full overflow-hidden">
+                        <td className="p-3 text-[11px] text-slate-600 italic break-all [word-break:break-word] [overflow-wrap:anywhere] align-top overflow-hidden">
                           {item.remarks || '-'}
                         </td>
                       </tr>
@@ -489,13 +532,21 @@ export function BoqPreview({
             </div>
 
             {/* Section Subtotal Footer */}
-            <div className="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700">
+            <div className="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
+              <span className="text-xs font-bold text-slate-700 truncate min-w-0" title={section.sectionTitle}>
                 Sub Total of {section.sectionTitle}:
               </span>
-              <span className="text-xs font-black font-mono text-slate-900 bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-2xs">
-                {currencySymbol} {section.subTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
-              </span>
+              {(() => {
+                const smartSub = formatSmartCurrency(section.subTotal, currencySymbol, { threshold: 1_000_000 });
+                return (
+                  <span
+                    className="text-xs font-black font-mono text-slate-900 bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-2xs shrink-0 whitespace-nowrap"
+                    title={smartSub.exact}
+                  >
+                    {smartSub.display}
+                  </span>
+                );
+              })()}
             </div>
           </div>
         ))}
@@ -507,7 +558,7 @@ export function BoqPreview({
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <AlertTriangle size={16} className="shrink-0 text-rose-600" />
             <span className="break-words [overflow-wrap:anywhere]">
-              <strong>Over Target Budget Warning:</strong> Current BOQ total of {currencySymbol} {totalBoqAmount.toLocaleString()} exceeds estimated target budget of {currencySymbol} {maxBudget?.toLocaleString()} ({lead?.budgetRange || 'Estimate'}) by <strong className="font-extrabold text-rose-700">{currencySymbol} {excessAmount.toLocaleString()}</strong>.
+              <strong>Over Target Budget Warning:</strong> Current BOQ total of {currencySymbol} {formatMillionBillion(totalBoqAmount)} exceeds estimated target budget of {currencySymbol} {formatMillionBillion(maxBudget || 0)} ({lead?.budgetRange || 'Estimate'}) by <strong className="font-extrabold text-rose-700">{currencySymbol} {formatMillionBillion(excessAmount)}</strong>.
             </span>
           </div>
           <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200 shrink-0">
@@ -518,24 +569,25 @@ export function BoqPreview({
 
       {/* Estimator Remarks / Handover Notes (only if present) */}
       {(boq.notes?.trim() || boq.submissionNotes?.trim()) && (
-        <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-3 shadow-xs">
+        <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-3 shadow-xs min-w-0 overflow-hidden">
           {boq.notes?.trim() && (
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1 min-w-0 overflow-hidden">
               <p className="text-[10px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                 <FileText size={12} className="text-blue-600" />
                 Estimator Remarks & Assumptions
               </p>
-              <p className="text-xs text-slate-900 font-medium whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
+              <p className="text-xs text-slate-900 font-medium whitespace-pre-wrap leading-relaxed break-all [word-break:break-word] [overflow-wrap:anywhere]">
                 {boq.notes.trim()}
               </p>
             </div>
           )}
           {boq.submissionNotes?.trim() && (
-            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs shadow-2xs">
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-amber-900">
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs shadow-2xs min-w-0 overflow-hidden">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-amber-900 flex items-center gap-1">
+                <FileText size={12} className="text-amber-700" />
                 Review Focus / Handover Note
               </p>
-              <p className="text-slate-900 font-semibold italic mt-1 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+              <p className="text-slate-900 font-semibold italic mt-1 whitespace-pre-wrap break-all [word-break:break-word] [overflow-wrap:anywhere] leading-relaxed">
                 "{boq.submissionNotes.trim()}"
               </p>
             </div>

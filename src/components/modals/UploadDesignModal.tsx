@@ -257,8 +257,8 @@ export const UploadDesignModal = ({
 
               <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
                 {newFiles.map((file, index) => {
-                  const type = file.fileType || detectFileType(file.name);
-                  const badge = getFileBadgeInfo(file.name, file.category);
+                  const type = file.fileType || detectFileType(file.name, file.url);
+                  const badge = getFileBadgeInfo(file.name, file.category, file.url, type);
 
                   return (
                     <div
@@ -341,8 +341,8 @@ export const UploadDesignModal = ({
 
               <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                 {existingFiles.map((file, index) => {
-                  const type = file.fileType || detectFileType(file.name);
-                  const badge = getFileBadgeInfo(file.name, file.category);
+                  const type = file.fileType || detectFileType(file.name, file.url);
+                  const badge = getFileBadgeInfo(file.name, file.category, file.url, type);
 
                   return (
                     <div

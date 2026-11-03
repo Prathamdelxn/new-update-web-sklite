@@ -456,16 +456,47 @@ export function InteriorProjectBoqBuilderModal({
       return toast.error('Please add at least one section/category and line item to the BOQ.');
     }
 
-    if (sections.some((s) => !s.sectionTitle || !s.sectionTitle.trim())) {
-      return toast.error('Please provide a category/section name for all sections.');
+    for (const s of sections) {
+      if (!s.sectionTitle || !s.sectionTitle.trim()) {
+        return toast.error('Please provide a category/section name for all sections.');
+      }
+      if (s.sectionTitle.trim().length > 80) {
+        return toast.error(`Section name "${s.sectionTitle.slice(0, 25)}..." exceeds maximum allowed length of 80 characters.`);
+      }
+      if (s.sectionNumber && s.sectionNumber.trim().length > 15) {
+        return toast.error(`Section number "${s.sectionNumber}" exceeds maximum allowed length of 15 characters.`);
+      }
+      if (s.scopeDescription && s.scopeDescription.trim().length > 1000) {
+        return toast.error(`Section Scope Note in "${s.sectionTitle.slice(0, 25)}" exceeds maximum allowed length of 1000 characters.`);
+      }
     }
 
-    if (items.some((i) => !i.itemName || !i.itemName.trim())) {
-      return toast.error('Please provide an Item Name for all line items.');
+    for (const i of items) {
+      if (!i.itemName || !i.itemName.trim()) {
+        return toast.error('Please provide an Item Name for all line items.');
+      }
+      if (i.itemName.trim().length > 120) {
+        return toast.error(`Item title "${i.itemName.slice(0, 25)}..." exceeds maximum allowed length of 120 characters.`);
+      }
+      if (i.description && i.description.trim().length > 1000) {
+        return toast.error(`Item description for "${i.itemName.slice(0, 25)}" exceeds maximum allowed length of 1000 characters.`);
+      }
+      if (i.remarks && i.remarks.trim().length > 500) {
+        return toast.error(`Remarks for "${i.itemName.slice(0, 25)}" exceeds maximum allowed length of 500 characters.`);
+      }
+      if (!i.quantity || Number(i.quantity) <= 0) {
+        return toast.error(`Quantity must be greater than 0 for "${i.itemName.slice(0, 25)}".`);
+      }
+      if (Number(i.quantity) > 999999999) {
+        return toast.error(`Quantity is too large for "${i.itemName.slice(0, 25)}" (maximum 999,999,999).`);
+      }
+      if (Number(i.rate) > 999999999) {
+        return toast.error(`Rate is too large for "${i.itemName.slice(0, 25)}" (maximum 999,999,999).`);
+      }
     }
 
-    if (items.some((i) => !i.quantity || Number(i.quantity) <= 0)) {
-      return toast.error('Quantity must be greater than 0 for all rows.');
+    if (notes && notes.trim().length > 2000) {
+      return toast.error('Overall BOQ terms/notes cannot exceed 2000 characters.');
     }
 
     setIsSubmitting(true);
@@ -632,6 +663,7 @@ export function InteriorProjectBoqBuilderModal({
                         <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
                           <input
                             disabled={isReadOnly}
+                            maxLength={15}
                             value={section.sectionNumber}
                             onChange={(e) => updateSection(section.id, 'sectionNumber', e.target.value)}
                             placeholder="Sec #"
@@ -641,6 +673,7 @@ export function InteriorProjectBoqBuilderModal({
                           <input
                             required
                             disabled={isReadOnly}
+                            maxLength={80}
                             list={`boq-categories-${section.id}`}
                             value={section.sectionTitle}
                             onChange={(e) => updateSection(section.id, 'sectionTitle', e.target.value)}
@@ -683,13 +716,21 @@ export function InteriorProjectBoqBuilderModal({
                       <div className="p-3 sm:p-4 space-y-3.5">
                         {/* Section Scope Notes */}
                         <div className="space-y-1">
-                          <label className="text-[11px] font-semibold text-slate-700 flex items-center gap-1.5">
-                            <FileText className="w-3 h-3 text-blue-600" />
-                            <span>Section Scope of Work / Technical Notes (Optional)</span>
+                          <label className="text-[11px] font-semibold text-slate-700 flex items-center justify-between gap-1.5">
+                            <span className="flex items-center gap-1.5">
+                              <FileText className="w-3 h-3 text-blue-600" />
+                              <span>Section Scope of Work / Technical Notes (Optional)</span>
+                            </span>
+                            {!isReadOnly && (
+                              <span className="text-[10px] font-normal text-slate-400">
+                                {(section.scopeDescription || '').length}/1000
+                              </span>
+                            )}
                           </label>
                           <textarea
                             disabled={isReadOnly}
                             rows={2}
+                            maxLength={1000}
                             value={section.scopeDescription}
                             onChange={(e) => updateSection(section.id, 'scopeDescription', e.target.value)}
                             placeholder="Describe scope, surface preparation, approvals, work methods, inclusions/exclusions for this section..."
@@ -814,11 +855,11 @@ export function InteriorProjectBoqBuilderModal({
                                   <tr
                                     key={item.id}
                                     className="border-b border-slate-100 hover:bg-slate-50/60 transition-colors"
-                                  >
-                                    {/* Code */}
+                                  >                                     {/* Code */}
                                     <td className="p-1.5 align-top">
                                       <input
                                         disabled={isReadOnly}
+                                        maxLength={15}
                                         value={item.itemCode}
                                         onChange={(e) => updateItem(item.id, 'itemCode', e.target.value)}
                                         placeholder={String(rowIdx + 1)}
@@ -831,6 +872,7 @@ export function InteriorProjectBoqBuilderModal({
                                       <textarea
                                         required
                                         disabled={isReadOnly}
+                                        maxLength={120}
                                         rows={2}
                                         value={item.itemName}
                                         onChange={(e) => updateItem(item.id, 'itemName', e.target.value)}
@@ -843,6 +885,7 @@ export function InteriorProjectBoqBuilderModal({
                                     <td className="p-1.5 align-top">
                                       <textarea
                                         disabled={isReadOnly}
+                                        maxLength={1000}
                                         rows={2}
                                         value={item.description}
                                         onChange={(e) => updateItem(item.id, 'description', e.target.value)}
@@ -857,6 +900,7 @@ export function InteriorProjectBoqBuilderModal({
                                         type="number"
                                         required
                                         min={0.01}
+                                        max={999999999}
                                         step="any"
                                         disabled={isReadOnly}
                                         value={item.quantity === 0 ? '' : item.quantity}
@@ -887,6 +931,7 @@ export function InteriorProjectBoqBuilderModal({
                                       <input
                                         type="number"
                                         min={0}
+                                        max={999999999}
                                         step="any"
                                         disabled={isReadOnly}
                                         value={item.rate === 0 ? '' : item.rate}
@@ -907,6 +952,7 @@ export function InteriorProjectBoqBuilderModal({
                                     <td className="p-1.5 align-top">
                                       <textarea
                                         disabled={isReadOnly}
+                                        maxLength={500}
                                         rows={2}
                                         value={item.remarks}
                                         onChange={(e) => updateItem(item.id, 'remarks', e.target.value)}
@@ -914,6 +960,7 @@ export function InteriorProjectBoqBuilderModal({
                                         className="w-full text-xs p-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 outline-none focus:border-blue-500 disabled:bg-slate-50 resize-none placeholder:text-slate-400"
                                       />
                                     </td>
+
 
                                     {/* Delete Row Button */}
                                     {!isReadOnly && (
@@ -955,13 +1002,21 @@ export function InteriorProjectBoqBuilderModal({
 
               {/* Terms & Overall Scope Notes */}
               <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs space-y-2">
-                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <FileText className="w-4 h-4 text-blue-600" />
-                  <span>BOQ Notes, Special Conditions & Payment Terms</span>
+                <label className="text-xs font-bold text-slate-800 flex items-center justify-between gap-1.5">
+                  <span className="flex items-center gap-1.5">
+                    <FileText className="w-4 h-4 text-blue-600" />
+                    <span>BOQ Notes, Special Conditions & Payment Terms</span>
+                  </span>
+                  {!isReadOnly && (
+                    <span className="text-[10px] font-normal text-slate-400">
+                      {notes.length}/2000
+                    </span>
+                  )}
                 </label>
                 <textarea
                   disabled={isReadOnly}
                   rows={3}
+                  maxLength={2000}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Enter custom remarks, exclusions, payment milestones, brand substitution guidelines, or site constraints..."

@@ -28,7 +28,7 @@ import {
   Clock,
   RefreshCw,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatSmartCurrency } from '@/lib/utils';
 import interiorApiClient from '@/services/interiorApi.client';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { interiorProjectService } from '@/services/interiorProject.service';
@@ -213,10 +213,11 @@ export default function InteriorProjectQuotationView() {
   const handleDeleteQuotationByIndex = async (idxToDelete: number) => {
     const q = quotations[idxToDelete];
     const quoteTitle = q?.title || `Quotation ${idxToDelete + 1}`;
+    const displayTitle = quoteTitle.length > 50 ? `${quoteTitle.slice(0, 50)}...` : quoteTitle;
 
     const confirmed = await confirm({
       title: 'Delete Quotation',
-      message: `Are you sure you want to delete "${quoteTitle}" (v${q?.version || idxToDelete + 1})? This action cannot be undone.`,
+      message: `Are you sure you want to delete "${displayTitle}" (v${q?.version || idxToDelete + 1})? This action cannot be undone.`,
       confirmText: 'Delete Quotation',
       type: 'danger',
     });
@@ -344,13 +345,24 @@ export default function InteriorProjectQuotationView() {
 
         {/* ── 2. Summary KPI Metrics Ribbon ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors">
+          <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors min-w-0 overflow-hidden">
             <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
               Grand Total
             </p>
-            <p className="font-extrabold text-sm sm:text-base text-blue-600 dark:text-blue-400 mt-1">
-              {hasQuotations ? `${currencySymbol} ${quotationInfo.grandTotal.toLocaleString()}` : '—'}
+            <p 
+              className="font-extrabold text-sm sm:text-base text-blue-600 dark:text-blue-400 mt-1 truncate block"
+              title={hasQuotations ? formatSmartCurrency(quotationInfo.grandTotal, currencySymbol).exact : ''}
+            >
+              {hasQuotations ? formatSmartCurrency(quotationInfo.grandTotal, currencySymbol).display : '—'}
             </p>
+            {hasQuotations && formatSmartCurrency(quotationInfo.grandTotal, currencySymbol).isLarge && (
+              <p 
+                className="text-[10px] font-mono text-[hsl(var(--muted-foreground))] truncate block"
+                title={formatSmartCurrency(quotationInfo.grandTotal, currencySymbol).exact}
+              >
+                ({formatSmartCurrency(quotationInfo.grandTotal, currencySymbol).exact})
+              </p>
+            )}
           </div>
 
           <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors">
@@ -435,12 +447,12 @@ export default function InteriorProjectQuotationView() {
                 <thead>
                   <tr className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.4)] text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wider text-[10px]">
                     <th className="py-3 px-4 w-12 text-center">#</th>
-                    <th className="py-3 px-4">Quotation Title</th>
-                    <th className="py-3 px-4">Scope / Items</th>
-                    <th className="py-3 px-4">Subtotal & Tax</th>
-                    <th className="py-3 px-4">Grand Total</th>
-                    <th className="py-3 px-4 text-center">Status</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                    <th className="py-3 px-4 min-w-[200px] max-w-[320px]">Quotation Title</th>
+                    <th className="py-3 px-4 whitespace-nowrap">Scope / Items</th>
+                    <th className="py-3 px-4 whitespace-nowrap">Subtotal & Tax</th>
+                    <th className="py-3 px-4 whitespace-nowrap">Grand Total</th>
+                    <th className="py-3 px-4 text-center whitespace-nowrap">Status</th>
+                    <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border))]">
@@ -463,16 +475,19 @@ export default function InteriorProjectQuotationView() {
                         </td>
 
                         {/* Quotation Title */}
-                        <td className="py-3.5 px-4 font-bold text-[hsl(var(--foreground))]">
-                          <div className="flex items-center gap-3">
+                        <td className="py-3.5 px-4 font-bold text-[hsl(var(--foreground))] min-w-[200px] max-w-[320px]">
+                          <div className="flex items-center gap-3 min-w-0">
                             <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-all bg-blue-50 text-blue-600 border-blue-200 group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-500/10 dark:border-blue-500/20">
                               <FileText size={14} />
                             </div>
-                            <div>
-                              <span className="text-xs font-bold text-[hsl(var(--foreground))] block">
+                            <div className="min-w-0 flex-1">
+                              <span 
+                                className="text-xs font-bold text-[hsl(var(--foreground))] block truncate"
+                                title={quoteTitle}
+                              >
                                 {quoteTitle}
                               </span>
-                              <p className="text-[10px] text-[hsl(var(--muted-foreground))] font-normal">
+                              <p className="text-[10px] text-[hsl(var(--muted-foreground))] font-normal truncate">
                                 Version {q.version || idx + 1}
                                 {q.sourceBoqVersion && ` • BOQ v${q.sourceBoqVersion}`}
                                 {Array.isArray(q.vendorQuotes) && q.vendorQuotes.length > 0 && (
@@ -497,14 +512,20 @@ export default function InteriorProjectQuotationView() {
 
                         {/* Subtotal & Tax */}
                         <td className="py-3.5 px-4 text-[11px] text-[hsl(var(--muted-foreground))] whitespace-nowrap">
-                          <div className="font-medium text-[hsl(var(--foreground))]">
-                            {currencySymbol} {(q.subtotal || q.subTotal || 0).toLocaleString()}
+                          <div 
+                            className="font-medium text-[hsl(var(--foreground))] truncate max-w-[140px]"
+                            title={formatSmartCurrency(q.subtotal || q.subTotal || 0, currencySymbol).exact}
+                          >
+                            {formatSmartCurrency(q.subtotal || q.subTotal || 0, currencySymbol).display}
                           </div>
                           <div className="text-[10px] text-[hsl(var(--muted-foreground))]">
                             Tax: {q.taxPercentage || 0}%
                             {Number(q.discountAmount || 0) > 0 && (
-                              <span className="ml-1 text-emerald-600 font-semibold">
-                                • Disc: {currencySymbol} {Number(q.discountAmount).toLocaleString()}
+                              <span 
+                                className="ml-1 text-emerald-600 font-semibold truncate"
+                                title={formatSmartCurrency(Number(q.discountAmount), currencySymbol).exact}
+                              >
+                                • Disc: {formatSmartCurrency(Number(q.discountAmount), currencySymbol).display}
                               </span>
                             )}
                           </div>
@@ -512,8 +533,11 @@ export default function InteriorProjectQuotationView() {
 
                         {/* Grand Total */}
                         <td className="py-3.5 px-4 whitespace-nowrap">
-                          <span className="text-xs font-extrabold text-blue-600 dark:text-blue-400">
-                            {currencySymbol} {(q.grandTotal || 0).toLocaleString()}
+                          <span 
+                            className="text-xs font-extrabold text-blue-600 dark:text-blue-400 truncate block max-w-[150px]"
+                            title={formatSmartCurrency(q.grandTotal || 0, currencySymbol).exact}
+                          >
+                            {formatSmartCurrency(q.grandTotal || 0, currencySymbol).display}
                           </span>
                         </td>
 

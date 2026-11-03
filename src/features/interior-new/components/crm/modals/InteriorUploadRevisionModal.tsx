@@ -78,7 +78,7 @@ export const InteriorUploadRevisionModal: React.FC<Props> = ({
   const internalNotes = drawing.internalNotes || latestVersion?.internalNotes;
   const rejectionReason = drawing.rejectionReason || drawing.internalNotes || latestVersion?.rejectionReason || latestVersion?.internalNotes;
   const approvalStatus = drawing.approvalStatus || latestVersion?.approvalStatus || drawing.status;
-  const badgeInfo = getFileBadgeInfo(drawing.name || 'Drawing', drawing.category || 'Drawing');
+  const badgeInfo = getFileBadgeInfo(drawing.name, drawing.category || 'Drawing', drawing.url, drawing.fileType);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

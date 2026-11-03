@@ -39,7 +39,7 @@ import {
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
 import { useCurrency } from '@/hooks/useCurrency';
-import { cn, parseMaxBudget } from '@/lib/utils';
+import { cn, parseMaxBudget, formatSmartCurrency, formatMillionBillion, formatInternational } from '@/lib/utils';
 
 export interface StructuredSection {
   id: string;
@@ -376,6 +376,11 @@ export function InteriorQuotationBuilderModal({
       titleInputRef.current?.focus();
       return;
     }
+    if (quotationTitle.trim().length > 60) {
+      setTitleError('Quotation title cannot exceed 60 characters');
+      titleInputRef.current?.focus();
+      return;
+    }
     if (items.length === 0 || items.every((i) => !i.description.trim())) {
       return toast.error('Please add at least one line item to the quotation.');
     }
@@ -393,6 +398,9 @@ export function InteriorQuotationBuilderModal({
     }
     if (grandTotal < 0) {
       return toast.error('Grand total amount cannot be negative.');
+    }
+    if (notes && notes.length > 500) {
+      return toast.error('Quotation notes cannot exceed 500 characters.');
     }
 
     setIsSubmitting(true);
@@ -551,25 +559,39 @@ export function InteriorQuotationBuilderModal({
             {/* A. Quotation Title & Version Picker */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="md:col-span-2 space-y-1">
-                <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                  <Tag size={13} className={titleError ? "text-rose-500" : "text-indigo-500"} /> Quotation Title <span className="text-rose-500">*</span>
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
+                    <Tag size={13} className={titleError ? "text-rose-500" : "text-indigo-500"} /> Quotation Title <span className="text-rose-500">*</span>
+                  </label>
+                  <span className={`text-[10px] font-mono ${quotationTitle.length >= 60 ? 'text-rose-500 font-bold' : 'text-[hsl(var(--muted-foreground))]'}`}>
+                    {quotationTitle.length}/60
+                  </span>
+                </div>
                 <input
                   ref={titleInputRef}
                   type="text"
+                  maxLength={60}
                   value={quotationTitle}
                   onChange={(e) => {
                     setQuotationTitle(e.target.value);
-                    if (titleError && e.target.value.trim()) {
-                      setTitleError(null);
+                    if (titleError) {
+                      if (!e.target.value.trim()) {
+                        setTitleError('Quotation title is required');
+                      } else if (e.target.value.length > 60) {
+                        setTitleError('Quotation title cannot exceed 60 characters');
+                      } else {
+                        setTitleError(null);
+                      }
                     }
                   }}
                   onBlur={() => {
                     if (!quotationTitle.trim()) {
                       setTitleError('Quotation title is required');
+                    } else if (quotationTitle.trim().length > 60) {
+                      setTitleError('Quotation title cannot exceed 60 characters');
                     }
                   }}
-                  placeholder="Enter Quotation Title"
+                  placeholder="Enter Quotation Title (e.g. Option A - Premium Fitout)"
                   className={cn(
                     "w-full px-3.5 py-2.5 rounded-xl border bg-[hsl(var(--background))] text-xs font-bold text-[hsl(var(--foreground))] outline-none transition-all",
                     titleError
@@ -731,8 +753,11 @@ export function InteriorQuotationBuilderModal({
                               </p>
                             </div>
                           </div>
-                          <span className="text-xs font-mono font-bold shrink-0">
-                            {currencySymbol} {sec.subTotal.toLocaleString()}
+                          <span 
+                            className="text-xs font-mono font-bold shrink-0 truncate max-w-[100px]"
+                            title={formatSmartCurrency(sec.subTotal, currencySymbol).exact}
+                          >
+                            {formatSmartCurrency(sec.subTotal, currencySymbol).display}
                           </span>
                         </div>
                       );
@@ -800,12 +825,15 @@ export function InteriorQuotationBuilderModal({
                                         </p>
                                       )}
                                     </div>
-                                    <div className="text-right shrink-0">
-                                      <p className="font-mono font-bold text-[hsl(var(--foreground))]">
-                                        {currencySymbol} {(Number(it.amount) || Number(it.quantity || 0) * Number(it.rate || 0)).toLocaleString()}
+                                    <div className="text-right shrink-0 max-w-[140px]">
+                                      <p 
+                                        className="font-mono font-bold text-[hsl(var(--foreground))] truncate"
+                                        title={formatSmartCurrency(Number(it.amount) || Number(it.quantity || 0) * Number(it.rate || 0), currencySymbol).exact}
+                                      >
+                                        {formatSmartCurrency(Number(it.amount) || Number(it.quantity || 0) * Number(it.rate || 0), currencySymbol).display}
                                       </p>
-                                      <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                                        {it.quantity} {it.unit || 'Nos'} × {currencySymbol} {it.rate}
+                                      <p className="text-[10px] text-[hsl(var(--muted-foreground))] truncate">
+                                        {it.quantity} {it.unit || 'Nos'} × {currencySymbol} {formatMillionBillion(Number(it.rate) || 0)}
                                       </p>
                                     </div>
                                   </div>
@@ -832,79 +860,95 @@ export function InteriorQuotationBuilderModal({
               </div>
 
               <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl overflow-hidden shadow-xs">
-                <div className="grid grid-cols-12 gap-2 p-3 bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                  <div className="col-span-6">Item Description & Scope</div>
-                  <div className="col-span-2 text-center">Unit / Qty</div>
+                <div className="grid grid-cols-12 gap-2.5 p-3 bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                  <div className="col-span-5">Item Description & Scope</div>
+                  <div className="col-span-2 text-center">Unit</div>
+                  <div className="col-span-1 text-center">Qty</div>
                   <div className="col-span-2 text-right">Unit Price ({currencySymbol})</div>
                   <div className="col-span-2 text-right pr-2">Total ({currencySymbol})</div>
                 </div>
 
-                <div className="p-3 space-y-2.5 max-h-72 overflow-y-auto">
+                <div className="p-3 space-y-3 max-h-80 overflow-y-auto">
                   {items.map((item, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-2 items-center group">
+                    <div key={index} className="grid grid-cols-12 gap-2.5 items-start group">
                       {/* Description & Category */}
-                      <div className="col-span-6 flex items-start gap-1.5">
+                      <div className="col-span-5 flex items-start gap-1.5 min-w-0">
                         <button
                           type="button"
                           onClick={() => removeItem(index)}
-                          className="p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-500/10 rounded-lg transition-colors mt-1 cursor-pointer shrink-0"
+                          className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-500/10 rounded-xl transition-colors shrink-0 mt-0.5 cursor-pointer"
                           title="Remove item"
                         >
                           <Trash2 size={14} />
                         </button>
-                        <div className="w-full space-y-1">
-                          <textarea
-                            rows={1}
+                        <div className="w-full min-w-0 space-y-1.5">
+                          <input
+                            type="text"
                             required
+                            maxLength={150}
                             value={item.description}
                             onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                             placeholder="Item description / specification"
-                            className="w-full px-3 py-1.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-semibold text-[hsl(var(--foreground))] focus:border-indigo-500 outline-none resize-none leading-relaxed"
+                            className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-semibold text-[hsl(var(--foreground))] focus:border-indigo-500 outline-none transition-all placeholder:text-[hsl(var(--muted-foreground))]"
                           />
-                          {item.category && (
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 inline-block">
-                              {item.category}
+                          {item.category && item.category !== 'General Scope' && (
+                            <span 
+                              className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 max-w-[220px] truncate"
+                              title={item.category}
+                            >
+                              <Tag size={10} className="shrink-0" />
+                              <span className="truncate">{item.category}</span>
                             </span>
                           )}
                         </div>
                       </div>
 
-                      {/* Unit & Qty */}
-                      <div className="col-span-2 flex items-center gap-1">
+                      {/* Unit */}
+                      <div className="col-span-2 min-w-0 flex justify-center">
                         <input
                           type="text"
+                          maxLength={10}
                           value={item.unit || 'Nos'}
                           onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
                           placeholder="Unit"
-                          className="w-12 px-1.5 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[11px] font-bold text-center focus:border-indigo-500 outline-none uppercase"
+                          className="w-full max-w-[90px] px-2.5 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-bold text-center focus:border-indigo-500 outline-none uppercase font-mono"
                         />
+                      </div>
+
+                      {/* Qty */}
+                      <div className="col-span-1 min-w-0 flex justify-center">
                         <input
                           type="number"
                           required
-                          min="0.1"
+                          min="0.01"
+                          max="999999999"
                           step="any"
                           value={item.quantity || ''}
                           onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value) || 0)}
-                          className="w-full px-2 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-bold text-center focus:border-indigo-500 outline-none font-mono"
+                          className="w-full max-w-[70px] px-2 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-bold text-center focus:border-indigo-500 outline-none font-mono"
                         />
                       </div>
 
                       {/* Unit Price */}
-                      <div className="col-span-2">
+                      <div className="col-span-2 min-w-0 flex justify-end">
                         <input
                           type="number"
                           required
                           min="0"
+                          max="999999999999"
                           step="any"
                           value={item.unitPrice || ''}
                           onChange={(e) => handleItemChange(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                          className="w-full px-2.5 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-bold text-right focus:border-indigo-500 outline-none font-mono"
+                          className="w-full max-w-[125px] px-3 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-bold text-right focus:border-indigo-500 outline-none font-mono"
                         />
                       </div>
 
                       {/* Total */}
-                      <div className="col-span-2 text-right font-mono font-extrabold text-xs text-[hsl(var(--foreground))] pr-2">
-                        {currencySymbol} {(Number(item.total) || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                      <div 
+                        className="col-span-2 flex items-center justify-end pr-2 py-2 text-right font-mono font-extrabold text-xs text-[hsl(var(--foreground))] min-w-0 truncate"
+                        title={formatSmartCurrency(Number(item.total) || 0, currencySymbol).exact}
+                      >
+                        {formatSmartCurrency(Number(item.total) || 0, currencySymbol).display}
                       </div>
                     </div>
                   ))}
@@ -926,11 +970,17 @@ export function InteriorQuotationBuilderModal({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
               {/* Left Side: Client Notes & Remarks */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[hsl(var(--foreground))] uppercase tracking-wider flex items-center gap-1">
-                  Quotation Notes / Remarks (Optional)
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-[hsl(var(--foreground))] uppercase tracking-wider flex items-center gap-1">
+                    Quotation Notes / Remarks (Optional)
+                  </label>
+                  <span className={`text-[10px] font-mono ${notes.length >= 500 ? 'text-rose-500 font-bold' : 'text-[hsl(var(--muted-foreground))]'}`}>
+                    {notes.length}/500
+                  </span>
+                </div>
                 <textarea
                   rows={5}
+                  maxLength={500}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Optional notes or remarks for this quotation..."
@@ -939,16 +989,19 @@ export function InteriorQuotationBuilderModal({
               </div>
 
               {/* Right Side: Calculation Totals */}
-              <div className="bg-[hsl(var(--muted)/0.4)] border border-[hsl(var(--border))] rounded-2xl p-4 space-y-3">
-                <div className="flex justify-between items-center text-xs font-semibold text-[hsl(var(--muted-foreground))]">
-                  <span>Scope Subtotal ({items.length} items)</span>
-                  <span className="font-mono font-bold text-[hsl(var(--foreground))]">
-                    {currencySymbol} {subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              <div className="bg-[hsl(var(--muted)/0.4)] border border-[hsl(var(--border))] rounded-2xl p-4 space-y-3 min-w-0 overflow-hidden">
+                <div className="flex justify-between items-center text-xs font-semibold text-[hsl(var(--muted-foreground))] gap-2">
+                  <span className="shrink-0">Scope Subtotal ({items.length} items)</span>
+                  <span 
+                    className="font-mono font-bold text-[hsl(var(--foreground))] truncate text-right"
+                    title={formatSmartCurrency(subtotal, currencySymbol).exact}
+                  >
+                    {formatSmartCurrency(subtotal, currencySymbol).display}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-semibold text-[hsl(var(--muted-foreground))] flex items-center gap-2">
+                <div className="flex justify-between items-center text-xs gap-2">
+                  <span className="font-semibold text-[hsl(var(--muted-foreground))] flex items-center gap-2 shrink-0">
                     Tax / VAT %
                     <input
                       type="number"
@@ -959,13 +1012,16 @@ export function InteriorQuotationBuilderModal({
                       className="w-14 px-2 py-0.5 text-xs rounded border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-center focus:border-indigo-500 outline-none font-mono font-bold"
                     />
                   </span>
-                  <span className="font-mono font-semibold text-[hsl(var(--muted-foreground))]">
-                    + {currencySymbol} {tax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <span 
+                    className="font-mono font-semibold text-[hsl(var(--muted-foreground))] truncate text-right"
+                    title={formatSmartCurrency(tax, currencySymbol).exact}
+                  >
+                    + {formatSmartCurrency(tax, currencySymbol).display}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-semibold text-[hsl(var(--muted-foreground))]">
+                <div className="flex justify-between items-center text-xs gap-2">
+                  <span className="font-semibold text-[hsl(var(--muted-foreground))] shrink-0">
                     Discount ({currencySymbol})
                   </span>
                   <input
@@ -978,8 +1034,8 @@ export function InteriorQuotationBuilderModal({
                   />
                 </div>
 
-                <div className="pt-3 border-t border-[hsl(var(--border))] flex justify-between items-center">
-                  <div>
+                <div className="pt-3 border-t border-[hsl(var(--border))] flex justify-between items-center gap-3 min-w-0">
+                  <div className="shrink-0">
                     <span className="text-xs font-extrabold text-[hsl(var(--foreground))] block">
                       Grand Total Quotation
                     </span>
@@ -989,9 +1045,22 @@ export function InteriorQuotationBuilderModal({
                       </span>
                     )}
                   </div>
-                  <span className="text-xl sm:text-2xl font-black text-indigo-600 dark:text-indigo-400 font-mono">
-                    {currencySymbol} {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
+                  <div className="min-w-0 text-right">
+                    <span 
+                      className="text-lg sm:text-xl font-black text-indigo-600 dark:text-indigo-400 font-mono truncate block"
+                      title={formatSmartCurrency(grandTotal, currencySymbol).exact}
+                    >
+                      {formatSmartCurrency(grandTotal, currencySymbol).display}
+                    </span>
+                    {formatSmartCurrency(grandTotal, currencySymbol).isLarge && (
+                      <span 
+                        className="text-[10px] font-mono text-[hsl(var(--muted-foreground))] truncate block"
+                        title={formatSmartCurrency(grandTotal, currencySymbol).exact}
+                      >
+                        ({formatSmartCurrency(grandTotal, currencySymbol).exact})
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

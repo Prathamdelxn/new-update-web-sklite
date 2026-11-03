@@ -39,7 +39,7 @@ export function InteriorSendBoqForApprovalModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [assignedReviewer, setAssignedReviewer] = useState('');
   const [remarks, setRemarks] = useState('');
-  const [errors, setErrors] = useState<{ reviewer?: string }>({});
+  const [errors, setErrors] = useState<{ reviewer?: string; remarks?: string }>({});
 
   React.useEffect(() => {
     if (!isOpen) {
@@ -79,6 +79,12 @@ export function InteriorSendBoqForApprovalModal({
 
     if (!targetBoq) {
       toast.error('Target BOQ not found.');
+      return;
+    }
+
+    if (remarks.trim().length > 500) {
+      setErrors({ remarks: 'Handover note cannot exceed 500 characters.' });
+      toast.error('Handover note cannot exceed 500 characters.');
       return;
     }
 
@@ -219,16 +225,30 @@ export function InteriorSendBoqForApprovalModal({
 
           {/* Submission Notes */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-              <MessageSquare size={13} className="text-indigo-500" /> Handover Notes / Review Focus (Optional)
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
+                <MessageSquare size={13} className="text-indigo-500" /> Handover Notes / Review Focus (Optional)
+              </label>
+              <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
+                {remarks.length}/500
+              </span>
+            </div>
             <textarea
               rows={3}
+              maxLength={500}
               value={remarks}
-              onChange={(e) => setRemarks(e.target.value)}
+              onChange={(e) => {
+                setRemarks(e.target.value);
+                if (errors.remarks) setErrors((prev) => ({ ...prev, remarks: undefined }));
+              }}
               placeholder="e.g. Please check custom veneer rates and kitchen hardware quantities..."
               className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-medium text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none"
             />
+            {errors.remarks && (
+              <p className="text-[11px] text-rose-500 font-medium flex items-center gap-1">
+                <AlertCircle size={11} /> {errors.remarks}
+              </p>
+            )}
           </div>
 
           {/* Footer */}

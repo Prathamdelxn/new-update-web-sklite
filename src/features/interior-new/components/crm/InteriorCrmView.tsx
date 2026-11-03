@@ -606,10 +606,7 @@ export default function InteriorCrmView() {
           <InteriorRequirementDesignView
             leads={getFilteredLeads()}
             onLogRequirements={openRequirementsModal}
-            onUploadDesign={() => {}} // Not used anymore
             onPassToSiteVisit={openSendToSiteVisitModal}
-            onPassToDrawing={openSendToDrawingModal}
-            onPassToQuotations={openSendToQuotationsModal}
             onMarkAsLost={openMarkAsLostModal}
           />
         ) : activeTab === 'site_visits' ? (

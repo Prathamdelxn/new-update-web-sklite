@@ -1078,16 +1078,16 @@ export function InteriorComparativeRequirementsView({
                         {room.roomUsage && (
                           <div className="min-w-0">
                             <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Usage / Primary Purpose</span>
-                            <span className="font-semibold text-[hsl(var(--foreground))] break-words mt-0.5 block">{room.roomUsage}</span>
+                            <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.roomUsage}</span>
                           </div>
                         )}
 
                         {room.furnitureRequirements && (
-                          <div className="p-2.5 rounded-lg bg-[hsl(var(--card))] border border-[hsl(var(--border))] min-w-0">
+                          <div className="p-2.5 rounded-lg bg-[hsl(var(--card))] border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                             <span className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 flex items-center gap-1 mb-0.5">
                               <Armchair size={11} className="text-emerald-600" /> Furniture & Fixtures Required
                             </span>
-                            <p className="font-semibold text-[hsl(var(--foreground))] leading-relaxed break-words">
+                            <p className="font-semibold text-[hsl(var(--foreground))] leading-relaxed break-words [overflow-wrap:anywhere]">
                               {room.furnitureRequirements}
                             </p>
                           </div>
@@ -1096,7 +1096,7 @@ export function InteriorComparativeRequirementsView({
                         {room.storage && (
                           <div className="min-w-0">
                             <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Storage Units</span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words mt-0.5 block">{room.storage}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.storage}</span>
                           </div>
                         )}
 
@@ -1105,7 +1105,7 @@ export function InteriorComparativeRequirementsView({
                             <span className="text-[10px] font-bold text-amber-500 uppercase flex items-center gap-1">
                               <Zap size={11} /> Electrical / MEP Points
                             </span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words mt-0.5 block">{room.electricalPoints}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.electricalPoints}</span>
                           </div>
                         )}
 
@@ -1114,7 +1114,7 @@ export function InteriorComparativeRequirementsView({
                             <span className="text-[10px] font-bold text-amber-500 uppercase flex items-center gap-1">
                               <Sun size={11} /> Lighting Requirements
                             </span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words mt-0.5 block">{room.lightingRequirements}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.lightingRequirements}</span>
                           </div>
                         )}
 
@@ -1123,14 +1123,14 @@ export function InteriorComparativeRequirementsView({
                             <span className="text-[10px] font-bold text-cyan-500 uppercase flex items-center gap-1">
                               <Droplets size={11} /> Plumbing Requirements
                             </span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words mt-0.5 block">{room.plumbingRequirements}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.plumbingRequirements}</span>
                           </div>
                         )}
 
                         {room.circulation && (
                           <div className="min-w-0">
                             <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Circulation & Clearance</span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words mt-0.5 block">{room.circulation}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.circulation}</span>
                           </div>
                         )}
 
@@ -1142,7 +1142,7 @@ export function InteriorComparativeRequirementsView({
                       </div>
 
                       {/* 2. Aesthetic Requirements Card */}
-                      <div className="bg-[hsl(var(--muted)/0.15)] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-2.5 min-w-0">
+                      <div className="bg-[hsl(var(--muted)/0.15)] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-2.5 min-w-0 overflow-hidden">
                         <div className="flex items-center justify-between pb-1.5 border-b border-[hsl(var(--border))]">
                           <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 dark:text-purple-400 flex items-center gap-1.5">
                             <Palette size={12} /> Aesthetic Requirements
@@ -1159,56 +1159,56 @@ export function InteriorComparativeRequirementsView({
                         {(room.designStyle || room.theme) && (
                           <div className="min-w-0">
                             <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Design Style</span>
-                            <span className="font-bold text-purple-700 dark:text-purple-300 break-words mt-0.5 block">{room.designStyle || room.theme}</span>
+                            <span className="font-bold text-purple-700 dark:text-purple-300 break-words [overflow-wrap:anywhere] mt-0.5 block">{room.designStyle || room.theme}</span>
                           </div>
                         )}
 
                         {room.theme && room.designStyle && room.theme !== room.designStyle && (
                           <div className="min-w-0">
                             <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Theme / Mood</span>
-                            <span className="font-semibold text-[hsl(var(--foreground))] break-words mt-0.5 block">{room.theme}</span>
+                            <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.theme}</span>
                           </div>
                         )}
 
                         {room.colours && (
                           <div className="min-w-0">
                             <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Colours & Palette</span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words mt-0.5 block">{room.colours}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.colours}</span>
                           </div>
                         )}
 
                         {room.materials && (
                           <div className="min-w-0">
                             <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Materials & Finishes</span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words mt-0.5 block">{room.materials}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.materials}</span>
                           </div>
                         )}
 
                         {room.flooring && (
                           <div className="min-w-0">
                             <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Flooring Preferences</span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words mt-0.5 block">{room.flooring}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.flooring}</span>
                           </div>
                         )}
 
                         {room.ceiling && (
                           <div className="min-w-0">
                             <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Ceiling & False Ceiling</span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words mt-0.5 block">{room.ceiling}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.ceiling}</span>
                           </div>
                         )}
 
                         {room.wallFinishes && (
                           <div className="min-w-0">
                             <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Wall Finishes & Paneling</span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words mt-0.5 block">{room.wallFinishes}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.wallFinishes}</span>
                           </div>
                         )}
 
                         {room.furnitureStyle && (
                           <div className="min-w-0">
                             <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Furniture Style</span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words mt-0.5 block">{room.furnitureStyle}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.furnitureStyle}</span>
                           </div>
                         )}
 
@@ -1222,11 +1222,11 @@ export function InteriorComparativeRequirementsView({
 
                     {/* Special Notes / Description */}
                     {room.description && (
-                      <div className="p-3 rounded-xl bg-[hsl(var(--muted)/0.25)] border border-[hsl(var(--border))] space-y-1">
+                      <div className="p-3 rounded-xl bg-[hsl(var(--muted)/0.25)] border border-[hsl(var(--border))] space-y-1 min-w-0 overflow-hidden">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1.5">
                           <Sparkles size={11} className="text-amber-500" /> Space Observations & Preferences
                         </span>
-                        <p className="text-[hsl(var(--foreground))] leading-relaxed italic whitespace-pre-wrap">
+                        <p className="text-[hsl(var(--foreground))] leading-relaxed italic whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                           &ldquo;{room.description}&rdquo;
                         </p>
                       </div>

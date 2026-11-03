@@ -106,6 +106,9 @@ export function InteriorSendToSiteVisitModal({
       assignedSalesExecutive: validateNonEmpty(assignedSalesExecutive, 'Assign team member'),
       scheduledDate: validateFutureDate(scheduledDate, 'Scheduled date & time'),
     };
+    if (remarks.trim().length > 500) {
+      newErrors.remarks = 'Instructions / site notes cannot exceed 500 characters.';
+    }
     setErrors(newErrors);
     return !Object.values(newErrors).some((err) => err !== null);
   };
@@ -113,7 +116,11 @@ export function InteriorSendToSiteVisitModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
-      toast.error('Please fill in all required fields');
+      if (remarks.trim().length > 500) {
+        toast.error('Instructions / site notes cannot exceed 500 characters.');
+      } else {
+        toast.error('Please fill in all required fields');
+      }
       return;
     }
 
@@ -367,13 +374,14 @@ export function InteriorSendToSiteVisitModal({
                   <FileText size={13} className="text-purple-600" />
                   Instructions / Site Notes
                 </label>
-                <span className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded-md">
-                  Optional
+                <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
+                  {remarks.length}/500
                 </span>
               </div>
 
               <textarea
                 rows={3}
+                maxLength={500}
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
                 placeholder="Any specific instructions for the person visiting the site..."

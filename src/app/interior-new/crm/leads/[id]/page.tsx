@@ -77,7 +77,7 @@ import {
 } from 'lucide-react';
 import { exportBoqToExcel } from '@/lib/exportBoqExcel';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn, parseMaxBudget } from '@/lib/utils';
+import { cn, parseMaxBudget, formatSmartCurrency, formatMillionBillion } from '@/lib/utils';
 import { InteriorLogSiteVisitModal } from '@/features/interior-new/components/crm/modals/InteriorLogSiteVisitModal';
 import { InteriorSendToSiteVisitModal } from '@/features/interior-new/components/crm/modals/InteriorSendToSiteVisitModal';
 import { InteriorSiteVisitHistoryModal } from '@/features/interior-new/components/crm/modals/InteriorSiteVisitHistoryModal';
@@ -312,11 +312,12 @@ const { hasPermission: canDo } = usePermissions();
     if (!lead || !params.id) return;
     const q = lead?.quotations?.[idxToDelete];
     const quoteTitle = q?.title || `Quotation ${idxToDelete + 1}`;
+    const displayTitle = quoteTitle.length > 50 ? `${quoteTitle.slice(0, 50)}...` : quoteTitle;
     const quoteAmount = q?.grandTotal || 0;
 
     const ok = await confirm({
-      title: `Delete ${quoteTitle}`,
-      message: `Are you sure you want to delete "${quoteTitle}" (${currencySymbol} ${quoteAmount.toLocaleString()})? This action cannot be undone.`,
+      title: 'Delete Quotation',
+      message: `Are you sure you want to delete "${displayTitle}" (${formatSmartCurrency(quoteAmount, currencySymbol).display})? This action cannot be undone.`,
       confirmText: 'Delete Quotation',
       type: 'danger',
     });
@@ -1955,7 +1956,7 @@ const { hasPermission: canDo } = usePermissions();
                             </span>
                           )}
                         </div>
-                        <p className="text-xs font-medium text-[hsl(var(--foreground))] leading-relaxed whitespace-pre-wrap break-words bg-[hsl(var(--card))] p-2.5 rounded border border-purple-500/15">
+                        <p className="text-xs font-medium text-[hsl(var(--foreground))] leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] bg-[hsl(var(--card))] p-2.5 rounded border border-purple-500/15">
                           {siteVisitInfo.note || 'Lead passed to Site Visit and assigned to site team.'}
                         </p>
                         <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-[hsl(var(--muted-foreground))] font-medium">
@@ -2050,39 +2051,39 @@ const { hasPermission: canDo } = usePermissions();
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 min-w-0">
                           
                           {/* Card 1: Spatial Dimensions */}
-                          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-3 min-w-0">
+                          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-3 min-w-0 overflow-hidden">
                             <div className="flex items-center justify-between pb-2 border-b border-[hsl(var(--border))]">
                               <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
                                 <Maximize2 size={14} className="text-purple-500" />
                                 Spatial Dimensions
                               </h3>
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 border border-purple-500/20 shrink-0">
                                 Spatial
                               </span>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2 text-xs">
-                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
+                            <div className="grid grid-cols-2 gap-2 text-xs min-w-0">
+                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2.5 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                                 <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Carpet Area</p>
-                                <p className="font-bold text-sm text-[hsl(var(--foreground))] mt-0.5">
+                                <p className="font-bold text-sm text-[hsl(var(--foreground))] mt-0.5 break-words [overflow-wrap:anywhere]">
                                   {lead.siteMeasurements.carpetArea || '—'} <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-normal">Sq.Ft</span>
                                 </p>
                               </div>
-                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
+                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2.5 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                                 <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Ceiling Height</p>
-                                <p className="font-bold text-sm text-[hsl(var(--foreground))] mt-0.5">
+                                <p className="font-bold text-sm text-[hsl(var(--foreground))] mt-0.5 break-words [overflow-wrap:anywhere]">
                                   {lead.siteMeasurements.ceilingHeight || '—'} <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-normal">Ft</span>
                                 </p>
                               </div>
-                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2.5 border border-[hsl(var(--border))] col-span-2">
+                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2.5 border border-[hsl(var(--border))] col-span-2 min-w-0 overflow-hidden">
                                 <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Room Dimensions</p>
-                                <p className="font-semibold text-xs text-[hsl(var(--foreground))] mt-0.5">
+                                <p className="font-semibold text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                                   {lead.siteMeasurements.roomDimensions || 'Not recorded'}
                                 </p>
                               </div>
-                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2.5 border border-[hsl(var(--border))] col-span-2">
+                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2.5 border border-[hsl(var(--border))] col-span-2 min-w-0 overflow-hidden">
                                 <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Rooms to Design</p>
-                                <p className="font-semibold text-xs text-[hsl(var(--foreground))] mt-0.5">
+                                <p className="font-semibold text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                                   {lead.siteMeasurements.rooms || 'Not specified'}
                                 </p>
                               </div>
@@ -2090,85 +2091,85 @@ const { hasPermission: canDo } = usePermissions();
                           </div>
 
                           {/* Card 2: Openings & Structure */}
-                          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-3 min-w-0">
+                          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-3 min-w-0 overflow-hidden">
                             <div className="flex items-center justify-between pb-2 border-b border-[hsl(var(--border))]">
                               <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
                                 <DoorOpen size={14} className="text-blue-500" />
                                 Openings & Structure
                               </h3>
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 border border-blue-500/20 shrink-0">
                                 Structure
                               </span>
                             </div>
 
-                            <div className="grid grid-cols-1 gap-2 text-xs">
-                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))]">
+                            <div className="grid grid-cols-1 gap-2 text-xs min-w-0">
+                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                                 <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Door Dimensions</p>
-                                <p className="font-semibold text-xs text-[hsl(var(--foreground))] mt-0.5">{lead.siteMeasurements.doorDimensions || 'Not recorded'}</p>
+                                <p className="font-semibold text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.doorDimensions || 'Not recorded'}</p>
                               </div>
-                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))]">
+                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                                 <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Window Dimensions</p>
-                                <p className="font-semibold text-xs text-[hsl(var(--foreground))] mt-0.5">{lead.siteMeasurements.windowDimensions || 'Not recorded'}</p>
+                                <p className="font-semibold text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.windowDimensions || 'Not recorded'}</p>
                               </div>
-                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))]">
+                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                                 <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Wall / Column Dimensions</p>
-                                <p className="font-semibold text-xs text-[hsl(var(--foreground))] mt-0.5">{lead.siteMeasurements.columnBeamDimensions || lead.siteMeasurements.wallThickness || 'Not recorded'}</p>
+                                <p className="font-semibold text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.columnBeamDimensions || lead.siteMeasurements.wallThickness || 'Not recorded'}</p>
                               </div>
                             </div>
                           </div>
 
                           {/* Card 3: MEP & Utilities */}
-                          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-3 min-w-0">
+                          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-3 min-w-0 overflow-hidden">
                             <div className="flex items-center justify-between pb-2 border-b border-[hsl(var(--border))]">
                               <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
                                 <Zap size={14} className="text-amber-500" />
                                 MEP & Utility Services
                               </h3>
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 border border-amber-500/20 shrink-0">
                                 MEP
                               </span>
                             </div>
 
-                            <div className="grid grid-cols-1 gap-2 text-xs">
-                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))]">
+                            <div className="grid grid-cols-1 gap-2 text-xs min-w-0">
+                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                                 <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1"><Zap size={10} /> Electrical Points</p>
-                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5">{lead.siteMeasurements.electricalPoints || 'None recorded'}</p>
+                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.electricalPoints || 'None recorded'}</p>
                               </div>
-                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))]">
+                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                                 <p className="text-[10px] font-bold text-cyan-500 uppercase tracking-wider flex items-center gap-1"><Droplets size={10} /> Plumbing Points</p>
-                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5">{lead.siteMeasurements.plumbingPoints || 'None recorded'}</p>
+                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.plumbingPoints || 'None recorded'}</p>
                               </div>
-                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))]">
+                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                                 <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider flex items-center gap-1"><Wind size={10} /> AC Locations</p>
-                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5">{lead.siteMeasurements.acLocations || 'None recorded'}</p>
+                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.acLocations || 'None recorded'}</p>
                               </div>
                             </div>
                           </div>
 
                           {/* Card 4: Constraints & Notes */}
-                          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-3 min-w-0">
+                          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-3 min-w-0 overflow-hidden">
                             <div className="flex items-center justify-between pb-2 border-b border-[hsl(var(--border))]">
                               <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
                                 <Armchair size={14} className="text-emerald-500" />
                                 Furniture & Constraints
                               </h3>
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 shrink-0">
                                 Notes
                               </span>
                             </div>
 
-                            <div className="grid grid-cols-1 gap-2 text-xs">
-                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))]">
+                            <div className="grid grid-cols-1 gap-2 text-xs min-w-0">
+                              <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                                 <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Existing Furniture</p>
-                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5">{lead.siteMeasurements.furnitureDimensions || 'None recorded'}</p>
+                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.furnitureDimensions || 'None recorded'}</p>
                               </div>
-                              <div className="bg-rose-500/5 rounded-lg p-2 border border-rose-500/20">
+                              <div className="bg-rose-500/5 rounded-lg p-2 border border-rose-500/20 min-w-0 overflow-hidden">
                                 <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">Site Constraints</p>
-                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5">{lead.siteMeasurements.siteConstraints || 'None reported'}</p>
+                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.siteConstraints || 'None reported'}</p>
                               </div>
-                              <div className="bg-purple-500/5 rounded-lg p-2 border border-purple-500/20">
+                              <div className="bg-purple-500/5 rounded-lg p-2 border border-purple-500/20 min-w-0 overflow-hidden">
                                 <p className="text-[10px] font-bold text-purple-600 uppercase tracking-wider">Additional Site Notes</p>
-                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5">{lead.siteMeasurements.notes || 'No notes added'}</p>
+                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.notes || 'No notes added'}</p>
                               </div>
                             </div>
                           </div>
@@ -2832,8 +2833,8 @@ const { hasPermission: canDo } = usePermissions();
                         {/* File Cards Grid */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                           {(designSubTab === '2d' ? twoDFiles : threeDFiles).map((file: any, index: number) => {
-                            const type = file.fileType || detectFileType(file.name);
-                            const badge = getFileBadgeInfo(file.name, file.category || (designSubTab === '2d' ? '2D' : '3D'));
+                            const type = file.fileType || detectFileType(file.name, file.url);
+                            const badge = getFileBadgeInfo(file.name, file.category || (designSubTab === '2d' ? '2D' : '3D'), file.url, type);
                             const versions = file.versions || [];
                             const latestVersion = versions.length > 0 ? versions[versions.length - 1] : null;
                             const versionNum = file.currentVersion || latestVersion?.versionNumber || 1;
@@ -2878,11 +2879,11 @@ const { hasPermission: canDo } = usePermissions();
                                     <FileIcon size={32} />
                                   )}
 
-                                  <div className="absolute top-2 left-2 flex items-center gap-1">
-                                    <span className={cn("text-[8px] font-bold px-1.5 py-0.5 rounded border uppercase", badge.color)}>
+                                  <div className="absolute top-2 left-2 flex items-center gap-1 max-w-[calc(100%-80px)] overflow-hidden">
+                                    <span className={cn("text-[8px] font-bold px-1.5 py-0.5 rounded border uppercase shrink-0", badge.color)}>
                                       {badge.label}
                                     </span>
-                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-black/60 text-white">
+                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-black/60 text-white shrink-0">
                                       v{versionNum}
                                     </span>
                                   </div>
@@ -3440,11 +3441,22 @@ const { hasPermission: canDo } = usePermissions();
 
                       {/* Summary Metrics */}
                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors">
+                        <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors min-w-0 overflow-hidden">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Grand Total</p>
-                          <p className="font-extrabold text-sm sm:text-base text-blue-600 dark:text-blue-400 mt-1">
-                            {hasQuotations ? `${currencySymbol} ${quotationInfo.grandTotal.toLocaleString()}` : '—'}
+                          <p 
+                            className="font-extrabold text-sm sm:text-base text-blue-600 dark:text-blue-400 mt-1 truncate block"
+                            title={hasQuotations ? formatSmartCurrency(quotationInfo.grandTotal, currencySymbol).exact : ''}
+                          >
+                            {hasQuotations ? formatSmartCurrency(quotationInfo.grandTotal, currencySymbol).display : '—'}
                           </p>
+                          {hasQuotations && formatSmartCurrency(quotationInfo.grandTotal, currencySymbol).isLarge && (
+                            <p 
+                              className="text-[10px] font-mono text-[hsl(var(--muted-foreground))] truncate block"
+                              title={formatSmartCurrency(quotationInfo.grandTotal, currencySymbol).exact}
+                            >
+                              ({formatSmartCurrency(quotationInfo.grandTotal, currencySymbol).exact})
+                            </p>
+                          )}
                         </div>
                         <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors">
                           <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Breakdown</p>
@@ -3511,12 +3523,12 @@ const { hasPermission: canDo } = usePermissions();
                               <thead>
                                 <tr className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.4)] text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wider text-[10px]">
                                   <th className="py-3 px-4 w-12 text-center">#</th>
-                                  <th className="py-3 px-4">Quotation Title</th>
-                                  <th className="py-3 px-4">Scope / Items</th>
-                                  <th className="py-3 px-4">Subtotal & Tax</th>
-                                  <th className="py-3 px-4">Grand Total</th>
-                                  <th className="py-3 px-4 text-center">Status</th>
-                                  <th className="py-3 px-4 text-right">Actions</th>
+                                  <th className="py-3 px-4 min-w-[200px] max-w-[320px]">Quotation Title</th>
+                                  <th className="py-3 px-4 whitespace-nowrap">Scope / Items</th>
+                                  <th className="py-3 px-4 whitespace-nowrap">Subtotal & Tax</th>
+                                  <th className="py-3 px-4 whitespace-nowrap">Grand Total</th>
+                                  <th className="py-3 px-4 text-center whitespace-nowrap">Status</th>
+                                  <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-[hsl(var(--border))]">
@@ -3556,16 +3568,19 @@ const { hasPermission: canDo } = usePermissions();
                                       </td>
 
                                       {/* Quotation Title */}
-                                      <td className="py-3.5 px-4 font-bold text-[hsl(var(--foreground))]">
-                                        <div className="flex items-center gap-3">
+                                      <td className="py-3.5 px-4 font-bold text-[hsl(var(--foreground))] min-w-[200px] max-w-[320px]">
+                                        <div className="flex items-center gap-3 min-w-0">
                                           <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-all bg-blue-50 text-blue-600 border-blue-200 group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-500/10 dark:border-blue-500/20">
                                             <FileText size={14} />
                                           </div>
-                                          <div>
-                                            <span className="text-xs font-bold text-[hsl(var(--foreground))] block">
+                                          <div className="min-w-0 flex-1">
+                                            <span 
+                                              className="text-xs font-bold text-[hsl(var(--foreground))] block truncate"
+                                              title={quoteTitle}
+                                            >
                                               {quoteTitle}
                                             </span>
-                                            <p className="text-[10px] text-[hsl(var(--muted-foreground))] font-normal">
+                                            <p className="text-[10px] text-[hsl(var(--muted-foreground))] font-normal truncate">
                                               Version {q.version || idx + 1}
                                               {q.sourceBoqVersion && ` • BOQ v${q.sourceBoqVersion}`}
                                               {Array.isArray(q.vendorQuotes) && q.vendorQuotes.length > 0 && (
@@ -3589,12 +3604,20 @@ const { hasPermission: canDo } = usePermissions();
 
                                       {/* Subtotal & Tax */}
                                       <td className="py-3.5 px-4 text-[11px] text-[hsl(var(--muted-foreground))] whitespace-nowrap">
-                                        <div className="font-medium text-[hsl(var(--foreground))]">{currencySymbol} {(q.subtotal || 0).toLocaleString()}</div>
+                                        <div 
+                                          className="font-medium text-[hsl(var(--foreground))] truncate max-w-[140px]"
+                                          title={formatSmartCurrency(q.subtotal || 0, currencySymbol).exact}
+                                        >
+                                          {formatSmartCurrency(q.subtotal || 0, currencySymbol).display}
+                                        </div>
                                         <div className="text-[10px] text-[hsl(var(--muted-foreground))]">
                                           Tax: {q.taxPercentage || 0}%
                                           {Number(q.discountAmount || 0) > 0 && (
-                                            <span className="ml-1 text-emerald-600 font-semibold">
-                                              • Disc: {currencySymbol} {Number(q.discountAmount).toLocaleString()}
+                                            <span 
+                                              className="ml-1 text-emerald-600 font-semibold truncate"
+                                              title={formatSmartCurrency(Number(q.discountAmount), currencySymbol).exact}
+                                            >
+                                              • Disc: {formatSmartCurrency(Number(q.discountAmount), currencySymbol).display}
                                             </span>
                                           )}
                                         </div>
@@ -3602,8 +3625,11 @@ const { hasPermission: canDo } = usePermissions();
 
                                       {/* Grand Total */}
                                       <td className="py-3.5 px-4 whitespace-nowrap">
-                                        <span className="text-xs font-extrabold text-blue-600 dark:text-blue-400">
-                                          {currencySymbol} {(q.grandTotal || 0).toLocaleString()}
+                                        <span 
+                                          className="text-xs font-extrabold text-blue-600 dark:text-blue-400 truncate block max-w-[150px]"
+                                          title={formatSmartCurrency(q.grandTotal || 0, currencySymbol).exact}
+                                        >
+                                          {formatSmartCurrency(q.grandTotal || 0, currencySymbol).display}
                                         </span>
                                       </td>
 

@@ -75,6 +75,12 @@ export function InteriorProjectSendBoqForApprovalModal({
       return;
     }
 
+    if (remarks.trim().length > 500) {
+      setError('Submission remarks cannot exceed 500 characters.');
+      toast.error('Submission remarks cannot exceed 500 characters.');
+      return;
+    }
+
     setError(null);
     setIsSubmitting(true);
 
@@ -236,12 +242,18 @@ export function InteriorProjectSendBoqForApprovalModal({
 
           {/* Remarks */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-              <MessageSquare className="w-3.5 h-3.5 text-blue-600" />
-              Submission Remarks (Optional)
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <MessageSquare className="w-3.5 h-3.5 text-blue-600" />
+                Submission Remarks (Optional)
+              </label>
+              <span className="text-[10px] text-slate-400 font-mono">
+                {remarks.length}/500
+              </span>
+            </div>
             <textarea
               rows={3}
+              maxLength={500}
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
               placeholder="Highlight rate adjustments, brand selections, or major scope inclusions..."

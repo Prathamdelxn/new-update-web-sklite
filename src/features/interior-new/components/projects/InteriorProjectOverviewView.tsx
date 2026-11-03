@@ -219,15 +219,15 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
               <div className="space-y-2.5 sm:space-y-3">
                 <div onClick={() => router.push(`/interior-new/projects/${projectId}/snags`)} className="flex items-center justify-between p-2.5 rounded-xl border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)] transition-all cursor-pointer">
                   <span className="text-xs text-[hsl(var(--muted-foreground))]">Open Snags</span>
-                  <span className="text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full">{quality?.openSnags} snags</span>
+                  <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{quality?.openSnags} snags</span>
                 </div>
                 <div onClick={() => router.push(`/interior-new/projects/${projectId}/rfis`)} className="flex items-center justify-between p-2.5 rounded-xl border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)] transition-all cursor-pointer">
                   <span className="text-xs text-[hsl(var(--muted-foreground))]">Open RFIs</span>
-                  <span className="text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-full">{quality?.openRFIs} RFIs</span>
+                  <span className="text-xs font-bold text-blue-600 bg-blue-50  px-2 py-0.5 rounded-full">{quality?.openRFIs} RFIs</span>
                 </div>
                 <div onClick={() => router.push(`/interior-new/projects/${projectId}/risks`)} className="flex items-center justify-between p-2.5 rounded-xl border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)] transition-all cursor-pointer">
                   <span className="text-xs text-[hsl(var(--muted-foreground))]">Critical Risks</span>
-                  <span className="text-xs font-bold text-red-600 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded-full">{quality?.criticalRisks} risks</span>
+                  <span className="text-xs font-bold text-red-600 bg-red-50  px-2 py-0.5 rounded-full">{quality?.criticalRisks} risks</span>
                 </div>
               </div>
             </CardContent>

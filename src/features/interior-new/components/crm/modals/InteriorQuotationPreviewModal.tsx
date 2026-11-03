@@ -35,7 +35,7 @@ import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { useCurrency } from '@/hooks/useCurrency';
 import { QuotationPreview } from '@/components/crm/QuotationPreview';
-import { cn } from '@/lib/utils';
+import { cn, formatSmartCurrency } from '@/lib/utils';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 interface InteriorQuotationPreviewModalProps {
@@ -59,7 +59,7 @@ export function InteriorQuotationPreviewModal({
 const { hasPermission: canDo } = usePermissions();
   const { confirm } = useConfirm();
   const router = useRouter();
-  const { formatExactCurrency } = useCurrency();
+  const { formatExactCurrency, currencySymbol } = useCurrency();
 
   // Navigation state inside the right sidebar
   const [sideView, setSideView] = useState<SideViewMode>('overview');
@@ -366,9 +366,10 @@ const { hasPermission: canDo } = usePermissions();
   // Delete Entire Quotation handler
   const handleDeleteQuotation = async () => {
     if (quotationIndex === null || !lead?.quotations || !quote) return;
+    const displayTitle = quoteTitle.length > 50 ? `${quoteTitle.slice(0, 50)}...` : quoteTitle;
     const ok = await confirm({
       title: `Delete Quotation?`,
-      message: `Are you sure you want to delete "${quoteTitle}" (${qtnNumber}) with ${itemsCount} items (${formatExactCurrency(grandTotal)})? This action cannot be undone.`,
+      message: `Are you sure you want to delete "${displayTitle}" (${qtnNumber}) with ${itemsCount} items (${formatSmartCurrency(grandTotal, currencySymbol).display})? This action cannot be undone.`,
       confirmText: 'Delete Quotation',
       type: 'danger',
     });

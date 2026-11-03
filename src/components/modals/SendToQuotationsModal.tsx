@@ -39,11 +39,13 @@ export function SendToQuotationsModal({ isOpen, onClose, customerId, onSuccess, 
     }
     if (!remarks.trim()) {
       newErrors.remarks = 'Handover notes are required before passing to quotations.';
+    } else if (remarks.trim().length > 500) {
+      newErrors.remarks = 'Handover notes cannot exceed 500 characters.';
     }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      toast.error('Please fill in all required fields.');
+      toast.error(newErrors.remarks || 'Please fill in all required fields.');
       return;
     }
 
@@ -133,14 +135,20 @@ export function SendToQuotationsModal({ isOpen, onClose, customerId, onSuccess, 
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5 mb-1.5">
-              <MessageSquare size={13} className="text-indigo-500" />
-              <span>Handover Notes & Pricing Assumptions</span>
-              <span className="text-rose-500 font-black">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <MessageSquare size={13} className="text-indigo-500" />
+                <span>Handover Notes & Pricing Assumptions</span>
+                <span className="text-rose-500 font-black">*</span>
+              </label>
+              <span className={`text-[10px] font-mono ${remarks.length >= 500 ? 'text-rose-500 font-bold' : 'text-slate-400'}`}>
+                {remarks.length}/500
+              </span>
+            </div>
             <textarea 
               rows={4}
               required
+              maxLength={500}
               value={remarks}
               onChange={e => {
                 setRemarks(e.target.value);

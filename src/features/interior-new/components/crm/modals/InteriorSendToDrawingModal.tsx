@@ -83,17 +83,24 @@ export function InteriorSendToDrawingModal({
     : null;
 
   const validateForm = () => {
-    const newErrors: { assignedDesigner?: string | null } = {
+    const newErrors: { assignedDesigner?: string | null; remarks?: string | null } = {
       assignedDesigner: validateNonEmpty(assignedDesigner, 'Assign a 2D/3D designer or team member'),
     };
-    setErrors(newErrors);
-    return !newErrors.assignedDesigner;
+    if (remarks.trim().length > 500) {
+      newErrors.remarks = 'Handover notes cannot exceed 500 characters.';
+    }
+    setErrors(newErrors as any);
+    return !newErrors.assignedDesigner && !newErrors.remarks;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
-      toast.error('Please assign a designer');
+      if (remarks.trim().length > 500) {
+        toast.error('Handover notes cannot exceed 500 characters.');
+      } else {
+        toast.error('Please assign a designer');
+      }
       return;
     }
 
@@ -266,10 +273,14 @@ export function InteriorSendToDrawingModal({
                   <FileText size={13} className="text-blue-600" />
                   Drawing Brief & Handover Notes
                 </label>
+                <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
+                  {remarks.length}/500
+                </span>
               </div>
 
               <textarea
                 rows={3}
+                maxLength={500}
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
                 placeholder="Any specific instructions, CAD layer guidelines, room priorities, or notes from requirements..."

@@ -28,7 +28,7 @@ export const InteriorRequirementDesignView = ({
 }: Props) => {
   const router = useRouter();
 const { hasPermission: canDo } = usePermissions();
-  const handlePassToNext = onPassToSiteVisit || onPassToDrawing || onPassToQuotations;
+  const handlePassToNext = onPassToSiteVisit;
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterState, setFilterState] = useState<'all' | 'pending' | 'completed'>('all');
@@ -261,24 +261,15 @@ const { hasPermission: canDo } = usePermissions();
                           Passed
                         </span>
                       ) : (
-                        (canDo('crm_requirements', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_site_visits', 'create') || canDo('crm_drawings', 'update') || canDo('crm_drawings', 'create')) && (
+                        (canDo('crm_requirements', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_site_visits', 'create')) && (
                           <div className="flex items-center gap-1">
                             {onPassToSiteVisit && (
                               <button
                                 onClick={() => onPassToSiteVisit(lead._id)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer shadow-xs"
                                 title="Pass to Site Visit"
                               >
                                 Site Visit <ArrowRight size={11} />
-                              </button>
-                            )}
-                            {onPassToDrawing && (
-                              <button
-                                onClick={() => onPassToDrawing(lead._id)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
-                                title="Pass to 2D/3D Drawing"
-                              >
-                                Drawing <ArrowRight size={11} />
                               </button>
                             )}
                           </div>
@@ -421,7 +412,7 @@ const { hasPermission: canDo } = usePermissions();
                                 Passed
                               </span>
                             ) : (
-                              (canDo('crm_requirements', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_site_visits', 'create') || canDo('crm_drawings', 'update') || canDo('crm_drawings', 'create')) && (
+                              (canDo('crm_requirements', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_site_visits', 'create')) && (
                                 <div className="flex items-center gap-1">
                                   {onPassToSiteVisit && (
                                     <button
@@ -430,15 +421,6 @@ const { hasPermission: canDo } = usePermissions();
                                       title="Pass to Site Visit"
                                     >
                                       Site Visit <ArrowRight size={11} />
-                                    </button>
-                                  )}
-                                  {onPassToDrawing && (
-                                    <button
-                                      onClick={() => onPassToDrawing(lead._id)}
-                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                      title="Pass to 2D/3D Drawing"
-                                    >
-                                      Drawing <ArrowRight size={11} />
                                     </button>
                                   )}
                                 </div>
