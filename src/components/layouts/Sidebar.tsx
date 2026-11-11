@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Briefcase, Users, Settings, X, Layers,
-  LogOut, Wallet, ShieldCheck, PanelLeftClose, PanelLeftOpen,
+  LogOut, Wallet, ShieldCheck, PanelLeftClose, PanelLeftOpen, Building2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/providers/AuthContext';
@@ -53,6 +53,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   // No global role = project-scoped user; never label them Admin
   const roleName = user?.role?.name || 'Member';
+  const organizationName =
+    (typeof user?.organization === 'object' && user?.organization !== null ? (user.organization as any).name : null) ||
+    (user as any)?.organizationName ||
+    '';
   const dashboardHome = '/construction-dashboard';
 
   return (
@@ -76,9 +80,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Header Logo */}
         <div className={cn(
           "h-16 flex items-center shrink-0 border-b border-slate-100",
-          isCollapsed ? "justify-center px-2" : "px-5 justify-between"
+          isCollapsed ? "justify-center px-2" : "px-4 justify-between"
         )}>
-          <Link href={dashboardHome} onClick={onClose} className="flex items-center gap-3 outline-none min-w-0 group">
+          <Link
+            href={dashboardHome}
+            onClick={onClose}
+            className="flex items-center gap-3 outline-none min-w-0 group flex-1"
+            title={isCollapsed ? (organizationName || 'SkyStruct Lite') : undefined}
+          >
             <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 via-blue-700 to-blue-700 text-white shadow-sm shadow-blue-600/30 border border-white/20 group-hover:scale-105 transition-all shrink-0">
               <img
                 src="/SS-Logo-2025-Colour.svg"
@@ -88,12 +97,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
 
             {!isCollapsed && (
-              <div className="flex flex-col min-w-0">
-                <span className="font-extrabold text-slate-900 text-sm  tracking-tight leading-tight">
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="font-extrabold text-slate-900 text-sm tracking-tight leading-tight truncate">
                   SKYSTRUCT <span className="text-blue-600">LITE</span>
                 </span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.1em] mt-0.5">
-                  Construction
+                <span className="text-[10px] font-bold text-slate-500 truncate flex items-center gap-1 mt-0.5" title={organizationName || 'Construction'}>
+                  <Building2 className="w-3 h-3 text-blue-600 shrink-0" />
+                  <span className="truncate">{organizationName || 'Construction'}</span>
                 </span>
               </div>
             )}
@@ -170,47 +180,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Footer Area */}
         <div className="p-3 border-t border-slate-100 bg-slate-50/50 space-y-2">
-          {/* User Profile Card */}
-          <div className={cn(
-            "flex items-center gap-2.5 transition-all rounded-2xl p-2",
-            isCollapsed ? "justify-center flex-col" : "justify-between bg-white border border-slate-200/80 shadow-xs"
-          )}>
-            <Link
-              href="/construction-dashboard/settings"
-              onClick={onClose}
-              className={cn(
-                "flex items-center gap-2.5 min-w-0 transition-colors group",
-                isCollapsed ? "justify-center w-full" : "flex-1"
-              )}
-              title={isCollapsed ? (user?.name || 'Profile') : undefined}
-            >
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 text-white font-extrabold text-sm flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-                {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-              </div>
-
-              {!isCollapsed && (
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-slate-900 truncate tracking-tight group-hover:text-blue-600 transition-colors">
-                    {user?.name || 'Account'}
-                  </p>
-                  <p className="text-xs font-semibold text-slate-500 truncate flex items-center gap-1 mt-0.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                    <span>{roleName}</span>
-                  </p>
-                </div>
-              )}
-            </Link>
-
-            <button
-              type="button"
-              onClick={logout}
-              title="Sign out"
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors shrink-0 cursor-pointer"
-            >
-              <LogOut className="w-4 h-4 stroke-[2.2]" />
-            </button>
-          </div>
-
+         
           {/* Expand / Collapse Button */}
           {onToggleCollapse && (
             <div className="pt-0.5">

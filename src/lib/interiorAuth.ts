@@ -50,6 +50,7 @@ export async function verifyInteriorEmail(email: string, otp: string) {
 }
 
 export function logoutInterior() {
+  if (typeof window === 'undefined') return;
   localStorage.removeItem('interiorAccessToken');
   localStorage.removeItem('interiorRefreshToken');
   localStorage.removeItem('interiorUser');
@@ -63,6 +64,7 @@ export function logoutInterior() {
 }
 
 export function getInteriorUser() {
+  if (typeof window === 'undefined') return null;
   const saved = localStorage.getItem('interiorUser');
   if (!saved) return null;
   try {

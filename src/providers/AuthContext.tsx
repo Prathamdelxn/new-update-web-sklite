@@ -70,7 +70,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       Cookies.remove('industryType');
       Cookies.remove('industryType', { path: '/' });
       Promise.resolve().then(() => setUser(null));
-      router.push('/login');
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login' && window.location.pathname !== '/register' && !window.location.pathname.startsWith('/reset-password')) {
+        router.push('/login');
+      }
     } else if (token && savedUser && savedUser !== 'undefined' && savedUser !== 'null') {
       try {
         setUser(JSON.parse(savedUser));

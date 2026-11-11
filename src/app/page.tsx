@@ -96,7 +96,33 @@ export default function LandingPage() {
   }, []);
 
   if (loading || user || isInterior) {
-    return <div className="grid min-h-screen place-items-center bg-[#07172b] text-2xl font-bold tracking-normal text-white">SKYSTRUCT <span className="text-cyan-300">LITE</span></div>;
+    return (
+      <div className="relative isolate flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#07172b] px-4">
+        {/* Subtle background ambient glows matching SkyStruct branding */}
+        <div className="pointer-events-none absolute -right-24 -top-24 size-96 rounded-full bg-cyan-500/10 blur-[120px]" />
+        <div className="pointer-events-none absolute -left-24 -bottom-24 size-96 rounded-full bg-blue-600/15 blur-[120px]" />
+
+        {/* Logo and Brand Container */}
+        <div className="relative z-10 flex flex-col items-center text-center">
+          <div className="relative mb-5 flex items-center justify-center">
+            <div className="absolute -inset-3 rounded-2xl bg-cyan-400/20 blur-xl animate-pulse" />
+            <img
+              src="/SS-Emblem.svg"
+              alt="SkyStruct Lite Logo"
+              className="relative h-16 w-auto sm:h-20 object-contain drop-shadow-[0_4px_20px_rgba(34,211,238,0.35)]"
+            />
+          </div>
+
+          <div className="flex items-center gap-2.5 text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+            <span>SKYSTRUCT</span>
+            <span className="text-cyan-300">LITE</span>
+          </div>
+
+          {/* Elegant Loading Status */}
+         
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -104,7 +130,8 @@ export default function LandingPage() {
       <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${scrolled ? 'border-b border-white/10 bg-[#07172b]/90 shadow-xl shadow-slate-950/15 backdrop-blur-xl' : 'bg-transparent'}`}>
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-8">
           <Link href="/" className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-white" aria-label="SkyStruct Lite home">
-            <span className="grid size-8 place-items-center rounded-lg bg-cyan-300 text-sm text-[#08203b] font-extrabold">S</span> SKYSTRUCT <span className="text-cyan-300">LITE</span>
+            <img src="/SS-Emblem.svg" alt="SkyStruct Logo" className="h-8 w-auto object-contain" />
+            <span>SKYSTRUCT</span> <span className="text-cyan-300">LITE</span>
           </Link>
           <nav className="hidden items-center gap-8 md:flex">
             {navLinks.map((link) => <a key={link.href} href={link.href} className="text-sm font-medium text-slate-300 transition hover:text-white">{link.label}</a>)}
@@ -180,7 +207,10 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-12 border-b border-white/10 pb-12 md:grid-cols-[1.5fr_repeat(3,1fr)]">
             <div className="max-w-xs">
-              <Link href="/" className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-white" aria-label="SkyStruct Lite home"><span className="grid size-8 place-items-center rounded-lg bg-cyan-300 text-sm text-[#08203b] font-extrabold">S</span> SKYSTRUCT <span className="text-cyan-300">LITE</span></Link>
+              <Link href="/" className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-white" aria-label="SkyStruct Lite home">
+                <img src="/SS-Emblem.svg" alt="SkyStruct Logo" className="h-8 w-auto object-contain" />
+                <span>SKYSTRUCT</span> <span className="text-cyan-300">LITE</span>
+              </Link>
               <p className="mt-5 text-sm leading-6 text-slate-400">A clearer operating system for construction teams that want every project, person and decision moving in the same direction.</p>
               <Link href="/register" className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-cyan-300 transition hover:text-cyan-200">Start your free workspace <ArrowRight className="size-4" /></Link>
             </div>

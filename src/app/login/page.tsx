@@ -1,21 +1,24 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+export const dynamic = 'force-dynamic';
+
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { Building, Eye, EyeOff, Lock, Mail, Loader2, ArrowLeft, CheckCircle2, HardHat, Palette } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Eye, EyeOff, Lock, Mail, Loader2, ArrowLeft, CheckCircle2, HardHat, Palette } from 'lucide-react';
 import { useAuth } from '@/providers/AuthContext';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
 import interiorApiClient from '@/services/interiorApi.client';
 import { loginInterior } from '@/lib/interiorAuth';
+
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [industryType, setIndustryType] = useState<'construction' | 'interior'>('construction');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [showForgotPw, setShowForgotPw] = useState(false);
   const [fpEmail, setFpEmail] = useState('');
   const [fpLoading, setFpLoading] = useState(false);
@@ -27,15 +30,45 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const registered = searchParams.get('registered');
 
+  // Load remembered email on initial mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedEmail = localStorage.getItem('rememberedEmail');
+      if (savedEmail) {
+        setEmail(savedEmail);
+        setRememberMe(true);
+      }
+    }
+  }, []);
+
+  const openForgotPassword = () => {
+    setShowForgotPw(true);
+    setFpSent(false);
+    if (email) {
+      setFpEmail(email.trim());
+    }
+  };
+
+  const closeForgotPassword = () => {
+    setShowForgotPw(false);
+    setFpSent(false);
+    setFpEmail('');
+  };
+
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanFpEmail = fpEmail.trim().toLowerCase();
+    if (!cleanFpEmail) {
+      toast.error('Please enter your email address');
+      return;
+    }
+
     setFpLoading(true);
     try {
-      console.log
       if (industryType === 'interior') {
-        await interiorApiClient.post('/auth/forgot-password', { email: fpEmail });
+        await interiorApiClient.post('/auth/forgot-password', { email: cleanFpEmail });
       } else {
-        await api.post('/auth/forgot-password', { email: fpEmail });
+        await api.post('/auth/forgot-password', { email: cleanFpEmail });
       }
       setFpSent(true);
     } catch (error: any) {
@@ -53,27 +86,31 @@ function LoginForm() {
       return;
     }
 
+    const cleanEmail = email.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim().toLowerCase())) {
+    if (!emailRegex.test(cleanEmail)) {
       toast.error('Invalid email address');
       return;
     }
 
-    // const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    // if (!passwordRegex.test(password)) {
-    //   toast.error('Password must be at least 8 characters long, and contain at least one uppercase letter, one lowercase letter, one number, and one special symbol');
-    //   return;
-    // }
+    // Persist or remove remembered email
+    if (typeof window !== 'undefined') {
+      if (rememberMe) {
+        localStorage.setItem('rememberedEmail', cleanEmail);
+      } else {
+        localStorage.removeItem('rememberedEmail');
+      }
+    }
 
     setIsLoading(true);
 
     try {
       if (industryType === 'interior') {
-        await loginInterior(email, password);
+        await loginInterior(cleanEmail, password);
         toast.success('Welcome back!');
         router.push('/interior-new');
       } else {
-        await login({ email, password, industryType });
+        await login({ email: cleanEmail, password, industryType });
         toast.success('Welcome back!');
       }
     } catch (error: any) {
@@ -88,24 +125,39 @@ function LoginForm() {
     }
   };
 
-
   return (
     <div className="min-h-screen xl:h-screen xl:overflow-hidden bg-[#E6F0FF] flex items-center justify-center p-4 sm:p-6 xl:p-0">
       <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-6 xl:gap-8 w-full max-w-md xl:max-w-5xl">
         
         {/* Left Marketing Banner - Hidden on mobile, shown on desktop (xl+) */}
-        <div className="hidden xl:flex order-2 xl:order-1 rounded-3xl bg-[#0E3B7B] p-6 xl:p-8 text-white overflow-hidden relative flex-col justify-between">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.18),_transparent_35%)] pointer-events-none" />
+        <div className="hidden xl:flex order-2 xl:order-1 rounded-3xl bg-[#0A2952] p-6 xl:p-8 text-white overflow-hidden relative flex-col justify-between shadow-xl">
+          {/* Construction Background Image with Brand Gradient Overlays */}
+          <div className="absolute inset-0 pointer-events-none">
+            <img
+              src="/construction-bg.jpg"
+              alt="SkyStruct Construction"
+              className="h-full w-full object-cover object-center"
+            />
+            {/* Rich gradient & blue tint overlay to guarantee contrast & text legibility */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#061d3d] via-[#092b57]/80 to-[#0e3b7b]/75 mix-blend-multiply" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#0E3B7B]/70 via-transparent to-[#071c36]/90" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.15),_transparent_40%)]" />
+          </div>
+
           <div className="relative z-10 flex h-full flex-col justify-between space-y-6">
             <div>
-              <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white">
-                <Building className="w-5 h-5 text-white" />
+              <div className="inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white">
+                <img
+                  src="/SS-Emblem.svg"
+                  alt="SkyStruct Logo"
+                  className="w-5 h-5 object-contain brightness-0 invert"
+                />
                 SkyStruct Lite
               </div>
 
               <h1 className="mt-4 xl:mt-6 text-2xl xl:text-3xl font-extrabold leading-tight tracking-tight">
                 Build better projects
-                <span className="text-[#8AC7FF]"> with one login</span>
+                <span className="text-[#8AC7FF]"> with one Sign In</span>
               </h1>
 
               <p className="mt-3 xl:mt-4 max-w-xl text-blue-100/90 text-xs xl:text-sm leading-normal">
@@ -118,7 +170,7 @@ function LoginForm() {
               <div className="mt-4 space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="grid size-6 shrink-0 place-items-center rounded-full bg-white/20 text-xs font-bold text-white">✓</div>
-                  <p className="text-xs xl:text-sm text-blue-100/90">Unified login for Workspace Members & Super Admins</p>
+                  <p className="text-xs xl:text-sm text-blue-100/90">Unified Sign In for Workspace Members & Super Admins</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="grid size-6 shrink-0 place-items-center rounded-full bg-white/20 text-xs font-bold text-white">✓</div>
@@ -126,46 +178,50 @@ function LoginForm() {
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="grid size-6 shrink-0 place-items-center rounded-full bg-white/20 text-xs font-bold text-white">✓</div>
-                  <p className="text-xs xl:text-sm text-blue-100/90">Seamless sync across Web & Expo Mobile app</p>
+                  <p className="text-xs xl:text-sm text-blue-100/90">Seamless sync across Web & Mobile app</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right Login Card - Visible everywhere */}
-        <div className="order-1 xl:order-2 rounded-3xl bg-white p-5 sm:p-7 xl:p-8 border border-slate-200/80 flex flex-col justify-between w-full">
+        {/* Right Sign In Card - Visible everywhere */}
+        <div className="order-1 xl:order-2 rounded-3xl bg-white p-5 sm:p-7 xl:p-8 border border-slate-200/80 flex flex-col justify-between w-full shadow-sm">
           <div>
             {/* Mobile Brand Logo Header */}
-            <div className="xl:hidden flex items-center justify-center gap-2 mb-5">
-              <div className="w-8 h-8 rounded-xl bg-[#0E3B7B] flex items-center justify-center text-white">
-                <Building className="w-4 h-4" />
+            <div className="xl:hidden flex items-center justify-center gap-2.5 mb-5">
+              <div className="w-8 h-8 rounded-xl bg-[#0E3B7B] flex items-center justify-center p-1.5 text-white">
+                <img
+                  src="/SS-Emblem.svg"
+                  alt="SkyStruct Logo"
+                  className="w-full h-full object-contain brightness-0 invert"
+                />
               </div>
               <span className="font-extrabold text-base tracking-tight text-[#0E3B7B]">SkyStruct Lite</span>
             </div>
 
             <div className="mb-4 sm:mb-5 flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">Sign in</h2>
+                <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">Sign In</h2>
                 <p className="mt-0.5 text-xs text-slate-500">Enter your credentials to continue.</p>
               </div>
-              <div className="rounded-xl bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 shrink-0">Account Access</div>
             </div>
 
             {registered && (
               <div className="mb-3 xl:mb-4 rounded-2xl border border-emerald-100/90 bg-emerald-50 p-2.5 text-xs text-emerald-800">
-                Registration successful! Please login with your credentials.
+                Sign up successful! Please sign in with your credentials.
               </div>
             )}
 
             <div className="space-y-4">
               <div className="mb-4 sm:mb-5">
-                <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Select Workspace Mode</label>
+                <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Sign In Type</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
+                    disabled={isLoading}
                     onClick={() => setIndustryType('construction')}
-                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-semibold transition active:scale-95 ${
+                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-semibold transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed ${
                       industryType === 'construction'
                         ? 'border-blue-600 bg-blue-50 text-blue-700'
                         : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
@@ -176,8 +232,9 @@ function LoginForm() {
                   </button>
                   <button
                     type="button"
+                    disabled={isLoading}
                     onClick={() => setIndustryType('interior')}
-                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-semibold transition active:scale-95 ${
+                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-semibold transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed ${
                       industryType === 'interior'
                         ? 'border-purple-600 bg-purple-50 text-purple-700'
                         : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
@@ -192,11 +249,13 @@ function LoginForm() {
               {showForgotPw ? (
                 <div>
                   <button
-                    onClick={() => { setShowForgotPw(false); setFpSent(false); setFpEmail(''); }}
-                    className="mb-4 sm:mb-6 inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900"
+                    type="button"
+                    disabled={fpLoading}
+                    onClick={closeForgotPassword}
+                    className="mb-4 sm:mb-6 inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 disabled:opacity-60"
                   >
                     <ArrowLeft className="w-4 h-4" />
-                    Back to login
+                    Back to Sign In
                   </button>
 
                   {fpSent ? (
@@ -213,6 +272,7 @@ function LoginForm() {
                         Enter OTP & Reset Password
                       </Link>
                       <button
+                        type="button"
                         onClick={() => setFpSent(false)}
                         className="mt-3 sm:mt-4 text-xs font-semibold text-slate-500 hover:text-slate-900"
                       >
@@ -225,15 +285,18 @@ function LoginForm() {
                       <p className="text-xs text-slate-500 mb-3 sm:mb-4">Enter your email and we’ll send a reset link.</p>
                       <form onSubmit={handleForgotPassword} className="space-y-3.5 sm:space-y-4">
                         <div>
-                          <label className="text-xs font-semibold text-slate-700">Email Address</label>
+                          <label htmlFor="fp-email" className="text-xs font-semibold text-slate-700">Email Address</label>
                           <div className="relative mt-1">
                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <input
+                              id="fp-email"
                               type="email"
                               required
+                              disabled={fpLoading}
+                              autoComplete="email"
                               value={fpEmail}
                               onChange={(e) => setFpEmail(e.target.value)}
-                              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-xs text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-xs text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-60"
                               placeholder="name@company.com"
                             />
                           </div>
@@ -243,7 +306,14 @@ function LoginForm() {
                           disabled={fpLoading}
                           className="w-full rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60 active:scale-95"
                         >
-                          {fpLoading ? 'Sending...' : 'Send Reset Link'}
+                          {fpLoading ? (
+                            <span className="inline-flex items-center justify-center gap-2">
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              Sending Link...
+                            </span>
+                          ) : (
+                            'Send Reset Link'
+                          )}
                         </button>
                       </form>
                     </div>
@@ -253,14 +323,17 @@ function LoginForm() {
                 <>
                   <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
                     <div>
-                      <label className="text-xs font-semibold text-slate-700">Email Address</label>
+                      <label htmlFor="login-email" className="text-xs font-semibold text-slate-700">Email Address</label>
                       <div className="relative mt-1">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
+                          id="login-email"
                           type="email"
+                          autoComplete="email"
+                          disabled={isLoading}
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-xs sm:text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-xs sm:text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-60"
                           placeholder="name@company.com"
                           required
                         />
@@ -268,21 +341,26 @@ function LoginForm() {
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-slate-700">Password</label>
+                      <label htmlFor="login-password" className="text-xs font-semibold text-slate-700">Password</label>
                       <div className="relative mt-1">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
+                          id="login-password"
                           type={showPassword ? 'text' : 'password'}
+                          autoComplete="current-password"
+                          disabled={isLoading}
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-10 text-xs sm:text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-10 text-xs sm:text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-60"
                           placeholder="••••••••"
                           required
                         />
                         <button
                           type="button"
+                          disabled={isLoading}
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-900 p-1"
+                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-900 p-1 disabled:opacity-40"
                         >
                           {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
@@ -290,12 +368,24 @@ function LoginForm() {
                     </div>
 
                     <div className="flex items-center justify-between text-xs text-slate-500 pt-0.5">
-                      <label className="inline-flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                        Remember me
+                      <label htmlFor="remember-me" className="inline-flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          id="remember-me"
+                          type="checkbox"
+                          disabled={isLoading}
+                          checked={rememberMe}
+                          onChange={(e) => setRememberMe(e.target.checked)}
+                          className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer disabled:opacity-50"
+                        />
+                        Remember Me
                       </label>
-                      <button type="button" onClick={() => setShowForgotPw(true)} className="font-semibold text-blue-600 hover:text-blue-700">
-                        Forgot password?
+                      <button
+                        type="button"
+                        disabled={isLoading}
+                        onClick={openForgotPassword}
+                        className="font-semibold text-blue-600 hover:text-blue-700 disabled:opacity-50"
+                      >
+                        Forgot Password?
                       </button>
                     </div>
 
@@ -304,14 +394,21 @@ function LoginForm() {
                       disabled={isLoading}
                       className="w-full rounded-xl bg-blue-600 px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60 active:scale-95 cursor-pointer"
                     >
-                      {isLoading ? 'Signing in...' : 'Sign In'}
+                      {isLoading ? (
+                        <span className="inline-flex items-center justify-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Signing In...
+                        </span>
+                      ) : (
+                        'Sign In'
+                      )}
                     </button>
                   </form>
 
                   <div className="mt-4 text-center text-xs text-slate-500">
                     Don’t have an account?{' '}
                     <Link href="/register" className="font-semibold text-blue-600 hover:text-blue-700">
-                      Register Workspace
+                      Sign Up
                     </Link>
                   </div>
                 </>

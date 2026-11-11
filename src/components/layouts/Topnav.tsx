@@ -1,7 +1,7 @@
 'use client';
  
 import React, { useState, useRef, useEffect } from 'react';
-import { Menu, User, LogOut, ChevronDown } from 'lucide-react';
+import { Menu, User, LogOut, ChevronDown, Building2 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthContext';
 import {GlobalSearch} from '@/components/shared/GlobalSearch';
 import { NotificationCenter } from '@/components/shared/NotificationCenter';
@@ -20,6 +20,11 @@ export const Topnav: React.FC<TopnavProps> = ({ onMenuClick, isSidebarCollapsed,
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+
+  const organizationName =
+    (typeof user?.organization === 'object' && user?.organization !== null ? (user.organization as any).name : null) ||
+    (user as any)?.organizationName ||
+    '';
 
   const isInterior =
     (user as any)?.industryType === 'interior' ||
@@ -94,6 +99,12 @@ export const Topnav: React.FC<TopnavProps> = ({ onMenuClick, isSidebarCollapsed,
                   <p className="text-[11px] text-slate-500 truncate">
                     {user?.email || 'user@example.com'}
                   </p>
+                  {organizationName && (
+                    <p className="text-[11px] font-semibold text-blue-600 truncate mt-1 flex items-center gap-1.5" title={organizationName}>
+                      <Building2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                      <span className="truncate">{organizationName}</span>
+                    </p>
+                  )}
                 </div>
                
                 <button

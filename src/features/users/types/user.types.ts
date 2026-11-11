@@ -7,7 +7,8 @@ export interface User {
   phoneNumber?: string;
   avatar?: string;
   role?: Role;
-  organization?: string;
+  organization?: string | Organization;
+  organizationName?: string;
   projects?: string[];
   status: "Active" | "Inactive" | "Suspended" | "Pending";
   lastLogin?: string;
