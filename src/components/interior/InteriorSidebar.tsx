@@ -3,13 +3,23 @@
 // Port of interior-os-frontend's components/layout/sidebar.tsx, wired to the
 // interior-only localStorage session instead of Zustand's useAuthStore.
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, FolderKanban, Users, Bell, Settings, ChevronLeft, ChevronRight, Building2, UsersRound, ShieldCheck, Truck } from 'lucide-react';
+import { motion, Variants } from 'framer-motion';
+import {
+  LayoutDashboard, FolderKanban, Users, Building2, UsersRound,
+  ShieldCheck, Truck, Settings, ChevronLeft,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
+import {
+  SIDEBAR_EXPANDED_WIDTH,
+  SIDEBAR_COLLAPSED_WIDTH,
+  SIDEBAR_TRANSITION,
+  useIsDesktop,
+} from '@/components/layouts/sidebarConfig';
 
 interface NavItem {
   label: string;
@@ -39,10 +49,43 @@ interface InteriorSidebarProps {
   onCloseMobile: () => void;
 }
 
-export function InteriorSidebar({ organizationName, collapsed, onToggleCollapse, mobileOpen, onCloseMobile }: InteriorSidebarProps) {
+const textVariants: Variants = {
+  expanded: {
+    opacity: 1,
+    transition: {
+      duration: 0.2,
+      delay: 0.08,
+      ease: [0.25, 1, 0.5, 1],
+    },
+  },
+  collapsed: {
+    opacity: 0,
+    transition: {
+      duration: 0.1,
+      ease: [0.4, 0, 1, 1],
+    },
+  },
+};
+
+export function InteriorSidebar({
+  organizationName,
+  collapsed,
+  onToggleCollapse,
+  mobileOpen,
+  onCloseMobile,
+}: InteriorSidebarProps) {
   const pathname = usePathname();
   const toast = useToast();
   const { isOrgAdmin, currentUser, hasPermission } = usePermissions();
+  const isDesktop = useIsDesktop(768);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      setIsMounted(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   // Sections the server says this user can open (GET /auth/me → navAccess)
   const navAccess: Record<string, boolean> | undefined = currentUser?.navAccess;
@@ -63,10 +106,12 @@ export function InteriorSidebar({ organizationName, collapsed, onToggleCollapse,
     return true;
   });
 
-  const isActive = (href: string) => pathname === href || (href !== '/interior-new' && pathname.startsWith(href + '/'));
+  const isActive = (href: string) =>
+    pathname === href || (href !== '/interior-new' && pathname.startsWith(href + '/'));
 
   const renderNavItem = (item: NavItem) => {
     const active = isActive(item.href);
+
     return (
       <Link
         key={item.href}
@@ -80,24 +125,39 @@ export function InteriorSidebar({ organizationName, collapsed, onToggleCollapse,
           onCloseMobile();
         }}
         className={cn(
-          'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 group',
+          'relative flex items-center h-9 rounded-lg text-sm transition-colors duration-150 outline-none group overflow-hidden w-full',
           active
             ? 'bg-[hsl(var(--sidebar-primary,var(--primary)))] text-white font-medium shadow-sm'
             : 'text-[hsl(var(--foreground)/0.7)] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))]',
-          collapsed && 'justify-center px-2'
+          collapsed ? 'justify-center px-0' : 'gap-3 px-3'
         )}
+        title={collapsed ? item.label : undefined}
       >
-        <item.icon className="w-4 h-4 shrink-0" />
+        <div className="flex items-center justify-center shrink-0 w-4 h-4">
+          <item.icon className="w-4 h-4 shrink-0" />
+        </div>
+
         {!collapsed && (
-          <>
-            <span className="flex-1">{item.label}</span>
-            {item.badge ? (
-              <span className={cn('min-w-[20px] h-5 flex items-center justify-center rounded-full text-[10px] font-semibold px-1.5', active ? 'bg-white/20 text-white' : 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]')}>
-                {item.badge}
-              </span>
-            ) : null}
-          </>
+          <motion.span
+            variants={textVariants}
+            initial={false}
+            animate="expanded"
+            className="flex-1 truncate"
+          >
+            {item.label}
+          </motion.span>
         )}
+
+        {!collapsed && item.badge ? (
+          <span
+            className={cn(
+              'min-w-[20px] h-5 flex items-center justify-center rounded-full text-[10px] font-semibold px-1.5',
+              active ? 'bg-white/20 text-white' : 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]'
+            )}
+          >
+            {item.badge}
+          </span>
+        ) : null}
       </Link>
     );
   };
@@ -105,50 +165,100 @@ export function InteriorSidebar({ organizationName, collapsed, onToggleCollapse,
   return (
     <>
       {mobileOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden" onClick={onCloseMobile} />
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+          onClick={onCloseMobile}
+        />
       )}
 
-      <aside
+      <motion.aside
+        initial={false}
+        animate={{
+          width: isDesktop
+            ? collapsed
+              ? SIDEBAR_COLLAPSED_WIDTH
+              : SIDEBAR_EXPANDED_WIDTH
+            : SIDEBAR_EXPANDED_WIDTH,
+        }}
+        transition={isMounted ? SIDEBAR_TRANSITION : { duration: 0 }}
         className={cn(
-          'interior-os-theme h-screen flex flex-col border-r border-[hsl(var(--border))] bg-[hsl(var(--background))] transition-all duration-300',
-          'fixed md:sticky top-0 left-0 z-50 md:z-auto',
-          mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
-          collapsed ? 'w-[60px]' : 'w-[260px]'
+          'interior-os-theme h-screen h-dvh flex flex-col border-r border-[hsl(var(--border))] bg-[hsl(var(--background))] overflow-hidden shrink-0',
+          'will-change-[width]',
+          'fixed md:static top-0 left-0 z-50 md:z-40',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         )}
       >
-        <div className={cn('flex items-center h-16 px-4 border-b border-[hsl(var(--border))]', collapsed && 'justify-center px-2')}>
+        {/* Header Logo — Perfectly centered in 60px collapsed width */}
+        <div
+          className={cn(
+            'flex items-center h-16 border-b border-[hsl(var(--border))] overflow-hidden shrink-0',
+            collapsed ? 'justify-center px-0' : 'px-4'
+          )}
+        >
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 bg-[hsl(var(--primary))] rounded-lg flex items-center justify-center shrink-0">
               <Building2 className="w-4 h-4 text-white" />
             </div>
             {!collapsed && (
-              <div className="min-w-0">
-                <h2 className="text-sm font-bold tracking-tight text-[hsl(var(--foreground))] truncate">SkyStruct-Lite Interior</h2>
-                <p className="text-[10px] text-[hsl(var(--muted-foreground))] truncate">{organizationName || 'Workspace'}</p>
-              </div>
+              <motion.div
+                variants={textVariants}
+                initial={false}
+                animate="expanded"
+                className="min-w-0 flex-1 overflow-hidden"
+              >
+                <h2 className="text-sm font-bold tracking-tight text-[hsl(var(--foreground))] truncate">
+                  SkyStruct-Lite Interior
+                </h2>
+                <p className="text-[10px] text-[hsl(var(--muted-foreground))] truncate">
+                  {organizationName || 'Workspace'}
+                </p>
+              </motion.div>
             )}
           </div>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
+        {/* Navigation Items (Single flat list, no extra section headers) */}
+        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
           {filteredNavigation.map(renderNavItem)}
         </nav>
 
-        <div className="border-t border-[hsl(var(--border))] p-2 space-y-0.5">
+        {/* Footer Area — Perfectly centered in 60px collapsed width */}
+        <div className="border-t border-[hsl(var(--border))] p-2 space-y-1 shrink-0">
           {bottomNavigation.map(renderNavItem)}
 
           <button
+            type="button"
             onClick={onToggleCollapse}
             className={cn(
-              'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150',
+              'w-full flex items-center h-9 rounded-lg text-sm transition-colors overflow-hidden cursor-pointer',
               'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))]',
-              collapsed && 'justify-center px-2'
+              collapsed ? 'justify-center px-0' : 'gap-3 px-3'
             )}
+            title={collapsed ? 'Expand sidebar' : undefined}
           >
-            {collapsed ? <ChevronRight className="w-4 h-4" /> : (<><ChevronLeft className="w-4 h-4" /><span>Collapse</span></>)}
+            <div className="flex items-center justify-center shrink-0 w-4 h-4">
+              <motion.div
+                animate={{ rotate: collapsed ? 180 : 0 }}
+                transition={SIDEBAR_TRANSITION}
+                className="flex items-center justify-center"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </motion.div>
+            </div>
+
+            {!collapsed && (
+              <motion.span
+                variants={textVariants}
+                initial={false}
+                animate="expanded"
+                className="overflow-hidden whitespace-nowrap"
+              >
+                Collapse
+              </motion.span>
+            )}
           </button>
         </div>
-      </aside>
+      </motion.aside>
     </>
   );
 }

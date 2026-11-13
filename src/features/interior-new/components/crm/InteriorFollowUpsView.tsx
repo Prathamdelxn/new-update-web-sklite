@@ -4,7 +4,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
-import { Clock, Phone, UserCircle, MapPin, CheckCircle2, Search, CheckCircle, XCircle, MessageSquare } from 'lucide-react';
+import { Clock, X, Phone, UserCircle, MapPin, CheckCircle2, Search, CheckCircle, XCircle, MessageSquare } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/providers/ToastContext';
 import { cn } from '@/lib/utils';
@@ -128,63 +128,65 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, onPassToRequirements,
 
   return (
     <div className="w-full space-y-4">
-      {/* Header, Filter Tabs & Search Bar */}
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Left: Tab Pills */}
-        <div className="flex items-center gap-1.5 bg-[hsl(var(--muted))] p-1 rounded-xl w-full sm:w-max overflow-x-auto scrollbar-none">
-          <button
-            onClick={() => setActiveTab('all')}
-            className={cn(
-              'flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all whitespace-nowrap text-center cursor-pointer',
-              activeTab === 'all'
-                ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-sm'
-                : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
+      {/* ── Search & Filter Control Bar (Matching Projects & Vendors Layout) ── */}
+      <div className="p-2.5 sm:p-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          {/* Left: Search Box (Full Width flex-1) */}
+          <div className="relative flex-1 min-w-0">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search follow-ups..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-8 pr-8 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             )}
-          >
-            All ({allActivities.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('pending')}
-            className={cn(
-              'flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all whitespace-nowrap flex items-center justify-center gap-1.5 cursor-pointer',
-              activeTab === 'pending'
-                ? 'bg-amber-500 text-white shadow-sm'
-                : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
-            )}
-          >
-            Pending ({pendingCount})
-          </button>
-          <button
-            onClick={() => setActiveTab('completed')}
-            className={cn(
-              'flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all whitespace-nowrap flex items-center justify-center gap-1.5 cursor-pointer',
-              activeTab === 'completed'
-                ? 'bg-emerald-600 text-white shadow-sm'
-                : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
-            )}
-          >
-            Completed ({completedCount})
-          </button>
-        </div>
+          </div>
 
-        {/* Right: Search Box */}
-        <div className="relative w-full sm:min-w-[240px] sm:w-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-          <input
-            type="text"
-            placeholder="Search follow-ups..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-10 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-medium text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none transition-all"
-          />
-          {searchTerm && (
+          {/* Right: Filter Tabs */}
+          <div className="flex items-center gap-1.5 p-1 rounded-lg border border-slate-200 bg-slate-50 shrink-0 overflow-x-auto scrollbar-none">
             <button
-              onClick={() => setSearchTerm('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] cursor-pointer"
+              onClick={() => setActiveTab('all')}
+              className={cn(
+                'px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap cursor-pointer',
+                activeTab === 'all'
+                  ? 'bg-blue-600 text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              )}
             >
-              Clear
+              All ({allActivities.length})
             </button>
-          )}
+            <button
+              onClick={() => setActiveTab('pending')}
+              className={cn(
+                'px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap cursor-pointer',
+                activeTab === 'pending'
+                  ? 'bg-amber-500 text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              )}
+            >
+              Pending ({pendingCount})
+            </button>
+            <button
+              onClick={() => setActiveTab('completed')}
+              className={cn(
+                'px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap cursor-pointer',
+                activeTab === 'completed'
+                  ? 'bg-emerald-600 text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              )}
+            >
+              Completed ({completedCount})
+            </button>
+          </div>
         </div>
       </div>
 

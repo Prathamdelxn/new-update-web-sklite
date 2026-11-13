@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/layouts/Sidebar';
 import { Topnav } from '@/components/layouts/Topnav';
 import { usePathname, useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/providers/AuthContext';
 import { isInteriorSession } from '@/lib/interiorAuth';
@@ -69,7 +70,7 @@ export const Shell: React.FC<ShellProps> = ({ children, headerContent }) => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFF]">
+    <div className="flex min-h-screen w-full bg-[#F8FAFF] overflow-hidden">
       <Sidebar 
         isOpen={isSidebarOpen} 
         onClose={() => setIsSidebarOpen(false)} 
@@ -77,23 +78,23 @@ export const Shell: React.FC<ShellProps> = ({ children, headerContent }) => {
         onToggleCollapse={handleToggleCollapse}
       />
       
-      <div 
-        className={`${
-          isCollapsed ? 'lg:pl-20' : 'lg:pl-[280px]'
-        } flex flex-col min-h-screen transition-all duration-300`}
-      >
+      <div className="flex-1 min-w-0 flex flex-col">
         <Topnav 
           onMenuClick={() => setIsSidebarOpen(true)} 
           isSidebarCollapsed={isCollapsed}
           headerContent={headerContent}
         />
         
-        <main className={cn(
-          "flex-1 px-4 md:px-8 pb-8 transition-all duration-300",
-          (pathname === '/construction-dashboard/projects' || pathname === '/projects') ? "pt-12" : "pt-24"
-        )}>
+        <main className="flex-1 min-w-0 px-4 md:px-8 pb-8 pt-5">
           <div className="max-w-7xl mx-auto">
-            {children}
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+            >
+              {children}
+            </motion.div>
           </div>
         </main>
       </div>

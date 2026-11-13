@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { Sidebar } from '@/components/layouts/Sidebar';
 import { Topnav } from '@/components/layouts/Topnav';
-import { cn } from '@/lib/utils';
 import { useAuth } from '@/providers/AuthContext';
 import { isInteriorSession } from '@/lib/interiorAuth';
 
@@ -60,7 +60,7 @@ export default function ConstructionDashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFF]">
+    <div className="flex min-h-screen w-full bg-[#F8FAFF] overflow-hidden">
       <Sidebar 
         isOpen={isSidebarOpen} 
         onClose={() => setIsSidebarOpen(false)} 
@@ -68,20 +68,22 @@ export default function ConstructionDashboardLayout({
         onToggleCollapse={handleToggleCollapse}
       />
       
-      <div 
-        className={cn(
-          "flex flex-col min-h-screen transition-all duration-200",
-          isCollapsed ? "lg:pl-[72px]" : "lg:pl-[260px]"
-        )}
-      >
+      <div className="flex-1 min-w-0 flex flex-col">
         <Topnav 
           onMenuClick={() => setIsSidebarOpen(true)} 
           isSidebarCollapsed={isCollapsed}
         />
         
-        <main className="flex-1 px-4 md:px-6 pt-20 pb-8">
+        <main className="flex-1 min-w-0 px-4 md:px-6 pt-5 pb-8">
           <div className="max-w-[1680px] w-full mx-auto">
-            {children}
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+            >
+              {children}
+            </motion.div>
           </div>
         </main>
       </div>

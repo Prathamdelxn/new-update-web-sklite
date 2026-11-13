@@ -82,7 +82,7 @@ function InteriorNewDashboardSkeleton() {
         {/* KPI Cards Row Skeleton (6 cards) */}
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
           {Array.from({ length: 6 }).map((_, idx) => (
-            <div key={idx} className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-xs">
+            <div key={idx} className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-none">
               <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200/60 mb-3" />
               <div className="h-7 w-16 bg-slate-200/90 rounded-md mb-1.5" />
               <div className="h-3.5 w-24 bg-slate-200/60 rounded-md" />
@@ -92,7 +92,7 @@ function InteriorNewDashboardSkeleton() {
 
         {/* Progress & Health Row Skeleton (2 major cards) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-white border border-slate-200/90 rounded-xl p-6 shadow-xs">
+          <div className="lg:col-span-2 bg-white border border-slate-200/90 rounded-xl p-6 shadow-none">
             <div className="flex items-center justify-between mb-6">
               <div className="h-5 w-36 bg-slate-200/90 rounded-md" />
               <div className="flex items-center gap-3">
@@ -111,7 +111,7 @@ function InteriorNewDashboardSkeleton() {
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200/90 rounded-xl p-6 shadow-xs">
+          <div className="bg-white border border-slate-200/90 rounded-xl p-6 shadow-none">
             <div className="h-5 w-32 bg-slate-200/90 rounded-md mb-6" />
             <div className="w-36 h-36 mx-auto rounded-full border-8 border-slate-100 flex items-center justify-center my-4">
               <div className="w-16 h-16 rounded-full bg-slate-50" />
@@ -133,7 +133,7 @@ function InteriorNewDashboardSkeleton() {
         {/* Bottom 4 Cards Grid Skeleton */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* CRM Pipeline */}
-          <div className="bg-white border border-slate-200/90 rounded-xl p-6 shadow-xs">
+          <div className="bg-white border border-slate-200/90 rounded-xl p-6 shadow-none">
             <div className="h-5 w-40 bg-slate-200/90 rounded-md mb-4" />
             <div className="h-[200px] bg-slate-50 border border-slate-100 rounded-xl flex items-end p-4 gap-3">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -147,7 +147,7 @@ function InteriorNewDashboardSkeleton() {
           </div>
 
           {/* Procurement */}
-          <div className="bg-white border border-slate-200/90 rounded-xl p-6 shadow-xs">
+          <div className="bg-white border border-slate-200/90 rounded-xl p-6 shadow-none">
             <div className="h-5 w-32 bg-slate-200/90 rounded-md mb-4" />
             <div className="h-[200px] bg-slate-50 border border-slate-100 rounded-xl flex items-end p-4 gap-3">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -161,7 +161,7 @@ function InteriorNewDashboardSkeleton() {
           </div>
 
           {/* Top Projects */}
-          <div className="bg-white border border-slate-200/90 rounded-xl p-6 shadow-xs">
+          <div className="bg-white border border-slate-200/90 rounded-xl p-6 shadow-none">
             <div className="h-5 w-28 bg-slate-200/90 rounded-md mb-4" />
             <div className="space-y-4">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -177,7 +177,7 @@ function InteriorNewDashboardSkeleton() {
           </div>
 
           {/* Recent Activity */}
-          <div className="lg:col-span-3 bg-white border border-slate-200/90 rounded-xl p-6 shadow-xs">
+          <div className="lg:col-span-3 bg-white border border-slate-200/90 rounded-xl p-6 shadow-none">
             <div className="h-5 w-36 bg-slate-200/90 rounded-md mb-4" />
             <div className="space-y-3">
               {Array.from({ length: 3 }).map((_, i) => (
@@ -291,7 +291,7 @@ export default function InteriorNewDashboardView() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-[hsl(var(--foreground))]">
-            Good {getGreeting()}, {user?.firstName || 'there'}
+            Good {getGreeting()}, {user?.firstName?.toUpperCase() || 'there'}
           </h1>
           <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
             Here&apos;s the live status of your organizational fit-out portfolio today.
@@ -417,12 +417,12 @@ export default function InteriorNewDashboardView() {
                     </PieChart>
                   </ResponsiveContainer>
                   {/* Centre label: number of active projects counted */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  {/* <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <span className="text-2xl font-bold text-[hsl(var(--foreground))]">{healthTotal}</span>
                     <span className="text-[11px] text-[hsl(var(--muted-foreground))]">
                       {healthTotal === 1 ? 'Project' : 'Projects'}
                     </span>
-                  </div>
+                  </div> */}
                 </div>
                 <div className="space-y-2 mt-2">
                   {(data?.projectHealth || []).map((item) => (

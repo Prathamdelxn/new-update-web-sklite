@@ -38,7 +38,7 @@ export function InteriorHeader({ user, onMobileMenuClick }: InteriorHeaderProps)
   const initials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() : '?';
 
   return (
-    <header className="interior-os-theme h-16 border-b border-[hsl(var(--border))] bg-[hsl(var(--background))] flex items-center justify-between px-4 md:px-6 sticky top-0 z-30 gap-4">
+    <header className="interior-os-theme h-16 border-b border-[hsl(var(--border))] bg-[hsl(var(--background))] flex items-center justify-between px-4 md:px-6 sticky top-0 z-30 shrink-0 gap-4">
       <Button variant="outline" size="sm" onClick={onMobileMenuClick} className="md:hidden text-[hsl(var(--muted-foreground))] shrink-0 px-2">
         <Menu className="w-5 h-5" />
       </Button>
