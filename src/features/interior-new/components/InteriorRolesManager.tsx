@@ -10,14 +10,30 @@
 import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Shield, ShieldCheck, ChevronDown, ChevronUp, Plus, Pencil, Trash2, Lock, Loader2, X, CheckCircle2, MinusCircle,
+  Shield,
+  ShieldCheck,
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  Pencil,
+  Trash2,
+  Lock,
+  Loader2,
+  X,
+  CheckCircle2,
+  MinusCircle,
 } from 'lucide-react';
 import { useToast } from '@/providers/ToastContext';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { usePermissions, refreshInteriorUser } from '@/features/interior-new/hooks/usePermissions';
 import {
-  PERMISSION_ACTIONS, PERMISSION_MODULES, MODULE_CATEGORIES, permissionsAllow, moduleActions,
-  type RolePermission, type PermissionAction,
+  PERMISSION_ACTIONS,
+  PERMISSION_MODULES,
+  MODULE_CATEGORIES,
+  permissionsAllow,
+  moduleActions,
+  type RolePermission,
+  type PermissionAction,
 } from '@/features/interior-new/lib/permissionCatalog';
 
 export interface ManagedRole {
@@ -139,97 +155,97 @@ function RoleEditorModal({ role, onClose, onSaved }: { role: ManagedRole | null;
     }
   };
 
-  const fieldCls = 'w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] disabled:opacity-60';
+  const fieldCls = 'w-full px-3.5 py-2.5 rounded-xl border border-slate-200/80 bg-slate-50/50 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-60 transition-all';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs" onClick={onClose} />
       <motion.div
-        initial={{ opacity: 0, scale: 0.97, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-xl"
+        initial={{ opacity: 0, scale: 0.96, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-2xl border border-slate-200/90 bg-white shadow-2xl overflow-hidden"
       >
-        <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
+        <div className="flex items-center justify-between p-5 sm:p-6 border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[hsl(var(--primary)/0.1)] flex items-center justify-center">
-              <ShieldCheck className="w-4.5 h-4.5 text-[hsl(var(--primary))]" />
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-[hsl(var(--foreground))]">{isEdit ? 'Edit Role' : 'New Role'}</h3>
-              <p className="text-xs text-[hsl(var(--muted-foreground))]">{enabledModules} of {PERMISSION_MODULES.length} modules enabled</p>
+              <h3 className="text-base font-bold text-slate-900">{isEdit ? 'Edit Role Permissions' : 'Create New Role'}</h3>
+              <p className="text-xs text-slate-500">{enabledModules} of {PERMISSION_MODULES.length} modules enabled</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-[hsl(var(--muted))]"><X className="w-4 h-4" /></button>
+          <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"><X className="w-4 h-4" /></button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5 space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
-              <label className="block text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-1.5">Role name</label>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">Role name *</label>
               <input value={name} onChange={(e) => setName(e.target.value)} disabled={isEdit && role!.isSystem} className={fieldCls} placeholder="e.g. Site Supervisor" />
-              {isEdit && role!.isSystem && <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-1">Built-in roles can&apos;t be renamed.</p>}
+              {isEdit && role!.isSystem && <p className="text-[11px] text-slate-400 mt-1">Built-in roles cannot be renamed.</p>}
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-1.5">Description</label>
-              <input value={description} onChange={(e) => setDescription(e.target.value)} className={fieldCls} placeholder="What this role is for" />
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">Description</label>
+              <input value={description} onChange={(e) => setDescription(e.target.value)} className={fieldCls} placeholder="Brief summary of what this role does" />
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Module permissions</p>
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Module permissions matrix</p>
             <div className="flex gap-1.5">
-              <button type="button" onClick={() => applyPreset('read')} className="px-3 py-1.5 rounded-md text-xs font-medium bg-[hsl(var(--muted))] hover:opacity-80">Read Only</button>
-              <button type="button" onClick={() => applyPreset('full')} className="px-3 py-1.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100">Full Access</button>
-              <button type="button" onClick={() => applyPreset('clear')} className="px-3 py-1.5 rounded-md text-xs font-medium bg-red-50 text-red-600 border border-red-200 hover:bg-red-100">Clear All</button>
+              <button type="button" onClick={() => applyPreset('read')} className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer">Read Only</button>
+              <button type="button" onClick={() => applyPreset('full')} className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors cursor-pointer">Full Access</button>
+              <button type="button" onClick={() => applyPreset('clear')} className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors cursor-pointer">Clear All</button>
             </div>
           </div>
 
           {MODULE_CATEGORIES.map((category) => (
-            <div key={category} className="rounded-xl border border-[hsl(var(--border))] overflow-hidden">
-              <div className="px-4 py-2 bg-[hsl(var(--muted)/0.4)] text-xs font-bold text-[hsl(var(--foreground))]">
+            <div key={category} className="rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs">
+              <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200/80 text-xs font-bold text-slate-800">
                 {category}
                 {category === 'Project Execution' && (
-                  <span className="block mt-0.5 text-[10px] font-normal text-[hsl(var(--muted-foreground))]">
-                    Project Config → View is turned on automatically with any project module — it&apos;s needed to open a project.
+                  <span className="block mt-0.5 text-[10px] font-normal text-slate-500">
+                    Project Config → View is enabled automatically with any project module — required to open a project.
                   </span>
                 )}
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="text-[hsl(var(--muted-foreground))]">
-                      <th className="text-left font-semibold px-4 py-2 min-w-[180px]">Module</th>
+                    <tr className="text-slate-500 bg-slate-50/50">
+                      <th className="text-left font-semibold px-4 py-2.5 min-w-[180px]">Module</th>
                       {ACTION_COLUMNS.map((a) => (
-                        <th key={a.key} className="font-semibold px-2 py-2 text-center whitespace-nowrap">{a.label}</th>
+                        <th key={a.key} className="font-semibold px-2 py-2.5 text-center whitespace-nowrap">{a.label}</th>
                       ))}
-                      <th className="font-semibold px-2 py-2 text-center whitespace-nowrap border-l border-[hsl(var(--border)/0.6)]" title="Tick to give every action in this module">Full access</th>
+                      <th className="font-semibold px-2 py-2.5 text-center whitespace-nowrap border-l border-slate-200/60" title="Tick to give every action in this module">Full access</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-slate-100">
                     {PERMISSION_MODULES.filter((m) => m.category === category).map((m) => (
-                      <tr key={m.key} className="border-t border-[hsl(var(--border)/0.6)]">
-                        <td className="px-4 py-2 font-medium text-[hsl(var(--foreground))]">{m.label}</td>
+                      <tr key={m.key} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-4 py-2.5 font-medium text-slate-800">{m.label}</td>
                         {ACTION_COLUMNS.map((a) => (
-                          <td key={a.key} className="px-2 py-2 text-center">
+                          <td key={a.key} className="px-2 py-2.5 text-center">
                             {!moduleActions(m.key).includes(a.key) ? (
-                              <span className="text-[hsl(var(--muted-foreground)/0.5)]" title={`${m.label} has no ${a.label.toLowerCase()} action`}>—</span>
+                              <span className="text-slate-300" title={`${m.label} has no ${a.label.toLowerCase()} action`}>—</span>
                             ) : (
                             <input
                               type="checkbox"
                               checked={has(m.key, a.key)}
                               onChange={() => toggle(m.key, a.key)}
-                              className="w-4 h-4 accent-[hsl(var(--primary))] cursor-pointer"
+                              className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
                               aria-label={`${m.label} ${a.label}`}
                             />
                             )}
                           </td>
                         ))}
-                        <td className="px-2 py-2 text-center border-l border-[hsl(var(--border)/0.6)]">
+                        <td className="px-2 py-2.5 text-center border-l border-slate-200/60 bg-slate-50/30">
                           <input
                             type="checkbox"
                             checked={rowCount(m.key) === moduleActions(m.key).length}
                             ref={(el) => { if (el) el.indeterminate = rowCount(m.key) > 0 && rowCount(m.key) < moduleActions(m.key).length; }}
                             onChange={() => toggleFull(m.key)}
-                            className="w-4 h-4 accent-[hsl(var(--primary))] cursor-pointer"
+                            className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
                             aria-label={`${m.label} full access`}
                           />
                         </td>
@@ -242,11 +258,11 @@ function RoleEditorModal({ role, onClose, onSaved }: { role: ManagedRole | null;
           ))}
         </div>
 
-        <div className="flex justify-end gap-2 p-4 border-t border-[hsl(var(--border))]">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-semibold bg-[hsl(var(--muted))] hover:opacity-80">Cancel</button>
-          <button onClick={handleSave} disabled={saving} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 disabled:opacity-60">
+        <div className="flex justify-end gap-2.5 p-4 sm:p-5 border-t border-slate-100 bg-slate-50/50">
+          <button onClick={onClose} className="px-4 py-2.5 rounded-xl text-sm font-semibold border border-slate-200/80 text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer">Cancel</button>
+          <button onClick={handleSave} disabled={saving} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-xs transition-all active:scale-[0.98] disabled:opacity-60 cursor-pointer">
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-            {isEdit ? 'Save Changes' : 'Create Role'}
+            <span>{isEdit ? 'Save Changes' : 'Create Role'}</span>
           </button>
         </div>
       </motion.div>
@@ -265,46 +281,59 @@ function RoleCard({
   const modulesWithAccess = PERMISSION_MODULES.filter((m) => permissionsAllow(role.permissions, m.key, 'read')).length;
 
   return (
-    <motion.div layout className="border border-[hsl(var(--border))] rounded-xl overflow-hidden bg-[hsl(var(--card))]">
-      <div className="flex items-center gap-4 p-4">
-        <button onClick={() => setExpanded((v) => !v)} className="flex items-center gap-4 flex-1 min-w-0 text-left">
-          <div className="w-10 h-10 rounded-xl bg-[hsl(var(--muted)/0.5)] border border-[hsl(var(--border))] flex items-center justify-center shrink-0">
-            <Shield className="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
+    <div className="border border-slate-200/80 rounded-2xl overflow-hidden bg-white shadow-2xs hover:border-slate-300 transition-all">
+      <div className="flex items-center gap-3.5 sm:gap-4 p-4 sm:p-5">
+        <button onClick={() => setExpanded((v) => !v)} className="flex items-center gap-3.5 sm:gap-4 flex-1 min-w-0 text-left cursor-pointer">
+          <div className="w-11 h-11 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-center shrink-0 text-slate-600 shadow-2xs">
+            <Shield className="w-5 h-5 text-blue-600" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-bold text-[hsl(var(--foreground))]">{role.name}</span>
+              <span className="text-sm sm:text-base font-bold text-slate-900">{role.name}</span>
               {locked && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                  <Lock className="w-2.5 h-2.5" /> FULL ACCESS · LOCKED
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                  <Lock className="w-2.5 h-2.5" /> FULL ACCESS · SYSTEM LOCKED
                 </span>
               )}
               {role.isSystem && !locked && (
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-500">BUILT-IN</span>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                  BUILT-IN
+                </span>
               )}
             </div>
-            {role.description && <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5 truncate">{role.description}</p>}
+            {role.description && <p className="text-xs text-slate-500 mt-0.5 truncate">{role.description}</p>}
           </div>
-          <span className="hidden sm:inline px-2 py-0.5 rounded bg-[hsl(var(--muted)/0.5)] text-xs font-semibold text-[hsl(var(--foreground))] shrink-0">
+          <span className="hidden sm:inline px-3 py-1 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-bold text-slate-700 shrink-0 shadow-2xs">
             {locked ? PERMISSION_MODULES.length : modulesWithAccess}/{PERMISSION_MODULES.length} modules
           </span>
-          {expanded ? <ChevronUp className="w-4 h-4 text-[hsl(var(--muted-foreground))] shrink-0" /> : <ChevronDown className="w-4 h-4 text-[hsl(var(--muted-foreground))] shrink-0" />}
+          <div className="p-1 text-slate-400">
+            {expanded ? <ChevronUp className="w-4 h-4 text-slate-500 shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-500 shrink-0" />}
+          </div>
         </button>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           {canEdit && !locked && (
-            <button onClick={onEdit} title="Edit role" className="p-2 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-blue-600 hover:bg-blue-50"><Pencil className="w-3.5 h-3.5" /></button>
+            <button onClick={onEdit} title="Edit role" className="p-2 rounded-xl border border-slate-200/80 text-slate-500 hover:text-blue-600 hover:bg-blue-50/60 shadow-2xs transition-colors cursor-pointer">
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
           )}
           {canDelete && !role.isSystem && (
-            <button onClick={onDelete} title="Delete role" className="p-2 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-red-600 hover:bg-red-50"><Trash2 className="w-3.5 h-3.5" /></button>
+            <button onClick={onDelete} title="Delete role" className="p-2 rounded-xl border border-rose-200/80 text-rose-600 hover:bg-rose-50 shadow-2xs transition-colors cursor-pointer">
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
           )}
         </div>
       </div>
 
       <AnimatePresence>
         {expanded && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-            className="border-t border-[hsl(var(--border))] overflow-hidden">
-            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="border-t border-slate-100 bg-slate-50/50 p-4 sm:p-5 overflow-hidden"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
               {PERMISSION_MODULES.map((m) => {
                 const actions = locked
                   ? [...moduleActions(m.key)]
@@ -312,21 +341,40 @@ function RoleCard({
                 const hasAccess = actions.length > 0;
                 const full = actions.length === moduleActions(m.key).length;
                 return (
-                  <div key={m.key} className={`flex items-center justify-between p-2.5 rounded-lg border text-xs ${hasAccess ? 'border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.25)]' : 'border-dashed border-[hsl(var(--border)/0.5)] opacity-40'}`}>
+                  <div
+                    key={m.key}
+                    className={`flex items-center justify-between p-3 rounded-xl border text-xs transition-all ${
+                      hasAccess
+                        ? 'border-slate-200/80 bg-white shadow-2xs'
+                        : 'border-dashed border-slate-200 bg-slate-50/50 opacity-50'
+                    }`}
+                  >
                     <div className="flex items-center gap-2 min-w-0">
-                      {hasAccess ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> : <MinusCircle className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))] shrink-0" />}
-                      <span className="font-medium truncate">{m.label}</span>
+                      {hasAccess ? (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      ) : (
+                        <MinusCircle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      )}
+                      <span className="font-semibold text-slate-800 truncate">{m.label}</span>
                     </div>
-                    <div className="flex gap-0.5 shrink-0 ml-2">
-                      {full
-                        ? <span className="px-1.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700">Full</span>
-                        : hasAccess
-                        ? actions.map((a) => (
-                            <span key={a} title={PERMISSION_ACTIONS.find((x) => x.key === a)?.label} className="px-1 rounded text-[9px] font-bold bg-blue-50 text-blue-700">
-                              {PERMISSION_ACTIONS.find((x) => x.key === a)?.short}
-                            </span>
-                          ))
-                        : <span className="text-[10px] text-[hsl(var(--muted-foreground))]">—</span>}
+                    <div className="flex gap-1 shrink-0 ml-2">
+                      {full ? (
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          Full
+                        </span>
+                      ) : hasAccess ? (
+                        actions.map((a) => (
+                          <span
+                            key={a}
+                            title={PERMISSION_ACTIONS.find((x) => x.key === a)?.label}
+                            className="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200/80"
+                          >
+                            {PERMISSION_ACTIONS.find((x) => x.key === a)?.short}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-[10px] text-slate-400 font-mono">—</span>
+                      )}
                     </div>
                   </div>
                 );
@@ -335,7 +383,7 @@ function RoleCard({
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 }
 
@@ -379,20 +427,26 @@ export function InteriorRolesManager({ roles, onChanged: onRolesChanged }: { rol
   };
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
-        <div className="flex items-start gap-3">
-          <ShieldCheck className="w-4 h-4 text-[hsl(var(--primary))] mt-0.5 shrink-0" />
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl border border-slate-200/80 bg-blue-50/40 shadow-2xs">
+        <div className="flex items-start gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-blue-100/80 text-blue-600 flex items-center justify-center shrink-0 border border-blue-200/50 mt-0.5">
+            <ShieldCheck className="w-5 h-5 stroke-[2.2]" />
+          </div>
           <div>
-            <p className="text-xs font-semibold text-[hsl(var(--foreground))]">Organization roles</p>
-            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-              A user&apos;s global role applies across the organization (CRM, vendors, templates). Inside a project, members also get the role assigned to them on that project.
+            <p className="text-sm font-bold text-slate-900">Organization Roles &amp; Permissions Matrix</p>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              A user&apos;s global role applies across the organization (CRM, vendors, settings). Inside a project, members also get the role assigned to them on that project.
             </p>
           </div>
         </div>
         {canCreate && (
-          <button onClick={() => setEditing('new')} className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 shrink-0">
-            <Plus className="w-3.5 h-3.5" /> New Role
+          <button
+            onClick={() => setEditing('new')}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-all active:scale-[0.98] shrink-0 cursor-pointer"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>New Role</span>
           </button>
         )}
       </div>
@@ -408,7 +462,11 @@ export function InteriorRolesManager({ roles, onChanged: onRolesChanged }: { rol
             onDelete={() => setDeleting(role)}
           />
         ))}
-        {sorted.length === 0 && <p className="text-sm text-center text-[hsl(var(--muted-foreground))] py-10">No roles found.</p>}
+        {sorted.length === 0 && (
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-12 text-center text-sm text-slate-500 shadow-2xs">
+            No organization roles configured yet.
+          </div>
+        )}
       </div>
 
       {editing && (
@@ -417,16 +475,35 @@ export function InteriorRolesManager({ roles, onChanged: onRolesChanged }: { rol
 
       {deleting && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => !isDeleting && setDeleting(null)} />
-          <div className="relative w-full max-w-sm rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-5 shadow-xl">
-            <h3 className="text-base font-bold text-[hsl(var(--foreground))]">Delete role?</h3>
-            <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1.5">
-              &ldquo;{deleting.name}&rdquo; will be removed. Roles still assigned to users or project members can&apos;t be deleted.
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs" onClick={() => !isDeleting && setDeleting(null)} />
+          <div className="relative w-full max-w-sm rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5 stroke-[2.2]" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Delete Role?</h3>
+                <p className="text-xs text-slate-500">This action cannot be undone.</p>
+              </div>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              &ldquo;{deleting.name}&rdquo; will be removed. Roles still assigned to users or project members cannot be deleted.
             </p>
-            <div className="flex justify-end gap-2 mt-5">
-              <button onClick={() => setDeleting(null)} disabled={isDeleting} className="px-4 py-2 rounded-lg text-sm font-semibold bg-[hsl(var(--muted))]">Cancel</button>
-              <button onClick={confirmDelete} disabled={isDeleting} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-red-600 text-white hover:bg-red-700 disabled:opacity-60">
-                {isDeleting && <Loader2 className="w-4 h-4 animate-spin" />} Delete
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                onClick={() => setDeleting(null)}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-xl text-xs font-semibold border border-slate-200/80 text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={isDeleting}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700 transition-colors disabled:opacity-60 cursor-pointer shadow-xs active:scale-[0.98]"
+              >
+                {isDeleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <span>Delete</span>
               </button>
             </div>
           </div>

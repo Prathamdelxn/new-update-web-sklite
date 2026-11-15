@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { motion, Variants } from 'framer-motion';
 import {
   LayoutDashboard, Briefcase, Users, Settings, X, Layers,
   ChevronLeft, ChevronRight,
@@ -10,6 +11,13 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/providers/AuthContext';
 import { hasProjectPermission, hasAnyRolePermission } from '@/lib/permissions';
+import {
+  SIDEBAR_TRANSITION,
+  useIsDesktop,
+} from '@/components/layouts/sidebarConfig';
+
+const SIDEBAR_EXPANDED_WIDTH = 260;
+const SIDEBAR_COLLAPSED_WIDTH = 60;
 
 interface SidebarProps {
   isOpen: boolean;
@@ -35,6 +43,26 @@ const navigation: NavItem[] = [
   { name: 'Settings', href: '/construction-dashboard/settings', icon: Settings },
 ];
 
+const textVariants: Variants = {
+  expanded: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      duration: 0.3,
+      delay: 0.15,
+      ease: [0.4, 0, 0.2, 1],
+    },
+  },
+  collapsed: {
+    opacity: 0,
+    x: -8,
+    transition: {
+      duration: 0.18,
+      ease: [0.4, 0, 0.2, 1],
+    },
+  },
+};
+
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen,
   onClose,
@@ -43,6 +71,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const pathname = usePathname();
   const { user } = useAuth();
+  const isDesktop = useIsDesktop(1024);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const organizationName =
     (typeof user?.organization === 'object' && user?.organization !== null ? (user.organization as any).name : null) ||
@@ -112,16 +146,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Mobile Backdrop */}
       <div
         className={cn(
-          'fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 lg:hidden transition-opacity duration-200',
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          'fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 lg:hidden transition-opacity duration-200',
+          isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         )}
         onClick={onClose}
       />
 
-      <aside
+      <motion.aside
+        initial={false}
+        animate={{
+          width: isDesktop
+            ? isCollapsed
+              ? SIDEBAR_COLLAPSED_WIDTH
+              : SIDEBAR_EXPANDED_WIDTH
+            : SIDEBAR_EXPANDED_WIDTH,
+        }}
+        transition={isMounted ? SIDEBAR_TRANSITION : { duration: 0 }}
         className={cn(
-          'fixed top-0 left-0 bottom-0 z-50 flex flex-col transition-all duration-200 bg-white border-r border-slate-200/80 shadow-[2px_0_16px_rgba(0,0,0,0.02)]',
-          isCollapsed ? 'lg:w-[60px]' : 'lg:w-[260px]',
+          'fixed top-0 left-0 bottom-0 z-50 flex flex-col bg-white border-r border-slate-200/80 shadow-[2px_0_16px_rgba(0,0,0,0.02)] transition-transform duration-200',
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
@@ -198,7 +240,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </button>
           </div>
         )}
-      </aside>
+      </motion.aside>
     </>
   );
 };

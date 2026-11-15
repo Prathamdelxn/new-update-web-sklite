@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Phone,
   Ruler,
+  X,
   XCircle,
   MessageSquare,
   Pencil,
@@ -82,75 +83,80 @@ const { hasPermission: canDo } = usePermissions();
 
   return (
     <div className="w-full space-y-4">
-      {/* Search & Filter Toolbar */}
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Left: Tab Pills */}
-        <div className="flex items-center gap-1.5 bg-[hsl(var(--muted))] p-1 rounded-xl w-full sm:w-max overflow-x-auto scrollbar-none">
-          <button
-            onClick={() => {
-              setStatusFilter('all');
-              setCurrentPage(1);
-            }}
-            className={cn(
-'flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all whitespace-nowrap text-center',
-              statusFilter === 'all'
-                ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-sm'
-                : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
+      {/* ── Search & Filter Control Bar (Matching Projects & Vendors Layout) ── */}
+      <div className="p-2.5 sm:p-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          {/* Left: Search Box (Full Width flex-1) */}
+          <div className="relative flex-1 min-w-0">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search site visits..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full pl-8 pr-8 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setCurrentPage(1);
+                }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             )}
-          >
-            All ({leads.length})
-          </button>
-          <button
-            onClick={() => {
-              setStatusFilter('pending');
-              setCurrentPage(1);
-            }}
-            className={cn(
-'flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all whitespace-nowrap flex items-center justify-center gap-1.5',
-              statusFilter === 'pending'
-                ? 'bg-amber-500 text-white shadow-sm'
-                : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
-            )}
-          >
-            Pending ({pendingCount})
-          </button>
-          <button
-            onClick={() => {
-              setStatusFilter('completed');
-              setCurrentPage(1);
-            }}
-            className={cn(
-'flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all whitespace-nowrap flex items-center justify-center gap-1.5',
-              statusFilter === 'completed'
-                ? 'bg-purple-600 text-white shadow-sm'
-                : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
-            )}
-          >
-            Completed ({completedCount})
-          </button>
-        </div>
+          </div>
 
-        {/* Right: Search Box */}
-        <div className="relative w-full sm:min-w-[240px] sm:w-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-          <input
-            type="text"
-            placeholder="Search site visits..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="w-full pl-9 pr-10 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-medium text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
-          />
-          {searchTerm && (
+          {/* Right: Filter Tabs */}
+          <div className="flex items-center gap-1.5 p-1 rounded-lg border border-slate-200 bg-slate-50 shrink-0 overflow-x-auto scrollbar-none">
             <button
-              onClick={() => setSearchTerm('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+              onClick={() => {
+                setStatusFilter('all');
+                setCurrentPage(1);
+              }}
+              className={cn(
+                'px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap cursor-pointer',
+                statusFilter === 'all'
+                  ? 'bg-blue-600 text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              )}
             >
-              Clear
+              All ({leads.length})
             </button>
-          )}
+            <button
+              onClick={() => {
+                setStatusFilter('pending');
+                setCurrentPage(1);
+              }}
+              className={cn(
+                'px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap cursor-pointer',
+                statusFilter === 'pending'
+                  ? 'bg-amber-500 text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              )}
+            >
+              Pending ({pendingCount})
+            </button>
+            <button
+              onClick={() => {
+                setStatusFilter('completed');
+                setCurrentPage(1);
+              }}
+              className={cn(
+                'px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap cursor-pointer',
+                statusFilter === 'completed'
+                  ? 'bg-emerald-600 text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              )}
+            >
+              Completed ({completedCount})
+            </button>
+          </div>
         </div>
       </div>
 

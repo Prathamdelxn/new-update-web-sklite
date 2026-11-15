@@ -5,15 +5,20 @@ import { useRouter } from 'next/navigation';
 import { isInteriorSession } from '@/lib/interiorAuth';
 import { ensureFreshInteriorUser } from '@/features/interior-new/hooks/usePermissions';
 
+let isVerifiedInSession = false;
+
 export function useInteriorAuthGuard() {
   const router = useRouter();
-  const [checked, setChecked] = useState(false);
+  // Safe SSR initialization: during initial hydration, isVerifiedInSession is false on both server and client.
+  // On client-side page transitions, isVerifiedInSession is already true, preventing screen flash.
+  const [checked, setChecked] = useState(() => isVerifiedInSession);
 
   useEffect(() => {
     const hasInterior = isInteriorSession();
     const token = localStorage.getItem('token') || localStorage.getItem('interiorAccessToken');
 
     if (!hasInterior) {
+      isVerifiedInSession = false;
       if (token) {
         router.replace('/dashboard');
       } else {
@@ -21,11 +26,15 @@ export function useInteriorAuthGuard() {
       }
       return;
     }
-    // Render only after the user's current permissions are loaded (instant after
-    // the first page of this visit), so a refresh never shows the saved ones
+
+    isVerifiedInSession = true;
+    setChecked(true);
+
     let alive = true;
     ensureFreshInteriorUser().then(() => {
-      if (alive) setChecked(true);
+      if (alive) {
+        // Permissions refreshed
+      }
     });
     return () => {
       alive = false;

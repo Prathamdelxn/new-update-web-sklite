@@ -108,7 +108,7 @@ type FilterStatus = 'all' | 'on-track' | 'at-risk' | 'delayed' | 'completed';
 
 function InteriorNewProjectsSkeleton() {
   return (
-    <div className="interior-os-theme min-h-screen p-3 sm:p-4 lg:p-6 space-y-4 max-w-[1600px] mx-auto overflow-x-hidden animate-pulse font-sans">
+    <div className="interior-os-theme min-h-full p-3 sm:p-4 lg:p-6 space-y-4 max-w-[1600px] mx-auto overflow-x-hidden animate-pulse font-sans">
       {/* 1. Page Header Skeleton */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/80">
         <div className="flex items-center gap-2.5">
@@ -145,7 +145,7 @@ function InteriorNewProjectsSkeleton() {
         {Array.from({ length: 6 }).map((_, idx) => (
           <div
             key={idx}
-            className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4"
+            className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-none flex flex-col justify-between space-y-4"
           >
             {/* Top row */}
             <div className="flex items-start justify-between gap-3">
@@ -543,7 +543,7 @@ export default function InteriorNewProjectsView() {
   }
 
   return (
-    <div className="interior-os-theme min-h-screen p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto overflow-x-hidden font-sans">
+    <div className="interior-os-theme min-h-full p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto overflow-x-hidden font-sans">
       
       {/* ── 1. Page Header & Primary Action ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">

@@ -19,7 +19,7 @@ function CardGridSkeleton() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4 shadow-sm">
+        <div key={i} className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4 shadow-none">
           <div className="flex items-center gap-3">
             <Bone className="w-10 h-10 rounded-xl" />
             <div className="flex-1 space-y-2">

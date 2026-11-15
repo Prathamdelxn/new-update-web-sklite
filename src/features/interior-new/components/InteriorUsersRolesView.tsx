@@ -1,20 +1,21 @@
 'use client';
 
 // =============================================================================
-// Sky-Lite Web — Interior-OS Users & Roles View
-// Toggle between: Users (with project assignments) | Roles (default role matrix)
+// Sky-Lite Web — Interior-OS Users & Roles Management
+// Matches the exact format and corporate ledger table UI of Audit Management:
+// Executive ribbon, 4 KPI metric cards, quick segments, filter controls card,
+// clean non-colorful table ledger with integrated pagination & inspection modal.
 // =============================================================================
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button, Input } from '@/components/interior/ui';
+import { Card, CardContent, Button, Input } from '@/components/interior/ui';
 import { useToast } from '@/providers/ToastContext';
 import { InteriorRolesManager } from '@/features/interior-new/components/InteriorRolesManager';
+import { cn } from '@/lib/utils';
 import {
   Users,
   Search,
-  ChevronDown,
-  ChevronUp,
   FolderKanban,
   ShieldCheck,
   Loader2,
@@ -30,11 +31,23 @@ import {
   UserPlus,
   Mail,
   Phone,
-  Briefcase,
   Edit3,
   Trash2,
   Lock,
   AlertTriangle,
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Copy,
+  Check,
+  FileCode,
+  Layers,
+  Globe,
+  Clock,
+  Briefcase,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
@@ -94,90 +107,70 @@ interface UserWithProjects {
 }
 
 // ---------------------------------------------------------------------------
-// Static role & module data (mirrors backend project-permissions.ts)
+// Action & Status badge styling (matching Audit Management)
 // ---------------------------------------------------------------------------
-const ALL_MODULES = [
-  // CRM Pipeline Stages
-  { key: 'crm_leads',         label: 'CRM: Leads',                category: 'CRM Pipeline' },
-  { key: 'crm_followups',     label: 'CRM: Follow-ups',           category: 'CRM Pipeline' },
-  { key: 'crm_site_visits',   label: 'CRM: Site Visits',          category: 'CRM Pipeline' },
-  { key: 'crm_requirements',  label: 'CRM: Requirements',         category: 'CRM Pipeline' },
-  { key: 'crm_drawings',      label: 'CRM: Drawings (2D/3D)',     category: 'CRM Pipeline' },
-  { key: 'crm_boq',           label: 'CRM: BOQ',                  category: 'CRM Pipeline' },
-  { key: 'crm_quotations',    label: 'CRM: Quotations',           category: 'CRM Pipeline' },
-
-  // Execution & Project Modules
-  { key: 'projects',         label: 'Project Config',            category: 'Project Execution' },
-  { key: 'wbs',              label: 'WBS Hierarchy',             category: 'Project Execution' },
-  { key: 'tasks',            label: 'Activity / Task',           category: 'Project Execution' },
-  { key: 'milestones',       label: 'Milestones',                category: 'Project Execution' },
-  { key: 'dpr',              label: 'Daily Progress',            category: 'Project Execution' },
-  { key: 'weekly_reports',   label: 'Weekly Reports',            category: 'Project Execution' },
-  { key: 'procurement',      label: 'Procurement',               category: 'Project Execution' },
-  { key: 'purchase_orders',  label: 'Purchase Orders',           category: 'Project Execution' },
-  { key: 'drawings',         label: 'Drawings & CAD',            category: 'Project Execution' },
-  { key: 'rfis',             label: 'RFIs',                      category: 'Project Execution' },
-  { key: 'mom',              label: 'Minutes of Meeting',        category: 'Project Execution' },
-  { key: 'risks',            label: 'Risks',                     category: 'Project Execution' },
-  { key: 'snags',            label: 'Snags',                     category: 'Project Execution' },
-  { key: 'ncrs',             label: 'NCRs',                      category: 'Project Execution' },
-  { key: 'utilities',        label: 'Utilities',                 category: 'Project Execution' },
-  { key: 'photos',           label: 'Site Photos',               category: 'Project Execution' },
-  { key: 'handover',         label: 'Handover',                  category: 'Project Execution' },
-  { key: 'users',            label: 'Team / Members',            category: 'Project Execution' },
-  { key: 'filemgt',          label: 'File Management',           category: 'Project Execution' },
-  { key: 'financials',       label: 'Payments & Financials',     category: 'Project Execution' },
-];
-
-const ALL_ACTIONS = ['create', 'read', 'update', 'delete', 'approve', 'export', 'manage'];
-
-const full  = ['create', 'read', 'update', 'delete', 'approve', 'export', 'manage'];
-const none: string[] = [];
-
-// Action badge styling
 const ACTION_COLORS: Record<string, string> = {
-  create:  'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
-  read:    'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800',
-  update:  'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
-  delete:  'bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800',
-  approve: 'bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-800',
-  export:  'bg-teal-100 dark:bg-teal-950/60 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-800',
-  manage:  'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800',
+  create:  'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25',
+  read:    'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25',
+  update:  'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25',
+  delete:  'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25',
+  approve: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/25',
+  export:  'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/25',
+  manage:  'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/25',
 };
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-const SYSTEM_ROLE_LABELS: Record<string, { label: string; color: string }> = {
-  super_admin: { label: 'Super Admin', color: 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300' },
-  org_admin:   { label: 'Org Admin',   color: 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300' },
-  manager:     { label: 'Manager',     color: 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300' },
-  member:      { label: 'Member',      color: 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300' },
-  viewer:      { label: 'Viewer',      color: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300' },
+const SYSTEM_ROLE_LABELS: Record<string, { label: string; badgeClass: string }> = {
+  super_admin: { label: 'Super Admin', badgeClass: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/25' },
+  org_admin:   { label: 'Org Admin',   badgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25' },
+  manager:     { label: 'Manager',     badgeClass: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25' },
+  member:      { label: 'Member',      badgeClass: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/25' },
+  viewer:      { label: 'Viewer',      badgeClass: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/25' },
 };
 
 const PROJECT_ROLE_LABELS: Record<string, string> = {
-  project_manager: 'Project Manager', site_engineer: 'Site Engineer',
-  quantity_surveyor: 'Quantity Surveyor', designer: 'Designer',
-  client_representative: 'Client Rep.', sub_contractor: 'Sub Contractor', viewer: 'Viewer',
+  project_manager: 'Project Manager',
+  site_engineer: 'Site Engineer',
+  quantity_surveyor: 'Quantity Surveyor',
+  designer: 'Designer',
+  client_representative: 'Client Rep.',
+  sub_contractor: 'Sub Contractor',
+  viewer: 'Viewer',
 };
 
 const PROJECT_STATUS_COLORS: Record<string, string> = {
-  active:    'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400',
-  inactive:  'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400',
-  completed: 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400',
-  'on-hold': 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400',
+  active:    'bg-emerald-500/10 text-emerald-600 border border-emerald-500/25',
+  inactive:  'bg-slate-500/10 text-slate-600 border border-slate-500/25',
+  completed: 'bg-blue-500/10 text-blue-600 border border-blue-500/25',
+  'on-hold': 'bg-amber-500/10 text-amber-600 border border-amber-500/25',
 };
 
 function getInitials(first: string, last: string) {
-  return `${first?.[0] ?? ''}${last?.[0] ?? ''}`.toUpperCase();
+  return `${first?.[0] ?? ''}${last?.[0] ?? ''}`.toUpperCase() || 'U';
 }
-function getAvatarColor(name: string) {
-  const colors = ['bg-violet-500','bg-blue-500','bg-emerald-500','bg-rose-500','bg-amber-500','bg-teal-500','bg-pink-500'];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return colors[Math.abs(hash) % colors.length];
-}
+
+const isNonAdminRole = (r: OrgRole) => {
+  const slug = (r.slug || '').toLowerCase();
+  const name = (r.name || '').toLowerCase();
+  return (
+    slug !== 'admin' &&
+    slug !== 'org_admin' &&
+    slug !== 'administrator' &&
+    name !== 'admin' &&
+    name !== 'administrator' &&
+    name !== 'org admin'
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Quick Segment Options
+// ---------------------------------------------------------------------------
+const QUICK_SEGMENTS = [
+  { id: 'all',        label: 'All Members' },
+  { id: 'active',     label: 'Active Accounts' },
+  { id: 'assigned',   label: 'Assigned to Projects' },
+  { id: 'unassigned', label: 'Unassigned' },
+  { id: 'admin',      label: 'Admins & Managers' },
+];
 
 // ---------------------------------------------------------------------------
 // Add User Modal
@@ -194,21 +187,14 @@ interface AddUserForm {
 }
 
 const INITIAL_FORM: AddUserForm = {
-  firstName: '', lastName: '', email: '', password: '',
-  phone: '', designation: '', department: '', roleId: '',
-};
-
-const isNonAdminRole = (r: OrgRole) => {
-  const slug = (r.slug || '').toLowerCase();
-  const name = (r.name || '').toLowerCase();
-  return (
-    slug !== 'admin' &&
-    slug !== 'org_admin' &&
-    slug !== 'administrator' &&
-    name !== 'admin' &&
-    name !== 'administrator' &&
-    name !== 'org admin'
-  );
+  firstName: '',
+  lastName: '',
+  email: '',
+  password: '',
+  phone: '',
+  designation: '',
+  department: '',
+  roleId: '',
 };
 
 function AddUserModal({
@@ -232,7 +218,6 @@ function AddUserModal({
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Always fetch the organization's live roles directly from the backend
   useEffect(() => {
     interiorProjectService
       .getRoles()
@@ -288,104 +273,94 @@ function AddUserModal({
     }
   };
 
-  const fieldCls = 'w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] transition-all';
+  const fieldCls = 'w-full px-3.5 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        onClick={onClose} className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 16 }}
-        className="relative w-full max-w-md bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl z-10 overflow-hidden max-h-[90vh] flex flex-col"
+        initial={{ opacity: 0, scale: 0.96, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 12 }}
+        className="relative w-full max-w-lg bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl z-10 overflow-hidden max-h-[90vh] flex flex-col shadow-2xl"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--border))]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[hsl(var(--muted)/0.5)] flex items-center justify-center">
-              <UserPlus className="w-4 h-4 text-[hsl(var(--primary))]" />
+            <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
+              <UserPlus className="w-4.5 h-4.5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-[hsl(var(--foreground))]">Add New User</h2>
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Invite a team member to your organisation</p>
+              <h2 className="text-sm font-bold text-[hsl(var(--foreground))]">Add New Member</h2>
+              <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Create an account and assign organization permissions</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 hover:bg-[hsl(var(--muted))] rounded-lg text-[hsl(var(--muted-foreground))] transition-colors cursor-pointer">
+          <button onClick={onClose} className="p-1.5 hover:bg-[hsl(var(--accent))] rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors cursor-pointer">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
-          {/* Name row */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-3.5 overflow-y-auto">
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">First Name *</label>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">First Name *</label>
               <input value={form.firstName} onChange={set('firstName')} placeholder="John" className={fieldCls} required />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Last Name *</label>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Last Name *</label>
               <input value={form.lastName} onChange={set('lastName')} placeholder="Doe" className={fieldCls} required />
             </div>
           </div>
 
-          {/* Email */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Email *</label>
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Email Address *</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
-              <input type="email" value={form.email} onChange={set('email')} placeholder="john@company.com" className={`${fieldCls} pl-9`} required />
+              <input type="email" value={form.email} onChange={set('email')} placeholder="john.doe@company.com" className={`${fieldCls} pl-9`} required />
             </div>
           </div>
 
-          {/* Password */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Password</label>
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Initial Password</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={form.password}
                 onChange={set('password')}
-                placeholder="Leave blank for welcome123"
+                placeholder="Leave blank for default: welcome123"
                 className={`${fieldCls} pl-9 pr-9`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors p-0.5 rounded focus:outline-none cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors cursor-pointer"
                 title={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
             </div>
-            <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Default password is <span className="font-mono font-semibold">welcome123</span> if left blank</p>
+            <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Default password is <span className="font-mono font-semibold text-[hsl(var(--foreground))]">welcome123</span></p>
           </div>
 
-          {/* Phone */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Phone</label>
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Phone</label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
-              <input value={form.phone} onChange={set('phone')} placeholder="+971 50 000 0000" className={`${fieldCls} pl-9`} />
+              <input value={form.phone} onChange={set('phone')} placeholder="+91 98765 43210" className={`${fieldCls} pl-9`} />
             </div>
           </div>
 
-          {/* Designation & Department row */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Designation</label>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Designation</label>
               <input value={form.designation} onChange={set('designation')} placeholder="e.g. Senior Architect" className={fieldCls} />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Department</label>
-              <input value={form.department} onChange={set('department')} placeholder="e.g. Design / Site" className={fieldCls} />
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Department</label>
+              <input value={form.department} onChange={set('department')} placeholder="e.g. Fit-Out Operations" className={fieldCls} />
             </div>
           </div>
 
-          {/* Role (Fetched from Organization) */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Role *</label>
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Organization Role *</label>
             <select value={form.roleId} onChange={set('roleId')} className={fieldCls} required>
               {modalRoles.map((r) => (
                 <option key={r._id || r.slug} value={r._id || r.slug}>
@@ -395,17 +370,14 @@ function AddUserModal({
             </select>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <button type="button" onClick={onClose}
-              className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm font-semibold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] transition-colors cursor-pointer">
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[hsl(var(--border))]">
+            <Button type="button" variant="outline" size="sm" onClick={onClose} className="h-8.5 text-xs font-semibold">
               Cancel
-            </button>
-            <button type="submit" disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60 cursor-pointer">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
-              {saving ? 'Creating...' : 'Create User'}
-            </button>
+            </Button>
+            <Button type="submit" variant="default" size="sm" disabled={saving} className="h-8.5 text-xs font-semibold gap-1.5 shadow-xs cursor-pointer">
+              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserPlus className="w-3.5 h-3.5" />}
+              <span>{saving ? 'Creating...' : 'Create Member'}</span>
+            </Button>
           </div>
         </form>
       </motion.div>
@@ -513,59 +485,52 @@ function EditUserModal({
     }
   };
 
-  const fieldCls = 'w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] transition-all';
+  const fieldCls = 'w-full px-3.5 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        onClick={onClose} className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 16 }}
-        className="relative w-full max-w-md bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl z-10 overflow-hidden max-h-[90vh] flex flex-col"
+        initial={{ opacity: 0, scale: 0.96, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 12 }}
+        className="relative w-full max-w-lg bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl z-10 overflow-hidden max-h-[90vh] flex flex-col shadow-2xl"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--border))]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[hsl(var(--muted)/0.5)] flex items-center justify-center">
-              <Edit3 className="w-4 h-4 text-[hsl(var(--primary))]" />
+            <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
+              <Edit3 className="w-4.5 h-4.5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-[hsl(var(--foreground))]">Edit User</h2>
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Update profile details and role access</p>
+              <h2 className="text-sm font-bold text-[hsl(var(--foreground))]">Edit User Account</h2>
+              <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Update profile details, permissions, and status</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 hover:bg-[hsl(var(--muted))] rounded-lg text-[hsl(var(--muted-foreground))] transition-colors cursor-pointer">
+          <button onClick={onClose} className="p-1.5 hover:bg-[hsl(var(--accent))] rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors cursor-pointer">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
-          {/* Name row */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-3.5 overflow-y-auto">
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">First Name *</label>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">First Name *</label>
               <input value={form.firstName} onChange={set('firstName')} placeholder="John" className={fieldCls} required />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Last Name *</label>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Last Name *</label>
               <input value={form.lastName} onChange={set('lastName')} placeholder="Doe" className={fieldCls} required />
             </div>
           </div>
 
-          {/* Email */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Email Address *</label>
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Email Address *</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
               <input type="email" value={form.email} onChange={set('email')} placeholder="john@example.com" className={`${fieldCls} pl-9`} required />
             </div>
           </div>
 
-          {/* Reset Password */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">New Password (leave blank to keep current)</label>
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">New Password (leave blank to keep current)</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
               <input
@@ -578,7 +543,7 @@ function EditUserModal({
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors p-0.5 rounded focus:outline-none cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors cursor-pointer"
                 title={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -586,31 +551,28 @@ function EditUserModal({
             </div>
           </div>
 
-          {/* Phone */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Phone</label>
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Phone</label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
-              <input value={form.phone} onChange={set('phone')} placeholder="+1 (555) 234-5678" className={`${fieldCls} pl-9`} />
+              <input value={form.phone} onChange={set('phone')} placeholder="+91 98765 43210" className={`${fieldCls} pl-9`} />
             </div>
           </div>
 
-          {/* Designation & Department row */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Designation</label>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Designation</label>
               <input value={form.designation} onChange={set('designation')} placeholder="e.g. Senior Architect" className={fieldCls} />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Department</label>
-              <input value={form.department} onChange={set('department')} placeholder="e.g. Design / Site" className={fieldCls} />
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Department</label>
+              <input value={form.department} onChange={set('department')} placeholder="e.g. Design Studio" className={fieldCls} />
             </div>
           </div>
 
-          {/* Role & Status */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Role *</label>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Role *</label>
               <select value={form.roleId} onChange={set('roleId')} className={fieldCls} required>
                 {modalRoles.map((r) => (
                   <option key={r._id || r.slug} value={r._id || r.slug}>
@@ -619,8 +581,8 @@ function EditUserModal({
                 ))}
               </select>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Account Status</label>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Account Status</label>
               <select value={form.status} onChange={set('status')} className={fieldCls}>
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
@@ -630,17 +592,14 @@ function EditUserModal({
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <button type="button" onClick={onClose}
-              className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm font-semibold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] transition-colors cursor-pointer">
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[hsl(var(--border))]">
+            <Button type="button" variant="outline" size="sm" onClick={onClose} className="h-8.5 text-xs font-semibold">
               Cancel
-            </button>
-            <button type="submit" disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60 cursor-pointer">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Edit3 className="w-4 h-4" />}
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
+            </Button>
+            <Button type="submit" variant="default" size="sm" disabled={saving} className="h-8.5 text-xs font-semibold gap-1.5 shadow-xs cursor-pointer">
+              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Edit3 className="w-3.5 h-3.5" />}
+              <span>{saving ? 'Saving...' : 'Save Changes'}</span>
+            </Button>
           </div>
         </form>
       </motion.div>
@@ -678,47 +637,46 @@ function DeleteUserModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        onClick={onClose} className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 16 }}
-        className="relative w-full max-w-sm bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6 z-10 space-y-4 shadow-xl"
+        initial={{ opacity: 0, scale: 0.96, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 12 }}
+        className="relative w-full max-w-sm bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6 z-10 space-y-4 shadow-2xl"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 flex items-center justify-center shrink-0">
             <AlertTriangle className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-[hsl(var(--foreground))]">Delete User</h2>
+            <h2 className="text-sm font-bold text-[hsl(var(--foreground))]">Delete User Account</h2>
             <p className="text-xs text-[hsl(var(--muted-foreground))]">This action cannot be undone.</p>
           </div>
         </div>
 
         <p className="text-xs text-[hsl(var(--muted-foreground))] leading-relaxed">
-          Are you sure you want to remove <strong className="text-[hsl(var(--foreground))]">{user.firstName} {user.lastName}</strong> ({user.email})?
+          Are you sure you want to remove <strong className="text-[hsl(var(--foreground))] font-bold">{user.firstName} {user.lastName}</strong> ({user.email})?
           {user.projectAssignments.length > 0 && (
-            <span className="block mt-1 text-amber-600 dark:text-amber-400 font-semibold">
-              Warning: User has {user.projectAssignments.length} project assignment{user.projectAssignments.length > 1 ? 's' : ''} that will also be removed.
+            <span className="block mt-2 p-2.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 font-medium text-[11px]">
+              Warning: User has {user.projectAssignments.length} project assignment{user.projectAssignments.length > 1 ? 's' : ''} that will also be detached.
             </span>
           )}
         </p>
 
-        <div className="flex items-center justify-end gap-3 pt-2">
-          <button type="button" onClick={onClose}
-            className="px-3.5 py-1.5 rounded-lg border border-[hsl(var(--border))] text-xs font-semibold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] transition-colors cursor-pointer">
+        <div className="flex items-center justify-end gap-2 pt-2">
+          <Button type="button" variant="outline" size="sm" onClick={onClose} className="h-8 text-xs font-semibold">
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="destructive"
+            size="sm"
             onClick={handleDelete}
             disabled={deleting}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition-colors disabled:opacity-60 cursor-pointer shadow-sm"
+            className="h-8 text-xs font-semibold gap-1.5 shadow-xs cursor-pointer"
           >
             {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-            {deleting ? 'Deleting...' : 'Delete User'}
-          </button>
+            <span>{deleting ? 'Deleting...' : 'Delete'}</span>
+          </Button>
         </div>
       </motion.div>
     </div>
@@ -726,209 +684,252 @@ function DeleteUserModal({
 }
 
 // ---------------------------------------------------------------------------
-// Permission Detail Modal (for Users tab)
+// Granular User Inspector Modal (Matching Audit Management Inspector)
 // ---------------------------------------------------------------------------
-function PermissionsModal({ assignment, onClose }: { assignment: ProjectAssignment; onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        onClick={onClose} className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 16 }}
-        className="relative w-full max-w-lg bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6 z-10 space-y-4 max-h-[85vh] flex flex-col"
-      >
-        <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
-          <div>
-            <h2 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-[hsl(var(--primary))]" /> Permissions — {assignment.projectName}
-            </h2>
-            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-              Role: <span className="font-semibold text-[hsl(var(--foreground))]">{PROJECT_ROLE_LABELS[assignment.projectRole] ?? assignment.projectRole}</span>
-            </p>
-          </div>
-          <button onClick={onClose} className="p-2 hover:bg-[hsl(var(--muted))] rounded-lg text-[hsl(var(--muted-foreground))] transition-colors cursor-pointer">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="overflow-y-auto flex-1 space-y-1.5 pr-1">
-          {assignment.permissions.length === 0 ? (
-            <p className="text-sm text-[hsl(var(--muted-foreground))] text-center py-6">No custom permissions set</p>
-          ) : (
-            assignment.permissions.map((perm) => (
-              <div key={perm.module} className="flex items-center justify-between gap-3 py-2 px-3 rounded-lg bg-[hsl(var(--muted)/0.4)]">
-                <span className="text-xs font-semibold text-[hsl(var(--foreground))] capitalize">{perm.module.replace(/_/g, ' ')}</span>
-                <div className="flex flex-wrap gap-1 justify-end">
-                  {perm.actions.map((action) => (
-                    <span key={action} className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${ACTION_COLORS[action] ?? 'bg-slate-100 text-slate-600'}`}>
-                      {action}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// User Row (expandable)
-// ---------------------------------------------------------------------------
-function UserRow({ user, roles, onUserUpdated }: { user: UserWithProjects; roles: OrgRole[]; onUserUpdated: () => void }) {
-  const [expanded, setExpanded] = useState(false);
-  const [selectedAssignment, setSelectedAssignment] = useState<ProjectAssignment | null>(null);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const { isOrgAdmin, hasPermission, currentUser } = usePermissions();
-  const canManageUsers = isOrgAdmin || hasPermission('users', 'update');
-  const canDeleteUsers = isOrgAdmin || hasPermission('users', 'delete');
-  const isSelf = currentUser && (
-    String((currentUser as any).id || (currentUser as any)._id) === String(user._id) ||
-    (currentUser as any).email?.toLowerCase() === user.email?.toLowerCase()
-  );
+function UserInspectorModal({
+  user,
+  onClose,
+  onEdit,
+}: {
+  user: UserWithProjects;
+  onClose: () => void;
+  onEdit: () => void;
+}) {
+  const toast = useToast();
+  const [modalTab, setModalTab] = useState<'overview' | 'projects' | 'json'>('overview');
+  const [copiedPayload, setCopiedPayload] = useState(false);
   const initials = getInitials(user.firstName, user.lastName);
-  const avatarBg = getAvatarColor(user.firstName + user.lastName);
-  const sysRole = SYSTEM_ROLE_LABELS[user.systemRole] ?? { label: user.systemRole, color: 'bg-slate-100 text-slate-600' };
+  const sysRole = SYSTEM_ROLE_LABELS[user.systemRole] ?? { label: user.systemRole, badgeClass: 'bg-slate-500/10 text-slate-600 border-slate-500/25' };
   const displayRoleName = user.role?.name || sysRole.label;
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedPayload(true);
+    toast.success('Copied to clipboard!');
+    setTimeout(() => setCopiedPayload(false), 2000);
+  };
+
   return (
-    <>
-      {selectedAssignment && (
-        <AnimatePresence>
-          <PermissionsModal assignment={selectedAssignment} onClose={() => setSelectedAssignment(null)} />
-        </AnimatePresence>
-      )}
-      {isEditOpen && (
-        <AnimatePresence>
-          <EditUserModal user={user} roles={roles} onClose={() => setIsEditOpen(false)} onSuccess={onUserUpdated} />
-        </AnimatePresence>
-      )}
-      {isDeleteOpen && (
-        <AnimatePresence>
-          <DeleteUserModal user={user} onClose={() => setIsDeleteOpen(false)} onSuccess={onUserUpdated} />
-        </AnimatePresence>
-      )}
-      <motion.div layout className="border border-[hsl(var(--border))] rounded-xl overflow-hidden bg-[hsl(var(--card))]">
-        <div onClick={() => setExpanded((v) => !v)}
-          className="flex items-center gap-4 p-4 cursor-pointer hover:bg-[hsl(var(--muted)/0.4)] transition-colors">
-          <div className={`w-10 h-10 rounded-full ${avatarBg} flex items-center justify-center text-white text-sm font-bold shrink-0`}>{initials}</div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-bold text-[hsl(var(--foreground))]">{user.firstName} {user.lastName}</span>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.25)]">
-                {displayRoleName}
-              </span>
-              {user.status !== 'active' && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400">{user.status}</span>
-              )}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/70 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 15 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 15 }}
+        transition={{ duration: 0.2 }}
+        className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden text-[hsl(var(--card-foreground))]"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4.5 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-blue-600 to-blue-500 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+              {initials}
             </div>
-            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5 truncate">{user.email}</p>
-            {(user.designation || user.department) && (
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))] truncate">{[user.designation, user.department].filter(Boolean).join(' · ')}</p>
-            )}
+            <div>
+              <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
+                <span>{user.firstName} {user.lastName}</span>
+                <span className="text-xs font-mono px-2 py-0.5 rounded bg-[hsl(var(--accent))] border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]">
+                  #{user._id.slice(-6)}
+                </span>
+              </h3>
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                {user.email} · Registered on {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {user.role && (
-              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[hsl(var(--muted)/0.5)] border border-[hsl(var(--border))]">
-                <Crown className="w-3 h-3 text-[hsl(var(--primary))]" />
-                <span className="text-[11px] font-semibold text-[hsl(var(--foreground))]">{user.role.name}</span>
-              </div>
-            )}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[hsl(var(--muted)/0.5)] border border-[hsl(var(--border))]">
-              <FolderKanban className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
-              <span className="text-[11px] font-semibold text-[hsl(var(--foreground))]">{user.projectAssignments.length}</span>
-            </div>
 
-            {/* Edit & Delete Action Buttons */}
-            <div className="flex items-center gap-1">
-              {canManageUsers && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsEditOpen(true);
-                  }}
-                  className="p-1.5 rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] transition-colors cursor-pointer"
-                  title="Edit User Details"
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                </button>
-              )}
-              {canDeleteUsers && !isSelf && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsDeleteOpen(true);
-                  }}
-                  className="p-1.5 rounded-lg border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
-                  title="Delete User"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => copyToClipboard(JSON.stringify(user, null, 2))}
+              className="h-8.5 rounded-xl text-xs font-bold gap-1.5"
+            >
+              {copiedPayload ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copiedPayload ? 'Copied' : 'Copy JSON'}</span>
+            </Button>
 
-            {expanded ? <ChevronUp className="w-4 h-4 text-[hsl(var(--muted-foreground))]" /> : <ChevronDown className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />}
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
-        <AnimatePresence>
-          {expanded && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}
-              className="border-t border-[hsl(var(--border))] overflow-hidden">
-              <div className="p-4 space-y-3">
-                {user.projectAssignments.length === 0 ? (
-                  <p className="text-xs text-[hsl(var(--muted-foreground))] italic py-2 text-center">Not assigned to any project yet.</p>
-                ) : (
-                  <>
-                    <p className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide mb-2">
-                      Project Assignments ({user.projectAssignments.length})
-                    </p>
-                    <div className="space-y-2">
-                      {user.projectAssignments.map((asgn) => (
-                        <div key={asgn.projectId} className="flex items-center gap-3 p-3 rounded-xl bg-[hsl(var(--muted)/0.35)] border border-[hsl(var(--border))]">
-                          <div className="w-8 h-8 rounded-lg bg-[hsl(var(--primary)/0.1)] flex items-center justify-center shrink-0">
-                            <Building2 className="w-4 h-4 text-[hsl(var(--primary))]" />
+        {/* Modal Tabs */}
+        <div className="flex items-center gap-2 px-6 pt-3 border-b border-[hsl(var(--border))] bg-[hsl(var(--card))]">
+          <button
+            onClick={() => setModalTab('overview')}
+            className={cn(
+              'pb-3 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border-b-2 -mb-[1px]',
+              modalTab === 'overview'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            )}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Profile & Account</span>
+          </button>
+
+          <button
+            onClick={() => setModalTab('projects')}
+            className={cn(
+              'pb-3 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border-b-2 -mb-[1px]',
+              modalTab === 'projects'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            )}
+          >
+            <FolderKanban className="w-3.5 h-3.5" />
+            <span>Project Assignments ({user.projectAssignments.length})</span>
+          </button>
+
+          <button
+            onClick={() => setModalTab('json')}
+            className={cn(
+              'pb-3 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border-b-2 -mb-[1px]',
+              modalTab === 'json'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            )}
+          >
+            <FileCode className="w-3.5 h-3.5" />
+            <span>Raw Object</span>
+          </button>
+        </div>
+
+        {/* Modal Body */}
+        <div className="p-6 overflow-y-auto space-y-6">
+          {modalTab === 'overview' && (
+            <div className="space-y-5">
+              {/* Overview Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 p-4 rounded-2xl bg-[hsl(var(--accent)/0.5)] border border-[hsl(var(--border))] text-xs">
+                <div>
+                  <span className="text-[hsl(var(--muted-foreground))] font-semibold uppercase text-[10px] tracking-wider block">
+                    Full Name
+                  </span>
+                  <span className="font-bold text-[hsl(var(--foreground))] text-sm mt-0.5 block">
+                    {user.firstName} {user.lastName}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[hsl(var(--muted-foreground))] font-semibold uppercase text-[10px] tracking-wider block">
+                    Assigned Role
+                  </span>
+                  <span className="font-bold text-[hsl(var(--foreground))] text-sm mt-0.5 block">
+                    {displayRoleName}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[hsl(var(--muted-foreground))] font-semibold uppercase text-[10px] tracking-wider block">
+                    Account Status
+                  </span>
+                  <span className="font-bold text-[hsl(var(--foreground))] text-sm mt-0.5 block capitalize">
+                    {user.status}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[hsl(var(--muted-foreground))] font-semibold uppercase text-[10px] tracking-wider block">
+                    Designation
+                  </span>
+                  <span className="font-semibold text-[hsl(var(--foreground))] text-xs mt-0.5 block">
+                    {user.designation || 'Not specified'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[hsl(var(--muted-foreground))] font-semibold uppercase text-[10px] tracking-wider block">
+                    Department
+                  </span>
+                  <span className="font-semibold text-[hsl(var(--foreground))] text-xs mt-0.5 block">
+                    {user.department || 'Not specified'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[hsl(var(--muted-foreground))] font-semibold uppercase text-[10px] tracking-wider block">
+                    Contact Phone
+                  </span>
+                  <span className="font-mono text-xs text-[hsl(var(--foreground))] mt-0.5 block">
+                    {user.phone || '—'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-2.5 pt-2">
+                <Button variant="outline" size="sm" onClick={onClose} className="text-xs font-semibold">
+                  Close
+                </Button>
+                <Button variant="default" size="sm" onClick={() => { onClose(); onEdit(); }} className="text-xs font-semibold gap-1.5 shadow-xs cursor-pointer">
+                  <Edit3 className="w-3.5 h-3.5" />
+                  <span>Edit Member</span>
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {modalTab === 'projects' && (
+            <div className="space-y-3">
+              {user.projectAssignments.length === 0 ? (
+                <div className="py-12 text-center text-[hsl(var(--muted-foreground))]">
+                  <FolderKanban className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm font-semibold">No project assignments linked to this member.</p>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {user.projectAssignments.map((asgn) => (
+                    <div
+                      key={asgn.projectId}
+                      className="p-4 rounded-xl bg-[hsl(var(--background))] border border-[hsl(var(--border))] space-y-3"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-[hsl(var(--accent))] border border-[hsl(var(--border))] flex items-center justify-center shrink-0">
+                            <Building2 className="w-4.5 h-4.5 text-[hsl(var(--primary))]" />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-xs font-bold text-[hsl(var(--foreground))] truncate">{asgn.projectName}</span>
-                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${PROJECT_STATUS_COLORS[asgn.projectStatus] ?? 'bg-slate-100 text-slate-500'}`}>{asgn.projectStatus}</span>
-                            </div>
-                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                              <div className="flex items-center gap-1">
-                                <UserCheck className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
-                                <span className="text-[11px] text-[hsl(var(--muted-foreground))]">{PROJECT_ROLE_LABELS[asgn.projectRole] ?? asgn.projectRole}</span>
-                              </div>
-                              {asgn.projectType && <span className="text-[11px] text-[hsl(var(--muted-foreground))]">· {asgn.projectType}</span>}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[hsl(var(--primary)/0.08)] border border-[hsl(var(--primary)/0.15)]">
-                              <ShieldCheck className="w-3 h-3 text-[hsl(var(--primary))]" />
-                              <span className="text-[11px] font-semibold text-[hsl(var(--primary))]">{asgn.permissions.length} modules</span>
-                            </div>
-                            <button onClick={(e) => { e.stopPropagation(); setSelectedAssignment(asgn); }}
-                              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] transition-colors border border-[hsl(var(--border))] cursor-pointer">
-                              <Eye className="w-3 h-3" /> View
-                            </button>
+                          <div>
+                            <h5 className="font-bold text-xs text-[hsl(var(--foreground))]">{asgn.projectName}</h5>
+                            <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
+                              Role: <span className="font-semibold text-[hsl(var(--foreground))]">{PROJECT_ROLE_LABELS[asgn.projectRole] ?? asgn.projectRole}</span>
+                              {asgn.projectType && ` · ${asgn.projectType}`}
+                            </p>
                           </div>
                         </div>
-                      ))}
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${PROJECT_STATUS_COLORS[asgn.projectStatus] ?? 'bg-slate-100 text-slate-600'}`}>
+                          {asgn.projectStatus}
+                        </span>
+                      </div>
+
+                      {asgn.permissions.length > 0 && (
+                        <div className="pt-2 border-t border-[hsl(var(--border)/0.6)]">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block mb-1.5">
+                            Module Permissions ({asgn.permissions.length} modules)
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {asgn.permissions.map((p) => (
+                              <span key={p.module} className="px-2 py-1 rounded-md text-[10px] font-semibold bg-[hsl(var(--accent)/0.6)] border border-[hsl(var(--border))] flex items-center gap-1">
+                                <span className="font-bold text-[hsl(var(--foreground))] capitalize">{p.module.replace(/_/g, ' ')}:</span>
+                                <span className="text-[hsl(var(--muted-foreground))]">{p.actions.join(', ')}</span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </>
-                )}
-              </div>
-            </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
-        </AnimatePresence>
+
+          {modalTab === 'json' && (
+            <div className="relative rounded-2xl bg-slate-950 p-4 border border-slate-800 font-mono text-[11px] text-slate-200 overflow-x-auto max-h-[400px]">
+              <pre>{JSON.stringify(user, null, 2)}</pre>
+            </div>
+          )}
+        </div>
       </motion.div>
-    </>
+    </div>
   );
 }
 
@@ -937,19 +938,34 @@ function UserRow({ user, roles, onUserUpdated }: { user: UserWithProjects; roles
 // ---------------------------------------------------------------------------
 export default function InteriorUsersRolesView() {
   const toast = useToast();
-  const { isOrgAdmin, hasPermission } = usePermissions();
+  const { isOrgAdmin, hasPermission, currentUser } = usePermissions();
   const showUsersTab = isOrgAdmin || hasPermission('users', 'read');
   const showRolesTab = isOrgAdmin || hasPermission('roles', 'read');
   const canAddUsers = isOrgAdmin || hasPermission('users', 'create');
+  const canManageUsers = isOrgAdmin || hasPermission('users', 'update');
+  const canDeleteUsers = isOrgAdmin || hasPermission('users', 'delete');
+
   const [selectedTab, setActiveTab] = useState<'users' | 'roles'>('users');
   const activeTab: 'users' | 'roles' | null =
     selectedTab === 'users' && showUsersTab ? 'users' : showRolesTab ? 'roles' : showUsersTab ? 'users' : null;
+
   const [users, setUsers] = useState<UserWithProjects[]>([]);
   const [roles, setRoles] = useState<OrgRole[]>(DEFAULT_ORG_ROLES);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState('All');
+
+  // Filters & Pagination (Matching Audit Management format)
+  const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(15);
+  const [activeSegment, setActiveSegment] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  // Modals state
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserWithProjects | null>(null);
+  const [deletingUser, setDeletingUser] = useState<UserWithProjects | null>(null);
+  const [inspectedUser, setInspectedUser] = useState<UserWithProjects | null>(null);
 
   const loadRoles = useCallback(async () => {
     try {
@@ -982,170 +998,654 @@ export default function InteriorUsersRolesView() {
     loadRoles();
   }, [loadUsers, loadRoles]);
 
-  const filteredUsers = users.filter((u) => {
-    const q = searchQuery.toLowerCase();
-    const matchesSearch =
-      `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q) ||
-      (u.designation ?? '').toLowerCase().includes(q) ||
-      (u.department ?? '').toLowerCase().includes(q) ||
-      u.projectAssignments.some((a) => a.projectName.toLowerCase().includes(q));
-    const matchesRole = roleFilter === 'All' || u.role?.name === roleFilter || u.systemRole === roleFilter;
-    return matchesSearch && matchesRole;
-  });
+  // Handle Quick Segment Switch
+  const handleSegmentChange = (segId: string) => {
+    setActiveSegment(segId);
+    setPage(1);
+    if (segId === 'all') {
+      setStatusFilter('all');
+      setRoleFilter('all');
+    } else if (segId === 'active') {
+      setStatusFilter('active');
+    } else if (segId === 'admin') {
+      setStatusFilter('all');
+      setRoleFilter('admin');
+    }
+  };
 
-  const totalProjects = [...new Set(users.flatMap((u) => u.projectAssignments.map((a) => a.projectId)))].length;
-  const activeUsers  = users.filter((u) => u.status === 'active').length;
+  // Filtered dataset
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) => {
+      const q = searchTerm.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q) ||
+        (u.designation ?? '').toLowerCase().includes(q) ||
+        (u.department ?? '').toLowerCase().includes(q) ||
+        u.projectAssignments.some((a) => a.projectName.toLowerCase().includes(q));
+
+      const matchesRole =
+        roleFilter === 'all' ||
+        u.role?.name === roleFilter ||
+        u.role?.slug === roleFilter ||
+        u.systemRole === roleFilter;
+
+      const matchesStatus =
+        statusFilter === 'all' ||
+        u.status === statusFilter;
+
+      let matchesSegment = true;
+      if (activeSegment === 'assigned') {
+        matchesSegment = u.projectAssignments.length > 0;
+      } else if (activeSegment === 'unassigned') {
+        matchesSegment = u.projectAssignments.length === 0;
+      } else if (activeSegment === 'admin') {
+        matchesSegment =
+          u.systemRole === 'org_admin' ||
+          u.systemRole === 'super_admin' ||
+          u.role?.slug === 'admin' ||
+          u.systemRole === 'manager';
+      }
+
+      return matchesSearch && matchesRole && matchesStatus && matchesSegment;
+    });
+  }, [users, searchTerm, roleFilter, statusFilter, activeSegment]);
+
+  // Pagination calculation
+  const totalCount = filteredUsers.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / limit));
+  const paginatedUsers = useMemo(() => {
+    const start = (page - 1) * limit;
+    return filteredUsers.slice(start, start + limit);
+  }, [filteredUsers, page, limit]);
+
+  // KPI Metrics
+  const totalProjects = useMemo(() => {
+    return [...new Set(users.flatMap((u) => u.projectAssignments.map((a) => a.projectId)))].length;
+  }, [users]);
+  const activeUsers = useMemo(() => users.filter((u) => u.status === 'active').length, [users]);
+
+  // Pagination pills with ellipsis helper
+  const paginationRange = useMemo<(number | string)[]>(() => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    if (page <= 4) {
+      return [1, 2, 3, 4, 5, '...', totalPages];
+    }
+    if (page >= totalPages - 3) {
+      return [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    }
+    return [1, '...', page - 1, page, page + 1, '...', totalPages];
+  }, [page, totalPages]);
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 max-w-5xl mx-auto">
-      {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="interior-os-theme p-4 lg:p-6 space-y-4 gradient-mesh min-h-full max-w-[1600px] mx-auto font-sans">
+      {/* ── 1. Executive Header Ribbon (Matching Audit Management) ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[hsl(var(--foreground))] flex items-center gap-2.5">
-            <Users className="w-6 h-6 sm:w-7 sm:h-7 text-[hsl(var(--primary))]" />
+          <h1 className="text-xl lg:text-2xl font-bold tracking-tight text-[hsl(var(--foreground))] flex items-center gap-2.5">
             Users &amp; Roles
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-[hsl(var(--accent))] border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]">
+              {users.length} members
+            </span>
           </h1>
-          <p className="text-xs sm:text-sm text-[hsl(var(--muted-foreground))] mt-1">
-            Team members with project assignments, and role permission matrix.
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+            Organization user directory, role permissions matrix, and project assignment access.
           </p>
         </div>
-        {activeTab === 'users' && (
-          <div className="flex items-center gap-2 shrink-0">
-            <Button variant="outline" size="sm" onClick={() => { loadUsers(); loadRoles(); }} className="text-xs font-semibold" isLoading={isLoading}>
-              Refresh
-            </Button>
-            {canAddUsers && (
+
+        <div className="flex items-center gap-2">
+          {/* Main Segment Switcher: Users vs Roles */}
+          <div className="flex items-center gap-1 p-1 rounded-lg border border-slate-200 bg-white shadow-xs mr-1">
+            {showUsersTab && (
               <button
-                onClick={() => setIsAddUserOpen(true)}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer"
+                onClick={() => { setActiveTab('users'); setPage(1); }}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer',
+                  activeTab === 'users'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-blue-600 hover:bg-slate-100/80 transition-colors'
+                )}
               >
-                <UserPlus className="w-3.5 h-3.5" />
-                Add User
+                <Users className="w-3.5 h-3.5" />
+                <span>Users ({users.length})</span>
+              </button>
+            )}
+            {showRolesTab && (
+              <button
+                onClick={() => setActiveTab('roles')}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer',
+                  activeTab === 'roles'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-blue-600 hover:bg-slate-100/80 transition-colors'
+                )}
+              >
+                <Shield className="w-3.5 h-3.5" />
+                <span>Roles ({roles.length})</span>
               </button>
             )}
           </div>
-        )}
-      </div>
 
-      {/* Add User Modal */}
-      <AnimatePresence>
-        {isAddUserOpen && (
-          <AddUserModal roles={roles} onClose={() => setIsAddUserOpen(false)} onSuccess={loadUsers} />
-        )}
-      </AnimatePresence>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => { loadUsers(); loadRoles(); }}
+            disabled={isLoading}
+            className="gap-1.5 h-8.5 text-xs bg-[hsl(var(--card))] shadow-xs cursor-pointer"
+          >
+            <RefreshCw className={cn('w-3.5 h-3.5', isLoading && 'animate-spin')} />
+            <span>Sync</span>
+          </Button>
 
-      {/* ── Tab toggle ── */}
-      <div className="flex items-center gap-1 p-1 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.4)] w-fit">
-        {showUsersTab && (
-        <button
-          onClick={() => setActiveTab('users')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-            activeTab === 'users'
-              ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
-              : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
-          }`}
-        >
-          <Users className="w-3.5 h-3.5" /> Users
-        </button>
-        )}
-        {showRolesTab && (
-        <button
-          onClick={() => setActiveTab('roles')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-            activeTab === 'roles'
-              ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
-              : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
-          }`}
-        >
-          <Shield className="w-3.5 h-3.5" /> Roles
-        </button>
-        )}
-      </div>
-
-      {activeTab === null && (
-        <div className="rounded-xl border border-[hsl(var(--border))] p-10 text-center text-sm text-[hsl(var(--muted-foreground))]">
-          You don&apos;t have permission to view users or roles.
+          {activeTab === 'users' && canAddUsers && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => setIsAddUserOpen(true)}
+              className="gap-1.5 h-8.5 text-xs shadow-xs font-semibold cursor-pointer"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>Add Member</span>
+            </Button>
+          )}
         </div>
-      )}
+      </div>
+
+      {/* ── 2. KPI Stat Metrics Overview (Matching Audit Management) ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Card className="border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-xs hover:border-[hsl(var(--primary)/0.3)] transition-colors">
+          <CardContent className="p-3.5 flex items-center justify-between">
+            <div className="space-y-0.5 min-w-0">
+              <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider block">
+                Total Members
+              </span>
+              <div className="text-xl font-bold tracking-tight text-[hsl(var(--foreground))]">
+                {isLoading ? '—' : users.length}
+              </div>
+              <span className="text-[10px] text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                Organization Roster
+              </span>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/20">
+              <Users className="w-5 h-5" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-xs hover:border-[hsl(var(--primary)/0.3)] transition-colors">
+          <CardContent className="p-3.5 flex items-center justify-between">
+            <div className="space-y-0.5 min-w-0">
+              <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider block">
+                Active Accounts
+              </span>
+              <div className="text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
+                {isLoading ? '—' : activeUsers}
+              </div>
+              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" />
+                Live authorized access
+              </span>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
+              <UserCheck className="w-5 h-5" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-xs hover:border-[hsl(var(--primary)/0.3)] transition-colors">
+          <CardContent className="p-3.5 flex items-center justify-between">
+            <div className="space-y-0.5 min-w-0">
+              <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider block">
+                Projects Covered
+              </span>
+              <div className="text-xl font-bold tracking-tight text-[hsl(var(--foreground))]">
+                {isLoading ? '—' : totalProjects}
+              </div>
+              <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                Active project assignments
+              </span>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/20">
+              <Building2 className="w-5 h-5" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-xs hover:border-[hsl(var(--primary)/0.3)] transition-colors">
+          <CardContent className="p-3.5 flex items-center justify-between">
+            <div className="space-y-0.5 min-w-0">
+              <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider block">
+                Configured Roles
+              </span>
+              <div className="text-xl font-bold tracking-tight text-[hsl(var(--foreground))]">
+                {roles.length}
+              </div>
+              <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                Permission matrix presets
+              </span>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <AnimatePresence mode="wait">
         {/* ═══════════════════════════════════ USERS TAB ═══════════════════════════════════ */}
         {activeTab === 'users' && (
-          <motion.div key="users" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="space-y-5">
-            {/* Summary cards */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 text-center">
-                <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{isLoading ? '—' : users.length}</p>
-                <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1 font-medium">Total Users</p>
-              </div>
-              <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 text-center">
-                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{isLoading ? '—' : activeUsers}</p>
-                <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1 font-medium">Active</p>
-              </div>
-              <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 text-center">
-                <p className="text-2xl font-bold text-[hsl(var(--primary))]">{isLoading ? '—' : totalProjects}</p>
-                <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1 font-medium">Projects Covered</p>
-              </div>
+          <motion.div key="users" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="space-y-4">
+            {/* ── Quick Segment Filter Bar ── */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
+              {QUICK_SEGMENTS.map((seg) => {
+                const isActive = activeSegment === seg.id;
+                return (
+                  <button
+                    key={seg.id}
+                    onClick={() => handleSegmentChange(seg.id)}
+                    className={cn(
+                      'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer border',
+                      isActive
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                        : 'bg-white text-slate-700 border-slate-200 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50/50'
+                    )}
+                  >
+                    {seg.label}
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row items-center gap-3">
-              <div className="relative w-full sm:w-80">
-                <Input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by name, email, or project..."
-                  icon={<Search className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />} />
-              </div>
-              <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] w-full sm:w-auto">
-                <option value="All">All Roles</option>
-                {roles.map((r) => (
-                  <option key={r._id} value={r.name}>{r.name}</option>
-                ))}
-              </select>
-              {(searchQuery || roleFilter !== 'All') && (
-                <button onClick={() => { setSearchQuery(''); setRoleFilter('All'); }}
-                  className="flex items-center gap-1 text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors cursor-pointer shrink-0">
-                  <X className="w-3.5 h-3.5" /> Clear
-                </button>
-              )}
-              <span className="ml-auto text-xs text-[hsl(var(--muted-foreground))] shrink-0">
-                {filteredUsers.length} of {users.length} users
-              </span>
-            </div>
-
-            {/* Loading */}
-            {isLoading && (
-              <div className="flex items-center justify-center py-20 text-[hsl(var(--muted-foreground))]">
-                <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                <span className="text-sm font-medium">Loading users…</span>
-              </div>
-            )}
-
-            {/* User list */}
-            {!isLoading && (
-              <div className="space-y-3">
-                {filteredUsers.length === 0 ? (
-                  <div className="text-center py-16 text-[hsl(var(--muted-foreground))]">
-                    <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                    <p className="text-sm font-medium">No users match your search.</p>
+            {/* ── Search & Filter Controls Card (Matching Audit Management) ── */}
+            <Card className="border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-xs">
+              <CardContent className="p-3">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5">
+                  {/* Search Input */}
+                  <div className="md:col-span-6 relative">
+                    <Input
+                      placeholder="Search member by name, email, designation, department..."
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setPage(1);
+                      }}
+                      icon={<Search className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />}
+                      className="bg-[hsl(var(--background))] h-9 rounded-lg text-xs"
+                    />
+                    {searchTerm && (
+                      <button
+                        onClick={() => {
+                          setSearchTerm('');
+                          setPage(1);
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] p-0.5 cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
-                ) : (
-                  filteredUsers.map((user) => (
-                    <UserRow key={user._id} user={user} roles={roles} onUserUpdated={loadUsers} />
-                  ))
-                )}
-              </div>
+
+                  {/* Role Filter Dropdown */}
+                  <div className="md:col-span-3">
+                    <select
+                      value={roleFilter}
+                      onChange={(e) => {
+                        setRoleFilter(e.target.value);
+                        setPage(1);
+                      }}
+                      className="w-full h-9 px-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-semibold text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+                    >
+                      <option value="all">All Roles</option>
+                      {roles.map((r) => (
+                        <option key={r._id || r.slug} value={r.name}>{r.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Account Status Dropdown */}
+                  <div className="md:col-span-3">
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => {
+                        setStatusFilter(e.target.value);
+                        setPage(1);
+                      }}
+                      className="w-full h-9 px-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-semibold text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+                    >
+                      <option value="all">All Statuses</option>
+                      <option value="active">Active Only</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="suspended">Suspended</option>
+                      <option value="pending">Pending</option>
+                    </select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* ── Table Ledger View (Matching Audit Management) ── */}
+            {isLoading ? (
+              <Card className="border-[hsl(var(--border))] bg-[hsl(var(--card))] rounded-xl shadow-none">
+                <CardContent className="p-16 flex flex-col items-center justify-center text-center">
+                  <RefreshCw className="w-7 h-7 text-[hsl(var(--primary))] animate-spin mb-3" />
+                  <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">Loading Directory...</h3>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                    Fetching organization members and project permissions
+                  </p>
+                </CardContent>
+              </Card>
+            ) : filteredUsers.length === 0 ? (
+              <Card className="border-[hsl(var(--border))] bg-[hsl(var(--card))] rounded-xl shadow-xs">
+                <CardContent className="p-16 flex flex-col items-center justify-center text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-[hsl(var(--accent))] flex items-center justify-center mb-3 border border-[hsl(var(--border))]">
+                    <Users className="w-6 h-6 text-[hsl(var(--muted-foreground))]" />
+                  </div>
+                  <h3 className="text-base font-bold text-[hsl(var(--foreground))]">No users found</h3>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-md mt-1">
+                    No members match your active filters or search terms.
+                  </p>
+                  {(searchTerm || roleFilter !== 'all' || statusFilter !== 'all' || activeSegment !== 'all') && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-4 rounded-lg font-semibold text-xs h-8 cursor-pointer"
+                      onClick={() => {
+                        setSearchTerm('');
+                        setRoleFilter('all');
+                        setStatusFilter('all');
+                        setActiveSegment('all');
+                        setPage(1);
+                      }}
+                    >
+                      Reset All Filters
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              /* ── UNIFIED TABLE & PAGINATION CONTAINER ── */
+              <Card className="border-[hsl(var(--border))] bg-[hsl(var(--card))] rounded-xl shadow-xs overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-[hsl(var(--muted)/0.4)] border-b border-[hsl(var(--border))] text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                        <th className="py-3 px-4">Member / User</th>
+                        <th className="py-3 px-4">Assigned Role</th>
+                        <th className="py-3 px-4">Department / Designation</th>
+                        <th className="py-3 px-4">Status</th>
+                        <th className="py-3 px-4">Projects</th>
+                        <th className="py-3 px-4">Created Date</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[hsl(var(--border))]">
+                      {paginatedUsers.map((user) => {
+                        const initials = getInitials(user.firstName, user.lastName);
+                        const sysRole = SYSTEM_ROLE_LABELS[user.systemRole] ?? { label: user.systemRole, badgeClass: 'bg-slate-500/10 text-slate-600 border-slate-500/25' };
+                        const displayRoleName = user.role?.name || sysRole.label;
+                        const isSelf = currentUser && (
+                          String((currentUser as any).id || (currentUser as any)._id) === String(user._id) ||
+                          (currentUser as any).email?.toLowerCase() === user.email?.toLowerCase()
+                        );
+
+                        return (
+                          <tr
+                            key={user._id}
+                            onClick={() => setInspectedUser(user)}
+                            className="hover:bg-[hsl(var(--accent)/0.4)] transition-colors group cursor-pointer"
+                          >
+                            {/* Member / User Profile (Clean Non-Colorful Avatar) */}
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <div className="flex items-center gap-2.5">
+                                {/* Member Avatar - Blue Theme */}
+                                <div className="w-8 h-8 rounded-lg bg-linear-to-br from-blue-600 to-blue-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                                  {initials}
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="font-bold text-xs text-[hsl(var(--foreground))] group-hover:text-blue-600 transition-colors truncate max-w-[160px]">
+                                    {user.firstName} {user.lastName}
+                                  </div>
+                                  <div className="text-[10px] text-[hsl(var(--muted-foreground))] truncate max-w-[160px] font-mono">
+                                    {user.email}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Assigned Role */}
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border border-[hsl(var(--border))] bg-[hsl(var(--accent)/0.7)] text-[hsl(var(--foreground))]">
+                                <Crown className="w-3 h-3 text-[hsl(var(--primary))]" />
+                                <span>{displayRoleName}</span>
+                              </span>
+                            </td>
+
+                            {/* Department / Designation */}
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <div className="font-semibold text-xs text-[hsl(var(--foreground))]">
+                                {user.designation || '—'}
+                              </div>
+                              <div className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                                {user.department || 'General'}
+                              </div>
+                            </td>
+
+                            {/* Status */}
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              {user.status === 'active' ? (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                  <span>Active</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/25 capitalize">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                  <span>{user.status}</span>
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Projects Covered */}
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[hsl(var(--accent)/0.6)] border border-[hsl(var(--border))] text-xs font-semibold text-[hsl(var(--foreground))]">
+                                <Building2 className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+                                <span>{user.projectAssignments.length} {user.projectAssignments.length === 1 ? 'project' : 'projects'}</span>
+                              </div>
+                            </td>
+
+                            {/* Created Date */}
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <div className="text-xs text-[hsl(var(--foreground))] font-medium">
+                                {user.createdAt ? new Date(user.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                              </div>
+                            </td>
+
+                            {/* Actions / Inspection */}
+                            <td className="py-3 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center justify-end gap-1.5">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 px-2.5 rounded-md text-[11px] font-bold gap-1 shadow-2xs bg-[hsl(var(--card))] group-hover:border-[hsl(var(--primary))] cursor-pointer"
+                                  onClick={() => setInspectedUser(user)}
+                                >
+                                  <Eye className="w-3 h-3 text-[hsl(var(--primary))]" />
+                                  <span>Inspect</span>
+                                </Button>
+
+                                {canManageUsers && (
+                                  <button
+                                    onClick={() => setEditingUser(user)}
+                                    title="Edit User"
+                                    className="p-1.5 rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:text-blue-600 hover:bg-blue-50/60 transition-colors cursor-pointer"
+                                  >
+                                    <Edit3 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+
+                                {canDeleteUsers && !isSelf && (
+                                  <button
+                                    onClick={() => setDeletingUser(user)}
+                                    title="Delete User"
+                                    className="p-1.5 rounded-lg border border-rose-500/20 text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* ── Integrated Pagination Footer (Matching Audit Management) ── */}
+                <div className="p-3 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.15)] flex flex-col sm:flex-row items-center justify-between gap-3">
+                  {/* Left: Range and Rows per Page */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <p className="text-[11px] text-[hsl(var(--muted-foreground))] font-medium">
+                      Showing <strong className="text-[hsl(var(--foreground))]">{(page - 1) * limit + 1}</strong> –{' '}
+                      <strong className="text-[hsl(var(--foreground))]">{Math.min(page * limit, totalCount)}</strong> of{' '}
+                      <strong className="text-[hsl(var(--foreground))]">{totalCount}</strong> members
+                    </p>
+
+                    <div className="flex items-center gap-1.5 text-[11px] text-[hsl(var(--muted-foreground))]">
+                      <span>Per page:</span>
+                      <select
+                        value={limit}
+                        onChange={(e) => {
+                          setLimit(Number(e.target.value));
+                          setPage(1);
+                        }}
+                        className="h-7 px-1.5 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-bold text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                      >
+                        <option value={10}>10</option>
+                        <option value={15}>15</option>
+                        <option value={25}>25</option>
+                        <option value={50}>50</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Right: Page Buttons */}
+                  <div className="flex items-center gap-1 flex-wrap">
+                    <button
+                      onClick={() => setPage(1)}
+                      disabled={page <= 1}
+                      title="First Page"
+                      className="w-7 h-7 rounded-md flex items-center justify-center border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[hsl(var(--accent))] transition-colors cursor-pointer"
+                    >
+                      <ChevronsLeft className="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page <= 1}
+                      title="Previous Page"
+                      className="w-7 h-7 rounded-md flex items-center justify-center border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[hsl(var(--accent))] transition-colors cursor-pointer"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+
+                    {paginationRange.map((item: number | string, index: number) => {
+                      if (item === '...') {
+                        return (
+                          <span
+                            key={`ellipsis-${index}`}
+                            className="w-7 h-7 flex items-center justify-center text-[11px] font-bold text-[hsl(var(--muted-foreground))]"
+                          >
+                            ...
+                          </span>
+                        );
+                      }
+
+                      const pageNum = Number(item);
+                      const isActive = page === pageNum;
+
+                      return (
+                        <button
+                          key={`page-${pageNum}`}
+                          onClick={() => setPage(pageNum)}
+                          className={cn(
+                            'min-w-[28px] h-7 px-1.5 rounded-md text-[11px] font-bold transition-all cursor-pointer border',
+                            isActive
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                              : 'border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))]'
+                          )}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={page >= totalPages}
+                      title="Next Page"
+                      className="w-7 h-7 rounded-md flex items-center justify-center border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[hsl(var(--accent))] transition-colors cursor-pointer"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      onClick={() => setPage(totalPages)}
+                      disabled={page >= totalPages}
+                      title="Last Page"
+                      className="w-7 h-7 rounded-md flex items-center justify-center border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[hsl(var(--accent))] transition-colors cursor-pointer"
+                    >
+                      <ChevronsRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </Card>
             )}
           </motion.div>
         )}
 
         {/* ═══════════════════════════════════ ROLES TAB ═══════════════════════════════════ */}
         {activeTab === 'roles' && (
-          <motion.div key="roles" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
-            {/* Live, editable organization roles (replaces the old hard-coded preset matrix) */}
+          <motion.div key="roles" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}>
             <InteriorRolesManager roles={roles} onChanged={loadRoles} />
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Modals ── */}
+      <AnimatePresence>
+        {isAddUserOpen && (
+          <AddUserModal roles={roles} onClose={() => setIsAddUserOpen(false)} onSuccess={loadUsers} />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {editingUser && (
+          <EditUserModal user={editingUser} roles={roles} onClose={() => setEditingUser(null)} onSuccess={loadUsers} />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {deletingUser && (
+          <DeleteUserModal user={deletingUser} onClose={() => setDeletingUser(null)} onSuccess={loadUsers} />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {inspectedUser && (
+          <UserInspectorModal
+            user={inspectedUser}
+            onClose={() => setInspectedUser(null)}
+            onEdit={() => {
+              const u = inspectedUser;
+              setInspectedUser(null);
+              setEditingUser(u);
+            }}
+          />
         )}
       </AnimatePresence>
     </div>

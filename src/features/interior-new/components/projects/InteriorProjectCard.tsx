@@ -1,23 +1,17 @@
 'use client';
 
 // =============================================================================
-// Sky-Lite Web — Interior-OS Compact Modern Project Card
-// Clean, sleek, proportionate, and accessible with Bento metric sub-panel.
+// Sky-Lite Web — Interior-OS Modern Streamlined Project Card
+// Optimized, clean, lightweight UI with essential metrics and zero visual clutter.
 // =============================================================================
 
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
-  MapPin,
   Calendar,
   Pencil,
   Trash2,
   ArrowUpRight,
-  User,
-  Clock,
-  Building2,
-  AlertTriangle,
-  Layers,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -123,19 +117,37 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
 
   const health = healthConfig[healthType] || healthConfig['on-track'];
 
-  // Date formatting
+  // Clean date formatter
   const formatDate = (dateVal?: string) => {
-    if (!dateVal) return '—';
+    if (!dateVal) return '';
     try {
       const d = new Date(dateVal);
-      if (isNaN(d.getTime())) return '—';
+      if (isNaN(d.getTime())) return '';
       return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     } catch {
-      return '—';
+      return '';
     }
   };
 
+  // Single meaningful deadline / date to avoid visual clutter
+  const deadlineText = React.useMemo(() => {
+    if (project.endDate) {
+      const formatted = formatDate(project.endDate);
+      if (formatted) return `Due ${formatted}`;
+    }
+    if (project.startDate) {
+      const formatted = formatDate(project.startDate);
+      if (formatted) return `Started ${formatted}`;
+    }
+    if (project.createdAt) {
+      const formatted = formatDate(project.createdAt);
+      if (formatted) return `Created ${formatted}`;
+    }
+    return 'No target date';
+  }, [project.endDate, project.startDate, project.createdAt]);
+
   const city = project.location?.city || project.location?.address;
+  const clientSubtitle =  city;
 
   // Keyboard accessibility
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -147,10 +159,10 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.03, duration: 0.2 }}
-      whileHover={{ y: -3, transition: { duration: 0.15 } }}
+      transition={{ delay: Math.min(index * 0.02, 0.2), duration: 0.2 }}
+      whileHover={{ y: -2, transition: { duration: 0.15 } }}
       className="h-full"
     >
       <div
@@ -163,27 +175,28 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
           'group relative flex flex-col justify-between h-full',
           'bg-white text-slate-800',
           'border border-slate-200/90 hover:border-blue-400',
-          'rounded-xl p-4',
-          'shadow-[0_1px_3px_0_rgba(0,0,0,0.04),0_1px_2px_0_rgba(0,0,0,0.02)]',
-          'hover:shadow-[0_8px_20px_-4px_rgba(37,99,235,0.1),0_4px_8px_-2px_rgba(0,0,0,0.04)]',
+          'rounded-2xl p-4 sm:p-4.5',
+          'shadow-2xs hover:shadow-md hover:shadow-blue-500/5',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2',
-          'cursor-pointer transition-all duration-200 select-none space-y-3'
+          'cursor-pointer transition-all duration-200 select-none space-y-3.5'
         )}
       >
-        {/* Top Header Row: Code + Type + Status Pill */}
+        {/* Top Row: Monospace Code + Type + Status Badge */}
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-            <span className="px-2 py-0.5 text-[11px] font-semibold rounded bg-slate-100 text-slate-700 border border-slate-200/60">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200/60 shrink-0">
               {project.code || 'PRJ'}
             </span>
-            <span className="px-2 py-0.5 text-[11px] font-medium rounded bg-blue-50 text-blue-700 border border-blue-100 truncate max-w-[130px]">
-              {project.type || 'Fit-Out'}
-            </span>
+            {project.type && (
+              <span className="text-xs font-medium text-slate-400 truncate max-w-[120px]" title={project.type}>
+                {project.type}
+              </span>
+            )}
           </div>
 
           <span
             className={cn(
-              'px-2 py-0.5 text-[11px] font-medium rounded-full border inline-flex items-center gap-1.5 shrink-0',
+              'px-2 py-0.5 text-[11px] font-semibold rounded-full border inline-flex items-center gap-1.5 shrink-0',
               health.badge
             )}
           >
@@ -192,37 +205,25 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
           </span>
         </div>
 
-        {/* Project Title & Client/Location Meta */}
-        <div className="space-y-1">
-          <h3 className="text-[15px] font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 leading-snug tracking-tight">
+        {/* Project Title & Client/Location Subtitle */}
+        <div className="space-y-0.5">
+          <h3
+            className="text-[15px] sm:text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 leading-snug"
+            title={project.name}
+          >
             {project.name}
           </h3>
-
-          <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
-            {project.client && (
-              <span className="flex items-center gap-1 truncate max-w-[130px]" title={project.client}>
-                <User className="w-3 h-3 text-slate-400 shrink-0" />
-                <span className="truncate">{project.client}</span>
-              </span>
-            )}
-            {project.client && city && <span className="text-slate-300">•</span>}
-            {city && (
-              <span className="flex items-center gap-1 text-slate-500 truncate max-w-[130px]" title={city}>
-                <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                <span className="truncate">{city}</span>
-              </span>
-            )}
-          </div>
+          
         </div>
 
-        {/* Bento Stats Matrix */}
-        <div className="rounded-lg bg-slate-50/80 border border-slate-200/70 p-3 space-y-2">
-          <div className="flex items-center justify-between gap-2">
+        {/* Essential Metrics: Budget & Progress (Clean & Modern, No Box-in-Box) */}
+        <div className="space-y-2 pt-1">
+          <div className="flex items-baseline justify-between">
             <div>
               <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
-                Contract Budget
+                Budget
               </span>
-              <span className="text-sm font-bold text-slate-900 leading-tight">
+              <span className="text-sm sm:text-base font-bold text-slate-900">
                 {formattedBudget}
               </span>
             </div>
@@ -231,7 +232,7 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
               <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
                 Progress
               </span>
-              <span className="text-sm font-bold text-slate-900 leading-tight">
+              <span className="text-xs sm:text-sm font-bold text-slate-900">
                 {progressVal}%
               </span>
             </div>
@@ -243,43 +244,23 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
             aria-valuenow={progressVal}
             aria-valuemin={0}
             aria-valuemax={100}
-            className="w-full h-1.5 rounded-full bg-slate-200 overflow-hidden"
+            className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden"
           >
             <div
               className={cn('h-full rounded-full transition-all duration-500', health.bar)}
               style={{ width: `${Math.max(progressVal, 2)}%` }}
             />
           </div>
-
-          {/* Timeline Row */}
-          <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5 border-t border-slate-200/50">
-            <span className="flex items-center gap-1">
-              <Calendar className="w-3 h-3 text-blue-600 shrink-0" />
-              <span>Start: {formatDate(project.startDate || project.createdAt)}</span>
-            </span>
-            {project.endDate && (
-              <span className="text-right">
-                Target: {formatDate(project.endDate)}
-              </span>
-            )}
-          </div>
         </div>
 
-        {/* Action Footer */}
-        <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpen(project);
-            }}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-          >
-            <span>View Project</span>
-            <ArrowUpRight className="w-3.5 h-3.5 stroke-[2] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-          </button>
+        {/* Clean Footer Row: Single Deadline on Left + Actions on Right */}
+        <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-1.5 text-slate-500 text-[11px] truncate max-w-[150px]">
+            <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span className="truncate">{deadlineText}</span>
+          </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0">
             {canEdit && onEdit && (
               <button
                 type="button"
@@ -289,7 +270,7 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
                   e.stopPropagation();
                   onEdit(project);
                 }}
-                className="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
               >
                 <Pencil className="w-3.5 h-3.5" />
               </button>
@@ -304,11 +285,18 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
                   e.stopPropagation();
                   onDelete(project);
                 }}
-                className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             )}
+
+            <div className="w-px h-3 bg-slate-200 mx-0.5" />
+
+            <span className="text-blue-600 font-semibold inline-flex items-center gap-0.5 text-xs group-hover:text-blue-700">
+              <span>View</span>
+              <ArrowUpRight className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            </span>
           </div>
         </div>
       </div>
