@@ -66,7 +66,7 @@ export const BOQViewModal: React.FC<BOQViewModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 sm:p-6">
       <div 
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden transform transition-all max-h-[90vh] flex flex-col"
+        className="bg-white rounded-2xl border border-slate-200 w-full max-w-2xl overflow-hidden transform transition-all max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

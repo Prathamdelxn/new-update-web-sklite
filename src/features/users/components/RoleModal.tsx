@@ -234,7 +234,7 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="w-full max-w-3xl relative z-10"
           >
-            <div className="bg-white border border-gray-200 rounded-xl shadow-lg">
+            <div className="bg-white border border-gray-200 rounded-xl">
               <div className="p-6 max-h-[92vh] overflow-y-auto custom-scrollbar">
 
                 {/* Header */}

@@ -2,14 +2,13 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Calendar, CheckCircle2, Circle, Clock, MessageSquare,
-  User, Image as ImageIcon, X, ChevronRight, Loader2, BarChart2,
+  Calendar, CheckCircle2, Clock, MessageSquare,
+  User, Image as ImageIcon, X, ChevronRight, Loader2,
   TrendingUp, Activity, Download, Mail, FileText, Wrench, AlertCircle, XOctagon
 } from 'lucide-react';
 import api from '@/services/api.client';
 import { useToast } from '@/providers/ToastContext';
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
-import { GlassCard } from '@/components/ui/GlassCard';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/providers/AuthContext';
@@ -19,6 +18,33 @@ import { hasProjectPermission } from '@/lib/permissions';
 interface ReportsTabProps {
   projectId: string;
 }
+
+const StatCard = ({
+  label,
+  value,
+  icon: Icon,
+  accent,
+  bg,
+  sub,
+}: {
+  label: string;
+  value: string | number;
+  icon: React.ElementType;
+  accent: string;
+  bg: string;
+  sub?: string;
+}) => (
+  <div className="bg-white rounded-xl border border-slate-200/80 p-4 flex items-center gap-3.5 min-w-0 transition-colors duration-200 hover:border-blue-200 shadow-none">
+    <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border', bg)}>
+      <Icon className={cn('w-5 h-5', accent)} />
+    </div>
+    <div className="min-w-0">
+      <div className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">{value}</div>
+      <div className="text-xs text-slate-500 font-medium truncate">{label}</div>
+      {sub && <div className="text-[11px] text-slate-400 font-normal truncate mt-0.5">{sub}</div>}
+    </div>
+  </div>
+);
 
 export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
   const { project: contextProject } = useProjectContext();
@@ -192,6 +218,18 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
       rangeSnags: filteredSnags
     };
   }, [milestones, reportType, project, issues, snags]);
+
+  const dateRangeLabel = useMemo(() => {
+    const start = new Date();
+    if (reportType === 'Daily') {
+      start.setDate(start.getDate() - 7);
+    } else {
+      start.setMonth(start.getMonth() - 6);
+    }
+    const end = new Date();
+    const opt: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' };
+    return `${start.toLocaleDateString('en-US', opt)} – ${end.toLocaleDateString('en-US', opt)}`;
+  }, [reportType]);
 
   const handleExportReport = () => {
     if (Object.keys(groupedTasks).length === 0) {
@@ -487,27 +525,29 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
     }
   };
 
-  // SVG Chart calculation parameters (shrunk for neat high-density UI)
+  const hasChartActivity = useMemo(() => {
+    return chartData.some(c => c.value > 0);
+  }, [chartData]);
+
+  // SVG Chart calculation parameters
   const chartPoints = useMemo(() => {
     const maxVal = Math.max(...chartData.map(c => c.value), 1);
     return chartData.map((item, index) => {
-      // chart viewBox: 0 0 600 135
-      // x: ranges from 40 to 560
-      // y: ranges from 20 to 110 (height offset: 110 - valuePct * 90)
-      const x = 40 + (index / (chartData.length - 1)) * 520;
-      const y = 110 - (item.value / maxVal) * 90;
+      // chart viewBox: 0 0 700 140
+      const x = 45 + (index / Math.max(chartData.length - 1, 1)) * 610;
+      const y = hasChartActivity ? 105 - (item.value / maxVal) * 75 : 105;
       return { x, y, value: item.value, label: item.label };
     });
-  }, [chartData]);
+  }, [chartData, hasChartActivity]);
 
   const linePath = useMemo(() => {
     return chartPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
   }, [chartPoints]);
 
   const areaPath = useMemo(() => {
-    if (chartPoints.length === 0) return '';
-    return `${linePath} L ${chartPoints[chartPoints.length - 1].x} 110 L ${chartPoints[0].x} 110 Z`;
-  }, [chartPoints, linePath]);
+    if (chartPoints.length === 0 || !hasChartActivity) return '';
+    return `${linePath} L ${chartPoints[chartPoints.length - 1].x} 105 L ${chartPoints[0].x} 105 Z`;
+  }, [chartPoints, linePath, hasChartActivity]);
 
   const canViewReports = hasProjectPermission(user, contextProject, 'reports:view');
 
@@ -527,48 +567,74 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
 
   return (
     <SkeletonLoader loading={loading} preset="list">
-      <div className="space-y-6">
-        {/* Toggle Box */}
-        <div className="flex justify-between items-center flex-wrap gap-3">
-          <div className="flex items-center gap-2">
-            <div className="flex p-1 bg-slate-100/90 border border-slate-200/80 rounded-xl w-fit shadow-2xs">
+      <div className="space-y-4 sm:space-y-5">
+        {/* ── Toolbar & Date Range Controls ── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-slate-200/80 rounded-xl px-4 py-3 shadow-none">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex p-0.5 bg-slate-100 rounded-lg border border-slate-200/60">
               <button
+                type="button"
                 onClick={() => setReportType('Daily')}
                 className={cn(
-                  'py-1.5 px-4 rounded-lg text-xs font-bold transition-all',
+                  'py-1.5 px-3.5 rounded-md text-xs font-semibold transition-all cursor-pointer select-none',
                   reportType === 'Daily'
-                    ? 'bg-white shadow-2xs text-blue-700 border border-slate-200/60'
-                    : 'text-slate-500 hover:text-slate-900'
+                    ? 'bg-white text-blue-600 shadow-none border border-slate-200/60'
+                    : 'text-slate-600 hover:text-slate-900'
                 )}
               >
-                Daily
+                Daily (7 Days)
               </button>
               <button
+                type="button"
                 onClick={() => setReportType('Monthly')}
                 className={cn(
-                  'py-1.5 px-4 rounded-lg text-xs font-bold transition-all',
+                  'py-1.5 px-3.5 rounded-md text-xs font-semibold transition-all cursor-pointer select-none',
                   reportType === 'Monthly'
-                    ? 'bg-white shadow-2xs text-blue-700 border border-slate-200/60'
-                    : 'text-slate-500 hover:text-slate-900'
+                    ? 'bg-white text-blue-600 shadow-none border border-slate-200/60'
+                    : 'text-slate-600 hover:text-slate-900'
                 )}
               >
-                Monthly
+                Monthly (6 Months)
               </button>
             </div>
 
+            <div className="hidden md:flex items-center gap-1.5 text-xs font-medium text-slate-500 bg-slate-50 border border-slate-200/60 px-3 py-1.5 rounded-lg">
+              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+              <span>{dateRangeLabel}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
             <button
+              type="button"
               onClick={handleExportReport}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-700 transition-all shadow-2xs active:scale-95 cursor-pointer"
-              title="Export Report to CSV"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors text-xs font-medium cursor-pointer shadow-none"
+              title="Export Report as CSV"
             >
               <Download className="w-3.5 h-3.5 text-slate-500" />
               <span>Export CSV</span>
             </button>
 
             <button
+              type="button"
+              onClick={handleDownloadPDF}
+              disabled={downloadingPDF}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors text-xs font-medium cursor-pointer disabled:opacity-50 shadow-none"
+              title="Download Report PDF"
+            >
+              {downloadingPDF ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-500" />
+              ) : (
+                <FileText className="w-3.5 h-3.5 text-slate-500" />
+              )}
+              <span>{downloadingPDF ? 'Generating...' : 'Download PDF'}</span>
+            </button>
+
+            <button
+              type="button"
               onClick={handleEmailReport}
               disabled={emailing}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-xl text-xs font-bold text-white transition-all shadow-xs active:scale-95 disabled:opacity-50 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors text-xs font-medium cursor-pointer disabled:opacity-50 shadow-none"
               title="Email PDF Report"
             >
               {emailing ? (
@@ -576,63 +642,115 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
               ) : (
                 <Mail className="w-3.5 h-3.5" />
               )}
-              <span>{emailing ? 'Emailing...' : 'Email PDF'}</span>
+              <span>{emailing ? 'Sending...' : 'Email PDF'}</span>
             </button>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <Activity className="w-3.5 h-3.5 text-blue-500" />
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">
-              {reportType === 'Daily' ? 'Last 7 Days Activity' : 'Last 6 Months Activity'}
-            </span>
           </div>
         </div>
 
-        {/* Metric Header Card */}
-        <GlassCard className="p-3.5 border-gray-200 flex justify-between items-center gap-4" gradient>
-          <div>
-            <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Completed Tasks</h4>
-            <div className="flex items-baseline gap-1.5 mt-0.5">
-              <span className="text-2xl font-extrabold text-gray-900 leading-none">{totalFiltered}</span>
-              <span className="text-[11px] font-semibold text-slate-500">
-                tasks in {reportType === 'Daily' ? 'last 7 days' : 'last 6 months'}
+        {/* ── Metric Stat Cards ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <StatCard
+            label="Tasks Completed"
+            value={totalFiltered}
+            icon={CheckCircle2}
+            accent="text-blue-600"
+            bg="bg-blue-50 border-blue-100"
+            sub={reportType === 'Daily' ? 'last 7 days' : 'last 6 months'}
+          />
+          <StatCard
+            label="Reported Issues"
+            value={rangeIssues.length}
+            icon={AlertCircle}
+            accent="text-amber-600"
+            bg="bg-amber-50 border-amber-100"
+            sub={`${rangeIssues.filter(i => i.status !== 'Resolved' && i.status !== 'Closed').length} unresolved`}
+          />
+          <StatCard
+            label="Site Snags"
+            value={rangeSnags.length}
+            icon={Wrench}
+            accent="text-purple-600"
+            bg="bg-purple-50 border-purple-100"
+            sub={`${rangeSnags.filter(s => s.status !== 'Resolved' && s.status !== 'Closed').length} pending fix`}
+          />
+          <StatCard
+            label="Activity Events"
+            value={rangeLogs.length}
+            icon={Activity}
+            accent="text-emerald-600"
+            bg="bg-emerald-50 border-emerald-100"
+            sub="audit trail records"
+          />
+        </div>
+
+        {/* ── Task Completion Velocity Chart ── */}
+        <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-none space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-600" />
+                <h3 className="text-sm font-bold text-slate-900 tracking-tight">Task Completion Velocity</h3>
+              </div>
+              <p className="text-xs text-slate-400 font-medium mt-0.5">
+                {reportType === 'Daily' ? 'Milestone tasks completed daily over the past 7 days' : 'Milestone tasks completed monthly over the past 6 months'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-100">
+                {totalFiltered} {totalFiltered === 1 ? 'Task Completed' : 'Tasks Completed'}
               </span>
             </div>
           </div>
-          <div className="p-2 rounded-xl bg-blue-50/80 border border-blue-100/50 flex items-center justify-center shrink-0">
-            <TrendingUp className="w-4 h-4 text-blue-600" />
-          </div>
-        </GlassCard>
 
-        {/* Custom SVG Line Chart */}
-        <GlassCard className="p-4 border-gray-200 overflow-hidden" gradient>
-          <div className="w-full overflow-x-auto scrollbar-hide">
-            <div className="min-w-[500px]">
-              <svg viewBox="0 0 600 135" className="w-full h-auto overflow-visible select-none">
+          <div className="w-full overflow-x-auto scrollbar-hide pt-2">
+            <div className="min-w-[540px]">
+              <svg viewBox="0 0 700 140" className="w-full h-auto overflow-visible select-none">
                 <defs>
                   <linearGradient id="chart-area-grad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.3" />
+                    <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.25" />
                     <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
 
                 {/* Horizontal Grid lines */}
-                <line x1="40" y1="20" x2="560" y2="20" stroke="#F8FAFC" strokeWidth="1" strokeDasharray="4 4" />
-                <line x1="40" y1="65" x2="560" y2="65" stroke="#F1F5F9" strokeWidth="1" strokeDasharray="4 4" />
-                <line x1="40" y1="110" x2="560" y2="110" stroke="#E2E8F0" strokeWidth="1.5" />
+                <line x1="45" y1="30" x2="655" y2="30" stroke="#F1F5F9" strokeWidth="1" strokeDasharray="4 4" />
+                <line x1="45" y1="67" x2="655" y2="67" stroke="#F1F5F9" strokeWidth="1" strokeDasharray="4 4" />
+                <line x1="45" y1="105" x2="655" y2="105" stroke="#E2E8F0" strokeWidth="1.5" />
+
+                {/* When no activity: gentle centered notice */}
+                {!hasChartActivity && (
+                  <g>
+                    <text
+                      x="350"
+                      y="58"
+                      textAnchor="middle"
+                      className="text-xs font-semibold fill-slate-500"
+                    >
+                      No tasks completed in this time range
+                    </text>
+                    <text
+                      x="350"
+                      y="78"
+                      textAnchor="middle"
+                      className="text-[11px] font-normal fill-slate-400"
+                    >
+                      Completed milestone tasks will plot across this timeline
+                    </text>
+                  </g>
+                )}
 
                 {/* Area under the line */}
-                {areaPath && (
+                {hasChartActivity && areaPath && (
                   <path d={areaPath} fill="url(#chart-area-grad)" className="transition-all duration-500 ease-out" />
                 )}
 
                 {/* Line path */}
-                {linePath && (
+                {hasChartActivity && linePath && (
                   <path
                     d={linePath}
                     fill="none"
-                    stroke="#3B82F6"
-                    strokeWidth="3"
+                    stroke="#2563EB"
+                    strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     className="transition-all duration-500 ease-out"
@@ -642,29 +760,42 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                 {/* Markers & Value Indicators */}
                 {chartPoints.map((p, i) => (
                   <g key={i} className="group cursor-pointer">
-                    {/* Glow ring */}
-                    <circle cx={p.x} cy={p.y} r="8" className="fill-transparent group-hover:fill-blue-500/10 transition-colors" />
-                    {/* Outer border dot */}
-                    <circle cx={p.x} cy={p.y} r="5" className="fill-white stroke-blue-500 stroke-2" />
-                    {/* Inner core dot */}
-                    <circle cx={p.x} cy={p.y} r="2.5" className="fill-blue-500" />
+                    <circle cx={p.x} cy={p.y} r="10" className="fill-transparent group-hover:fill-blue-500/10 transition-colors" />
 
-                    {/* Value text above dot */}
+                    <circle
+                      cx={p.x}
+                      cy={p.y}
+                      r={hasChartActivity && p.value > 0 ? 5 : 4}
+                      className={cn(
+                        "transition-all",
+                        hasChartActivity && p.value > 0
+                          ? "fill-white stroke-blue-600 stroke-2"
+                          : "fill-white stroke-slate-300 stroke-2"
+                      )}
+                    />
+                    {hasChartActivity && p.value > 0 && (
+                      <circle cx={p.x} cy={p.y} r="2.5" className="fill-blue-600" />
+                    )}
+
+                    {hasChartActivity && (
+                      <text
+                        x={p.x}
+                        y={p.y - 9}
+                        textAnchor="middle"
+                        className={cn(
+                          "text-[10px] font-bold transition-opacity",
+                          p.value > 0 ? "fill-blue-600" : "fill-slate-400"
+                        )}
+                      >
+                        {p.value}
+                      </text>
+                    )}
+
                     <text
                       x={p.x}
-                      y={p.y - 9}
+                      y="126"
                       textAnchor="middle"
-                      className="text-[9px] font-black fill-blue-600 transition-opacity"
-                    >
-                      {p.value}
-                    </text>
-
-                    {/* Label at bottom */}
-                    <text
-                      x={p.x}
-                      y="125"
-                      textAnchor="middle"
-                      className="text-[9px] font-bold fill-slate-400"
+                      className="text-[10px] font-semibold fill-slate-500"
                     >
                       {p.label}
                     </text>
@@ -673,46 +804,73 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
               </svg>
             </div>
           </div>
-        </GlassCard>
+        </div>
 
-        {/* Milestone Breakdown List */}
-        <div className="space-y-3">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Breakdown by Milestone</h3>
+        {/* ── Breakdown by Milestone ── */}
+        <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-none space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-4 h-4 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Breakdown by Milestone</h3>
+                <p className="text-xs text-slate-400 font-medium">Completed task deliverables grouped by milestone</p>
+              </div>
+            </div>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 border border-slate-200/60">
+              {totalFiltered} {totalFiltered === 1 ? 'Task' : 'Tasks'}
+            </span>
+          </div>
 
           {Object.keys(groupedTasks).length === 0 ? (
-            <div className="py-8 text-center border-2 border-dashed border-gray-200 rounded-2xl bg-white">
-              <CheckCircle2 className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-slate-400 font-medium text-xs">No tasks completed in this time range.</p>
+            <div className="py-8 text-center bg-slate-50/50 rounded-xl border border-slate-100">
+              <div className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center mx-auto mb-2 text-slate-400">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+              <p className="text-xs font-bold text-slate-700">No Tasks Completed in this Timeframe</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Tasks marked complete during this period will appear grouped here.
+              </p>
             </div>
           ) : (
             <div className="space-y-4">
               {Object.entries(groupedTasks).map(([milestoneName, tasks], index) => (
                 <div key={index} className="space-y-2">
-                  <h4 className="text-[11px] font-extrabold text-slate-800 tracking-wide pl-1">
-                    {milestoneName}
-                  </h4>
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                    <h4 className="text-xs font-bold text-slate-800 tracking-wide">
+                      {milestoneName}
+                    </h4>
+                    <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                      {tasks.length}
+                    </span>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {tasks.map((task, tIndex) => (
-                      <GlassCard
+                      <div
                         key={tIndex}
-                        className="p-2.5 border-gray-200 hover:border-blue-500/30 transition-colors flex items-center justify-between cursor-pointer group"
                         onClick={() => setSelectedTask(task)}
-                        gradient
+                        className="bg-white border border-slate-200/80 hover:border-blue-400/80 rounded-xl p-3 flex items-center justify-between cursor-pointer group transition-all"
                       >
                         <div className="flex items-center space-x-2.5 min-w-0">
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                          <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                           <div className="min-w-0">
-                            <p className="text-xs font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
+                            <p className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
                               {task.title}
                             </p>
-                            <p className="text-[9px] text-slate-400 mt-0.5 flex items-center gap-1 font-medium">
-                              <Calendar className="w-2.5 h-2.5" />
-                              {safeFormatDate(task.completedAtDate)}
+                            <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1.5 font-medium">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3 text-slate-400" />
+                                {safeFormatDate(task.completedAtDate)}
+                              </span>
+                              <span>•</span>
+                              <span className="truncate">{getMemberName(task.assignedTo)}</span>
                             </p>
                           </div>
                         </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-blue-500 transition-all group-hover:translate-x-0.5" />
-                      </GlassCard>
+                        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-600 transition-all group-hover:translate-x-0.5 shrink-0" />
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -721,158 +879,237 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
           )}
         </div>
 
-        {/* Reported Issues Section */}
-        <div className="space-y-3">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Reported Issues</h3>
-          {rangeIssues.length === 0 ? (
-            <div className="py-6 text-center border-2 border-dashed border-gray-200 rounded-2xl bg-white">
-              <AlertCircle className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-slate-400 font-medium text-xs">No issues reported in this range.</p>
+        {/* ── Quality & Site Health Grid: Issues & Snags ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Card 1: Reported Issues */}
+          <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-none flex flex-col">
+            <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-white">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center shrink-0">
+                  <AlertCircle className="w-4 h-4 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900">Reported Issues</h3>
+                  <p className="text-[11px] text-slate-400 font-medium">Logged site issues & blockers</p>
+                </div>
+              </div>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/60">
+                {rangeIssues.length} {rangeIssues.length === 1 ? 'Issue' : 'Issues'}
+              </span>
             </div>
-          ) : (
-            <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-gray-50/75 border-b border-gray-200 text-slate-500 font-black uppercase tracking-wider text-[10px]">
-                    <th className="p-3">Issue Title</th>
-                    <th className="p-3">Category</th>
-                    <th className="p-3">Priority</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3">Reported Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 font-medium text-slate-700">
-                  {rangeIssues.map((issue, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/50">
-                      <td className="p-3">
-                        <div className="font-bold text-slate-900">{issue.title}</div>
-                        {issue.description && <div className="text-[10px] text-slate-400 mt-0.5 font-medium">{issue.description}</div>}
-                      </td>
-                      <td className="p-3 text-slate-500">{issue.category || 'Other'}</td>
-                      <td className="p-3">
-                        <span className={cn(
-                          'px-2 py-0.5 rounded-full text-[9px] font-bold border',
-                          issue.priority === 'Critical' ? 'bg-red-50 text-red-700 border-red-100' :
-                          issue.priority === 'High' ? 'bg-orange-50 text-orange-700 border-orange-100' :
-                          'bg-blue-50 text-blue-700 border-blue-100'
-                        )}>
-                          {issue.priority}
-                        </span>
-                      </td>
-                      <td className="p-3">
-                        <span className={cn(
-                          'px-2 py-0.5 rounded-full text-[9px] font-bold border',
-                          issue.status === 'Resolved' || issue.status === 'Closed' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100'
-                        )}>
-                          {issue.status}
-                        </span>
-                      </td>
-                      <td className="p-3 text-slate-400">
-                        {safeFormatDate(issue.createdAt)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+
+            <div className="p-4 flex-1 flex flex-col justify-center">
+              {rangeIssues.length === 0 ? (
+                <div className="py-6 text-center">
+                  <div className="w-9 h-9 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-2 text-slate-400">
+                    <AlertCircle className="w-4 h-4" />
+                  </div>
+                  <p className="text-xs font-bold text-slate-700">No Issues Reported</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">All clear for this time range.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
+                        <th className="pb-2">Issue</th>
+                        <th className="pb-2">Priority</th>
+                        <th className="pb-2">Status</th>
+                        <th className="pb-2 text-right">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {rangeIssues.map((issue, idx) => (
+                        <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
+                          <td className="py-2.5 pr-2">
+                            <div className="font-semibold text-slate-900 truncate max-w-[180px]">{issue.title}</div>
+                            <div className="text-[10px] text-slate-400 capitalize">{issue.category || 'General'}</div>
+                          </td>
+                          <td className="py-2.5 pr-2">
+                            <span className={cn(
+                              'px-2 py-0.5 rounded-md text-[10px] font-semibold border',
+                              issue.priority === 'Critical' ? 'bg-red-50 text-red-700 border-red-100' :
+                              issue.priority === 'High' ? 'bg-orange-50 text-orange-700 border-orange-100' :
+                              'bg-blue-50 text-blue-700 border-blue-100'
+                            )}>
+                              {issue.priority}
+                            </span>
+                          </td>
+                          <td className="py-2.5 pr-2">
+                            <span className={cn(
+                              'px-2 py-0.5 rounded-md text-[10px] font-semibold border',
+                              issue.status === 'Resolved' || issue.status === 'Closed'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                : 'bg-amber-50 text-amber-700 border-amber-100'
+                            )}>
+                              {issue.status}
+                            </span>
+                          </td>
+                          <td className="py-2.5 text-right text-slate-400 text-[11px] whitespace-nowrap">
+                            {safeFormatDate(issue.createdAt)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
-          )}
+          </div>
+
+          {/* Card 2: Reported Snags */}
+          <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-none flex flex-col">
+            <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-white">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0">
+                  <Wrench className="w-4 h-4 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900">Reported Snags</h3>
+                  <p className="text-[11px] text-slate-400 font-medium">Defects & punch list items</p>
+                </div>
+              </div>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/60">
+                {rangeSnags.length} {rangeSnags.length === 1 ? 'Snag' : 'Snags'}
+              </span>
+            </div>
+
+            <div className="p-4 flex-1 flex flex-col justify-center">
+              {rangeSnags.length === 0 ? (
+                <div className="py-6 text-center">
+                  <div className="w-9 h-9 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-2 text-slate-400">
+                    <Wrench className="w-4 h-4" />
+                  </div>
+                  <p className="text-xs font-bold text-slate-700">No Snags Reported</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">No punch items recorded for this range.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
+                        <th className="pb-2">Snag Title</th>
+                        <th className="pb-2">Priority</th>
+                        <th className="pb-2">Status</th>
+                        <th className="pb-2 text-right">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {rangeSnags.map((snag, idx) => (
+                        <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
+                          <td className="py-2.5 pr-2">
+                            <div className="font-semibold text-slate-900 truncate max-w-[180px]">{snag.title}</div>
+                            {snag.description && <div className="text-[10px] text-slate-400 truncate max-w-[180px]">{snag.description}</div>}
+                          </td>
+                          <td className="py-2.5 pr-2">
+                            <span className={cn(
+                              'px-2 py-0.5 rounded-md text-[10px] font-semibold border',
+                              snag.priority === 'Critical' ? 'bg-red-50 text-red-700 border-red-100' :
+                              snag.priority === 'High' ? 'bg-orange-50 text-orange-700 border-orange-100' :
+                              'bg-blue-50 text-blue-700 border-blue-100'
+                            )}>
+                              {snag.priority}
+                            </span>
+                          </td>
+                          <td className="py-2.5 pr-2">
+                            <span className={cn(
+                              'px-2 py-0.5 rounded-md text-[10px] font-semibold border',
+                              snag.status === 'Resolved' || snag.status === 'Closed'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                : 'bg-amber-50 text-amber-700 border-amber-100'
+                            )}>
+                              {snag.status}
+                            </span>
+                          </td>
+                          <td className="py-2.5 text-right text-slate-400 text-[11px] whitespace-nowrap">
+                            {safeFormatDate(snag.createdAt)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Reported Snags Section */}
-        <div className="space-y-3">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Reported Snags</h3>
-          {rangeSnags.length === 0 ? (
-            <div className="py-6 text-center border-2 border-dashed border-gray-200 rounded-2xl bg-white">
-              <Wrench className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-slate-400 font-medium text-xs">No snags reported in this range.</p>
+        {/* ── Activity Logs Section ── */}
+        <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-none">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0">
+                <Activity className="w-4 h-4 text-emerald-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Activity Logs</h3>
+                <p className="text-xs text-slate-400 font-medium">Audit trail of actions performed on this project</p>
+              </div>
             </div>
-          ) : (
-            <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-gray-50/75 border-b border-gray-200 text-slate-500 font-black uppercase tracking-wider text-[10px]">
-                    <th className="p-3">Snag Title</th>
-                    <th className="p-3">Priority</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3">Reported Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 font-medium text-slate-700">
-                  {rangeSnags.map((snag, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/50">
-                      <td className="p-3">
-                        <div className="font-bold text-slate-900">{snag.title}</div>
-                        {snag.description && <div className="text-[10px] text-slate-400 mt-0.5 font-medium">{snag.description}</div>}
-                      </td>
-                      <td className="p-3">
-                        <span className={cn(
-                          'px-2 py-0.5 rounded-full text-[9px] font-bold border',
-                          snag.priority === 'Critical' ? 'bg-red-50 text-red-700 border-red-100' :
-                          snag.priority === 'High' ? 'bg-orange-50 text-orange-700 border-orange-100' :
-                          'bg-blue-50 text-blue-700 border-blue-100'
-                        )}>
-                          {snag.priority}
-                        </span>
-                      </td>
-                      <td className="p-3">
-                        <span className={cn(
-                          'px-2 py-0.5 rounded-full text-[9px] font-bold border',
-                          snag.status === 'Resolved' || snag.status === 'Closed' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100'
-                        )}>
-                          {snag.status}
-                        </span>
-                      </td>
-                      <td className="p-3 text-slate-400">
-                        {safeFormatDate(snag.createdAt)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 border border-slate-200/60">
+              {rangeLogs.length} {rangeLogs.length === 1 ? 'Record' : 'Records'}
+            </span>
+          </div>
 
-        {/* Activity Logs Section */}
-        <div className="space-y-3">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Activity Logs</h3>
           {rangeLogs.length === 0 ? (
-            <div className="py-6 text-center border-2 border-dashed border-gray-200 rounded-2xl bg-white">
-              <Activity className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-slate-400 font-medium text-xs">No activity logs in this range.</p>
+            <div className="py-12 text-center">
+              <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-2 text-slate-400">
+                <Activity className="w-5 h-5" />
+              </div>
+              <p className="text-xs font-bold text-slate-700">No Activity Logs Found</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">No logged actions recorded within this date range.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white">
+            <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-gray-50/75 border-b border-gray-200 text-slate-500 font-black uppercase tracking-wider text-[10px]">
-                    <th className="p-3">User</th>
-                    <th className="p-3">Role</th>
-                    <th className="p-3">Action</th>
-                    <th className="p-3">Details</th>
-                    <th className="p-3">Date</th>
+                  <tr className="bg-slate-50/75 border-b border-slate-200/80 text-slate-500 font-semibold uppercase tracking-wider text-[10.5px]">
+                    <th className="px-4 py-3">User</th>
+                    <th className="px-4 py-3">Role</th>
+                    <th className="px-4 py-3">Action</th>
+                    <th className="px-4 py-3">Details</th>
+                    <th className="px-4 py-3 text-right">Date & Time</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 font-medium text-slate-700">
-                  {rangeLogs.map((log: any, idx: number) => (
-                    <tr key={idx} className="hover:bg-slate-50/50">
-                      <td className="p-3">
-                        <div className="font-bold text-slate-900">{log.userName || log.user?.name || 'System'}</div>
-                      </td>
-                      <td className="p-3 text-slate-500 capitalize">{log.userRole || log.user?.role || '-'}</td>
-                      <td className="p-3">
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
-                          {log.action}
-                        </span>
-                      </td>
-                      <td className="p-3 text-slate-600 max-w-[250px] truncate" title={log.details}>
-                        {log.details}
-                      </td>
-                      <td className="p-3 text-slate-400">
-                        {safeFormatDate(log.timestamp)}
-                      </td>
-                    </tr>
-                  ))}
+                <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                  {rangeLogs.map((log: any, idx: number) => {
+                    const userName = log.userName || log.user?.name || 'System';
+                    const initials = userName
+                      .split(' ')
+                      .map((n: string) => n[0])
+                      .slice(0, 2)
+                      .join('')
+                      .toUpperCase() || 'S';
+
+                    return (
+                      <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 text-slate-600 font-bold text-[10px] flex items-center justify-center shrink-0">
+                              {initials}
+                            </div>
+                            <span className="font-bold text-slate-900 truncate">{userName}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="capitalize text-slate-500 font-medium">
+                            {log.userRole || log.user?.role || '-'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="inline-block px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/60">
+                            {log.action}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-slate-600 max-w-sm truncate" title={log.details}>
+                          {log.details}
+                        </td>
+                        <td className="px-4 py-3 text-right text-slate-400 font-medium whitespace-nowrap">
+                          {safeFormatDateTime(log.timestamp)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -897,7 +1134,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
               exit={{ opacity: 0, scale: 0.95, y: 16 }}
               className="w-full max-w-md relative z-10"
             >
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 space-y-5 max-h-[85vh] overflow-y-auto">
+              <div className="bg-white rounded-2xl shadow-none border border-slate-200 p-6 space-y-5 max-h-[85vh] overflow-y-auto">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">

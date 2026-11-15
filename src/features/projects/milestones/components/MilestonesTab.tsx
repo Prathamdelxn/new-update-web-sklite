@@ -9,7 +9,7 @@ import {
   Calendar, Loader2, Target, Flag, X,
   CheckCircle2, Circle, ChevronDown, ChevronUp,
   Trash2, LayoutGrid, List, AlignLeft, MoreVertical, Pencil,
-  User, Clock, MessageSquare, ChevronRight, Camera, Image as ImageIcon, FileText, ShieldAlert
+  User, Clock, MessageSquare, ChevronRight, Camera, Image as ImageIcon, FileText, ShieldAlert, Plus
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { cn } from '@/lib/utils';
@@ -34,10 +34,10 @@ const STATUS_OPTIONS: MilestoneStatus[] = ['Pending', 'In Progress', 'Completed'
 
 const getStatusStyle = (status: string) => {
   switch (status) {
-    case 'Completed':   return 'text-emerald-700 bg-emerald-100 border-emerald-200';
-    case 'In Progress': return 'text-blue-700 bg-blue-100 border-blue-200';
-    case 'On Hold':     return 'text-amber-700 bg-amber-100 border-amber-200';
-    default:            return 'text-slate-600 bg-gray-100 border-gray-200';
+    case 'Completed':   return 'text-emerald-700 bg-emerald-50 border-emerald-200';
+    case 'In Progress': return 'text-blue-700 bg-blue-50 border-blue-200';
+    case 'On Hold':     return 'text-amber-700 bg-amber-50 border-amber-200';
+    default:            return 'text-slate-600 bg-slate-50 border-slate-200';
   }
 };
 
@@ -456,7 +456,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
   return (
     <SkeletonLoader loading={loading} preset="list">
       {isForbidden ? (
-        <div className="flex flex-col items-center justify-center py-24 bg-white/60 backdrop-blur-sm rounded-2xl border border-slate-200/60 shadow-sm mt-4">
+        <div className="flex flex-col items-center justify-center py-24 bg-white/60 backdrop-blur-sm rounded-2xl border border-slate-200 mt-4">
           <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
             <ShieldAlert className="w-8 h-8 text-slate-400" />
           </div>
@@ -468,14 +468,14 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
       ) : (
       <div className="space-y-6">
         {/* View switcher */}
-        <div className="flex p-1 bg-slate-100/90 border border-slate-200/80 rounded-xl w-fit shadow-2xs">
+        <div className="flex p-1 bg-slate-100/90 border border-slate-200/80 rounded-xl w-fit">
           <button
             type="button"
             onClick={() => setActiveView('milestones')}
             className={cn(
               'py-1.5 px-4 rounded-lg text-xs font-bold transition-all',
               activeView === 'milestones'
-                ? 'bg-white shadow-2xs text-blue-700 border border-slate-200/60'
+                ? 'bg-white text-blue-700 border border-slate-200/60'
                 : 'text-slate-500 hover:text-slate-900'
             )}
           >
@@ -487,7 +487,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
             className={cn(
               'py-1.5 px-4 rounded-lg text-xs font-bold transition-all',
               activeView === 'timeline'
-                ? 'bg-white shadow-2xs text-blue-700 border border-slate-200/60'
+                ? 'bg-white text-blue-700 border border-slate-200/60'
                 : 'text-slate-500 hover:text-slate-900'
             )}
           >
@@ -501,40 +501,53 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
           <>
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h3 className="text-lg font-bold text-slate-900">Project Milestones</h3>
-          <p className="text-xs text-slate-500 mt-0.5">Key targets, task completion tracking, and critical path objectives.</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <div className="flex p-1 bg-slate-100/90 border border-slate-200/80 rounded-xl shadow-2xs">
-            <button onClick={() => setView('cards')} className={cn('p-1.5 rounded-lg transition-all', view === 'cards' ? 'bg-white shadow-2xs text-blue-700 border border-slate-200/60' : 'text-slate-400 hover:text-slate-700')}>
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-            <button onClick={() => setView('list')} className={cn('p-1.5 rounded-lg transition-all', view === 'list' ? 'bg-white shadow-2xs text-blue-700 border border-slate-200/60' : 'text-slate-400 hover:text-slate-700')}>
-              <List className="w-4 h-4" />
-            </button>
-            <button onClick={() => setView('gantt')} className={cn('p-1.5 rounded-lg transition-all', view === 'gantt' ? 'bg-white shadow-2xs text-blue-700 border border-slate-200/60' : 'text-slate-400 hover:text-slate-700')}>
-              <AlignLeft className="w-4 h-4" />
-            </button>
-          </div>
-          {canCreate && (
-            <button
-              onClick={() => setIsXERModalOpen(true)}
-              className="flex items-center space-x-1.5 bg-violet-50 border border-violet-200 text-violet-700 hover:bg-violet-100 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-2xs"
-            >
-              <FileText className="w-3.5 h-3.5" /><span>Import XER</span>
-            </button>
-          )}
-        </div>
-      </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 tracking-tight">Project Milestones</h3>
+                <p className="text-xs text-slate-500 mt-1">Key targets, task completion tracking, and critical path objectives.</p>
+              </div>
+              <div className="flex items-center space-x-2.5">
+                <div className="flex p-1 bg-slate-100/90 border border-slate-200/80 rounded-xl">
+                  <button onClick={() => setView('cards')} className={cn('p-1.5 rounded-lg transition-all', view === 'cards' ? 'bg-white text-blue-700 border border-slate-200/60' : 'text-slate-400 hover:text-slate-700')} title="Cards view">
+                    <LayoutGrid className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => setView('list')} className={cn('p-1.5 rounded-lg transition-all', view === 'list' ? 'bg-white text-blue-700 border border-slate-200/60' : 'text-slate-400 hover:text-slate-700')} title="List view">
+                    <List className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => setView('gantt')} className={cn('p-1.5 rounded-lg transition-all', view === 'gantt' ? 'bg-white text-blue-700 border border-slate-200/60' : 'text-slate-400 hover:text-slate-700')} title="Gantt chart">
+                    <AlignLeft className="w-4 h-4" />
+                  </button>
+                </div>
+                {canCreate && (
+                  <button
+                    onClick={() => setIsXERModalOpen(true)}
+                    className="flex items-center space-x-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Import XER</span>
+                  </button>
+                )}
+                {canCreate && (
+                  <button
+                    onClick={openCreateModal}
+                    className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>New Milestone</span>
+                  </button>
+                )}
+              </div>
+            </div>
 
       {/* ── Gantt view ── */}
       {view === 'gantt' && (() => {
         const withDates = milestones.filter(m => m.dueDate);
         if (withDates.length === 0) return (
-          <div className="py-16 text-center border-2 border-dashed border-gray-200 rounded-xl">
-            <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-            <p className="text-slate-500 font-medium">No milestones with due dates to display.</p>
+          <div className="py-20 text-center border-2 border-dashed border-slate-200 bg-white/70 backdrop-blur-sm rounded-2xl p-8 flex flex-col items-center justify-center">
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center mb-4">
+              <Calendar className="w-7 h-7 text-blue-600" />
+            </div>
+            <h4 className="text-base font-bold text-slate-900 mb-1">No due dates set</h4>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed mt-1">Assign due dates to your milestones to view them in the Gantt chart timeline.</p>
           </div>
         );
         const dates  = milestones.map(m => new Date(m.dueDate || m.createdAt).getTime());
@@ -803,7 +816,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                                     const isToggling = togglingTask === key;
                                     const assignee   = memberName(task.assignedTo);
                                     return (
-                                      <div key={i} className={cn('rounded-xl border bg-white p-3 shadow-sm transition-all hover:border-blue-200', task.isCompleted ? 'bg-emerald-50/20 border-emerald-100' : 'border-gray-100')}>
+                                      <div key={i} className={cn('rounded-xl border bg-white p-3 transition-all hover:border-blue-200', task.isCompleted ? 'bg-emerald-50/20 border-emerald-100' : 'border-gray-100')}>
                                         <div className="flex items-start gap-3">
                                           <button onClick={() => initiateToggle(milestone, i)} disabled={isToggling || !canComplete} className="mt-0.5 shrink-0 disabled:opacity-50">
                                             {isToggling ? <Loader2 className="w-4 h-4 text-blue-500 animate-spin" /> : task.isCompleted ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Circle className="w-4 h-4 text-gray-300 hover:text-blue-400" />}
@@ -856,8 +869,16 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                 })}
                 {milestones.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-6 py-20 text-center text-slate-400 italic bg-white">
-                      No milestones set for this project.
+                    <td colSpan={7} className="px-6 py-20 text-center bg-white">
+                      <div className="flex flex-col items-center justify-center">
+                        <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center mb-4">
+                          <Target className="w-7 h-7 text-blue-600" />
+                        </div>
+                        <h4 className="text-base font-bold text-slate-900 mb-1">No milestones set</h4>
+                        <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed mt-1">
+                          Define key milestones to track the critical path of your project.
+                        </p>
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -876,13 +897,13 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
             const progress       = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : (milestone.status === 'Completed' ? 100 : 0);
             const isExpanded     = expandedId === milestone._id;
             return (
-              <div key={milestone._id} className="bg-white/90 backdrop-blur-md border border-slate-200/80 rounded-2xl shadow-xs hover:border-slate-300 hover:shadow-card-hover transition-all flex flex-col h-full overflow-hidden group">
+              <div key={milestone._id} className="bg-white border border-slate-200/80 rounded-2xl hover:border-blue-200 transition-all flex flex-col h-full overflow-hidden group">
                 <div className="p-5 flex-1 flex flex-col">
                   {/* Header: Title and Menu */}
                   <div className="flex justify-between items-start gap-3">
                     <div className="min-w-0 flex-1 cursor-pointer" onClick={() => router.push(`/construction-dashboard/projects/${projectId}/milestones/${milestone._id}`)}>
                       <div className="flex items-center gap-2 mb-1.5">
-                        <span className={cn('px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border shadow-2xs', getStatusStyle(milestone.status || 'Pending'))}>
+                        <span className={cn('px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border', getStatusStyle(milestone.status || 'Pending'))}>
                           {milestone.status || 'Pending'}
                         </span>
                       </div>
@@ -1024,13 +1045,14 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
           })}
 
           {milestones.length === 0 && (
-            <div className="col-span-full py-20 text-center border-2 border-dashed border-gray-200 rounded-xl">
-              <Target className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <h4 className="text-lg font-bold text-slate-500">No milestones set</h4>
-              <p className="text-sm text-slate-400 max-w-xs mx-auto mt-1">Define key milestones to track the critical path of your project.</p>
-              {canCreate && (
-                <button onClick={openCreateModal} className="mt-4 text-sm font-bold text-blue-600 hover:text-blue-500 transition-colors">+ Add first milestone</button>
-              )}
+            <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 bg-white/70 backdrop-blur-sm rounded-2xl p-8 flex flex-col items-center justify-center">
+              <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center mb-4">
+                <Target className="w-7 h-7 text-blue-600" />
+              </div>
+              <h4 className="text-base font-bold text-slate-900 mb-1">No milestones set</h4>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed mt-1">
+                Define key milestones to track the critical path of your project.
+              </p>
             </div>
           )}
         </div>
@@ -1045,7 +1067,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
             <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setCompletionPrompt(null)} className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
               <motion.div initial={{ opacity: 0, scale: 0.95, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 16 }} className="w-full max-w-sm relative z-10">
-                <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 space-y-4">
+                <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -1111,7 +1133,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                     <button
                       onClick={() => commitToggle(ms, completionPrompt.taskIndex, completionPrompt.note, completionPrompt.proofImageUrl)}
                       disabled={completionPrompt.uploading}
-                      className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-sm font-bold text-white transition-all shadow-sm flex items-center justify-center gap-2"
+                      className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-sm font-bold text-white transition-all flex items-center justify-center gap-2"
                     >
                       <CheckCircle2 className="w-4 h-4" /> Mark Done
                     </button>
@@ -1129,7 +1151,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
           <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setEditingTask(null)} className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 16 }} className="w-full max-w-sm relative z-10">
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 space-y-4">
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
@@ -1210,7 +1232,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                   <button
                     onClick={handleSaveEditTask}
                     disabled={isSavingEditTask || !editingTask.form.title.trim()}
-                    className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-sm font-bold text-white transition-all shadow-sm flex items-center justify-center gap-2"
+                    className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-sm font-bold text-white transition-all flex items-center justify-center gap-2"
                   >
                     {isSavingEditTask ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4" /> Save Task</>}
                   </button>
@@ -1229,7 +1251,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
           <div className="fixed inset-0 z-40" onClick={() => { setMilestoneMenuId(null); setMenuPos(null); }} />
           <div
             style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 50 }}
-            className="w-36 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
+            className="w-36 bg-white border border-gray-200 rounded-xl overflow-hidden"
           >
             {canDelete && (
               <button
@@ -1260,7 +1282,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="w-full max-w-lg relative z-10">
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-200 max-h-[90vh] overflow-y-auto">
+              <div className="bg-white rounded-2xl border border-gray-200 max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between px-8 pt-8 pb-6">
                   <div className="flex items-center space-x-3">
                     <div className="p-3 rounded-2xl bg-blue-50 border border-blue-200">
@@ -1291,7 +1313,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
 
                   <div className="pt-2 flex space-x-4">
                     <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-3 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-medium transition-all">Cancel</button>
-                    <button type="submit" disabled={isSaving} className="flex-1 py-3 px-8 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all disabled:opacity-50 shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+                    <button type="submit" disabled={isSaving} className="flex-1 py-3 px-8 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
                       {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <span>{editingMilestone ? 'Save Changes' : 'Create Milestone'}</span>}
                     </button>
                   </div>

@@ -88,54 +88,54 @@ export const RiskModal: React.FC<RiskModalProps> = ({ isOpen, onClose, onSuccess
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.95, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="w-full max-w-lg relative z-10"
+            exit={{ opacity: 0, scale: 0.95, y: 16 }}
+            className="w-full max-w-xl relative z-10"
           >
-            <div className="bg-white rounded-3xl border border-gray-150 shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col">
               {/* Header */}
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
+              <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between shrink-0">
                 <div className="flex items-center space-x-3">
-                  <div className="p-3 rounded-2xl bg-orange-50 border border-orange-200">
-                    <ShieldAlert className="w-5 h-5 text-orange-600" />
+                  <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-100 text-blue-600">
+                    <ShieldAlert className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-gray-900">New Risk Record</h2>
+                    <h2 className="text-base font-bold text-slate-900 tracking-tight">New Risk Record</h2>
                     <p className="text-xs text-slate-500 mt-0.5">Log a new risk entry for this project</p>
                   </div>
                 </div>
-                <button onClick={onClose} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
+                <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Form Body */}
-              <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+              <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 {/* Risk Title */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block ml-1">
-                    Risk Title
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                    Risk Title *
                   </label>
                   <div className="relative">
-                    <Type className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" />
+                    <Type className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
                       type="text"
                       required
                       value={formData.title}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-11 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all"
+                      className="w-full bg-slate-50/80 border border-slate-200 rounded-xl py-2.5 pl-10 pr-3.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 text-xs font-medium transition-all"
                       placeholder="e.g. Weather delay risk"
                     />
                   </div>
                 </div>
 
-                {/* Category Chips Scroll/Grid */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block ml-1">
+                {/* Category Chips */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
                     Category
                   </label>
-                  <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto py-1">
+                  <div className="flex flex-wrap gap-1.5">
                     {CATEGORIES.map(c => {
                       const Icon = c.icon;
                       const isSelected = formData.category === c.name;
@@ -145,13 +145,13 @@ export const RiskModal: React.FC<RiskModalProps> = ({ isOpen, onClose, onSuccess
                           type="button"
                           onClick={() => setFormData({ ...formData, category: c.name })}
                           className={cn(
-                            'flex items-center space-x-2 px-3 py-2 rounded-xl text-xs font-semibold border transition-all',
+                            'flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer',
                             isSelected
-                              ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
-                              : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                              ? 'bg-blue-600 border-blue-600 text-white'
+                              : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                           )}
                         >
-                          <Icon className="w-4 h-4" />
+                          <Icon className="w-3.5 h-3.5" />
                           <span>{c.name}</span>
                         </button>
                       );
@@ -160,13 +160,22 @@ export const RiskModal: React.FC<RiskModalProps> = ({ isOpen, onClose, onSuccess
                 </div>
 
                 {/* Impact & Probability Selector Grids */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Impact Column */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block ml-1">
-                      Impact
-                    </label>
-                    <div className="grid grid-cols-1 gap-2">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                        Impact Level
+                      </label>
+                      <span className={cn('text-[11px] font-bold',
+                        formData.impact === 'Very High' ? 'text-red-600' :
+                        formData.impact === 'High' ? 'text-amber-600' :
+                        formData.impact === 'Medium' ? 'text-blue-600' : 'text-emerald-600'
+                      )}>
+                        {formData.impact}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-1.5 bg-slate-100/80 p-1 rounded-xl border border-slate-200/80">
                       {IMPACTS.map(i => {
                         const isSelected = formData.impact === i.label;
                         return (
@@ -175,17 +184,17 @@ export const RiskModal: React.FC<RiskModalProps> = ({ isOpen, onClose, onSuccess
                             type="button"
                             onClick={() => setFormData({ ...formData, impact: i.label })}
                             className={cn(
-                              'flex items-center space-x-2.5 px-3 py-2.5 rounded-xl border text-left text-xs font-bold transition-all relative overflow-hidden',
+                              'py-2 px-1 rounded-lg text-center text-xs font-semibold transition-all cursor-pointer truncate',
                               isSelected
-                                ? i.bgClass
-                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                                ? i.label === 'Very High' ? 'bg-red-600 text-white' :
+                                  i.label === 'High' ? 'bg-amber-500 text-white' :
+                                  i.label === 'Medium' ? 'bg-blue-600 text-white' :
+                                  'bg-emerald-600 text-white'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                             )}
+                            title={i.label}
                           >
-                            <span 
-                              className="w-1.5 h-6 rounded-full block" 
-                              style={{ backgroundColor: i.color }}
-                            />
-                            <span>{i.label}</span>
+                            {i.label === 'Very High' ? 'V. High' : i.label}
                           </button>
                         );
                       })}
@@ -193,11 +202,19 @@ export const RiskModal: React.FC<RiskModalProps> = ({ isOpen, onClose, onSuccess
                   </div>
 
                   {/* Probability Column */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block ml-1">
-                      Probability
-                    </label>
-                    <div className="grid grid-cols-1 gap-2">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                        Probability
+                      </label>
+                      <span className={cn('text-[11px] font-bold',
+                        formData.probability === 'High' ? 'text-red-600' :
+                        formData.probability === 'Medium' ? 'text-blue-600' : 'text-slate-600'
+                      )}>
+                        {formData.probability}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5 bg-slate-100/80 p-1 rounded-xl border border-slate-200/80">
                       {PROBABILITIES.map(p => {
                         const isSelected = formData.probability === p;
                         return (
@@ -206,10 +223,10 @@ export const RiskModal: React.FC<RiskModalProps> = ({ isOpen, onClose, onSuccess
                             type="button"
                             onClick={() => setFormData({ ...formData, probability: p })}
                             className={cn(
-                              'px-3 py-3 rounded-xl border text-center text-xs font-bold transition-all',
+                              'py-2 px-1 rounded-lg text-center text-xs font-semibold transition-all cursor-pointer',
                               isSelected
-                                ? 'bg-slate-900 border-slate-900 text-white shadow-sm'
-                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                                ? 'bg-blue-600 text-white'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                             )}
                           >
                             {p}
@@ -221,45 +238,42 @@ export const RiskModal: React.FC<RiskModalProps> = ({ isOpen, onClose, onSuccess
                 </div>
 
                 {/* Description */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block ml-1">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
                     Description
                   </label>
-                  <div className="relative">
-                    <AlignLeft className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" />
-                    <textarea
-                      rows={3}
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-11 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all resize-none"
-                      placeholder="Describe the risk and potential consequences..."
-                    />
-                  </div>
+                  <textarea
+                    rows={2}
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full bg-slate-50/80 border border-slate-200 rounded-xl py-2 px-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 text-xs font-medium transition-all resize-none"
+                    placeholder="Describe the risk and potential consequences..."
+                  />
                 </div>
 
                 {/* Submit / Action Buttons */}
-                <div className="flex space-x-3 pt-2 shrink-0">
+                <div className="flex items-center justify-end space-x-2.5 pt-3 border-t border-slate-100">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="flex-1 py-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm transition-all"
+                    className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-all cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="flex-[2] py-3.5 px-8 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-all disabled:opacity-50 shadow-lg shadow-blue-600/20 flex items-center justify-center space-x-2"
+                    className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all disabled:opacity-50 flex items-center justify-center space-x-1.5 cursor-pointer"
                   >
                     {isLoading ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         <span>Logging...</span>
                       </>
                     ) : (
                       <>
                         <span>Create Risk Entry</span>
-                        <ArrowRight className="w-4 h-4" />
+                        
                       </>
                     )}
                   </button>

@@ -89,7 +89,7 @@ export const XERImportModal: React.FC<XERImportModalProps> = ({
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="w-full max-w-lg relative z-10"
           >
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
 
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
@@ -199,7 +199,7 @@ export const XERImportModal: React.FC<XERImportModalProps> = ({
                     </button>
                     <button
                       onClick={handleClose}
-                      className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition-all shadow-sm"
+                      className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition-all"
                     >
                       Done
                     </button>

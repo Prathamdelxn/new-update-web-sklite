@@ -79,11 +79,12 @@ export const NotificationCenter: React.FC = () => {
     <div ref={containerRef} className="relative">
       <button
         onClick={() => setOpen(v => !v)}
-        className="relative p-2 text-slate-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors"
+        className="relative flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200/80 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+        aria-label="Notifications"
       >
-        <Bell className="w-5 h-5" />
+        <Bell className="w-4 h-4" />
         {unread > 0 && (
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full border-2 border-white" />
+          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
         )}
       </button>
 

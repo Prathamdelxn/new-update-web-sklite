@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Briefcase, Users, Settings, X, Layers,
-  LogOut, Wallet, ShieldCheck, PanelLeftClose, PanelLeftOpen, Building2,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/providers/AuthContext';
@@ -18,46 +18,94 @@ interface SidebarProps {
   onToggleCollapse?: () => void;
 }
 
-const NAV_SECTIONS: { label: string; items: { name: string; href: string; icon: any; permission?: string | string[]; anyRole?: boolean }[] }[] = [
-  {
-    label: 'WORKSPACE',
-    items: [
-      { name: 'Dashboard', href: '/construction-dashboard', icon: LayoutDashboard },
-      { name: 'Projects', href: '/construction-dashboard/projects', icon: Briefcase },
-     
-    ],
-  },
-  {
-    label: 'OPERATIONS',
-    items: [
-      { name: 'Templates', href: '/construction-dashboard/templates', icon: Layers, permission: ['template:view', 'category:view'], anyRole: true },
-      { name: 'Team & Roles', href: '/construction-dashboard/users', icon: Users, permission: 'users:view' },
-    ],
-  },
-  {
-    label: 'SYSTEM',
-    items: [
-      { name: 'Settings', href: '/construction-dashboard/settings', icon: Settings },
-    ],
-  },
+interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ElementType;
+  permission?: string | string[];
+  anyRole?: boolean;
+  badge?: number;
+}
+
+const navigation: NavItem[] = [
+  { name: 'Dashboard', href: '/construction-dashboard', icon: LayoutDashboard },
+  { name: 'Projects', href: '/construction-dashboard/projects', icon: Briefcase },
+  { name: 'Templates', href: '/construction-dashboard/templates', icon: Layers, permission: ['template:view', 'category:view'], anyRole: true },
+  { name: 'Team & Roles', href: '/construction-dashboard/users', icon: Users, permission: 'users:view' },
+  { name: 'Settings', href: '/construction-dashboard/settings', icon: Settings },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen,
   onClose,
   isCollapsed = false,
-  onToggleCollapse
+  onToggleCollapse,
 }) => {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
-  // No global role = project-scoped user; never label them Admin
-  const roleName = user?.role?.name || 'Member';
   const organizationName =
     (typeof user?.organization === 'object' && user?.organization !== null ? (user.organization as any).name : null) ||
     (user as any)?.organizationName ||
     '';
   const dashboardHome = '/construction-dashboard';
+
+  const filteredNavigation = navigation.filter((item) =>
+    !item.permission ||
+    [item.permission].flat().some((p) =>
+      item.anyRole ? hasAnyRolePermission(user, p) : hasProjectPermission(user, null, p)
+    )
+  );
+
+  const isActive = (href: string) => {
+    if (href === '/construction-dashboard') {
+      return pathname === '/construction-dashboard' || pathname === '/dashboard';
+    }
+    return (
+      pathname === href ||
+      (href !== '/' && pathname.startsWith(href + '/')) ||
+      (href === '/construction-dashboard/projects' && (pathname === '/projects' || pathname.startsWith('/projects/'))) ||
+      (href === '/construction-dashboard/templates' && (pathname === '/templates' || pathname.startsWith('/templates/'))) ||
+      (href === '/construction-dashboard/users' && (pathname === '/users' || pathname.startsWith('/users/'))) ||
+      (href === '/construction-dashboard/settings' && (pathname === '/settings' || pathname.startsWith('/settings/')))
+    );
+  };
+
+  const renderNavItem = (item: NavItem) => {
+    const active = isActive(item.href);
+    return (
+      <Link
+        key={item.name}
+        href={item.href}
+        onClick={onClose}
+        className={cn(
+          'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 group',
+          active
+            ? 'bg-blue-600 text-white font-medium shadow-sm'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100',
+          isCollapsed && 'justify-center px-2'
+        )}
+        title={isCollapsed ? item.name : undefined}
+      >
+        <item.icon className="w-4 h-4 shrink-0" />
+        {!isCollapsed && (
+          <>
+            <span className="flex-1 truncate">{item.name}</span>
+            {item.badge ? (
+              <span
+                className={cn(
+                  'min-w-[20px] h-5 flex items-center justify-center rounded-full text-[10px] font-semibold px-1.5',
+                  active ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600'
+                )}
+              >
+                {item.badge}
+              </span>
+            ) : null}
+          </>
+        )}
+      </Link>
+    );
+  };
 
   return (
     <>
@@ -73,139 +121,83 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <aside
         className={cn(
           'fixed top-0 left-0 bottom-0 z-50 flex flex-col transition-all duration-200 bg-white border-r border-slate-200/80 shadow-[2px_0_16px_rgba(0,0,0,0.02)]',
-          isCollapsed ? 'lg:w-[72px]' : 'lg:w-[260px]',
+          isCollapsed ? 'lg:w-[60px]' : 'lg:w-[260px]',
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
         {/* Header Logo */}
-        <div className={cn(
-          "h-16 flex items-center shrink-0 border-b border-slate-100",
-          isCollapsed ? "justify-center px-2" : "px-4 justify-between"
-        )}>
+        <div
+          className={cn(
+            'flex items-center h-16 px-4 border-b border-slate-200/80 shrink-0',
+            isCollapsed && 'justify-center px-2'
+          )}
+        >
           <Link
             href={dashboardHome}
             onClick={onClose}
-            className="flex items-center gap-3 outline-none min-w-0 group flex-1"
-            title={isCollapsed ? (organizationName || 'SkyStruct Lite') : undefined}
+            className="flex items-center gap-2.5 min-w-0 outline-none group flex-1"
+            title={isCollapsed ? (organizationName || 'SkyStruct Lite Construction') : undefined}
           >
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 via-blue-700 to-blue-700 text-white shadow-sm shadow-blue-600/30 border border-white/20 group-hover:scale-105 transition-all shrink-0">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0 shadow-sm">
               <img
                 src="/SS-Logo-2025-Colour.svg"
                 alt="SkyStruct Lite"
-                className="w-5 h-5 object-contain brightness-0 invert"
+                className="w-4 h-4 object-contain brightness-0 invert"
               />
             </div>
 
             {!isCollapsed && (
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="font-extrabold text-slate-900 text-sm tracking-tight leading-tight truncate">
-                  SKYSTRUCT <span className="text-blue-600">LITE</span>
-                </span>
-                <span className="text-[10px] font-bold text-slate-500 truncate flex items-center gap-1 mt-0.5" title={organizationName || 'Construction'}>
-                  <Building2 className="w-3 h-3 text-blue-600 shrink-0" />
-                  <span className="truncate">{organizationName || 'Construction'}</span>
-                </span>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-sm font-bold tracking-tight text-slate-900 truncate">
+                  SkyStruct-Lite
+                </h2>
+                <p className="text-[10px] text-slate-500 truncate" title={organizationName || 'Workspace'}>
+                  {organizationName || 'Workspace'}
+                </p>
               </div>
             )}
           </Link>
 
           <button
             onClick={onClose}
-            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors ml-2"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Navigation Sections */}
-        <nav className={cn(
-          "flex-1 overflow-y-auto py-5 space-y-6",
-          isCollapsed ? "px-2" : "px-3.5"
-        )} style={{ scrollbarWidth: 'none' }}>
-          {NAV_SECTIONS.map((section) => (
-            <div key={section.label} className="space-y-1.5">
-              {!isCollapsed && (
-                <div className="px-3 mb-1.5">
-                  <span className="text-xs font-bold uppercase tracking-[0.08em] text-slate-400">
-                    {section.label}
-                  </span>
-                </div>
-              )}
-
-              <div className="space-y-1">
-                {section.items.filter((item) => !item.permission || [item.permission].flat().some((p) => (item.anyRole ? hasAnyRolePermission(user, p) : hasProjectPermission(user, null, p)))).map((item) => {
-                  const isActive =
-                    item.href === '/construction-dashboard'
-                      ? pathname === '/construction-dashboard'
-                      : (pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href + '/')));
-
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      onClick={onClose}
-                      className={cn(
-                        'relative flex items-center transition-all duration-150 outline-none rounded-xl group select-none',
-                        isCollapsed
-                          ? 'justify-center w-11 h-11 mx-auto'
-                          : 'px-3.5 h-11 gap-3',
-                        isActive
-                          ? 'bg-blue-50/90 border border-blue-200/80 text-blue-700 shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border border-transparent'
-                      )}
-                      title={isCollapsed ? item.name : undefined}
-                    >
-                      <div className={cn(
-                        "flex items-center justify-center shrink-0 transition-colors duration-150",
-                        isActive ? "text-blue-600" : "text-slate-500 group-hover:text-slate-900"
-                      )}>
-                        <item.icon className="w-5 h-5 stroke-[2.2]" />
-                      </div>
-
-                      {!isCollapsed && (
-                        <span className={cn(
-                          "text-sm font-bold tracking-tight truncate flex-1",
-                          isActive ? "text-blue-700" : "text-slate-600 group-hover:text-slate-900"
-                        )}>
-                          {item.name}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+        {/* Navigation Items */}
+        <nav
+          className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5"
+          style={{ scrollbarWidth: 'none' }}
+        >
+          {filteredNavigation.map(renderNavItem)}
         </nav>
 
-        {/* Footer Area */}
-        <div className="p-3 border-t border-slate-100 bg-slate-50/50 space-y-2">
-         
-          {/* Expand / Collapse Button */}
-          {onToggleCollapse && (
-            <div className="pt-0.5">
-              {!isCollapsed ? (
-                <button
-                  type="button"
-                  onClick={onToggleCollapse}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 border border-slate-200/50 transition-all text-[13px] font-semibold cursor-pointer group shadow-2xs"
-                >
-                  <PanelLeftClose className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition-colors" />
-                  <span>Collapse sidebar</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={onToggleCollapse}
-                  className="w-10 h-8 mx-auto flex items-center justify-center rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-slate-200/50 transition-all cursor-pointer shadow-2xs"
-                  title="Expand sidebar"
-                >
-                  <PanelLeftOpen className="w-4 h-4" />
-                </button>
+        {/* Footer Area / Collapse Toggle */}
+        {onToggleCollapse && (
+          <div className="border-t border-slate-200/80 p-2 space-y-0.5">
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              className={cn(
+                'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 cursor-pointer',
+                'text-slate-500 hover:text-slate-900 hover:bg-slate-100',
+                isCollapsed && 'justify-center px-2'
               )}
-            </div>
-          )}
-        </div>
+              title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {isCollapsed ? (
+                <ChevronRight className="w-4 h-4 shrink-0" />
+              ) : (
+                <>
+                  <ChevronLeft className="w-4 h-4 shrink-0" />
+                  <span className="truncate">Collapse</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </aside>
     </>
   );

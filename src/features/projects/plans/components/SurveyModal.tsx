@@ -6,12 +6,10 @@ import {
   X, Loader2, Map, Zap, Droplets, Mountain,
   DollarSign, Home, Wind, Ruler, Camera, Image as ImageIcon, Trash2, Plus, Info
 } from 'lucide-react';
-import { GlassCard } from '@/components/ui/GlassCard';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
 import { cn } from '@/lib/utils';
 import { uploadToCloudinary } from '@/lib/upload';
-import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
 import { formatCurrency } from '@/lib/utils';
 
 interface SurveyModalProps {
@@ -27,24 +25,28 @@ interface SurveyModalProps {
 const Switch = ({ checked, onChange, activeColor = 'bg-blue-600' }: { checked: boolean; onChange: (v: boolean) => void, activeColor?: string }) => (
   <button
     type="button"
+    role="switch"
+    aria-checked={checked}
     onClick={() => onChange(!checked)}
     className={cn(
-      'w-12 h-6 rounded-full relative transition-all duration-300 ease-in-out shrink-0',
-      checked ? activeColor : 'bg-slate-300'
+      'w-11 h-6 rounded-full relative transition-colors duration-200 ease-in-out shrink-0 cursor-pointer focus:outline-none',
+      checked ? activeColor : 'bg-slate-200'
     )}
   >
-    <div className={cn(
-      'absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 ease-in-out shadow-sm',
-      checked ? 'right-1' : 'left-1'
-    )} />
+    <div
+      className={cn(
+        'absolute top-1 w-4 h-4 rounded-full bg-white transition-transform duration-200 ease-in-out',
+        checked ? 'translate-x-6' : 'translate-x-1'
+      )}
+    />
   </button>
 );
 
-const ToggleRow = ({ label, subLabel, checked, onChange, activeColor }: any) => (
-  <div className="flex items-center justify-between py-3">
+const ToggleRow = ({ label, subLabel, checked, onChange, activeColor = 'bg-blue-600' }: any) => (
+  <div className="flex items-center justify-between py-2">
     <div className="pr-4">
-      <span className="text-sm font-bold text-slate-900 block">{label}</span>
-      {subLabel && <span className="text-xs font-medium text-slate-500 block mt-0.5">{subLabel}</span>}
+      <span className="text-xs font-semibold text-slate-800 block">{label}</span>
+      {subLabel && <span className="text-[11px] text-slate-500 block mt-0.5">{subLabel}</span>}
     </div>
     <Switch checked={checked} onChange={onChange} activeColor={activeColor} />
   </div>
@@ -56,7 +58,6 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
   const isInterior = projectType === 'Interior';
   const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  console.log(project);
   const budgetHistory = project?.budgetHistory;
   const currentBudgetAmount = (budgetHistory && budgetHistory.length > 0) 
     ? budgetHistory[budgetHistory.length - 1].amount 
@@ -264,7 +265,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
     }
   };
 
-  const inputCls = 'w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-4 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all font-semibold';
+  const inputCls = 'w-full bg-slate-50/70 border border-slate-200 rounded-xl py-2 px-3.5 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all';
   const accessibilityOptions = isInterior
     ? ['Good', 'Fair', 'Poor', 'Needs Work']
     : ['Good', 'Fair', 'Poor', 'Hazardous'];
@@ -272,423 +273,572 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={onClose} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4">
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="w-full max-w-2xl relative z-10 max-h-[85vh] flex flex-col bg-white rounded-3xl shadow-xl overflow-hidden"
+            exit={{ opacity: 0, scale: 0.98, y: 10 }}
+            className="w-full max-w-2xl relative z-10 max-h-[90vh] flex flex-col bg-white rounded-2xl border border-slate-200 overflow-hidden"
           >
             {/* Header */}
-            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between shrink-0">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
               <div className="flex items-center gap-3">
-                <div className={cn('p-2.5 rounded-xl border', isInterior ? 'bg-purple-50 border-purple-150' : 'bg-blue-50 border-blue-150')}>
-                  {isInterior ? <Home className="w-6 h-6 text-purple-600" /> : <Map className="w-6 h-6 text-blue-600" />}
+                <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center shrink-0">
+                  {isInterior ? <Home className="w-5 h-5 text-blue-600" /> : <Map className="w-5 h-5 text-blue-600" />}
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-slate-900 leading-tight">
+                  <h2 className="text-base font-bold text-slate-900 leading-tight">
                     {existingSurvey
                       ? `Edit ${isInterior ? 'Interior' : 'Site'} Survey`
-                      : (isInterior ? 'Interior Space Survey' : 'Record Site Survey')}
+                      : (isInterior ? 'Record Interior Survey' : 'Record Site Survey')}
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    {isInterior ? 'Space condition & design assessment' : 'Physical terrain and resource assessment'}
+                    {isInterior ? 'Space condition, MEP & architectural diagnostics' : 'Physical terrain, MEP points & site conditions'}
                   </p>
                 </div>
               </div>
-              <button onClick={onClose} className="p-2 text-slate-400 hover:bg-slate-100 rounded-xl transition-colors">
-                <X className="w-5 h-5" />
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Scrollable Form */}
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-              
-              {/* Section: Conditions & Utilities */}
-              <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm space-y-4">
-                <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest border-b border-slate-100 pb-2">
-                  {isInterior ? 'Space & Condition Assessment' : 'Conditions & Utilities'}
-                </p>
-                <div>
-                  <label className="text-sm font-bold text-slate-900 mb-2 block">
-                    {isInterior ? 'Overall Space Condition' : 'Overall Accessibility'}
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {accessibilityOptions.map(o => (
-                      <button
-                        key={o}
-                        type="button"
-                        onClick={() => setAccessibility(o)}
-                        className={cn(
-                          'py-2.5 rounded-xl border text-xs font-bold transition-all text-center',
-                          accessibility === o
-                            ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-600/20'
-                            : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300'
-                        )}
-                      >
-                        {o}
-                      </button>
-                    ))}
+            <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+                
+                {/* Section: Conditions & Utilities */}
+                <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      {isInterior ? 'Space & Condition Assessment' : 'Conditions & Utilities'}
+                    </span>
                   </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 mb-2 block">
+                      {isInterior ? 'Overall Space Condition' : 'Overall Accessibility'}
+                    </label>
+                    <div className="p-1 bg-slate-100/90 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-1 border border-slate-200/50">
+                      {accessibilityOptions.map(o => (
+                        <button
+                          key={o}
+                          type="button"
+                          onClick={() => setAccessibility(o)}
+                          className={cn(
+                            'py-2 px-3 rounded-lg text-xs font-semibold transition-all text-center cursor-pointer',
+                            accessibility === o
+                              ? 'bg-blue-600 text-white'
+                              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                          )}
+                        >
+                          {o}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-slate-100 pt-1" />
+
+                  <ToggleRow
+                    label={isInterior ? 'Electrical Points Accessible' : 'Power Infrastructure Available'}
+                    subLabel={isInterior ? 'Existing outlets and wiring in place' : 'Existing grid connections'}
+                    checked={powerAvailable}
+                    onChange={setPowerAvailable}
+                  />
+
+                  <div className="border-t border-slate-100 pt-1" />
+
+                  <ToggleRow
+                    label={isInterior ? 'Plumbing Accessible' : 'Water Connection Available'}
+                    subLabel={isInterior ? 'Kitchen/bathroom plumbing lines' : 'Municipal or well connection'}
+                    checked={waterAvailable}
+                    onChange={setWaterAvailable}
+                  />
                 </div>
 
-                <div className="border-t border-slate-100 pt-1" />
+                {/* Construction-only: Terrain */}
+                {!isInterior && (
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        Terrain & Soil
+                      </span>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-700 block mb-1.5">Terrain / Soil Notes</label>
+                      <textarea
+                        required
+                        rows={2.5}
+                        value={terrainNotes}
+                        onChange={e => setTerrainNotes(e.target.value)}
+                        className={`${inputCls} resize-none`}
+                        placeholder="Soil type, slope, clearing needed..."
+                      />
+                    </div>
+                  </div>
+                )}
 
-                <ToggleRow
-                  label={isInterior ? 'Electrical Points Accessible' : 'Power Infrastructure Available'}
-                  subLabel={isInterior ? 'Existing outlets and wiring in place' : 'Existing grid connections'}
-                  checked={powerAvailable}
-                  onChange={setPowerAvailable}
-                />
-
-                <div className="border-t border-slate-100 pt-1" />
-
-                <ToggleRow
-                  label={isInterior ? 'Plumbing Accessible' : 'Water Connection Available'}
-                  subLabel={isInterior ? 'Kitchen/bathroom plumbing lines' : 'Municipal or well connection'}
-                  checked={waterAvailable}
-                  onChange={setWaterAvailable}
-                />
-              </div>
-
-              {/* Construction-only: Terrain */}
-              {!isInterior && (
-                <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm space-y-4">
-                  <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest border-b border-slate-100 pb-2">Terrain & Soil</p>
-                  <label className="text-sm font-bold text-slate-900 block mb-1">Terrain / Soil Notes</label>
-                  <textarea required rows={2.5} value={terrainNotes} onChange={e => setTerrainNotes(e.target.value)}
-                    className={`${inputCls} resize-none`} placeholder="Soil type, slope, clearing needed..." />
-                </div>
-              )}
-
-              {/* Interior-only sections */}
-              {isInterior && (
-                <>
-                  {/* Room Details */}
-                  <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm space-y-4">
-                    <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest border-b border-slate-100 pb-2">Room Details</p>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-bold text-slate-900 mb-2 block">Room Count</label>
-                        <input type="number" min="1" value={roomCount} onChange={e => setRoomCount(e.target.value)}
-                          className={inputCls} placeholder="e.g. 8" />
+                {/* Interior-only sections */}
+                {isInterior && (
+                  <>
+                    {/* Room Details */}
+                    <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                          Room Details
+                        </span>
                       </div>
-                      <div>
-                        <label className="text-sm font-bold text-slate-900 mb-2 block">Ceiling Height</label>
-                        <div className="flex gap-2">
-                          <input type="text" value={ceilingHeight} onChange={e => setCeilingHeight(e.target.value)}
-                            className={`${inputCls} flex-1`} placeholder="e.g. 10.5" />
-                          <select
-                            value={ceilingHeightUnit}
-                            onChange={e => setCeilingHeightUnit(e.target.value as any)}
-                            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
-                          >
-                            <option value="ft">ft (Feet)</option>
-                            <option value="m">m (Meters)</option>
-                            <option value="in">in (Inches)</option>
-                            <option value="mm">mm (Millimeters)</option>
-                            <option value="cm">cm (Centimeters)</option>
-                          </select>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Room Count</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={roomCount}
+                            onChange={e => setRoomCount(e.target.value)}
+                            className={inputCls}
+                            placeholder="e.g. 8"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Ceiling Height</label>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={ceilingHeight}
+                              onChange={e => setCeilingHeight(e.target.value)}
+                              className={`${inputCls} flex-1`}
+                              placeholder="e.g. 10.5"
+                            />
+                            <select
+                              value={ceilingHeightUnit}
+                              onChange={e => setCeilingHeightUnit(e.target.value as any)}
+                              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 cursor-pointer"
+                            >
+                              <option value="ft">ft</option>
+                              <option value="m">m</option>
+                              <option value="in">in</option>
+                              <option value="mm">mm</option>
+                              <option value="cm">cm</option>
+                            </select>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div>
-                      <label className="text-sm font-bold text-slate-900 mb-2 block">Natural Lighting</label>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {['Excellent', 'Good', 'Limited', 'None'].map(o => (
-                          <button key={o} type="button" onClick={() => setNaturalLighting(o)}
-                            className={cn('py-2.5 rounded-xl border text-xs font-bold transition-all text-center',
-                              naturalLighting === o
-                                ? 'bg-amber-100 border-amber-400 text-amber-800'
-                                : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300'
-                            )}>{o}</button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="border-t border-slate-100 pt-1" />
-
-                    <ToggleRow
-                      label="Ventilation / AC Available"
-                      subLabel="Existing ducting or split unit points"
-                      checked={ventilationAvailable}
-                      onChange={setVentilationAvailable}
-                      activeColor="bg-cyan-500"
-                    />
-                  </div>
-
-                  {/* Wall & Moisture Diagnostics */}
-                  <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm space-y-4">
-                    <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest border-b border-slate-100 pb-2">Wall & Moisture Diagnostics</p>
-                    <div>
-                      <label className="text-sm font-bold text-slate-900 mb-2 block">Wall Construction Type</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {(['Solid Brick', 'Gypsum Drywall', 'RCC Concrete', 'Mixed'] as const).map(w => (
-                          <button key={w} type="button" onClick={() => setWallCondition(w)}
-                            className={cn('py-2 rounded-xl border text-xs font-bold transition-all text-center',
-                              wallCondition === w
-                                ? 'bg-blue-50 border-blue-400 text-blue-800'
-                                : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
-                            )}>{w}</button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="border-t border-slate-100 pt-1" />
-
-                    <ToggleRow
-                      label="Dampness / Water Seepage Observed"
-                      subLabel="Check for water stains or damp walls before woodwork"
-                      checked={dampnessObserved}
-                      onChange={setDampnessObserved}
-                      activeColor="bg-rose-600"
-                    />
-
-                    {dampnessObserved && (
                       <div>
-                        <label className="text-sm font-bold text-slate-900 mb-2 block">Dampness & Leakage Details</label>
-                        <textarea rows={2} value={dampnessNotes} onChange={e => setDampnessNotes(e.target.value)}
-                          className={`${inputCls} resize-none`} placeholder="e.g. Seepage observed on Bedroom 2 outer wall..." />
+                        <label className="text-xs font-semibold text-slate-700 mb-2 block">Natural Lighting</label>
+                        <div className="p-1 bg-slate-100/90 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-1 border border-slate-200/50">
+                          {['Excellent', 'Good', 'Limited', 'None'].map(o => (
+                            <button
+                              key={o}
+                              type="button"
+                              onClick={() => setNaturalLighting(o)}
+                              className={cn(
+                                'py-2 px-3 rounded-lg text-xs font-semibold transition-all text-center cursor-pointer',
+                                naturalLighting === o
+                                  ? 'bg-blue-600 text-white'
+                                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                              )}
+                            >
+                              {o}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    )}
-                  </div>
 
-                  {/* MEP & Utility Readiness */}
-                  <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm space-y-4">
-                    <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest border-b border-slate-100 pb-2">MEP & Services Readiness</p>
-                    
-                    <div>
-                      <label className="text-sm font-bold text-slate-900 mb-2 block">Electrical Supply Phase</label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {(['Single Phase', 'Three Phase', 'Unsure'] as const).map(phase => (
-                          <button key={phase} type="button" onClick={() => setElectricalPhase(phase)}
-                            className={cn('py-2 rounded-xl border text-xs font-bold transition-all text-center',
-                              electricalPhase === phase
-                                ? 'bg-amber-100 border-amber-400 text-amber-900'
-                                : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
-                            )}>{phase}</button>
-                        ))}
-                      </div>
+                      <div className="border-t border-slate-100 pt-1" />
+
+                      <ToggleRow
+                        label="Ventilation / AC Available"
+                        subLabel="Existing ducting or split unit points"
+                        checked={ventilationAvailable}
+                        onChange={setVentilationAvailable}
+                      />
                     </div>
 
-                    <div className="border-t border-slate-100 pt-1" />
-
-                    <ToggleRow
-                      label="AC Copper Piping Laid"
-                      subLabel="Internal refrigerant pipes pre-installed"
-                      checked={acPipingReady}
-                      onChange={setAcPipingReady}
-                      activeColor="bg-teal-600"
-                    />
-
-                    <ToggleRow
-                      label="Plumbing & Waste Outlets Positioned"
-                      subLabel="Drainage points ready for kitchen/baths"
-                      checked={plumbingDrainReady}
-                      onChange={setPlumbingDrainReady}
-                      activeColor="bg-blue-600"
-                    />
-                  </div>
-
-                  {/* Freight & Elevator Access */}
-                  <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm space-y-4">
-                    <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest border-b border-slate-100 pb-2">Material Access & Freight Logistics</p>
-                    
-                    <div>
-                      <label className="text-sm font-bold text-slate-900 mb-2 block">Elevator / Stair Access</label>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        {(['Service Elevator Available', 'Passenger Elevator Only', 'Stairs Only'] as const).map(opt => (
-                          <button key={opt} type="button" onClick={() => setElevatorAccessibility(opt)}
-                            className={cn('py-2 px-2 rounded-xl border text-xs font-bold transition-all text-center',
-                              elevatorAccessibility === opt
-                                ? 'bg-indigo-50 border-indigo-400 text-indigo-800'
-                                : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
-                            )}>{opt}</button>
-                        ))}
+                    {/* Wall & Moisture Diagnostics */}
+                    <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                          Wall & Moisture Diagnostics
+                        </span>
                       </div>
-                    </div>
-
-                    {elevatorAccessibility !== 'Stairs Only' && (
                       <div>
-                        <label className="text-sm font-bold text-slate-900 mb-1 block">Elevator Capacity (kg)</label>
-                        <input type="number" value={elevatorCapacityKg} onChange={e => setElevatorCapacityKg(e.target.value)}
-                          className={inputCls} placeholder="e.g. 1000" />
+                        <label className="text-xs font-semibold text-slate-700 mb-2 block">Wall Construction Type</label>
+                        <div className="p-1 bg-slate-100/90 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-1 border border-slate-200/50">
+                          {(['Solid Brick', 'Gypsum Drywall', 'RCC Concrete', 'Mixed'] as const).map(w => (
+                            <button
+                              key={w}
+                              type="button"
+                              onClick={() => setWallCondition(w)}
+                              className={cn(
+                                'py-2 px-2 rounded-lg text-xs font-semibold transition-all text-center cursor-pointer',
+                                wallCondition === w
+                                  ? 'bg-blue-600 text-white'
+                                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                              )}
+                            >
+                              {w}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    )}
-                  </div>
 
-                  {/* Structural & Design */}
-                  <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm space-y-4">
-                    <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest border-b border-slate-100 pb-2">Structural & Design</p>
-                    
-                    <ToggleRow
-                      label="Structural Modifications Needed"
-                      subLabel="Wall removal, partition additions, beam work"
-                      checked={structuralModification}
-                      onChange={setStructuralModification}
-                      activeColor="bg-orange-500"
-                    />
-                    
-                    {structuralModification && (
-                      <div className="mt-2">
-                        <label className="text-sm font-bold text-slate-900 mb-2 block">Structural Notes</label>
-                        <textarea rows={2.5} value={structuralNotes} onChange={e => setStructuralNotes(e.target.value)}
-                          className={`${inputCls} resize-none`} placeholder="Describe required structural changes..." />
-                      </div>
-                    )}
-                    
-                    <div className="border-t border-slate-100 pt-1 mt-2" />
+                      <div className="border-t border-slate-100 pt-1" />
 
-                    <div>
-                      <label className="text-sm font-bold text-slate-900 mb-2 block">Client Style Preference</label>
-                      <textarea rows={3} value={clientStylePreference} onChange={e => setClientStylePreference(e.target.value)}
-                        className={`${inputCls} resize-none`} placeholder="e.g. Modern minimalist, warm tones, open-plan kitchen preferred..." />
+                      <ToggleRow
+                        label="Dampness / Water Seepage Observed"
+                        subLabel="Check for water stains or damp walls before woodwork"
+                        checked={dampnessObserved}
+                        onChange={setDampnessObserved}
+                        activeColor="bg-rose-600"
+                      />
+
+                      {dampnessObserved && (
+                        <div>
+                          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Dampness & Leakage Details</label>
+                          <textarea
+                            rows={2}
+                            value={dampnessNotes}
+                            onChange={e => setDampnessNotes(e.target.value)}
+                            className={`${inputCls} resize-none`}
+                            placeholder="e.g. Seepage observed on Bedroom 2 outer wall..."
+                          />
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </>
-              )}
 
-              {/* Photo Upload Sections */}
-              <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm space-y-6">
-                
-                {/* Main Observation Image */}
-                <div>
-                  <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest border-b border-slate-100 pb-2 mb-4">Media Observations</p>
-                  <label className="text-sm font-bold text-slate-900 mb-2 block">
-                    {isInterior ? 'Space Photo (Observation)' : 'Site Photo (Observation)'}
-                  </label>
-                  <input type="file" accept="image/*" className="hidden" ref={obsInputRef} onChange={handleObsImageSelect} />
+                    {/* MEP & Utility Readiness */}
+                    <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                          MEP & Services Readiness
+                        </span>
+                      </div>
+                      
+                      <div>
+                        <label className="text-xs font-semibold text-slate-700 mb-2 block">Electrical Supply Phase</label>
+                        <div className="p-1 bg-slate-100/90 rounded-xl grid grid-cols-3 gap-1 border border-slate-200/50">
+                          {(['Single Phase', 'Three Phase', 'Unsure'] as const).map(phase => (
+                            <button
+                              key={phase}
+                              type="button"
+                              onClick={() => setElectricalPhase(phase)}
+                              className={cn(
+                                'py-2 px-2 rounded-lg text-xs font-semibold transition-all text-center cursor-pointer',
+                                electricalPhase === phase
+                                  ? 'bg-blue-600 text-white'
+                                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                              )}
+                            >
+                              {phase}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="border-t border-slate-100 pt-1" />
+
+                      <ToggleRow
+                        label="AC Copper Piping Laid"
+                        subLabel="Internal refrigerant pipes pre-installed"
+                        checked={acPipingReady}
+                        onChange={setAcPipingReady}
+                      />
+
+                      <ToggleRow
+                        label="Plumbing & Waste Outlets Positioned"
+                        subLabel="Drainage points ready for kitchen/baths"
+                        checked={plumbingDrainReady}
+                        onChange={setPlumbingDrainReady}
+                      />
+                    </div>
+
+                    {/* Freight & Elevator Access */}
+                    <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                          Material Access & Freight Logistics
+                        </span>
+                      </div>
+                      
+                      <div>
+                        <label className="text-xs font-semibold text-slate-700 mb-2 block">Elevator / Stair Access</label>
+                        <div className="p-1 bg-slate-100/90 rounded-xl grid grid-cols-1 sm:grid-cols-3 gap-1 border border-slate-200/50">
+                          {(['Service Elevator Available', 'Passenger Elevator Only', 'Stairs Only'] as const).map(opt => (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() => setElevatorAccessibility(opt)}
+                              className={cn(
+                                'py-2 px-2 rounded-lg text-xs font-semibold transition-all text-center cursor-pointer',
+                                elevatorAccessibility === opt
+                                  ? 'bg-blue-600 text-white'
+                                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                              )}
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {elevatorAccessibility !== 'Stairs Only' && (
+                        <div>
+                          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Elevator Capacity (kg)</label>
+                          <input
+                            type="number"
+                            value={elevatorCapacityKg}
+                            onChange={e => setElevatorCapacityKg(e.target.value)}
+                            className={inputCls}
+                            placeholder="e.g. 1000"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Structural & Design */}
+                    <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                          Structural & Design
+                        </span>
+                      </div>
+                      
+                      <ToggleRow
+                        label="Structural Modifications Needed"
+                        subLabel="Wall removal, partition additions, beam work"
+                        checked={structuralModification}
+                        onChange={setStructuralModification}
+                        activeColor="bg-amber-600"
+                      />
+                      
+                      {structuralModification && (
+                        <div className="mt-2">
+                          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Structural Notes</label>
+                          <textarea
+                            rows={2.5}
+                            value={structuralNotes}
+                            onChange={e => setStructuralNotes(e.target.value)}
+                            className={`${inputCls} resize-none`}
+                            placeholder="Describe required structural changes..."
+                          />
+                        </div>
+                      )}
+                      
+                      <div className="border-t border-slate-100 pt-1 mt-2" />
+
+                      <div>
+                        <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Client Style Preference</label>
+                        <textarea
+                          rows={3}
+                          value={clientStylePreference}
+                          onChange={e => setClientStylePreference(e.target.value)}
+                          className={`${inputCls} resize-none`}
+                          placeholder="e.g. Modern minimalist, warm tones, open-plan kitchen preferred..."
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Photo Upload Sections */}
+                <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-5">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Site Observation Media
+                    </span>
+                  </div>
                   
-                  <div
-                    onClick={() => obsInputRef.current?.click()}
-                    className="w-full h-44 border-2 border-dashed border-slate-200 hover:border-blue-400 bg-slate-50 rounded-2xl cursor-pointer flex flex-col items-center justify-center gap-2 overflow-hidden group transition-all"
-                  >
-                    {observationFile ? (
-                      <img src={URL.createObjectURL(observationFile)} alt="Obs preview" className="w-full h-full object-cover" />
-                    ) : observationImage ? (
-                      <img src={observationImage} alt="Obs source" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="text-center p-4">
-                        <Camera className="w-8 h-8 text-slate-450 mx-auto mb-1 group-hover:text-blue-500 transition-colors" />
-                        <p className="text-xs font-bold text-slate-500">Select {isInterior ? 'space' : 'site'} observation image</p>
-                      </div>
+                  {/* Main Observation Image */}
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 mb-2 block">
+                      {isInterior ? 'Primary Space Photo (Key Observation)' : 'Primary Site Photo (Key Observation)'}
+                    </label>
+                    <input type="file" accept="image/*" className="hidden" ref={obsInputRef} onChange={handleObsImageSelect} />
+                    
+                    <div
+                      onClick={() => obsInputRef.current?.click()}
+                      className="w-full h-40 border-2 border-dashed border-slate-200 hover:border-blue-400 bg-slate-50/60 hover:bg-blue-50/20 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 overflow-hidden group transition-all"
+                    >
+                      {observationFile ? (
+                        <img src={URL.createObjectURL(observationFile)} alt="Obs preview" className="w-full h-full object-cover" />
+                      ) : observationImage ? (
+                        <img src={observationImage} alt="Obs source" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="text-center p-4">
+                          <Camera className="w-7 h-7 text-slate-400 mx-auto mb-1 group-hover:text-blue-600 transition-colors" />
+                          <p className="text-xs font-semibold text-slate-600">Select {isInterior ? 'space' : 'site'} observation image</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">PNG, JPG, or WEBP up to 10MB</p>
+                        </div>
+                      )}
+                    </div>
+                    {(observationFile || observationImage) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setObservationFile(null);
+                          setObservationImage('');
+                        }}
+                        className="mt-2.5 text-xs font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Remove Image
+                      </button>
                     )}
                   </div>
-                  {(observationFile || observationImage) && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setObservationFile(null);
-                        setObservationImage('');
-                      }}
-                      className="mt-3 text-xs font-bold text-red-500 flex items-center gap-1 hover:text-red-650"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" /> Remove Image
-                    </button>
+
+                  {/* Additional Room Photos (Interior-only) */}
+                  {isInterior && (
+                    <div className="border-t border-slate-100 pt-4">
+                      <label className="text-xs font-semibold text-slate-700 mb-2.5 block">Additional Space Photos</label>
+                      <input type="file" accept="image/*" multiple className="hidden" ref={addInputRef} onChange={handleAddPhotosSelect} />
+                      
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                        {/* Upload button */}
+                        <div
+                          onClick={() => addInputRef.current?.click()}
+                          className="h-24 border-2 border-dashed border-slate-200 hover:border-blue-400 bg-slate-50/60 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-1 group transition-all"
+                        >
+                          <Plus className="w-5 h-5 text-slate-400 group-hover:text-blue-600" />
+                          <span className="text-[10px] font-semibold text-slate-500">Add Photo</span>
+                        </div>
+
+                        {/* Existing Photos URLs */}
+                        {additionalPhotos.map((url, idx) => (
+                          <div key={`url-${idx}`} className="h-24 bg-slate-100 border border-slate-200 rounded-xl overflow-hidden relative group">
+                            <img src={url} alt="Space attachment" className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => removeAdditionalPhotoUrl(idx)}
+                              className="absolute top-1 right-1 p-1 bg-white/90 rounded-md hover:bg-white text-rose-600 transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+
+                        {/* New Photos Files */}
+                        {additionalFiles.map((file, idx) => (
+                          <div key={`file-${idx}`} className="h-24 bg-slate-100 border border-slate-200 rounded-xl overflow-hidden relative group">
+                            <img src={URL.createObjectURL(file)} alt="File attachment" className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => removeAdditionalFile(idx)}
+                              className="absolute top-1 right-1 p-1 bg-white/90 rounded-md hover:bg-white text-rose-600 transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
 
-                {/* Additional Room Photos (Interior-only) */}
-                {isInterior && (
+                {/* Surveyor Comments (common) */}
+                <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Surveyor Comments
+                    </span>
+                  </div>
                   <div>
-                    <label className="text-sm font-bold text-slate-900 mb-3 block border-t border-slate-100 pt-4">Additional Space Photos</label>
-                    <input type="file" accept="image/*" multiple className="hidden" ref={addInputRef} onChange={handleAddPhotosSelect} />
-                    
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                      {/* Upload button */}
-                      <div
-                        onClick={() => addInputRef.current?.click()}
-                        className="h-24 border-2 border-dashed border-slate-200 hover:border-blue-400 bg-slate-50 rounded-2xl cursor-pointer flex flex-col items-center justify-center gap-1 group transition-all"
-                      >
-                        <Plus className="w-6 h-6 text-slate-450 group-hover:text-blue-500" />
-                        <span className="text-[10px] font-bold text-slate-500">Add Photo</span>
-                      </div>
-
-                      {/* Existing Photos URLs */}
-                      {additionalPhotos.map((url, idx) => (
-                        <div key={`url-${idx}`} className="h-24 bg-slate-100 border border-slate-200 rounded-2xl overflow-hidden relative group">
-                          <img src={url} alt="Space attachment" className="w-full h-full object-cover" />
-                          <button
-                            type="button"
-                            onClick={() => removeAdditionalPhotoUrl(idx)}
-                            className="absolute top-1 right-1 p-1 bg-white/80 rounded-lg hover:bg-white text-red-500"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ))}
-
-                      {/* New Photos Files */}
-                      {additionalFiles.map((file, idx) => (
-                        <div key={`file-${idx}`} className="h-24 bg-slate-100 border border-slate-200 rounded-2xl overflow-hidden relative group">
-                          <img src={URL.createObjectURL(file)} alt="File attachment" className="w-full h-full object-cover" />
-                          <button
-                            type="button"
-                            onClick={() => removeAdditionalFile(idx)}
-                            className="absolute top-1 right-1 p-1 bg-white/80 rounded-lg hover:bg-white text-red-500"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
+                    <label className="text-xs font-semibold text-slate-700 block mb-1.5">Observations & Remarks</label>
+                    <textarea
+                      rows={2.5}
+                      value={notes}
+                      onChange={e => setNotes(e.target.value)}
+                      className={`${inputCls} resize-none`}
+                      placeholder="General observations, access notes, or site constraints..."
+                    />
                   </div>
-                )}
-              </div>
+                </div>
 
-              {/* Surveyor Comments (common) */}
-              <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm space-y-4">
-                <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest border-b border-slate-100 pb-2">Comments</p>
-                <label className="text-sm font-bold text-slate-900 block mb-1">Surveyor Comments</label>
-                <textarea rows={2.5} value={notes} onChange={e => setNotes(e.target.value)}
-                  className={`${inputCls} resize-none`} placeholder="General observations..." />
-              </div>
-
-              {/* Budget Impact (common) */}
-              <div className={cn('p-5 rounded-2xl border transition-all', affectsBudget ? 'bg-red-50/50 border-red-200' : 'bg-slate-50 border-slate-250')}>
-                <ToggleRow
-                  label="Affects Initial Budget?"
-                  subLabel="Does this survey require a budget update?"
-                  checked={affectsBudget}
-                  onChange={setAffectsBudget}
-                  activeColor="bg-red-600"
-                />
-                {affectsBudget && (
-                  <div className="mt-2 pt-4 border-t border-red-150/50 space-y-4">
-                    <div className="flex items-center gap-2 p-3 bg-blue-50/50 border border-blue-100 rounded-xl">
-                      <Info className="w-4 h-4 text-blue-500 shrink-0" />
-                      <p className="text-sm text-blue-900">
-                        Current Active Budget:{' '}
-                        <span className="font-black">
-                          {formatCurrency(currentBudgetAmount, project?.currency)}
-                        </span>
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-bold text-slate-900 mb-2 block">New Estimated Budget ({project?.currency || 'AED'})</label>
-                        <input type="number" required value={recommendedBudget} onChange={e => setRecommendedBudget(e.target.value)}
-                          className="w-full bg-white border border-red-150 rounded-xl py-2 px-3 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 font-semibold" />
+                {/* Budget Impact (common) */}
+                <div className={cn(
+                  'p-4 sm:p-5 rounded-xl border transition-all space-y-3',
+                  affectsBudget ? 'bg-amber-50/40 border-amber-200' : 'bg-white border-slate-200'
+                )}>
+                  <ToggleRow
+                    label="Affects Initial Budget?"
+                    subLabel="Does this survey identify scope changes requiring budget adjustment?"
+                    checked={affectsBudget}
+                    onChange={setAffectsBudget}
+                    activeColor="bg-amber-600"
+                  />
+                  {affectsBudget && (
+                    <div className="pt-3 border-t border-amber-200/60 space-y-3">
+                      <div className="flex items-center gap-2 p-2.5 bg-blue-50/80 border border-blue-200/80 rounded-lg">
+                        <Info className="w-4 h-4 text-blue-600 shrink-0" />
+                        <p className="text-xs text-blue-900">
+                          Current Active Budget:{' '}
+                          <span className="font-bold">
+                            {formatCurrency(currentBudgetAmount, project?.currency)}
+                          </span>
+                        </p>
                       </div>
-                      <div>
-                        <label className="text-sm font-bold text-slate-900 mb-2 block">Reason</label>
-                        <input type="text" required value={budgetReason} onChange={e => setBudgetReason(e.target.value)}
-                          className="w-full bg-white border border-red-150 rounded-xl py-2 px-3 text-slate-800 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 font-semibold"
-                          placeholder="e.g. Structural modifications required" />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">
+                            New Estimated Budget ({project?.currency || 'AED'})
+                          </label>
+                          <input
+                            type="number"
+                            required
+                            value={recommendedBudget}
+                            onChange={e => setRecommendedBudget(e.target.value)}
+                            className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 font-medium transition-all"
+                            placeholder="e.g. 850000"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Reason</label>
+                          <input
+                            type="text"
+                            required
+                            value={budgetReason}
+                            onChange={e => setBudgetReason(e.target.value)}
+                            className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 font-medium transition-all"
+                            placeholder="e.g. Structural modifications required"
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-2 shrink-0">
-                <button type="button" onClick={onClose} className="flex-1 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-650 font-bold transition-all">Cancel</button>
-                <button type="submit" disabled={isLoading}
-                  className="flex-1 py-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all disabled:opacity-50 shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-                  {isLoading ? <><Loader2 className="w-5 h-5 animate-spin" /><span>Submitting...</span></> : <span>Submit Assessment</span>}
+              {/* Sticky Footer */}
+              <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50/70 flex items-center justify-end gap-2.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-200/60 rounded-xl border border-slate-200 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="px-5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Submitting...</span>
+                    </>
+                  ) : (
+                    <span>{existingSurvey ? 'Update Survey Report' : 'Submit Survey Report'}</span>
+                  )}
                 </button>
               </div>
             </form>

@@ -2,11 +2,15 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Loader2, FileText, Upload, Image as ImageIcon, Trash2, Plus } from 'lucide-react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import {
+  X, Loader2, FileText, Upload, Image as ImageIcon, Trash2, Plus,
+  Layers, DollarSign, Ruler, Clock, FolderOpen, CheckCircle2,
+  AlertCircle, Sparkles, Check
+} from 'lucide-react';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
 import { uploadToCloudinary } from '@/lib/upload';
+import { cn, formatCurrency } from '@/lib/utils';
 
 interface TemplateModalProps {
   isOpen: boolean;
@@ -16,13 +20,18 @@ interface TemplateModalProps {
   templateId?: string;
 }
 
-const inputCls = 'w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all';
-
-export const TemplateModal: React.FC<TemplateModalProps> = ({ isOpen, onClose, onSuccess, initialData, templateId }) => {
+export const TemplateModal: React.FC<TemplateModalProps> = ({
+  isOpen,
+  onClose,
+  onSuccess,
+  initialData,
+  templateId,
+}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [assetTab, setAssetTab] = useState<'images' | 'files'>('images');
 
   const isEditing = !!templateId;
 
@@ -44,13 +53,15 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({ isOpen, onClose, o
 
   useEffect(() => {
     if (!isOpen) return;
-    api.get('/template-categories')
-      .then(r => {
-        setCategories(r.data);
+    api
+      .get('/template-categories')
+      .then((r) => {
+        const catList = Array.isArray(r.data) ? r.data : [];
+        setCategories(catList);
         if (initialData) {
           setFormData({
             name: initialData.name || '',
-            category: initialData.category?._id || initialData.category || r.data[0]?._id || '',
+            category: initialData.category?._id || initialData.category || catList[0]?._id || '',
             description: initialData.description || '',
             minBudget: initialData.minBudget?.toString() || '',
             maxBudget: initialData.maxBudget?.toString() || '',
@@ -59,17 +70,28 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({ isOpen, onClose, o
           });
           setImages(Array.isArray(initialData.images) ? initialData.images : []);
           setFiles(Array.isArray(initialData.files) ? initialData.files : []);
-        } else if (r.data.length > 0) {
-          setFormData(f => ({ ...f, category: r.data[0]._id }));
+        } else if (catList.length > 0) {
+          setFormData((f) => ({ ...f, category: catList[0]._id }));
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        toast.error('Failed to load categories');
+      });
   }, [isOpen, initialData]);
 
   const reset = () => {
-    setFormData({ name: '', category: categories[0]?._id || '', description: '', minBudget: '', maxBudget: '', area: '', estimatedDays: '' });
+    setFormData({
+      name: '',
+      category: categories[0]?._id || '',
+      description: '',
+      minBudget: '',
+      maxBudget: '',
+      area: '',
+      estimatedDays: '',
+    });
     setImages([]);
     setFiles([]);
+    setAssetTab('images');
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,8 +99,9 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({ isOpen, onClose, o
     if (!picked.length) return;
     setUploadingImage(true);
     try {
-      const urls = await Promise.all(picked.map(f => uploadToCloudinary(f)));
-      setImages(prev => [...prev, ...urls]);
+      const urls = await Promise.all(picked.map((f) => uploadToCloudinary(f)));
+      setImages((prev) => [...prev, ...urls]);
+      toast.success(`${picked.length} visual${picked.length > 1 ? 's' : ''} uploaded`);
     } catch {
       toast.error('Image upload failed');
     } finally {
@@ -93,12 +116,13 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({ isOpen, onClose, o
     setUploadingFile(true);
     try {
       const uploaded = await Promise.all(
-        picked.map(async f => {
+        picked.map(async (f) => {
           const url = await uploadToCloudinary(f);
           return { name: f.name, url, size: f.size };
         })
       );
-      setFiles(prev => [...prev, ...uploaded]);
+      setFiles((prev) => [...prev, ...uploaded]);
+      toast.success(`${picked.length} plan file${picked.length > 1 ? 's' : ''} uploaded`);
     } catch {
       toast.error('File upload failed');
     } finally {
@@ -109,16 +133,20 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({ isOpen, onClose, o
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.category) {
-      toast.error('Template name and category are required');
+    if (!formData.name.trim()) {
+      toast.error('Template name is required');
+      return;
+    }
+    if (!formData.category) {
+      toast.error('Please select a category classification');
       return;
     }
     setIsLoading(true);
     try {
       const payload = {
-        name: formData.name,
+        name: formData.name.trim(),
         category: formData.category,
-        description: formData.description,
+        description: formData.description.trim(),
         minBudget: Number(formData.minBudget) || 0,
         maxBudget: Number(formData.maxBudget) || 0,
         area: Number(formData.area) || 0,
@@ -126,12 +154,13 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({ isOpen, onClose, o
         images,
         files,
       };
+
       if (isEditing) {
         await api.patch(`/templates/${templateId}`, payload);
-        toast.success('Template updated successfully!');
+        toast.success('Template updated successfully');
       } else {
         await api.post('/templates', payload);
-        toast.success('Project template created successfully!');
+        toast.success('Project template created successfully');
       }
       onSuccess();
       onClose();
@@ -143,231 +172,492 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({ isOpen, onClose, o
     }
   };
 
+  const formatFileSize = (bytes: number) => {
+    if (!bytes) return '0 KB';
+    if (bytes >= 1024 * 1024) {
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+    return `${Math.round(bytes / 1024)} KB`;
+  };
+
+  const minNum = Number(formData.minBudget) || 0;
+  const maxNum = Number(formData.maxBudget) || 0;
+
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4">
+          {/* Backdrop */}
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"
           />
+
+          {/* Modal Container */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.96, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="w-full max-w-2xl relative z-10"
+            exit={{ opacity: 0, scale: 0.96, y: 16 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="w-full max-w-3xl relative z-10"
           >
-            <GlassCard className="border-gray-200" gradient>
-              <div className="p-8 max-h-[90vh] overflow-y-auto custom-scrollbar">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                  <div>
-                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">{isEditing ? 'Edit Template' : 'New Project'}</p>
-                    <h2 className="text-xl font-black text-gray-900">{isEditing ? 'Edit Project Template' : 'New Project Template'}</h2>
+            <div className="bg-white rounded-2xl border border-slate-300 shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
+              
+              {/* ── Modal Header ── */}
+              <div className="px-6 py-4 border-b border-slate-150 flex items-center justify-between shrink-0 bg-gradient-to-r from-slate-50 via-white to-slate-50">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-150 text-blue-600 flex items-center justify-center shrink-0 shadow-2xs">
+                    <Layers className="w-5 h-5 stroke-[2]" />
                   </div>
-                  <button onClick={() => { onClose(); reset(); }} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
-                    <X className="w-5 h-5" />
-                  </button>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-150">
+                        {isEditing ? 'Modify Template' : 'Template Management'}
+                      </span>
+                    </div>
+                    <h2 className="text-base font-extrabold text-slate-900 tracking-tight mt-0.5">
+                      {isEditing ? 'Edit Project Template' : 'Create New Project Template'}
+                    </h2>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { onClose(); reset(); }}
+                  className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                  title="Close modal"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* ── Scrollable Form Body ── */}
+              <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
+                <div className="p-6 space-y-5">
+                  
+                  {/* ── Panel 1: General Information & Category ── */}
+                  <div className="bg-slate-50/70 border border-slate-200/90 rounded-xl p-4.5 space-y-4">
+                    <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/80">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-blue-600" />
+                        <h3 className="text-xs font-bold text-slate-900 tracking-tight">
+                          General Information
+                        </h3>
+                      </div>
+                      <span className="text-[10.5px] font-semibold text-slate-400">
+                        Core Identity & Classification
+                      </span>
+                    </div>
+
+                    {/* Template Name */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                        Template Name <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <Layers className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input
+                          type="text"
+                          required
+                          value={formData.name}
+                          onChange={(e) => setFormData((f) => ({ ...f, name: e.target.value }))}
+                          placeholder="e.g. 3BHK Luxury Villa Template, Commercial Retail Shell..."
+                          className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300 shadow-2xs"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Category Selection Cards */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-bold text-slate-700">
+                          Classification Category <span className="text-rose-500">*</span>
+                        </label>
+                        <span className="text-[10px] font-semibold text-slate-400">
+                          {categories.length} categories available
+                        </span>
+                      </div>
+
+                      {categories.length > 0 ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          {categories.map((cat) => {
+                            const isSelected = formData.category === cat._id;
+                            return (
+                              <button
+                                key={cat._id}
+                                type="button"
+                                onClick={() => setFormData((f) => ({ ...f, category: cat._id }))}
+                                className={cn(
+                                  "flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-all text-left cursor-pointer",
+                                  isSelected
+                                    ? "bg-blue-50/90 text-blue-700 border-blue-400 shadow-2xs ring-1 ring-blue-500/20"
+                                    : "bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50/80"
+                                )}
+                              >
+                                <div className={cn(
+                                  "w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border",
+                                  isSelected ? "bg-blue-600 text-white border-blue-600" : "bg-slate-100 text-slate-500 border-slate-200/80"
+                                )}>
+                                  {isSelected ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : <FolderOpen className="w-3.5 h-3.5" />}
+                                </div>
+                                <span className="truncate">{cat.name}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs font-semibold text-amber-700 flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4 shrink-0" />
+                          <span>No categories found. Please create a category first under the Categories tab.</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-bold text-slate-700">
+                          Standard Scope & Description
+                        </label>
+                        <span className="text-[10px] font-semibold text-slate-400">
+                          {formData.description.length} characters
+                        </span>
+                      </div>
+                      <textarea
+                        rows={3}
+                        value={formData.description}
+                        onChange={(e) => setFormData((f) => ({ ...f, description: e.target.value }))}
+                        placeholder="Detail standard site delivery milestones, turnkey materials, quality checks, and architectural scope..."
+                        className="w-full p-3 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300 shadow-2xs resize-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* ── Panel 2: Costing & Technical Dimensions ── */}
+                  <div className="bg-slate-50/70 border border-slate-200/90 rounded-xl p-4.5 space-y-4">
+                    <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/80">
+                      <div className="flex items-center gap-2">
+                        <Ruler className="w-4 h-4 text-blue-600" />
+                        <h3 className="text-xs font-bold text-slate-900 tracking-tight">
+                          Estimates & Technical Specifications
+                        </h3>
+                      </div>
+                      <span className="text-[10.5px] font-semibold text-slate-400">
+                        Financial Thresholds & Physical Footprint
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Budget Range Section */}
+                      <div className="bg-white border border-slate-200/80 rounded-xl p-3.5 space-y-2.5 shadow-2xs">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-xs font-bold text-slate-700">
+                            Estimated Budget Range
+                          </label>
+                          <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Min Budget</span>
+                            <div className="relative flex items-center">
+                              <span className="absolute left-2.5 text-xs font-bold text-slate-400">₹</span>
+                              <input
+                                type="number"
+                                min="0"
+                                value={formData.minBudget}
+                                onChange={(e) => setFormData((f) => ({ ...f, minBudget: e.target.value }))}
+                                placeholder="0"
+                                className="w-full pl-6 pr-2.5 py-1.5 bg-slate-50 border border-slate-200/90 rounded-lg text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Max Budget</span>
+                            <div className="relative flex items-center">
+                              <span className="absolute left-2.5 text-xs font-bold text-slate-400">₹</span>
+                              <input
+                                type="number"
+                                min="0"
+                                value={formData.maxBudget}
+                                onChange={(e) => setFormData((f) => ({ ...f, maxBudget: e.target.value }))}
+                                placeholder="50,00,000"
+                                className="w-full pl-6 pr-2.5 py-1.5 bg-slate-50 border border-slate-200/90 rounded-lg text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {(minNum > 0 || maxNum > 0) && (
+                          <div className="pt-1 flex items-center gap-1.5 text-[10.5px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-150">
+                            <Sparkles className="w-3 h-3 text-emerald-600" />
+                            <span>Preview: {formatCurrency(minNum, '₹')} – {formatCurrency(maxNum, '₹')}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Area & Timeline Section */}
+                      <div className="bg-white border border-slate-200/80 rounded-xl p-3.5 space-y-2.5 shadow-2xs">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-xs font-bold text-slate-700">
+                            Footprint & Execution Target
+                          </label>
+                          <Clock className="w-3.5 h-3.5 text-blue-600" />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Built-Up Area</span>
+                            <div className="relative flex items-center">
+                              <input
+                                type="number"
+                                min="0"
+                                value={formData.area}
+                                onChange={(e) => setFormData((f) => ({ ...f, area: e.target.value }))}
+                                placeholder="e.g. 2400"
+                                className="w-full pl-3 pr-10 py-1.5 bg-slate-50 border border-slate-200/90 rounded-lg text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                              />
+                              <span className="absolute right-2 text-[10px] font-bold text-slate-400 pointer-events-none">ft²</span>
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Estimated Days</span>
+                            <div className="relative flex items-center">
+                              <input
+                                type="number"
+                                min="0"
+                                value={formData.estimatedDays}
+                                onChange={(e) => setFormData((f) => ({ ...f, estimatedDays: e.target.value }))}
+                                placeholder="e.g. 60"
+                                className="w-full pl-3 pr-12 py-1.5 bg-slate-50 border border-slate-200/90 rounded-lg text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                              />
+                              <span className="absolute right-2 text-[10px] font-bold text-slate-400 pointer-events-none">Days</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <p className="text-[10px] font-semibold text-slate-400 pt-0.5">
+                          Used to benchmark project schedules and automated Gantt chart timelines.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── Panel 3: Media & Architectural Assets ── */}
+                  <div className="bg-slate-50/70 border border-slate-200/90 rounded-xl p-4.5 space-y-4">
+                    <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/80">
+                      <div className="flex items-center gap-2">
+                        <ImageIcon className="w-4 h-4 text-blue-600" />
+                        <h3 className="text-xs font-bold text-slate-900 tracking-tight">
+                          Documentation & Visual Assets
+                        </h3>
+                      </div>
+                      
+                      {/* Segmented asset switch */}
+                      <div className="flex items-center bg-slate-200/70 p-0.5 rounded-lg border border-slate-300/60">
+                        <button
+                          type="button"
+                          onClick={() => setAssetTab('images')}
+                          className={cn(
+                            "px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer",
+                            assetTab === 'images'
+                              ? "bg-white text-blue-700 shadow-2xs border border-slate-200"
+                              : "text-slate-600 hover:text-slate-900"
+                          )}
+                        >
+                          Images ({images.length})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAssetTab('files')}
+                          className={cn(
+                            "px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer",
+                            assetTab === 'files'
+                              ? "bg-white text-blue-700 shadow-2xs border border-slate-200"
+                              : "text-slate-600 hover:text-slate-900"
+                          )}
+                        >
+                          Drawings ({files.length})
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Image Assets Tab */}
+                    {assetTab === 'images' && (
+                      <div className="space-y-3">
+                        <input
+                          ref={imageInputRef}
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={handleImageUpload}
+                        />
+
+                        {/* Upload trigger dropzone */}
+                        <div
+                          onClick={() => imageInputRef.current?.click()}
+                          className={cn(
+                            "border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all bg-white hover:bg-blue-50/30 flex flex-col items-center justify-center gap-1.5",
+                            uploadingImage ? "border-blue-400 bg-blue-50/20" : "border-slate-200 hover:border-blue-400"
+                          )}
+                        >
+                          {uploadingImage ? (
+                            <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 border border-blue-150 flex items-center justify-center">
+                              <Upload className="w-4 h-4" />
+                            </div>
+                          )}
+                          <p className="text-xs font-bold text-slate-800">
+                            {uploadingImage ? 'Uploading reference visuals...' : 'Upload Reference Images & Renders'}
+                          </p>
+                          <p className="text-[10px] font-semibold text-slate-400">
+                            PNG, JPG, WEBP up to 10MB each · First image becomes card cover
+                          </p>
+                        </div>
+
+                        {/* Uploaded images grid */}
+                        {images.length > 0 && (
+                          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5 pt-1">
+                            {images.map((url, i) => (
+                              <div
+                                key={i}
+                                className="group relative aspect-4/3 rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-slate-100"
+                              >
+                                <img src={url} alt="" className="w-full h-full object-cover" />
+                                {i === 0 && (
+                                  <span className="absolute top-1.5 left-1.5 bg-blue-600/90 text-white text-[9px] font-extrabold px-1.5 py-0.2 rounded shadow-sm">
+                                    Cover
+                                  </span>
+                                )}
+                                <div className="absolute inset-0 bg-slate-950/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}
+                                    className="p-1.5 rounded-lg bg-white/90 text-rose-600 hover:bg-white hover:scale-105 transition-all shadow-sm cursor-pointer"
+                                    title="Delete image"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* File Assets Tab */}
+                    {assetTab === 'files' && (
+                      <div className="space-y-3">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          className="hidden"
+                          onChange={handleFileUpload}
+                        />
+
+                        {/* Upload trigger dropzone */}
+                        <div
+                          onClick={() => fileInputRef.current?.click()}
+                          className={cn(
+                            "border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all bg-white hover:bg-blue-50/30 flex flex-col items-center justify-center gap-1.5",
+                            uploadingFile ? "border-blue-400 bg-blue-50/20" : "border-slate-200 hover:border-blue-400"
+                          )}
+                        >
+                          {uploadingFile ? (
+                            <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-150 flex items-center justify-center">
+                              <FileText className="w-4 h-4" />
+                            </div>
+                          )}
+                          <p className="text-xs font-bold text-slate-800">
+                            {uploadingFile ? 'Uploading architectural drawings...' : 'Upload Plan Files & Specifications'}
+                          </p>
+                          <p className="text-[10px] font-semibold text-slate-400">
+                            PDF, DWG, DXF, or ZIP files · Downloadable during site survey & estimation
+                          </p>
+                        </div>
+
+                        {/* Uploaded files list */}
+                        {files.length > 0 && (
+                          <div className="space-y-2 pt-1">
+                            {files.map((file, i) => (
+                              <div
+                                key={i}
+                                className="flex items-center justify-between p-2.5 bg-white rounded-xl border border-slate-200 shadow-2xs group hover:border-blue-300 transition-colors"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 border border-blue-150 flex items-center justify-center shrink-0">
+                                    <FileText className="w-4 h-4" />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-bold text-slate-900 truncate">
+                                      {file.name}
+                                    </p>
+                                    <p className="text-[10px] font-semibold text-slate-400">
+                                      {formatFileSize(file.size)} · Architectural Document
+                                    </p>
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setFiles((prev) => prev.filter((_, j) => j !== i))}
+                                  className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                  title="Remove plan file"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Template Name */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-700">Template Name</label>
-                    <input
-                      type="text" required value={formData.name}
-                      onChange={e => setFormData(f => ({ ...f, name: e.target.value }))}
-                      className={inputCls} placeholder="e.g. Shopping Mall Expansion"
-                    />
-                  </div>
+                {/* ── Sticky Modal Footer ── */}
+                <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-150 flex items-center justify-between shrink-0 mt-auto">
+                  <span className="text-[11px] font-semibold text-slate-400">
+                    <span className="text-rose-500 font-bold">*</span> Required fields marked
+                  </span>
 
-                  {/* Category Pills */}
-                  <div className="space-y-3">
-                    <label className="text-sm font-bold text-slate-700">Category</label>
-                    <div className="flex flex-wrap gap-2">
-                      {categories.map(cat => (
-                        <button
-                          key={cat._id} type="button"
-                          onClick={() => setFormData(f => ({ ...f, category: cat._id }))}
-                          className={`px-4 py-2 rounded-xl border text-sm font-bold transition-all ${
-                            formData.category === cat._id
-                              ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
-                              : 'bg-gray-50 border-gray-200 text-slate-600 hover:border-blue-300 hover:text-blue-700'
-                          }`}
-                        >
-                          {cat.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-700">Description</label>
-                    <textarea
-                      rows={3} value={formData.description}
-                      onChange={e => setFormData(f => ({ ...f, description: e.target.value }))}
-                      className={`${inputCls} resize-none`}
-                      placeholder="Describe the scope of this template..."
-                    />
-                  </div>
-
-                  {/* Budget */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-700">Estimated Budget ($)</label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">MIN</span>
-                        <input
-                          type="number" value={formData.minBudget}
-                          onChange={e => setFormData(f => ({ ...f, minBudget: e.target.value }))}
-                          className={`${inputCls} pl-12`} placeholder="0"
-                        />
-                      </div>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">MAX</span>
-                        <input
-                          type="number" value={formData.maxBudget}
-                          onChange={e => setFormData(f => ({ ...f, maxBudget: e.target.value }))}
-                          className={`${inputCls} pl-12`} placeholder="1,000,000"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Area + Days */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-slate-700">Area (sq ft)</label>
-                      <input
-                        type="number" value={formData.area}
-                        onChange={e => setFormData(f => ({ ...f, area: e.target.value }))}
-                        className={inputCls} placeholder="e.g. 1500"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-slate-700">Est. Duration (days)</label>
-                      <input
-                        type="number" value={formData.estimatedDays}
-                        onChange={e => setFormData(f => ({ ...f, estimatedDays: e.target.value }))}
-                        className={inputCls} placeholder="e.g. 45"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Reference Images */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-bold text-slate-700">Reference Images</label>
-                      <button
-                        type="button" onClick={() => imageInputRef.current?.click()}
-                        className="text-xs font-bold text-blue-600 hover:text-blue-500 flex items-center gap-1"
-                        disabled={uploadingImage}
-                      >
-                        <Plus className="w-3 h-3" /> Add Image
-                      </button>
-                    </div>
-                    <input ref={imageInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
-                    {images.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {images.map((url, i) => (
-                          <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200">
-                            <img src={url} alt="" className="w-full h-full object-cover" />
-                            <button
-                              type="button" onClick={() => setImages(prev => prev.filter((_, j) => j !== i))}
-                              className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 flex items-center justify-center"
-                            >
-                              <X className="w-3 h-3 text-white" />
-                            </button>
-                          </div>
-                        ))}
-                        {uploadingImage && (
-                          <div className="w-20 h-20 rounded-xl border border-dashed border-blue-300 flex items-center justify-center">
-                            <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <button
-                        type="button" onClick={() => imageInputRef.current?.click()}
-                        disabled={uploadingImage}
-                        className="w-full border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center gap-2 text-slate-400 hover:border-blue-400 hover:text-blue-500 transition-all"
-                      >
-                        {uploadingImage ? <Loader2 className="w-6 h-6 animate-spin" /> : <ImageIcon className="w-6 h-6" />}
-                        <span className="text-xs font-semibold">{uploadingImage ? 'Uploading...' : 'Select Images'}</span>
-                        <span className="text-[10px]">Upload references or blueprints</span>
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Plan Files */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-bold text-slate-700">Project Plan Files</label>
-                      <button
-                        type="button" onClick={() => fileInputRef.current?.click()}
-                        className="text-xs font-bold text-blue-600 hover:text-blue-500 flex items-center gap-1"
-                        disabled={uploadingFile}
-                      >
-                        <Plus className="w-3 h-3" /> Add File
-                      </button>
-                    </div>
-                    <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileUpload} />
-                    {files.length > 0 ? (
-                      <div className="space-y-2">
-                        {files.map((file, i) => (
-                          <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
-                            <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
-                              <FileText className="w-4 h-4 text-blue-500" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-bold text-gray-900 truncate">{file.name}</p>
-                              <p className="text-[10px] text-slate-400">{(file.size / 1024).toFixed(1)} KB</p>
-                            </div>
-                            <button type="button" onClick={() => setFiles(prev => prev.filter((_, j) => j !== i))} className="text-slate-400 hover:text-red-500 transition-colors">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ))}
-                        {uploadingFile && (
-                          <div className="flex items-center gap-2 p-3 border border-dashed border-blue-200 rounded-xl text-blue-500">
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span className="text-xs font-semibold">Uploading...</span>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <button
-                        type="button" onClick={() => fileInputRef.current?.click()}
-                        disabled={uploadingFile}
-                        className="w-full border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center gap-2 text-slate-400 hover:border-blue-400 hover:text-blue-500 transition-all"
-                      >
-                        {uploadingFile ? <Loader2 className="w-6 h-6 animate-spin" /> : <Upload className="w-6 h-6" />}
-                        <span className="text-xs font-semibold">{uploadingFile ? 'Uploading...' : 'Upload Plans'}</span>
-                        <span className="text-[10px]">PDF, DWG, or ZIP</span>
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Footer */}
-                  <div className="pt-4 flex gap-3 border-t border-gray-200">
+                  <div className="flex items-center gap-2.5">
                     <button
-                      type="button" onClick={() => { onClose(); reset(); }}
-                      className="flex-1 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-bold transition-all"
+                      type="button"
+                      onClick={() => { onClose(); reset(); }}
+                      className="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all cursor-pointer shadow-2xs"
                     >
                       Cancel
                     </button>
+                    
                     <button
-                      type="submit" disabled={isLoading || uploadingImage || uploadingFile}
-                      className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all disabled:opacity-50 shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2"
+                      type="submit"
+                      disabled={isLoading || uploadingImage || uploadingFile}
+                      className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-xs border border-slate-300 hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-50 shadow-xs cursor-pointer"
                     >
-                      {isLoading ? <><Loader2 className="w-4 h-4 animate-spin" /><span>{isEditing ? 'Saving...' : 'Creating...'}</span></> : <span>{isEditing ? 'Save Changes' : 'Create Template'}</span>}
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>{isEditing ? 'Saving Template...' : 'Creating Template...'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" />
+                          <span>{isEditing ? 'Save Changes' : 'Create Template'}</span>
+                        </>
+                      )}
                     </button>
                   </div>
-                </form>
-              </div>
-            </GlassCard>
+                </div>
+              </form>
+            </div>
           </motion.div>
         </div>
       )}

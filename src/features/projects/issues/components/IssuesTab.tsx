@@ -370,7 +370,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
           {activeType === 'Issue' && (
             <button
               onClick={() => { fetchEscalationMatrix(); setIsEscalationOpen(true); }}
-              className="flex items-center space-x-1.5 px-3.5 py-2 bg-orange-50 border border-orange-200 rounded-xl text-xs font-bold text-orange-700 hover:bg-orange-100 transition-all shadow-2xs"
+              className="flex items-center space-x-1.5 px-3.5 py-2 bg-orange-50 border border-orange-200 rounded-xl text-xs font-bold text-orange-700 hover:bg-orange-100 transition-all cursor-pointer"
             >
               <GitBranch className="w-3.5 h-3.5" />
               <span>Escalation Matrix</span>
@@ -382,7 +382,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                 <button
                   onClick={handleBulkSendDrafts}
                   disabled={bulkSubmitting}
-                  className="flex items-center space-x-1.5 bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 hover:border-amber-300 px-3.5 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 cursor-pointer shadow-2xs"
+                  className="flex items-center space-x-1.5 bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 hover:border-amber-300 px-3.5 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
                 >
                   {bulkSubmitting ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -396,7 +396,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                 <button
                   onClick={handleFinalizeSnagging}
                   disabled={finalizing}
-                  className="flex items-center space-x-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 px-3.5 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 cursor-pointer shadow-2xs"
+                  className="flex items-center space-x-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 px-3.5 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
                 >
                   {finalizing ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -408,10 +408,10 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
               )}
             </>
           )}
-          {(canCreate || isInspector) && (
+          {(canCreate || isInspector) && (activeType !== 'Snag' || isSnaggingActive) && (
             <button
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs"
+              className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Report {activeType}</span>
@@ -422,42 +422,64 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
 
       {/* Render conditional snagging not started page if activeType is Snag and Snagging is not active */}
       {activeType === 'Snag' && !isSnaggingActive ? (
-        <div className="flex flex-col items-center justify-center py-20 px-8 bg-slate-50/80 border border-dashed border-slate-200 rounded-2xl text-center">
-          <div className="p-4 bg-amber-50 border border-amber-100 rounded-full shadow-2xs mb-4 text-amber-600">
-            <ClipboardList className="w-10 h-10" />
+        <div className="bg-white/70 backdrop-blur-sm border border-slate-200/80 rounded-2xl p-8 md:p-12">
+          <div className="max-w-2xl mx-auto flex flex-col items-center text-center">
+            {/* Header Icon */}
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mb-4 text-blue-600">
+              <ClipboardList className="w-7 h-7" />
+            </div>
+
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-[11px] font-semibold text-slate-600 mb-3">
+              <span>Current Project Stage:</span>
+              <span className="font-bold text-blue-600">{project?.status || 'Planning'}</span>
+            </div>
+
+            <h3 className="text-lg font-bold text-slate-900 tracking-tight">Snagging Phase Not Started</h3>
+            <p className="text-xs text-slate-500 mt-1.5 max-w-lg leading-relaxed">
+              Defect logging and snag list management activate once the project transitions into the inspection and snagging stage.
+            </p>
+
+        
+
+            {/* Milestone Progress Bar if milestones exist */}
+            {milestoneProgress && milestoneProgress.total > 0 && (
+              <div className="w-full mt-6 p-4 rounded-xl bg-slate-50/80 border border-slate-200 text-left">
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <span className="font-semibold text-slate-700">Milestone Completion</span>
+                  <span className="font-bold text-slate-900">
+                    {milestoneProgress.completed} of {milestoneProgress.total} ({Math.round((milestoneProgress.completed / milestoneProgress.total) * 100)}%)
+                  </span>
+                </div>
+                <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-blue-600 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.round((milestoneProgress.completed / milestoneProgress.total) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Action / Next Steps */}
+            {project?.status === 'Ongoing' && !isLocked && hasProjectPermission(user, project, 'projects:update') ? (
+              <div className="mt-8 pt-6 border-t border-slate-100 w-full flex flex-col items-center">
+                <p className="text-xs text-slate-600 mb-3">
+                  Ready for site inspection? Transition the project to start logging snags.
+                </p>
+                <button
+                  onClick={handleStartSnagging}
+                  disabled={startingSnagging}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {startingSnagging ? <Loader2 className="w-4 h-4 animate-spin" /> : <ClipboardList className="w-4 h-4" />}
+                  <span>Start Snagging Phase</span>
+                </button>
+              </div>
+            ) : (
+              <div className="mt-6 text-xs text-slate-400">
+               
+              </div>
+            )}
           </div>
-          <h3 className="text-sm font-bold text-slate-900">Snagging Phase Not Started</h3>
-          {['Initialized', 'Planning', 'Site Survey'].includes(project?.status ?? '') ? (
-            // Snagging follows the Ongoing phase, which needs planning approved first
-            <p className="text-xs text-slate-500 mt-1.5 max-w-sm">
-              The project is still in <span className="font-semibold text-slate-700">{project?.status}</span>. It becomes <span className="font-semibold text-slate-700">Ongoing</span> once <span className="font-semibold text-slate-700">every plan and every BOQ item is approved</span> and it has at least one milestone. When all milestones are completed after that, it moves into the snagging phase.
-            </p>
-          ) : (
-            <p className="text-xs text-slate-500 mt-1.5 max-w-sm">
-              The project stays <span className="font-semibold text-slate-700">Ongoing</span> until <span className="font-semibold text-slate-700">all milestones are completed</span>. Once the last milestone is completed, it moves into the snagging phase automatically and snags can be reported here.
-            </p>
-          )}
-          {milestoneProgress && milestoneProgress.total > 0 && (
-            <p className="text-xs font-bold text-amber-700 mt-3">
-              {milestoneProgress.completed} of {milestoneProgress.total} milestones completed
-            </p>
-          )}
-          {milestoneProgress && milestoneProgress.total === 0 && (
-            <p className="text-xs font-bold text-amber-700 mt-3">No milestones yet — add milestones to track progress toward snagging.</p>
-          )}
-          <p className="text-[11px] text-slate-400 mt-2 max-w-sm">
-            Construction finished early? Users with Project Management → Update can start snagging manually.
-          </p>
-          {project?.status === 'Ongoing' && !isLocked && hasProjectPermission(user, project, 'projects:update') && (
-            <button
-              onClick={handleStartSnagging}
-              disabled={startingSnagging}
-              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl transition-all shadow-xs disabled:opacity-50"
-            >
-              {startingSnagging ? <Loader2 className="w-4 h-4 animate-spin" /> : <ClipboardList className="w-4 h-4" />}
-              Start Snagging Phase
-            </button>
-          )}
         </div>
       ) : (
         <>
@@ -469,7 +491,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
               { label: 'In Progress', value: typeIssues.filter(i => i.status === 'In Progress').length, color: 'text-amber-600' },
               { label: 'Resolved', value: typeIssues.filter(i => i.status === 'Resolved').length, color: 'text-emerald-600' },
             ].map((stat, i) => (
-              <div key={i} className="p-4 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs">
+              <div key={i} className="p-4 rounded-2xl bg-white border border-slate-200">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{stat.label}</p>
                 <p className={cn('text-2xl font-extrabold', stat.color)}>{stat.value}</p>
               </div>
@@ -499,7 +521,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                         {idx > 0 && (
                           <ChevronRight className="w-4 h-4 text-slate-300 shrink-0" />
                         )}
-                        <div className="flex items-center space-x-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm shrink-0">
+                        <div className="flex items-center space-x-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shrink-0">
                           <span className="flex items-center justify-center w-5 h-5 rounded-lg bg-orange-100 text-orange-700 text-[10px] font-black">
                             L{lvl.level}
                           </span>
@@ -586,7 +608,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                     <div
                       key={item._id}
                       onClick={() => setSelectedIssue(item)}
-                      className="bg-white border border-slate-150 rounded-3xl p-5 shadow-sm hover:shadow-md hover:border-slate-300 transition-all flex flex-col justify-between cursor-pointer"
+                      className="bg-white border border-slate-200 rounded-3xl p-5 hover:border-slate-300 transition-all flex flex-col justify-between cursor-pointer"
                     >
                       <div>
                         {/* Header */}
@@ -637,7 +659,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                           {item.status === 'Draft' && canAssignSnagging && (
                             <button
                               onClick={() => setAssigningSnag(item)}
-                              className="flex items-center space-x-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-xl px-3 py-1.5 text-[10px] font-bold text-blue-600 transition-all shrink-0 shadow-sm"
+                              className="flex items-center space-x-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-xl px-3 py-1.5 text-[10px] font-bold text-blue-600 transition-all shrink-0"
                             >
                               <Wrench className="w-3 h-3" />
                               <span>Assign for Fixing</span>
@@ -677,7 +699,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                           {item.status === 'In Progress' && !isLocked && canCompleteSnag && (
                             <button
                               onClick={() => setCompletingSnag(item)}
-                              className="flex items-center space-x-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-xl px-3 py-1.5 text-[10px] font-bold text-emerald-600 transition-all shrink-0 shadow-sm"
+                              className="flex items-center space-x-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-xl px-3 py-1.5 text-[10px] font-bold text-emerald-600 transition-all shrink-0"
                             >
                               <CheckCircle className="w-3 h-3" />
                               <span>Complete Snag</span>

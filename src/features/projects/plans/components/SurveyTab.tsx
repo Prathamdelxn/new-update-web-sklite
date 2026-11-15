@@ -204,29 +204,29 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
 
       {/* ── Pending Action Reminder ── */}
       {showReminder && (
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
-            <div className="p-2.5 rounded-xl bg-white border border-amber-200 text-amber-600 shadow-2xs shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-white border border-blue-200 text-blue-600 flex items-center justify-center shrink-0">
               <ClipboardCheck className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wider">Site Survey Assigned</h4>
-              <p className="text-xs text-amber-700 mt-0.5">Please record site measurements and interior diagnostics to submit your report.</p>
+              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Site Survey Assigned</h4>
+              <p className="text-xs text-slate-600 mt-0.5">Please record site measurements and interior diagnostics to submit your report.</p>
             </div>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl transition-all shadow-xs shrink-0"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all shrink-0 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            Submit Assessment Report
+            Submit Survey Report
           </button>
         </div>
       )}
 
       {/* ── Main Display ── */}
       {!survey ? (
-        <div className="py-20 text-center border-2 border-dashed border-slate-200 bg-white/70 backdrop-blur-sm rounded-3xl p-8 shadow-xs">
+        <div className="py-20 text-center border-2 border-dashed border-slate-200 bg-white/70 backdrop-blur-sm rounded-3xl p-8">
           <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mx-auto mb-4">
             <ClipboardCheck className="w-8 h-8 text-blue-600" />
           </div>
@@ -234,24 +234,15 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
           <p className="text-slate-500 max-w-md mx-auto text-xs mt-1.5 leading-relaxed">
             A site survey captures essential measurements, MEP points, wall conditions, and photos before design work begins.
           </p>
-          {isAssignedSurveyor && (
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="mt-5 px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow-xs inline-flex items-center gap-2 transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              Lodge Survey Report
-            </button>
-          )}
         </div>
       ) : (
         <div className="space-y-6">
 
           {/* ── 1. Executive Summary Hero Card ── */}
-          <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-xs relative overflow-hidden space-y-6">
+          <div className="bg-white border border-slate-200/80 rounded-3xl p-6 relative overflow-hidden space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-100">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-blue-50 border border-blue-150 flex items-center justify-center text-blue-600 shrink-0 shadow-2xs">
+                <div className="w-11 h-11 rounded-2xl bg-blue-50 border border-blue-150 flex items-center justify-center text-blue-600 shrink-0">
                   <Map className="w-5 h-5" />
                 </div>
                 <div>
@@ -267,21 +258,51 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 self-start md:self-auto">
+              <div className="flex items-center gap-2.5 flex-wrap self-start md:self-auto">
                 {badge && StatusIcon && (
-                  <div className={cn("px-3.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-2 shrink-0 shadow-2xs", badge.bg, badge.color, badge.border)}>
-                    <StatusIcon className="w-4 h-4" />
+                  <div className={cn("px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 shrink-0", badge.bg, badge.color, badge.border)}>
+                    <StatusIcon className="w-3.5 h-3.5" />
                     <span>{survey.status}</span>
                   </div>
                 )}
                 {((isAssignedSurveyor || isAdminOrManager || String((survey as any)?.surveyor?._id || (survey as any)?.surveyor) === String(user?.id || user?._id)) && (canUpdateSurvey || canCreateSurvey || isAdminOrManager)) && survey.status !== 'Approved' && (
                   <button
                     onClick={() => setIsModalOpen(true)}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
                   >
                     <Edit2 className="w-3.5 h-3.5 text-blue-600" />
                     <span>Edit</span>
                   </button>
+                )}
+                {canApproveSurvey && survey.status === 'Submitted' && (
+                  <>
+                    <button
+                      disabled={isProcessing}
+                      onClick={() => setIsRejectOpen(true)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                      <span>Reject </span>
+                    </button>
+                    <button
+                      disabled={isProcessing}
+                      onClick={async () => {
+                        const ok = await confirm({
+                          title: 'Approve Survey Report',
+                          message: 'Are you sure you want to approve this survey report? This will advance the project status to "Planning".',
+                          confirmText: 'Approve',
+                          type: 'success',
+                        });
+                        if (ok) {
+                          handleAction('Approve');
+                        }
+                      }}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                      <span>Approve </span>
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -289,7 +310,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
             {/* Metadata Bar */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50/70 border border-slate-150/70 rounded-2xl p-4">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold flex items-center justify-center uppercase shrink-0 text-xs shadow-2xs">
+                <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold flex items-center justify-center uppercase shrink-0 text-xs">
                   {surveyorName.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
@@ -299,7 +320,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-700 flex items-center justify-center shrink-0 shadow-2xs">
+                <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-700 flex items-center justify-center shrink-0">
                   <Calendar className="w-4 h-4 text-blue-600" />
                 </div>
                 <div>
@@ -311,7 +332,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-700 flex items-center justify-center shrink-0 shadow-2xs">
+                <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-700 flex items-center justify-center shrink-0">
                   <DollarSign className={cn("w-4 h-4", survey.affectsBudget ? "text-rose-600" : "text-emerald-600")} />
                 </div>
                 <div>
@@ -337,7 +358,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
 
           {/* ── 2. Bento Section: Room & Space Specifications ── */}
           {isInterior && (
-            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-xs space-y-4">
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 space-y-4">
               <div className="flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-blue-600" />
                 <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Space & Room Specifications</h3>
@@ -395,7 +416,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
             {/* MEP Services Card */}
-            <div className="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-xs space-y-4">
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-5 space-y-4">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
                 <Zap className="w-4 h-4 text-amber-500" />
                 <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">MEP & Utility Readiness</h3>
@@ -422,7 +443,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
             </div>
 
             {/* Freight Logistics Card */}
-            <div className="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-xs space-y-4">
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-5 space-y-4">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
                 <Truck className="w-4 h-4 text-blue-600" />
                 <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Material Logistics & Access</h3>
@@ -461,7 +482,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
           {/* ── 4. Notes & Observations Hub ── */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {survey.clientStylePreference && (
-              <div className="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-xs space-y-2">
+              <div className="bg-white border border-slate-200/80 rounded-3xl p-5 space-y-2">
                 <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
                   <Sparkles className="w-4 h-4 text-purple-600" />
                   <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Client Design Preferences</h4>
@@ -470,7 +491,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
               </div>
             )}
 
-            <div className="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-xs space-y-2">
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-5 space-y-2">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
                 <FileText className="w-4 h-4 text-blue-600" />
                 <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Surveyor Comments</h4>
@@ -483,7 +504,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
 
           {/* ── 5. Site & Room Photos Gallery ── */}
           {((survey.additionalPhotos && survey.additionalPhotos.length > 0) || survey.observationImage) && (
-            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-xs space-y-4">
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
                   <ImageIcon className="w-4 h-4 text-blue-600" />
@@ -498,7 +519,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
                 {survey.observationImage && (
                   <div
                     onClick={() => setPreviewImage(survey.observationImage)}
-                    className="h-32 bg-slate-100 border border-slate-200 rounded-2xl overflow-hidden cursor-zoom-in hover:opacity-90 transition-all relative group shadow-2xs"
+                    className="h-32 bg-slate-100 border border-slate-200 rounded-2xl overflow-hidden cursor-zoom-in hover:opacity-90 transition-all relative group"
                   >
                     <img src={survey.observationImage} alt="Main observation" className="w-full h-full object-cover" />
                     <span className="absolute bottom-1.5 left-1.5 bg-black/60 backdrop-blur-xs text-white text-[9px] font-bold px-2 py-0.5 rounded-md">
@@ -510,7 +531,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
                   <div
                     key={idx}
                     onClick={() => setPreviewImage(url)}
-                    className="h-32 bg-slate-100 border border-slate-200 rounded-2xl overflow-hidden cursor-zoom-in hover:opacity-90 transition-all shadow-2xs"
+                    className="h-32 bg-slate-100 border border-slate-200 rounded-2xl overflow-hidden cursor-zoom-in hover:opacity-90 transition-all"
                   >
                     <img src={url} alt={`Space photo ${idx + 1}`} className="w-full h-full object-cover" />
                   </div>
@@ -521,7 +542,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
 
           {/* ── 6. Budget Change Request Box ── */}
           {survey.affectsBudget && (
-            <div className="p-6 bg-gradient-to-br from-rose-50 to-red-50 border border-rose-200 rounded-3xl space-y-4 shadow-xs">
+            <div className="p-6 bg-gradient-to-br from-rose-50 to-red-50 border border-rose-200 rounded-3xl space-y-4">
               <div className="flex items-center gap-2.5 text-rose-700">
                 <AlertCircle className="w-5 h-5 shrink-0" />
                 <h4 className="text-xs font-black uppercase tracking-wider">Budget Modification Requested</h4>
@@ -553,38 +574,6 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
                   <span>Request Sent for Admin Approval</span>
                 </div>
               )}
-            </div>
-          )}
-
-          {/* ── 7. Admin Executive Decision Bar ── */}
-          {canApproveSurvey && survey.status === 'Submitted' && (
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <button
-                disabled={isProcessing}
-                onClick={() => setIsRejectOpen(true)}
-                className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-2xl text-xs font-bold transition-all cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-                <span>Reject & Request Revision</span>
-              </button>
-              <button
-                disabled={isProcessing}
-                onClick={async () => {
-                  const ok = await confirm({
-                    title: 'Approve Survey Report',
-                    message: 'Are you sure you want to approve this survey report? This will advance the project status to "Planning".',
-                    confirmText: 'Approve & Advance',
-                    type: 'success',
-                  });
-                  if (ok) {
-                    handleAction('Approve');
-                  }
-                }}
-                className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-bold transition-all shadow-xs cursor-pointer"
-              >
-                {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                <span>Approve & Advance Project</span>
-              </button>
             </div>
           )}
         </div>

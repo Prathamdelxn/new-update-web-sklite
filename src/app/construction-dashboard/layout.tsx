@@ -71,7 +71,7 @@ export default function ConstructionDashboardLayout({
       <div 
         className={cn(
           "flex flex-col min-h-screen transition-all duration-200",
-          isCollapsed ? "lg:pl-[72px]" : "lg:pl-[260px]"
+          isCollapsed ? "lg:pl-[60px]" : "lg:pl-[260px]"
         )}
       >
         <Topnav 

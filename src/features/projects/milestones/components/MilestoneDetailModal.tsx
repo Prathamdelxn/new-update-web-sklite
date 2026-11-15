@@ -314,7 +314,7 @@ export const MilestoneDetailModal: React.FC<Props> = ({
             exit={{ opacity: 0, scale: 0.96, y: 20 }}
             className="w-full max-w-2xl relative z-10 max-h-[90vh] flex flex-col"
           >
-            <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col max-h-[90vh]">
+            <div className="bg-white rounded-2xl border border-gray-200 flex flex-col max-h-[90vh]">
 
               {/* ── Header ── */}
               <div className="px-6 py-5 border-b border-gray-100 shrink-0">
@@ -684,7 +684,7 @@ export const MilestoneDetailModal: React.FC<Props> = ({
                                 <button
                                   onClick={() => handleSubmitTask(i)}
                                   disabled={isSubmitting || form.uploadingPhoto}
-                                  className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-xs font-bold text-white transition-all shadow-sm flex items-center justify-center gap-2"
+                                  className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-xs font-bold text-white transition-all flex items-center justify-center gap-2"
                                 >
                                   {isSubmitting || form.uploadingPhoto
                                     ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />{form.uploadingPhoto ? 'Uploading…' : 'Submitting…'}</>

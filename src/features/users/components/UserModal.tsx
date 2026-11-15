@@ -2,13 +2,30 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Loader2, UserPlus, UserCog, Mail, Lock, Phone, FolderOpen, Check, ChevronDown, Search, Eye, EyeOff, Copy, CheckCheck } from 'lucide-react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import {
+  X,
+  Loader2,
+  UserPlus,
+  UserCog,
+  User,
+  Mail,
+  Lock,
+  Phone,
+  FolderOpen,
+  Check,
+  ChevronDown,
+  Search,
+  Eye,
+  EyeOff,
+  Copy,
+  CheckCheck,
+  Shield,
+  CheckCircle2,
+  Trash2,
+} from 'lucide-react';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
 import { cn } from '@/lib/utils';
-import 'react-phone-number-input/style.css';
-import PhoneInput from 'react-phone-number-input';
 
 interface UserModalProps {
   isOpen: boolean;
@@ -17,11 +34,18 @@ interface UserModalProps {
   initialData?: any;
 }
 
-const inputCls = 'w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all';
-
-export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess, initialData }) => {
+export const UserModal: React.FC<UserModalProps> = ({
+  isOpen,
+  onClose,
+  onSuccess,
+  initialData,
+}) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [createdCreds, setCreatedCreds] = useState<{ name: string; email: string; password: string } | null>(null);
+  const [createdCreds, setCreatedCreds] = useState<{
+    name: string;
+    email: string;
+    password: string;
+  } | null>(null);
   const [showCredsPassword, setShowCredsPassword] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [roles, setRoles] = useState<any[]>([]);
@@ -52,14 +76,35 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
           api.get('/projects'),
         ]);
         setRoles(rolesRes.data || []);
-        setProjects(Array.isArray(projectsRes.data) ? projectsRes.data : projectsRes.data?.projects ?? []);
+        setProjects(
+          Array.isArray(projectsRes.data)
+            ? projectsRes.data
+            : projectsRes.data?.projects ?? []
+        );
       } catch {
-        // silent
+        // silent error handling for initial load
       }
     };
     load();
 
     if (initialData) {
+      const roleName = typeof initialData.role === 'object' ? initialData.role?.name : (typeof initialData.role === 'string' ? initialData.role : '');
+      const isTargetAdmin =
+        roleName?.toLowerCase() === 'admin' ||
+        initialData.isAdmin === true ||
+        initialData.isSystemRole === true ||
+        (typeof initialData.role === 'object' && (
+          initialData.role?.name?.toLowerCase() === 'admin' ||
+          initialData.role?.permissions?.includes('*') ||
+          initialData.role?.isSystemRole === true
+        ));
+
+      if (isTargetAdmin) {
+        toast.error('Admin accounts are system-protected and cannot be edited.');
+        onClose();
+        return;
+      }
+
       Promise.resolve().then(() => {
         setFormData({
           name: initialData.name || '',
@@ -70,12 +115,9 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
         setSelectedRole(
           typeof initialData.role === 'object' ? initialData.role : null
         );
-        
+
         const pRoles: Record<string, string> = {};
         const projArr: any[] = [];
-        // Entries with no linked project (project: null) are orphaned
-        // assignments left over from elsewhere — they don't reference a real
-        // project, so there's nothing to display or resubmit for them.
         (initialData.projects || []).forEach((p: any) => {
           if (p.project) {
             projArr.push(p.project);
@@ -94,6 +136,7 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
       });
     }
     setProjectSearch('');
+    setShowCredsPassword(false);
   }, [isOpen, initialData]);
 
   const copyToClipboard = (text: string, field: string) => {
@@ -103,68 +146,89 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
   };
 
   const toggleProject = (project: any) => {
-    setSelectedProjects(prev => {
-      const isSelected = prev.some(p => p._id === project._id);
+    setSelectedProjects((prev) => {
+      const isSelected = prev.some((p) => p._id === project._id);
       if (isSelected) {
-        setProjectRoles(roles => {
+        setProjectRoles((roles) => {
           const newRoles = { ...roles };
           delete newRoles[project._id];
           return newRoles;
         });
-        return prev.filter(p => p._id !== project._id);
+        return prev.filter((p) => p._id !== project._id);
       }
       return [...prev, project];
     });
   };
 
-  const filteredProjects = projects.filter(p =>
+  const removeProject = (projectId: string) => {
+    setSelectedProjects((prev) => prev.filter((p) => p._id !== projectId));
+    setProjectRoles((roles) => {
+      const next = { ...roles };
+      delete next[projectId];
+      return next;
+    });
+  };
+
+  const filteredProjects = projects.filter((p) =>
     p.name?.toLowerCase().includes(projectSearch.toLowerCase())
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.email.trim()) {
-      toast.error('Please enter at least a name and email.');
+      toast.error('Please enter full name and email address.');
       return;
     }
 
     const cleanPhone = formData.mobile.trim().replace(/[\s-]/g, '');
     if (!cleanPhone) {
-      toast.error('Please enter a mobile number.');
+      toast.error('Please enter a mobile phone number.');
       return;
     }
     if (!/^\+?[0-9]{7,15}$/.test(cleanPhone)) {
-      toast.error('Please enter a valid mobile number (digits only, e.g. +91 9876543210).');
+      toast.error(
+        'Please enter a valid mobile number (e.g. +91 9876543210 or 10 digits).'
+      );
       return;
     }
 
     setIsLoading(true);
     try {
       const payload: any = {
-        name: formData.name,
-        email: formData.email,
-        phoneNumber: formData.mobile,
-        roleId: selectedRole?._id,
-        projects: selectedProjects.map(p => ({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phoneNumber: cleanPhone,
+        roleId: selectedRole?._id || undefined,
+        projects: selectedProjects.map((p) => ({
           project: p._id,
-          role: projectRoles[p._id] || undefined
+          role: projectRoles[p._id] || undefined,
         })),
       };
+
       if (isEditing) {
-        if (formData.password?.trim()) payload.password = formData.password.trim();
+        if (formData.password?.trim()) {
+          payload.password = formData.password.trim();
+        }
         await api.patch(`/users/${initialData._id}`, payload);
-        toast.success('Member updated successfully!');
+        toast.success('Team member updated successfully!');
         onSuccess();
         onClose();
       } else {
         const finalPassword = formData.password?.trim() || 'welcome123';
         payload.password = finalPassword;
         await api.post('/users', payload);
-        setCreatedCreds({ name: formData.name, email: formData.email, password: finalPassword });
+        setCreatedCreds({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          password: finalPassword,
+        });
         onSuccess();
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || (isEditing ? 'Failed to update user' : 'Failed to onboard user'));
+      toast.error(
+        error.response?.data?.message ||
+          (isEditing ? 'Failed to update user' : 'Failed to onboard user')
+      );
     } finally {
       setIsLoading(false);
     }
@@ -172,321 +236,616 @@ export const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess
 
   return (
     <div className="relative">
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4">
+            {/* Backdrop */}
             <motion.div
-              key="user-modal-backdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={onClose}
-              className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"
             />
+
+            {/* Modal Container — Compact, 2-column landscape design to avoid scrolling */}
             <motion.div
-              key="user-modal-content"
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-lg relative z-10"
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+              className="w-full max-w-3xl relative z-10"
             >
-            <GlassCard className="border-gray-200" gradient>
-              <div className="p-8 max-h-[90vh] overflow-y-auto custom-scrollbar">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-3 rounded-2xl bg-blue-50 border border-blue-200">
-                      {isEditing ? <UserCog className="w-6 h-6 text-blue-600" /> : <UserPlus className="w-6 h-6 text-blue-600" />}
+              <div className="bg-white rounded-2xl border border-slate-300 overflow-hidden flex flex-col">
+                
+                {/* ── Modal Header ── */}
+                <div className="px-5 py-3.5 border-b border-slate-150 flex items-center justify-between shrink-0 bg-gradient-to-r from-slate-50 via-white to-slate-50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-150 text-blue-600 flex items-center justify-center shrink-0">
+                      {isEditing ? (
+                        <UserCog className="w-4.5 h-4.5 stroke-[2]" />
+                      ) : (
+                        <UserPlus className="w-4.5 h-4.5 stroke-[2]" />
+                      )}
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-gray-900">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9.5px] font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-150">
+                          {isEditing ? 'Member Management' : 'Team Onboarding'}
+                        </span>
+                      </div>
+                      <h2 className="text-sm font-extrabold text-slate-900 tracking-tight mt-0.5">
                         {isEditing ? 'Update Team Member' : 'Onboard New Member'}
                       </h2>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        {isEditing ? 'Update team member details.' : 'Invite a team member to the platform.'}
-                      </p>
                     </div>
                   </div>
-                  <button onClick={onClose} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Full Name */}
-                  <div>
-                    <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px] mb-3">Full Name</label>
-                    <input
-                      type="text" required value={formData.name}
-                      onChange={e => setFormData(f => ({ ...f, name: e.target.value }))}
-                      className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl px-4 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
-                      placeholder="e.g. Robert Fox"
-                    />
-                  </div>
-
-                  {/* Email */}
-                  <div>
-                    <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px] mb-3">Email Address</label>
-                    <input
-                      type="email" required value={formData.email}
-                      onChange={e => setFormData(f => ({ ...f, email: e.target.value }))}
-                      className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl px-4 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
-                      placeholder="name@example.com"
-                    />
-                  </div>
-
-                  {/* Mobile Number */}
-                  <div>
-                    <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px] mb-3">Mobile Number</label>
-                    <input
-                      type="tel" required value={formData.mobile}
-                      onChange={e => setFormData(f => ({ ...f, mobile: e.target.value }))}
-                      className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl px-4 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
-                      placeholder="Enter mobile number"
-                    />
-                  </div>
-
-                  {/* Password */}
-                  {!isEditing && (
-                    <div>
-                      <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px] mb-3">Password</label>
-                      <div className="relative">
-                        <input
-                          type={showCredsPassword ? "text" : "password"} required={!isEditing} value={formData.password}
-                          onChange={e => setFormData(f => ({ ...f, password: e.target.value }))}
-                          className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl pl-4 pr-12 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
-                          placeholder="Leave blank for default"
-                        />
-                        <button type="button" onClick={() => setShowCredsPassword(v => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600">
-                          {showCredsPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Global Role — org-wide default role, required for actions that
-                      aren't scoped to any single project (e.g. creating a new
-                      project in the first place). Project-specific roles below
-                      are additive on top of this, not a substitute for it. */}
-                  <div>
-                    <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px] mb-3">Global Role</label>
-                    <select
-                      value={selectedRole?._id || ''}
-                      onChange={e => setSelectedRole(roles.find(r => r._id === e.target.value) || null)}
-                      className="w-full h-[56px] bg-white border border-blue-100 rounded-2xl px-4 text-[15px] font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
-                    >
-                      <option value="">No global role (project-scoped access only)</option>
-                      {roles.map(role => (
-                        <option key={role._id} value={role._id}>{role.name}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Project Assignments */}
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <label className="block text-[11px] font-black text-blue-500 uppercase tracking-[1.5px]">Project Assignments</label>
-                      <button
-                        type="button"
-                        onClick={() => setIsProjectPickerOpen(true)}
-                        className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700"
-                      >
-                        <FolderOpen className="w-3.5 h-3.5" />
-                        {selectedProjects.length > 0 ? 'Edit Projects' : 'Assign Projects'}
-                      </button>
-                    </div>
-
-                    {selectedProjects.length === 0 ? (
-                      <p className="text-xs text-slate-400 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
-                        No projects assigned yet.
-                      </p>
-                    ) : (
-                      <div className="space-y-2">
-                        {selectedProjects.map(project => (
-                          <div key={project._id} className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl">
-                            <span className="text-sm font-semibold text-gray-900 truncate flex-1">{project.name}</span>
-                            <select
-                              value={projectRoles[project._id] || ''}
-                              onChange={e => setProjectRoles(prev => ({ ...prev, [project._id]: e.target.value }))}
-                              className="text-xs font-semibold bg-white border border-gray-200 rounded-lg py-1.5 px-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                            >
-                              <option value="">Use global role</option>
-                              {roles.map(role => (
-                                <option key={role._id} value={role._id}>{role.name}</option>
-                              ))}
-                            </select>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Footer */}
-                  <div className="pt-2">
-                    <button
-                      type="submit" disabled={isLoading}
-                      className="w-full h-[58px] rounded-[18px] bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-[16px] font-bold transition-all disabled:opacity-50 shadow-[0_8px_16px_-6px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2"
-                    >
-                      {isLoading ? (
-                        <><Loader2 className="w-5 h-5 animate-spin" /><span>{isEditing ? 'Saving...' : 'Initializing...'}</span></>
-                      ) : (
-                        <span>{isEditing ? 'Save Changes' : 'Initialize Member'}</span>
-                      )}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </GlassCard>
-          </motion.div>
-        </div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {isProjectPickerOpen && (
-          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-            <motion.div
-              key="project-picker-backdrop"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setIsProjectPickerOpen(false)}
-              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            />
-            <motion.div
-              key="project-picker-content"
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-md relative z-10"
-            >
-              <GlassCard className="border-gray-200 p-6" gradient>
-                <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-lg font-bold text-gray-900">Select Projects</h3>
-                  <button onClick={() => setIsProjectPickerOpen(false)} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                    title="Close modal"
+                  >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
 
-                {/* Search */}
-                <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="text" value={projectSearch}
-                    onChange={e => setProjectSearch(e.target.value)}
-                    className={`${inputCls} pl-10`} placeholder="Search projects..."
-                    autoFocus
-                  />
-                </div>
-
-                <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar">
-                  {filteredProjects.length === 0 ? (
-                    <p className="text-sm text-slate-400 text-center py-8">No projects found</p>
-                  ) : filteredProjects.map((project, idx) => {
-                    const isSelected = selectedProjects.some(p => p._id === project._id);
-                    return (
-                      <button
-                        key={project._id || `project-${idx}`} type="button"
-                        onClick={() => toggleProject(project)}
-                        className={cn(
-                          'w-full flex items-center justify-between px-4 py-3 rounded-xl border text-left transition-all',
-                          isSelected
-                            ? 'bg-blue-50 border-blue-300 text-blue-700'
-                            : 'bg-gray-50 border-gray-200 text-slate-700 hover:border-blue-200'
-                        )}
-                      >
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold truncate">{project.name}</p>
-                          {project.status && (
-                            <p className="text-[10px] text-slate-400 uppercase tracking-wider">{project.status}</p>
-                          )}
+                {/* ── Form Body: Side-by-Side Panels (Non-scrollable on desktop) ── */}
+                <form onSubmit={handleSubmit} className="flex flex-col">
+                  <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    {/* ── Left Column: Personal & Contact Information ── */}
+                    <div className="bg-slate-50/70 border border-slate-200/90 rounded-xl p-4 space-y-2.5 flex flex-col justify-between">
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-200/80">
+                        <div className="flex items-center gap-1.5">
+                          <User className="w-3.5 h-3.5 text-blue-600" />
+                          <h3 className="text-xs font-bold text-slate-900 tracking-tight">
+                            Identity & Contact
+                          </h3>
                         </div>
-                        {isSelected && <Check className="w-4 h-4 text-blue-600 shrink-0" />}
-                      </button>
-                    );
-                  })}
-                </div>
+                        <span className="text-[10px] font-semibold text-slate-400">
+                          Personal Info
+                        </span>
+                      </div>
 
-                <div className="mt-5 flex gap-3 pt-4 border-t border-gray-200">
-                  <button
-                    type="button" onClick={() => setSelectedProjects([])}
-                    className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-bold transition-all text-sm"
-                  >
-                    Clear All
-                  </button>
-                  <button
-                    type="button" onClick={() => setIsProjectPickerOpen(false)}
-                    className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all text-sm shadow-lg shadow-blue-600/20"
-                  >
-                    Done ({selectedProjects.length})
-                  </button>
-                </div>
-              </GlassCard>
+                      {/* Full Name */}
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                          Full Name <span className="text-rose-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                          <input
+                            type="text"
+                            required
+                            value={formData.name}
+                            onChange={(e) =>
+                              setFormData((f) => ({ ...f, name: e.target.value }))
+                            }
+                            placeholder="e.g. Robert Fox"
+                            className="w-full pl-8.5 pr-3 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Email Address */}
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                          Email Address <span className="text-rose-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                          <input
+                            type="email"
+                            required
+                            value={formData.email}
+                            onChange={(e) =>
+                              setFormData((f) => ({ ...f, email: e.target.value }))
+                            }
+                            placeholder="name@company.com"
+                            className="w-full pl-8.5 pr-3 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Mobile Number & Password in a tight sub-grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {/* Mobile Number */}
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                            Mobile <span className="text-rose-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <Phone className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                            <input
+                              type="tel"
+                              required
+                              value={formData.mobile}
+                              onChange={(e) =>
+                                setFormData((f) => ({ ...f, mobile: e.target.value }))
+                              }
+                              placeholder="+91..."
+                              className="w-full pl-7.5 pr-2 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Password */}
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-700 mb-1 truncate">
+                            {isEditing ? 'New Password' : 'Password'}
+                            <span className="text-slate-400 font-normal ml-0.5 text-[10px]">
+                              {isEditing ? '(Option)' : '(Default)'}
+                            </span>
+                          </label>
+                          <div className="relative">
+                            <Lock className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                            <input
+                              type={showCredsPassword ? 'text' : 'password'}
+                              value={formData.password}
+                              onChange={(e) =>
+                                setFormData((f) => ({
+                                  ...f,
+                                  password: e.target.value,
+                                }))
+                              }
+                              placeholder={isEditing ? 'Unchanged' : 'welcome123'}
+                              className="w-full pl-7.5 pr-7 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowCredsPassword((v) => !v)}
+                              className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded transition-colors"
+                              title={showCredsPassword ? 'Hide' : 'Show'}
+                            >
+                              {showCredsPassword ? (
+                                <EyeOff className="w-3 h-3" />
+                              ) : (
+                                <Eye className="w-3 h-3" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ── Right Column: Organisation Role & Project Scopes ── */}
+                    <div className="bg-slate-50/70 border border-slate-200/90 rounded-xl p-4 space-y-2.5 flex flex-col justify-between">
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-200/80">
+                        <div className="flex items-center gap-1.5">
+                          <Shield className="w-3.5 h-3.5 text-blue-600" />
+                          <h3 className="text-xs font-bold text-slate-900 tracking-tight">
+                            Access & Permissions
+                          </h3>
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-400">
+                          Role & Scope
+                        </span>
+                      </div>
+
+                      {/* Global Role */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-[11px] font-bold text-slate-700">
+                            Global Organisation Role
+                          </label>
+                          <span className="text-[10px] text-slate-400">System-wide</span>
+                        </div>
+                        <div className="relative">
+                          <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                          <select
+                            value={selectedRole?._id || ''}
+                            onChange={(e) =>
+                              setSelectedRole(
+                                roles.find((r) => r._id === e.target.value) || null
+                              )
+                            }
+                            className="w-full pl-8.5 pr-8 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300 appearance-none cursor-pointer"
+                          >
+                            <option value="">No global role (project-scoped access)</option>
+                            {roles.map((role) => (
+                              <option key={role._id} value={role._id}>
+                                {role.name}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                        </div>
+                      </div>
+
+                      {/* Project Assignments */}
+                      <div className="flex-1 flex flex-col pt-1">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <FolderOpen className="w-3.5 h-3.5 text-blue-600" />
+                            <label className="text-[11px] font-bold text-slate-700">
+                              Assigned Projects
+                            </label>
+                            <span className="text-[9.5px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.2 rounded-full">
+                              {selectedProjects.length}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setIsProjectPickerOpen(true)}
+                            className="flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 transition-colors cursor-pointer"
+                          >
+                            <FolderOpen className="w-3 h-3" />
+                            <span>{selectedProjects.length > 0 ? 'Edit Selection' : '+ Assign'}</span>
+                          </button>
+                        </div>
+
+                        {selectedProjects.length === 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => setIsProjectPickerOpen(true)}
+                            className="flex-1 min-h-[76px] border border-dashed border-slate-200/90 rounded-lg bg-white/70 hover:bg-blue-50/50 hover:border-blue-300 transition-all flex flex-col items-center justify-center p-2 text-center cursor-pointer group"
+                          >
+                            <FolderOpen className="w-4 h-4 text-slate-300 group-hover:text-blue-500 mb-0.5 transition-colors" />
+                            <p className="text-xs font-bold text-slate-600 group-hover:text-blue-600">
+                              Assign Projects
+                            </p>
+                            <p className="text-[10px] text-slate-400">
+                              Restrict access to specific projects
+                            </p>
+                          </button>
+                        ) : (
+                          <div className="space-y-1.5 max-h-[82px] overflow-y-auto custom-scrollbar pr-0.5">
+                            {selectedProjects.map((project) => (
+                              <div
+                                key={project._id}
+                                className="flex items-center gap-2 px-2.5 py-1.5 bg-white border border-slate-200/90 rounded-lg hover:border-slate-300 transition-all"
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-xs font-bold text-slate-900 truncate">
+                                    {project.name}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <select
+                                    value={projectRoles[project._id] || ''}
+                                    onChange={(e) =>
+                                      setProjectRoles((prev) => ({
+                                        ...prev,
+                                        [project._id]: e.target.value,
+                                      }))
+                                    }
+                                    className="text-[10.5px] font-semibold bg-slate-50 border border-slate-200 rounded py-0.5 px-1.5 text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                                  >
+                                    <option value="">Global role</option>
+                                    {roles.map((role) => (
+                                      <option key={role._id} value={role._id}>
+                                        {role.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeProject(project._id)}
+                                    className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+                                    title="Remove project"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── Sticky Modal Footer ── */}
+                  <div className="px-5 py-3 bg-slate-50 border-t border-slate-150 flex items-center justify-between shrink-0">
+                    <span className="text-[11px] font-semibold text-slate-400">
+                      <span className="text-rose-500 font-bold">*</span> Required fields marked
+                    </span>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={onClose}
+                        className="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="flex items-center gap-1.5 px-4.5 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-xs border border-slate-300 hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer"
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>
+                              {isEditing ? 'Saving...' : 'Initializing...'}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" />
+                            <span>
+                              {isEditing ? 'Save Changes' : 'Initialize Member'}
+                            </span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* Credential reveal modal — shown after successful user creation */}
+      {/* ── Project Picker Sub-Modal ── */}
       <AnimatePresence>
-        {createdCreds && (
-          <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+        {isProjectPickerOpen && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4">
             <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsProjectPickerOpen(false)}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
               className="w-full max-w-md relative z-10"
             >
-              <GlassCard className="border-emerald-200 p-8" gradient>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200">
-                    <Check className="w-6 h-6 text-emerald-600" />
+              <div className="bg-white rounded-2xl border border-slate-300 overflow-hidden max-h-[85vh] flex flex-col">
+                {/* Header */}
+                <div className="px-5 py-3.5 border-b border-slate-150 flex items-center justify-between shrink-0 bg-gradient-to-r from-slate-50 via-white to-slate-50">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-150 text-blue-600 flex items-center justify-center shrink-0">
+                      <FolderOpen className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-extrabold text-slate-900">
+                        Select Projects
+                      </h3>
+                      <p className="text-[10.5px] font-semibold text-slate-400">
+                        Choose projects to assign this member
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900">Member Added!</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">Share these login credentials securely.</p>
+                  <button
+                    type="button"
+                    onClick={() => setIsProjectPickerOpen(false)}
+                    className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="p-4 space-y-3 flex-1 overflow-hidden flex flex-col">
+                  {/* Search */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="text"
+                      value={projectSearch}
+                      onChange={(e) => setProjectSearch(e.target.value)}
+                      placeholder="Search projects by name..."
+                      className="w-full pl-9 pr-3 py-1.5 bg-slate-50/70 border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
+                      autoFocus
+                    />
+                  </div>
+
+                  {/* Project List */}
+                  <div className="space-y-1.5 flex-1 overflow-y-auto custom-scrollbar pr-1 max-h-56">
+                    {filteredProjects.length === 0 ? (
+                      <div className="text-center py-6">
+                        <FolderOpen className="w-7 h-7 text-slate-300 mx-auto mb-1.5" />
+                        <p className="text-xs font-semibold text-slate-500">
+                          No matching projects found
+                        </p>
+                      </div>
+                    ) : (
+                      filteredProjects.map((project, idx) => {
+                        const isSelected = selectedProjects.some(
+                          (p) => p._id === project._id
+                        );
+                        return (
+                          <button
+                            key={project._id || `proj-${idx}`}
+                            type="button"
+                            onClick={() => toggleProject(project)}
+                            className={cn(
+                              'w-full flex items-center justify-between p-2.5 rounded-xl border text-left transition-all cursor-pointer',
+                              isSelected
+                                ? 'bg-blue-50/70 border-blue-300'
+                                : 'bg-white border-slate-200/80 hover:bg-slate-50 hover:border-slate-300'
+                            )}
+                          >
+                            <div className="min-w-0 pr-2">
+                              <p
+                                className={cn(
+                                  'text-xs font-bold truncate',
+                                  isSelected ? 'text-blue-900' : 'text-slate-800'
+                                )}
+                              >
+                                {project.name}
+                              </p>
+                              {project.status && (
+                                <span className="text-[9.5px] font-semibold text-slate-400 uppercase tracking-wider">
+                                  {project.status}
+                                </span>
+                              )}
+                            </div>
+                            <div
+                              className={cn(
+                                'w-5 h-5 rounded-md flex items-center justify-center shrink-0 border transition-all',
+                                isSelected
+                                  ? 'bg-blue-600 border-blue-600 text-white'
+                                  : 'border-slate-300 bg-white'
+                              )}
+                            >
+                              {isSelected && (
+                                <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })
+                    )}
                   </div>
                 </div>
 
-                <div className="space-y-3 mb-6">
-                  {([
-                    { label: 'Full Name', value: createdCreds.name, field: 'name', secret: false },
-                    { label: 'Email', value: createdCreds.email, field: 'email', secret: false },
-                    { label: 'Password', value: createdCreds.password, field: 'password', secret: true },
-                  ] as Array<{ label: string; value: string; field: string; secret: boolean }>).map(({ label, value, field, secret }) => (
-                    <div key={field} className="flex items-center gap-3 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl">
+                {/* Footer */}
+                <div className="px-5 py-3 bg-slate-50 border-t border-slate-150 flex items-center justify-between shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProjects([])}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 text-xs font-bold transition-all cursor-pointer"
+                  >
+                    Clear All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsProjectPickerOpen(false)}
+                    className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-xs font-bold transition-all border border-slate-300 cursor-pointer"
+                  >
+                    Apply Selection ({selectedProjects.length})
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Credential Reveal Modal ── */}
+      <AnimatePresence>
+        {createdCreds && (
+          <div className="fixed inset-0 z-[80] flex items-center justify-center p-3 sm:p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+              className="w-full max-w-md relative z-10"
+            >
+              <div className="bg-white rounded-2xl border border-emerald-200 overflow-hidden p-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                  <div>
+                    <span className="text-[9.5px] font-extrabold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+                      Success
+                    </span>
+                    <h3 className="text-sm font-extrabold text-slate-900 tracking-tight mt-0.5">
+                      Member Onboarded!
+                    </h3>
+                    <p className="text-[10.5px] font-medium text-slate-500">
+                      Share these initial credentials securely with the member.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 mb-3.5">
+                  {[
+                    {
+                      label: 'Full Name',
+                      value: createdCreds.name,
+                      field: 'name',
+                      secret: false,
+                      icon: User,
+                    },
+                    {
+                      label: 'Email Address',
+                      value: createdCreds.email,
+                      field: 'email',
+                      secret: false,
+                      icon: Mail,
+                    },
+                    {
+                      label: 'Initial Password',
+                      value: createdCreds.password,
+                      field: 'password',
+                      secret: true,
+                      icon: Lock,
+                    },
+                  ].map(({ label, value, field, secret, icon: Icon }) => (
+                    <div
+                      key={field}
+                      className="flex items-center gap-2.5 px-3 py-2 bg-slate-50 border border-slate-200/90 rounded-xl"
+                    >
+                      <div className="w-6.5 h-6.5 rounded-lg bg-white border border-slate-200 text-slate-500 flex items-center justify-center shrink-0">
+                        <Icon className="w-3.5 h-3.5" />
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
-                        <p className="text-sm font-semibold text-gray-900 truncate mt-0.5">
-                          {secret && !showCredsPassword ? '••••••••' : value}
+                        <p className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider">
+                          {label}
+                        </p>
+                        <p className="text-xs font-bold text-slate-900 truncate mt-0.5 font-mono">
+                          {secret && !showCredsPassword ? '••••••••••••' : value}
                         </p>
                       </div>
                       {secret && (
-                        <button type="button" onClick={() => setShowCredsPassword(v => !v)} className="p-1.5 text-slate-400 hover:text-gray-700 transition-colors">
-                          {showCredsPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        <button
+                          type="button"
+                          onClick={() => setShowCredsPassword((v) => !v)}
+                          className="p-1 text-slate-400 hover:text-slate-700 hover:bg-white rounded-lg transition-colors cursor-pointer"
+                          title={
+                            showCredsPassword
+                              ? 'Hide password'
+                              : 'Show password'
+                          }
+                        >
+                          {showCredsPassword ? (
+                            <EyeOff className="w-3.5 h-3.5" />
+                          ) : (
+                            <Eye className="w-3.5 h-3.5" />
+                          )}
                         </button>
                       )}
-                      <button type="button" onClick={() => copyToClipboard(value, field)} className="p-1.5 text-slate-400 hover:text-blue-600 transition-colors">
-                        {copiedField === field ? <CheckCheck className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(value, field)}
+                        className="p-1 text-slate-400 hover:text-blue-600 hover:bg-white rounded-lg transition-colors cursor-pointer"
+                        title="Copy to clipboard"
+                      >
+                        {copiedField === field ? (
+                          <CheckCheck className="w-3.5 h-3.5 text-emerald-600" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
                       </button>
                     </div>
                   ))}
                 </div>
 
-                <p className="text-[11px] text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-5">
-                  Save this password now. It won't be shown again.
-                </p>
+                <div className="flex items-start gap-2 p-2.5 bg-amber-50/80 border border-amber-200 rounded-xl text-amber-800 text-[10.5px] font-semibold mb-4">
+                  <span className="shrink-0 text-sm">⚠️</span>
+                  <span className="leading-relaxed">
+                    Save or copy these credentials now. For security purposes, this password will not be displayed again.
+                  </span>
+                </div>
 
                 <button
                   type="button"
-                  onClick={() => { setCreatedCreds(null); onClose(); }}
-                  className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all shadow-lg shadow-emerald-600/20"
+                  onClick={() => {
+                    setCreatedCreds(null);
+                    onClose();
+                  }}
+                  className="w-full py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs border border-emerald-600/30 transition-all cursor-pointer"
                 >
-                  Done
+                  Done & Close
                 </button>
-              </GlassCard>
+              </div>
             </motion.div>
           </div>
         )}

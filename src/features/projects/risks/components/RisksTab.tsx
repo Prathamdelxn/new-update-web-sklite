@@ -19,6 +19,8 @@ import {
   AlertCircle,
   ShieldCheck,
   Lock,
+  Clock,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import api from '@/services/api.client';
@@ -86,6 +88,23 @@ const getImpactColor = (label: string) => {
     default:          return '#94A3B8';
   }
 };
+
+const StatCard = ({
+  label, value, icon: Icon, accent, bg, sub,
+}: { label: string; value: string | number; icon: React.ElementType; accent: string; bg: string; sub?: string }) => (
+  <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 flex items-center gap-3.5 sm:gap-4 min-w-0 transition-colors duration-200 hover:border-blue-200">
+    <div className={cn('w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 border', bg)}>
+      <Icon className={cn('w-5 h-5', accent)} />
+    </div>
+    <div className="min-w-0 flex-1">
+      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">{label}</p>
+      <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
+        <p className="min-w-0 flex-1 text-xl sm:text-2xl font-bold text-slate-900 leading-tight">{value}</p>
+      </div>
+      {sub && <p className="text-xs text-slate-400 mt-0.5 font-medium">{sub}</p>}
+    </div>
+  </div>
+);
 
 export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
   const { project } = useProjectContext();
@@ -155,10 +174,12 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
 
   if (!canView) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 px-8 bg-white border border-gray-100 rounded-3xl text-center">
-        <Lock className="w-12 h-12 text-slate-300 mb-4" />
-        <h3 className="text-lg font-bold text-gray-900">Access Restricted</h3>
-        <p className="text-sm text-slate-500 mt-2 max-w-sm">
+      <div className="flex flex-col items-center justify-center py-24 bg-white/60 backdrop-blur-sm rounded-2xl border border-slate-200 text-center mt-4">
+        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+          <Lock className="w-8 h-8 text-slate-400" />
+        </div>
+        <h3 className="text-lg font-bold text-slate-900 mb-1">Access Restricted</h3>
+        <p className="text-xs text-slate-500 max-w-sm">
           You don't have permission to view the Risk Management module.
         </p>
       </div>
@@ -168,103 +189,103 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
   return (
     <SkeletonLoader loading={loading} preset="list">
       <div className="space-y-6">
-        {/* Statistics Card */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-md text-white">
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Risk Assessment Overview</h4>
-              <p className="text-xs text-slate-500 mt-0.5">Active risk factors and mitigation statuses</p>
-            </div>
-            <div className="bg-slate-800 px-3 py-1 rounded-lg text-xs font-bold border border-slate-700/50 text-slate-300">
-              {risks.length} Total Risks
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div className="flex flex-col space-y-1">
-              <div className="flex items-center space-x-2 text-xs font-semibold text-slate-400">
-                <span className="w-2 h-2 rounded-full bg-red-500 block" />
-                <span>Critical</span>
-              </div>
-              <span className="text-2xl font-extrabold">{risks.filter(r => r.status === 'Critical').length}</span>
-            </div>
-
-            <div className="flex flex-col space-y-1 border-l border-slate-800 pl-4">
-              <div className="flex items-center space-x-2 text-xs font-semibold text-slate-400">
-                <span className="w-2 h-2 rounded-full bg-amber-500 block" />
-                <span>Active</span>
-              </div>
-              <span className="text-2xl font-extrabold">{risks.filter(r => r.status === 'Active').length}</span>
-            </div>
-
-            <div className="flex flex-col space-y-1 border-l border-slate-800 pl-4">
-              <div className="flex items-center space-x-2 text-xs font-semibold text-slate-400">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 block" />
-                <span>Resolved</span>
-              </div>
-              <span className="text-2xl font-extrabold">{risks.filter(r => r.status === 'Resolved').length}</span>
-            </div>
-          </div>
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            label="Total Risks"
+            value={risks.length}
+            icon={ShieldAlert}
+            accent="text-blue-600"
+            bg="bg-blue-50 border-blue-100"
+            sub={`${risks.filter(r => r.status === 'Critical').length} critical incidents`}
+          />
+          <StatCard
+            label="Critical Risks"
+            value={risks.filter(r => r.status === 'Critical').length}
+            icon={AlertTriangle}
+            accent="text-red-600"
+            bg="bg-red-50 border-red-100"
+            sub={risks.filter(r => r.status === 'Critical').length > 0 ? 'requires immediate action' : 'none detected'}
+          />
+          <StatCard
+            label="Active Risks"
+            value={risks.filter(r => r.status === 'Active').length}
+            icon={Clock}
+            accent="text-amber-600"
+            bg="bg-amber-50 border-amber-100"
+            sub="under active review"
+          />
+          <StatCard
+            label="Resolved Risks"
+            value={risks.filter(r => r.status === 'Resolved').length}
+            icon={ShieldCheck}
+            accent="text-emerald-600"
+            bg="bg-emerald-50 border-emerald-100"
+            sub={risks.length > 0 ? `${Math.round((risks.filter(r => r.status === 'Resolved').length / risks.length) * 100)}% mitigated` : 'all clear'}
+          />
         </div>
 
-        {/* Filters and Search Action Row */}
+        {/* Filters and Header Action Row */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {STATUS_FILTERS.map(f => (
-              <button
-                key={f}
-                onClick={() => setStatusFilter(f)}
-                className={cn(
-                  'px-3 py-1.5 rounded-xl text-xs font-bold border transition-all shadow-2xs',
-                  statusFilter === f
-                    ? f === 'Critical'  ? 'bg-red-600 border-red-600 text-white' :
-                      f === 'Resolved'  ? 'bg-emerald-600 border-emerald-600 text-white' :
-                      f === 'Monitored' ? 'bg-blue-600 border-blue-600 text-white' :
-                      f === 'Active'    ? 'bg-amber-500 border-amber-500 text-white' :
-                                          'bg-slate-900 border-slate-900 text-white'
-                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-900'
-                )}
-              >
-                {f}
-                {f !== 'All' && (
-                  <span className="ml-1.5 opacity-70">
-                    ({risks.filter(r => r.status === f).length})
-                  </span>
-                )}
-              </button>
-            ))}
+          <div>
+            <h3 className="text-lg font-bold text-slate-900 tracking-tight">Risk Registry</h3>
+            <p className="text-xs text-slate-500 mt-0.5">{filteredRisks.length} incidents tracked across active phases</p>
           </div>
 
-          {canCreate && (
-            <button
-              onClick={() => setIsCreateOpen(true)}
-              className="flex items-center justify-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>New Risk</span>
-            </button>
-          )}
-        </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {STATUS_FILTERS.map(f => (
+                <button
+                  key={f}
+                  onClick={() => setStatusFilter(f)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer',
+                    statusFilter === f
+                      ? f === 'Critical'  ? 'bg-red-600 border-red-600 text-white' :
+                        f === 'Resolved'  ? 'bg-emerald-600 border-emerald-600 text-white' :
+                        f === 'Monitored' ? 'bg-blue-600 border-blue-600 text-white' :
+                        f === 'Active'    ? 'bg-amber-500 border-amber-500 text-white' :
+                                            'bg-blue-600 border-blue-600 text-white'
+                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-900'
+                  )}
+                >
+                  {f}
+                  {f !== 'All' && (
+                    <span className="ml-1.5 opacity-70">
+                      ({risks.filter(r => r.status === f).length})
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
 
-        {/* Risk Registry Header */}
-        <div className="border-b border-gray-100 pb-4">
-          <h3 className="text-lg font-bold text-gray-900">Risk Registry</h3>
-          <p className="text-xs text-slate-500 mt-1">{filteredRisks.length} incidents tracked</p>
+            {canCreate && (
+              <button
+                onClick={() => setIsCreateOpen(true)}
+                className="flex items-center justify-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>New Risk</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Risk cards Grid */}
         {filteredRisks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 px-8 bg-slate-50 border border-dashed border-slate-200 rounded-3xl text-center">
-            <div className="p-4 bg-white border border-slate-100 rounded-full shadow-sm mb-4">
-              <ShieldCheck className="w-8 h-8 text-slate-400" />
+          <div className="flex flex-col items-center justify-center py-20 px-8 bg-white/70 backdrop-blur-sm border-2 border-dashed border-slate-200 rounded-2xl text-center">
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center mb-4">
+              <ShieldCheck className="w-7 h-7 text-blue-600" />
             </div>
-            <h3 className="text-base font-bold text-gray-900">No Risks Detected</h3>
-            <p className="text-xs text-slate-500 mt-1.5 max-w-xs">
-              No risk events match the selected criteria. Keep up the good work!
+            <h3 className="text-base font-bold text-slate-900 mb-1">No Risks Detected</h3>
+            <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto leading-relaxed">
+              {statusFilter !== 'All'
+                ? `No risk records match the filter "${statusFilter}".`
+                : 'No risk events or safety hazards recorded for this project.'}
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredRisks.map((risk) => {
               const statusColor = getStatusColor(risk.status);
               const categoryObj = CATEGORIES.find(c => c.name === risk.category);
@@ -273,18 +294,18 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
               return (
                 <div
                   key={risk._id}
-                  className="bg-white border border-slate-150 rounded-3xl p-5 shadow-sm hover:shadow-md hover:border-slate-300 transition-all flex flex-col justify-between"
+                  className="bg-white border border-slate-200 rounded-2xl p-5 hover:border-blue-200 transition-all flex flex-col justify-between"
                 >
                   {/* Top card info */}
                   <div>
                     <div className="flex items-center justify-between gap-4 mb-3">
-                      <div className="flex items-center space-x-2" style={{ color: statusColor }}>
+                      <div className="flex items-center space-x-1.5" style={{ color: statusColor }}>
                         <CategoryIcon className="w-4 h-4" />
-                        <span className="text-[10px] font-black uppercase tracking-wider">
+                        <span className="text-[10px] font-bold uppercase tracking-wider">
                           {risk.category}
                         </span>
                       </div>
-                      <span className={cn('px-2.5 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider', getImpactBadgeClass(risk.impact))}>
+                      <span className={cn('px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider', getImpactBadgeClass(risk.impact))}>
                         {risk.impact}
                       </span>
                     </div>
@@ -299,7 +320,7 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
                   </div>
 
                   {/* Mid card progress */}
-                  <div className="space-y-2 mb-4 border-t border-slate-50 pt-4">
+                  <div className="space-y-2 mb-4 border-t border-slate-100 pt-4">
                     <div className="flex items-center justify-between text-[10px] font-bold text-slate-400">
                       <span>Mitigation Progress</span>
                       <span className="text-slate-900 font-extrabold">{risk.mitigationProgress}%</span>
@@ -316,7 +337,7 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
                   </div>
 
                   {/* Bottom card footer */}
-                  <div className="flex items-center justify-between pt-3 border-t border-slate-50">
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                     <p className="text-[10px] font-semibold text-slate-400">
                       Updated {new Date(risk.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </p>
@@ -328,7 +349,7 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
                           setIsDetailOpen(true);
                         }}
                         title="View Details"
-                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded-xl transition-all"
+                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded-xl transition-all cursor-pointer"
                       >
                         <Eye className="w-3.5 h-3.5" />
                       </button>
@@ -340,7 +361,7 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
                             setIsMitigateOpen(true);
                           }}
                           title="Update Mitigation"
-                          className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 border border-transparent hover:border-amber-100 rounded-xl transition-all"
+                          className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 border border-transparent hover:border-amber-100 rounded-xl transition-all cursor-pointer"
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
@@ -352,7 +373,7 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
                           onClick={() => handleDeleteRisk(risk._id)}
                           disabled={deletingId === risk._id}
                           title="Delete Risk"
-                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-xl transition-all disabled:opacity-40"
+                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-xl transition-all disabled:opacity-40 cursor-pointer"
                         >
                           {deletingId === risk._id ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />

@@ -12,36 +12,44 @@ export default function UsersPage() {
 
   return (
     <UserManagementGate>
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold text-gray-900">Organisation Members</h1>
-          <p className="text-slate-500 mt-1">Manage all organisation-level users, roles, and access permissions.</p>
+      <div className="space-y-4">
+        {/* ── Top Hero Header ── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+                Organisation <span className="text-blue-600">Members</span>
+              </h1>
+            </div>
+            <p className="text-xs font-semibold text-slate-500 mt-0.5">
+              Manage organisation-level team members, access tiers, and governance role permissions.
+            </p>
+          </div>
+
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/80 shrink-0">
+            {([['users', Users, 'Members'], ['roles', Shield, 'Roles & Permissions']] as const).map(([key, Icon, label]) => (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key)}
+                className={cn(
+                  "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                  activeTab === key
+                    ? "bg-white text-blue-600 border border-slate-300"
+                    : "text-slate-600 hover:text-slate-900"
+                )}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="flex p-1 bg-gray-100 border border-gray-200 rounded-2xl">
-          {([['users', Users, 'Users'], ['roles', Shield, 'Roles & Permissions']] as const).map(([key, Icon, label]) => (
-            <button
-              key={key}
-              onClick={() => setActiveTab(key)}
-              className={cn(
-                "flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all",
-                activeTab === key
-                  ? "bg-white text-blue-700 shadow-sm border border-gray-200"
-                  : "text-slate-500 hover:text-gray-700"
-              )}
-            >
-              <Icon className="w-4 h-4" />
-              <span>{label}</span>
-            </button>
-          ))}
+        {/* ── Content View ── */}
+        <div className="min-h-[500px]">
+          {activeTab === 'users' ? <UserList /> : <RoleList />}
         </div>
       </div>
-
-      <div className="min-h-[600px]">
-        {activeTab === 'users' ? <UserList /> : <RoleList />}
-      </div>
-    </div>
     </UserManagementGate>
   );
 }

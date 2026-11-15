@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 import { ProjectCard } from '@/components/ui/ProjectCard';
 import { CreateProjectModal } from '@/components/modals/CreateProjectModal';
@@ -10,7 +10,8 @@ import { SurveyModal } from '@/features/projects/plans/components/SurveyModal';
 import {
   Plus, Search, Filter, FolderOpen, RefreshCw, LayoutGrid, List,
   Briefcase, CheckCircle2, Clock, AlertTriangle, ArrowUpRight,
-  MapPin, Calendar, Users, Building2, ChevronRight, X, Layers, ShieldAlert
+  MapPin, Calendar, Users, Building2, ChevronRight, X, Layers, ShieldAlert,
+  ChevronDown, Check
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -36,6 +37,8 @@ export default function ProjectsPage() {
   const [isSurveyAssignOpen, setIsSurveyAssignOpen] = useState(false);
   const [isSurveyModalOpen, setIsSurveyModalOpen] = useState(false);
   const [surveyProject, setSurveyProject] = useState<Project | null>(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const filterDropdownRef = useRef<HTMLDivElement>(null);
   const toast = useToast();
   const pathname = usePathname();
   const { user } = useAuth();
@@ -43,6 +46,21 @@ export default function ProjectsPage() {
   // No Project Management > View on any role: the list is empty for that
   // reason, so tell the user what to ask their admin for.
   const lacksProjectView = !canViewAnyProject(user);
+
+  // Close filter dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
+        setIsFilterOpen(false);
+      }
+    };
+    if (isFilterOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isFilterOpen]);
 
   const fetchProjects = async (showRefresh = false) => {
     try {
@@ -153,8 +171,8 @@ export default function ProjectsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-              Projects <span className="text-blue-600">Portfolio</span>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              Projects Management
             </h1>
           </div>
           <p className="text-xs font-semibold text-slate-500 mt-0.5">
@@ -241,7 +259,7 @@ export default function ProjectsPage() {
       </div>
 
       {/* ── Toolbar: Search, Filters & View Mode ── */}
-      <div className="bg-white border border-slate-200/80 rounded-xl p-3 border border-slate-300 space-y-2.5">
+      <div className="bg-white border border-slate-300 rounded-xl p-3 shadow-2xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
           
           {/* Search Input */}
@@ -264,8 +282,93 @@ export default function ProjectsPage() {
             )}
           </div>
 
-          {/* Controls: Sort & View Mode */}
-          <div className="flex items-center gap-2 self-end md:self-auto">
+          {/* Controls: Filter Button, Sort & View Mode */}
+          <div className="flex items-center gap-2 self-end md:self-auto flex-wrap">
+            {/* Status Filter Dropdown */}
+            <div className="relative" ref={filterDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsFilterOpen((prev) => !prev)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer",
+                  statusFilter !== 'All'
+                    ? "bg-blue-50 text-blue-700 border-blue-200 font-bold"
+                    : "bg-slate-50 text-slate-700 border-slate-200/80 hover:bg-slate-100"
+                )}
+              >
+                <Filter className={cn("w-3.5 h-3.5", statusFilter !== 'All' ? "text-blue-600" : "text-slate-500")} />
+                <span>{statusFilter === 'All' ? 'Filter Status' : statusFilter}</span>
+                {statusFilter !== 'All' && statusCounts[statusFilter] !== undefined && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-blue-200/80 text-blue-800 tabular-nums">
+                    {statusCounts[statusFilter]}
+                  </span>
+                )}
+                <ChevronDown className={cn("w-3.5 h-3.5 transition-transform text-slate-400", isFilterOpen && "rotate-180")} />
+              </button>
+
+              {isFilterOpen && (
+                <div className="absolute right-0 sm:right-auto sm:left-0 mt-1.5 w-52 bg-white rounded-xl border border-slate-200 shadow-lg py-1.5 z-30">
+                  <div className="px-3 py-1.5 border-b border-slate-100 flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      Filter by Status
+                    </span>
+                    {statusFilter !== 'All' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStatusFilter('All');
+                          setIsFilterOpen(false);
+                        }}
+                        className="text-[11px] font-semibold text-blue-600 hover:underline cursor-pointer"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                  <div className="py-1 max-h-60 overflow-y-auto">
+                    {filterTabs.map((tab) => {
+                      const count = statusCounts[tab] || 0;
+                      const isSelected = statusFilter === tab;
+
+                      return (
+                        <button
+                          key={tab}
+                          type="button"
+                          onClick={() => {
+                            setStatusFilter(tab);
+                            setIsFilterOpen(false);
+                          }}
+                          className={cn(
+                            "w-full px-3 py-2 text-xs font-medium flex items-center justify-between text-left hover:bg-slate-50 transition-colors cursor-pointer",
+                            isSelected && "bg-blue-50/70 text-blue-700 font-bold"
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            {isSelected ? (
+                              <Check className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                            ) : (
+                              <span className="w-3.5 h-3.5 shrink-0" />
+                            )}
+                            <span className={cn(isSelected ? "text-blue-900 font-semibold" : "text-slate-700")}>
+                              {tab}
+                            </span>
+                          </div>
+                          {count > 0 && (
+                            <span className={cn(
+                              "px-1.5 py-0.5 rounded-full text-[10px] font-bold tabular-nums",
+                              isSelected ? "bg-blue-100 text-blue-800" : "bg-slate-100 text-slate-500"
+                            )}>
+                              {count}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Sort Dropdown */}
             <select
               value={sortBy}
@@ -305,37 +408,6 @@ export default function ProjectsPage() {
               </button>
             </div>
           </div>
-        </div>
-
-        {/* Status Filter Chips */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
-          {filterTabs.map((tab) => {
-            const count = statusCounts[tab] || 0;
-            const isSelected = statusFilter === tab;
-
-            return (
-              <button
-                key={tab}
-                onClick={() => setStatusFilter(tab)}
-                className={cn(
-                  "whitespace-nowrap px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
-                  isSelected
-                    ? "bg-blue-600 text-white "
-                    : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60"
-                )}
-              >
-                <span>{tab}</span>
-                {count > 0 && (
-                  <span className={cn(
-                    "px-1.5 py-0.2 rounded-full text-[10px] font-extrabold tabular-nums",
-                    isSelected ? "bg-white/20 text-white" : "bg-slate-200/80 text-slate-600"
-                  )}>
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
         </div>
       </div>
 
@@ -505,15 +577,7 @@ export default function ProjectsPage() {
                 ? 'Try adjusting your search query or status filter to locate projects.'
                 : 'Initialize your first construction site to track progress, drawings, site surveys, and milestones.'}
             </p>
-            {canCreateProject && (
-              <button
-                onClick={() => { setEditingProject(null); setIsModalOpen(true); }}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-600 hover:from-blue-700 hover:to-blue-700 text-white text-xs font-bold border border-slate-300 transition-all active:scale-95 cursor-pointer"
-              >
-                <Plus className="w-4 h-4 stroke-[2.5]" />
-                <span>Create New Project</span>
-              </button>
-            )}
+            
           </div>
         )}
       </SkeletonLoader>

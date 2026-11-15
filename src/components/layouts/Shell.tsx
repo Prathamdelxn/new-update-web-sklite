@@ -78,9 +78,10 @@ export const Shell: React.FC<ShellProps> = ({ children, headerContent }) => {
       />
       
       <div 
-        className={`${
-          isCollapsed ? 'lg:pl-20' : 'lg:pl-[280px]'
-        } flex flex-col min-h-screen transition-all duration-300`}
+        className={cn(
+          "flex flex-col min-h-screen transition-all duration-300",
+          isCollapsed ? "lg:pl-[60px]" : "lg:pl-[260px]"
+        )}
       >
         <Topnav 
           onMenuClick={() => setIsSidebarOpen(true)} 

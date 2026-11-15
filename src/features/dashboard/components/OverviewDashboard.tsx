@@ -1,72 +1,114 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import Link from 'next/link';
 import {
   Briefcase,
-  ListTodo,
-  Calendar as CalendarIcon,
-  AlertCircle,
-  FolderOpen,
-  CheckCircle2,
-  ArrowUpRight,
-  TrendingUp,
-  TrendingDown,
   AlertTriangle,
-  ChevronRight,
-  ChevronLeft,
-  Clock,
-  Sparkles,
-  Layers,
+  FolderKanban,
+  CheckCircle2,
+  TrendingUp,
   Plus,
-  ArrowRight,
-  ShieldAlert,
-  Wallet,
-  Building2,
-  Filter,
-  Check,
-  Zap,
-  Target,
-  BarChart3,
-  PieChart as PieIcon,
   RefreshCw,
-  Search,
-  Activity,
-  ArrowUp,
-  ArrowDown,
-  Hammer,
-  FileCheck,
-  ArrowDownLeft,
-  FileText,
-  Receipt,
+  Loader2,
+  Bug,
+  ChevronRight,
+  Clock,
+  Flag,
+  Calendar,
+  ShieldCheck,
+  Building2,
 } from 'lucide-react';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
 import { cn } from '@/lib/utils';
 import api from '@/services/api.client';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/providers/AuthContext';
 import { canCreateProjects } from '@/lib/permissions';
-import Link from 'next/link';
-import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { CreateProjectModal } from '@/components/modals/CreateProjectModal';
 
-// --- Mini Calendar Helper ---
-const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
-];
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'morning';
+  if (hour < 17) return 'afternoon';
+  return 'evening';
+}
 
-// Helper to generate smooth SVG cubic bezier curves
-function generateSmoothPath(points: { x: number; y: number }[]): string {
-  if (!points || points.length === 0) return '';
-  if (points.length === 1) return `M ${points[0].x},${points[0].y}`;
-  let d = `M ${points[0].x},${points[0].y}`;
-  for (let i = 0; i < points.length - 1; i++) {
-    const p0 = points[i];
-    const p1 = points[i + 1];
-    const cx = (p0.x + p1.x) / 2;
-    d += ` C ${cx},${p0.y} ${cx},${p1.y} ${p1.x},${p1.y}`;
-  }
-  return d;
+function ConstructionDashboardSkeleton() {
+  return (
+    <div className="space-y-8 min-h-full font-sans animate-pulse">
+      {/* Header Skeleton */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-2">
+          <div className="h-8 w-64 bg-slate-200/80 rounded-lg" />
+          <div className="h-4 w-96 max-w-full bg-slate-200/60 rounded-md" />
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="h-9 w-36 bg-slate-200/80 rounded-lg" />
+          <div className="h-9 w-24 bg-slate-200/80 rounded-lg" />
+        </div>
+      </div>
+
+      <div className="space-y-8">
+        {/* KPI Cards Row Skeleton */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <div key={idx} className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-none">
+              <div className="flex items-center justify-between mb-2">
+                <div className="h-3 w-20 bg-slate-200/80 rounded" />
+                <div className="w-6 h-6 rounded-lg bg-slate-100" />
+              </div>
+              <div className="flex items-baseline gap-1.5 mt-1">
+                <div className="h-6 w-10 bg-slate-200/90 rounded" />
+                <div className="h-4 w-12 bg-slate-200/60 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Progress & Health Row Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-white border border-slate-200/80 rounded-xl p-6 shadow-xs">
+            <div className="flex items-center justify-between mb-6">
+              <div className="h-5 w-36 bg-slate-200/90 rounded-md" />
+              <div className="flex items-center gap-3">
+                <div className="h-4 w-20 bg-slate-200/60 rounded-md" />
+                <div className="h-4 w-20 bg-slate-200/60 rounded-md" />
+              </div>
+            </div>
+            <div className="h-[280px] w-full bg-slate-50 border border-slate-100 rounded-xl" />
+          </div>
+
+          <div className="bg-white border border-slate-200/80 rounded-xl p-6 shadow-xs">
+            <div className="h-5 w-32 bg-slate-200/90 rounded-md mb-6" />
+            <div className="w-36 h-36 mx-auto rounded-full border-8 border-slate-100 flex items-center justify-center my-4" />
+          </div>
+        </div>
+
+        {/* Secondary 2-Card Grid Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <div key={idx} className="bg-white border border-slate-200/80 rounded-xl p-6 shadow-xs">
+              <div className="h-5 w-36 bg-slate-200/90 rounded-md mb-4" />
+              <div className="h-[200px] bg-slate-50 border border-slate-100 rounded-xl" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export const OverviewDashboard = () => {
@@ -74,41 +116,42 @@ export const OverviewDashboard = () => {
   const [data, setData] = useState<any>(null);
   const [allProjects, setAllProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeTimeRange, setActiveTimeRange] = useState<'All' | 'Month' | 'Week'>('All');
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState<number>(new Date().getDate());
-  const [calendarMonthOffset, setCalendarMonthOffset] = useState<number>(0);
-  const [milestoneViewMode, setMilestoneViewMode] = useState<'milestones' | 'stages'>('milestones');
   const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
-  const [selectedFinanceMonthIdx, setSelectedFinanceMonthIdx] = useState<number>(3);
 
-  const fetchDashboard = useCallback(async (projId?: string) => {
-    try {
-      setLoading(true);
-      const targetProjId = projId !== undefined ? projId : selectedProjectId;
-      const queryParam = targetProjId && targetProjId !== 'all' ? `?projectId=${targetProjId}` : '';
+  const fetchDashboard = useCallback(
+    async (projId?: string) => {
+      try {
+        setRefreshing(true);
+        const targetProjId = projId !== undefined ? projId : selectedProjectId;
+        const queryParam = targetProjId && targetProjId !== 'all' ? `?projectId=${targetProjId}` : '';
 
-      const [dashRes, projRes] = await Promise.allSettled([
-        api.get(`/dashboard${queryParam}`),
-        api.get('/projects'),
-      ]);
+        const [dashRes, projRes] = await Promise.allSettled([
+          api.get(`/dashboard${queryParam}`),
+          api.get('/projects'),
+        ]);
 
-      if (dashRes.status === 'fulfilled' && dashRes.value.data) {
-        setData(dashRes.value.data);
+        if (dashRes.status === 'fulfilled' && dashRes.value.data) {
+          setData(dashRes.value.data);
+        }
+
+        if (projRes.status === 'fulfilled' && projRes.value.data) {
+          const pList = Array.isArray(projRes.value.data)
+            ? projRes.value.data
+            : projRes.value.data?.projects ?? projRes.value.data?.data ?? [];
+          setAllProjects(pList);
+        }
+      } catch (e) {
+        console.error('Dashboard data fetch error', e);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-
-      if (projRes.status === 'fulfilled' && projRes.value.data) {
-        const pList = Array.isArray(projRes.value.data)
-          ? projRes.value.data
-          : projRes.value.data?.projects ?? projRes.value.data?.data ?? [];
-        setAllProjects(pList);
-      }
-    } catch (e) {
-      console.error('Dashboard data fetch error', e);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedProjectId]);
+    },
+    [selectedProjectId]
+  );
 
   useEffect(() => {
     if (authLoading) return;
@@ -117,1065 +160,702 @@ export const OverviewDashboard = () => {
     } else {
       setLoading(false);
     }
-  }, [isAuthenticated, authLoading, selectedProjectId]);
+  }, [isAuthenticated, authLoading, selectedProjectId, fetchDashboard]);
 
   // Derived Backend Stats
-  const ps = useMemo(() => data?.projectStats || { total: allProjects.length || 0, statusCounts: {} }, [data, allProjects]);
-  const ts = useMemo(() => data?.taskStats || { total: 0, completed: 0, overdue: 0, dueToday: 0, dueTodayList: [] }, [data]);
-  const rs = useMemo(() => data?.riskStats || { total: 0, statusCounts: {}, criticalRisks: [] }, [data]);
-  const snags = useMemo(() => data?.snagStats || { total: 0, open: 0, resolved: 0 }, [data]);
-  const portfolioSummary = useMemo(() => data?.portfolioSummary || null, [data]);
+  const ps = useMemo(
+    () => data?.projectStats || { total: allProjects.length || 0, statusCounts: {} },
+    [data, allProjects]
+  );
+  const ts = useMemo(
+    () => data?.taskStats || { total: 0, completed: 0, overdue: 0, dueToday: 0, dueTodayList: [] },
+    [data]
+  );
+  const rs = useMemo(
+    () => data?.riskStats || { total: 0, statusCounts: {}, criticalRisks: [] },
+    [data]
+  );
+  const snags = useMemo(() => data?.snagStats || { total: 0, open: 0, resolved: 0, recentSnags: [] }, [data]);
 
-  // Overall Task & Quality Percentages
-  const taskPct = useMemo(() => {
-    if (data?.taskStats?.completionPct !== undefined) return data.taskStats.completionPct;
-    return ts.total > 0 ? Math.round((ts.completed / ts.total) * 100) : (ps.total > 0 ? 68 : 0);
-  }, [data, ts, ps]);
+  // Live Project Milestones
+  const projectMilestones = useMemo(
+    () => (Array.isArray(data?.milestones) ? data.milestones : []),
+    [data]
+  );
 
-  const overdueCount = useMemo(() => ts.overdue || 0, [ts]);
-  const completedCount = useMemo(() => ts.completed || 0, [ts]);
-  const totalTasks = useMemo(() => ts.total || 0, [ts]);
+  // Critical Risks & Open Punch List Snags
+  const siteIssuesAndRisks = useMemo(() => {
+    const criticals = (rs.criticalRisks || []).map((r: any) => ({
+      id: `risk-${r.title}-${r.projectId}`,
+      title: r.title,
+      type: 'risk' as const,
+      badgeText: r.status === 'Critical' ? 'Critical Risk' : `${r.impact || 'High'} Impact`,
+      badgeStyle:
+        r.status === 'Critical'
+          ? 'bg-rose-50 text-rose-700 border-rose-200'
+          : 'bg-amber-50 text-amber-700 border-amber-200',
+      projectName: r.projectName,
+      projectId: r.projectId,
+      link: r.projectId ? `/construction-dashboard/projects/${r.projectId}/risks` : '/construction-dashboard/projects',
+    }));
 
-  const totalDeliverablesCount = useMemo(() => {
-    if (portfolioSummary?.totalDeliverables) return portfolioSummary.totalDeliverables;
-    return totalTasks > 0 ? totalTasks : (ps.total > 0 ? ps.total * 36 : 1420);
-  }, [portfolioSummary, totalTasks, ps]);
+    const snagsList = (snags.recentSnags || []).map((s: any) => ({
+      id: `snag-${s._id || s.title}`,
+      title: s.title,
+      type: 'snag' as const,
+      badgeText: `Snag · ${s.priority || 'Medium'}`,
+      badgeStyle:
+        s.priority === 'Critical' || s.priority === 'High'
+          ? 'bg-rose-50 text-rose-700 border-rose-200'
+          : 'bg-purple-50 text-purple-700 border-purple-200',
+      projectName: s.projectName,
+      projectId: s.projectId,
+      link: s.projectId ? `/construction-dashboard/projects/${s.projectId}/snags` : '/construction-dashboard/projects',
+    }));
 
-  const attentionRequiredCount = useMemo(() => {
-    if (portfolioSummary?.totalAttentionNeeded !== undefined) return portfolioSummary.totalAttentionNeeded;
-    return overdueCount + (snags.open || 0) + (rs.statusCounts?.Critical || 0);
-  }, [portfolioSummary, overdueCount, snags, rs]);
+    return [...criticals, ...snagsList].slice(0, 5);
+  }, [rs, snags]);
 
-  // Calendar calculations & Event Mapping
-  const currentDate = useMemo(() => {
-    const d = new Date();
-    d.setMonth(d.getMonth() + calendarMonthOffset);
-    return d;
-  }, [calendarMonthOffset]);
-
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth();
-  const currentMonthName = MONTH_NAMES[currentMonth];
-
-  const calendarEvents = useMemo(() => data?.calendarEvents || [], [data]);
-
-  // Events on selected date
-  const selectedDateEvents = useMemo(() => {
-    const targetMonthStr = String(currentMonth + 1).padStart(2, '0');
-    const targetDayStr = String(selectedCalendarDate).padStart(2, '0');
-    const targetDatePattern = `${currentYear}-${targetMonthStr}-${targetDayStr}`;
-    return calendarEvents.filter((ev: any) => ev.date === targetDatePattern);
-  }, [calendarEvents, currentYear, currentMonth, selectedCalendarDate]);
-
-  const monthlyEventsCount = useMemo(() => {
-    const targetMonthStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
-    return calendarEvents.filter((ev: any) => (ev.date || '').startsWith(targetMonthStr)).length;
-  }, [calendarEvents, currentYear, currentMonth]);
-
-  const calendarDays = useMemo(() => {
-    const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    const prevDaysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-
-    const days: Array<{ day: number; isCurrentMonth: boolean; hasEvent?: boolean; eventCount?: number }> = [];
-
-    // Previous month padding
-    for (let i = firstDayIndex - 1; i >= 0; i--) {
-      days.push({ day: prevDaysInMonth - i, isCurrentMonth: false });
-    }
-
-    // Current month days
-    for (let i = 1; i <= daysInMonth; i++) {
-      const monthStr = String(currentMonth + 1).padStart(2, '0');
-      const dayStr = String(i).padStart(2, '0');
-      const dateStr = `${currentYear}-${monthStr}-${dayStr}`;
-      const dayEvts = calendarEvents.filter((ev: any) => ev.date === dateStr);
-      const isToday = i === new Date().getDate() && calendarMonthOffset === 0;
-      const hasEvent = dayEvts.length > 0 || isToday;
-      days.push({ day: i, isCurrentMonth: true, hasEvent, eventCount: dayEvts.length });
-    }
-
-    // Next month padding to fill grid
-    const remaining = 35 - days.length;
-    for (let i = 1; i <= remaining; i++) {
-      days.push({ day: i, isCurrentMonth: false });
-    }
-
-    return days;
-  }, [currentYear, currentMonth, calendarMonthOffset, calendarEvents]);
-
-  // Stages data
-  const stages = useMemo(() => {
-    if (data?.stages && Array.isArray(data.stages) && data.stages.length > 0) {
-      return data.stages;
-    }
-    return [
-      { name: 'Structural & Civil', progress: taskPct > 0 ? Math.min(100, taskPct + 12) : 84, colorFrom: 'from-blue-500', colorTo: 'to-blue-700', textCol: 'text-blue-600' },
-      { name: 'MEP & Electrical', progress: taskPct > 0 ? Math.round(taskPct * 0.85) : 62, colorFrom: 'from-amber-400', colorTo: 'to-orange-500', textCol: 'text-orange-500' },
-      { name: 'Finishes & Snagging', progress: taskPct > 0 ? Math.round(taskPct * 0.6) : 45, colorFrom: 'from-teal-400', colorTo: 'to-emerald-500', textCol: 'text-teal-600' },
-    ];
-  }, [data, taskPct]);
-
-  // Filtered live milestones based on selected organization project
-  const filteredMilestones = useMemo(() => {
-    const mList = data?.milestones || [];
-    if (selectedProjectId === 'all') return mList;
-    return mList.filter((m: any) => m.projectId === selectedProjectId);
-  }, [data, selectedProjectId]);
-
-  // Selected project details (if single project selected)
-  const selectedProject = useMemo(() => {
-    if (selectedProjectId === 'all') return null;
-    return allProjects.find((p: any) => p._id === selectedProjectId) || null;
-  }, [allProjects, selectedProjectId]);
-
-  const avgStageProgress = useMemo(() => {
-    if (milestoneViewMode === 'milestones' && filteredMilestones.length > 0) {
-      const sum = filteredMilestones.reduce((acc: number, m: any) => acc + (m.progress || 0), 0);
-      return Math.round(sum / filteredMilestones.length);
-    }
-    if (data?.averageStageProgress !== undefined) return data.averageStageProgress;
-    const sum = stages.reduce((acc: number, s: any) => acc + (s.progress || 0), 0);
-    return Math.round(sum / (stages.length || 1));
-  }, [data, stages, milestoneViewMode, filteredMilestones]);
-
-  // Main Trajectory Multi-Curve calculations for 'All', 'Month', 'Week'
+  // Trajectory chart data for AreaChart
   const activeTrajectoryList = useMemo(() => {
     const list = data?.trajectory?.[activeTimeRange.toLowerCase()] || [];
     if (list.length > 0) return list;
     if (activeTimeRange === 'Month') {
       return [
-        { label: 'W1', delivered: 24, planned: 28 },
-        { label: 'W2', delivered: 48, planned: 52 },
-        { label: 'W3', delivered: 72, planned: 78 },
-        { label: 'W4', delivered: 94, planned: 98 },
+        { label: 'W1', delivered: 0, planned: 0 },
+        { label: 'W2', delivered: 0, planned: 0 },
+        { label: 'W3', delivered: 0, planned: 0 },
+        { label: 'W4', delivered: 0, planned: 0 },
       ];
     }
     if (activeTimeRange === 'Week') {
-      return [
-        { label: 'Sun', delivered: 14, planned: 18 },
-        { label: 'Mon', delivered: 32, planned: 30 },
-        { label: 'Tue', delivered: 22, planned: 25 },
-        { label: 'Wed', delivered: 45, planned: 40 },
-        { label: 'Thu', delivered: 28, planned: 32 },
-        { label: 'Fri', delivered: 38, planned: 35 },
-        { label: 'Sat', delivered: 42, planned: 44 },
-      ];
+      return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => ({
+        label: d,
+        delivered: 0,
+        planned: 0,
+      }));
     }
-    return [
-      { label: 'Oct', delivered: 35, planned: 42 },
-      { label: 'Nov', delivered: 68, planned: 75 },
-      { label: 'Dec', delivered: 110, planned: 125 },
-      { label: 'Jan', delivered: 155, planned: 165 },
-      { label: 'Feb', delivered: 190, planned: 210 },
-      { label: 'Mar', delivered: 245, planned: 250 },
-    ];
+    const now = new Date();
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const res = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      res.push({ label: monthNames[d.getMonth()], delivered: 0, planned: 0 });
+    }
+    return res;
   }, [data, activeTimeRange]);
 
-  // Dynamic SVG Curves for Trajectory Chart (viewBox 0 0 500 180)
-  const trajectoryCurves = useMemo(() => {
-    const n = activeTrajectoryList.length;
-    if (n === 0) return { deliveredLine: '', deliveredArea: '', plannedLine: '', plannedArea: '', deliveredPoints: [], plannedPoints: [] };
+  // Project Health Donut chart slices
+  const healthSlices = useMemo(() => {
+    const counts = ps.statusCounts || {};
+    const raw = [
+      { name: 'In Progress', value: counts['In Progress'] || 0, color: '#2563EB' },
+      { name: 'Planning', value: counts['Planning'] || 0, color: '#D97706' },
+      { name: 'Completed', value: counts['Completed'] || 0, color: '#16A34A' },
+      { name: 'On Hold', value: counts['On Hold'] || 0, color: '#64748B' },
+    ].filter((s) => s.value > 0);
 
-    const maxVal = Math.max(...activeTrajectoryList.map((d: any) => Math.max(d.delivered || 0, d.planned || 0)), 50);
+    return raw.length > 0 ? raw : [{ name: 'No Projects', value: 1, color: '#E2E8F0' }];
+  }, [ps]);
 
-    const deliveredPoints = activeTrajectoryList.map((item: any, idx: number) => {
-      const x = (idx / (n - 1 || 1)) * 480 + 10;
-      const y = 160 - ((item.delivered || 0) / maxVal) * 120;
-      return { x, y, val: item.delivered, label: item.label };
-    });
+  const healthTotal = ps.total || allProjects.length || 0;
 
-    const plannedPoints = activeTrajectoryList.map((item: any, idx: number) => {
-      const x = (idx / (n - 1 || 1)) * 480 + 10;
-      const y = 160 - ((item.planned || 0) / maxVal) * 120;
-      return { x, y, val: item.planned, label: item.label };
-    });
+  const userFirstName =
+    (user as any)?.firstName ||
+    user?.name?.split(' ')[0] ||
+    'there';
 
-    const deliveredLine = generateSmoothPath(deliveredPoints);
-    const plannedLine = generateSmoothPath(plannedPoints);
+  const canCreate = canCreateProjects(user);
 
-    const lastDelivered = deliveredPoints[deliveredPoints.length - 1];
-    const firstDelivered = deliveredPoints[0];
-    const deliveredArea = `${deliveredLine} L ${lastDelivered.x},180 L ${firstDelivered.x},180 Z`;
+  // 4 KPI cards (Styled matching the KPI Stat Strip)
+  const kpiCards = [
+    {
+      title: 'Active Projects',
+      value: ps.statusCounts?.['In Progress'] || 0,
+      badge: 'Live',
+      badgeColor: 'text-blue-700 bg-blue-50 border-blue-100',
+      valueColor: 'text-blue-600',
+      iconBoxColor: 'bg-blue-50 text-blue-600 border border-blue-100',
+      hoverBorder: 'hover:border-blue-300',
+      icon: FolderKanban,
+      link: '/construction-dashboard/projects',
+    },
+    {
+      title: 'Completed Projects',
+      value: ps.statusCounts?.['Completed'] || 0,
+      badge: 'Delivered',
+      badgeColor: 'text-emerald-700 bg-emerald-50 border-emerald-100',
+      valueColor: 'text-emerald-600',
+      iconBoxColor: 'bg-emerald-50 text-emerald-600 border border-emerald-100',
+      hoverBorder: 'hover:border-emerald-300',
+      icon: CheckCircle2,
+      link: '/construction-dashboard/projects',
+    },
+    {
+      title: 'Open Snags',
+      value: snags.open || 0,
+      badge: 'Punch list',
+      badgeColor: 'text-rose-700 bg-rose-50 border-rose-100',
+      valueColor: 'text-rose-600',
+      iconBoxColor: 'bg-rose-50 text-rose-600 border border-rose-100',
+      hoverBorder: 'hover:border-rose-300',
+      icon: Bug,
+      link: '/construction-dashboard/projects',
+    },
+    {
+      title: 'Critical Risks',
+      value: rs.statusCounts?.Critical || rs.criticalRisks?.length || 0,
+      badge: 'Attention',
+      badgeColor: 'text-amber-700 bg-amber-50 border-amber-100',
+      valueColor: 'text-amber-600',
+      iconBoxColor: 'bg-amber-50 text-amber-600 border border-amber-100',
+      hoverBorder: 'hover:border-amber-300',
+      icon: AlertTriangle,
+      link: '/construction-dashboard/projects',
+    },
+  ];
 
-    const lastPlanned = plannedPoints[plannedPoints.length - 1];
-    const firstPlanned = plannedPoints[0];
-    const plannedArea = `${plannedLine} L ${lastPlanned.x},180 L ${firstPlanned.x},180 Z`;
-
-    return {
-      deliveredLine,
-      deliveredArea,
-      plannedLine,
-      plannedArea,
-      deliveredPoints,
-      plannedPoints,
-    };
-  }, [activeTrajectoryList]);
-
-  // Velocity Dual Wave SVG Curves (viewBox 0 0 200 80)
-  const velocityWaves = useMemo(() => {
-    const actuals = data?.velocity?.dailyActual || [14, 32, 22, 45, 28, 38, 42];
-    const planneds = data?.velocity?.dailyPlanned || [18, 30, 25, 40, 32, 35, 44];
-    const maxVal = Math.max(...actuals, ...planneds, 20);
-
-    const actualPoints = actuals.map((val: number, i: number) => ({
-      x: (i / 6) * 200,
-      y: 70 - (val / maxVal) * 45,
-    }));
-
-    const plannedPoints = planneds.map((val: number, i: number) => ({
-      x: (i / 6) * 200,
-      y: 70 - (val / maxVal) * 45,
-    }));
-
-    const actualLine = generateSmoothPath(actualPoints);
-    const actualArea = `${actualLine} L 200,80 L 0,80 Z`;
-
-    const plannedLine = generateSmoothPath(plannedPoints);
-    const plannedArea = `${plannedLine} L 200,80 L 0,80 Z`;
-
-    return { actualLine, actualArea, plannedLine, plannedArea };
-  }, [data]);
-
-  // Monthly Trade Allocations
-  const tradeAllocations = useMemo(() => {
-    if (data?.monthlyTradeAllocations && data.monthlyTradeAllocations.length > 0) {
-      return data.monthlyTradeAllocations;
-    }
-    return [
-      { month: 'OCT', civilPct: 45, mepPct: 35, finishesPct: 20 },
-      { month: 'NOV', civilPct: 40, mepPct: 38, finishesPct: 22 },
-      { month: 'DEC', civilPct: 50, mepPct: 30, finishesPct: 20 },
-      { month: 'JAN', civilPct: 35, mepPct: 45, finishesPct: 20 },
-    ];
-  }, [data]);
-
-  // Daily Site Activity Bars
-  const dailyActivityBars = useMemo(() => {
-    if (data?.dailyActivityBars && data.dailyActivityBars.length > 0) {
-      return data.dailyActivityBars;
-    }
-    return [
-      { day: 'Sun', activeWorkers: 65, completedTasks: 35 },
-      { day: 'Mon', activeWorkers: 85, completedTasks: 55 },
-      { day: 'Tue', activeWorkers: 45, completedTasks: 25 },
-      { day: 'Wed', activeWorkers: 90, completedTasks: 70 },
-      { day: 'Thu', activeWorkers: 40, completedTasks: 20 },
-      { day: 'Fri', activeWorkers: 75, completedTasks: 45 },
-      { day: 'Sat', activeWorkers: 80, completedTasks: 60 },
-    ];
-  }, [data]);
-
-  // Quality vs Risk Donut calculation
-  const qualityVsRisk = useMemo(() => {
-    const qPct = data?.qualityVsRisk?.qualityPercentage ?? 70;
-    const rPct = data?.qualityVsRisk?.riskPercentage ?? 30;
-    const qCount = data?.qualityVsRisk?.qualityPassCount ?? completedCount;
-    const rCount = data?.qualityVsRisk?.attentionItemCount ?? attentionRequiredCount;
-    return { qualityPercentage: qPct, riskPercentage: rPct, qualityPassCount: qCount, attentionItemCount: rCount };
-  }, [data, completedCount, attentionRequiredCount]);
-
-  // Financials & Transaction Management
-  const financials = useMemo(() => {
-    return data?.financials || {
-      totalIncoming: 0,
-      totalOutgoing: 0,
-      totalDebitNotes: 0,
-      netCashflow: 0,
-      thisMonthIncoming: 0,
-      thisMonthOutgoing: 0,
-      thisMonthDebitNotes: 0,
-      thisMonthNetCashflow: 0,
-      monthlyHistory: [],
-      currentMonthName: 'September',
-      recentTransactions: [],
-      currency: 'INR',
-    };
-  }, [data]);
-
-  const currentFinanceMonth = useMemo(() => {
-    const history = financials.monthlyHistory || [];
-    if (history.length > 0 && history[selectedFinanceMonthIdx]) {
-      return history[selectedFinanceMonthIdx];
-    }
-    const inc = financials.thisMonthIncoming || 0;
-    const out = financials.thisMonthOutgoing || 0;
-    const deb = financials.thisMonthDebitNotes || 0;
-    const vol = inc + out + deb;
-    const incPct = vol > 0 ? Math.round((inc / vol) * 100) : 0;
-    const outPct = vol > 0 ? Math.round((out / vol) * 100) : 0;
-    const debPct = vol > 0 ? Math.max(0, 100 - incPct - outPct) : 0;
-    return {
-      month: financials.currentMonthName ? financials.currentMonthName.slice(0, 3) : 'Sep',
-      fullMonth: financials.currentMonthName || 'September',
-      incomingPct: incPct,
-      outgoingPct: outPct,
-      debitNotesPct: debPct,
-      incoming: inc,
-      outgoing: out,
-      debitNotes: deb,
-      hasData: vol > 0,
-      totalVolume: vol,
-    };
-  }, [financials, selectedFinanceMonthIdx]);
+  if (loading) {
+    return <ConstructionDashboardSkeleton />;
+  }
 
   return (
-    <SkeletonLoader loading={loading} preset="dashboard">
-      <div className="space-y-5 pb-12 font-sans text-slate-800">
+    <div className="space-y-8 font-sans pb-12">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl lg:text-2xl font-bold tracking-tight text-slate-900">
+            Good {getGreeting()}, {userFirstName}
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Here&apos;s the live status of your construction portfolio today.
+          </p>
+        </div>
 
-        {/* Organization Project Switcher & Header Bar */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shadow-2xs">
-              <Building2 className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-bold text-slate-900">
-                  {selectedProject ? selectedProject.name : 'Organization Portfolio Overview'}
-                </h2>
-                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full">
-                  Live Sync
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 font-medium mt-0.5">
-                {selectedProject
-                  ? `Milestones, task velocity & deliverables for ${selectedProject.name}`
-                  : `Aggregated milestones & deliverables across ${allProjects.length} organization projects`}
-              </p>
-            </div>
-          </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Project Selector Filter */}
+          <select
+            value={selectedProjectId}
+            onChange={(e) => setSelectedProjectId(e.target.value)}
+            className="text-xs font-semibold bg-white hover:bg-slate-50 border border-slate-200/80 rounded-lg px-3 py-2 text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-all shadow-xs"
+          >
+            <option value="all">All Projects ({allProjects.length})</option>
+            {allProjects.map((p: any) => (
+              <option key={p._id} value={p._id}>
+                {p.name} {p.code ? `(${p.code})` : ''}
+              </option>
+            ))}
+          </select>
 
-          <div className="flex items-center gap-3 w-full lg:w-auto min-w-0">
-            {/* Project Filter Dropdown */}
-            <div className="relative flex-1 lg:flex-none min-w-0">
-              <select
-                value={selectedProjectId}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
-                className="w-full lg:w-64 truncate text-xs font-semibold bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-all pr-8"
-              >
-                <option value="all">All Organization Projects ({allProjects.length})</option>
-                {allProjects.map((p: any) => (
-                  <option key={p._id} value={p._id}>
-                    {p.name} {p.code ? `(${p.code})` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Quick Action Link */}
-            {selectedProjectId !== 'all' ? (
-              <Link
-                href={`/construction-dashboard/projects/${selectedProjectId}/milestones`}
-                className="shrink-0 whitespace-nowrap px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold transition-all shadow-xs inline-flex items-center gap-1.5"
-              >
-                <span>Project Milestones</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            ) : canCreateProjects(user) && (
-              <button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="shrink-0 whitespace-nowrap px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold transition-all shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>New Project</span>
-              </button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fetchDashboard(selectedProjectId)}
+            disabled={refreshing}
+            className="border-slate-200/80 hover:bg-slate-50 text-slate-700 shadow-xs"
+          >
+            {refreshing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+            ) : (
+              <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
             )}
-          </div>
-        </div>
+            Refresh
+          </Button>
 
-        {/* =========================================================================
-            TOP SECTION: KPI Counter | Calendar | Progress Bars | Dual Waves
-        ========================================================================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          
-          {/* 1. Dual KPI Metric Counter (cols 1-3) */}
-          <div className="lg:col-span-3 bg-white rounded-3xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-            <div>
+         
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        {/* KPI Cards Row (4 cards) */}
+       
+        {/* ── KPI Stat Strip (Construction Dashboard Card Tabs) ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {kpiCards.map((kpi) => (
+            <Link
+              key={kpi.title}
+              href={kpi.link}
+              className={cn(
+                'bg-white rounded-xl border border-slate-300 p-3 transition-all cursor-pointer block group shadow-none',
+                kpi.hoverBorder
+              )}
+            >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">Portfolio Summary</span>
-                <span className="text-[11px] font-semibold text-slate-400 bg-slate-100/80 px-2.5 py-0.5 rounded-full">
-                  Week {portfolioSummary?.currentWeek || 36}
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider group-hover:text-slate-600 transition-colors">
+                  {kpi.title}
                 </span>
-              </div>
-
-              {/* Upward Stat: Total Active & Executed Deliverables */}
-              <div className="mt-5">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                    <ArrowUp className="w-3.5 h-3.5 stroke-[2.5]" />
-                  </div>
-                  <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                    {totalDeliverablesCount.toLocaleString()}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400 font-medium mt-1 leading-relaxed">
-                  Active milestones and scheduled work tasks across portfolio.
-                </p>
-              </div>
-            </div>
-
-            <div className="my-5 border-t border-slate-100" />
-
-            {/* Downward Stat: Items Needing Attention */}
-            <div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
-                  <ArrowDown className="w-3.5 h-3.5 stroke-[2.5]" />
-                </div>
-                <span className="text-2xl font-extrabold text-slate-900 tracking-tight">
-                  {attentionRequiredCount.toLocaleString()}
-                </span>
-              </div>
-              <p className="text-xs text-slate-400 font-medium mt-1 leading-relaxed">
-                Overdue tasks, punch list snags, and flagged risk items.
-              </p>
-            </div>
-          </div>
-
-          {/* 2. Mini Interactive Calendar Widget (cols 4-6) */}
-          <div className="lg:col-span-3 bg-white rounded-3xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-            <div>
-              {/* Calendar Month Header */}
-              <div className="flex items-center justify-between mb-4">
-                <button
-                  onClick={() => setCalendarMonthOffset(v => v - 1)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                  title="Previous Month"
+                <div
+                  className={cn(
+                    'w-6 h-6 rounded-lg flex items-center justify-center shrink-0',
+                    kpi.iconBoxColor
+                  )}
                 >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-
-                <h3 className="text-sm font-bold text-slate-800">
-                  {currentMonthName} {currentYear}
-                </h3>
-
-                <button
-                  onClick={() => setCalendarMonthOffset(v => v + 1)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                  title="Next Month"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Day Labels */}
-              <div className="grid grid-cols-7 gap-1 text-center mb-2">
-                {DAYS_OF_WEEK.map((d, i) => (
-                  <span key={i} className="text-[10px] font-bold text-slate-400">
-                    {d.slice(0, 2).toLowerCase()}
-                  </span>
-                ))}
-              </div>
-
-              {/* Days Grid */}
-              <div className="grid grid-cols-7 gap-1 text-center">
-                {calendarDays.slice(0, 28).map((item, idx) => {
-                  const isSelected = item.day === selectedCalendarDate && item.isCurrentMonth;
-                  const isToday = item.day === new Date().getDate() && item.isCurrentMonth && calendarMonthOffset === 0;
-
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => item.isCurrentMonth && setSelectedCalendarDate(item.day)}
-                      disabled={!item.isCurrentMonth}
-                      className={cn(
-                        "h-7 w-7 mx-auto rounded-full flex items-center justify-center text-[11px] font-semibold transition-all relative",
-                        !item.isCurrentMonth && "text-slate-300 opacity-40 cursor-default",
-                        item.isCurrentMonth && "text-slate-700 hover:bg-slate-100 cursor-pointer",
-                        isSelected && "bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-2xs",
-                        isToday && !isSelected && "border border-blue-500 text-blue-600 font-bold",
-                        item.hasEvent && !isSelected && "ring-1 ring-slate-300 font-bold"
-                      )}
-                    >
-                      {item.day}
-                      {item.hasEvent && !isSelected && (
-                        <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-blue-600" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Quick Inspection Indicator */}
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-              <span className="flex items-center gap-1.5 font-medium truncate">
-                <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
-                {selectedDateEvents.length > 0
-                  ? `${selectedDateEvents.length} Item${selectedDateEvents.length > 1 ? 's' : ''} on ${currentMonthName.slice(0, 3)} ${selectedCalendarDate}`
-                  : `${monthlyEventsCount} Deliverables Scheduled`}
-              </span>
-              <span className="text-[10px] font-bold text-blue-600 shrink-0">
-                {calendarMonthOffset === 0 ? 'This Month' : currentMonthName.slice(0, 3)}
-              </span>
-            </div>
-          </div>
-
-          {/* 3. Progress Bars & Task Velocity (cols 7-9) */}
-          <div className="lg:col-span-3 bg-white rounded-3xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-slate-800">Milestone Progress</h3>
-                <div className="flex items-center bg-slate-100 p-0.5 rounded-lg text-[10px] font-bold">
-                  <button
-                    onClick={() => setMilestoneViewMode('milestones')}
-                    className={cn(
-                      "px-2 py-0.5 rounded-md transition-all cursor-pointer",
-                      milestoneViewMode === 'milestones'
-                        ? "bg-white text-blue-600 shadow-2xs font-bold"
-                        : "text-slate-400 hover:text-slate-700"
-                    )}
-                  >
-                    Active
-                  </button>
-                  <button
-                    onClick={() => setMilestoneViewMode('stages')}
-                    className={cn(
-                      "px-2 py-0.5 rounded-md transition-all cursor-pointer",
-                      milestoneViewMode === 'stages'
-                        ? "bg-white text-blue-600 shadow-2xs font-bold"
-                        : "text-slate-400 hover:text-slate-700"
-                    )}
-                  >
-                    Stages
-                  </button>
+                  <kpi.icon className="w-3.5 h-3.5" />
                 </div>
               </div>
-
-              {/* Stack of Gradient Multi-Bars */}
-              <div className="space-y-3.5 pt-1">
-                {milestoneViewMode === 'milestones' && filteredMilestones.length > 0 ? (
-                  <>
-                    {filteredMilestones.slice(0, 4).map((m: any, idx: number) => {
-                      const barColor =
-                        m.status === 'Completed'
-                          ? 'from-emerald-400 to-emerald-600'
-                          : m.progress > 50
-                          ? 'from-indigo-500 to-indigo-700'
-                          : 'from-amber-400 to-orange-500';
-                      const textCol =
-                        m.status === 'Completed'
-                          ? 'text-emerald-600'
-                          : m.progress > 50
-                          ? 'text-indigo-600'
-                          : 'text-orange-500';
-
-                      return (
-                        <Link
-                          key={m._id || idx}
-                          href={`/construction-dashboard/projects/${m.projectId}/milestones`}
-                          className="block group"
-                        >
-                          <div className="space-y-1.5">
-                            <div className="flex justify-between items-center text-[11px] font-semibold text-slate-700">
-                              <div className="min-w-0 pr-2">
-                                <span className="truncate block group-hover:text-blue-600 transition-colors">
-                                  {m.name}
-                                </span>
-                                <span className="text-[9px] text-slate-400 font-medium truncate block">
-                                  {m.projectName} {m.totalTasks > 0 && `• ${m.completedTasks}/${m.totalTasks} tasks`}
-                                </span>
-                              </div>
-                              <span className={cn('font-bold shrink-0', textCol)}>
-                                {m.progress}%
-                              </span>
-                            </div>
-                            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${m.progress}%` }}
-                                transition={{ duration: 0.6, delay: idx * 0.1 }}
-                                className={cn('h-full rounded-full bg-gradient-to-r', barColor)}
-                              />
-                            </div>
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </>
-                ) : (
-                  stages.map((stage: any, idx: number) => (
-                    <div key={idx} className="space-y-1.5">
-                      <div className="flex justify-between text-[11px] font-semibold text-slate-600">
-                        <span>{stage.name}</span>
-                        <span className={cn('font-bold', stage.textCol || 'text-blue-600')}>
-                          {stage.progress}%
-                        </span>
-                      </div>
-                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${stage.progress}%` }}
-                          transition={{ duration: 0.6, delay: idx * 0.1 }}
-                          className={cn('h-full rounded-full bg-gradient-to-r', stage.colorFrom || 'from-blue-500', stage.colorTo || 'to-blue-700')}
-                        />
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-              <span className="text-slate-400 text-[11px]">
-                {milestoneViewMode === 'milestones' && filteredMilestones.length > 0
-                  ? `${filteredMilestones.filter((m: any) => m.status === 'Completed').length} of ${filteredMilestones.length} completed`
-                  : 'Average completion'}
-              </span>
-              <span className="font-bold text-slate-800">
-                {avgStageProgress}% {avgStageProgress >= 50 ? 'On track' : 'In Progress'}
-              </span>
-            </div>
-          </div>
-
-          {/* 4. Dual Wave / Spline Area Chart (cols 10-12) */}
-          <div className="lg:col-span-3 bg-white rounded-3xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-bold text-slate-800">Execution Velocity</h3>
-                <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
-                  Real-time
+              <div className="mt-1 flex items-baseline gap-1.5">
+                <span className={cn('text-xl font-extrabold tabular-nums', kpi.valueColor)}>
+                  {kpi.value}
+                </span>
+                <span
+                  className={cn(
+                    'text-[10px] font-bold px-1.5 py-0.5 rounded border',
+                    kpi.badgeColor
+                  )}
+                >
+                  {kpi.badge}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-medium">Daily work throughput vs baseline</p>
-
-              {/* Two Wave SVG Curves */}
-              <div className="mt-4 h-24 w-full relative">
-                <svg viewBox="0 0 200 80" preserveAspectRatio="none" className="w-full h-full">
-                  <defs>
-                    <linearGradient id="waveIndigo" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#2563EB" stopOpacity="0.45" />
-                      <stop offset="100%" stopColor="#2563EB" stopOpacity="0.0" />
-                    </linearGradient>
-                    <linearGradient id="waveOrange" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#F97316" stopOpacity="0.35" />
-                      <stop offset="100%" stopColor="#F97316" stopOpacity="0.0" />
-                    </linearGradient>
-                  </defs>
-
-                  {/* Wave 1: Indigo Actual */}
-                  <path d={velocityWaves.actualArea} fill="url(#waveIndigo)" />
-                  <path d={velocityWaves.actualLine} fill="none" stroke="#2563EB" strokeWidth="2.5" />
-
-                  {/* Wave 2: Orange Planned */}
-                  <path d={velocityWaves.plannedArea} fill="url(#waveOrange)" />
-                  <path
-                    d={velocityWaves.plannedLine}
-                    fill="none"
-                    stroke="#F97316"
-                    strokeWidth="2"
-                    strokeDasharray="3 3"
-                  />
-                </svg>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between text-[10px] font-semibold text-slate-500 pt-2 border-t border-slate-100">
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-blue-600" /> Actual Output
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-orange-500" /> Planned Target
-              </span>
-            </div>
-          </div>
+            </Link>
+          ))}
         </div>
 
-        {/* =========================================================================
-            MIDDLE SECTION: Main Multi-Curve Wave Chart (2/3) + Radial Gauge (1/3)
-        ========================================================================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          
-          {/* Main Multi-Curve Wave Chart (cols 1-8) */}
-          <div className="lg:col-span-8 bg-white rounded-3xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-4 flex flex-col justify-between">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
-              <div>
-                <h3 className="text-base font-extrabold text-slate-900 tracking-tight">
-                  Portfolio Performance & Project Trajectory
-                </h3>
-                <p className="text-xs text-slate-400 font-medium mt-0.5">
-                  Comparative analysis of executed deliverables vs projected baseline curve
-                </p>
-              </div>
 
-              {/* Time Filters */}
-              <div className="flex items-center bg-slate-100 p-1 rounded-xl">
-                {(['All', 'Month', 'Week'] as const).map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setActiveTimeRange(t)}
-                    className={cn(
-                      "px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer",
-                      activeTimeRange === t
-                        ? "bg-white text-slate-900 shadow-2xs font-bold"
-                        : "text-slate-500 hover:text-slate-800"
-                    )}
-                  >
-                    {t === 'All' ? 'All time' : t}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Smooth Dynamic SVG Curve Chart */}
-            <div className="h-56 w-full relative pt-2">
-              <svg viewBox="0 0 500 180" preserveAspectRatio="none" className="w-full h-full">
-                <defs>
-                  <linearGradient id="mainCurvePurple" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.35" />
-                    <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.0" />
-                  </linearGradient>
-                  <linearGradient id="mainCurveAmber" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.25" />
-                    <stop offset="100%" stopColor="#F59E0B" stopOpacity="0.0" />
-                  </linearGradient>
-                </defs>
-
-                {/* Horizontal Grid lines */}
-                {[30, 75, 120, 165].map((y, idx) => (
-                  <line
-                    key={idx}
-                    x1="0"
-                    y1={y}
-                    x2="500"
-                    y2={y}
-                    stroke="#F1F5F9"
-                    strokeWidth="1.5"
-                    strokeDasharray="4 4"
-                  />
-                ))}
-
-                {/* Shaded Area: Indigo/Purple (Delivered) */}
-                <path d={trajectoryCurves.deliveredArea} fill="url(#mainCurvePurple)" />
-
-                {/* Line: Indigo/Purple */}
-                <path
-                  d={trajectoryCurves.deliveredLine}
-                  fill="none"
-                  stroke="#2563EB"
-                  strokeWidth="3"
-                />
-
-                {/* Shaded Area: Amber/Orange (Planned) */}
-                <path d={trajectoryCurves.plannedArea} fill="url(#mainCurveAmber)" />
-
-                {/* Line: Amber/Orange */}
-                <path
-                  d={trajectoryCurves.plannedLine}
-                  fill="none"
-                  stroke="#F59E0B"
-                  strokeWidth="2.5"
-                  strokeDasharray="4 2"
-                />
-
-                {/* Marker Dots on key points */}
-                {trajectoryCurves.deliveredPoints?.map((p: any, idx: number) => (
-                  <circle
-                    key={`del-${idx}`}
-                    cx={p.x}
-                    cy={p.y}
-                    r={idx === trajectoryCurves.deliveredPoints.length - 1 ? 5 : 4}
-                    fill="#FFFFFF"
-                    stroke="#2563EB"
-                    strokeWidth={idx === trajectoryCurves.deliveredPoints.length - 1 ? 3 : 2}
-                  />
-                ))}
-              </svg>
-            </div>
-
-            {/* Chart Legend & Labels */}
-            <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs font-semibold text-slate-500">
-              <div className="flex items-center gap-6">
-                <span className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-blue-600" /> Delivered Scope ({completedCount})
-                </span>
-                <span className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-amber-500" /> Planned Baseline ({totalTasks || totalDeliverablesCount})
-                </span>
-              </div>
-              <span className="text-[11px] text-slate-400 font-medium">
-                {activeTimeRange === 'All' ? 'Monthly Scope' : activeTimeRange === 'Month' ? 'Weekly Sprints' : 'Daily Output'}
-              </span>
-            </div>
-          </div>
-
-          {/* Radial Progress / Overall Target Card (cols 9-12) */}
-          <div className="lg:col-span-4 bg-white rounded-3xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between text-center">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-slate-800">Overall Target</h3>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Health</span>
-              </div>
-
-              {/* Big Circular Ring */}
-              <div className="relative w-36 h-36 mx-auto flex items-center justify-center my-3">
-                <svg width="144" height="144" viewBox="0 0 144 144" className="-rotate-90">
-                  <circle
-                    cx="72"
-                    cy="72"
-                    r="58"
-                    fill="transparent"
-                    stroke="#F1F5F9"
-                    strokeWidth="14"
-                  />
-                  <circle
-                    cx="72"
-                    cy="72"
-                    r="58"
-                    fill="transparent"
-                    stroke="#2563EB"
-                    strokeWidth="14"
-                    strokeDasharray={`${2 * Math.PI * 58}`}
-                    strokeDashoffset={`${2 * Math.PI * 58 * (1 - taskPct / 100)}`}
-                    strokeLinecap="round"
-                    className="transition-all duration-1000"
-                  />
-                </svg>
-
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-3xl font-black text-slate-900 tracking-tight">{taskPct}%</span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Efficiency</span>
-                </div>
-              </div>
-
-              <p className="text-xs text-slate-500 font-medium px-4 mt-2">
-                {completedCount > 0
-                  ? `${completedCount} of ${totalTasks || totalDeliverablesCount} tasks completed across ${ps.total || allProjects.length} projects.`
-                  : 'Workspace quality index and project execution pacing remain within targets.'}
-              </p>
-            </div>
-
-            <div className="mt-4 pt-3">
-              <Link
-                href="/construction-dashboard/projects"
-                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold transition-all shadow-md shadow-blue-600/20 active:scale-95 inline-flex items-center justify-center gap-2"
-              >
-                <span>Inspect Workspace</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* =========================================================================
-            BOTTOM SECTION: Stacked Horizontal Bars | Clustered Daily Bars | Split Donut
-        ========================================================================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          
-          {/* 1. Monthly Transaction Allocation Horizontal Bars (cols 1-4) */}
-          <div className="lg:col-span-4 bg-white rounded-3xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-bold text-slate-800">Monthly Transaction Allocation</h3>
-                {/* Month Selector Pills */}
-                {financials.monthlyHistory && financials.monthlyHistory.length > 0 ? (
-                  <div className="flex items-center bg-slate-100 p-0.5 rounded-xl">
-                    {financials.monthlyHistory.map((m: any, idx: number) => (
+        {/* Progress & Health Row (2:1 Grid) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Progress Trend Area Chart */}
+          <div className="lg:col-span-2">
+            <Card className="bg-white border border-slate-200/80 rounded-xl shadow-xs">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-base font-semibold text-slate-900">Project Timeline & Progress</CardTitle>
+                <div className="flex items-center gap-4 text-xs text-slate-500">
+                  <div className="flex items-center bg-slate-100 p-0.5 rounded-lg">
+                    {(['All', 'Month', 'Week'] as const).map((t) => (
                       <button
-                        key={idx}
-                        onClick={() => setSelectedFinanceMonthIdx(idx)}
+                        key={t}
+                        onClick={() => setActiveTimeRange(t)}
                         className={cn(
-                          "px-2 py-0.5 text-[10px] font-bold rounded-lg transition-all cursor-pointer",
-                          selectedFinanceMonthIdx === idx
-                            ? "bg-white text-blue-600 shadow-2xs font-extrabold"
-                            : "text-slate-400 hover:text-slate-700"
+                          'px-2.5 py-1 text-xs font-medium rounded-md transition-all cursor-pointer',
+                          activeTimeRange === t
+                            ? 'bg-white text-slate-900 shadow-xs font-semibold'
+                            : 'text-slate-500 hover:text-slate-900'
                         )}
                       >
-                        {m.month}
+                        {t === 'All' ? 'All time' : t}
                       </button>
                     ))}
                   </div>
-                ) : (
-                  <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full">
-                    {financials.currentMonthName || 'Monthly'}
+
+                  <span className="flex items-center gap-1.5 hidden sm:inline-flex">
+                    <span className="w-2 h-2 rounded-full bg-blue-600" />
+                    Planned
                   </span>
-                )}
-              </div>
-              <p className="text-[11px] text-slate-400 font-medium mb-5">
-                Proportional monthly allocation for {currentFinanceMonth.fullMonth || currentFinanceMonth.month}
-              </p>
-
-              {/* Horizontal Progress Bars for Selected Month */}
-              <div className="space-y-4">
-                {[
-                  {
-                    name: 'Incoming',
-                    pct: currentFinanceMonth.incomingPct,
-                    gradient: 'from-emerald-500 to-teal-400',
-                  },
-                  {
-                    name: 'Outgoing (Expenses & Vendors)',
-                    pct: currentFinanceMonth.outgoingPct,
-                    gradient: 'from-rose-500 to-amber-500',
-                  },
-                  {
-                    name: 'Debit Notes (Recoveries & Adjustments)',
-                    pct: currentFinanceMonth.debitNotesPct,
-                    gradient: 'from-blue-600 to-purple-500',
-                  },
-                ].map((trade, idx) => (
-                  <div key={idx} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs font-semibold">
-                      <span className="text-slate-700">{trade.name}</span>
-                      <strong className="text-slate-900">{trade.pct}%</strong>
-                    </div>
-                    <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                      <motion.div
-                        key={`${selectedFinanceMonthIdx}-${trade.name}-${trade.pct}`}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${trade.pct}%` }}
-                        transition={{ duration: 0.5, delay: idx * 0.08 }}
-                        className={cn("h-full rounded-full bg-gradient-to-r", trade.gradient)}
-                      />
-                    </div>
-                  </div>
-                ))}
-
-                {!currentFinanceMonth.hasData && (
-                  <p className="text-[11px] text-center text-slate-400 font-medium pt-1">
-                    No transactions recorded for {currentFinanceMonth.fullMonth || currentFinanceMonth.month} yet.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Bottom Legend */}
-            <div className="flex items-center justify-between text-[10px] font-semibold text-slate-500 pt-3 border-t border-slate-100 mt-4">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" /> Incoming
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-rose-500" /> Outgoing
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-blue-600" /> Debit Notes
-              </span>
-            </div>
-          </div>
-
-          {/* 2. Clustered Vertical Daily Bar Chart (cols 5-8) */}
-          <div className="lg:col-span-4 bg-white rounded-3xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-bold text-slate-800">Daily Site Activity & Logs</h3>
-                <span className="text-[10px] font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full">
-                  Weekly
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 font-medium mb-4">Active workload & verified task completions</p>
-
-              {/* Clustered Coral/Orange Vertical Bars */}
-              <div className="flex items-end justify-between h-28 pt-2 px-1">
-                {dailyActivityBars.map((item: any, idx: number) => (
-                  <div key={idx} className="flex flex-col items-center gap-1.5 flex-1">
-                    <div className="flex items-end gap-1 h-20">
-                      {/* Bar 1: Active workload */}
-                      <motion.div
-                        initial={{ height: 0 }}
-                        animate={{ height: `${item.activeWorkers}%` }}
-                        transition={{ duration: 0.5, delay: idx * 0.04 }}
-                        className="w-2.5 bg-gradient-to-t from-orange-500 to-amber-400 rounded-t-sm"
-                        title={`Active: ${item.activeWorkers}`}
-                      />
-                      {/* Bar 2: Completed tasks */}
-                      <motion.div
-                        initial={{ height: 0 }}
-                        animate={{ height: `${item.completedTasks}%` }}
-                        transition={{ duration: 0.5, delay: idx * 0.04 + 0.1 }}
-                        className="w-2.5 bg-gradient-to-t from-orange-300 to-orange-200 rounded-t-sm"
-                        title={`Completed: ${item.completedTasks}`}
-                      />
-                    </div>
-                    <span className="text-[10px] font-semibold text-slate-400">{item.day}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between text-[10px] font-semibold text-slate-500 pt-3 border-t border-slate-100">
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-orange-500" /> Active Tasks
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-orange-300" /> Completed Deliverables
-              </span>
-            </div>
-          </div>
-
-          {/* 3. Segmented Split Donut (cols 9-12) */}
-          <div className="lg:col-span-4 bg-white rounded-3xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-bold text-slate-800">Risk vs Quality Ratio</h3>
-                <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-                  Live
-                </span>
-              </div>
-
-              {/* Segmented Donut */}
-              <div className="relative w-28 h-28 mx-auto flex items-center justify-center my-3">
-                <svg width="112" height="112" viewBox="0 0 112 112" className="-rotate-90">
-                  {/* Segment 1: Quality Passes (Orange / Emerald) */}
-                  <circle
-                    cx="56"
-                    cy="56"
-                    r="44"
-                    fill="transparent"
-                    stroke="#F97316"
-                    strokeWidth="12"
-                    strokeDasharray={`${2 * Math.PI * 44}`}
-                    strokeDashoffset={`${2 * Math.PI * 44 * (1 - qualityVsRisk.qualityPercentage / 100)}`}
-                  />
-                  {/* Segment 2: Risks / Items Monitored (Indigo) */}
-                  <circle
-                    cx="56"
-                    cy="56"
-                    r="44"
-                    fill="transparent"
-                    stroke="#2563EB"
-                    strokeWidth="12"
-                    strokeDasharray={`${2 * Math.PI * 44}`}
-                    strokeDashoffset={`${2 * Math.PI * 44 * (1 - qualityVsRisk.riskPercentage / 100)}`}
-                    style={{
-                      transform: `rotate(${Math.round(360 * (qualityVsRisk.qualityPercentage / 100))}deg)`,
-                      transformOrigin: '56px 56px',
-                    }}
-                  />
-                </svg>
-
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-xs font-bold text-blue-600">{qualityVsRisk.riskPercentage}%</span>
-                  <span className="text-sm font-black text-orange-600">{qualityVsRisk.qualityPercentage}%</span>
+                  <span className="flex items-center gap-1.5 hidden sm:inline-flex">
+                    <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                    Actual
+                  </span>
                 </div>
-              </div>
-            </div>
+              </CardHeader>
+              <CardContent>
+                {allProjects.length === 0 || !activeTrajectoryList.some((t: any) => (t.delivered || 0) > 0 || (t.planned || 0) > 0) ? (
+                  <div className="h-[280px] flex flex-col items-center justify-center text-center p-6 space-y-2">
+                    <TrendingUp className="w-8 h-8 text-slate-300" />
+                    <p className="text-sm font-semibold text-slate-700">No project activity recorded yet</p>
+                    <p className="text-xs text-slate-400 max-w-sm">
+                      Create a project and schedule work tasks or milestones to begin tracking planned vs actual delivery trends.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="h-[280px] outline-none focus:outline-none [&_*]:outline-none">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart
+                        style={{ outline: 'none' }}
+                        data={activeTrajectoryList}
+                        margin={{ top: 10, right: 10, bottom: 5, left: -20 }}
+                      >
+                        <defs>
+                          <linearGradient id="plannedGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#2563EB" stopOpacity={0.25} />
+                            <stop offset="100%" stopColor="#2563EB" stopOpacity={0} />
+                          </linearGradient>
+                          <linearGradient id="actualGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#16A34A" stopOpacity={0.25} />
+                            <stop offset="100%" stopColor="#16A34A" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                        <XAxis
+                          dataKey="label"
+                          tick={{ fontSize: 12, fill: '#64748B' }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          tick={{ fontSize: 12, fill: '#64748B' }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#FFFFFF',
+                            border: '1px solid #E2E8F0',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            color: '#0F172A',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                          }}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="planned"
+                          name="Planned Target"
+                          stroke="#2563EB"
+                          fill="url(#plannedGradient)"
+                          strokeWidth={2}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="delivered"
+                          name="Actual Scope"
+                          stroke="#16A34A"
+                          fill="url(#actualGradient)"
+                          strokeWidth={2}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
-            {/* Legend Breakdown */}
-            <div className="space-y-1.5 pt-3 border-t border-slate-100 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-slate-500 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-orange-500" /> Quality Verified
-                </span>
-                <strong className="text-slate-800">{qualityVsRisk.qualityPercentage}%</strong>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-slate-500 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-blue-600" /> Risk & Snags
-                </span>
-                <strong className="text-slate-800">{qualityVsRisk.riskPercentage}%</strong>
-              </div>
-            </div>
+          {/* Project Health Donut */}
+          <div>
+            <Card className="h-full bg-white border border-slate-200/80 rounded-xl shadow-xs">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold text-slate-900">Project Health</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="relative h-[200px] outline-none focus:outline-none [&_*]:outline-none">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart style={{ outline: 'none' }}>
+                      <Pie
+                        data={healthSlices}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={55}
+                        outerRadius={80}
+                        paddingAngle={3}
+                        dataKey="value"
+                        isAnimationActive={healthTotal > 0}
+                      >
+                        {healthSlices.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#FFFFFF',
+                          border: '1px solid #E2E8F0',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-2xl font-bold text-slate-900">{healthTotal}</span>
+                    <span className="text-[11px] text-slate-500">
+                      {healthTotal === 1 ? 'Project' : 'Projects'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2 mt-2">
+                  {healthTotal === 0 ? (
+                    <p className="text-xs text-slate-400 text-center py-2">
+                      No active projects in this workspace
+                    </p>
+                  ) : (
+                    healthSlices.map((item) => (
+                      <div key={item.name} className="flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-2">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full"
+                            style={{ backgroundColor: item.color }}
+                          />
+                          <span className="text-slate-500 text-xs">{item.name}</span>
+                        </span>
+                        <span className="font-semibold text-xs text-slate-900">{item.value}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
-        {/* Modal for creating a project */}
-        <CreateProjectModal
-          isOpen={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
-          onSuccess={fetchDashboard}
-        />
+        {/* Secondary Row: Top Projects & Attention Items */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Card 1: Top Projects Portfolio */}
+          <div>
+            <Card className="h-full bg-white border border-slate-200/80 rounded-xl shadow-xs">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
+                  <Briefcase className="w-4 h-4 text-slate-700" />
+                  Top Projects
+                </CardTitle>
+                <Link
+                  href="/construction-dashboard/projects"
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline inline-flex items-center gap-1"
+                >
+                  View all <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </CardHeader>
+              <CardContent className="pt-2">
+                {allProjects.length === 0 ? (
+                  <div className="py-8 text-center space-y-2">
+                    <FolderKanban className="w-8 h-8 mx-auto text-slate-300" />
+                    <p className="text-xs text-slate-500">No active projects yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3.5">
+                    {allProjects.slice(0, 4).map((project: any) => {
+                      const progress =
+                        project.progress ??
+                        (project.status === 'Completed'
+                          ? 100
+                          : project.status === 'In Progress'
+                          ? 58
+                          : 20);
+                      return (
+                        <div key={project._id} className="space-y-1">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-medium text-slate-800 truncate max-w-[180px]">
+                              {project.name}
+                            </span>
+                            <span className="font-semibold text-slate-500">{progress}%</span>
+                          </div>
+                          <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{
+                                width: `${progress}%`,
+                                backgroundColor:
+                                  progress >= 80
+                                    ? '#16A34A'
+                                    : progress >= 40
+                                    ? '#2563EB'
+                                    : '#D97706',
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Card 2: Attention Items & Schedule */}
+          <div>
+            <Card className="h-full bg-white border border-slate-200/80 rounded-xl shadow-xs">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-amber-500" />
+                  Attention Required & Scheduled Items
+                </CardTitle>
+                <span className="text-xs text-slate-500">
+                  {ts.dueTodayList?.length || 0} pending today
+                </span>
+              </CardHeader>
+              <CardContent className="pt-2">
+                {!ts.dueTodayList || ts.dueTodayList.length === 0 ? (
+                  <div className="py-6 text-center space-y-2">
+                    <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
+                    <p className="text-sm font-medium text-slate-800">
+                      All deliverables on schedule
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      No overdue tasks or critical roadblocks requiring immediate intervention.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {ts.dueTodayList.slice(0, 4).map((task: any, idx: number) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                          <span className="text-xs font-medium text-slate-800 truncate">
+                            {task.title || task.name || 'Scheduled deliverable'}
+                          </span>
+                        </div>
+                        <span className="text-[11px] font-semibold text-slate-500 shrink-0 ml-2">
+                          Due today
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Site Delivery & Quality Resolution Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Card 1: Key Project Milestones */}
+          <div>
+            <Card className="h-full bg-white border border-slate-200/80 rounded-xl shadow-xs">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
+                  <Flag className="w-4 h-4 text-blue-600" />
+                  Site Delivery Milestones
+                </CardTitle>
+                <Link
+                  href="/construction-dashboard/projects"
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline inline-flex items-center gap-1"
+                >
+                  View projects <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </CardHeader>
+              <CardContent className="pt-2">
+                {projectMilestones.length === 0 ? (
+                  <div className="py-8 text-center space-y-2">
+                    <Flag className="w-8 h-8 mx-auto text-slate-300" />
+                    <p className="text-sm font-medium text-slate-800">No project milestones scheduled</p>
+                    <p className="text-xs text-slate-400 max-w-xs mx-auto">
+                      Define milestone deliverables in your project workspaces to track phased construction progress.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3.5">
+                    {projectMilestones.slice(0, 4).map((m: any, idx: number) => {
+                      const isCompleted = m.status === 'Completed' || m.progress === 100;
+                      const isInProgress = m.status === 'In Progress' || (m.progress > 0 && m.progress < 100);
+                      const formattedDate = m.dueDate
+                        ? new Date(m.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                        : null;
+
+                      return (
+                        <div key={m._id || idx} className="p-3 rounded-lg border border-slate-100 hover:bg-slate-50/70 transition-all space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold text-slate-900 truncate">{m.name}</p>
+                              <p className="text-[11px] text-slate-500 truncate mt-0.5">{m.projectName}</p>
+                            </div>
+                            <span
+                              className={cn(
+                                'px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 border',
+                                isCompleted
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                  : isInProgress
+                                  ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                  : 'bg-slate-100 text-slate-600 border-slate-200'
+                              )}
+                            >
+                              {m.status || (isCompleted ? 'Completed' : 'Pending')}
+                            </span>
+                          </div>
+
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between text-[11px] text-slate-500">
+                              <span>
+                                {m.totalTasks > 0 ? `${m.completedTasks || 0} of ${m.totalTasks} tasks` : `${m.progress || 0}% complete`}
+                              </span>
+                              {formattedDate && (
+                                <span className="flex items-center gap-1 text-slate-400">
+                                  <Calendar className="w-3 h-3" />
+                                  {formattedDate}
+                                </span>
+                              )}
+                            </div>
+                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                              <div
+                                className={cn(
+                                  'h-full rounded-full transition-all duration-500',
+                                  isCompleted ? 'bg-emerald-600' : isInProgress ? 'bg-blue-600' : 'bg-slate-300'
+                                )}
+                                style={{ width: `${Math.min(100, m.progress || 0)}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Card 2: Site Issues & Quality Watch */}
+          <div>
+            <Card className="h-full bg-white border border-slate-200/80 rounded-xl shadow-xs">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                  Site Risks & Snags Watch
+                </CardTitle>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-full font-medium">
+                    {snags.open || 0} Snags
+                  </span>
+                  <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-medium">
+                    {rs.criticalRisks?.length || 0} Critical
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-2">
+                {siteIssuesAndRisks.length === 0 ? (
+                  <div className="py-8 text-center space-y-2">
+                    <ShieldCheck className="w-8 h-8 mx-auto text-emerald-500" />
+                    <p className="text-sm font-medium text-slate-800">Job sites operating smoothly</p>
+                    <p className="text-xs text-slate-400 max-w-xs mx-auto">
+                      Zero critical risks or unresolved snags reported across your active construction portfolio.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {siteIssuesAndRisks.map((item: any) => (
+                      <Link
+                        key={item.id}
+                        href={item.link}
+                        className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors group"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {item.type === 'risk' ? (
+                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                          ) : (
+                            <Bug className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
+                              {item.title}
+                            </p>
+                            <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                              {item.projectName}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                          <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-semibold border', item.badgeStyle)}>
+                            {item.badgeText}
+                          </span>
+                          <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
-    </SkeletonLoader>
+
+      {/* Modal for creating a project */}
+      <CreateProjectModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={fetchDashboard}
+      />
+    </div>
   );
 };

@@ -266,7 +266,7 @@ export function ProjectDetailsTab() {
   const daysRem = calculateDaysRemaining();
 
   return (
-    <div className="space-y-4 md:space-y-5">
+    <div className="space-y-4">
       {/* ── Site Survey Action Banner ── */}
       {(project.needSiteSurvey || project.status === 'Site Survey' || project.status === 'Initialized' || project.surveyStatus) && (() => {
         const surveyStatus = project.surveyStatus;
@@ -274,19 +274,19 @@ export function ProjectDetailsTab() {
 
         if (surveyStatus === 'Approved') {
           return (
-            <div className="p-4 bg-emerald-50/80 border border-emerald-200/80 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+            <div className="p-3.5 sm:p-4 bg-emerald-50/70 border border-emerald-200/80 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
               <div className="flex items-center space-x-3">
-                <div className="p-2.5 rounded-xl bg-white border border-emerald-200 text-emerald-600 shadow-2xs shrink-0">
-                  <CheckCircle2 className="w-5 h-5" />
+                <div className="w-8 h-8 rounded-lg bg-white border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-4.5 h-4.5" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="text-xs font-bold text-emerald-900 uppercase tracking-wider">Site Survey Completed & Approved</h4>
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                    <h4 className="text-xs font-bold text-slate-900">Site Survey Completed & Approved</h4>
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-semibold border border-emerald-200/60">
                       Approved
                     </span>
                   </div>
-                  <p className="text-[11px] text-emerald-700 mt-0.5">
+                  <p className="text-xs text-slate-600 mt-0.5">
                     {project.siteSurveyor ? `Assigned to: ${surveyorName} • ` : ''}Survey report has been approved by management.
                   </p>
                 </div>
@@ -298,7 +298,7 @@ export function ProjectDetailsTab() {
                     : `/construction-dashboard/projects/${projectId}/site-survey`;
                   router.push(surveyPath);
                 }}
-                className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs shrink-0"
+                className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-medium transition-colors shrink-0 cursor-pointer"
               >
                 <span>View Survey Report</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -309,19 +309,19 @@ export function ProjectDetailsTab() {
 
         if (surveyStatus === 'Submitted') {
           return (
-            <div className="p-4 bg-blue-50/80 border border-blue-200/80 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+            <div className="p-3.5 sm:p-4 bg-blue-50/70 border border-blue-200/80 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
               <div className="flex items-center space-x-3">
-                <div className="p-2.5 rounded-xl bg-white border border-blue-200 text-blue-600 shadow-2xs shrink-0">
-                  <Compass className="w-5 h-5 animate-spin-slow" />
+                <div className="w-8 h-8 rounded-lg bg-white border border-blue-200 text-blue-600 flex items-center justify-center shrink-0">
+                  <Compass className="w-4.5 h-4.5 animate-spin-slow" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="text-xs font-bold text-blue-900 uppercase tracking-wider">Site Survey Submitted</h4>
-                    <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[10px] font-bold">
+                    <h4 className="text-xs font-bold text-slate-900">Site Survey Submitted</h4>
+                    <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[10px] font-semibold border border-blue-200/60">
                       Pending Approval
                     </span>
                   </div>
-                  <p className="text-[11px] text-blue-700 mt-0.5">
+                  <p className="text-xs text-slate-600 mt-0.5">
                     Assigned to: {surveyorName} • Awaiting manager review & approval.
                   </p>
                 </div>
@@ -333,7 +333,7 @@ export function ProjectDetailsTab() {
                     : `/construction-dashboard/projects/${projectId}/site-survey`;
                   router.push(surveyPath);
                 }}
-                className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs shrink-0"
+                className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition-colors shrink-0 cursor-pointer"
               >
                 <span>View Survey Report</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -344,19 +344,19 @@ export function ProjectDetailsTab() {
 
         if (surveyStatus === 'Needs Attention') {
           return (
-            <div className="p-4 bg-amber-50/80 border border-amber-200/80 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+            <div className="p-3.5 sm:p-4 bg-amber-50/70 border border-amber-200/80 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
               <div className="flex items-center space-x-3">
-                <div className="p-2.5 rounded-xl bg-white border border-amber-200 text-amber-600 shadow-2xs shrink-0">
-                  <AlertTriangle className="w-5 h-5" />
+                <div className="w-8 h-8 rounded-lg bg-white border border-amber-200 text-amber-600 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-4.5 h-4.5" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wider">Site Survey Needs Attention</h4>
-                    <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-bold">
+                    <h4 className="text-xs font-bold text-slate-900">Site Survey Needs Attention</h4>
+                    <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-semibold border border-amber-200/60">
                       Needs Revision
                     </span>
                   </div>
-                  <p className="text-[11px] text-amber-700 mt-0.5">
+                  <p className="text-xs text-slate-600 mt-0.5">
                     Assigned to: {surveyorName} • {project.surveyRejectionReason ? `Reason: ${project.surveyRejectionReason}` : 'Revision required.'}
                   </p>
                 </div>
@@ -368,7 +368,7 @@ export function ProjectDetailsTab() {
                     : `/construction-dashboard/projects/${projectId}/site-survey`;
                   router.push(surveyPath);
                 }}
-                className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs shrink-0"
+                className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-3.5 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-medium transition-colors shrink-0 cursor-pointer"
               >
                 <span>View Survey Report</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -378,25 +378,25 @@ export function ProjectDetailsTab() {
         }
 
         return (
-          <div className="p-4 bg-cyan-50/80 border border-cyan-200/80 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+          <div className="p-3.5 sm:p-4 bg-blue-50/70 border border-blue-200/80 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
             <div className="flex items-center space-x-3">
-              <div className="p-2.5 rounded-xl bg-white border border-cyan-200 text-cyan-600 shadow-2xs shrink-0">
-                <Map className="w-5 h-5" />
+              <div className="w-8 h-8 rounded-lg bg-white border border-blue-200 text-blue-600 flex items-center justify-center shrink-0">
+                <Map className="w-4.5 h-4.5" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h4 className="text-xs font-bold text-cyan-900 uppercase tracking-wider">Site Survey Required</h4>
+                  <h4 className="text-xs font-bold text-slate-900">Site Survey Required</h4>
                   {project.siteSurveyor ? (
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-semibold border border-emerald-200/60">
                       Surveyor Assigned
                     </span>
                   ) : (
-                    <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-bold">
+                    <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-semibold border border-amber-200/60">
                       Surveyor Pending
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-cyan-700 mt-0.5">
+                <p className="text-xs text-slate-600 mt-0.5">
                   {project.siteSurveyor
                     ? `Assigned to: ${surveyorName}`
                     : 'Assign an authorized surveyor to record site measurements & interior diagnostics before design work.'}
@@ -409,7 +409,7 @@ export function ProjectDetailsTab() {
                 canAssignSurveyor && (
                 <button
                   onClick={() => setIsSurveyModalOpen(true)}
-                  className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+                  className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer"
                 >
                   <Users className="w-3.5 h-3.5" />
                   <span>Assign Surveyor & Send</span>
@@ -423,7 +423,7 @@ export function ProjectDetailsTab() {
                       : `/construction-dashboard/projects/${projectId}/site-survey`;
                     router.push(surveyPath);
                   }}
-                  className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-4 py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+                  className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer"
                 >
                   <span>View Survey Report</span>
                   <ChevronRight className="w-3.5 h-3.5" />
@@ -436,22 +436,22 @@ export function ProjectDetailsTab() {
 
       {/* ── Pending Budget Change Request Banner ── */}
       {pendingBh && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 md:p-5 bg-amber-50/90 border border-amber-200 rounded-2xl shadow-xs">
-          <div className="flex items-center space-x-3.5">
-            <div className="p-2.5 rounded-xl bg-amber-100 border border-amber-200 text-amber-700 shadow-2xs shrink-0">
-              <Clock className="w-5 h-5 animate-pulse" />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 p-3.5 sm:p-4 bg-amber-50/80 border border-amber-200/80 rounded-xl">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-lg bg-amber-100 border border-amber-200 text-amber-700 flex items-center justify-center shrink-0">
+              <Clock className="w-4 h-4 animate-pulse" />
             </div>
             <div>
               <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-                <h4 className="text-xs font-black text-amber-900 uppercase tracking-wider">Budget Change Request Pending</h4>
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-200/80 text-amber-800 border border-amber-300/60">
+                <h4 className="text-xs font-bold text-amber-900">Budget Change Request Pending</h4>
+                <span className="px-2 py-0.5 rounded-md text-[9px] font-semibold bg-amber-200/80 text-amber-800 border border-amber-300/60">
                   +{formatCurrency(pendingAddedAmount, project.currency || '$')} Added
                 </span>
-                <span className="text-[11px] font-bold text-amber-900">
+                <span className="text-xs font-medium text-amber-900">
                   New Proposed Total: {formatCurrency(pendingTotalBudget, project.currency || '$')} <span className="font-normal text-amber-700">(Current Base: {formatCurrency(currentBaseBudget, project.currency || '$')})</span>
                 </span>
               </div>
-              <p className="text-[11px] text-amber-800 mt-1 font-medium">
+              <p className="text-xs text-amber-800 mt-0.5">
                 {pendingBh.reason || 'A budget modification request has been submitted for review.'}
               </p>
             </div>
@@ -462,14 +462,14 @@ export function ProjectDetailsTab() {
               <button
                 disabled={isProcessing}
                 onClick={() => handleBudgetAction(pendingBh._id, 'Rejected')}
-                className="flex-1 sm:flex-initial px-4 py-2 rounded-xl border border-amber-300 text-amber-900 bg-white hover:bg-amber-100/50 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
+                className="flex-1 sm:flex-initial px-3.5 py-2 rounded-lg border border-amber-300 text-amber-900 bg-white hover:bg-amber-100/50 text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer"
               >
                 Reject
               </button>
               <button
                 disabled={isProcessing}
                 onClick={() => handleBudgetAction(pendingBh._id, 'Approved')}
-                className="flex-1 sm:flex-initial px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center space-x-1.5 disabled:opacity-50 cursor-pointer"
+                className="flex-1 sm:flex-initial px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-medium transition-colors flex items-center justify-center space-x-1.5 disabled:opacity-50 cursor-pointer"
               >
                 {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                 <span>Approve (+{formatCurrency(pendingAddedAmount, project.currency || '$')})</span>
@@ -481,13 +481,13 @@ export function ProjectDetailsTab() {
 
       {/* ── Under Snagging Banner ── */}
       {project.status === 'Under Snagging' && (
-        <div className="flex items-center space-x-3 p-4 bg-amber-50 border border-amber-100 rounded-2xl">
-          <div className="p-2 rounded-lg bg-white border border-amber-200 text-amber-600 shadow-sm shrink-0">
-            <Clock className="w-5 h-5 animate-pulse" />
+        <div className="flex items-center space-x-3 p-3.5 sm:p-4 bg-amber-50/70 border border-amber-200/80 rounded-xl">
+          <div className="w-8 h-8 rounded-lg bg-white border border-amber-200 text-amber-600 flex items-center justify-center shrink-0">
+            <Clock className="w-4 h-4 animate-pulse" />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wider">Project Under Snagging</h4>
-            <p className="text-[11px] text-amber-600 mt-0.5">
+            <h4 className="text-xs font-bold text-amber-800">Project Under Snagging</h4>
+            <p className="text-xs text-amber-600 mt-0.5">
               Quality assurance audits are ongoing. Check Handover tab for status.
             </p>
           </div>
@@ -496,13 +496,13 @@ export function ProjectDetailsTab() {
 
       {/* ── Snagging Completed Banner ── */}
       {project.status === 'Snagging Completed' && (
-        <div className="flex items-center space-x-3 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl">
-          <div className="p-2 rounded-lg bg-white border border-emerald-200 text-emerald-600 shadow-sm shrink-0">
-            <CheckCircle2 className="w-5 h-5" />
+        <div className="flex items-center space-x-3 p-3.5 sm:p-4 bg-emerald-50/70 border border-emerald-200/80 rounded-xl">
+          <div className="w-8 h-8 rounded-lg bg-white border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Snagging Completed</h4>
-            <p className="text-[11px] text-emerald-600 mt-0.5">
+            <h4 className="text-xs font-bold text-emerald-800">Snagging Completed</h4>
+            <p className="text-xs text-emerald-600 mt-0.5">
               The quality inspection phase is finished. Ready for handover operations.
             </p>
           </div>
@@ -510,43 +510,43 @@ export function ProjectDetailsTab() {
       )}
 
       {/* ── Bento Grid ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
         
         {/* Bento Card 1: Project Details Hero */}
-        <div className="p-5 md:p-6 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs lg:col-span-2 flex flex-col justify-between hover:border-slate-300 transition-all">
+        <div className="p-4 sm:p-5 rounded-xl bg-white border border-slate-200/80 lg:col-span-2 flex flex-col justify-between transition-all">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200/60 shadow-2xs">
+              <span className="px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/80">
                 {project.status || 'Planning'}
               </span>
-              <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs">
+              <span className="px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                 {project.category?.name || 'General'}
               </span>
             </div>
             
-            <h2 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight mt-3 flex items-baseline flex-wrap gap-2">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight mt-2.5 flex items-center flex-wrap gap-2">
               {project.name}
               {project.projectCode && (
-                <span className="text-xs md:text-sm font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
                   {project.projectCode}
                 </span>
               )}
             </h2>
-            <p className="text-slate-600 mt-2 text-xs leading-relaxed font-normal">
+            <p className="text-slate-500 mt-1 text-xs leading-relaxed font-normal">
               {project.description || 'No description provided.'}
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 bg-slate-50/80 border border-slate-200/80 rounded-xl p-3.5 mt-5">
+          <div className="grid grid-cols-2 gap-3 bg-slate-50 border border-slate-200/80 rounded-lg p-3 mt-4">
             <div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Start Date</span>
-              <span className="text-xs font-bold text-slate-800 mt-0.5 block">
+              <span className="text-[10.5px] font-medium text-slate-500 block">Start Date</span>
+              <span className="text-xs font-semibold text-slate-800 mt-0.5 block">
                 {project.startDate ? new Date(project.startDate).toLocaleDateString() : 'N/A'}
               </span>
             </div>
             <div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Target Date</span>
-              <span className="text-xs font-bold text-slate-800 mt-0.5 block">
+              <span className="text-[10.5px] font-medium text-slate-500 block">Target Date</span>
+              <span className="text-xs font-semibold text-slate-800 mt-0.5 block">
                 {project.endDate ? new Date(project.endDate).toLocaleDateString() : 'N/A'}
               </span>
             </div>
@@ -557,31 +557,31 @@ export function ProjectDetailsTab() {
         <div
           onClick={() => setShowBudgetHist(true)}
           className={cn(
-            "p-5 md:p-6 rounded-2xl bg-white/90 backdrop-blur-md border shadow-xs flex flex-col justify-between hover:shadow-card-hover cursor-pointer transition-all duration-200 group relative",
+            "p-4 sm:p-5 rounded-xl bg-white border flex flex-col justify-between cursor-pointer transition-all group relative",
             pendingBh ? "border-amber-300 bg-amber-50/20" : "border-slate-200/80 hover:border-blue-300"
           )}
         >
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Budget</span>
+              <span className="text-xs font-semibold text-slate-500">Total Budget</span>
               <div className={cn("w-7 h-7 rounded-lg border flex items-center justify-center transition-transform group-hover:scale-105", pendingBh ? "bg-amber-100 border-amber-200 text-amber-600" : "bg-blue-50 border-blue-100 text-blue-600")}>
                 <History className="w-3.5 h-3.5" />
               </div>
             </div>
             
-            <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-4">
+            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-3">
               {formatCurrency(project.budgetHistory?.[project.budgetHistory.length - 1]?.amount || 0, project.currency || '$')}
             </h3>
-            <div className="flex flex-col gap-1 mt-1">
-              <p className="text-[11px] text-slate-500 font-medium">Latest Approved Base Budget</p>
+            <div className="flex flex-col gap-1 mt-0.5">
+              <p className="text-[11px] text-slate-500 font-normal">Latest Approved Base Budget</p>
               {pendingBh && (
                 <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-100 border border-amber-200 text-amber-800 flex items-center gap-1">
+                  <span className="px-2 py-0.5 rounded-md text-[9px] font-semibold bg-amber-100 border border-amber-200 text-amber-800 flex items-center gap-1">
                     <Clock className="w-2.5 h-2.5 animate-pulse" />
                     <span>+{formatCurrency(pendingAddedAmount, project.currency || '$')} Change Req</span>
                   </span>
-                  <span className="text-[10px] font-semibold text-amber-700">
-                    (Proposed Total: {formatCurrency(pendingTotalBudget, project.currency || '$')})
+                  <span className="text-[10px] font-medium text-amber-700">
+                    (Proposed: {formatCurrency(pendingTotalBudget, project.currency || '$')})
                   </span>
                 </div>
               )}
@@ -589,7 +589,7 @@ export function ProjectDetailsTab() {
           </div>
           
           <div className="flex items-center justify-between pt-3 border-t border-slate-100 mt-4">
-            <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider group-hover:translate-x-1 transition-transform flex items-center space-x-1">
+            <span className="text-xs font-medium text-blue-600 group-hover:text-blue-700 transition-colors flex items-center space-x-1">
               <span>Lifecycle Log</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </span>
@@ -600,7 +600,7 @@ export function ProjectDetailsTab() {
                   e.stopPropagation();
                   handleOpenRequestModal();
                 }}
-                className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1 shadow-2xs"
+                className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-xs font-medium rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
               >
                 <Plus className="w-3 h-3" />
                 <span>Change Req</span>
@@ -610,39 +610,39 @@ export function ProjectDetailsTab() {
         </div>
 
         {/* Bento Card 3: Days Remaining */}
-        <div className="p-5 md:p-6 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
+        <div className="p-4 sm:p-5 rounded-xl bg-white border border-slate-200/80 flex flex-col justify-between transition-all">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Days Remaining</span>
+              <span className="text-xs font-semibold text-slate-500 block">Days Remaining</span>
               <div className="w-7 h-7 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
                 <Clock className="w-3.5 h-3.5" />
               </div>
             </div>
             
-            <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-4">
+            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-3">
               {daysRem !== 'N/A' ? `${daysRem} Days` : 'N/A'}
             </h3>
-            <p className="text-[11px] text-slate-500 mt-1 font-medium">Time Remaining Until Target Handover</p>
+            <p className="text-[11px] text-slate-500 mt-0.5 font-normal">Time Remaining Until Target Handover</p>
           </div>
           <div className="flex items-center space-x-1.5 text-slate-400 mt-4 pt-3 border-t border-slate-100">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Scheduled Target</span>
+            <span className="text-[10.5px] font-medium text-slate-400">Scheduled Target Handover</span>
           </div>
         </div>
 
         {/* Bento Card 4: Project Area */}
-        <div className="p-5 md:p-6 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
+        <div className="p-4 sm:p-5 rounded-xl bg-white border border-slate-200/80 flex flex-col justify-between transition-all">
           <div className="flex flex-col h-full justify-between">
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Project Area</span>
+                <span className="text-xs font-semibold text-slate-500 block">Project Area</span>
                 <div className="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
                   <Map className="w-3.5 h-3.5" />
                 </div>
               </div>
-              <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-4">
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-3">
                 {project.area ? `${Number(project.area).toLocaleString()} ${project.areaUnit ? project.areaUnit.toUpperCase() : 'SQFT'}` : 'N/A'}
               </h3>
-              <p className="text-[11px] text-slate-500 mt-1 font-medium">Total Site Area</p>
+              <p className="text-[11px] text-slate-500 mt-0.5 font-normal">Total Site Area</p>
             </div>
             
             {project?.siteLocation?.latitude != null && project?.siteLocation?.longitude != null && (
@@ -651,10 +651,10 @@ export function ProjectDetailsTab() {
                   href={`https://www.google.com/maps/search/?api=1&query=${project.siteLocation.latitude},${project.siteLocation.longitude}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200/60 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors shadow-2xs"
+                  className="inline-flex items-center space-x-1.5 px-2.5 py-1 bg-blue-50 border border-blue-200/60 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-xs font-medium"
                 >
                   <Map className="w-3.5 h-3.5" />
-                  <span className="text-xs font-bold">View Location</span>
+                  <span>View Location</span>
                 </a>
               </div>
             )}
@@ -662,19 +662,19 @@ export function ProjectDetailsTab() {
         </div>
 
         {/* Bento Card 5: Coordination Team */}
-        <div className="p-5 md:p-6 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs lg:col-span-2 flex flex-col justify-between hover:border-slate-300 transition-all">
+        <div className="p-4 sm:p-5 rounded-xl bg-white border border-slate-200/80 lg:col-span-2 flex flex-col justify-between transition-all">
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3.5">
               <div className="flex items-center space-x-2">
                 <div className="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
                   <Users className="w-4 h-4" />
                 </div>
-                <h3 className="text-sm font-bold text-slate-900">Coordination Team</h3>
+                <h3 className="text-xs font-bold text-slate-900">Coordination Team</h3>
               </div>
               {canAssignMembers && (
                 <button
                   onClick={() => setIsTeamModalOpen(true)}
-                  className="flex items-center space-x-1 px-3 py-1.5 bg-blue-50 border border-blue-200/60 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold transition-all shadow-2xs"
+                  className="flex items-center space-x-1 px-2.5 py-1 bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-medium transition-all cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Manage</span>
@@ -682,18 +682,18 @@ export function ProjectDetailsTab() {
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               
               {/* Creator display */}
-              <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/60 flex items-center space-x-3">
-                <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-2xs">
+              <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/60 flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-xs font-medium text-white shrink-0">
                   {(project.createdBy?.name || 'S').charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-slate-900 truncate">
+                  <p className="text-xs font-semibold text-slate-900 truncate">
                     {project.createdBy?.name || 'Manager'}
                   </p>
-                  <p className="text-[10px] text-blue-700 truncate font-semibold mt-0.5">Admin</p>
+                  <p className="text-[10px] text-blue-600 truncate font-medium">Admin</p>
                   <p className="text-[10px] text-slate-400 truncate">
                     {project.createdBy?.email || 'admin@creator'}
                   </p>
@@ -702,11 +702,6 @@ export function ProjectDetailsTab() {
 
               {/* Members display */}
               {project.members?.filter((m: any) => {
-                // Skip orphaned membership records: if a user is deleted directly from
-                // the DB (there's no "remove member" flow yet to clean up the reference),
-                // `m.user` comes back null/undefined and the card would render a fake
-                // "Member" entry with no real name/email. TODO: remove this guard once
-                // remove-member is implemented and cleans up membership records itself.
                 if (!m.user) return false;
                 const u = m.user || m;
                 return u.email !== project.createdBy?.email;
@@ -717,14 +712,14 @@ export function ProjectDetailsTab() {
                 const roleName = member.role?.name || 'Member';
                 
                 return (
-                  <div key={i} className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center space-x-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-xs font-black text-blue-700 shrink-0">
+                  <div key={i} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/60 flex items-center space-x-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-150 flex items-center justify-center text-xs font-medium text-blue-600 shrink-0">
                       {name.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-bold text-slate-900 truncate">{name}</p>
-                      <p className="text-[9px] text-slate-500 truncate font-semibold mt-0.5">{roleName}</p>
-                      <p className="text-[9px] text-slate-400 truncate">{email}</p>
+                      <p className="text-xs font-semibold text-slate-900 truncate">{name}</p>
+                      <p className="text-[10px] text-blue-600 truncate font-medium">{roleName}</p>
+                      <p className="text-[10px] text-slate-400 truncate">{email}</p>
                     </div>
                   </div>
                 );
@@ -735,19 +730,19 @@ export function ProjectDetailsTab() {
       </div>
 
       {/* ── Bottom Section: Budget & Change Request Management ── */}
-      <div className="p-5 md:p-6 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="p-4 sm:p-5 rounded-xl bg-white border border-slate-200/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5">
         <div className="flex items-center space-x-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-blue-50 border border-blue-200/60 flex items-center justify-center text-blue-600 shrink-0 shadow-2xs">
-            <Wallet className="w-5 h-5" />
+          <div className="w-9 h-9 rounded-lg bg-blue-50 border border-blue-150 flex items-center justify-center text-blue-600 shrink-0">
+            <Wallet className="w-4.5 h-4.5" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h4 className="text-sm font-bold text-slate-900">Project Budget & Changes</h4>
-              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+              <h4 className="text-xs font-bold text-slate-900">Project Budget & Changes</h4>
+              <span className="px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                 Base: {formatCurrency(currentBaseBudget, project.currency || '$')}
               </span>
               {pendingBh && (
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1">
+                <span className="px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   +{formatCurrency(pendingAddedAmount, project.currency || '$')} Pending → {formatCurrency(pendingTotalBudget, project.currency || '$')}
                 </span>
@@ -759,11 +754,11 @@ export function ProjectDetailsTab() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 w-full md:w-auto">
+        <div className="flex items-center gap-2 w-full md:w-auto">
           <button
             type="button"
             onClick={() => setShowBudgetHist(true)}
-            className="flex-1 md:flex-initial flex items-center justify-center space-x-1.5 px-4 py-2.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 rounded-xl text-xs font-bold transition-all border border-slate-200 shadow-2xs"
+            className="flex-1 md:flex-initial flex items-center justify-center space-x-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-medium transition-colors border border-slate-200 cursor-pointer"
           >
             <History className="w-3.5 h-3.5" />
             <span>Lifecycle Log</span>
@@ -772,7 +767,7 @@ export function ProjectDetailsTab() {
             <button
               type="button"
               onClick={handleOpenRequestModal}
-              className="flex-1 md:flex-initial flex items-center justify-center space-x-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs shadow-blue-500/20"
+              className="flex-1 md:flex-initial flex items-center justify-center space-x-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer"
             >
               <GitPullRequest className="w-3.5 h-3.5" />
               <span>Request Budget Change</span>
@@ -783,17 +778,17 @@ export function ProjectDetailsTab() {
 
       {/* ── Budget History Modal ── */}
       {showBudgetHist && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-3xl border border-gray-200 max-w-lg w-full max-h-[80vh] flex flex-col p-6 shadow-2xl relative"
+            className="bg-white rounded-2xl border border-slate-300 max-w-lg w-full max-h-[80vh] flex flex-col p-5 relative"
           >
             {/* Header */}
-            <div className="flex items-center justify-between mb-6 pb-2 border-b border-slate-100">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
               <div>
-                <h3 className="text-lg font-bold text-slate-900">Budget Lifecycle</h3>
-                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mt-0.5">Historical log & pending requests</p>
+                <h3 className="text-sm font-bold text-slate-900">Budget Lifecycle</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Historical log & pending requests</p>
               </div>
               <div className="flex items-center gap-2">
                 {!isProjectLocked(project) && (
@@ -802,7 +797,7 @@ export function ProjectDetailsTab() {
                       setShowBudgetHist(false);
                       handleOpenRequestModal();
                     }}
-                    className="flex items-center space-x-1 px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-xl text-xs font-bold hover:bg-blue-100 transition-colors shadow-2xs"
+                    className="flex items-center space-x-1 px-2.5 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-100 transition-colors cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Request Change</span>
@@ -810,35 +805,35 @@ export function ProjectDetailsTab() {
                 )}
                 <button
                   onClick={() => setShowBudgetHist(false)}
-                  className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
             {/* Current Active Base Budget Banner */}
-            <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200/80 flex items-center justify-between">
+            <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200/80 flex items-center justify-between mb-3">
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-2xs">
+                <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shrink-0">
                   <Wallet className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Current Active Base Budget</p>
-                  <p className="text-base font-extrabold text-slate-900">
+                  <p className="text-[10.5px] font-medium text-slate-500">Current Active Base Budget</p>
+                  <p className="text-base font-bold text-slate-900">
                     {formatCurrency(currentBaseBudget, project.currency || '$')}
                   </p>
                 </div>
               </div>
               {pendingRequests.length > 0 && (
-                <span className="text-[10px] font-extrabold text-red-600 bg-red-100/80 px-2 py-0.5 rounded-md border border-red-200">
+                <span className="text-[10px] font-semibold text-red-600 bg-red-100/80 px-2 py-0.5 rounded-md border border-red-200">
                   +{formatCurrency(pendingAddedAmount, project.currency || '$')} PENDING
                 </span>
               )}
             </div>
 
             {/* List */}
-            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
               {project.budgetHistory?.slice().reverse().map((bh: any, i: number) => {
                 const badgeColor =
                   bh.approvalStatus === 'Approved'
@@ -863,38 +858,38 @@ export function ProjectDetailsTab() {
                 }
 
                 return (
-                  <div key={i} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-3">
+                  <div key={i} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-baseline gap-2 flex-wrap">
-                        <span className="text-base font-extrabold text-blue-600">
+                        <span className="text-sm font-bold text-blue-600">
                           {formatCurrency(displayTotal, project.currency || '$')}
                         </span>
                         {displayAdded !== null && displayAdded > 0 && (
-                          <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                          <span className="text-[10px] font-medium text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
                             +{formatCurrency(displayAdded, project.currency || '$')} Change Req
                           </span>
                         )}
                       </div>
-                      <span className={cn('text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border', badgeColor)}>
+                      <span className={cn('text-[9.5px] font-semibold px-2 py-0.5 rounded-md border', badgeColor)}>
                         {bh.approvalStatus || 'Approved'}
                       </span>
                     </div>
                     
-                    <p className="text-xs text-slate-600 leading-relaxed font-semibold">{bh.reason}</p>
+                    <p className="text-xs text-slate-600 leading-relaxed">{bh.reason}</p>
 
                     {bh.approvalStatus === 'Pending' && canApproveBudget && (
-                      <div className="flex items-center space-x-2 pt-2">
+                      <div className="flex items-center space-x-2 pt-1">
                         <button
                           onClick={() => handleBudgetAction(bh._id, 'Rejected')}
                           disabled={isProcessing}
-                          className="flex-1 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold transition-all disabled:opacity-50"
+                          className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer"
                         >
                           Reject
                         </button>
                         <button
                           onClick={() => handleBudgetAction(bh._id, 'Approved')}
                           disabled={isProcessing}
-                          className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center space-x-1.5 disabled:opacity-50"
+                          className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-medium transition-colors flex items-center justify-center space-x-1.5 disabled:opacity-50 cursor-pointer"
                         >
                           {isProcessing ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -905,7 +900,7 @@ export function ProjectDetailsTab() {
                       </div>
                     )}
 
-                    <div className="border-t border-slate-200/50 pt-2 flex items-center justify-between text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                    <div className="border-t border-slate-200/50 pt-2 flex items-center justify-between text-[10px] text-slate-400 font-medium">
                       <span>By: {bh.updatedByName || 'System'}</span>
                       <span>{new Date(bh.timestamp).toLocaleDateString()}</span>
                     </div>
@@ -913,7 +908,7 @@ export function ProjectDetailsTab() {
                 );
               })}
               {(!project.budgetHistory || project.budgetHistory.length === 0) && (
-                <div className="text-center py-8 text-slate-400 text-xs font-medium">
+                <div className="text-center py-8 text-slate-400 text-xs font-normal">
                   No budget lifecycle updates recorded.
                 </div>
               )}
@@ -924,72 +919,72 @@ export function ProjectDetailsTab() {
 
       {/* ── Request Budget Change Modal ── */}
       {showRequestModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-3xl border border-gray-200 max-w-lg w-full p-6 shadow-2xl relative space-y-4"
+            className="bg-white rounded-2xl border border-slate-300 max-w-lg w-full p-5 relative space-y-4"
           >
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center space-x-2.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600 shrink-0">
-                  <GitPullRequest className="w-5 h-5" />
+                <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center shrink-0">
+                  <GitPullRequest className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">Request Budget Change</h3>
+                  <h3 className="text-sm font-bold text-slate-900">Request Budget Change</h3>
                   <p className="text-xs text-slate-500">
-                    Cycle: <span className="font-semibold text-slate-700">Current Budget + Added Change Req Budget</span>
+                    Cycle: <span className="font-medium text-slate-700">Current Budget + Added Change Req Budget</span>
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowRequestModal(false)}
-                className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Live Calculation Preview Card */}
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-blue-50/40 border border-blue-100/80 space-y-2.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+              <span className="text-[10.5px] font-medium text-slate-500 block">
                 Budget Addition Preview
               </span>
               <div className="grid grid-cols-3 gap-2 items-center text-center">
-                <div className="p-2.5 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Current Budget</span>
-                  <span className="text-xs sm:text-sm font-black text-slate-800 mt-0.5 block truncate">
+                <div className="p-2.5 rounded-lg bg-white border border-slate-200/80">
+                  <span className="text-[9.5px] font-medium text-slate-400 block">Current Budget</span>
+                  <span className="text-xs sm:text-sm font-bold text-slate-800 mt-0.5 block truncate">
                     {formatCurrency(currentBaseBudget, project.currency || '$')}
                   </span>
                 </div>
                 <div className="flex flex-col items-center justify-center">
-                  <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-black text-xs">
+                  <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
                     +
                   </div>
-                  <span className="text-[9px] font-bold text-blue-600 mt-0.5 uppercase tracking-wider truncate">Change Req</span>
+                  <span className="text-[9.5px] font-medium text-blue-600 mt-0.5 truncate">Change Req</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200/80 shadow-2xs">
-                  <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-wider block">New Proposed</span>
-                  <span className="text-xs sm:text-sm font-black text-emerald-700 mt-0.5 block truncate">
+                <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200/80">
+                  <span className="text-[9.5px] font-medium text-emerald-600 block">New Proposed</span>
+                  <span className="text-xs sm:text-sm font-bold text-emerald-700 mt-0.5 block truncate">
                     {formatCurrency(currentBaseBudget + (Number(requestAmount) > 0 ? Number(requestAmount) : 0), project.currency || '$')}
                   </span>
                 </div>
               </div>
               {Number(requestAmount) > 0 && (
-                <div className="pt-2 border-t border-blue-100/60 flex items-center justify-between text-[11px]">
-                  <span className="text-slate-600 font-medium">Added to project:</span>
-                  <span className="font-bold text-blue-700">+{formatCurrency(Number(requestAmount), project.currency || '$')}</span>
+                <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
+                  <span className="text-slate-600 font-normal">Added to project:</span>
+                  <span className="font-semibold text-blue-700">+{formatCurrency(Number(requestAmount), project.currency || '$')}</span>
                 </div>
               )}
             </div>
 
-            <form onSubmit={handleRequestBudgetSubmit} className="space-y-4">
+            <form onSubmit={handleRequestBudgetSubmit} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Added Change Request Budget ({project.currency || '$'})
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 font-bold text-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-medium text-sm">
                     {project.currency || '$'}
                   </div>
                   <input
@@ -1000,7 +995,7 @@ export function ProjectDetailsTab() {
                     placeholder="e.g. 50000 (amount to add to current budget)"
                     value={requestAmount}
                     onChange={(e) => setRequestAmount(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    className="w-full pl-9 pr-3.5 py-2 rounded-lg border border-slate-200 bg-slate-50 text-xs font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   />
                 </div>
                 <p className="text-[11px] text-slate-500 mt-1">
@@ -1009,7 +1004,7 @@ export function ProjectDetailsTab() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Reason / Justification for Change
                 </label>
                 <textarea
@@ -1018,22 +1013,22 @@ export function ProjectDetailsTab() {
                   placeholder="Describe why the additional budget is required (e.g. additional client requirements, scope addition)..."
                   value={requestReason}
                   onChange={(e) => setRequestReason(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+                  className="w-full p-2.5 rounded-lg border border-slate-200 bg-slate-50 text-xs font-normal text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
                 />
               </div>
 
               {/* Approver Picker */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Assign Approver
                 </label>
                 {isLoadingApprovers ? (
-                  <div className="p-4 flex items-center justify-center text-xs text-slate-400">
+                  <div className="p-3 flex items-center justify-center text-xs text-slate-400">
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
                     Loading eligible approvers...
                   </div>
                 ) : budgetApprovers.length > 0 ? (
-                  <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
                     {budgetApprovers.map((approver: any) => {
                       const isSelected = selectedApproverId === approver._id;
                       return (
@@ -1041,28 +1036,28 @@ export function ProjectDetailsTab() {
                           key={approver._id}
                           onClick={() => setSelectedApproverId(approver._id)}
                           className={cn(
-                            "p-2.5 rounded-xl border cursor-pointer flex items-center justify-between transition-all",
+                            "p-2 rounded-lg border cursor-pointer flex items-center justify-between transition-all",
                             isSelected
-                              ? "bg-blue-50/80 border-blue-300 shadow-2xs"
+                              ? "bg-blue-50/80 border-blue-300"
                               : "bg-slate-50 hover:bg-slate-100 border-slate-200"
                           )}
                         >
                           <div className="flex items-center space-x-2.5">
-                            <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold", isSelected ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-700")}>
+                            <div className={cn("w-6 h-6 rounded-md flex items-center justify-center text-xs font-medium", isSelected ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-700")}>
                               {(approver.name || 'A').charAt(0).toUpperCase()}
                             </div>
                             <div>
-                              <p className="text-xs font-bold text-slate-900">{approver.name}</p>
+                              <p className="text-xs font-semibold text-slate-900">{approver.name}</p>
                               <p className="text-[10px] text-slate-500">{approver.role?.name || approver.email}</p>
                             </div>
                           </div>
-                          {isSelected && <Check className="w-4 h-4 text-blue-600" />}
+                          {isSelected && <Check className="w-3.5 h-3.5 text-blue-600" />}
                         </div>
                       );
                     })}
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-500 italic p-2 bg-slate-50 rounded-xl border border-slate-200">
+                  <p className="text-xs text-slate-500 italic p-2 bg-slate-50 rounded-lg border border-slate-200">
                     Request will be broadcasted to project managers with budget approval privileges.
                   </p>
                 )}
@@ -1072,14 +1067,14 @@ export function ProjectDetailsTab() {
                 <button
                   type="button"
                   onClick={() => setShowRequestModal(false)}
-                  className="px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors"
+                  className="px-3.5 py-2 border border-slate-200 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-50 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingRequest}
-                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-xs flex items-center space-x-1.5 transition-all disabled:opacity-50"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium flex items-center space-x-1.5 transition-all disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmittingRequest ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1096,15 +1091,15 @@ export function ProjectDetailsTab() {
 
       {/* ── Confirmation Modal ── */}
       {confirmModal.visible && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 space-y-4">
-            <h4 className="text-base font-bold text-slate-900">{confirmModal.title}</h4>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-5 max-w-sm w-full border border-slate-300 space-y-3.5">
+            <h4 className="text-sm font-bold text-slate-900">{confirmModal.title}</h4>
             <p className="text-xs text-slate-500 leading-relaxed">{confirmModal.message}</p>
-            <div className="flex items-center justify-end space-x-2 pt-2">
+            <div className="flex items-center justify-end space-x-2 pt-1 border-t border-slate-100">
               <button
                 onClick={() => setConfirmModal((prev) => ({ ...prev, visible: false }))}
                 disabled={isProcessing}
-                className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors disabled:opacity-50"
+                className="px-3.5 py-2 border border-slate-200 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-50 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 Cancel
               </button>
@@ -1112,7 +1107,7 @@ export function ProjectDetailsTab() {
                 onClick={confirmModal.onConfirm || undefined}
                 disabled={isProcessing}
                 className={cn(
-                  'px-4 py-2 text-white rounded-xl text-xs font-bold shadow-sm transition-colors flex items-center space-x-1.5 disabled:opacity-50',
+                  'px-3.5 py-2 text-white rounded-lg text-xs font-medium transition-colors flex items-center space-x-1.5 disabled:opacity-50 cursor-pointer',
                   confirmModal.type === 'destructive'
                     ? 'bg-red-600 hover:bg-red-500'
                     : confirmModal.type === 'success'

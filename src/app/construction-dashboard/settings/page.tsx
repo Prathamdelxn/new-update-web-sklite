@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -15,24 +15,19 @@ import {
   Bell,
   Globe,
   HelpCircle,
-  CheckCircle2,
   Copy,
   Check,
   Loader2,
-  LogOut,
-  ExternalLink,
   HardHat,
   Eye,
   EyeOff,
-  ChevronRight,
-  Info,
-  Calendar,
-  Sparkles,
   Users,
   Layers,
   ArrowRight,
   KeyRound,
   FileText,
+  Info,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthContext';
 import { useToast } from '@/providers/ToastContext';
@@ -40,10 +35,16 @@ import api from '@/services/api.client';
 import AppInfoModal from '@/components/settings/AppInfoModal';
 import { cn } from '@/lib/utils';
 
-type SettingsTab = 'profile' | 'organization' | 'security' | 'billing' | 'preferences' | 'support';
+type SettingsTab =
+  | 'profile'
+  | 'organization'
+  | 'security'
+  | 'billing'
+  | 'preferences'
+  | 'support';
 
 export default function SettingsPage() {
-  const { user, refreshUser, logout } = useAuth() as any;
+  const { user, refreshUser } = useAuth() as any;
   const toast = useToast();
   const router = useRouter();
 
@@ -71,7 +72,10 @@ export default function SettingsPage() {
 
   // Subscription State
   const [subscription, setSubscription] = useState<any>(null);
-  const [usageStats, setUsageStats] = useState<{ users?: number; projects?: number }>({});
+  const [usageStats, setUsageStats] = useState<{
+    users?: number;
+    projects?: number;
+  }>({});
   const [loadingPlan, setLoadingPlan] = useState(true);
 
   // Preferences State
@@ -79,7 +83,6 @@ export default function SettingsPage() {
   const [projectAlerts, setProjectAlerts] = useState(true);
   const [materialAlerts, setMaterialAlerts] = useState(true);
   const [language, setLanguage] = useState('English');
-  const [savingLanguage, setSavingLanguage] = useState(false);
 
   // Modal State
   const [showAppInfo, setShowAppInfo] = useState(false);
@@ -93,7 +96,9 @@ export default function SettingsPage() {
       setProfileName(user.name || '');
       setProfilePhone(user.phoneNumber || '');
       const initialOrgName =
-        (typeof user.organization === 'object' && user.organization !== null ? user.organization.name : null) ||
+        (typeof user.organization === 'object' && user.organization !== null
+          ? user.organization.name
+          : null) ||
         user.organizationName ||
         '';
       setOrgName(initialOrgName);
@@ -148,7 +153,11 @@ export default function SettingsPage() {
         phoneNumber: profilePhone.trim(),
       });
 
-      const updatedUser = res.data?.user || { ...user, name: profileName.trim(), phoneNumber: profilePhone.trim() };
+      const updatedUser = res.data?.user || {
+        ...user,
+        name: profileName.trim(),
+        phoneNumber: profilePhone.trim(),
+      };
       if (refreshUser) {
         refreshUser(updatedUser);
       }
@@ -179,9 +188,10 @@ export default function SettingsPage() {
         refreshUser({
           ...user,
           organizationName: orgName.trim(),
-          organization: typeof user.organization === 'object' && user.organization !== null
-            ? { ...user.organization, name: orgName.trim() }
-            : orgName.trim(),
+          organization:
+            typeof user.organization === 'object' && user.organization !== null
+              ? { ...user.organization, name: orgName.trim() }
+              : orgName.trim(),
         });
       }
       if (updatedOrg) setOrgData(updatedOrg);
@@ -197,10 +207,13 @@ export default function SettingsPage() {
   // Change Password
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentPassword) return toast.error('Please enter your current password');
+    if (!currentPassword)
+      return toast.error('Please enter your current password');
     if (!newPassword) return toast.error('Please enter a new password');
-    if (newPassword.length < 8) return toast.error('New password must be at least 8 characters long');
-    if (newPassword !== confirmPassword) return toast.error('New passwords do not match');
+    if (newPassword.length < 8)
+      return toast.error('New password must be at least 8 characters long');
+    if (newPassword !== confirmPassword)
+      return toast.error('New passwords do not match');
 
     setSavingPassword(true);
     try {
@@ -213,7 +226,9 @@ export default function SettingsPage() {
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: any) {
-      const msg = err.response?.data?.message || 'Failed to change password. Check current password.';
+      const msg =
+        err.response?.data?.message ||
+        'Failed to change password. Check current password.';
       toast.error(msg);
     } finally {
       setSavingPassword(false);
@@ -222,7 +237,12 @@ export default function SettingsPage() {
 
   // Copy Workspace ID
   const handleCopyOrgId = () => {
-    const orgId = orgData?._id || user?.organizationId || (typeof user?.organization === 'string' ? user?.organization : user?.organization?._id);
+    const orgId =
+      orgData?._id ||
+      user?.organizationId ||
+      (typeof user?.organization === 'string'
+        ? user?.organization
+        : user?.organization?._id);
     if (!orgId) return;
     navigator.clipboard.writeText(orgId);
     setCopiedId(true);
@@ -235,8 +255,12 @@ export default function SettingsPage() {
     const nextVal = !notifications;
     setNotifications(nextVal);
     try {
-      await api.patch('/organization/notifications', { pushNotifications: nextVal });
-      toast.success(nextVal ? 'Push notifications enabled' : 'Push notifications muted');
+      await api.patch('/organization/notifications', {
+        pushNotifications: nextVal,
+      });
+      toast.success(
+        nextVal ? 'Push notifications enabled' : 'Push notifications muted'
+      );
     } catch {
       // Non-blocking UI update
     }
@@ -245,18 +269,19 @@ export default function SettingsPage() {
   // Save Language
   const handleSaveLanguage = async (newLang: string) => {
     setLanguage(newLang);
-    setSavingLanguage(true);
     try {
       localStorage.setItem('language', newLang);
       toast.success(`Language set to ${newLang}`);
-    } finally {
-      setSavingLanguage(false);
+    } catch {
+      // silent
     }
   };
 
   const currentOrgName =
     orgName ||
-    (typeof user?.organization === 'object' && user?.organization !== null ? user.organization.name : null) ||
+    (typeof user?.organization === 'object' && user?.organization !== null
+      ? user.organization.name
+      : null) ||
     user?.organizationName ||
     'Workspace';
 
@@ -264,152 +289,140 @@ export default function SettingsPage() {
   const orgInitial = (currentOrgName || 'W').charAt(0).toUpperCase();
 
   const TABS = [
-    { id: 'profile', label: 'My Profile', icon: User, desc: 'Personal details & role' },
-    { id: 'organization', label: 'Organization', icon: Building2, desc: 'Company workspace & team' },
-    { id: 'security', label: 'Security', icon: Lock, desc: 'Password & credentials' },
-    { id: 'billing', label: 'Plan & Billing', icon: CreditCard, desc: 'Subscription & limits' },
-    { id: 'preferences', label: 'Preferences', icon: Bell, desc: 'Notifications & language' },
-    { id: 'support', label: 'Support & Legal', icon: HelpCircle, desc: 'About & legal terms' },
+    { id: 'profile', label: 'My Profile', icon: User },
+    { id: 'organization', label: 'Organization', icon: Building2 },
+    { id: 'security', label: 'Security', icon: Lock },
+    { id: 'billing', label: 'Plan & Billing', icon: CreditCard },
+    { id: 'preferences', label: 'Preferences', icon: Bell },
+    { id: 'support', label: 'Support & Legal', icon: HelpCircle },
   ] as const;
 
   return (
     <>
-      <div className="max-w-6xl mx-auto space-y-6 pb-12">
-        {/* Top Header & Context Card */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/80 pb-6">
+      <div className="space-y-4">
+        {/* ── Top Hero Header ── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200/60">
-                Workspace Settings
-              </span>
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Active Session
-              </span>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+                Settings & <span className="text-blue-600">Preferences</span>
+              </h1>
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight mt-2">
-              Settings & Preferences
-            </h1>
-            <p className="text-xs md:text-sm text-slate-500 mt-1">
+            <p className="text-xs font-semibold text-slate-500 mt-0.5">
               Configure your personal account, organization workspace, security, and project preferences.
             </p>
           </div>
-
-          <div className="flex items-center gap-2.5 self-start md:self-auto">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
-              <div className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
-                {orgInitial}
-              </div>
-              <div className="text-left">
-                <p className="text-[10px] font-bold text-slate-400 uppercase leading-none">Organization</p>
-                <p className="text-xs font-bold text-slate-800 leading-tight truncate max-w-[140px]">
-                  {currentOrgName}
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={logout}
-              title="Sign Out"
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 rounded-xl transition cursor-pointer"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Sign Out</span>
-            </button>
-          </div>
         </div>
 
-        {/* Tab Navigation Header */}
-        <div className="overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          <div className="flex items-center gap-1.5 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/70 min-w-max">
-            {TABS.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(tab.id as SettingsTab)}
+        {/* ── Tab Navigation Toolbar ── */}
+        <div className="bg-white border border-slate-300 rounded-xl p-1.5 flex items-center gap-1 overflow-x-auto custom-scrollbar">
+          {TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id as SettingsTab)}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap',
+                  isActive
+                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-transparent'
+                )}
+              >
+                <Icon
                   className={cn(
-                    'flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer select-none',
-                    isActive
-                      ? 'bg-white text-blue-700 shadow-xs border border-slate-200/80'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    'w-3.5 h-3.5',
+                    isActive ? 'text-blue-600' : 'text-slate-400'
                   )}
-                >
-                  <Icon className={cn('w-4 h-4', isActive ? 'text-blue-600' : 'text-slate-400')} />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
+                />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Tab 1: Profile & Account */}
+        {/* ── Tab 1: Profile & Account ── */}
         {activeTab === 'profile' && (
-          <div className="space-y-6 animate-in fade-in duration-200">
+          <div className="space-y-4">
             {/* Identity Hero Card */}
-            <div className="rounded-3xl bg-white border border-slate-200/90 p-6 md:p-8 shadow-xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                <div className="flex items-center gap-5">
-                  <div className="relative">
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white flex items-center justify-center text-3xl font-extrabold shadow-md border-2 border-white">
+            <div className="rounded-xl bg-white border border-slate-300 p-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="relative shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 text-white flex items-center justify-center text-lg font-extrabold">
                       {orgInitial || userInitial}
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-white" title="Active">
-                      <Check className="w-3 h-3 stroke-[3]" />
+                    <div
+                      className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-white"
+                      title="Active"
+                    >
+                      <Check className="w-2 h-2 stroke-[3]" />
                     </div>
                   </div>
 
-                  <div>
-                    <div className="flex items-center gap-2.5 flex-wrap">
-                      <h2 className="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="text-base font-extrabold text-slate-900 tracking-tight truncate">
                         {currentOrgName}
                       </h2>
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-bold text-xs border border-blue-200/60">
-                        <Building2 className="w-3.5 h-3.5 text-blue-600" />
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-bold text-[10px] uppercase tracking-wider border border-blue-200">
+                        <Building2 className="w-3 h-3 text-blue-600" />
                         Organization
                       </span>
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200">
-                        <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[10px] uppercase tracking-wider border border-slate-200">
+                        <ShieldCheck className="w-3 h-3 text-blue-600" />
                         {roleName}
                       </span>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 text-xs md:text-sm text-slate-600 mt-2">
-                      <p className="flex items-center gap-1.5 font-bold text-slate-900">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-slate-500 mt-1">
+                      <span className="flex items-center gap-1.5 font-bold text-slate-800">
                         <User className="w-3.5 h-3.5 text-slate-400" />
                         <span>{user?.name || 'Administrator'}</span>
-                      </p>
-                      <span className="hidden sm:inline text-slate-300">•</span>
-                      <p className="flex items-center gap-1.5 text-slate-500">
+                      </span>
+                      <span className="text-slate-300">•</span>
+                      <span className="flex items-center gap-1.5 text-slate-500 truncate">
                         <Mail className="w-3.5 h-3.5 text-slate-400" />
                         <span>{user?.email || 'N/A'}</span>
-                      </p>
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="text-left sm:text-right border-t sm:border-t-0 pt-4 sm:pt-0 border-slate-100">
-                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Account Status</p>
-                  <p className="text-xs font-bold text-emerald-600 mt-0.5">Verified & Active</p>
+                <div className="flex items-center sm:flex-col sm:items-end justify-between border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100 shrink-0">
+                  <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-150">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    Verified & Active
+                  </span>
                   <p className="text-[11px] text-slate-400 mt-1">
-                    Industry: <span className="font-semibold text-slate-600">Construction</span>
+                    Industry:{' '}
+                    <span className="font-semibold text-slate-600">
+                      Construction
+                    </span>
                   </p>
                 </div>
               </div>
             </div>
 
             {/* Edit Personal Details Form */}
-            <form onSubmit={handleSaveProfile} className="rounded-3xl bg-white border border-slate-200/90 p-6 md:p-8 shadow-xs space-y-6">
-              <div className="border-b border-slate-100 pb-4">
-                <h3 className="text-base font-bold text-slate-900 tracking-tight">Personal Information</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Update your contact profile name and phone number.</p>
+            <form
+              onSubmit={handleSaveProfile}
+              className="rounded-xl bg-white border border-slate-300 p-5 space-y-4"
+            >
+              <div className="pb-3 border-b border-slate-100">
+                <h3 className="text-xs font-bold text-slate-900 tracking-tight">
+                  Personal Information
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Update your contact profile name and phone number.
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
                     Full Name <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
@@ -420,14 +433,17 @@ export default function SettingsPage() {
                       value={profileName}
                       onChange={(e) => setProfileName(e.target.value)}
                       placeholder="e.g. John Doe"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-10 pr-3 text-xs md:text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20"
+                      className="w-full pl-9.5 pr-3 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1.5">
-                    Email Address <span className="text-[11px] text-slate-400 font-normal">(Primary Login)</span>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Email Address{' '}
+                    <span className="text-[11px] text-slate-400 font-normal">
+                      (Primary Login)
+                    </span>
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -435,14 +451,18 @@ export default function SettingsPage() {
                       type="email"
                       disabled
                       value={user?.email || ''}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-100/70 py-2.5 pl-10 pr-3 text-xs md:text-sm text-slate-600 outline-none cursor-not-allowed"
+                      className="w-full pl-9.5 pr-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-500 cursor-not-allowed"
                     />
                   </div>
-                  <p className="text-[10px] text-slate-400 mt-1">To change login email, contact your super administrator.</p>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    To change login email, contact your super administrator.
+                  </p>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1.5">Phone Number</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Phone Number
+                  </label>
                   <div className="relative">
                     <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
@@ -450,20 +470,22 @@ export default function SettingsPage() {
                       value={profilePhone}
                       onChange={(e) => setProfilePhone(e.target.value)}
                       placeholder="+91 98765 43210"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-10 pr-3 text-xs md:text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20"
+                      className="w-full pl-9.5 pr-3 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1.5">Global Role</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Global Role
+                  </label>
                   <div className="relative">
                     <ShieldCheck className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="text"
                       disabled
                       value={roleName}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-100/70 py-2.5 pl-10 pr-3 text-xs md:text-sm text-slate-600 outline-none cursor-not-allowed font-medium"
+                      className="w-full pl-9.5 pr-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-500 cursor-not-allowed font-medium"
                     />
                   </div>
                 </div>
@@ -473,43 +495,50 @@ export default function SettingsPage() {
                 <button
                   type="submit"
                   disabled={savingProfile}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-xs md:text-sm hover:bg-blue-700 active:scale-95 transition disabled:opacity-50 cursor-pointer shadow-xs"
+                  className="flex items-center gap-1.5 px-4.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-xs border border-slate-300 hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer"
                 >
-                  {savingProfile && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {savingProfile ? 'Saving Changes...' : 'Save Profile Changes'}
+                  {savingProfile && (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  )}
+                  <span>
+                    {savingProfile ? 'Saving Changes...' : 'Save Profile Changes'}
+                  </span>
                 </button>
               </div>
             </form>
           </div>
         )}
 
-        {/* Tab 2: Organization & Workspace */}
+        {/* ── Tab 2: Organization & Workspace ── */}
         {activeTab === 'organization' && (
-          <div className="space-y-6 animate-in fade-in duration-200">
+          <div className="space-y-4">
             {/* Organization Identity Card */}
-            <form onSubmit={handleSaveOrganization} className="rounded-3xl bg-white border border-slate-200/90 p-6 md:p-8 shadow-xs space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <form
+              onSubmit={handleSaveOrganization}
+              className="rounded-xl bg-white border border-slate-300 p-5 space-y-4"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                    <Building2 className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-xs font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-blue-600" />
                     <span>Organization & Workspace Details</span>
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    This organization name is shown in the workspace header, dashboard sidebar, and client reports.
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    This organization name is shown in the workspace header, dashboard sidebar, and reports.
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200/60 flex items-center gap-1">
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider border border-blue-200 flex items-center gap-1">
                     <HardHat className="w-3.5 h-3.5" />
                     Construction Workspace
                   </span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <label className="text-xs font-semibold text-slate-700 block mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
                     Organization Name <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
@@ -522,8 +551,8 @@ export default function SettingsPage() {
                       placeholder="e.g. Apex Construction Solutions"
                       disabled={!isAdmin || savingOrg}
                       className={cn(
-                        'w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-10 pr-3 text-xs md:text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20',
-                        !isAdmin && 'cursor-not-allowed bg-slate-100 text-slate-500'
+                        'w-full pl-9.5 pr-3 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300',
+                        !isAdmin && 'cursor-not-allowed bg-slate-50 text-slate-500'
                       )}
                     />
                   </div>
@@ -535,32 +564,42 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1.5">Workspace Unique ID</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Workspace Unique ID
+                  </label>
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
                       readOnly
-                      value={orgData?._id || user?.organizationId || 'Loading...'}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-100/70 py-2 px-3 text-xs font-mono text-slate-600 outline-none"
+                      value={
+                        orgData?._id || user?.organizationId || 'Loading...'
+                      }
+                      className="w-full pl-3 pr-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-mono text-slate-600 outline-none"
                     />
                     <button
                       type="button"
                       onClick={handleCopyOrgId}
-                      className="shrink-0 p-2 rounded-xl border border-slate-200 text-slate-600 hover:text-blue-600 hover:bg-slate-50 transition"
+                      className="shrink-0 p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition cursor-pointer"
                       title="Copy ID"
                     >
-                      {copiedId ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                      {copiedId ? (
+                        <Check className="w-4 h-4 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1.5">Workspace Industry</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Workspace Industry
+                  </label>
                   <input
                     type="text"
                     disabled
                     value="Construction & Civil Infrastructure"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-100/70 py-2 px-3 text-xs font-medium text-slate-600 outline-none cursor-not-allowed"
+                    className="w-full pl-3 pr-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-medium text-slate-600 outline-none cursor-not-allowed"
                   />
                 </div>
               </div>
@@ -570,77 +609,92 @@ export default function SettingsPage() {
                   <button
                     type="submit"
                     disabled={savingOrg || !orgName.trim()}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-xs md:text-sm hover:bg-blue-700 active:scale-95 transition disabled:opacity-50 cursor-pointer shadow-xs"
+                    className="flex items-center gap-1.5 px-4.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-xs border border-slate-300 hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer"
                   >
-                    {savingOrg && <Loader2 className="w-4 h-4 animate-spin" />}
-                    {savingOrg ? 'Updating...' : 'Save Organization Name'}
+                    {savingOrg && (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    )}
+                    <span>
+                      {savingOrg ? 'Updating...' : 'Save Organization Name'}
+                    </span>
                   </button>
                 </div>
               )}
             </form>
 
-            {/* Workspace Modules & Management */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="rounded-3xl bg-white border border-slate-200/90 p-6 shadow-xs flex flex-col justify-between space-y-4">
-                <div className="flex items-start gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                    <Users className="w-5 h-5" />
+            {/* Quick Navigation Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="rounded-xl bg-white border border-slate-300 p-4 flex flex-col justify-between space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 border border-blue-150 flex items-center justify-center shrink-0">
+                    <Users className="w-4.5 h-4.5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900">Team & Role Permissions</h4>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Manage workspace members, assign Project Managers, Finance Managers, Homeowners, and workers.
+                    <h4 className="text-xs font-bold text-slate-900">
+                      Team & Role Permissions
+                    </h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Manage workspace members, assign Project Managers, Engineers, and Contractors.
                     </p>
                   </div>
                 </div>
                 <Link
                   href="/construction-dashboard/users"
-                  className="inline-flex items-center justify-between w-full px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200/80 text-xs font-bold transition"
+                  className="inline-flex items-center justify-between w-full px-3.5 py-2 rounded-lg bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200/80 text-xs font-bold transition"
                 >
-                  <span>Open Team & Roles Management</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <span>Open Members & Roles</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
 
-              <div className="rounded-3xl bg-white border border-slate-200/90 p-6 shadow-xs flex flex-col justify-between space-y-4">
-                <div className="flex items-start gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-                    <Layers className="w-5 h-5" />
+              <div className="rounded-xl bg-white border border-slate-300 p-4 flex flex-col justify-between space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-150 flex items-center justify-center shrink-0">
+                    <Layers className="w-4.5 h-4.5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900">Project Templates & WBS</h4>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Standardize construction templates, work breakdown structures, and default categories.
+                    <h4 className="text-xs font-bold text-slate-900">
+                      Project Templates & Categories
+                    </h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Standardize construction templates, budgets, and categorization structures.
                     </p>
                   </div>
                 </div>
                 <Link
                   href="/construction-dashboard/templates"
-                  className="inline-flex items-center justify-between w-full px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-purple-50 text-slate-700 hover:text-purple-700 border border-slate-200/80 text-xs font-bold transition"
+                  className="inline-flex items-center justify-between w-full px-3.5 py-2 rounded-lg bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200/80 text-xs font-bold transition"
                 >
                   <span>Manage Templates</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </div>
           </div>
         )}
 
-        {/* Tab 3: Security & Credentials */}
+        {/* ── Tab 3: Security & Credentials ── */}
         {activeTab === 'security' && (
-          <div className="space-y-6 animate-in fade-in duration-200">
-            <form onSubmit={handleChangePassword} className="rounded-3xl bg-white border border-slate-200/90 p-6 md:p-8 shadow-xs space-y-6">
-              <div className="border-b border-slate-100 pb-4">
-                <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                  <Lock className="w-5 h-5 text-blue-600" />
-                  <span>Update Password</span>
+          <div className="space-y-4">
+            <form
+              onSubmit={handleChangePassword}
+              className="rounded-xl bg-white border border-slate-300 p-5 space-y-4"
+            >
+              <div className="pb-3 border-b border-slate-100">
+                <h3 className="text-xs font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-blue-600" />
+                  <span>Update Account Password</span>
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">Ensure your account uses a secure password of at least 8 characters.</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Ensure your account uses a secure password of at least 8 characters.
+                </p>
               </div>
 
-              <div className="space-y-4 max-w-xl">
+              <div className="space-y-3.5 max-w-xl">
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1.5">Current Password</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Current Password
+                  </label>
                   <div className="relative">
                     <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
@@ -649,20 +703,26 @@ export default function SettingsPage() {
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-10 pr-10 text-xs md:text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20"
+                      className="w-full pl-9.5 pr-10 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     />
                     <button
                       type="button"
                       onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
                     >
-                      {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showCurrentPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1.5">New Password</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    New Password
+                  </label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
@@ -672,20 +732,26 @@ export default function SettingsPage() {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Min. 8 characters"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-10 pr-10 text-xs md:text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20"
+                      className="w-full pl-9.5 pr-10 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     />
                     <button
                       type="button"
                       onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
                     >
-                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showNewPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1.5">Confirm New Password</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Confirm New Password
+                  </label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
@@ -694,7 +760,7 @@ export default function SettingsPage() {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Re-enter new password"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-10 pr-3 text-xs md:text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20"
+                      className="w-full pl-9.5 pr-3 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     />
                   </div>
                 </div>
@@ -704,171 +770,218 @@ export default function SettingsPage() {
                 <button
                   type="submit"
                   disabled={savingPassword}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-xs md:text-sm hover:bg-blue-700 active:scale-95 transition disabled:opacity-50 cursor-pointer shadow-xs"
+                  className="flex items-center gap-1.5 px-4.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-xs border border-slate-300 hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer"
                 >
-                  {savingPassword && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {savingPassword ? 'Updating Password...' : 'Update Password'}
+                  {savingPassword && (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  )}
+                  <span>
+                    {savingPassword ? 'Updating Password...' : 'Update Password'}
+                  </span>
                 </button>
               </div>
             </form>
 
             {/* Active Session Info */}
-            <div className="rounded-3xl bg-white border border-slate-200/90 p-6 md:p-8 shadow-xs space-y-4">
-              <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                <Shield className="w-5 h-5 text-emerald-600" />
+            <div className="rounded-xl bg-white border border-slate-300 p-5 space-y-3">
+              <h3 className="text-xs font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                <Shield className="w-4 h-4 text-emerald-600" />
                 <span>Session & Device Security</span>
               </h3>
-              <p className="text-xs text-slate-500">
-                You are currently signed in on this web browser with an active encrypted JWT session.
+              <p className="text-[11px] text-slate-500">
+                You are currently signed in on this web browser with an active encrypted session.
               </p>
 
-              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+              <div className="flex items-center justify-between p-3.5 rounded-lg bg-slate-50 border border-slate-200/80">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
                     ✓
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-slate-900">Current Web Session (Active)</p>
-                    <p className="text-[11px] text-slate-400">Signed in as {user?.email}</p>
+                    <p className="text-xs font-bold text-slate-900">
+                      Current Web Session (Active)
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      Signed in as {user?.email}
+                    </p>
                   </div>
                 </div>
-                <button
-                  onClick={logout}
-                  className="px-3 py-1.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold transition"
-                >
-                  Sign Out
-                </button>
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-150">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  Secure
+                </span>
               </div>
             </div>
           </div>
         )}
 
-        {/* Tab 4: Plan & Billing */}
+        {/* ── Tab 4: Plan & Billing ── */}
         {activeTab === 'billing' && (
-          <div className="space-y-6 animate-in fade-in duration-200">
-            <div className="rounded-3xl bg-gradient-to-br from-[#0A2952] to-[#0E3B7B] text-white p-6 md:p-8 shadow-xl relative overflow-hidden">
-              <div className="relative z-10 space-y-4 max-w-2xl">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-bold text-blue-200">
-                  <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+          <div className="space-y-4">
+            <div className="rounded-xl bg-slate-900 text-white p-5 border border-slate-800 space-y-3 relative overflow-hidden">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-white/10 border border-white/20 text-[10px] font-bold uppercase tracking-wider text-blue-200">
+                  <Sparkles className="w-3 h-3 text-yellow-300" />
                   <span>Subscription Plan</span>
                 </div>
-                <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-                  {loadingPlan ? 'Loading Plan...' : `${subscription?.plan || 'Silver'} Plan`}
-                </h3>
-                <p className="text-xs md:text-sm text-blue-100/90 leading-relaxed">
-                  Your workspace includes full access to BOQs, site drawings, milestone budgets, daily progress logs, and multi-user roles.
-                </p>
+                <span className="text-[11px] font-semibold text-emerald-400 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  Active Subscription
+                </span>
+              </div>
 
-                <div className="pt-2 flex flex-wrap items-center gap-3">
-                  <Link
-                    href="/construction-dashboard/settings/plan-billing"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-[#0A2952] font-bold text-xs md:text-sm hover:bg-blue-50 transition shadow-sm"
-                  >
-                    <span>Manage Plan & Billing</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </div>
+              <div>
+                <h3 className="text-xl font-extrabold tracking-tight">
+                  {loadingPlan
+                    ? 'Loading Plan...'
+                    : `${subscription?.plan || 'Enterprise'} Plan`}
+                </h3>
+                <p className="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
+                  Your workspace includes full access to BOQs, site drawings, milestone budgets, daily progress logs, and multi-user governance.
+                </p>
+              </div>
+
+              <div className="pt-2">
+                <Link
+                  href="/construction-dashboard/settings/plan-billing"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white text-slate-900 font-bold text-xs hover:bg-slate-100 transition"
+                >
+                  <span>Manage Plan & Invoices</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
             </div>
 
             {/* Usage Metrics */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-              <div className="rounded-2xl bg-white border border-slate-200/90 p-5 shadow-xs">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Team Members</p>
-                <p className="text-2xl font-black text-slate-900 mt-2">{usageStats.users || 1}</p>
-                <p className="text-[11px] text-slate-400 mt-1">Included in your plan</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
+              <div className="rounded-xl bg-white border border-slate-300 p-4">
+                <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">
+                  Active Team Members
+                </p>
+                <p className="text-xl font-extrabold text-slate-900 mt-1">
+                  {usageStats.users || 1}
+                </p>
+                <p className="text-[10px] text-slate-400 mt-0.5">
+                  Included in your plan
+                </p>
               </div>
 
-              <div className="rounded-2xl bg-white border border-slate-200/90 p-5 shadow-xs">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Projects</p>
-                <p className="text-2xl font-black text-slate-900 mt-2">{usageStats.projects || 0}</p>
-                <p className="text-[11px] text-slate-400 mt-1">Unlimited project tracking</p>
+              <div className="rounded-xl bg-white border border-slate-300 p-4">
+                <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">
+                  Active Projects
+                </p>
+                <p className="text-xl font-extrabold text-slate-900 mt-1">
+                  {usageStats.projects || 0}
+                </p>
+                <p className="text-[10px] text-slate-400 mt-0.5">
+                  Unlimited project tracking
+                </p>
               </div>
 
-              <div className="rounded-2xl bg-white border border-slate-200/90 p-5 shadow-xs sm:col-span-2 md:col-span-1">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Storage & Cloud Sync</p>
-                <p className="text-2xl font-black text-emerald-600 mt-2">Active</p>
-                <p className="text-[11px] text-slate-400 mt-1">Real-time mobile & web sync</p>
+              <div className="rounded-xl bg-white border border-slate-300 p-4 sm:col-span-2 md:col-span-1">
+                <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">
+                  Storage & Cloud Sync
+                </p>
+                <p className="text-xl font-extrabold text-emerald-600 mt-1">
+                  Active
+                </p>
+                <p className="text-[10px] text-slate-400 mt-0.5">
+                  Real-time mobile & web sync
+                </p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Tab 5: Preferences */}
+        {/* ── Tab 5: Preferences ── */}
         {activeTab === 'preferences' && (
-          <div className="space-y-6 animate-in fade-in duration-200">
+          <div className="space-y-4">
             {/* Notifications Card */}
-            <div className="rounded-3xl bg-white border border-slate-200/90 p-6 md:p-8 shadow-xs space-y-6">
-              <div className="border-b border-slate-100 pb-4">
-                <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                  <Bell className="w-5 h-5 text-blue-600" />
+            <div className="rounded-xl bg-white border border-slate-300 p-5 space-y-3">
+              <div className="pb-3 border-b border-slate-100">
+                <h3 className="text-xs font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                  <Bell className="w-4 h-4 text-blue-600" />
                   <span>Notification Preferences</span>
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">Control how and when you receive system alerts and activity updates.</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Control how and when you receive system alerts and activity updates.
+                </p>
               </div>
 
               <div className="divide-y divide-slate-100">
-                <div className="py-4 flex items-center justify-between gap-4">
+                <div className="py-3 flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-xs md:text-sm font-bold text-slate-900">Push Notifications</p>
-                    <p className="text-xs text-slate-500 mt-0.5">Receive immediate notifications for critical site events.</p>
+                    <p className="text-xs font-bold text-slate-900">
+                      Push Notifications
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Receive immediate notifications for critical site events.
+                    </p>
                   </div>
                   <button
                     type="button"
                     onClick={handleToggleNotification}
                     className={cn(
-                      'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                      'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
                       notifications ? 'bg-blue-600' : 'bg-slate-200'
                     )}
                   >
                     <span
                       className={cn(
-                        'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                        notifications ? 'translate-x-5' : 'translate-x-0'
+                        'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out',
+                        notifications ? 'translate-x-4' : 'translate-x-0'
                       )}
                     />
                   </button>
                 </div>
 
-                <div className="py-4 flex items-center justify-between gap-4">
+                <div className="py-3 flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-xs md:text-sm font-bold text-slate-900">Project Milestone & Task Alerts</p>
-                    <p className="text-xs text-slate-500 mt-0.5">Alerts when milestone statuses change or snag items are assigned.</p>
+                    <p className="text-xs font-bold text-slate-900">
+                      Project Milestone & Task Alerts
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Alerts when milestone statuses change or snag items are assigned.
+                    </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setProjectAlerts(!projectAlerts)}
                     className={cn(
-                      'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                      'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
                       projectAlerts ? 'bg-blue-600' : 'bg-slate-200'
                     )}
                   >
                     <span
                       className={cn(
-                        'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                        projectAlerts ? 'translate-x-5' : 'translate-x-0'
+                        'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out',
+                        projectAlerts ? 'translate-x-4' : 'translate-x-0'
                       )}
                     />
                   </button>
                 </div>
 
-                <div className="py-4 flex items-center justify-between gap-4">
+                <div className="py-3 flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-xs md:text-sm font-bold text-slate-900">Material Requests & Purchase Updates</p>
-                    <p className="text-xs text-slate-500 mt-0.5">Notifies when materials are requested, approved, or received on site.</p>
+                    <p className="text-xs font-bold text-slate-900">
+                      Material Requests & Purchase Updates
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Notifies when materials are requested, approved, or received on site.
+                    </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setMaterialAlerts(!materialAlerts)}
                     className={cn(
-                      'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                      'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
                       materialAlerts ? 'bg-blue-600' : 'bg-slate-200'
                     )}
                   >
                     <span
                       className={cn(
-                        'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                        materialAlerts ? 'translate-x-5' : 'translate-x-0'
+                        'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out',
+                        materialAlerts ? 'translate-x-4' : 'translate-x-0'
                       )}
                     />
                   </button>
@@ -877,17 +990,26 @@ export default function SettingsPage() {
             </div>
 
             {/* Language & Regional */}
-            <div className="rounded-3xl bg-white border border-slate-200/90 p-6 md:p-8 shadow-xs space-y-5">
-              <div className="border-b border-slate-100 pb-4">
-                <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                  <Globe className="w-5 h-5 text-blue-600" />
+            <div className="rounded-xl bg-white border border-slate-300 p-5 space-y-3">
+              <div className="pb-3 border-b border-slate-100">
+                <h3 className="text-xs font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-blue-600" />
                   <span>Language & Regional Display</span>
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">Select your preferred user interface language.</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Select your preferred user interface language.
+                </p>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {['English', 'Hindi', 'Spanish', 'French', 'Arabic', 'German'].map((lang) => {
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                {[
+                  'English',
+                  'Hindi',
+                  'Spanish',
+                  'French',
+                  'Arabic',
+                  'German',
+                ].map((lang) => {
                   const isSelected = language === lang;
                   return (
                     <button
@@ -895,14 +1017,16 @@ export default function SettingsPage() {
                       type="button"
                       onClick={() => handleSaveLanguage(lang)}
                       className={cn(
-                        'flex items-center justify-between p-3.5 rounded-2xl border text-xs font-bold transition cursor-pointer',
+                        'flex items-center justify-between p-2.5 rounded-lg border text-xs font-bold transition cursor-pointer',
                         isSelected
-                          ? 'border-blue-600 bg-blue-50/70 text-blue-700 shadow-2xs'
+                          ? 'border-blue-600 bg-blue-50/70 text-blue-700'
                           : 'border-slate-200 hover:bg-slate-50 text-slate-700'
                       )}
                     >
                       <span>{lang}</span>
-                      {isSelected && <Check className="w-4 h-4 text-blue-600" />}
+                      {isSelected && (
+                        <Check className="w-3.5 h-3.5 text-blue-600" />
+                      )}
                     </button>
                   );
                 })}
@@ -911,61 +1035,71 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {/* Tab 6: Support & Legal */}
+        {/* ── Tab 6: Support & Legal ── */}
         {activeTab === 'support' && (
-          <div className="space-y-6 animate-in fade-in duration-200">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="rounded-3xl bg-white border border-slate-200/90 p-6 shadow-xs flex flex-col justify-between space-y-4">
-                <div className="flex items-start gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                    <Info className="w-5 h-5" />
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="rounded-xl bg-white border border-slate-300 p-4 flex flex-col justify-between space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 border border-blue-150 flex items-center justify-center shrink-0">
+                    <Info className="w-4.5 h-4.5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900">Application Information</h4>
-                    <p className="text-xs text-slate-500 mt-1">SkyStruct Lite Construction Management Platform v1.0.0</p>
+                    <h4 className="text-xs font-bold text-slate-900">
+                      Application Information
+                    </h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      SkyStruct Lite Construction Management Platform v1.0.0
+                    </p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowAppInfo(true)}
-                  className="inline-flex items-center justify-between w-full px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200/80 text-xs font-bold transition cursor-pointer"
+                  className="inline-flex items-center justify-between w-full px-3.5 py-2 rounded-lg bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200/80 text-xs font-bold transition cursor-pointer"
                 >
-                  <span>View System & Version Specs</span>
-                  <ChevronRight className="w-4 h-4" />
+                  <span>View System Specs</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
 
-              <div className="rounded-3xl bg-white border border-slate-200/90 p-6 shadow-xs flex flex-col justify-between space-y-4">
-                <div className="flex items-start gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                    <FileText className="w-5 h-5" />
+              <div className="rounded-xl bg-white border border-slate-300 p-4 flex flex-col justify-between space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-150 flex items-center justify-center shrink-0">
+                    <FileText className="w-4.5 h-4.5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900">Terms & Conditions</h4>
-                    <p className="text-xs text-slate-500 mt-1">Review our service agreement, SLA and privacy terms.</p>
+                    <h4 className="text-xs font-bold text-slate-900">
+                      Terms & Conditions
+                    </h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Review service agreements, data protection, and SLA.
+                    </p>
                   </div>
                 </div>
                 <Link
                   href="/construction-dashboard/settings/terms"
-                  className="inline-flex items-center justify-between w-full px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200/80 text-xs font-bold transition"
+                  className="inline-flex items-center justify-between w-full px-3.5 py-2 rounded-lg bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200/80 text-xs font-bold transition"
                 >
                   <span>Read Terms & Conditions</span>
-                  <ChevronRight className="w-4 h-4" />
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </div>
 
             {/* Help & Contact Banner */}
-            <div className="rounded-3xl bg-slate-50 border border-slate-200 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="rounded-xl bg-slate-50 border border-slate-300 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h4 className="text-sm font-bold text-slate-900">Need help or enterprise onboarding?</h4>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Our construction software specialists are available to help you set up BOQs, templates, and team roles.
+                <h4 className="text-xs font-bold text-slate-900">
+                  Need help or enterprise onboarding?
+                </h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Our specialists are available to help you set up BOQs, templates, and permissions.
                 </p>
               </div>
               <a
                 href="mailto:support@skystruct.com"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-slate-800 border border-slate-200 text-xs font-bold hover:bg-slate-100 transition shadow-2xs shrink-0"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white text-slate-800 border border-slate-200 hover:bg-slate-100 text-xs font-bold transition shrink-0"
               >
                 <Mail className="w-3.5 h-3.5 text-blue-600" />
                 <span>Contact Support</span>

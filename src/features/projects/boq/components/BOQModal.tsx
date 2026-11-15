@@ -116,8 +116,8 @@ export const BOQModal: React.FC<BOQModalProps> = ({
       if (!row.quantity || Number(row.quantity) <= 0) newErrors[`${row.id}_quantity`] = 'Quantity > 0 required';
       else if (Number(row.quantity) > MAX_INPUT_VALUE) newErrors[`${row.id}_quantity`] = 'Quantity is too large';
       if (!row.unit) newErrors[`${row.id}_unit`] = 'Unit required';
-      if (!row.unitCost || Number(row.unitCost) <= 0) newErrors[`${row.id}_unitCost`] = 'Unit cost > 0 required';
-      else if (Number(row.unitCost) > MAX_INPUT_VALUE) newErrors[`${row.id}_unitCost`] = 'Unit cost is too large';
+      if (!row.unitCost || Number(row.unitCost) <= 0) newErrors[`${row.id}_unitCost`] = 'Rate > 0 required';
+      else if (Number(row.unitCost) > MAX_INPUT_VALUE) newErrors[`${row.id}_unitCost`] = 'Rate is too large';
     });
 
     setErrors(newErrors);
@@ -129,8 +129,8 @@ export const BOQModal: React.FC<BOQModalProps> = ({
     if (!editForm.itemDescription.trim()) newErrors.itemDescription = 'Description required';
     if (!editForm.quantity || Number(editForm.quantity) <= 0) newErrors.quantity = 'Quantity > 0 required';
     else if (Number(editForm.quantity) > MAX_INPUT_VALUE) newErrors.quantity = 'Quantity is too large';
-    if (!editForm.unitCost || Number(editForm.unitCost) <= 0) newErrors.unitCost = 'Unit cost > 0 required';
-    else if (Number(editForm.unitCost) > MAX_INPUT_VALUE) newErrors.unitCost = 'Unit cost is too large';
+    if (!editForm.unitCost || Number(editForm.unitCost) <= 0) newErrors.unitCost = 'Rate > 0 required';
+    else if (Number(editForm.unitCost) > MAX_INPUT_VALUE) newErrors.unitCost = 'Rate is too large';
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return false;
 
@@ -194,321 +194,315 @@ export const BOQModal: React.FC<BOQModalProps> = ({
   };
 
   const inputCls = (hasError?: boolean) =>
-    `w-full bg-white border rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${hasError ? 'border-red-400 bg-red-50' : 'border-gray-200'}`;
+    `w-full bg-white border rounded-xl py-1.5 px-3 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all ${
+      hasError ? 'border-rose-400 bg-rose-50/50' : 'border-slate-200'
+    }`;
 
   const editTotal = (Number(editForm.quantity) || 0) * (Number(editForm.unitCost) || 0);
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"
           />
           <motion.div
-            initial={{ opacity: 0, y: 60 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 60 }}
-            className="w-full md:max-w-lg relative z-10 max-h-[92vh] flex flex-col"
+            initial={{ opacity: 0, scale: 0.98, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.98, y: 10 }}
+            className="w-full max-w-3xl relative z-10 max-h-[90vh] flex flex-col bg-white rounded-2xl border border-slate-200 overflow-hidden"
           >
-            <div className="bg-white rounded-t-3xl md:rounded-2xl shadow-2xl flex flex-col max-h-[92vh]">
-
-              {/* Header — matches mobile sheet header gradient */}
-              <div className={`px-6 py-5 rounded-t-3xl md:rounded-t-2xl text-white shrink-0 ${isNewVersion ? 'bg-gradient-to-r from-blue-600 to-indigo-600' : 'bg-gradient-to-r from-blue-500 to-blue-600'}`}>
-                {/* Drag indicator */}
-                <div className="w-10 h-1 rounded-full bg-white/30 mx-auto mb-4" />
-                <div className="flex items-center justify-between">
-                  <div>
-                    {isNewVersion && <GitBranch className="w-5 h-5 mb-1 opacity-80" />}
-                    <h2 className="text-lg font-bold">{modalTitle}</h2>
-                    {isNewVersion && (
-                      <p className="text-xs opacity-80 mt-0.5">v{currentVersion} will be archived. New v{nextVersion} starts as Draft.</p>
-                    )}
-                    {!isNewVersion && !initialData && (
-                      <p className="text-xs opacity-80 mt-0.5">Set a group name then add items</p>
-                    )}
-                  </div>
-                  <button onClick={onClose} className="p-2 bg-white/20 rounded-xl hover:bg-white/30 transition-colors">
-                    <X className="w-5 h-5 text-white" />
-                  </button>
+            {/* Header */}
+            <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center shrink-0">
+                  {isNewVersion ? <GitBranch className="w-4.5 h-4.5 text-blue-600" /> : <Tag className="w-4.5 h-4.5 text-blue-600" />}
                 </div>
-              </div>
-
-              {/* New-version info banner */}
-              {isNewVersion && (
-                <div className="mx-6 mt-4 flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-2xl shrink-0">
-                  <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                  <p className="text-xs text-blue-800 leading-relaxed">
-                    <span className="font-bold">Creating a new version:</span> The current approved v{currentVersion} will be archived. New v{nextVersion} will start as <span className="font-bold">Draft</span> and require re-approval.
+                <div>
+                  <h2 className="text-base font-bold text-slate-900 leading-tight">{modalTitle}</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {isNewVersion
+                      ? `v${currentVersion} will be archived. New v${nextVersion} starts as Draft.`
+                      : initialData
+                        ? 'Update item specifications, cost, and quantities'
+                        : 'Set group name and configure line items'}
                   </p>
                 </div>
-              )}
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-              <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-                <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+            {/* New-version info banner */}
+            {isNewVersion && (
+              <div className="mx-5 mt-3 flex items-start gap-3 p-3 bg-blue-50 border border-blue-200/80 rounded-xl shrink-0">
+                <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                <p className="text-xs text-blue-900 leading-relaxed">
+                  <span className="font-bold">Creating a new version:</span> Current approved v{currentVersion} will be archived. New v{nextVersion} starts as <span className="font-bold">Draft</span>.
+                </p>
+              </div>
+            )}
 
-                  {/* ── EDIT / NEW VERSION MODE ── */}
-                  {initialData && (
-                    <>
-                      {/* Group Info Section */}
-                      <div className="bg-gray-50 rounded-2xl p-4">
-                        <div className="flex items-center gap-2 mb-4">
-                          <Tag className="w-5 h-5 text-blue-500" />
-                          <p className="font-bold text-gray-900">BOQ Group Information</p>
-                        </div>
-                        <div className="space-y-3">
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
-                              Group Name <span className="text-red-400">*</span>
-                            </label>
-                            <input
-                              required
-                              value={editForm.groupName}
-                              onChange={e => setEditForm({ ...editForm, groupName: e.target.value })}
-                              className={inputCls()}
-                              placeholder="e.g. Civil Works"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
-                              Item # (Optional)
-                            </label>
-                            <input
-                              value={editForm.itemNumber}
-                              onChange={e => setEditForm({ ...editForm, itemNumber: e.target.value })}
-                              className={inputCls()}
-                              placeholder="e.g. CW-01"
-                            />
-                          </div>
-                        </div>
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5">
+
+                {/* ── EDIT / NEW VERSION MODE ── */}
+                {initialData && (
+                  <div className="space-y-3">
+                    {/* Row 1: Group Name + Item Number */}
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+                      <div className="sm:col-span-8">
+                        <label className="text-xs font-semibold text-slate-700 block mb-1">
+                          Group Name <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          required
+                          value={editForm.groupName}
+                          onChange={e => setEditForm({ ...editForm, groupName: e.target.value })}
+                          className={inputCls()}
+                          placeholder="e.g. Civil Works"
+                        />
                       </div>
-
-                      {/* Item Details Section */}
-                      <div className="bg-gray-50 rounded-2xl p-4">
-                        <div className="flex items-center gap-2 mb-4">
-                          <Tag className="w-5 h-5 text-blue-500" />
-                          <p className="font-bold text-gray-900">Item Details</p>
-                        </div>
-                        <div className="space-y-3">
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
-                              Description <span className="text-red-400">*</span>
-                            </label>
-                            <textarea
-                              required
-                              rows={2}
-                              value={editForm.itemDescription}
-                              onChange={e => setEditForm({ ...editForm, itemDescription: e.target.value })}
-                              className={inputCls(!!errors.itemDescription) + ' resize-none'}
-                              placeholder="Detailed item description..."
-                            />
-                            {errors.itemDescription && <p className="text-xs text-red-500 mt-1">{errors.itemDescription}</p>}
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
-                                Quantity <span className="text-red-400">*</span>
-                              </label>
-                              <input
-                                type="number"
-                                min={0}
-                                max={MAX_INPUT_VALUE}
-                                step="any"
-                                required
-                                value={editForm.quantity}
-                                onChange={e => setEditForm({ ...editForm, quantity: e.target.value })}
-                                className={inputCls(!!errors.quantity)}
-                                placeholder="0"
-                              />
-                              {errors.quantity && <p className="text-xs text-red-500 mt-1">{errors.quantity}</p>}
-                            </div>
-                            <div>
-                              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Unit</label>
-                              <select
-                                value={editForm.unit}
-                                onChange={e => setEditForm({ ...editForm, unit: e.target.value })}
-                                className={inputCls()}
-                              >
-                                <option value="">Select Unit</option>
-                                {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
-                              </select>
-                            </div>
-                          </div>
-
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
-                              Unit Cost ($) <span className="text-red-400">*</span>
-                            </label>
-                            <input
-                              type="number"
-                              min={0}
-                              max={MAX_INPUT_VALUE}
-                              step="any"
-                              required
-                              value={editForm.unitCost}
-                              onChange={e => setEditForm({ ...editForm, unitCost: e.target.value })}
-                              className={inputCls(!!errors.unitCost)}
-                              placeholder="0"
-                            />
-                            {errors.unitCost && <p className="text-xs text-red-500 mt-1">{errors.unitCost}</p>}
-                          </div>
-
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Remark (optional)</label>
-                            <input
-                              value={editForm.remark}
-                              onChange={e => setEditForm({ ...editForm, remark: e.target.value })}
-                              className={inputCls()}
-                              placeholder="Optional note..."
-                            />
-                          </div>
-
-                          {/* Total */}
-                          <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-blue-50 border border-blue-200">
-                            <span className="text-sm font-bold text-blue-600 uppercase tracking-wider shrink-0">Total</span>
-                            <span className="text-xl font-black text-gray-900 text-right break-all min-w-0">{formatCurrency(editTotal, project?.currency || '$')}</span>
-                          </div>
-                        </div>
+                      <div className="sm:col-span-4">
+                        <label className="text-xs font-semibold text-slate-700 block mb-1">
+                          Item # (Optional)
+                        </label>
+                        <input
+                          value={editForm.itemNumber}
+                          onChange={e => setEditForm({ ...editForm, itemNumber: e.target.value })}
+                          className={inputCls()}
+                          placeholder="e.g. CW-01"
+                        />
                       </div>
-                    </>
-                  )}
+                    </div>
 
-                  {/* ── CREATE MODE — matches mobile CreateBOQDraftScreen ── */}
-                  {!initialData && (
-                    <>
-                      {/* Group Info Section */}
-                      <div className="bg-gray-50 rounded-2xl p-4">
-                        <div className="flex items-center gap-2 mb-4">
-                          <Tag className="w-5 h-5 text-blue-500" />
-                          <p className="font-bold text-gray-900">BOQ Group Information</p>
-                        </div>
-                        <div>
-                          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
-                            Group Name <span className="text-red-400">*</span>
-                          </label>
-                          <input
-                            required
-                            list="boq-group-names"
-                            value={groupName}
-                            onChange={e => { setGroupName(e.target.value); if (errors.groupName) setErrors(p => { const n = { ...p }; delete n.groupName; return n; }); }}
-                            className={inputCls(!!errors.groupName)}
-                            placeholder="e.g. Civil Works, Finishing Works"
-                          />
-                          {existingGroups.length > 0 && (
-                            <datalist id="boq-group-names">
-                              {existingGroups.map(g => <option key={g} value={g} />)}
-                            </datalist>
-                          )}
-                          {errors.groupName && <p className="text-xs text-red-500 mt-1">{errors.groupName}</p>}
-                          {existingGroups.length > 0 && !errors.groupName && (
-                            <p className="text-[11px] text-slate-400 mt-1">Type an existing group name to add items to it, or enter a new name.</p>
-                          )}
-                        </div>
-                      </div>
+                    {/* Row 2: Description */}
+                    <div>
+                      <label className="text-xs font-semibold text-slate-700 block mb-1">
+                        Description <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        required
+                        value={editForm.itemDescription}
+                        onChange={e => setEditForm({ ...editForm, itemDescription: e.target.value })}
+                        className={inputCls(!!errors.itemDescription)}
+                        placeholder="Detailed item description..."
+                      />
+                      {errors.itemDescription && <p className="text-[11px] text-rose-500 mt-0.5">{errors.itemDescription}</p>}
+                    </div>
 
-                      {/* Items Section — card-style matching mobile */}
+                    {/* Row 3: Quantity + Unit + Unit Cost */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                       <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <Tag className="w-5 h-5 text-blue-500" />
-                          <p className="font-bold text-gray-900">Items ({rows.length})</p>
+                        <label className="text-xs font-semibold text-slate-700 block mb-1">
+                          Quantity <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          max={MAX_INPUT_VALUE}
+                          step="any"
+                          required
+                          value={editForm.quantity}
+                          onChange={e => setEditForm({ ...editForm, quantity: e.target.value })}
+                          className={inputCls(!!errors.quantity)}
+                          placeholder="0"
+                        />
+                        {errors.quantity && <p className="text-[11px] text-rose-500 mt-0.5">{errors.quantity}</p>}
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-slate-700 block mb-1">Unit</label>
+                        <select
+                          value={editForm.unit}
+                          onChange={e => setEditForm({ ...editForm, unit: e.target.value })}
+                          className={inputCls()}
+                        >
+                          <option value="">Select Unit</option>
+                          {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-slate-700 block mb-1">
+                          Rate ({project?.currency || '$'}) <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          max={MAX_INPUT_VALUE}
+                          step="any"
+                          required
+                          value={editForm.unitCost}
+                          onChange={e => setEditForm({ ...editForm, unitCost: e.target.value })}
+                          className={inputCls(!!errors.unitCost)}
+                          placeholder="0"
+                        />
+                        {errors.unitCost && <p className="text-[11px] text-rose-500 mt-0.5">{errors.unitCost}</p>}
+                      </div>
+                    </div>
+
+                    {/* Row 4: Remark + Total inline */}
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
+                      <div className="sm:col-span-8">
+                        <label className="text-xs font-semibold text-slate-700 block mb-1">Remark (optional)</label>
+                        <input
+                          value={editForm.remark}
+                          onChange={e => setEditForm({ ...editForm, remark: e.target.value })}
+                          className={inputCls()}
+                          placeholder="Optional note..."
+                        />
+                      </div>
+                      <div className="sm:col-span-4">
+                        <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-blue-50/70 border border-blue-200/80">
+                          <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Total</span>
+                          <span className="text-xs font-bold text-slate-900">
+                            {formatCurrency(editTotal, project?.currency || '$')}
+                          </span>
                         </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-                        <div className="space-y-3">
-                          {rows.map((row, idx) => (
-                            <div key={row.id} className="bg-gray-50 border border-gray-200 rounded-2xl p-4">
-                              {/* Item card header */}
-                              <div className="flex items-center justify-between mb-4">
-                                <p className="font-bold text-gray-900">Item {idx + 1}</p>
-                                <button
-                                  type="button"
-                                  onClick={() => removeRow(row.id)}
-                                  disabled={rows.length === 1}
-                                  className="p-1 text-red-400 hover:text-red-600 disabled:opacity-0 disabled:pointer-events-none transition-colors"
-                                >
-                                  <Trash2 className="w-5 h-5" />
-                                </button>
+                {/* ── CREATE MODE ── */}
+                {!initialData && (
+                  <div className="space-y-3">
+                    {/* Compact Group Name Input */}
+                    <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-3 sm:px-4 sm:py-2.5 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                      <label className="text-xs font-semibold text-slate-700 shrink-0">
+                        BOQ Group Name <span className="text-rose-500">*</span>:
+                      </label>
+                      <div className="flex-1 min-w-0">
+                        <input
+                          required
+                          list="boq-group-names"
+                          value={groupName}
+                          onChange={e => { setGroupName(e.target.value); if (errors.groupName) setErrors(p => { const n = { ...p }; delete n.groupName; return n; }); }}
+                          className={inputCls(!!errors.groupName)}
+                          placeholder="e.g. Civil Works, Finishing Works"
+                        />
+                        {existingGroups.length > 0 && (
+                          <datalist id="boq-group-names">
+                            {existingGroups.map(g => <option key={g} value={g} />)}
+                          </datalist>
+                        )}
+                        {errors.groupName && <p className="text-[11px] text-rose-500 mt-1">{errors.groupName}</p>}
+                      </div>
+                    </div>
+
+                    {/* Items Section */}
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between px-1">
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                          Line Items ({rows.length})
+                        </span>
+                      </div>
+
+                      <div className="space-y-2.5">
+                        {rows.map((row, idx) => (
+                          <div key={row.id} className="bg-slate-50/50 border border-slate-200 rounded-xl p-3 space-y-2">
+                            {/* Item card header */}
+                            <div className="flex items-center justify-between border-b border-slate-200/60 pb-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-slate-900">Item {idx + 1}</span>
+                                {row.quantity && row.unitCost && Number(row.quantity) > 0 && Number(row.unitCost) > 0 && (
+                                  <span className="text-[10px] font-semibold text-blue-700 bg-blue-50 border border-blue-200/60 px-2 py-0.5 rounded-md">
+                                    Est. {formatCurrency(Number(row.quantity) * Number(row.unitCost), project?.currency || '$')}
+                                  </span>
+                                )}
                               </div>
+                              <button
+                                type="button"
+                                onClick={() => removeRow(row.id)}
+                                disabled={rows.length === 1}
+                                className="p-1 text-slate-400 hover:text-rose-600 disabled:opacity-0 disabled:pointer-events-none transition-colors rounded-md cursor-pointer"
+                                title="Remove item"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
 
-                              <div className="space-y-3">
-                                {/* Item Number */}
-                                <div>
-                                  <input
-                                    value={row.itemNumber || ''}
-                                    onChange={e => updateRow(row.id, 'itemNumber', e.target.value)}
-                                    className={inputCls()}
-                                    placeholder="Item Number (Optional)"
-                                  />
-                                </div>
+                            {/* Row 1: Item # + Description */}
+                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                              <div className="sm:col-span-3">
+                                <input
+                                  value={row.itemNumber || ''}
+                                  onChange={e => updateRow(row.id, 'itemNumber', e.target.value)}
+                                  className={inputCls()}
+                                  placeholder="Item # (Optional)"
+                                />
+                              </div>
+                              <div className="sm:col-span-9">
+                                <input
+                                  required
+                                  value={row.itemDescription}
+                                  onChange={e => updateRow(row.id, 'itemDescription', e.target.value)}
+                                  className={inputCls(!!errors[`${row.id}_itemDescription`])}
+                                  placeholder="Item Description *"
+                                />
+                                {errors[`${row.id}_itemDescription`] && (
+                                  <p className="text-[11px] text-rose-500 mt-0.5">{errors[`${row.id}_itemDescription`]}</p>
+                                )}
+                              </div>
+                            </div>
 
-                                {/* Description */}
-                                <div>
-                                  <input
-                                    required
-                                    value={row.itemDescription}
-                                    onChange={e => updateRow(row.id, 'itemDescription', e.target.value)}
-                                    className={inputCls(!!errors[`${row.id}_itemDescription`])}
-                                    placeholder="Item Description *"
-                                  />
-                                  {errors[`${row.id}_itemDescription`] && (
-                                    <p className="text-xs text-red-500 mt-1">{errors[`${row.id}_itemDescription`]}</p>
-                                  )}
-                                </div>
-
-                                {/* Qty + Unit */}
-                                <div className="grid grid-cols-2 gap-3">
-                                  <div>
-                                    <input
-                                      type="number"
-                                      min={0}
-                                      max={MAX_INPUT_VALUE}
-                                      step="any"
-                                      required
-                                      value={row.quantity}
-                                      onChange={e => updateRow(row.id, 'quantity', e.target.value)}
-                                      className={inputCls(!!errors[`${row.id}_quantity`])}
-                                      placeholder="Quantity *"
-                                    />
-                                    {errors[`${row.id}_quantity`] && (
-                                      <p className="text-xs text-red-500 mt-1">{errors[`${row.id}_quantity`]}</p>
-                                    )}
-                                  </div>
-                                  <div>
-                                    <select
-                                      value={row.unit}
-                                      onChange={e => updateRow(row.id, 'unit', e.target.value)}
-                                      className={inputCls(!!errors[`${row.id}_unit`])}
-                                    >
-                                      <option value="">Unit *</option>
-                                      {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
-                                    </select>
-                                    {errors[`${row.id}_unit`] && (
-                                      <p className="text-xs text-red-500 mt-1">{errors[`${row.id}_unit`]}</p>
-                                    )}
-                                  </div>
-                                </div>
-
-                                {/* Unit cost */}
-                                <div>
-                                  <input
-                                    type="number"
-                                    min={0}
-                                    max={MAX_INPUT_VALUE}
-                                    step="any"
-                                    required
-                                    value={row.unitCost}
-                                    onChange={e => updateRow(row.id, 'unitCost', e.target.value)}
-                                    className={inputCls(!!errors[`${row.id}_unitCost`])}
-                                    placeholder="Unit Cost ($) *"
-                                  />
-                                  {errors[`${row.id}_unitCost`] && (
-                                    <p className="text-xs text-red-500 mt-1">{errors[`${row.id}_unitCost`]}</p>
-                                  )}
-                                </div>
-
-                                {/* Remark */}
+                            {/* Row 2: Qty + Unit + Unit Cost + Remark */}
+                            <div className="grid grid-cols-2 sm:grid-cols-12 gap-2">
+                              <div className="col-span-1 sm:col-span-2">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={MAX_INPUT_VALUE}
+                                  step="any"
+                                  required
+                                  value={row.quantity}
+                                  onChange={e => updateRow(row.id, 'quantity', e.target.value)}
+                                  className={inputCls(!!errors[`${row.id}_quantity`])}
+                                  placeholder="Qty *"
+                                />
+                                {errors[`${row.id}_quantity`] && (
+                                  <p className="text-[11px] text-rose-500 mt-0.5">{errors[`${row.id}_quantity`]}</p>
+                                )}
+                              </div>
+                              <div className="col-span-1 sm:col-span-2">
+                                <select
+                                  value={row.unit}
+                                  onChange={e => updateRow(row.id, 'unit', e.target.value)}
+                                  className={inputCls(!!errors[`${row.id}_unit`])}
+                                >
+                                  <option value="">Unit *</option>
+                                  {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                                </select>
+                                {errors[`${row.id}_unit`] && (
+                                  <p className="text-[11px] text-rose-500 mt-0.5">{errors[`${row.id}_unit`]}</p>
+                                )}
+                              </div>
+                              <div className="col-span-1 sm:col-span-3">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={MAX_INPUT_VALUE}
+                                  step="any"
+                                  required
+                                  value={row.unitCost}
+                                  onChange={e => updateRow(row.id, 'unitCost', e.target.value)}
+                                  className={inputCls(!!errors[`${row.id}_unitCost`])}
+                                  placeholder={`Rate (${project?.currency || '$'}) *`}
+                                />
+                                {errors[`${row.id}_unitCost`] && (
+                                  <p className="text-[11px] text-rose-500 mt-0.5">{errors[`${row.id}_unitCost`]}</p>
+                                )}
+                              </div>
+                              <div className="col-span-1 sm:col-span-5">
                                 <input
                                   value={row.remark}
                                   onChange={e => updateRow(row.id, 'remark', e.target.value)}
@@ -517,56 +511,62 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                                 />
                               </div>
                             </div>
-                          ))}
-                        </div>
-
-                        {/* Add Another Item — matches mobile dashed button */}
-                        <button
-                          type="button"
-                          onClick={addRow}
-                          className="mt-3 w-full flex items-center justify-center gap-2 py-3.5 border-2 border-dashed border-gray-300 rounded-2xl bg-white text-blue-600 font-semibold text-sm hover:border-blue-400 hover:bg-blue-50/40 transition-all"
-                        >
-                          <Plus className="w-5 h-5" />
-                          Add Another Item
-                        </button>
+                          </div>
+                        ))}
                       </div>
+
+                      {/* Add Another Item button */}
+                      <button
+                        type="button"
+                        onClick={addRow}
+                        className="w-full flex items-center justify-center gap-1.5 py-2 border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-xl bg-white hover:bg-blue-50/30 text-blue-600 font-semibold text-xs transition-colors cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Another Item</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Sticky Footer */}
+              <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/70 flex items-center justify-end gap-2.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-200/60 rounded-xl border border-slate-200 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="px-5 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Saving…</span>
+                    </>
+                  ) : isNewVersion ? (
+                    <>
+                      <GitBranch className="w-3.5 h-3.5" />
+                      <span>Create v{nextVersion}</span>
+                    </>
+                  ) : initialData ? (
+                    <>
+                      <Save className="w-3.5 h-3.5" />
+                      <span>Update BOQ Item</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-3.5 h-3.5" />
+                      <span>{rows.length > 1 ? `Save ${rows.length} Items` : 'Create BOQ Group'}</span>
                     </>
                   )}
-                </div>
-
-                {/* Footer — matches mobile save button */}
-                <div className="px-6 py-4 border-t border-gray-100 shrink-0 bg-white rounded-b-3xl md:rounded-b-2xl">
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="flex-1 py-3.5 rounded-2xl bg-gray-100 hover:bg-gray-200 text-slate-600 text-sm font-semibold transition-all"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                      className={`flex-1 py-3.5 rounded-2xl disabled:opacity-50 text-white text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-                        isNewVersion
-                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-lg shadow-blue-600/20'
-                          : 'bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/20'
-                      }`}
-                    >
-                      {isLoading ? (
-                        <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
-                      ) : isNewVersion ? (
-                        <><GitBranch className="w-4 h-4" /> Create v{nextVersion}</>
-                      ) : initialData ? (
-                        <><Save className="w-4 h-4" /> Update BOQ Item</>
-                      ) : (
-                        <><Save className="w-4 h-4" /> {rows.length > 1 ? `Save ${rows.length} Items` : 'Create BOQ Group'}</>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </div>
+                </button>
+              </div>
+            </form>
           </motion.div>
         </div>
       )}

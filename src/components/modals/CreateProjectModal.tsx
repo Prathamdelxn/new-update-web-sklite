@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Loader2, ChevronLeft, ChevronRight, ChevronDown, FolderOpen,
   FileText, Zap, Upload, Trash2, MapPin, Check,
-  Plus, Navigation, Eye,
+  Plus, Navigation, Eye, Search, Building2,
 } from 'lucide-react';
 import { useToast } from '@/providers/ToastContext';
 import { useAuth } from '@/providers/AuthContext';
@@ -73,6 +73,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   const [currencies, setCurrencies] = useState<any[]>(countriesData);
   const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
   const [currencySearch, setCurrencySearch] = useState('');
+  const [categorySearch, setCategorySearch] = useState('');
+  const [templateSearch, setTemplateSearch] = useState('');
   
   // Category creation state
   const [isAddingCategory, setIsAddingCategory] = useState(false);
@@ -103,6 +105,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   React.useEffect(() => {
     if (!isOpen) return;
     setDateErrors({});
+    setCategorySearch('');
+    setTemplateSearch('');
     if (isEditing) {
       setStep('configure');
       setForm({
@@ -391,81 +395,168 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     })
     : templates;
 
+  const filteredCategories = categories.filter(c =>
+    c.name?.toLowerCase().includes(categorySearch.toLowerCase())
+  );
+
+  const filteredTemplates = templatesForCategory.filter(t =>
+    t.name?.toLowerCase().includes(templateSearch.toLowerCase())
+  );
+
   const stepTitle =
-    step === 'category' ? 'Select Category' :
-      step === 'template' ? 'Select Template' :
-        isEditing ? 'Update Details' : 'Configure Setup';
+    step === 'category' ? 'Select Project Category' :
+      step === 'template' ? 'Select Template or Custom' :
+        isEditing ? 'Update Project Details' : 'Configure Project Setup';
 
   const hasDateErrors = Object.keys(dateErrors).length > 0;
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.96, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            exit={{ opacity: 0, scale: 0.96, y: 16 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
             className="w-full max-w-2xl relative z-10"
           >
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 max-h-[90vh] overflow-y-auto custom-scrollbar">
-              <div className="p-8">
-
-                {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    {!isEditing && step !== 'category' && (
-                      <button
-                        onClick={() => setStep(step === 'configure' ? 'template' : 'category')}
-                        className="p-2 rounded-xl bg-gray-50 border border-gray-200 text-slate-500 hover:text-gray-900 transition-colors"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </button>
+            <div className="bg-white rounded-2xl border border-slate-300 max-h-[90vh] overflow-hidden flex flex-col">
+              
+              {/* ── Modal Header ── */}
+              <div className="px-5 sm:px-6 py-3.5 border-b border-slate-150 flex items-center justify-between shrink-0 bg-gradient-to-r from-slate-50 via-white to-slate-50">
+                <div className="flex items-center gap-3">
+                  {!isEditing && step !== 'category' && (
+                    <button
+                      type="button"
+                      onClick={() => setStep(step === 'configure' ? 'template' : 'category')}
+                      className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
+                      title="Back to previous step"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                  )}
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-150 text-blue-600 flex items-center justify-center shrink-0">
+                    {step === 'category' ? (
+                      <FolderOpen className="w-4.5 h-4.5 stroke-[2]" />
+                    ) : step === 'template' ? (
+                      <FileText className="w-4.5 h-4.5 stroke-[2]" />
+                    ) : (
+                      <Building2 className="w-4.5 h-4.5 stroke-[2]" />
                     )}
-                    <div>
-                      <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">
-                        {isEditing ? 'Edit Project' : 'New Project'}
-                      </p>
-                      <h2 className="text-xl font-black text-gray-900">{stepTitle}</h2>
-                    </div>
                   </div>
-                  <button onClick={onClose} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
-                    <X className="w-5 h-5" />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9.5px] font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-150">
+                        {isEditing ? 'Project Management' : `Step ${step === 'category' ? '1' : step === 'template' ? '2' : '3'} of 3`}
+                      </span>
+                      {!isEditing && (
+                        <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">
+                          {step === 'category' ? 'Category Selection' : step === 'template' ? 'Template Selection' : 'Project Setup'}
+                        </span>
+                      )}
+                    </div>
+                    <h2 className="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight mt-0.5">
+                      {stepTitle}
+                    </h2>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {!isEditing && (
+                    <div className="hidden sm:flex items-center gap-1.5 mr-2">
+                      <span className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold", step === 'category' ? "bg-blue-600 text-white" : "bg-blue-100 text-blue-700")}>1</span>
+                      <span className="w-2.5 h-0.5 bg-slate-200" />
+                      <span className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold", step === 'template' ? "bg-blue-600 text-white" : step === 'configure' ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-400")}>2</span>
+                      <span className="w-2.5 h-0.5 bg-slate-200" />
+                      <span className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold", step === 'configure' ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-400")}>3</span>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                    title="Close modal"
+                  >
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
+              </div>
+
+              {/* ── Scrollable Body Content ── */}
+              <div className="p-5 sm:p-6 overflow-y-auto custom-scrollbar flex-1">
 
                 {/* STEP 1: Category */}
                 {step === 'category' && (
                   <div className="space-y-4">
-                    <p className="text-sm text-slate-500">Choose a project category to get started.</p>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-0.5">
+                      <div>
+                        <p className="text-xs font-semibold text-slate-600">
+                          Choose a project category to browse matching templates or start with custom requirements.
+                        </p>
+                      </div>
+                      {categories.length > 3 && (
+                        <div className="relative w-full sm:w-56">
+                          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                          <input
+                            type="text"
+                            value={categorySearch}
+                            onChange={e => setCategorySearch(e.target.value)}
+                            placeholder="Search categories..."
+                            className="w-full bg-slate-50/80 border border-slate-200 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                          />
+                        </div>
+                      )}
+                    </div>
+
                     <SkeletonLoader loading={loadingModal} preset="modal">
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        {categories.map((cat, i) => {
-                          const iconColors = [
-                            'text-blue-500 bg-blue-50 border-blue-100',
-                            'text-purple-500 bg-purple-50 border-purple-100',
-                            'text-emerald-500 bg-emerald-50 border-emerald-100',
-                            'text-amber-500 bg-amber-50 border-amber-100',
-                            'text-red-500 bg-red-50 border-red-100',
-                            'text-cyan-500 bg-cyan-50 border-cyan-100',
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                        {filteredCategories.map((cat, i) => {
+                          const catTemplates = templates.filter(t => {
+                            const catId = typeof t.category === 'object' ? t.category?._id : t.category;
+                            return catId === cat._id;
+                          });
+                          const templateCount = catTemplates.length;
+
+                          const iconThemes = [
+                            { bg: 'bg-blue-50', border: 'border-blue-150', text: 'text-blue-600' },
+                            { bg: 'bg-purple-50', border: 'border-purple-150', text: 'text-purple-600' },
+                            { bg: 'bg-emerald-50', border: 'border-emerald-150', text: 'text-emerald-600' },
+                            { bg: 'bg-amber-50', border: 'border-amber-150', text: 'text-amber-600' },
+                            { bg: 'bg-rose-50', border: 'border-rose-150', text: 'text-rose-600' },
+                            { bg: 'bg-cyan-50', border: 'border-cyan-150', text: 'text-cyan-600' },
                           ];
-                          const c = iconColors[i % iconColors.length];
+                          const theme = iconThemes[i % iconThemes.length];
+
                           return (
                             <button
                               key={cat._id}
                               type="button"
                               onClick={() => { setSelectedCategory(cat); setStep('template'); }}
-                              className="flex items-center gap-3 p-2.5 rounded-2xl border border-slate-200 bg-white hover:border-blue-500 hover:bg-slate-50/50 transition-all text-left font-bold text-slate-700 hover:text-blue-700 hover:shadow-sm"
+                              className="group relative flex flex-col justify-between p-4 rounded-xl border border-slate-200/90 bg-white hover:border-blue-500 hover:bg-blue-50/20 transition-all text-left cursor-pointer active:scale-[0.99]"
                             >
-                              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center border shrink-0", c)}>
-                                <FolderOpen className="w-4 h-4" />
+                              <div className="flex items-start justify-between gap-2 mb-3">
+                                <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center border shrink-0 transition-transform group-hover:scale-105", theme.bg, theme.border, theme.text)}>
+                                  <FolderOpen className="w-4.5 h-4.5" />
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-full">
+                                  {templateCount} {templateCount === 1 ? 'template' : 'templates'}
+                                </span>
                               </div>
-                              <span className="truncate text-xs leading-none">{cat.name}</span>
+                              <div>
+                                <p className="text-sm font-extrabold text-slate-800 group-hover:text-blue-700 transition-colors truncate">
+                                  {cat.name}
+                                </p>
+                                <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-400 group-hover:text-blue-600 transition-colors mt-1">
+                                  <span>Browse templates</span>
+                                  <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                                </div>
+                              </div>
                             </button>
                           );
                         })}
@@ -474,23 +565,29 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                           <button
                             type="button"
                             onClick={() => { setIsAddingCategory(true); setNewCategoryName(''); }}
-                            className="flex items-center gap-3 p-2.5 rounded-2xl border border-dashed border-slate-300 text-slate-500 hover:text-slate-800 hover:border-slate-450 hover:bg-slate-50 font-bold text-xs transition-all"
+                            className="group flex flex-col items-center justify-center p-4 rounded-xl border border-dashed border-slate-300 hover:border-blue-500 hover:bg-blue-50/20 bg-slate-50/40 text-center cursor-pointer transition-all min-h-[110px]"
                           >
-                            <div className="w-8 h-8 rounded-lg border border-dashed border-slate-250 flex items-center justify-center shrink-0">
-                              <Plus className="w-4 h-4" />
+                            <div className="w-9 h-9 rounded-xl border border-dashed border-slate-300 group-hover:border-blue-400 group-hover:bg-blue-50 flex items-center justify-center text-slate-400 group-hover:text-blue-600 transition-colors mb-2">
+                              <Plus className="w-4.5 h-4.5" />
                             </div>
-                            <span>Add Category</span>
+                            <span className="text-xs font-extrabold text-slate-700 group-hover:text-blue-700 transition-colors">
+                              Add New Category
+                            </span>
+                            <span className="text-[10.5px] text-slate-400 mt-0.5">
+                              Create custom group
+                            </span>
                           </button>
                         )}
 
                         {categories.length === 0 && !loadingModal && (
-                          <div className="col-span-full flex flex-col items-center justify-center py-12 px-4 border border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
-                            <FolderOpen className="w-12 h-12 text-slate-300 mb-3" />
-                            <p className="text-sm font-medium text-slate-500 mb-4">No categories available</p>
+                          <div className="col-span-full flex flex-col items-center justify-center py-10 px-4 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                            <FolderOpen className="w-10 h-10 text-slate-300 mb-2" />
+                            <p className="text-sm font-bold text-slate-700">No categories found</p>
+                            <p className="text-xs text-slate-400 mb-4">Create your first category to organize projects and templates.</p>
                             <button
                               type="button"
                               onClick={() => { setIsAddingCategory(true); setNewCategoryName(''); }}
-                              className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all active:scale-[0.98] shadow-md shadow-blue-600/10"
+                              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all active:scale-[0.98]"
                             >
                               <Plus className="w-4 h-4" />
                               <span>Create First Category</span>
@@ -505,55 +602,141 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 {/* STEP 2: Template */}
                 {step === 'template' && (
                   <div className="space-y-4">
-                    <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl">
-                      <FolderOpen className="w-4 h-4 text-blue-600 shrink-0" />
-                      <span className="text-sm font-bold text-blue-800">{selectedCategory?.name}</span>
-                    </div>
-                    <p className="text-sm text-slate-500">Select a template or start with a custom setup.</p>
-
-                    <button
-                      onClick={handleCustom}
-                      className="w-full flex items-center gap-4 p-5 rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50 hover:bg-amber-100 transition-all text-left"
-                    >
-                      <div className="w-12 h-12 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center shrink-0">
-                        <Zap className="w-6 h-6 text-amber-600" />
+                    {/* Selected Category Bar */}
+                    <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200/90 rounded-xl">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-150 text-blue-600 flex items-center justify-center shrink-0">
+                          <FolderOpen className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Current Category</span>
+                          <h4 className="text-xs font-extrabold text-slate-800">{selectedCategory?.name}</h4>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-bold text-amber-800">Custom Requirement</p>
-                        <p className="text-xs text-amber-600 mt-0.5">Build from scratch without a template</p>
+                      <button
+                        type="button"
+                        onClick={() => setStep('category')}
+                        className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-white border border-slate-200 hover:border-blue-300 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Change Category
+                      </button>
+                    </div>
+
+                    <p className="text-xs font-semibold text-slate-600">
+                      Select a pre-configured template or build your project from scratch.
+                    </p>
+
+                    {/* Custom Build Option */}
+                    <button
+                      type="button"
+                      onClick={handleCustom}
+                      className="w-full flex items-center justify-between p-4 rounded-xl border border-slate-200/90 hover:border-amber-400 bg-gradient-to-r from-amber-50/60 via-white to-amber-50/20 hover:bg-amber-50/80 transition-all text-left group cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                          <Zap className="w-5 h-5 text-amber-600 fill-amber-500/20" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-extrabold text-slate-900 text-sm group-hover:text-amber-800 transition-colors">
+                              Custom Requirement
+                            </p>
+                            <span className="text-[10px] font-extrabold text-amber-700 bg-amber-100/80 border border-amber-200 px-1.5 py-0.2 rounded">
+                              Start Blank
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            Build from scratch without a template · Configure custom phases & milestones
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 group-hover:text-amber-700 transition-colors pl-3 shrink-0">
+                        <span>Start Custom</span>
+                        <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                       </div>
                     </button>
 
-                    {templatesForCategory.length > 0 && (
+                    {/* Templates Header */}
+                    <div className="flex items-center justify-between pt-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-extrabold uppercase tracking-wider text-slate-700">
+                          Available Templates
+                        </p>
+                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.2 rounded-full">
+                          {templatesForCategory.length}
+                        </span>
+                      </div>
+                      {templatesForCategory.length > 3 && (
+                        <div className="relative w-48">
+                          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                          <input
+                            type="text"
+                            value={templateSearch}
+                            onChange={e => setTemplateSearch(e.target.value)}
+                            placeholder="Filter templates..."
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-2.5 py-1 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-500"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {filteredTemplates.length > 0 ? (
                       <div className="space-y-2">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Templates</p>
-                        {templatesForCategory.map(tpl => (
+                        {filteredTemplates.map(tpl => (
                           <button
                             key={tpl._id}
+                            type="button"
                             onClick={() => handleSelectTemplate(tpl)}
-                            className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50/30 transition-all text-left group"
+                            className="w-full flex items-center justify-between p-3.5 rounded-xl border border-slate-200/90 bg-white hover:border-blue-500 hover:bg-blue-50/20 transition-all text-left group cursor-pointer"
                           >
-                            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
-                              <FileText className="w-5 h-5 text-blue-600" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-bold text-gray-900 text-sm truncate group-hover:text-blue-700 transition-colors">{tpl.name}</p>
-                              {(tpl.area || tpl.estimatedDays) && (
-                                <p className="text-[10px] text-slate-400 mt-0.5">
-                                  {tpl.area ? `${tpl.area} sqft` : ''}
-                                  {tpl.area && tpl.estimatedDays ? ' · ' : ''}
-                                  {tpl.estimatedDays ? `${tpl.estimatedDays} days` : ''}
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-150 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                <FileText className="w-4.5 h-4.5" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-extrabold text-slate-900 text-sm truncate group-hover:text-blue-700 transition-colors">
+                                  {tpl.name}
                                 </p>
-                              )}
+                                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                  {tpl.area && (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-md">
+                                      <span>{tpl.area} {tpl.areaUnit || 'sqft'}</span>
+                                    </span>
+                                  )}
+                                  {tpl.estimatedDays && (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-md">
+                                      <span>{tpl.estimatedDays} days</span>
+                                    </span>
+                                  )}
+                                  {tpl.phases && (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-md">
+                                      <span>{tpl.phases.length} phases</span>
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors shrink-0" />
+                            <div className="flex items-center gap-1 text-xs font-bold text-slate-400 group-hover:text-blue-600 transition-colors pl-3 shrink-0">
+                              <span className="hidden sm:inline">Use Template</span>
+                              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                            </div>
                           </button>
                         ))}
                       </div>
-                    )}
-
-                    {templatesForCategory.length === 0 && (
-                      <p className="text-sm text-center text-slate-400 py-4">No templates for this category.</p>
+                    ) : (
+                      <div className="text-center py-8 px-4 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                        <FileText className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                        <p className="text-xs font-bold text-slate-700">No templates found for this category</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5 mb-3">You can proceed directly with a custom setup</p>
+                        <button
+                          type="button"
+                          onClick={handleCustom}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 hover:border-amber-400 text-slate-700 hover:text-amber-800 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                        >
+                          <Zap className="w-3.5 h-3.5 text-amber-500" />
+                          <span>Proceed with Custom Requirement</span>
+                        </button>
+                      </div>
                     )}
                   </div>
                 )}
@@ -562,24 +745,39 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 {step === 'configure' && (
                   <form onSubmit={handleSubmit} className="space-y-6">
                     {!isEditing && (
-                      <div className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-200 rounded-2xl">
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
-                          <FolderOpen className="w-5 h-5 text-blue-600" />
+                      <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200/90 rounded-xl">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-150 flex items-center justify-center shrink-0">
+                            <FolderOpen className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Project Category</p>
+                            <p className="text-xs font-extrabold text-slate-800">{selectedCategory?.name || '—'}</p>
+                          </div>
+                          <div className="w-px h-6 bg-slate-200 mx-1" />
+                          <div
+                            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                            style={{
+                              backgroundColor: isCustom ? '#FEF3C7' : '#EFF6FF',
+                              border: isCustom ? '1px solid #FDE68A' : '1px solid #DBEAFE',
+                            }}
+                          >
+                            {isCustom ? <Zap className="w-4 h-4 text-amber-600" /> : <FileText className="w-4 h-4 text-blue-600" />}
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Configuration</p>
+                            <p className="text-xs font-extrabold text-slate-800">
+                              {isCustom ? 'Custom Blank Project' : (selectedTemplate?.name || 'Template')}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Project Category</p>
-                          <p className="text-sm font-bold text-gray-900">{selectedCategory?.name || '—'}</p>
-                        </div>
-                        <div className="w-px h-8 bg-gray-200 mx-2" />
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: isCustom ? '#FEF3C7' : '#EFF6FF' }}>
-                          {isCustom ? <Zap className="w-5 h-5 text-amber-600" /> : <FileText className="w-5 h-5 text-blue-600" />}
-                        </div>
-                        <div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Configuration</p>
-                          <p className="text-sm font-bold text-gray-900">
-                            {isCustom ? 'Custom Build' : `Template: ${selectedTemplate?.name}`}
-                          </p>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setStep('template')}
+                          className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-white border border-slate-200 hover:border-blue-300 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                        >
+                          Change
+                        </button>
                       </div>
                     )}
 
@@ -664,7 +862,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                         </div>
                         <div>
                           <label className={labelCls}>Est Budget</label>
-                          <div className="flex border border-gray-200 rounded-xl relative focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 bg-white shadow-sm">
+                          <div className="flex border border-gray-200 rounded-xl relative focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 bg-white">
                             <div className="relative flex items-center bg-gray-100 border-r border-gray-200 cursor-pointer min-w-[80px] rounded-l-xl hover:bg-gray-200 transition-colors" onClick={() => setIsCurrencyDropdownOpen(!isCurrencyDropdownOpen)}>
                               <div className="flex-1 px-3 py-3 text-sm font-semibold text-slate-600 flex items-center justify-between">
                                 <span className="flex items-center gap-1.5">
@@ -672,7 +870,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                     {(() => {
                                       const match = currencies.find(c => c.currencyCode === form.currency);
                                       return match ? (
-                                        <img src={`https://flagcdn.com/w20/${match.cca2.toLowerCase()}.png`} alt={match.cca2} className="w-5 h-auto shadow-sm rounded-[2px]" />
+                                        <img src={`https://flagcdn.com/w20/${match.cca2.toLowerCase()}.png`} alt={match.cca2} className="w-5 h-auto rounded-[2px]" />
                                       ) : '🌍';
                                     })()}
                                   </span>
@@ -683,7 +881,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                               {isCurrencyDropdownOpen && (
                                 <>
                                   <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setIsCurrencyDropdownOpen(false); }} />
-                                  <div className="absolute top-full left-0 mt-2 w-72 max-h-80 overflow-hidden bg-white border border-gray-200 rounded-xl shadow-xl z-50 flex flex-col">
+                                  <div className="absolute top-full left-0 mt-2 w-72 max-h-80 overflow-hidden bg-white border border-slate-300 rounded-xl z-50 flex flex-col">
                                     <div className="p-2 border-b border-gray-100">
                                       <input 
                                         type="text" 
@@ -713,7 +911,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                             }}
                                           >
                                             <div className="w-6 h-6 flex items-center justify-center shrink-0">
-                                              <img src={`https://flagcdn.com/w40/${c.cca2.toLowerCase()}.png`} alt={c.name} className="w-6 h-auto shadow-sm rounded-sm" />
+                                              <img src={`https://flagcdn.com/w40/${c.cca2.toLowerCase()}.png`} alt={c.name} className="w-6 h-auto rounded-sm" />
                                             </div>
                                             <div className="flex flex-col min-w-0">
                                               <span className="text-sm font-bold text-gray-900 truncate">{c.name}</span>
@@ -913,13 +1111,17 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
                     {/* Submit */}
                     <div className="flex gap-3 pt-2">
-                      <button type="button" onClick={onClose} className="flex-1 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-bold transition-all">
+                      <button
+                        type="button"
+                        onClick={onClose}
+                        className="flex-1 py-2.5 rounded-xl border border-slate-250 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold transition-all text-xs cursor-pointer"
+                      >
                         Cancel
                       </button>
                       <button
                         type="submit"
                         disabled={isSubmitting || uploadingDoc || uploadingDrawing || hasDateErrors}
-                        className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all disabled:opacity-50 shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2"
+                        className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-xs cursor-pointer"
                       >
                         {isSubmitting
                           ? <><Loader2 className="w-4 h-4 animate-spin" /><span>{isEditing ? 'Saving...' : 'Creating...'}</span></>
@@ -936,50 +1138,64 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             {/* Add Category Dialog Overlay */}
             <AnimatePresence>
               {isAddingCategory && (
-                <div className="absolute inset-0 z-20 flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm rounded-2xl">
+                <div className="absolute inset-0 z-20 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs rounded-2xl">
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
+                    initial={{ opacity: 0, scale: 0.96 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-white w-full max-w-md p-6 rounded-2xl border border-gray-200 shadow-xl"
+                    exit={{ opacity: 0, scale: 0.96 }}
+                    className="bg-white w-full max-w-md p-5 rounded-2xl border border-slate-300"
                   >
                     <form onSubmit={handleCreateCategory}>
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-base font-black text-gray-900">Create New Category</h3>
+                      <div className="flex justify-between items-center mb-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-150 text-blue-600 flex items-center justify-center">
+                            <FolderOpen className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <span className="text-[9.5px] font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-150">
+                              New Category
+                            </span>
+                            <h3 className="text-sm font-extrabold text-slate-900 tracking-tight mt-0.5">
+                              Create Project Category
+                            </h3>
+                          </div>
+                        </div>
                         <button
                           type="button"
                           onClick={() => setIsAddingCategory(false)}
-                          className="p-1 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-lg"
+                          className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                         >
                           <X className="w-4 h-4" />
                         </button>
                       </div>
-                      <p className="text-xs text-slate-500 mb-4">Add a new category to group your project templates and custom projects.</p>
+                      <p className="text-xs text-slate-500 mb-4">
+                        Add a new category to group your project templates and custom projects.
+                      </p>
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-[10px] font-bold text-slate-600 mb-1">Category Name *</label>
+                          <label className={labelCls}>Category Name *</label>
                           <input
                             type="text"
                             value={newCategoryName}
                             onChange={e => setNewCategoryName(e.target.value)}
-                            placeholder="e.g. Residential, Commercial..."
-                            className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-3 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+                            placeholder="e.g. Residential, Commercial, Renovation..."
+                            className={inputCls}
                             autoFocus
                             required
                           />
                         </div>
-                        <div className="flex gap-2 pt-2">
+                        <div className="flex gap-2 pt-1">
                           <button
                             type="button"
                             onClick={() => setIsAddingCategory(false)}
-                            className="flex-1 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 text-sm font-bold transition-all"
+                            className="flex-1 py-2.5 rounded-xl border border-slate-250 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all cursor-pointer"
                           >
                             Cancel
                           </button>
                           <button
                             type="submit"
                             disabled={isCreatingCategory || !newCategoryName.trim()}
-                            className="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+                            className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
                           >
                             {isCreatingCategory ? (
                               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1014,21 +1230,21 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                   <motion.div
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                     onClick={() => setPreviewUrl(null)}
-                    className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                    className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs"
                   />
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className="w-full max-w-5xl relative z-10 bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[90vh]"
+                    className="w-full max-w-5xl relative z-10 bg-white rounded-2xl border border-slate-300 overflow-hidden flex flex-col h-[90vh]"
                   >
-                    <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                      <h3 className="text-lg font-black text-gray-900">Document Preview</h3>
-                      <button type="button" onClick={() => setPreviewUrl(null)} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
-                        <X className="w-5 h-5" />
+                    <div className="flex items-center justify-between p-4 border-b border-slate-200">
+                      <h3 className="text-sm font-extrabold text-slate-900">Document Preview</h3>
+                      <button type="button" onClick={() => setPreviewUrl(null)} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer">
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
-                    <div className="flex-1 overflow-auto bg-gray-100 flex items-center justify-center p-4 relative">
+                    <div className="flex-1 overflow-auto bg-slate-100 flex items-center justify-center p-4 relative">
                       {isPreviewLoading && (
                         <div className="absolute inset-0 flex items-center justify-center">
                           <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
@@ -1039,13 +1255,13 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                           src={previewUrl} 
                           alt="Preview" 
                           onLoad={() => setIsPreviewLoading(false)}
-                          className={cn("max-w-full max-h-full object-contain rounded-lg shadow-sm transition-opacity duration-300", isPreviewLoading ? "opacity-0" : "opacity-100")} 
+                          className={cn("max-w-full max-h-full object-contain rounded-lg border border-slate-200 transition-opacity duration-300", isPreviewLoading ? "opacity-0" : "opacity-100")} 
                         />
                       ) : (
                         <iframe 
                           src={previewUrl} 
                           onLoad={() => setIsPreviewLoading(false)}
-                          className={cn("w-full h-full rounded-lg shadow-sm border-0 transition-opacity duration-300", isPreviewLoading ? "opacity-0" : "opacity-100")} 
+                          className={cn("w-full h-full rounded-lg border border-slate-200 transition-opacity duration-300", isPreviewLoading ? "opacity-0" : "opacity-100")} 
                           title="PDF Preview" 
                         />
                       )}

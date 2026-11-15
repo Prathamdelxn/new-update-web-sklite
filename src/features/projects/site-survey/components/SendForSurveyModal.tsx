@@ -115,7 +115,7 @@ export const SendForSurveyModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
             exit={{ opacity: 0, scale: 0.95, y: 16 }}
             className="w-full max-w-md relative z-10"
           >
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
                 <div className="flex items-center gap-3">
@@ -198,7 +198,7 @@ export const SendForSurveyModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
                 <button
                   onClick={handleAssign}
                   disabled={!selectedUser || submitting}
-                  className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold flex items-center justify-center gap-2 enabled:hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+                  className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold flex items-center justify-center gap-2 enabled:hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
                   {submitting
                     ? <><Loader2 className="w-4 h-4 animate-spin" /> Assigning...</>

@@ -65,17 +65,17 @@ const StatusBadge = ({ status, size = 'sm' }: { status: string; size?: 'xs' | 's
 const StatCard = ({
   label, value, icon: Icon, accent, bg, sub, action,
 }: { label: string; value: string | number; icon: React.ElementType; accent: string; bg: string; sub?: string; action?: React.ReactNode }) => (
-  <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 flex items-center gap-3 sm:gap-4 min-w-0 transition-colors duration-200 hover:border-blue-200">
-    <div className={cn('w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0', bg)}>
+  <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 flex items-center gap-3.5 sm:gap-4 min-w-0 transition-colors duration-200 hover:border-blue-200">
+    <div className={cn('w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 border', bg)}>
       <Icon className={cn('w-5 h-5', accent)} />
     </div>
     <div className="min-w-0 flex-1">
-      <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">{label}</p>
+      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">{label}</p>
       <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
-        <p className="min-w-0 flex-1 text-lg sm:text-2xl font-bold text-gray-900 leading-tight">{value}</p>
+        <p className="min-w-0 flex-1 text-xl sm:text-2xl font-bold text-slate-900 leading-tight">{value}</p>
         {action}
       </div>
-      {sub && <p className="text-[10px] text-slate-400 mt-0.5">{sub}</p>}
+      {sub && <p className="text-xs text-slate-400 mt-0.5 font-medium">{sub}</p>}
     </div>
   </div>
 );
@@ -317,7 +317,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
             value={isApprovedTotalVisible ? formatCurrency(totalBOQAmount, project?.currency || '$') : '••••••'}
             icon={DollarSign}
             accent="text-blue-600"
-            bg="bg-blue-50"
+            bg="bg-blue-50 border-blue-100"
             sub={`${approvedCount} approved items`}
             action={
               <button
@@ -335,15 +335,15 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
             label="BOQ Groups"
             value={Object.keys(groupedItems).length}
             icon={FileText}
-            accent="text-violet-600"
-            bg="bg-violet-50"
+            accent="text-purple-600"
+            bg="bg-purple-50 border-purple-100"
           />
           <StatCard
             label="Pending Approval"
             value={pendingCount}
             icon={Clock}
             accent="text-amber-600"
-            bg="bg-amber-50"
+            bg="bg-amber-50 border-amber-100"
             sub={pendingCount > 0 ? 'requires action' : 'all clear'}
           />
           <StatCard
@@ -351,22 +351,22 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
             value={approvedCount}
             icon={TrendingUp}
             accent="text-emerald-600"
-            bg="bg-emerald-50"
+            bg="bg-emerald-50 border-emerald-100"
             sub={items.length > 0 ? `${Math.round((approvedCount / items.length) * 100)}% of total` : ''}
           />
         </div>
 
         {/* ── Toolbar ── */}
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col sm:flex-row gap-2.5">
           {/* Search */}
           <div className="relative flex-1 min-w-0">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             <input
               type="text"
               placeholder="Search groups or items..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-slate-200/80 rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs focus:outline-none focus:ring-3 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
+              className="w-full bg-white border border-slate-200 rounded-xl py-2 pl-10 pr-3.5 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all"
             />
           </div>
 
@@ -374,7 +374,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors cursor-pointer w-full sm:w-auto"
+            className="bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all cursor-pointer w-full sm:w-auto"
           >
             {['All', 'Draft', 'Pending', 'Approved', 'Rejected'].map(s => (
               <option key={s} value={s}>{s === 'All' ? 'All Status' : s}</option>
@@ -385,7 +385,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
           <div className="flex items-center gap-2">
             <button
               onClick={fetchBOQ}
-              className="p-2 bg-white border border-gray-200 rounded-lg text-slate-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+              className="p-2 bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors cursor-pointer"
               title="Refresh"
             >
               <RefreshCw className="w-4 h-4" />
@@ -393,17 +393,17 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
 
             <button
               onClick={() => setIsImportModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
             >
-              <Upload className="w-4 h-4" />
+              <Upload className="w-3.5 h-3.5 text-slate-500" />
               <span className="hidden sm:inline">Import</span>
             </button>
             {canCreate && (
               <button
                 onClick={() => { setSelectedItem(null); setIsNewVersion(false); setIsModalOpen(true); }}
-                className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 border border-transparent rounded-xl text-xs font-semibold text-white transition-colors cursor-pointer shrink-0"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5" />
                 <span>New BOQ</span>
               </button>
             )}
@@ -412,52 +412,43 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
 
         {/* ── Empty state ── */}
         {filteredGroups.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 sm:py-24 bg-white rounded-2xl border-2 border-dashed border-gray-200">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center mb-4">
-              <FileText className="w-8 h-8 sm:w-10 sm:h-10 text-blue-400" />
+          <div className="flex flex-col items-center justify-center py-20 bg-white/70 backdrop-blur-sm rounded-2xl border-2 border-dashed border-slate-200 p-8">
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mb-4">
+              <FileText className="w-7 h-7 text-blue-600" />
             </div>
-            <p className="font-black text-gray-900 text-lg sm:text-xl mb-1">
+            <h3 className="font-bold text-slate-900 text-base mb-1">
               {searchQuery || statusFilter !== 'All' ? 'No results found' : 'No BOQ Groups Yet'}
-            </p>
-            <p className="text-slate-400 text-sm mb-6 text-center max-w-xs px-4">
+            </h3>
+            <p className="text-slate-500 text-xs leading-relaxed text-center max-w-sm px-4">
               {searchQuery
                 ? `No groups match "${searchQuery}"`
                 : statusFilter !== 'All'
                   ? `No groups with status "${statusFilter}"`
                   : 'Add your first Bill of Quantities group to get started'}
             </p>
-            {!searchQuery && statusFilter === 'All' && canCreate && (
-              <button
-                onClick={() => { setSelectedItem(null); setIsNewVersion(false); setIsModalOpen(true); }}
-                className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-500 transition-all"
-              >
-                <Plus className="w-4 h-4" />
-                Create BOQ Group
-              </button>
-            )}
           </div>
         ) : (
           <div className="space-y-6">
             {/* ─────────────────────────────────────────────────────────────────
               PROFESSIONAL DATA TABLE
             ───────────────────────────────────────────────────────────────── */}
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[980px] table-fixed text-sm text-left">
                   <thead>
-                    <tr className="bg-gray-50 border-b border-gray-200">
-                      <th className="w-[4%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">#</th>
-                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item No.</th>
-                      <th className="w-[29%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item Description</th>
-                      <th className="w-[7%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">Unit</th>
-                      <th className="w-[8%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Qty</th>
-                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Rate</th>
-                      <th className="w-[11%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Total</th>
-                      <th className="w-[11%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">Status</th>
-                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                    <tr className="bg-slate-50/70 border-b border-slate-200">
+                      <th className="w-[4%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">#</th>
+                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Item No.</th>
+                      <th className="w-[29%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Item Description</th>
+                      <th className="w-[7%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">Unit</th>
+                      <th className="w-[8%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Qty</th>
+                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Rate</th>
+                      <th className="w-[11%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Total</th>
+                      <th className="w-[11%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">Status</th>
+                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-slate-100">
                     {filteredGroups.map(groupName => {
                       const groupItems = groupedItems[groupName];
                       const status = getGroupStatus(groupItems);
@@ -469,14 +460,14 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
                       return (
                         <React.Fragment key={groupName}>
                           {/* Group Header Row */}
-                          <tr className="bg-gray-50/50 group border-b border-gray-200">
+                          <tr className="bg-slate-50/40 group border-b border-slate-200">
                             <td colSpan={6} className="px-2 sm:px-3 py-3">
-                              <div className="flex items-center gap-3">
-                                <div className="w-1 h-5 bg-blue-500 rounded-sm" />
-                                <span className="font-semibold text-gray-900 text-sm uppercase tracking-wide">{groupName}</span>
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-1.5 h-4 bg-blue-600 rounded-full" />
+                                <span className="font-bold text-slate-900 text-xs uppercase tracking-wider">{groupName}</span>
                               </div>
                             </td>
-                            <td className="px-1 sm:px-2 py-3 text-right font-semibold text-gray-900 whitespace-nowrap text-xs sm:text-sm">
+                            <td className="px-1 sm:px-2 py-3 text-right font-bold text-slate-900 whitespace-nowrap text-xs sm:text-sm">
                               {formatCurrency(totalCost, project?.currency || '$')}
                             </td>
                             <td className="px-2 sm:px-3 py-3 text-center">

@@ -119,7 +119,7 @@ export const BOQApproversModal: React.FC<BOQApproversModalProps> = ({
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="w-full max-w-md relative z-10"
           >
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden">
+            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
               <div className="p-6 border-b border-gray-100 flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="p-2.5 rounded-xl bg-purple-50 border border-purple-200">

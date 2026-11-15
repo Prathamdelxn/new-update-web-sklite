@@ -53,17 +53,20 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="w-full max-w-2xl relative z-10"
           >
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="bg-white rounded-xl border border-slate-300 shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
 
               {/* Header */}
-              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+              <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between shrink-0">
                 <div>
-                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Viewing Template</p>
-                  <h2 className="text-lg font-bold text-gray-900 mt-0.5">
+                  <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Viewing Template</p>
+                  <h2 className="text-sm font-bold text-slate-900 mt-0.5">
                     {loading ? 'Loading…' : (template?.name || '—')}
                   </h2>
                 </div>
-                <button onClick={onClose} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
+                <button
+                  onClick={onClose}
+                  className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -72,44 +75,44 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
               <div className="overflow-y-auto flex-1 custom-scrollbar">
                 <SkeletonLoader loading={loading} preset="modal">
                   {template ? (
-                    <div className="p-6 space-y-6">
+                    <div className="p-5 space-y-5">
 
                     {/* Hero card */}
-                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6">
-                      <div className="flex items-start justify-between mb-5">
-                        <div className="w-14 h-14 rounded-2xl bg-white border border-blue-200 flex items-center justify-center shadow-sm">
-                          <span className="text-2xl">🏗️</span>
+                    <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-2xs">
+                          <span className="text-xl">🏗️</span>
                         </div>
-                        <span className="px-3 py-1 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest">
+                        <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80 text-[10.5px] font-bold">
                           {template.category?.name || 'General'}
                         </span>
                       </div>
 
-                      <h3 className="text-2xl font-black text-gray-900 mb-2">{template.name}</h3>
-                      <p className="text-sm text-slate-500 leading-relaxed mb-5">
-                        {template.description || `A professional template designed for ${template.category?.name || 'standard'} projects.`}
+                      <h3 className="text-base font-bold text-slate-900 mb-1">{template.name}</h3>
+                      <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                        {template.description || `A standardized template configured for ${template.category?.name || 'general'} project delivery.`}
                       </p>
 
                       {/* Stats row */}
-                      <div className="bg-white rounded-xl border border-blue-100 grid grid-cols-3 divide-x divide-blue-100">
-                        <div className="px-4 py-3 text-center">
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Budget Range</p>
-                          <p className="text-sm font-black text-gray-900">
+                      <div className="bg-white rounded-lg border border-slate-200/90 grid grid-cols-3 divide-x divide-slate-100 shadow-2xs">
+                        <div className="px-3 py-2 text-center">
+                          <p className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Budget Range</p>
+                          <p className="text-xs font-bold text-slate-900">
                             {template.minBudget || template.maxBudget
                               ? `${formatCurrency(template.minBudget || 0, '$')} – ${formatCurrency(template.maxBudget || 0, '$')}`
                               : '—'
                             }
                           </p>
                         </div>
-                        <div className="px-4 py-3 text-center">
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Est. Area</p>
-                          <p className="text-sm font-black text-gray-900">
+                        <div className="px-3 py-2 text-center">
+                          <p className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Est. Area</p>
+                          <p className="text-xs font-bold text-slate-900">
                             {template.area ? `${template.area.toLocaleString()} sqft` : '—'}
                           </p>
                         </div>
-                        <div className="px-4 py-3 text-center">
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Timeline</p>
-                          <p className="text-sm font-black text-gray-900">
+                        <div className="px-3 py-2 text-center">
+                          <p className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Timeline</p>
+                          <p className="text-xs font-bold text-slate-900">
                             {template.estimatedDays ? `${template.estimatedDays} days` : '—'}
                           </p>
                         </div>
@@ -117,43 +120,43 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
                     </div>
 
                     {/* Photos & Visuals */}
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-black text-gray-900 uppercase tracking-wider">Photos & Visuals</h4>
+                    <div className="space-y-2.5">
+                      <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Photos & Visuals</h4>
                       {template.images && template.images.length > 0 ? (
-                        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                        <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-hide">
                           {template.images.map((img: string, idx: number) => (
-                            <div key={idx} className="w-52 h-36 rounded-xl overflow-hidden border border-gray-200 shrink-0">
+                            <div key={idx} className="w-48 h-32 rounded-xl overflow-hidden border border-slate-200 shrink-0 shadow-2xs">
                               <img src={img} alt={`Image ${idx + 1}`} className="w-full h-full object-cover" />
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <div className="border border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center gap-2 text-slate-400">
-                          <ImageIcon className="w-8 h-8" />
-                          <p className="text-sm font-semibold">No photos uploaded</p>
+                        <div className="border border-dashed border-slate-200 rounded-xl p-6 flex flex-col items-center gap-1.5 text-slate-400 bg-slate-50/50">
+                          <ImageIcon className="w-7 h-7 text-slate-300" />
+                          <p className="text-xs font-semibold">No photos uploaded</p>
                         </div>
                       )}
                     </div>
 
                     {/* Plan Files */}
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-black text-gray-900 uppercase tracking-wider">Plan Files & Blueprints</h4>
+                    <div className="space-y-2.5">
+                      <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Plan Files & Documents</h4>
                       {template.files && template.files.length > 0 ? (
                         <div className="space-y-2">
                           {template.files.map((file: any, idx: number) => (
-                            <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-xl">
-                              <div className="w-9 h-9 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
-                                <FileText className="w-4 h-4 text-blue-500" />
+                            <div key={idx} className="flex items-center gap-3 p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl">
+                              <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-150 flex items-center justify-center shrink-0">
+                                <FileText className="w-4 h-4 text-blue-600" />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm font-semibold text-gray-900 truncate">{file.name || `Plan File ${idx + 1}`}</p>
-                                <p className="text-[10px] text-slate-400">
+                                <p className="text-xs font-bold text-slate-900 truncate">{file.name || `Plan File ${idx + 1}`}</p>
+                                <p className="text-[10px] font-semibold text-slate-400">
                                   {file.size ? `${(file.size / 1024).toFixed(1)} KB` : 'Architectural Plan'}
                                 </p>
                               </div>
                               <a
                                 href={file.url} target="_blank" rel="noopener noreferrer"
-                                className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
                                 title="Download"
                               >
                                 <Download className="w-4 h-4" />
@@ -162,9 +165,9 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
                           ))}
                         </div>
                       ) : (
-                        <div className="border border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center gap-2 text-slate-400">
-                          <FileText className="w-8 h-8 text-blue-300" />
-                          <p className="text-sm font-semibold">No files attached</p>
+                        <div className="border border-dashed border-slate-200 rounded-xl p-6 flex flex-col items-center gap-1.5 text-slate-400 bg-slate-50/50">
+                          <FileText className="w-7 h-7 text-slate-300" />
+                          <p className="text-xs font-semibold">No files attached</p>
                         </div>
                       )}
                     </div>
@@ -175,20 +178,20 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
               </div>
 
               {/* Footer */}
-              <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between shrink-0">
+              <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between shrink-0">
                 <button
                   onClick={onClose}
-                  className="px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-gray-100 transition-all"
+                  className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all cursor-pointer shadow-2xs"
                 >
                   Close
                 </button>
                 {template && onEdit && (
                   <button
                     onClick={() => { onClose(); onEdit(template); }}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-600/20"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 via-blue-700 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-xs border border-slate-300 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer shadow-xs"
                   >
-                    <Pencil className="w-4 h-4" />
-                    Edit Template
+                    <Pencil className="w-3.5 h-3.5" />
+                    <span>Edit Template</span>
                   </button>
                 )}
               </div>

@@ -89,7 +89,7 @@ export const RiskDetailModal: React.FC<RiskDetailModalProps> = ({
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="w-full max-w-xl relative z-10"
           >
-            <div className="bg-white rounded-3xl border border-gray-150 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
               {/* Header */}
               <div className="p-6 border-b border-gray-100 flex items-start justify-between shrink-0">
                 <div className="flex items-start space-x-4">
@@ -211,7 +211,7 @@ export const RiskDetailModal: React.FC<RiskDetailModalProps> = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-gray-100 hover:text-gray-900 transition-all shadow-sm"
+                  className="px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-gray-100 hover:text-gray-900 transition-all cursor-pointer"
                 >
                   Close
                 </button>

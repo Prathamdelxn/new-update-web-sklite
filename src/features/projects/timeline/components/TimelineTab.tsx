@@ -114,12 +114,14 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
 
   if (normalized.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 text-center border-2 border-dashed border-gray-200 rounded-3xl">
-        <div className="p-6 rounded-full bg-gray-100 mb-6">
-          <GanttChart className="w-12 h-12 text-gray-300" />
+      <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-slate-200 bg-white/70 backdrop-blur-sm rounded-2xl p-8">
+        <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center mb-4">
+          <GanttChart className="w-7 h-7 text-blue-600" />
         </div>
-        <h3 className="text-xl font-bold text-gray-900 mb-2">No timeline data yet</h3>
-        <p className="text-slate-500 max-w-xs">Add milestones with dates to visualize your project timeline.</p>
+        <h4 className="text-base font-bold text-slate-900 mb-1">No timeline data yet</h4>
+        <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed mt-1">
+          Add milestones with target dates to visualize your project critical path and timeline.
+        </p>
       </div>
     );
   }
@@ -215,7 +217,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
       </div>
 
       {/* Gantt grid */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
         <div className="flex">
 
           {/* ── Label column ── */}
@@ -474,7 +476,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
             { label: 'Active', count: milestones.filter(m => m.status === 'In Progress').length, text: 'text-indigo-500' },
             { label: 'Pending', count: milestones.filter(m => m.status === 'Pending').length, text: 'text-slate-400' },
           ].map(s => (
-            <div key={s.label} className="bg-white rounded-2xl border border-gray-200 p-4 text-center shadow-sm">
+            <div key={s.label} className="bg-white rounded-2xl border border-gray-200 p-4 text-center">
               <p className={cn('text-2xl font-black', s.text)}>{s.count}</p>
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">{s.label}</p>
             </div>

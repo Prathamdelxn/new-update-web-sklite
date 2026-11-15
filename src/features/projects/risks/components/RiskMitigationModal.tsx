@@ -93,7 +93,7 @@ export const RiskMitigationModal: React.FC<RiskMitigationModalProps> = ({
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="w-full max-w-md relative z-10"
           >
-            <div className="bg-white rounded-3xl border border-gray-150 shadow-2xl overflow-hidden flex flex-col">
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col">
               {/* Header */}
               <div className="p-6 border-b border-gray-100 flex items-center justify-between">
                 <div>
@@ -188,7 +188,7 @@ export const RiskMitigationModal: React.FC<RiskMitigationModalProps> = ({
                   type="button"
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="flex items-center space-x-2 px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 shadow-sm"
+                  className="flex items-center space-x-2 px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 cursor-pointer"
                 >
                   {isSaving ? (
                     <>
