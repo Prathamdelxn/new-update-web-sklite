@@ -13,7 +13,7 @@ import {
   AlertCircle, ShieldAlert, Calendar,
   TrendingUp, GanttChart, ClipboardList, CreditCard,
   ChevronLeft, Pencil, MessageSquare,
-  ClipboardCheck, History, LayoutGrid, Sofa, LayoutDashboard, Clock,
+  ClipboardCheck, History, LayoutGrid, Sofa, LayoutDashboard, // Clock (Attendance tab, hidden),
   Lock, ArrowRight
 } from 'lucide-react';
 
@@ -28,7 +28,8 @@ const ALL_TABS = [
   { id: 'ffe',          name: 'FFE',            icon: Sofa },
   { id: 'milestones',   name: 'Milestone',      icon: Calendar },
   { id: 'materials',    name: 'Material',       icon: Package },
-  { id: 'attendance',   name: 'Attendance',     icon: Clock },
+  // Attendance hidden for now — no other module depends on it
+  // { id: 'attendance',   name: 'Attendance',     icon: Clock },
   { id: 'issues',       name: 'Snags',          icon: AlertCircle },
   { id: 'risks',        name: 'Risk',           icon: ShieldAlert },
   { id: 'transactions', name: 'Transactions',   icon: CreditCard },
@@ -52,7 +53,7 @@ const TAB_GROUPS: TabGroup[] = [
   { id: 'overview',  label: 'Overview',  icon: LayoutDashboard, tabIds: [ 'details'] },
   { id: 'work',      label: 'Work',      icon: Calendar,        tabIds: ['boq', 'milestones', 'reports'] },
   { id: 'finance',   label: 'Finance',   icon: DollarSign,      tabIds: ['transactions'] },
-  { id: 'site',      label: 'Site',      icon: Map,             tabIds: ['plans', 'documents', 'materials', 'site-survey', 'attendance'] },
+  { id: 'site',      label: 'Site',      icon: Map,             tabIds: ['plans', 'documents', 'materials', 'site-survey' /* , 'attendance' */] },
   { id: 'quality',   label: 'Quality',   icon: ShieldAlert,     tabIds: ['issues', 'risks', 'handover', 'audit'] },
   { id: 'chat',      label: 'Chat',      icon: MessageSquare,   tabIds: ['chat'] },
   { id: 'interior',  label: 'Interior',  icon: Sofa,            tabIds: ['rooms', 'ffe'] },

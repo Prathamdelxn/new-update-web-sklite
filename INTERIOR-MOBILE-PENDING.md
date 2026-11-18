@@ -110,3 +110,52 @@ The remaining meeting items (#3–5, #7, #9, #11, #13–16) aren't built on web 
   - The assignee list shows each member's real project role.
   - Header reads "N WBS Elements • N Activities".
 - Mobile-only extra kept: the overall progress strip with expand/collapse-all.
+
+## 5. Web cleanup ported to mobile (16 Nov): mobile working copy, not yet in a build
+Mirrors the web's removal of extra labels and its reworked screens.
+
+| Area | Change on mobile |
+|---|---|
+| Requirements tab | Same layout as the web. The briefing card holds the actions: **Edit Requirements + Pass to Site Visit** when filled, **Reschedule Session + Add Requirements** when empty. The status counts client-intake rooms when the team hasn't logged any ("- Client Intake"). Added the **Overall Project Directives & Scope** banner (Scope of Work / Target Timeline / Special Requests). Removed the separate "No Requirements Recorded" card and the Reschedule / "Edit / Add" row. |
+| Requirements view | Rewritten to the web's four states: **Waiting for Client Input** (Check Status, Copy Intake Link, WhatsApp, Schedule Expiry, Stop Link), **Link Stopped / Expired** (Reactivate 7 days), **No Requirements Logged Yet**, and **Room Specifications (N Areas)**. Room specs come from client + team entries merged by room name, with **Functional** and **Aesthetic** sections, client directives and the inspiration moodboard. Discard is hidden once the lead has passed to Site Visit. Re-checks every 5s while waiting for the client. Removed the old summary cards, view-mode pills and intake ribbon. |
+| Quotation preview | "Quotation Details" block: **Issue Date / Lead Reference / Quote Reference / Status**. Totals: "Subtotal (N items)", "Discount Applied", **Grand Total · Net Payable**. The "Total Items Count" row is gone. The PDF already matched. |
+| Users & Roles | Labels renamed to match the web: Total Members, Active Accounts, Add New Member, Edit User Account, "No project assignments linked to this member.", and the new placeholders. Removed the "Organization roles…" info banner. |
+| Interior projects | Card button reads "View". |
+| Unchanged (checked) | CRM stage lists: the web only restyled the All / Pending / Completed tabs. BOQ "Review Focus / Note": still shown on the web. Stage order Requirements → Site Visit: already on mobile. |
+
+## 6. Second parity pass, construction + interior (16 Nov): mobile working copy, not yet in a build
+Compared every web commit since 5 Nov (construction) and 24 Oct (interior) against mobile. The web added **no new backend endpoints** in this period. Most of the diff is a visual redesign; the items below are the parts that change behaviour or content.
+
+**Construction**
+
+| Area | Change on mobile |
+|---|---|
+| Site survey form | Same sections as the web. Site surveys: Conditions & Utilities, **Terrain & Soil**, Site Observation Media, Observations & Remarks + budget impact. Interior surveys: Room Details (ceiling height **with unit**), **Wall & Moisture Diagnostics** (wall type, dampness + notes), **MEP & Services Readiness** (electrical phase, AC piping, plumbing outlets), **Material Access & Freight Logistics** (elevator access + capacity), Structural & Design, primary + additional photos. Interior-only fields are sent only for interior projects, terrain only for site surveys (as on the web). |
+| Survey details | New **Site Diagnostics** card showing the new fields. |
+| Reports | The Export button now offers **Download Report PDF** (tasks, issues, snags, activity logs for the chosen range), **Email PDF** (existing) and **Export Report as CSV**. |
+| Settings | New **Account & Security** section: Profile Details (name, phone), Organization name (admin only; others see it read-only) and **Change Password**. |
+| Dashboard | Added **Site Delivery Milestones** and **Site Risks & Snags Watch** (critical risks + open snags, tap opens the project's Risks / Snagging). "Due Today" is now "Attention Required · N pending today". |
+| Project chat | **Search chat** by message text or sender, with result count and Clear filter. |
+| Templates | Sort: Newest / Template Name / Budget (High-Low) / Duration (Shortest). Search also matches description and category. |
+| Wording | Handover "All validation criteria in this section have passed successfully.", template "Plan Files & Documents". |
+| Already matched | Handover checks/approver, survey approval, create-project category → template/custom flow (incl. add category), adding members with projects + credentials, snagging start gate. |
+
+**Interior**
+
+| Area | Change on mobile |
+|---|---|
+| CRM leads list | Filter panel like the web table: **Source, Property Type, Pipeline Status** (All Leads tab) and **Sort Order** (newest, oldest, name A→Z / Z→A), with a count badge and Reset Filters. Search also matches lead number and location. **Call** and **WhatsApp** buttons on each lead card. |
+| Vendor Management / project Vendors | Search (name, code, contact, email, phone, GSTIN, category), filters for **Vendor Category** and **Partner Status**, **Sort Order**, empty states, and a WhatsApp button next to the vendor phone. |
+| Already matched | Settings org details (address, GSTIN, currency, date format), Site Details client-intake link actions, role create / edit / delete, project drawing & BOQ approvals. |
+
+**Notes**
+- Change Password (`POST /auth/change-password`) and organization rename (`PATCH /organization`) exist only on the construction backend's `origin/main` (commit `65c837c`). The local `new-update` checkout is 2 commits behind, so these return 404 against a local backend until it is pulled. The dashboard snag list (`snagStats.recentSnags`) is also from the newer backend (`d3b47bf`); with an older backend the section shows risks only.
+- The web user form's "New Password (Optional)" on **edit** has no effect: the backend `PATCH /users/:id` ignores `password`. Not copied to mobile.
+- Not ported (web-only or cosmetic): grid/table view toggles, Import XER, "Remember Me", page headers and card restyles, and the push-notification toggle (its `/organization/notifications` endpoint doesn't exist on the backend).
+
+## 7. Full construction audit (16 Nov)
+Compared the **whole** construction module, not just recent commits.
+- **Endpoints:** every backend call the web makes for construction is also made by mobile. Endpoints used only by the web are web-only by design: XER import, super-admin auth, the legacy construction CRM modals. The web's `/notifications/:id/read` and `/notifications/read-all` don't exist on the backend; mobile uses the real `PATCH /notifications` route.
+- **Project tabs:** mobile has a screen for every web tab (details, BOQ, milestones, reports, transactions, plans, documents, materials, site survey, attendance/labour, issues, risks, handover, audit, chat, rooms, FF&E), plus extras (snagging, timeline, budget, progress, tasks).
+- **Checked actions:** BOQ Excel import, materials (requests/purchases/receipts/usage: verify, fulfil, delete with stock restore), transactions add/edit/delete, escalation matrix save, attendance export with date range and user, manual attendance, geofence (set in create/edit project), snag completion, risk mitigation, survey send/approve, milestone task material usage.
+- **Remaining differences are visual only** (the web's Nov redesign: page headers, card styles, grid/table toggles). The web's Organisation Finance page isn't linked from any web menu.
