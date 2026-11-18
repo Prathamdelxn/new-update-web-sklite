@@ -671,9 +671,9 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                       className="w-full h-40 border-2 border-dashed border-slate-200 hover:border-blue-400 bg-slate-50/60 hover:bg-blue-50/20 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 overflow-hidden group transition-all"
                     >
                       {observationFile ? (
-                        <img src={URL.createObjectURL(observationFile)} alt="Obs preview" className="w-full h-full object-cover" />
+                        <img loading="lazy" decoding="async" src={URL.createObjectURL(observationFile)} alt="Obs preview" className="w-full h-full object-cover" />
                       ) : observationImage ? (
-                        <img src={observationImage} alt="Obs source" className="w-full h-full object-cover" />
+                        <img loading="lazy" decoding="async" src={observationImage} alt="Obs source" className="w-full h-full object-cover" />
                       ) : (
                         <div className="text-center p-4">
                           <Camera className="w-7 h-7 text-slate-400 mx-auto mb-1 group-hover:text-blue-600 transition-colors" />
@@ -715,7 +715,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                         {/* Existing Photos URLs */}
                         {additionalPhotos.map((url, idx) => (
                           <div key={`url-${idx}`} className="h-24 bg-slate-100 border border-slate-200 rounded-xl overflow-hidden relative group">
-                            <img src={url} alt="Space attachment" className="w-full h-full object-cover" />
+                            <img loading="lazy" decoding="async" src={url} alt="Space attachment" className="w-full h-full object-cover" />
                             <button
                               type="button"
                               onClick={() => removeAdditionalPhotoUrl(idx)}
@@ -729,7 +729,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                         {/* New Photos Files */}
                         {additionalFiles.map((file, idx) => (
                           <div key={`file-${idx}`} className="h-24 bg-slate-100 border border-slate-200 rounded-xl overflow-hidden relative group">
-                            <img src={URL.createObjectURL(file)} alt="File attachment" className="w-full h-full object-cover" />
+                            <img loading="lazy" decoding="async" src={URL.createObjectURL(file)} alt="File attachment" className="w-full h-full object-cover" />
                             <button
                               type="button"
                               onClick={() => removeAdditionalFile(idx)}

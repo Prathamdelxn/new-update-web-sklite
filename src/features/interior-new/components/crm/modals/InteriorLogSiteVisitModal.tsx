@@ -626,7 +626,7 @@ export const InteriorLogSiteVisitModal = ({
                     key={index}
                     className="relative aspect-square rounded-xl overflow-hidden border border-[hsl(var(--border))] group bg-[hsl(var(--card))]"
                   >
-                    <img src={photo} alt={`Site ${index + 1}`} className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={photo} alt={`Site ${index + 1}`} className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={() => removePhoto(index)}

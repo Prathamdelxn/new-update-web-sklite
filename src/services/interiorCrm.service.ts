@@ -12,8 +12,9 @@ import interiorApiClient from '@/services/interiorApi.client';
 export const interiorCrmService = {
   // Customers / Leads
   getCustomers: (params?: any) => interiorApiClient.get('/crm/customers', { params }).then((res) => res.data),
-  getCustomerById: (customerId: string) =>
-    interiorApiClient.get(`/crm/customers/${customerId}`).then((res) => res.data),
+  // `signal` lets React Query abort a superseded request instead of leaving it running
+  getCustomerById: (customerId: string, signal?: AbortSignal) =>
+    interiorApiClient.get(`/crm/customers/${customerId}`, { signal }).then((res) => res.data),
   getCustomerStats: () => interiorApiClient.get('/crm/customers/stats').then((res) => res.data),
   createCustomer: (data: any) => interiorApiClient.post('/crm/customers', data).then((res) => res.data),
   updateCustomer: (customerId: string, data: any) =>
@@ -76,9 +77,9 @@ export const interiorCrmService = {
     interiorApiClient.delete(`/crm/customers/${customerId}/drawings/${drawingId}`).then((res) => res.data),
 
   // Activities
-  getActivities: (params?: string | Record<string, any>) => {
+  getActivities: (params?: string | Record<string, any>, signal?: AbortSignal) => {
     const query = typeof params === 'string' ? { customerId: params } : params;
-    return interiorApiClient.get('/crm/activities', { params: query }).then((res) => res.data);
+    return interiorApiClient.get('/crm/activities', { params: query, signal }).then((res) => res.data);
   },
   createActivity: (data: any) => interiorApiClient.post('/crm/activities', data).then((res) => res.data),
   updateActivity: (activityId: string, data: any) =>

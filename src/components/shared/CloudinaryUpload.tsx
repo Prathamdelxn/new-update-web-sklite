@@ -141,7 +141,7 @@ export const CloudinaryUpload: React.FC<CloudinaryUploadProps> = ({
             <CheckCircle2 className="w-8 h-8 text-emerald-500" />
             <p className="text-sm font-semibold text-emerald-600">Uploaded successfully</p>
             {isImage ? (
-              <img src={uploadedUrl} alt="Preview" className="w-24 h-24 rounded-xl object-cover border border-gray-200 mt-1" />
+              <img loading="lazy" decoding="async" src={uploadedUrl} alt="Preview" className="w-24 h-24 rounded-xl object-cover border border-gray-200 mt-1" />
             ) : (
               <div className="flex items-center space-x-2 px-3 py-2 bg-white rounded-xl border border-gray-200">
                 <FileText className="w-4 h-4 text-blue-600" />

@@ -636,7 +636,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                         {/* Evidence Photo */}
                         {item.images && item.images.length > 0 && (
                           <div className="mt-3 rounded-2xl overflow-hidden border border-slate-100 mb-4 bg-slate-50">
-                            <img src={item.images[0]} alt="Evidence" className="w-full h-36 object-cover" />
+                            <img loading="lazy" decoding="async" src={item.images[0]} alt="Evidence" className="w-full h-36 object-cover" />
                           </div>
                         )}
                       </div>

@@ -2129,7 +2129,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                 {viewingImages.proofUrl ? (
                   <div className="space-y-2">
                     <h4 className="text-sm font-bold text-center text-[hsl(var(--foreground))]">Delivery Proof</h4>
-                    <img src={viewingImages.proofUrl} alt="Delivery Proof" className="w-full h-auto rounded-lg shadow-sm border border-[hsl(var(--border))]" />
+                    <img loading="lazy" decoding="async" src={viewingImages.proofUrl} alt="Delivery Proof" className="w-full h-auto rounded-lg shadow-sm border border-[hsl(var(--border))]" />
                   </div>
                 ) : (
                   <div className="flex items-center justify-center h-full min-h-[200px] border-2 border-dashed border-[hsl(var(--border))] rounded-lg text-[hsl(var(--muted-foreground))] text-sm">
@@ -2140,7 +2140,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                 {viewingImages.invoiceUrl ? (
                   <div className="space-y-2">
                     <h4 className="text-sm font-bold text-center text-[hsl(var(--foreground))]">Invoice</h4>
-                    <img src={viewingImages.invoiceUrl} alt="Invoice" className="w-full h-auto rounded-lg shadow-sm border border-[hsl(var(--border))]" />
+                    <img loading="lazy" decoding="async" src={viewingImages.invoiceUrl} alt="Invoice" className="w-full h-auto rounded-lg shadow-sm border border-[hsl(var(--border))]" />
                   </div>
                 ) : (
                   <div className="flex items-center justify-center h-full min-h-[200px] border-2 border-dashed border-[hsl(var(--border))] rounded-lg text-[hsl(var(--muted-foreground))] text-sm">

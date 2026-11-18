@@ -568,7 +568,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
                                 rel="noreferrer"
                                 className="block cursor-pointer hover:opacity-95"
                               >
-                                <img
+                                <img loading="lazy" decoding="async"
                                   src={att.url}
                                   alt="attachment"
                                   className="max-w-full h-auto max-h-60 rounded-lg object-cover"
@@ -766,7 +766,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
         {filePreview && (
           <div className="relative inline-block mb-2.5 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
             {fileType === 'image' ? (
-              <img
+              <img loading="lazy" decoding="async"
                 src={filePreview}
                 alt="Upload preview"
                 className="h-16 w-auto rounded-lg object-cover"

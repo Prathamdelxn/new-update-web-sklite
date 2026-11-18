@@ -117,7 +117,7 @@ export const CompleteSnagModal: React.FC<CompleteSnagModalProps> = ({
 
                   {previewUrl ? (
                     <div className="relative rounded-2xl border border-slate-150 overflow-hidden group">
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={previewUrl}
                         alt="Proof preview"
                         className="w-full h-44 object-cover"

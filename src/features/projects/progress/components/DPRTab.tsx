@@ -387,7 +387,7 @@ export const DPRTab: React.FC<DPRTabProps> = ({ projectId }) => {
                     <div className="mt-6 flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
                       {report.photos.map((photo: string, i: number) => (
                         <div key={i} className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-200 shrink-0">
-                          <img src={photo} alt="Progress" className="w-full h-full object-cover" />
+                          <img loading="lazy" decoding="async" src={photo} alt="Progress" className="w-full h-full object-cover" />
                         </div>
                       ))}
                     </div>

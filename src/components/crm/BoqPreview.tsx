@@ -36,7 +36,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn, parseMaxBudget, formatInternational, formatMillionBillion, formatSmartCurrency } from '@/lib/utils';
 import { useCurrency } from '@/hooks/useCurrency';
-import { exportBoqToExcel } from '@/lib/exportBoqExcel';
+import { exportBoqToExcel } from '@/lib/exportBoqExcelLazy';
 import { BoqDrawingViewerModal } from '@/components/crm/BoqDrawingViewerModal';
 
 interface BoqPreviewProps {

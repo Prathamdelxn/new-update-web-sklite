@@ -631,7 +631,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                         <td className="py-3 px-4 text-center">
                           {log.checkInPhoto && (
                             <button onClick={() => setLightboxPhoto(log.checkInPhoto)} className="w-8 h-8 rounded-lg overflow-hidden border border-gray-200 inline-block relative hover:opacity-85 transition-opacity">
-                              <img src={log.checkInPhoto} alt="Selfie" className="w-full h-full object-cover" />
+                              <img loading="lazy" decoding="async" src={log.checkInPhoto} alt="Selfie" className="w-full h-full object-cover" />
                             </button>
                           )}
                         </td>
@@ -775,7 +775,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
               >
                 <X className="w-5 h-5" />
               </button>
-              <img src={lightboxPhoto} alt="Expanded Selfie" className="w-full aspect-square object-cover rounded-2xl" />
+              <img loading="lazy" decoding="async" src={lightboxPhoto} alt="Expanded Selfie" className="w-full aspect-square object-cover rounded-2xl" />
             </motion.div>
           </div>
         )}
@@ -873,7 +873,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                   <span className="block text-[10px] font-bold text-slate-600 self-start mb-1.5">Verify Identity Selfie *</span>
                   <div className="w-full aspect-square rounded-2xl overflow-hidden bg-slate-900 border border-gray-200 relative flex items-center justify-center">
                     {capturedPhoto ? (
-                      <img src={capturedPhoto} alt="Captured Selfie" className="w-full h-full object-cover" />
+                      <img loading="lazy" decoding="async" src={capturedPhoto} alt="Captured Selfie" className="w-full h-full object-cover" />
                     ) : cameraActive ? (
                       <video
                         ref={videoRef}

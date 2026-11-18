@@ -744,7 +744,7 @@ export default function MilestoneDetailPage() {
                           <div className="col-span-2 md:col-span-3">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Proof Photo</p>
                             <a href={task.proofImage.url} target="_blank" rel="noopener noreferrer">
-                              <img src={task.proofImage.url} alt="Proof" className="h-40 w-auto object-cover rounded-xl border border-gray-200 hover:opacity-90 transition-opacity" />
+                              <img loading="lazy" decoding="async" src={task.proofImage.url} alt="Proof" className="h-40 w-auto object-cover rounded-xl border border-gray-200 hover:opacity-90 transition-opacity" />
                             </a>
                             {task.proofImage.uploadedAt && (
                               <p className="text-[10px] text-slate-400 mt-1">{new Date(task.proofImage.uploadedAt).toLocaleString()}</p>
@@ -787,7 +787,7 @@ export default function MilestoneDetailPage() {
                               </label>
                               {form.photoPreview ? (
                                 <div className="relative rounded-xl overflow-hidden border border-gray-200 w-fit">
-                                  <img src={form.photoPreview} alt="Preview" className="h-32 w-auto object-cover" />
+                                  <img loading="lazy" decoding="async" src={form.photoPreview} alt="Preview" className="h-32 w-auto object-cover" />
                                   <button
                                     type="button"
                                     onClick={() => setForm(i, { photoFile: null, photoPreview: null })}

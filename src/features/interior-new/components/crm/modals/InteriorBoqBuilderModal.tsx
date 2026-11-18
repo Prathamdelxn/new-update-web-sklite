@@ -987,7 +987,7 @@ export function InteriorBoqBuilderModal({
                                       title="Click to preview image/drawing in modal"
                                     >
                                       {isImg ? (
-                                        <img
+                                        <img loading="lazy" decoding="async"
                                           src={att.url}
                                           alt={att.name}
                                           className="w-5 h-5 rounded object-cover border border-slate-100 shrink-0"

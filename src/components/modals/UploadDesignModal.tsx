@@ -268,7 +268,7 @@ export const UploadDesignModal = ({
                       <div className="flex items-center gap-3 overflow-hidden">
                         {type === 'image' && file.url ? (
                           <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
-                            <img src={file.url} alt={file.name} className="w-full h-full object-cover" />
+                            <img loading="lazy" decoding="async" src={file.url} alt={file.name} className="w-full h-full object-cover" />
                           </div>
                         ) : type === 'pdf' ? (
                           <div className="w-10 h-10 rounded-xl bg-red-100 text-red-500 flex items-center justify-center shrink-0">
@@ -352,7 +352,7 @@ export const UploadDesignModal = ({
                       <div className="flex items-center gap-3 overflow-hidden flex-1">
                         {type === 'image' && file.url ? (
                           <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
-                            <img src={file.url} alt={file.name} className="w-full h-full object-cover" />
+                            <img loading="lazy" decoding="async" src={file.url} alt={file.name} className="w-full h-full object-cover" />
                           </div>
                         ) : type === 'pdf' ? (
                           <div className="w-10 h-10 rounded-xl bg-red-100 text-red-500 flex items-center justify-center shrink-0">

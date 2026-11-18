@@ -159,3 +159,13 @@ Compared the **whole** construction module, not just recent commits.
 - **Project tabs:** mobile has a screen for every web tab (details, BOQ, milestones, reports, transactions, plans, documents, materials, site survey, attendance/labour, issues, risks, handover, audit, chat, rooms, FF&E), plus extras (snagging, timeline, budget, progress, tasks).
 - **Checked actions:** BOQ Excel import, materials (requests/purchases/receipts/usage: verify, fulfil, delete with stock restore), transactions add/edit/delete, escalation matrix save, attendance export with date range and user, manual attendance, geofence (set in create/edit project), snag completion, risk mitigation, survey send/approve, milestone task material usage.
 - **Remaining differences are visual only** (the web's Nov redesign: page headers, card styles, grid/table toggles). The web's Organisation Finance page isn't linked from any web menu.
+
+## 8. Interior speed pass + static data removed (18 Nov): mobile working copy, not yet in a build
+| Area | Change on mobile | What to test |
+|---|---|---|
+| CRM leads list | Virtualized list (only on-screen cards are built), memoized cards, filtering and stage counts. Typing in Add Lead / follow-up forms no longer re-renders every card. | Scroll a long list, search, filters, every stage tab, pull to refresh, Call / WhatsApp buttons. |
+| Interior projects list | Virtualized list, memoized filtering and status counts. | Search, status chips, edit / delete from a card, pull to refresh. |
+| Lead detail: client requirements wait | The 5s poll now re-checks **only this lead** (was: refetch of all CRM data incl. the full lead list every 5s). One full refresh runs when the client's submission arrives. | Share the requirements link, submit from the client page, confirm the app picks it up and the timeline/list update. |
+| Lead detail: forms | BOQ builder, quotation builder, requirements, site visit, design upload and the 5 "Send to…" forms are mounted only while open (no close animation). "Send to BOQ / Quotations" now open with a clean form each time. | Open, edit and save each form; edit an existing BOQ / quotation. |
+| Project Vendors | Removed fake **Performance Indicators** (Quality Compliance %, On-Time Delivery %, cycled from fixed lists) and fake trade names for vendors with no category (now "Other"). Not on the web. | Vendor cards show contracts and total value only. |
+| Lead overview | Removed the extra "Client budget …" line under the latest quotation total (web shows the quote total only). | |

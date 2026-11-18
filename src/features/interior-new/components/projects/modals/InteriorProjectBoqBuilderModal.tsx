@@ -1105,7 +1105,7 @@ export function InteriorProjectBoqBuilderModal({
             </div>
             <div className="p-4 flex-1 flex items-center justify-center overflow-auto bg-slate-900">
               {previewAttachment.url.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i) ? (
-                <img
+                <img loading="lazy" decoding="async"
                   src={previewAttachment.url}
                   alt={previewAttachment.name}
                   className="max-h-[75vh] object-contain rounded-lg"

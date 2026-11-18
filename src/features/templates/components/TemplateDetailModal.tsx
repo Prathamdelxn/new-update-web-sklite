@@ -126,7 +126,7 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
                         <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-hide">
                           {template.images.map((img: string, idx: number) => (
                             <div key={idx} className="w-48 h-32 rounded-xl overflow-hidden border border-slate-200 shrink-0 shadow-2xs">
-                              <img src={img} alt={`Image ${idx + 1}`} className="w-full h-full object-cover" />
+                              <img loading="lazy" decoding="async" src={img} alt={`Image ${idx + 1}`} className="w-full h-full object-cover" />
                             </div>
                           ))}
                         </div>

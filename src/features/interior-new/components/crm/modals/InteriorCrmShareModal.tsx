@@ -546,7 +546,7 @@ export function InteriorCrmShareModal({
                     className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80 flex flex-col items-center text-center space-y-2.5"
                   >
                     <div className="p-3 bg-white rounded-2xl shadow-xs border border-slate-200/80">
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=0&data=${encodeURIComponent(shareUrl)}`}
                         alt="Intake Link QR Code"
                         className="w-32 h-32 object-contain"

@@ -375,7 +375,7 @@ export default function ClientRequirementSharePage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             {org.logo ? (
-              <img src={org.logo} alt={org.name || 'Studio'} className="h-7 w-auto max-w-[120px] object-contain shrink-0" />
+              <img loading="lazy" decoding="async" src={org.logo} alt={org.name || 'Studio'} className="h-7 w-auto max-w-[120px] object-contain shrink-0" />
             ) : (
               <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center font-bold text-white text-xs shrink-0">
                 {(org.name || 'S').charAt(0).toUpperCase()}

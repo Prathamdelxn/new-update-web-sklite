@@ -563,7 +563,7 @@ export const InteriorUploadDesignModal = ({
                       <div className="flex items-center gap-3 overflow-hidden">
                         {item.previewUrl ? (
                           <div className="w-10 h-10 rounded-lg overflow-hidden bg-white shrink-0 border border-slate-200 shadow-2xs">
-                            <img src={item.previewUrl} alt={item.file.name} className="w-full h-full object-cover" />
+                            <img loading="lazy" decoding="async" src={item.previewUrl} alt={item.file.name} className="w-full h-full object-cover" />
                           </div>
                         ) : (
                           <div className={cn(

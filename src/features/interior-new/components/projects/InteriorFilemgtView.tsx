@@ -339,7 +339,7 @@ export default function InteriorFilemgtView({ projectId }: InteriorFilemgtViewPr
 
               <div className="flex-1 bg-[hsl(var(--muted)/0.3)] relative overflow-hidden flex items-center justify-center">
                 {['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(viewingFile.fileType?.toLowerCase()) || viewingFile.fileType?.startsWith('image') ? (
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={viewingFile.fileUrl}
                     alt={viewingFile.name}
                     className="max-w-full max-h-full object-contain"

@@ -976,7 +976,7 @@ export function InteriorComparativeRequirementsView({
                     onClick={() => setSelectedPhotoModal(img)}
                     className="relative group rounded-xl overflow-hidden aspect-square border border-[hsl(var(--border))] hover:border-indigo-500 transition-all cursor-pointer"
                   >
-                    <img src={img} alt={`Inspiration ${iIdx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    <img loading="lazy" decoding="async" src={img} alt={`Inspiration ${iIdx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                     <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white">
                       <Eye size={16} />
                     </div>
@@ -1246,7 +1246,7 @@ export function InteriorComparativeRequirementsView({
           onClick={() => setSelectedPhotoModal(null)}
         >
           <div className="relative max-w-3xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
-            <img src={selectedPhotoModal} alt="Enlarged Inspiration" className="max-w-full max-h-[85vh] rounded-2xl object-contain shadow-2xl" />
+            <img loading="lazy" decoding="async" src={selectedPhotoModal} alt="Enlarged Inspiration" className="max-w-full max-h-[85vh] rounded-2xl object-contain shadow-2xl" />
             <button
               type="button"
               onClick={() => setSelectedPhotoModal(null)}

@@ -159,12 +159,12 @@ export const SurveyDetailModal: React.FC<SurveyDetailModalProps> = ({ isOpen, on
                     <div className="grid grid-cols-3 gap-2">
                       {survey.observationImage && (
                         <a href={survey.observationImage} target="_blank" rel="noreferrer">
-                          <img src={survey.observationImage} alt="Main observation" className="w-full h-24 object-cover rounded-xl border border-blue-300 hover:opacity-90 transition-opacity" />
+                          <img loading="lazy" decoding="async" src={survey.observationImage} alt="Main observation" className="w-full h-24 object-cover rounded-xl border border-blue-300 hover:opacity-90 transition-opacity" />
                         </a>
                       )}
                       {(survey.additionalPhotos || survey.photos || []).map((photo: string, i: number) => (
                         <a key={i} href={photo} target="_blank" rel="noreferrer">
-                          <img src={photo} alt={`Site photo ${i + 1}`} className="w-full h-24 object-cover rounded-xl border border-gray-200 hover:opacity-90 transition-opacity" />
+                          <img loading="lazy" decoding="async" src={photo} alt={`Site photo ${i + 1}`} className="w-full h-24 object-cover rounded-xl border border-gray-200 hover:opacity-90 transition-opacity" />
                         </a>
                       ))}
                     </div>

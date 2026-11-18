@@ -196,7 +196,7 @@ export const DPRModal: React.FC<DPRModalProps> = ({
                     <div className="flex flex-wrap gap-3">
                       {formData.photos.map((photo, i) => (
                         <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200">
-                          <img src={photo} alt="Upload" className="w-full h-full object-cover" />
+                          <img loading="lazy" decoding="async" src={photo} alt="Upload" className="w-full h-full object-cover" />
                         </div>
                       ))}
                       <label className={`w-16 h-16 rounded-lg border-2 border-dashed transition-all flex flex-col items-center justify-center ${isUploading ? 'border-blue-300 bg-blue-50 cursor-not-allowed' : 'border-gray-200 hover:border-blue-400 hover:bg-blue-50 cursor-pointer text-slate-400 hover:text-blue-500'}`}>

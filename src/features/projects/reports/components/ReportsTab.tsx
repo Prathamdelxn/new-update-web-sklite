@@ -1188,7 +1188,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                     <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Proof of Work</h5>
                     {selectedTask.proofImage?.url ? (
                       <div className="rounded-xl overflow-hidden border border-gray-200 bg-gray-50 aspect-video relative group">
-                        <img
+                        <img loading="lazy" decoding="async"
                           src={selectedTask.proofImage.url}
                           alt="Proof of work"
                           className="w-full h-full object-cover"

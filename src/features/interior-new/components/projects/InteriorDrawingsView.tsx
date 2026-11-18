@@ -668,7 +668,7 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                 >
                   {isImage && currentRev.url ? (
                     <>
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={currentRev.url}
                         alt={dwg.title}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"

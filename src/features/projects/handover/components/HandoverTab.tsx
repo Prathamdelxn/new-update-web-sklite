@@ -824,7 +824,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                         className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
                       />
                       {snag.images && snag.images.length > 0 && (
-                        <img src={snag.images[0]} alt="Snag" className="w-10 h-10 object-cover rounded-lg border shrink-0" />
+                        <img loading="lazy" decoding="async" src={snag.images[0]} alt="Snag" className="w-10 h-10 object-cover rounded-lg border shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-bold text-slate-900 truncate">{snag.title}</p>
@@ -1331,7 +1331,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                         {certificateFiles.map((c, i) => (
                           <div key={i} className="flex items-center gap-3 px-3 py-2.5 border border-slate-200 rounded-xl bg-slate-50">
                             {c.previewUrl ? (
-                              <img src={c.previewUrl} alt="Certificate preview" className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0" />
+                              <img loading="lazy" decoding="async" src={c.previewUrl} alt="Certificate preview" className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0" />
                             ) : (
                               <div className="w-10 h-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center shrink-0">
                                 <FileText className="w-4 h-4 text-slate-400" />

@@ -53,11 +53,9 @@ import { InteriorDrawingConfirmApproveModal } from '@/features/interior-new/comp
 import { InteriorUploadRevisionModal } from '@/features/interior-new/components/crm/modals/InteriorUploadRevisionModal';
 import { InteriorSendDrawingForApprovalModal } from '@/features/interior-new/components/crm/modals/InteriorSendDrawingForApprovalModal';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+// three.js is loaded inside the 3D effect, only when a 3D model is opened (types only here)
+import type * as THREE from 'three';
+import type { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 export function detectFileType(
@@ -203,11 +201,13 @@ const { hasPermission: canDo } = usePermissions();
 
   const {
     data: drawingLeadData,
+    error: drawingLeadError,
+    isFetching: isDrawingLeadFetching,
     refetch: refetchDrawingData,
   } = useQuery({
     queryKey: ['crm-lead', customerId],
-    queryFn: async () => {
-      const res = await interiorCrmService.getCustomerById(customerId);
+    queryFn: async ({ signal }) => {
+      const res = await interiorCrmService.getCustomerById(customerId, signal);
       return res?.data || res;
     },
     placeholderData: () => {
@@ -382,137 +382,161 @@ const { hasPermission: canDo } = usePermissions();
     setLoading3DProgress(0);
     setLoad3DError(null);
 
-    const container = mountRef.current;
-    const width = container.clientWidth || 800;
-    const height = container.clientHeight || 550;
+    let cancelled = false;
+    let teardown: (() => void) | undefined;
+    (async () => {
+      const [THREE_RT, { OrbitControls: OrbitControlsRT }, { FBXLoader }, { OBJLoader }, { GLTFLoader }] = await Promise.all([
+        import('three'),
+        import('three/examples/jsm/controls/OrbitControls.js'),
+        import('three/examples/jsm/loaders/FBXLoader.js'),
+        import('three/examples/jsm/loaders/OBJLoader.js'),
+        import('three/examples/jsm/loaders/GLTFLoader.js'),
+      ]);
+      if (cancelled || !mountRef.current) return;
 
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(bgColor);
-    sceneRef.current = scene;
+      const container = mountRef.current;
+      const width = container.clientWidth || 800;
+      const height = container.clientHeight || 550;
 
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
-    camera.position.set(100, 100, 100);
+      const scene = new THREE_RT.Scene();
+      scene.background = new THREE_RT.Color(bgColor);
+      sceneRef.current = scene;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.0;
-    rendererRef.current = renderer;
+      const camera = new THREE_RT.PerspectiveCamera(45, width / height, 0.1, 2000);
+      camera.position.set(100, 100, 100);
 
-    container.innerHTML = '';
-    container.appendChild(renderer.domElement);
+      const renderer = new THREE_RT.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE_RT.PCFSoftShadowMap;
+      renderer.toneMapping = THREE_RT.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.0;
+      rendererRef.current = renderer;
 
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.autoRotate = isAutoRotating;
-    controls.autoRotateSpeed = 1.2;
-    controlsRef.current = controls;
+      container.innerHTML = '';
+      container.appendChild(renderer.domElement);
 
-    // Studio Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
-    scene.add(ambientLight);
+      const controls = new OrbitControlsRT(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.autoRotate = isAutoRotating;
+      controls.autoRotateSpeed = 1.2;
+      controlsRef.current = controls;
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.25);
-    keyLight.position.set(100, 200, 100);
-    keyLight.castShadow = true;
-    scene.add(keyLight);
+      // Studio Lighting
+      const ambientLight = new THREE_RT.AmbientLight(0xffffff, 0.9);
+      scene.add(ambientLight);
 
-    const fillLight = new THREE.DirectionalLight(0x90b0ff, 0.6);
-    fillLight.position.set(-100, 100, -100);
-    scene.add(fillLight);
+      const keyLight = new THREE_RT.DirectionalLight(0xffffff, 1.25);
+      keyLight.position.set(100, 200, 100);
+      keyLight.castShadow = true;
+      scene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0xffffff, 0.4);
-    rimLight.position.set(0, -100, 0);
-    scene.add(rimLight);
+      const fillLight = new THREE_RT.DirectionalLight(0x90b0ff, 0.6);
+      fillLight.position.set(-100, 100, -100);
+      scene.add(fillLight);
 
-    // Architectural Ground Grid
-    const gridHelper = new THREE.GridHelper(200, 40, 0x6366f1, 0xcbd5e1);
-    gridHelper.position.y = -0.5;
-    scene.add(gridHelper);
+      const rimLight = new THREE_RT.DirectionalLight(0xffffff, 0.4);
+      rimLight.position.set(0, -100, 0);
+      scene.add(rimLight);
 
-    // Load 3D Asset
-    const ext = detectExt(activeUrl) || detectExt(activeName);
+      // Architectural Ground Grid
+      const gridHelper = new THREE_RT.GridHelper(200, 40, 0x6366f1, 0xcbd5e1);
+      gridHelper.position.y = -0.5;
+      scene.add(gridHelper);
 
-    const fitCameraToObject = (object: THREE.Object3D) => {
-      const box = new THREE.Box3().setFromObject(object);
-      const size = box.getSize(new THREE.Vector3());
-      const center = box.getCenter(new THREE.Vector3());
+      // Load 3D Asset
+      const ext = detectExt(activeUrl) || detectExt(activeName);
 
-      const maxDim = Math.max(size.x, size.y, size.z);
-      const fov = camera.fov * (Math.PI / 180);
-      let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.8;
-      cameraZ = Math.max(cameraZ, 20);
+      const fitCameraToObject = (object: THREE.Object3D) => {
+        const box = new THREE_RT.Box3().setFromObject(object);
+        const size = box.getSize(new THREE_RT.Vector3());
+        const center = box.getCenter(new THREE_RT.Vector3());
 
-      camera.position.set(center.x + cameraZ * 0.7, center.y + cameraZ * 0.6, center.z + cameraZ * 0.7);
-      camera.lookAt(center);
-      controls.target.copy(center);
-      controls.update();
-    };
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const fov = camera.fov * (Math.PI / 180);
+        let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.8;
+        cameraZ = Math.max(cameraZ, 20);
 
-    const handleModelLoaded = (obj: THREE.Object3D) => {
-      currentModelRef.current = obj;
-      scene.add(obj);
-      fitCameraToObject(obj);
-      setLoading3D(false);
-    };
+        camera.position.set(center.x + cameraZ * 0.7, center.y + cameraZ * 0.6, center.z + cameraZ * 0.7);
+        camera.lookAt(center);
+        controls.target.copy(center);
+        controls.update();
+      };
 
-    const handleError = (err: any) => {
-      console.error('3D Load error', err);
-      setLoad3DError('Could not render 3D preview in browser. You can inspect drawing metadata directly.');
-      setLoading3D(false);
-    };
+      const handleModelLoaded = (obj: THREE.Object3D) => {
+        currentModelRef.current = obj;
+        scene.add(obj);
+        fitCameraToObject(obj);
+        setLoading3D(false);
+      };
 
-    const onProgress = (xhr: ProgressEvent) => {
-      if (xhr.lengthComputable) {
-        setLoading3DProgress(Math.round((xhr.loaded / xhr.total) * 100));
+      const handleError = (err: any) => {
+        console.error('3D Load error', err);
+        setLoad3DError('Could not render 3D preview in browser. You can inspect drawing metadata directly.');
+        setLoading3D(false);
+      };
+
+      const onProgress = (xhr: ProgressEvent) => {
+        if (xhr.lengthComputable) {
+          setLoading3DProgress(Math.round((xhr.loaded / xhr.total) * 100));
+        }
+      };
+
+      if (ext === 'fbx') {
+        const loader = new FBXLoader();
+        loader.load(activeUrl, handleModelLoaded, onProgress, handleError);
+      } else if (ext === 'obj') {
+        const loader = new OBJLoader();
+        loader.load(activeUrl, handleModelLoaded, onProgress, handleError);
+      } else if (ext === 'gltf' || ext === 'glb') {
+        const loader = new GLTFLoader();
+        loader.load(activeUrl, (gltf) => handleModelLoaded(gltf.scene), onProgress, handleError);
+      } else {
+        setLoad3DError(`Preview unavailable for .${ext.toUpperCase()} files.`);
+        setLoading3D(false);
       }
-    };
 
-    if (ext === 'fbx') {
-      const loader = new FBXLoader();
-      loader.load(activeUrl, handleModelLoaded, onProgress, handleError);
-    } else if (ext === 'obj') {
-      const loader = new OBJLoader();
-      loader.load(activeUrl, handleModelLoaded, onProgress, handleError);
-    } else if (ext === 'gltf' || ext === 'glb') {
-      const loader = new GLTFLoader();
-      loader.load(activeUrl, (gltf) => handleModelLoaded(gltf.scene), onProgress, handleError);
-    } else {
-      setLoad3DError(`Preview unavailable for .${ext.toUpperCase()} files.`);
-      setLoading3D(false);
-    }
+      // Render Animation Loop
+      const animate = () => {
+        animationFrameId.current = requestAnimationFrame(animate);
+        if (controlsRef.current) controlsRef.current.update();
+        if (rendererRef.current && sceneRef.current) {
+          rendererRef.current.render(sceneRef.current, camera);
+        }
+      };
+      animate();
 
-    // Render Animation Loop
-    const animate = () => {
-      animationFrameId.current = requestAnimationFrame(animate);
-      if (controlsRef.current) controlsRef.current.update();
-      if (rendererRef.current && sceneRef.current) {
-        rendererRef.current.render(sceneRef.current, camera);
+      const handleResize = () => {
+        if (!container || !rendererRef.current) return;
+        const newW = container.clientWidth;
+        const newH = container.clientHeight;
+        camera.aspect = newW / newH;
+        camera.updateProjectionMatrix();
+        rendererRef.current.setSize(newW, newH);
+      };
+      window.addEventListener('resize', handleResize);
+
+      teardown = () => {
+        window.removeEventListener('resize', handleResize);
+        if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
+        if (rendererRef.current?.domElement) {
+          rendererRef.current.dispose();
+        }
+        container.innerHTML = '';
+      };
+    })().catch((err) => {
+      console.error('3D engine failed to load', err);
+      if (!cancelled) {
+        setLoad3DError('Could not load the 3D viewer. Check your connection and try again.');
+        setLoading3D(false);
       }
-    };
-    animate();
-
-    const handleResize = () => {
-      if (!container || !rendererRef.current) return;
-      const newW = container.clientWidth;
-      const newH = container.clientHeight;
-      camera.aspect = newW / newH;
-      camera.updateProjectionMatrix();
-      rendererRef.current.setSize(newW, newH);
-    };
-    window.addEventListener('resize', handleResize);
+    });
 
     return () => {
-      window.removeEventListener('resize', handleResize);
-      if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
-      if (rendererRef.current?.domElement) {
-        rendererRef.current.dispose();
-      }
-      container.innerHTML = '';
+      cancelled = true;
+      teardown?.();
     };
   }, [activeUrl, isDirect3DFormat, bgColor]);
 
@@ -680,6 +704,31 @@ const { hasPermission: canDo } = usePermissions();
           </div>
           <h2 className="text-sm font-semibold text-slate-900">Loading Drawing Studio</h2>
           <p className="text-xs text-slate-500 mt-0.5">Fetching blueprint specifications and revision history...</p>
+        </div>
+      </InteriorShell>
+    );
+  }
+
+  // No lead data because the request failed or is still retrying (slow network), not because the drawing is gone
+  const drawingLeadStatus = (drawingLeadError as any)?.response?.status;
+  if (!drawing && !drawingLeadData && (isDrawingLeadFetching || (drawingLeadError && drawingLeadStatus !== 404))) {
+    return (
+      <InteriorShell>
+        <div className="p-16 flex flex-col items-center justify-center min-h-[70vh] text-center max-w-md mx-auto gap-3">
+          <h2 className="text-base font-semibold text-slate-900">
+            {isDrawingLeadFetching ? 'Still loading this drawing…' : "Couldn't load this drawing"}
+          </h2>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            The connection is slow or was interrupted. Your data is safe — try again.
+          </p>
+          <button
+            type="button"
+            onClick={() => refetchDrawingData()}
+            disabled={isDrawingLeadFetching}
+            className="px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold disabled:opacity-60 cursor-pointer"
+          >
+            {isDrawingLeadFetching ? 'Retrying…' : 'Retry'}
+          </button>
         </div>
       </InteriorShell>
     );

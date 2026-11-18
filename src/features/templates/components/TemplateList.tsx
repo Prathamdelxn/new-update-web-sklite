@@ -328,7 +328,7 @@ export const TemplateList = () => {
                     {/* Cover Banner */}
                     <div className="relative h-36 w-full overflow-hidden bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50 shrink-0">
                       {coverImage ? (
-                        <img
+                        <img loading="lazy" decoding="async"
                           src={coverImage}
                           alt={template.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -508,7 +508,7 @@ export const TemplateList = () => {
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-150 overflow-hidden flex items-center justify-center shrink-0">
                                 {template.images?.[0] ? (
-                                  <img src={template.images[0]} alt={template.name} className="w-full h-full object-cover" />
+                                  <img loading="lazy" decoding="async" src={template.images[0]} alt={template.name} className="w-full h-full object-cover" />
                                 ) : (
                                   <Layers className="w-4 h-4 text-blue-600" />
                                 )}

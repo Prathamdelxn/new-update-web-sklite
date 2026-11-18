@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { InteriorShell } from '@/components/interior/InteriorShell';
 import { useInteriorAuthGuard } from '@/lib/useInteriorAuthGuard';
@@ -75,7 +75,7 @@ import {
   FileSpreadsheet,
   Download,
 } from 'lucide-react';
-import { exportBoqToExcel } from '@/lib/exportBoqExcel';
+import { exportBoqToExcel } from '@/lib/exportBoqExcelLazy';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn, parseMaxBudget, formatSmartCurrency, formatMillionBillion } from '@/lib/utils';
 import { InteriorLogSiteVisitModal } from '@/features/interior-new/components/crm/modals/InteriorLogSiteVisitModal';
@@ -93,7 +93,7 @@ import { InteriorDrawingApprovalModal } from '@/features/interior-new/components
 import { InteriorDrawingConfirmApproveModal } from '@/features/interior-new/components/crm/modals/InteriorDrawingConfirmApproveModal';
 import { InteriorUploadRevisionModal } from '@/features/interior-new/components/crm/modals/InteriorUploadRevisionModal';
 import { InteriorSendDrawingForApprovalModal } from '@/features/interior-new/components/crm/modals/InteriorSendDrawingForApprovalModal';
-import { Interior3DViewerModal } from '@/features/interior-new/components/crm/modals/Interior3DViewerModal';
+import { Interior3DViewerModal } from '@/features/interior-new/components/crm/modals/Interior3DViewerModalLazy';
 import { InteriorCrmShareModal } from '@/features/interior-new/components/crm/modals/InteriorCrmShareModal';
 import { InteriorQuotationBuilderModal } from '@/features/interior-new/components/crm/modals/InteriorQuotationBuilderModal';
 import { InteriorQuotationPreviewModal } from '@/features/interior-new/components/crm/modals/InteriorQuotationPreviewModal';
@@ -233,11 +233,13 @@ const { hasPermission: canDo } = usePermissions();
   const {
     data: leadData,
     isLoading: isLeadQueryLoading,
+    error: leadError,
+    isFetching: isLeadFetching,
     refetch: refetchLead,
   } = useQuery({
     queryKey: ['crm-lead', params.id],
-    queryFn: async () => {
-      const res = await interiorCrmService.getCustomerById(params.id as string);
+    queryFn: async ({ signal }) => {
+      const res = await interiorCrmService.getCustomerById(params.id as string, signal);
       return res?.success && res?.data ? res.data : res;
     },
     placeholderData: () => {
@@ -255,8 +257,8 @@ const { hasPermission: canDo } = usePermissions();
     refetch: refetchActivities,
   } = useQuery({
     queryKey: ['crm-lead-activities', params.id],
-    queryFn: async () => {
-      const res = await interiorCrmService.getActivities(params.id as string);
+    queryFn: async ({ signal }) => {
+      const res = await interiorCrmService.getActivities(params.id as string, signal);
       return res?.success && res?.data ? res.data : Array.isArray(res) ? res : [];
     },
     enabled: Boolean(checked && params.id),
@@ -279,11 +281,27 @@ const { hasPermission: canDo } = usePermissions();
   const users: any[] = (usersData as any[]) || [];
   const isLoading = !lead && isLeadQueryLoading;
 
-  const fetchData = async () => {
-    queryClient.invalidateQueries({ queryKey: ['crm-lead', params.id] });
-    queryClient.invalidateQueries({ queryKey: ['crm-lead-activities', params.id] });
+  // One refetch each (invalidating first as well fired every request twice)
+  const fetchData = useCallback(async () => {
     await Promise.all([refetchLead(), refetchActivities()]);
-  };
+  }, [refetchLead, refetchActivities]);
+
+  // For the requirements 5s poll: lead only, and skipped while a fetch is still
+  // running, so a slow connection doesn't stack up requests
+  const pollLead = useCallback(async () => {
+    await queryClient.refetchQueries({ queryKey: ['crm-lead', params.id], exact: true }, { cancelRefetch: false });
+  }, [queryClient, params.id]);
+
+  // When the poll picks up the client's submission, refresh the timeline once
+  const clientSubmittedStamp = lead?.clientRequirementsSubmittedAt || lead?.clientRequirements?.submittedAt || lead?.clientWishlist?.submittedAt || null;
+  const lastSubmittedStamp = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (!lead) return;
+    if (lastSubmittedStamp.current !== undefined && clientSubmittedStamp && clientSubmittedStamp !== lastSubmittedStamp.current) {
+      refetchActivities();
+    }
+    lastSubmittedStamp.current = clientSubmittedStamp;
+  }, [Boolean(lead), clientSubmittedStamp, refetchActivities]);
 
   const handleActivitySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1040,9 +1058,35 @@ const { hasPermission: canDo } = usePermissions();
     );
   }
   if (!lead) {
+    // Only a 404 means the lead is gone; a timeout or dropped connection gets a retry instead
+    const status = (leadError as any)?.response?.status;
+    const isMissing = status === 404 || (!leadError && !isLeadFetching);
     return (
       <InteriorShell>
-        <div className="p-8 text-rose-500 font-bold text-center">Lead not found.</div>
+        {isMissing ? (
+          <div className="p-8 text-rose-500 font-bold text-center">Lead not found.</div>
+        ) : (
+          <div className="p-8 flex flex-col items-center gap-3 text-center">
+            <p className="font-bold text-[hsl(var(--foreground))]">
+              {isLeadFetching ? 'Still loading this lead…' : "Couldn't load this lead"}
+            </p>
+            <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-sm">
+              {status === 403
+                ? "You don't have permission to view this lead."
+                : 'The connection is slow or was interrupted. Your data is safe — try again.'}
+            </p>
+            {status !== 403 && (
+              <button
+                type="button"
+                onClick={() => refetchLead()}
+                disabled={isLeadFetching}
+                className="px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold disabled:opacity-60 cursor-pointer"
+              >
+                {isLeadFetching ? 'Retrying…' : 'Retry'}
+              </button>
+            )}
+          </div>
+        )}
       </InteriorShell>
     );
   }
@@ -2197,7 +2241,7 @@ const { hasPermission: canDo } = usePermissions();
                                   rel="noopener noreferrer"
                                   className="aspect-square rounded-lg overflow-hidden border border-[hsl(var(--border))] hover:border-[hsl(var(--primary))] transition-all relative group bg-[hsl(var(--muted)/0.3)] block"
                                 >
-                                  <img src={photo} alt={`Site photo ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                  <img loading="lazy" decoding="async" src={photo} alt={`Site photo ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                                     <ImageIcon className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={16} />
                                   </div>
@@ -2504,7 +2548,7 @@ const { hasPermission: canDo } = usePermissions();
                       currencySymbol={currencySymbol}
                       onEditTeamRequirements={() => setIsReqModalOpen(true)}
                       onRescheduleSession={() => setIsSendToReqOpen(true)}
-                      onRefresh={fetchData}
+                      onRefresh={pollLead}
                       onOpenShareModal={() => {
                         setShareModalMode('requirements');
                         setIsShareModalOpen(true);
@@ -2868,7 +2912,7 @@ const { hasPermission: canDo } = usePermissions();
                                   )}
                                 >
                                   {type === 'image' && file.url ? (
-                                    <img src={file.url} alt={file.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                    <img loading="lazy" decoding="async" src={file.url} alt={file.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                                   ) : type === 'pdf' ? (
                                     <FileText size={32} />
                                   ) : type === 'cad' ? (

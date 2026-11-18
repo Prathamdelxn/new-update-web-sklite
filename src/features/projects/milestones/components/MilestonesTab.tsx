@@ -1103,7 +1103,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                     />
                     {completionPrompt.proofImageUrl ? (
                       <div className="relative rounded-xl overflow-hidden border border-emerald-200">
-                        <img src={completionPrompt.proofImageUrl} alt="Proof" className="w-full h-32 object-cover" />
+                        <img loading="lazy" decoding="async" src={completionPrompt.proofImageUrl} alt="Proof" className="w-full h-32 object-cover" />
                         <button
                           onClick={() => setCompletionPrompt(prev => prev ? { ...prev, proofImageUrl: '' } : null)}
                           className="absolute top-2 right-2 p-1 bg-black/50 rounded-lg text-white hover:bg-black/70 transition-colors"

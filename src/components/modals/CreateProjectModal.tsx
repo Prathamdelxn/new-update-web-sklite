@@ -870,7 +870,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                     {(() => {
                                       const match = currencies.find(c => c.currencyCode === form.currency);
                                       return match ? (
-                                        <img src={`https://flagcdn.com/w20/${match.cca2.toLowerCase()}.png`} alt={match.cca2} className="w-5 h-auto rounded-[2px]" />
+                                        <img loading="lazy" decoding="async" src={`https://flagcdn.com/w20/${match.cca2.toLowerCase()}.png`} alt={match.cca2} className="w-5 h-auto rounded-[2px]" />
                                       ) : '🌍';
                                     })()}
                                   </span>
@@ -911,7 +911,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                             }}
                                           >
                                             <div className="w-6 h-6 flex items-center justify-center shrink-0">
-                                              <img src={`https://flagcdn.com/w40/${c.cca2.toLowerCase()}.png`} alt={c.name} className="w-6 h-auto rounded-sm" />
+                                              <img loading="lazy" decoding="async" src={`https://flagcdn.com/w40/${c.cca2.toLowerCase()}.png`} alt={c.name} className="w-6 h-auto rounded-sm" />
                                             </div>
                                             <div className="flex flex-col min-w-0">
                                               <span className="text-sm font-bold text-gray-900 truncate">{c.name}</span>
@@ -1251,7 +1251,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                         </div>
                       )}
                       {previewType === 'image' ? (
-                        <img 
+                        <img loading="lazy" decoding="async" 
                           src={previewUrl} 
                           alt="Preview" 
                           onLoad={() => setIsPreviewLoading(false)}

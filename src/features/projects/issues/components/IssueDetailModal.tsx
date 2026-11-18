@@ -304,7 +304,7 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
                     <div className="grid grid-cols-3 gap-2">
                       {issue.images.map((photo: string, i: number) => (
                         <a key={i} href={photo} target="_blank" rel="noreferrer">
-                          <img
+                          <img loading="lazy" decoding="async"
                             src={photo}
                             alt={`Photo ${i + 1}`}
                             className="w-full h-24 object-cover rounded-xl border border-gray-200 hover:opacity-90 transition-opacity"

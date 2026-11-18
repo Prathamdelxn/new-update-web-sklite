@@ -29,7 +29,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useCurrency } from '@/hooks/useCurrency';
-import { exportBoqToExcel } from '@/lib/exportBoqExcel';
+import { exportBoqToExcel } from '@/lib/exportBoqExcelLazy';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
 interface Props {

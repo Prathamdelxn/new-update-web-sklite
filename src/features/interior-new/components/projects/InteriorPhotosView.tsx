@@ -167,7 +167,7 @@ export default function InteriorPhotosView({ projectId }: InteriorPhotosViewProp
               {/* Simplified from source: no fullscreen lightbox/annotation viewer, just thumbnail + link */}
               <div className="relative h-48 w-full bg-[hsl(var(--muted))] overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <img loading="lazy" decoding="async"
                   src={photo.url}
                   alt={photo.caption || 'Site progress image'}
                   className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"

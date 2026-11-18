@@ -167,7 +167,7 @@ export const InteriorGRNModal = ({ isOpen, onClose, po, onSubmit }: InteriorGRNM
                       </button>
                     ) : (
                       <div className="w-full border border-[hsl(var(--border))] rounded-md overflow-hidden relative group">
-                        <img src={proofUrl} alt="Delivery Proof Preview" className="w-full h-24 object-cover" />
+                        <img loading="lazy" decoding="async" src={proofUrl} alt="Delivery Proof Preview" className="w-full h-24 object-cover" />
                         <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2">
                           <div className="flex items-center gap-1 text-white font-bold text-xs">
                             <CheckCircle2 className="w-4 h-4 text-green-400" /> Attached
@@ -206,7 +206,7 @@ export const InteriorGRNModal = ({ isOpen, onClose, po, onSubmit }: InteriorGRNM
                       </button>
                     ) : (
                       <div className="w-full border border-[hsl(var(--border))] rounded-md overflow-hidden relative group">
-                        <img src={invoiceUrl} alt="Invoice Preview" className="w-full h-24 object-cover" />
+                        <img loading="lazy" decoding="async" src={invoiceUrl} alt="Invoice Preview" className="w-full h-24 object-cover" />
                         <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2">
                           <div className="flex items-center gap-1 text-white font-bold text-xs">
                             <CheckCircle2 className="w-4 h-4 text-green-400" /> Attached

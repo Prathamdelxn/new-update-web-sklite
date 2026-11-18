@@ -535,7 +535,7 @@ export const MilestoneDetailModal: React.FC<Props> = ({
                                   <div className="col-span-2">
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Proof Photo</p>
                                     <a href={task.proofImage.url} target="_blank" rel="noopener noreferrer">
-                                      <img src={task.proofImage.url} alt="Proof" className="w-32 h-32 object-cover rounded-xl border border-gray-200 hover:opacity-90 transition-opacity" />
+                                      <img loading="lazy" decoding="async" src={task.proofImage.url} alt="Proof" className="w-32 h-32 object-cover rounded-xl border border-gray-200 hover:opacity-90 transition-opacity" />
                                     </a>
                                     <p className="text-[10px] text-slate-400 mt-1">{task.proofImage.uploadedAt ? new Date(task.proofImage.uploadedAt).toLocaleDateString() : ''}</p>
                                   </div>
@@ -576,7 +576,7 @@ export const MilestoneDetailModal: React.FC<Props> = ({
                                 </label>
                                 {form.photoPreview ? (
                                   <div className="flex items-center gap-3">
-                                    <img src={form.photoPreview} alt="Preview" className="w-20 h-20 object-cover rounded-xl border border-gray-200" />
+                                    <img loading="lazy" decoding="async" src={form.photoPreview} alt="Preview" className="w-20 h-20 object-cover rounded-xl border border-gray-200" />
                                     <div className="flex-1">
                                       <p className="text-xs text-gray-700 font-medium">{form.photoFile?.name}</p>
                                       <button

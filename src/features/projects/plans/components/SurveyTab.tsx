@@ -521,7 +521,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
                     onClick={() => setPreviewImage(survey.observationImage)}
                     className="h-32 bg-slate-100 border border-slate-200 rounded-2xl overflow-hidden cursor-zoom-in hover:opacity-90 transition-all relative group"
                   >
-                    <img src={survey.observationImage} alt="Main observation" className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={survey.observationImage} alt="Main observation" className="w-full h-full object-cover" />
                     <span className="absolute bottom-1.5 left-1.5 bg-black/60 backdrop-blur-xs text-white text-[9px] font-bold px-2 py-0.5 rounded-md">
                       Main Photo
                     </span>
@@ -533,7 +533,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
                     onClick={() => setPreviewImage(url)}
                     className="h-32 bg-slate-100 border border-slate-200 rounded-2xl overflow-hidden cursor-zoom-in hover:opacity-90 transition-all"
                   >
-                    <img src={url} alt={`Space photo ${idx + 1}`} className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={url} alt={`Space photo ${idx + 1}`} className="w-full h-full object-cover" />
                   </div>
                 ))}
               </div>
@@ -618,7 +618,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
       {previewImage && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-md p-4" onClick={() => setPreviewImage(null)}>
           <div className="relative max-w-4xl max-h-[90vh]">
-            <img src={previewImage} alt="Fullscreen Preview" className="w-full h-full object-contain rounded-2xl shadow-2xl" />
+            <img loading="lazy" decoding="async" src={previewImage} alt="Fullscreen Preview" className="w-full h-full object-contain rounded-2xl shadow-2xl" />
             <button onClick={() => setPreviewImage(null)} className="absolute top-3 right-3 p-2 bg-black/60 hover:bg-black text-white rounded-full transition-all">
               <X className="w-5 h-5" />
             </button>

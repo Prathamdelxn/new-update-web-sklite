@@ -941,7 +941,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                                 className="relative h-20 rounded-lg overflow-hidden border border-slate-200 cursor-pointer group"
                                 onClick={() => setViewingImage(photo)}
                               >
-                                <img src={photo} alt="Defect photo" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                <img loading="lazy" decoding="async" src={photo} alt="Defect photo" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                               </div>
                             ))}
                           </div>
@@ -1089,7 +1089,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                     <div className="flex flex-wrap gap-2">
                       {photos.map((photo, i) => (
                         <div key={i} className="relative w-14 h-14 rounded-lg border overflow-hidden">
-                          <img src={photo} alt="Snag photo" className="w-full h-full object-cover" />
+                          <img loading="lazy" decoding="async" src={photo} alt="Snag photo" className="w-full h-full object-cover" />
                           <button
                             type="button"
                             onClick={() => setPhotos((prev) => prev.filter((_, idx) => idx !== i))}
@@ -1144,7 +1144,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <img src={viewingImage} alt="Snag Evidence" className="max-w-full max-h-[85vh] object-contain" />
+              <img loading="lazy" decoding="async" src={viewingImage} alt="Snag Evidence" className="max-w-full max-h-[85vh] object-contain" />
             </div>
           </div>
         )}

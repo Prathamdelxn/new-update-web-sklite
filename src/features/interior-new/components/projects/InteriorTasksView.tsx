@@ -1625,7 +1625,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                             key={idx}
                             className="group relative aspect-video rounded-lg overflow-hidden border border-[hsl(var(--border))] bg-slate-100"
                           >
-                            <img src={img.url} alt={img.name || `Proof ${idx + 1}`} className="w-full h-full object-cover" />
+                            <img loading="lazy" decoding="async" src={img.url} alt={img.name || `Proof ${idx + 1}`} className="w-full h-full object-cover" />
                             <button
                               type="button"
                               onClick={() => handleRemoveProofImage(idx)}
@@ -1699,7 +1699,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
               >
                 <X className="w-5 h-5" />
               </button>
-              <img src={imageLightboxUrl} alt="Proof of Work Full Resolution" className="max-w-full max-h-[85vh] object-contain rounded-lg" />
+              <img loading="lazy" decoding="async" src={imageLightboxUrl} alt="Proof of Work Full Resolution" className="max-w-full max-h-[85vh] object-contain rounded-lg" />
             </div>
           </div>
         )}
@@ -1837,7 +1837,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                               className="group relative aspect-video rounded-lg overflow-hidden border border-emerald-200 bg-slate-100 cursor-pointer hover:shadow-md transition-all"
                               onClick={() => setImageLightboxUrl(img.url)}
                             >
-                              <img src={img.url} alt={img.name || `Proof ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                              <img loading="lazy" decoding="async" src={img.url} alt={img.name || `Proof ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
                               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold gap-1">
                                 <ZoomIn className="w-3.5 h-3.5" /> View Photo
                               </div>

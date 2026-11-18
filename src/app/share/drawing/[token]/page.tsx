@@ -34,7 +34,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
-import { Interior3DViewerModal } from '@/features/interior-new/components/crm/modals/Interior3DViewerModal';
+import { Interior3DViewerModal } from '@/features/interior-new/components/crm/modals/Interior3DViewerModalLazy';
 import { cn } from '@/lib/utils';
 
 export function detectFileType(fileName: string = '', url: string = ''): 'image' | 'pdf' | 'cad-2d' | '3d-model' | 'archive' | 'other' {
@@ -289,7 +289,7 @@ export default function ClientDrawingSharePage() {
           {/* Left: Studio Brand & Project Title */}
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             {org.logo ? (
-              <img
+              <img loading="lazy" decoding="async"
                 src={org.logo}
                 alt={org.name || 'Studio'}
                 className="h-7 sm:h-8 w-auto max-w-[100px] sm:max-w-[140px] object-contain shrink-0"
@@ -653,7 +653,7 @@ export default function ClientDrawingSharePage() {
                   title="PDF Viewer"
                 />
               ) : (
-                <img
+                <img loading="lazy" decoding="async"
                   src={activeLightboxFile.url}
                   alt={activeLightboxFile.name}
                   style={{

@@ -1570,7 +1570,7 @@ export default function InteriorSiteDetailsView() {
                         rel="noopener noreferrer"
                         className="aspect-square rounded-lg overflow-hidden border border-[hsl(var(--border))] hover:border-[hsl(var(--foreground)/0.4)] transition-all relative group bg-[hsl(var(--muted)/0.2)] block"
                       >
-                        <img
+                        <img loading="lazy" decoding="async"
                           src={photoUrl}
                           alt={`Site Photo ${idx + 1}`}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"

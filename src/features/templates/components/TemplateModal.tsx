@@ -527,7 +527,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                                 key={i}
                                 className="group relative aspect-4/3 rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-slate-100"
                               >
-                                <img src={url} alt="" className="w-full h-full object-cover" />
+                                <img loading="lazy" decoding="async" src={url} alt="" className="w-full h-full object-cover" />
                                 {i === 0 && (
                                   <span className="absolute top-1.5 left-1.5 bg-blue-600/90 text-white text-[9px] font-extrabold px-1.5 py-0.2 rounded shadow-sm">
                                     Cover
