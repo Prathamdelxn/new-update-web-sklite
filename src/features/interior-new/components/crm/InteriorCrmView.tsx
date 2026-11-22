@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Interior-New CRM Workspace
@@ -305,10 +306,10 @@ export default function InteriorCrmView() {
     setDeletingLead(null);
     try {
       await interiorCrmService.deleteCustomer(targetId);
-      toast.success('Lead deleted successfully');
+      toast.success(tr("Lead deleted successfully"));
       fetchLeads();
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to delete lead');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || tr("Failed to delete lead"));
       fetchLeads();
     } finally {
       setIsDeletingLead(false);
@@ -370,7 +371,7 @@ export default function InteriorCrmView() {
     const designFiles = lead?.designFiles || [];
     
     if (designFiles.length === 0) {
-      toast.error('Cannot pass to BOQ: No drawings found. Please upload drawings first.');
+      toast.error(tr("Cannot pass to BOQ: No drawings found. Please upload drawings first."));
       return;
     }
 
@@ -386,7 +387,7 @@ export default function InteriorCrmView() {
     });
 
     if (unapproved.length > 0) {
-      toast.error(`Cannot pass to BOQ: ${unapproved.length} of ${designFiles.length} drawing(s) are still drafted or pending approval. Please approve all drawings first.`);
+      toast.error(tr("Cannot pass to BOQ: {{unapprovedCount}} of {{designFilesCount}} drawing(s) are still drafted or pending approval. Please approve all drawings first.", { unapprovedCount: unapproved.length, designFilesCount: designFiles.length }));
       return;
     }
 
@@ -554,14 +555,14 @@ export default function InteriorCrmView() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-black tracking-tight text-[hsl(var(--foreground))]">
-              CRM Workspace
+              {tr("CRM Workspace")}
             </h1>
-            <span className="hidden xs:inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] px-2 py-0.5 rounded-full border border-[hsl(var(--primary)/0.2)]">
-              Pipeline Live
+            <span className="hidden xs:inline-flex items-center gap-1 text-[0.625rem] font-black uppercase tracking-widest bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] px-2 py-0.5 rounded-full border border-[hsl(var(--primary)/0.2)]">
+              {tr("Pipeline Live")}
             </span>
           </div>
-          <p className="text-[hsl(var(--muted-foreground))] mt-0.5 flex items-center gap-1.5 text-[11px] sm:text-xs font-medium">
-            <Calendar size={13} className="shrink-0" /> Manage customer journeys, site measurements & quotations
+          <p className="text-[hsl(var(--muted-foreground))] mt-0.5 flex items-center gap-1.5 text-[0.6875rem] sm:text-xs font-medium">
+            <Calendar size={13} className="shrink-0" />{tr(" Manage customer journeys, site measurements & quotations")}
           </p>
         </div>
 
@@ -571,7 +572,7 @@ export default function InteriorCrmView() {
             onClick={() => setIsStagePickerOpen(true)}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 border border-[hsl(var(--primary)/0.4)] text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)] hover:bg-[hsl(var(--primary)/0.12)] px-4 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 cursor-pointer"
           >
-            <Plus size={15} /> {stageAdd!.label}
+            <Plus size={15} /> {tr(stageAdd!.label)}
           </button>
         )}
         {hasPermission('crm_leads', 'create') && (
@@ -579,7 +580,7 @@ export default function InteriorCrmView() {
             onClick={() => setIsCreateModalOpen(true)}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-[hsl(var(--primary-foreground))] px-4 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 cursor-pointer"
           >
-            <Plus size={15} /> Add New Lead
+            <Plus size={15} />{tr(" Add New Lead")}
           </button>
         )}
         </div>
@@ -666,10 +667,10 @@ export default function InteriorCrmView() {
               <Lightbulb size={32} />
             </div>
             <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))] tracking-tight">
-              {activeTab.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())} Pipeline
+              {activeTab.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}{tr(" Pipeline")}
             </h2>
             <p className="text-sm text-[hsl(var(--muted-foreground))] mt-2 max-w-sm">
-              This dedicated stage view is currently being implemented. You'll soon be able to manage all data specific to this flow phase right here in a tabular format!
+              {tr("This dedicated stage view is currently being implemented. You'll soon be able to manage all data specific to this flow phase right here in a tabular format!")}
             </p>
           </div>
         )}

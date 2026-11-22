@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState } from 'react';
 import {
@@ -182,7 +183,7 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
     e.preventDefault();
 
     if (selectedFiles.length === 0) {
-      toast.error('Please choose at least one drawing file or photo to upload.');
+      toast.error(tr("Please choose at least one drawing file or photo to upload."));
       return;
     }
 
@@ -236,8 +237,8 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
 
       toast.success(
         selectedFiles.length === 1
-          ? `${category} drawing uploaded successfully as Draft!`
-          : `${selectedFiles.length} ${category} drawings uploaded successfully as Draft!`
+          ? tr("{{category}} drawing uploaded successfully as Draft!", { category: category })
+          : tr("{{selectedFilesCount}} {{category}} drawings uploaded successfully as Draft!", { selectedFilesCount: selectedFiles.length, category: category })
       );
 
       if (onSuccess) {
@@ -246,7 +247,7 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
       onClose();
     } catch (error: any) {
       console.error('Upload drawing error:', error);
-      toast.error(error?.response?.data?.error || error?.message || 'Failed to upload drawing');
+      toast.error(error?.response?.data?.error || error?.message || tr("Failed to upload drawing"));
     } finally {
       setIsSubmitting(false);
     }
@@ -280,10 +281,10 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
               </div>
               <div>
                 <h2 className="text-base font-semibold text-slate-900 tracking-tight">
-                  Upload Drawing
+                  {tr("Upload Drawing")}
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Upload 2D architectural plans, working layouts, or 3D models.
+                  {tr("Upload 2D architectural plans, working layouts, or 3D models.")}
                 </p>
               </div>
             </div>
@@ -301,14 +302,14 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
             {/* Category Toggle */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Drawing Category
+                {tr("Drawing Category")}
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('2D')}
                   className={cn(
-                    "p-3 rounded-xl border flex items-center gap-3 transition-all cursor-pointer text-left shadow-2xs",
+                    "p-3 rounded-xl border flex items-center gap-3 transition-all cursor-pointer text-start shadow-2xs",
                     category === '2D'
                       ? "border-blue-500 bg-blue-50/70 text-blue-900 ring-1 ring-blue-500/20"
                       : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50/60"
@@ -323,8 +324,8 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
                     <Layers size={16} />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-slate-900">2D Working Drawing</p>
-                    <p className="text-[11px] text-slate-500">Floor plans, RCP, Electrical, PDF, DXF</p>
+                    <p className="text-xs font-semibold text-slate-900">{tr("2D Working Drawing")}</p>
+                    <p className="text-[0.6875rem] text-slate-500">{tr("Floor plans, RCP, Electrical, PDF, DXF")}</p>
                   </div>
                 </button>
 
@@ -332,7 +333,7 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
                   type="button"
                   onClick={() => handleCategoryChange('3D')}
                   className={cn(
-                    "p-3 rounded-xl border flex items-center gap-3 transition-all cursor-pointer text-left shadow-2xs",
+                    "p-3 rounded-xl border flex items-center gap-3 transition-all cursor-pointer text-start shadow-2xs",
                     category === '3D'
                       ? "border-purple-500 bg-purple-50/70 text-purple-900 ring-1 ring-purple-500/20"
                       : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50/60"
@@ -347,8 +348,8 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
                     <Box size={16} />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-slate-900">3D Model / Render</p>
-                    <p className="text-[11px] text-slate-500">DWG, SketchUp (.skp), Renders</p>
+                    <p className="text-xs font-semibold text-slate-900">{tr("3D Model / Render")}</p>
+                    <p className="text-[0.6875rem] text-slate-500">{tr("DWG, SketchUp (.skp), Renders")}</p>
                   </div>
                 </button>
               </div>
@@ -358,10 +359,10 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-semibold text-slate-700">
-                  Drawing Title <span className="text-rose-500">*</span>
+                  {tr("Drawing Title ")}<span className="text-rose-500">*</span>
                 </label>
                 <span className={cn(
-                  "text-[11px] font-mono transition-colors",
+                  "text-[0.6875rem] font-mono transition-colors",
                   title.length > 45
                     ? "text-amber-600 font-semibold"
                     : title.length > 0 && title.trim().length < 3
@@ -380,7 +381,7 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
                   setTitle(e.target.value);
                   if (!titleTouched) setTitleTouched(true);
                 }}
-                placeholder="e.g. Master Bedroom — False Ceiling (min 3 chars)"
+                placeholder={tr("e.g. Master Bedroom — False Ceiling (min 3 chars)")}
                 className={cn(
                   "w-full h-10 px-3.5 bg-white border rounded-xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 outline-none transition-all shadow-2xs",
                   titleTouched && getTitleValidationError(title)
@@ -390,7 +391,7 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
                 required
               />
               {titleTouched && getTitleValidationError(title) && (
-                <p className="text-[11px] text-rose-500 font-medium mt-1">
+                <p className="text-[0.6875rem] text-rose-500 font-medium mt-1">
                   {getTitleValidationError(title)}
                 </p>
               )}
@@ -400,10 +401,10 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-semibold text-slate-700">
-                  Room / Area <span className="text-slate-400 font-normal text-[11px]">(Optional)</span>
+                  {tr("Room / Area ")}<span className="text-slate-400 font-normal text-[0.6875rem]">{tr("(Optional)")}</span>
                 </label>
                 {roomTag === 'General / Not Specified' && (
-                  <span className="text-[11px] text-slate-400 font-medium">Default: General</span>
+                  <span className="text-[0.6875rem] text-slate-400 font-medium">{tr("Default: General")}</span>
                 )}
               </div>
               <select
@@ -411,15 +412,15 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
                 onChange={(e) => setRoomTag(e.target.value)}
                 className="w-full h-10 px-3.5 bg-white border border-slate-200 focus:border-blue-600 rounded-xl text-xs sm:text-sm font-medium text-slate-900 outline-none transition-all focus:ring-2 focus:ring-blue-100 shadow-2xs cursor-pointer"
               >
-                <option value="General / Not Specified">-- General / Not Specified --</option>
+                <option value="General / Not Specified">{tr("-- General / Not Specified --")}</option>
                 {STANDARD_ROOM_TAGS
                   .filter((r) => r !== 'General / Not Specified' && r !== 'Other / Custom Area')
                   .map((room) => (
                     <option key={room} value={room}>
-                      {room}
+                      {tr(room)}
                     </option>
                   ))}
-                <option value="Other / Custom Area">Other / Custom Area...</option>
+                <option value="Other / Custom Area">{tr("Other / Custom Area...")}</option>
               </select>
 
               {roomTag === 'Other / Custom Area' && (
@@ -428,7 +429,7 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
                   value={customRoomInput}
                   maxLength={40}
                   onChange={(e) => setCustomRoomInput(e.target.value)}
-                  placeholder="Type custom room/area (e.g. Home Theater, Balcony Garden)"
+                  placeholder={tr("Type custom room/area (e.g. Home Theater, Balcony Garden)")}
                   className="w-full h-9 px-3.5 mt-2 bg-slate-50 border border-slate-200 focus:border-blue-600 focus:bg-white rounded-xl text-xs font-medium text-slate-900 placeholder:text-slate-400 outline-none transition-all focus:ring-2 focus:ring-blue-100 shadow-2xs"
                 />
               )}
@@ -438,18 +439,18 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-semibold text-slate-700">
-                  File Attachment(s) <span className="text-rose-500">*</span>
+                  {tr("File Attachment(s) ")}<span className="text-rose-500">*</span>
                 </label>
                 {selectedFiles.length > 0 && (
-                  <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
-                    {selectedFiles.length} {selectedFiles.length === 1 ? 'file' : 'files'} selected
+                  <span className="text-[0.6875rem] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                    {selectedFiles.length} {selectedFiles.length === 1 ? tr("file") : tr("files")}{tr(" selected")}
                   </span>
                 )}
               </div>
 
               {selectedFiles.length > 0 ? (
                 <div className="space-y-2">
-                  <div className="max-h-56 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                  <div className="max-h-56 overflow-y-auto space-y-2 pe-1 custom-scrollbar">
                     {selectedFiles.map((item, idx) => (
                       <div
                         key={`${item.file.name}-${idx}`}
@@ -470,11 +471,11 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
                           )}
 
                           <div className="overflow-hidden">
-                            <p className="text-xs font-semibold text-slate-900 truncate max-w-[220px] sm:max-w-xs">
-                              {item.file.name}
+                            <p className="text-xs font-semibold text-slate-900 truncate max-w-[13.75rem] sm:max-w-xs">
+                              {tr(item.file.name)}
                             </p>
-                            <p className="text-[10px] text-slate-500 mt-0.5 font-mono">
-                              {(item.file.size / (1024 * 1024)).toFixed(2)} MB • {item.detectedType.toUpperCase()}
+                            <p className="text-[0.625rem] text-slate-500 mt-0.5 font-mono">
+                              {(item.file.size / (1024 * 1024)).toFixed(2)}{tr(" MB • ")}{item.detectedType.toUpperCase()}
                             </p>
                           </div>
                         </div>
@@ -483,7 +484,7 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
                           type="button"
                           onClick={() => handleRemoveFile(idx)}
                           className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
-                          title="Remove file"
+                          title={tr("Remove file")}
                         >
                           <Trash2 size={16} />
                         </button>
@@ -494,7 +495,7 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
                   {/* Add More Files Button */}
                   <div className="flex items-center justify-end pt-1">
                     <label className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100/70 border border-blue-200/60 text-blue-700 rounded-lg text-xs font-semibold cursor-pointer transition-colors shadow-2xs">
-                      <Plus size={14} /> Add More Files
+                      <Plus size={14} />{tr(" Add More Files")}
                       <input
                         type="file"
                         multiple
@@ -518,10 +519,10 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
                     <UploadCloud size={20} />
                   </div>
                   <p className="text-xs font-semibold text-slate-800">
-                    Click or drag files/photos here to upload
+                    {tr("Click or drag files/photos here to upload")}
                   </p>
-                  <p className="text-[11px] text-slate-500 mt-1">
-                    Select one or multiple files (Photos, PDFs, 3D models)
+                  <p className="text-[0.6875rem] text-slate-500 mt-1">
+                    {tr("Select one or multiple files (Photos, PDFs, 3D models)")}
                   </p>
                 </div>
               )}
@@ -534,7 +535,7 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
                 onClick={onClose}
                 className="px-4 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
               >
-                Cancel
+                {tr("Cancel")}
               </button>
               <button
                 type="submit"
@@ -542,11 +543,11 @@ export const InteriorProjectUploadDrawingModal: React.FC<Props> = ({
                 className="px-5 py-2 rounded-xl text-xs sm:text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isSubmitting ? (
-                  'Uploading...'
+                  tr("Uploading...")
                 ) : (
                   <>
                     <UploadCloud size={16} />
-                    {selectedFiles.length > 1 ? `Upload ${selectedFiles.length} Drawings` : 'Upload Drawing'}
+                    {selectedFiles.length > 1 ? tr("Upload {{selectedFilesCount}} Drawings", { selectedFilesCount: selectedFiles.length }) : tr("Upload Drawing")}
                   </>
                 )}
               </button>

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Enhanced Follow-ups View with Status Tabs (All, Pending, Completed), Search, and Direct Site Visit Actions
 
@@ -87,11 +88,11 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, onPassToRequirements,
         status: 'Completed',
         completedDate: new Date(),
       });
-      toast.success('Follow-up marked as completed! You can now send to Site Visit.');
+      toast.success(tr("Follow-up marked as completed! You can now send to Site Visit."));
       queryClient.invalidateQueries({ queryKey: ['crm-follow-ups-all'] });
       await refetch();
     } catch (err: any) {
-      toast.error('Failed to complete follow-up');
+      toast.error(tr("Failed to complete follow-up"));
     } finally {
       setCompletingId(null);
     }
@@ -136,10 +137,10 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, onPassToRequirements,
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search follow-ups..."
+              placeholder={tr("Search follow-ups...")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-8 pr-8 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+              className="w-full ps-8 pe-8 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
             />
             {searchTerm && (
               <button
@@ -162,7 +163,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, onPassToRequirements,
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               )}
             >
-              All ({allActivities.length})
+              {tr("All (")}{allActivities.length})
             </button>
             <button
               onClick={() => setActiveTab('pending')}
@@ -173,7 +174,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, onPassToRequirements,
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               )}
             >
-              Pending ({pendingCount})
+              {tr("Pending (")}{tr(pendingCount)})
             </button>
             <button
               onClick={() => setActiveTab('completed')}
@@ -184,7 +185,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, onPassToRequirements,
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               )}
             >
-              Completed ({completedCount})
+              {tr("Completed (")}{tr(completedCount)})
             </button>
           </div>
         </div>
@@ -204,14 +205,14 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, onPassToRequirements,
               <Clock size={24} />
             </div>
             <h3 className="text-sm sm:text-base font-extrabold text-[hsl(var(--foreground))] mb-1">
-              {searchTerm ? 'No Matching Follow-ups' : activeTab === 'completed' ? 'No Completed Follow-ups Yet' : 'All Clear!'}
+              {searchTerm ? tr("No Matching Follow-ups") : activeTab === 'completed' ? tr("No Completed Follow-ups Yet") : tr("All Clear!")}
             </h3>
             <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-md mx-auto">
               {searchTerm
-                ? 'Try adjusting your search terms.'
+                ? tr("Try adjusting your search terms.")
                 : activeTab === 'completed'
-                ? 'Completed follow-up calls and meetings will appear here with a direct option to send to Site Visit.'
-                : 'You have no pending follow-up touchpoints. Schedule a call or meeting from any lead profile.'}
+                ? tr("Completed follow-up calls and meetings will appear here with a direct option to send to Site Visit.")
+                : tr("You have no pending follow-up touchpoints. Schedule a call or meeting from any lead profile.")}
             </p>
           </div>
         ) : (
@@ -231,41 +232,41 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, onPassToRequirements,
                       </div>
                       <div className="min-w-0 flex-1">
                         <h4 
-                          className="text-xs font-bold text-[hsl(var(--foreground))] truncate max-w-[140px] sm:max-w-[220px]"
-                          title={act.customer?.name || 'Unknown'}
+                          className="text-xs font-bold text-[hsl(var(--foreground))] truncate max-w-[8.75rem] sm:max-w-[13.75rem]"
+                          title={act.customer?.name || tr("Unknown")}
                         >
-                          {act.customer?.name || 'Unknown'}
+                          {act.customer?.name || tr("Unknown")}
                         </h4>
-                        <div className="flex items-center gap-1.5 text-[10px]">
-                          <span className="font-mono text-[hsl(var(--muted-foreground))] shrink-0">{act.customer?.leadNumber || 'LD-XXXX'}</span>
+                        <div className="flex items-center gap-1.5 text-[0.625rem]">
+                          <span className="font-mono text-[hsl(var(--muted-foreground))] shrink-0">{act.customer?.leadNumber || tr("LD-XXXX")}</span>
                           <span className="text-[hsl(var(--muted-foreground))]">•</span>
-                          <span className="text-[hsl(var(--muted-foreground))] truncate">{act.customer?.mobileNumber}</span>
+                          <span className="text-[hsl(var(--muted-foreground))] truncate">{tr(act.customer?.mobileNumber)}</span>
                         </div>
                       </div>
                     </div>
 
                     <span
                       className={cn(
-                        'shrink-0 inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border',
+                        'shrink-0 inline-flex items-center px-2 py-0.5 rounded text-[0.5625rem] font-black uppercase tracking-wider border',
                         act.status === 'Completed'
                           ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                           : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
                       )}
                     >
-                      {act.status}
+                      {tr(act.status)}
                     </span>
                   </div>
 
                   <div className="bg-[hsl(var(--muted)/0.4)] p-2.5 rounded-xl border border-[hsl(var(--border)/0.5)] space-y-1 text-xs">
                     <div className="flex items-center justify-between font-bold">
-                      <span className="text-[hsl(var(--foreground))]">{act.type}</span>
-                      <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-normal">
+                      <span className="text-[hsl(var(--foreground))]">{tr(act.type)}</span>
+                      <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))] font-normal">
                         {act.scheduledDate ? new Date(act.scheduledDate).toLocaleDateString() : new Date(act.createdAt).toLocaleDateString()}
                       </span>
                     </div>
                     {act.remarks && (
-                      <p className="text-[11px] text-[hsl(var(--muted-foreground))] line-clamp-2 italic" title={act.remarks}>
-                        &quot;{act.remarks}&quot;
+                      <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] line-clamp-2 italic" title={act.remarks}>
+                        &quot;{tr(act.remarks)}&quot;
                       </p>
                     )}
                   </div>
@@ -273,10 +274,10 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, onPassToRequirements,
                   <div className="flex items-center justify-between pt-1 border-t border-[hsl(var(--border)/0.5)] text-xs" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-1.5">
                       {act.customer?.mobileNumber && (
-                        <a href={`tel:${act.customer.mobileNumber}`} className="p-1.5 rounded-lg bg-[hsl(var(--muted))] hover:bg-emerald-500/10 text-emerald-600 transition-colors border border-[hsl(var(--border))]" title="Call Lead"><Phone size={12} /></a>
+                        <a href={`tel:${act.customer.mobileNumber}`} className="p-1.5 rounded-lg bg-[hsl(var(--muted))] hover:bg-emerald-500/10 text-emerald-600 transition-colors border border-[hsl(var(--border))]" title={tr("Call Lead")}><Phone size={12} /></a>
                       )}
                       {act.customer?.mobileNumber && (
-                        <a href={`https://wa.me/${act.customer.mobileNumber.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg bg-[hsl(var(--muted))] hover:bg-emerald-500/10 text-emerald-600 transition-colors border border-[hsl(var(--border))]" title="WhatsApp Lead"><MessageSquare size={12} /></a>
+                        <a href={`https://wa.me/${act.customer.mobileNumber.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg bg-[hsl(var(--muted))] hover:bg-emerald-500/10 text-emerald-600 transition-colors border border-[hsl(var(--border))]" title={tr("WhatsApp Lead")}><MessageSquare size={12} /></a>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -288,9 +289,9 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, onPassToRequirements,
                               handlePass(act.customer?._id || act.customer?.id);
                             }}
                             className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer shadow-sm"
-                            title="Complete Follow-up and Send to Requirements"
+                            title={tr("Complete Follow-up and Send to Requirements")}
                           >
-                            <CheckCircle2 size={12} /> Done
+                            <CheckCircle2 size={12} />{tr(" Done")}
                           </button>
                         )
                       )}
@@ -302,14 +303,14 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, onPassToRequirements,
 
             {/* DESKTOP TABLE VIEW (>= md) - Senior Enterprise CRM Table */}
             <div className="hidden md:block w-full overflow-hidden">
-              <table className="w-full text-left text-xs border-collapse table-fixed">
-                <thead className="bg-[hsl(var(--muted)/0.45)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] text-[11px] font-bold uppercase tracking-wider">
+              <table className="w-full text-start text-xs border-collapse table-fixed">
+                <thead className="bg-[hsl(var(--muted)/0.45)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] text-[0.6875rem] font-bold uppercase tracking-wider">
                   <tr>
-                    <th className="px-4.5 py-3 rounded-tl-2xl w-[28%]">Lead / Customer</th>
-                    <th className="px-4 py-3 w-[16%]">Assigned Rep</th>
-                    <th className="px-4 py-3 w-[28%]">Activity & Notes</th>
-                    <th className="px-4 py-3 w-[14%]">Status</th>
-                    <th className="px-4.5 py-3 text-right rounded-tr-2xl w-[14%]">Actions</th>
+                    <th className="px-4.5 py-3 rounded-ss-2xl w-[28%]">{tr("Lead / Customer")}</th>
+                    <th className="px-4 py-3 w-[16%]">{tr("Assigned Rep")}</th>
+                    <th className="px-4 py-3 w-[28%]">{tr("Activity & Notes")}</th>
+                    <th className="px-4 py-3 w-[14%]">{tr("Status")}</th>
+                    <th className="px-4.5 py-3 text-end rounded-se-2xl w-[14%]">{tr("Actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border)/0.7)] text-xs">
@@ -328,16 +329,16 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, onPassToRequirements,
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span 
-                                className="font-bold text-xs text-[hsl(var(--foreground))] group-hover:text-amber-600 transition-colors truncate max-w-[150px] lg:max-w-[200px]"
-                                title={act.customer?.name || 'Unknown'}
+                                className="font-bold text-xs text-[hsl(var(--foreground))] group-hover:text-amber-600 transition-colors truncate max-w-[9.375rem] lg:max-w-[12.5rem]"
+                                title={act.customer?.name || tr("Unknown")}
                               >
-                                {act.customer?.name || 'Unknown'}
+                                {act.customer?.name || tr("Unknown")}
                               </span>
-                              <span className="text-[10px] font-mono font-bold text-purple-600 bg-purple-500/10 px-1.5 py-0.2 rounded border border-purple-500/20 shrink-0">
-                                {act.customer?.leadNumber || 'LD-XXXX'}
+                              <span className="text-[0.625rem] font-mono font-bold text-purple-600 bg-purple-500/10 px-1.5 py-0.2 rounded border border-purple-500/20 shrink-0">
+                                {act.customer?.leadNumber || tr("LD-XXXX")}
                               </span>
                             </div>
-                            <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[hsl(var(--muted-foreground))]">
+                            <div className="flex items-center gap-2 mt-0.5 text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
                               <span className="font-medium text-[hsl(var(--foreground))] truncate">{act.customer?.mobileNumber || '-'}</span>
                             </div>
                           </div>
@@ -348,15 +349,15 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, onPassToRequirements,
                       <td className="px-4 py-3 max-w-0">
                         {act.customer?.assignedSalesExecutive ? (
                           <div 
-                            className="inline-flex items-center gap-1.5 text-xs font-medium text-[hsl(var(--foreground))] bg-[hsl(var(--muted)/0.5)] px-2 py-1 rounded-lg border border-[hsl(var(--border))] max-w-[130px] truncate"
+                            className="inline-flex items-center gap-1.5 text-xs font-medium text-[hsl(var(--foreground))] bg-[hsl(var(--muted)/0.5)] px-2 py-1 rounded-lg border border-[hsl(var(--border))] max-w-[8.125rem] truncate"
                             title={displayUserName(act.customer.assignedSalesExecutive)}
                           >
                             <UserCircle size={13} className="text-amber-600 shrink-0" />
                             <span className="truncate">{displayUserName(act.customer.assignedSalesExecutive)}</span>
                           </div>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-[11px] text-[hsl(var(--muted-foreground))] italic">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> Unassigned
+                          <span className="inline-flex items-center gap-1 text-[0.6875rem] text-[hsl(var(--muted-foreground))] italic">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />{tr(" Unassigned")}
                           </span>
                         )}
                       </td>
@@ -365,38 +366,38 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, onPassToRequirements,
                       <td className="px-4 py-3 max-w-0">
                         <div className="min-w-0 space-y-1">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-bold tracking-tight uppercase bg-blue-500/10 text-blue-600 border border-blue-500/20">
-                              {act.type || 'Phone Call'}
+                            <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[0.5625rem] font-bold tracking-tight uppercase bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                              {act.type || tr("Phone Call")}
                             </span>
                             {act.status === 'Completed' ? (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600">
+                              <span className="inline-flex items-center gap-1 text-[0.625rem] font-semibold text-emerald-600">
                                 <CheckCircle size={10} /> {new Date(act.completedDate || act.updatedAt || act.createdAt).toLocaleDateString()}
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600">
+                              <span className="inline-flex items-center gap-1 text-[0.625rem] font-semibold text-amber-600">
                                 <Clock size={10} /> {new Date(act.scheduledDate || act.createdAt).toLocaleDateString()}
                               </span>
                             )}
                           </div>
                           {act.remarks ? (
-                            <div className="text-[11px] text-[hsl(var(--muted-foreground))] max-w-[220px] truncate" title={act.remarks}>
-                              {act.remarks}
+                            <div className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] max-w-[13.75rem] truncate" title={act.remarks}>
+                              {tr(act.remarks)}
                             </div>
                           ) : (
-                            <span className="text-[11px] text-[hsl(var(--muted-foreground)/0.6)] italic">No remarks</span>
+                            <span className="text-[0.6875rem] text-[hsl(var(--muted-foreground)/0.6)] italic">{tr("No remarks")}</span>
                           )}
                         </div>
                       </td>
 
                       {/* 4. Status */}
                       <td className="px-4 py-3">
-                        <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold tracking-tight uppercase border', act.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border-amber-500/20')}>
-                          {act.status === 'Completed' ? 'Completed ' : 'Pending'}
+                        <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-[0.5625rem] font-bold tracking-tight uppercase border', act.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border-amber-500/20')}>
+                          {act.status === 'Completed' ? tr("Completed ") : tr("Pending")}
                         </span>
                       </td>
 
                       {/* 5. Actions */}
-                      <td className="px-4.5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-4.5 py-3 text-end" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1.5">
                           {act.status === 'Pending' && (
                             (canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_requirements', 'create') || canDo('crm_site_visits', 'update')) && (
@@ -406,9 +407,9 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, onPassToRequirements,
                                   handlePass(act.customer?._id || act.customer?.id);
                                 }}
                                 className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                title="Complete Follow-up and Send to Requirements"
+                                title={tr("Complete Follow-up and Send to Requirements")}
                               >
-                                <CheckCircle2 size={12} /> Complete
+                                <CheckCircle2 size={12} />{tr(" Complete")}
                               </button>
                             )
                           )}
@@ -417,7 +418,7 @@ export const InteriorFollowUpsView = ({ onPassToSiteVisit, onPassToRequirements,
                               <button
                                 onClick={(e) => { e.stopPropagation(); onMarkAsLost(act.customer?._id); }}
                                 className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
-                                title="Mark as Lost"
+                                title={tr("Mark as Lost")}
                               >
                                 <XCircle size={13} />
                               </button>

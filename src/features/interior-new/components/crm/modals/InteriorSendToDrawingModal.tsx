@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -97,9 +98,9 @@ export function InteriorSendToDrawingModal({
     e.preventDefault();
     if (!validateForm()) {
       if (remarks.trim().length > 500) {
-        toast.error('Handover notes cannot exceed 500 characters.');
+        toast.error(tr("Handover notes cannot exceed 500 characters."));
       } else {
-        toast.error('Please assign a designer');
+        toast.error(tr("Please assign a designer"));
       }
       return;
     }
@@ -129,15 +130,15 @@ export function InteriorSendToDrawingModal({
 
       toast.success(
         isRescheduling
-          ? 'Drawing designer updated successfully!'
-          : 'Successfully passed to 2D & 3D Drawing phase!'
+          ? tr("Drawing designer updated successfully!")
+          : tr("Successfully passed to 2D & 3D Drawing phase!")
       );
       if (onSuccess) {
         onSuccess({ _id: customerId, ...updatePayload });
       }
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to send to drawing');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || tr("Failed to send to drawing"));
     } finally {
       setIsSubmitting(false);
     }
@@ -165,18 +166,18 @@ export function InteriorSendToDrawingModal({
         >
           {/* Header */}
           <div className="flex items-start justify-between px-6 py-5 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
-            <div className="flex items-start gap-3.5 pr-2">
+            <div className="flex items-start gap-3.5 pe-2">
               <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 shadow-sm mt-0.5">
                 <Ruler size={20} />
               </div>
               <div>
                 <h2 className="text-lg sm:text-xl font-black text-[hsl(var(--foreground))] tracking-tight flex items-center gap-2">
-                  {isRescheduling ? 'Reassign Drawing Phase' : 'Pass to 2D/3D Drawing'}
+                  {isRescheduling ? tr("Reassign Drawing Phase") : tr("Pass to 2D/3D Drawing")}
                 </h2>
                 <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5 leading-relaxed">
                   {isRescheduling
-                    ? 'Update assigned designer and handover brief notes.'
-                    : 'Assign a 2D/3D designer and handover requirements.'}
+                    ? tr("Update assigned designer and handover brief notes.")
+                    : tr("Assign a 2D/3D designer and handover requirements.")}
                 </p>
               </div>
             </div>
@@ -185,7 +186,7 @@ export function InteriorSendToDrawingModal({
               type="button"
               onClick={onClose}
               className="p-2 rounded-xl bg-[hsl(var(--muted)/0.6)] hover:bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors cursor-pointer shrink-0"
-              title="Close modal"
+              title={tr("Close modal")}
             >
               <X size={18} />
             </button>
@@ -197,11 +198,11 @@ export function InteriorSendToDrawingModal({
             {isRescheduling && (
               <div className="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-4 space-y-2.5 shadow-xs min-w-0 overflow-hidden">
                 <div className="flex items-center justify-between gap-2 min-w-0">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1.5 shrink-0">
-                    <History size={13} /> Current Assignment
+                  <span className="text-[0.625rem] font-black uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1.5 shrink-0">
+                    <History size={13} />{tr(" Current Assignment")}
                   </span>
-                  <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20 shrink-0">
-                    Drawing Phase
+                  <span className="text-[0.625rem] font-bold text-blue-700 dark:text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20 shrink-0">
+                    {tr("Drawing Phase")}
                   </span>
                 </div>
 
@@ -209,14 +210,14 @@ export function InteriorSendToDrawingModal({
                   <div className="flex items-center gap-2 bg-[hsl(var(--background))] px-3 py-2 rounded-xl border border-[hsl(var(--border))] text-xs text-[hsl(var(--muted-foreground))] min-w-0 overflow-hidden">
                     <User size={13} className="text-blue-500 shrink-0" />
                     <span className="truncate">
-                      Currently Assigned: <strong className="text-[hsl(var(--foreground))] font-semibold">{previousAssignedUser}</strong>
+                      {tr("Currently Assigned: ")}<strong className="text-[hsl(var(--foreground))] font-semibold">{tr(previousAssignedUser)}</strong>
                     </span>
                   </div>
                 )}
 
                 {initialData?.remarks && (
                   <div className="text-xs text-[hsl(var(--muted-foreground))] italic bg-[hsl(var(--background))] p-2.5 rounded-xl border border-[hsl(var(--border)/0.8)] leading-relaxed break-words [overflow-wrap:anywhere] whitespace-pre-wrap min-w-0">
-                    "{initialData.remarks}"
+                    "{tr(initialData.remarks)}"
                   </div>
                 )}
               </div>
@@ -227,10 +228,10 @@ export function InteriorSendToDrawingModal({
               <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <User size={13} className="text-blue-600" />
-                  Assign 2D / 3D Designer <span className="text-rose-500">*</span>
+                  {tr("Assign 2D / 3D Designer ")}<span className="text-rose-500">*</span>
                 </span>
-                <span className="text-[10px] font-medium text-[hsl(var(--muted-foreground))]">
-                  {users.length} available
+                <span className="text-[0.625rem] font-medium text-[hsl(var(--muted-foreground))]">
+                  {users.length}{tr(" available")}
                 </span>
               </label>
 
@@ -241,13 +242,13 @@ export function InteriorSendToDrawingModal({
                     setAssignedDesigner(e.target.value);
                     if (errors.assignedDesigner) setErrors((prev) => ({ ...prev, assignedDesigner: null }));
                   }}
-                  className={`w-full appearance-none pl-3.5 pr-10 py-2.5 sm:py-3 rounded-xl border bg-[hsl(var(--background))] text-xs sm:text-sm font-medium text-[hsl(var(--foreground))] outline-none transition-all cursor-pointer ${
+                  className={`w-full appearance-none ps-3.5 pe-10 py-2.5 sm:py-3 rounded-xl border bg-[hsl(var(--background))] text-xs sm:text-sm font-medium text-[hsl(var(--foreground))] outline-none transition-all cursor-pointer ${
                     errors.assignedDesigner
                       ? 'border-rose-500 focus:ring-2 focus:ring-rose-500/20'
                       : 'border-[hsl(var(--border))] focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500'
                   }`}
                 >
-                  <option value="">-- Select Designer or Team Member --</option>
+                  <option value="">{tr("-- Select Designer or Team Member --")}</option>
                   {users.map((u) => (
                     <option key={u._id || u.id || u.clerkUserId} value={u._id || u.id || u.clerkUserId}>
                       {userLabel(u)}
@@ -261,7 +262,7 @@ export function InteriorSendToDrawingModal({
 
               {errors.assignedDesigner && (
                 <p className="text-xs text-rose-500 font-medium flex items-center gap-1 pt-0.5">
-                  <AlertCircle size={12} /> {errors.assignedDesigner}
+                  <AlertCircle size={12} /> {tr(errors.assignedDesigner)}
                 </p>
               )}
             </div>
@@ -271,9 +272,9 @@ export function InteriorSendToDrawingModal({
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
                   <FileText size={13} className="text-blue-600" />
-                  Drawing Brief & Handover Notes
+                  {tr("Drawing Brief & Handover Notes")}
                 </label>
-                <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
+                <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))] font-mono">
                   {remarks.length}/500
                 </span>
               </div>
@@ -283,11 +284,11 @@ export function InteriorSendToDrawingModal({
                 maxLength={500}
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                placeholder="Any specific instructions, CAD layer guidelines, room priorities, or notes from requirements..."
+                placeholder={tr("Any specific instructions, CAD layer guidelines, room priorities, or notes from requirements...")}
                 className="w-full px-3.5 py-2.5 sm:py-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs sm:text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground)/0.6)] focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none resize-none leading-relaxed transition-all"
               />
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                These notes will be passed directly to the assigned designer.
+              <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
+                {tr("These notes will be passed directly to the assigned designer.")}
               </p>
             </div>
 
@@ -299,7 +300,7 @@ export function InteriorSendToDrawingModal({
                 disabled={isSubmitting}
                 className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] border border-[hsl(var(--border))] transition-colors cursor-pointer text-center"
               >
-                Cancel
+                {tr("Cancel")}
               </button>
 
               <button
@@ -310,11 +311,11 @@ export function InteriorSendToDrawingModal({
                 {isSubmitting ? (
                   <>
                     <Loader2 size={14} className="animate-spin" />
-                    <span>Saving...</span>
+                    <span>{tr("Saving...")}</span>
                   </>
                 ) : (
                   <>
-                    <span>{isRescheduling ? 'Confirm Reassign' : 'Pass to Drawing'}</span>
+                    <span>{isRescheduling ? tr("Confirm Reassign") : tr("Pass to Drawing")}</span>
                     <ArrowRight size={14} />
                   </>
                 )}

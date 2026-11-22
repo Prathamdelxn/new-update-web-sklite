@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Unified Requirements View
@@ -88,14 +89,14 @@ export function InteriorComparativeRequirementsView({
     const hours = Math.round(diffMs / (1000 * 60 * 60));
     if (hours < 1) {
       const mins = Math.max(1, Math.round(diffMs / (1000 * 60)));
-      return { label: `Expires in ${mins}m`, isWarning: true };
+      return { label: tr('Expires in {{mins}}m', { mins }), isWarning: true };
     }
     if (hours < 24) {
-      return { label: `Expires in ${hours}h`, isWarning: hours <= 3 };
+      return { label: tr('Expires in {{hours}}h', { hours }), isWarning: hours <= 3 };
     }
     const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
     const expDateStr = new Date(shareSettings.expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    return { label: `Expires in ${days}d (${expDateStr})`, isWarning: false };
+    return { label: tr('Expires in {{days}}d ({{expDateStr}})', { days, expDateStr }), isWarning: false };
   };
 
   const currentExpiry = getExpiryDisplay();
@@ -148,7 +149,7 @@ export function InteriorComparativeRequirementsView({
     setIsSyncing(true);
     try {
       await onRefresh();
-      toast.success('Requirements status updated');
+      toast.success(tr("Requirements status updated"));
     } catch (err) {
       console.error('Failed to refresh requirements:', err);
     } finally {
@@ -396,7 +397,7 @@ export function InteriorComparativeRequirementsView({
 
     const leadId = lead?._id || lead?.id;
     if (!leadId) {
-      toast.error('Customer/Lead ID is missing.');
+      toast.error(tr("Customer/Lead ID is missing."));
       return null;
     }
 
@@ -444,10 +445,10 @@ export function InteriorComparativeRequirementsView({
         document.body.removeChild(input);
       }
       setCopiedLink(true);
-      toast.success('Client Requirements Link copied to clipboard!');
+      toast.success(tr("Client Requirements Link copied to clipboard!"));
       setTimeout(() => setCopiedLink(false), 2500);
     } catch {
-      toast.error('Failed to copy to clipboard.');
+      toast.error(tr("Failed to copy to clipboard."));
     }
   };
 
@@ -465,14 +466,14 @@ export function InteriorComparativeRequirementsView({
 
   const handleDiscardRequirements = async () => {
     if (hasPassedToSiteVisit) {
-      toast.error('Cannot discard requirements after lead has been passed to Site Visit.');
+      toast.error(tr("Cannot discard requirements after lead has been passed to Site Visit."));
       return;
     }
 
     const ok = await confirm({
-      title: 'Discard Requirements',
-      message: 'Are you sure you want to discard all logged requirements for this lead? All room specifications will be cleared and reset.',
-      confirmText: 'Discard Requirements',
+      title: tr("Discard Requirements"),
+      message: tr("Are you sure you want to discard all logged requirements for this lead? All room specifications will be cleared and reset."),
+      confirmText: tr("Discard Requirements"),
       type: 'danger',
     });
     if (!ok) return;
@@ -492,10 +493,10 @@ export function InteriorComparativeRequirementsView({
         remarks: 'Discarded/reset all room requirements.',
         completedDate: new Date(),
       });
-      toast.success('Requirements discarded successfully.');
+      toast.success(tr("Requirements discarded successfully."));
       if (onRefresh) onRefresh();
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || err.message || 'Failed to discard requirements');
+      toast.error(err?.response?.data?.error || err.message || tr("Failed to discard requirements"));
     } finally {
       setIsDiscarding(false);
     }
@@ -506,9 +507,9 @@ export function InteriorComparativeRequirementsView({
     if (!leadId) return;
 
     const ok = await confirm({
-      title: 'Stop Client Intake Link?',
-      message: 'The link will be immediately deactivated. The client will no longer be able to open the intake form or submit specifications.',
-      confirmText: 'Stop Link',
+      title: tr("Stop Client Intake Link?"),
+      message: tr("The link will be immediately deactivated. The client will no longer be able to open the intake form or submit specifications."),
+      confirmText: tr("Stop Link"),
       type: 'danger',
     });
     if (!ok) return;
@@ -516,10 +517,10 @@ export function InteriorComparativeRequirementsView({
     setIsStoppingLink(true);
     try {
       await interiorCrmService.revokeShareLink(leadId);
-      toast.success('Client intake link stopped.');
+      toast.success(tr("Client intake link stopped."));
       if (onRefresh) onRefresh();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || 'Failed to stop link');
+      toast.error(err?.response?.data?.message || err?.message || tr("Failed to stop link"));
     } finally {
       setIsStoppingLink(false);
     }
@@ -549,10 +550,10 @@ export function InteriorComparativeRequirementsView({
           : hours === 720
           ? '30 days'
           : `${hours} hours`;
-      toast.success(`Link expiry set to ${label}.`);
+      toast.success(tr("Link expiry set to {{label}}.", { label: label }));
       if (onRefresh) onRefresh();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || 'Failed to update link expiry');
+      toast.error(err?.response?.data?.message || err?.message || tr("Failed to update link expiry"));
     } finally {
       setIsUpdatingExpiry(false);
     }
@@ -570,10 +571,10 @@ export function InteriorComparativeRequirementsView({
         allowDownload: false,
         expiresHours: hours,
       });
-      toast.success('Client intake link reactivated!');
+      toast.success(tr("Client intake link reactivated!"));
       if (onRefresh) onRefresh();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || 'Failed to reactivate link');
+      toast.error(err?.response?.data?.message || err?.message || tr("Failed to reactivate link"));
     } finally {
       setIsUpdatingExpiry(false);
     }
@@ -590,29 +591,29 @@ export function InteriorComparativeRequirementsView({
 
           <div className="max-w-md space-y-2">
             <div className="inline-flex items-center gap-2 flex-wrap justify-center">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 text-[10px] font-bold uppercase tracking-wider">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 text-[0.625rem] font-bold uppercase tracking-wider">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
-                Awaiting Client Submission
+                {tr("Awaiting Client Submission")}
               </span>
 
               <span
                 className={cn(
-                  "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border",
+                  "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[0.625rem] font-bold border",
                   currentExpiry.isWarning
                     ? "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20"
                     : "bg-teal-500/10 text-teal-700 dark:text-teal-400 border-teal-500/20"
                 )}
               >
                 <Clock size={10} />
-                {currentExpiry.label}
+                {tr(currentExpiry.label)}
               </span>
             </div>
 
             <h3 className="text-base sm:text-lg font-bold text-[hsl(var(--foreground))]">
-              Waiting for Client Input
+              {tr("Waiting for Client Input")}
             </h3>
             <p className="text-xs text-[hsl(var(--muted-foreground))] leading-relaxed">
-              The public intake link is active. Waiting for <strong className="text-[hsl(var(--foreground))]">{lead?.name || 'the client'}</strong> to submit room preferences online.
+              {tr("The public intake link is active. Waiting for ")}<strong className="text-[hsl(var(--foreground))]">{lead?.name || tr("the client")}</strong>{tr(" to submit room preferences online.")}
             </p>
           </div>
 
@@ -622,10 +623,10 @@ export function InteriorComparativeRequirementsView({
               disabled={isSyncing}
               onClick={handleManualRefresh}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer disabled:opacity-60"
-              title="Check if client has submitted requirements"
+              title={tr("Check if client has submitted requirements")}
             >
               <RotateCcw size={13} className={cn(isSyncing && "animate-spin")} />
-              <span>{isSyncing ? 'Checking...' : 'Check Status / Refresh'}</span>
+              <span>{isSyncing ? tr("Checking...") : tr("Check Status / Refresh")}</span>
             </button>
 
             <button
@@ -635,7 +636,7 @@ export function InteriorComparativeRequirementsView({
               className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer"
             >
               {copiedLink ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
-              <span>{copiedLink ? 'Link Copied!' : 'Copy Intake Link'}</span>
+              <span>{copiedLink ? tr("Link Copied!") : tr("Copy Intake Link")}</span>
             </button>
 
             {lead?.mobileNumber && (
@@ -646,14 +647,14 @@ export function InteriorComparativeRequirementsView({
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer"
               >
                 <MessageCircle size={13} />
-                <span>Send via WhatsApp</span>
+                <span>{tr("Send via WhatsApp")}</span>
               </button>
             )}
 
             {/* Schedule Expiry Dropdown Selector */}
             <div className="inline-flex items-center gap-1.5 px-3 py-2 bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted)/0.5)] border border-[hsl(var(--border))] rounded-xl text-xs transition-all shadow-2xs">
               <Clock size={13} className="text-amber-500 shrink-0" />
-              <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))]">Schedule Expiry:</span>
+              <span className="text-[0.6875rem] font-semibold text-[hsl(var(--muted-foreground))]">{tr("Schedule Expiry:")}</span>
               <select
                 disabled={isUpdatingExpiry}
                 value={
@@ -673,15 +674,15 @@ export function InteriorComparativeRequirementsView({
                   const val = e.target.value === 'never' ? null : Number(e.target.value);
                   handleChangeExpiry(val);
                 }}
-                className="bg-transparent text-xs font-bold text-[hsl(var(--foreground))] outline-none cursor-pointer pr-1"
-                title="Schedule link expiry duration"
+                className="bg-transparent text-xs font-bold text-[hsl(var(--foreground))] outline-none cursor-pointer pe-1"
+                title={tr("Schedule link expiry duration")}
               >
-                <option value="24" className="bg-[hsl(var(--card))] text-[hsl(var(--foreground))]">24 Hours (1 Day)</option>
-                <option value="72" className="bg-[hsl(var(--card))] text-[hsl(var(--foreground))]">3 Days</option>
-                <option value="168" className="bg-[hsl(var(--card))] text-[hsl(var(--foreground))]">7 Days (1 Week)</option>
-                <option value="720" className="bg-[hsl(var(--card))] text-[hsl(var(--foreground))]">30 Days</option>
-                <option value="never" className="bg-[hsl(var(--card))] text-[hsl(var(--foreground))]">Never (No Expiry)</option>
-                <option value="custom" disabled hidden className="bg-[hsl(var(--card))] text-[hsl(var(--foreground))]">Custom</option>
+                <option value="24" className="bg-[hsl(var(--card))] text-[hsl(var(--foreground))]">{tr("24 Hours (1 Day)")}</option>
+                <option value="72" className="bg-[hsl(var(--card))] text-[hsl(var(--foreground))]">{tr("3 Days")}</option>
+                <option value="168" className="bg-[hsl(var(--card))] text-[hsl(var(--foreground))]">{tr("7 Days (1 Week)")}</option>
+                <option value="720" className="bg-[hsl(var(--card))] text-[hsl(var(--foreground))]">{tr("30 Days")}</option>
+                <option value="never" className="bg-[hsl(var(--card))] text-[hsl(var(--foreground))]">{tr("Never (No Expiry)")}</option>
+                <option value="custom" disabled hidden className="bg-[hsl(var(--card))] text-[hsl(var(--foreground))]">{tr("Custom")}</option>
               </select>
             </div>
 
@@ -692,10 +693,10 @@ export function InteriorComparativeRequirementsView({
                 disabled={isStoppingLink}
                 onClick={handleStopLink}
                 className="inline-flex items-center gap-1.5 px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20 rounded-xl text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer disabled:opacity-50"
-                title="Stop link immediately (clients will be blocked)"
+                title={tr("Stop link immediately (clients will be blocked)")}
               >
                 <PowerOff size={13} />
-                <span>{isStoppingLink ? 'Stopping...' : 'Stop Link'}</span>
+                <span>{isStoppingLink ? tr("Stopping...") : tr("Stop Link")}</span>
               </button>
             )}
 
@@ -704,7 +705,7 @@ export function InteriorComparativeRequirementsView({
                 type="button"
                 onClick={onOpenShareModal}
                 className="p-2 bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl transition-all shadow-2xs active:scale-95 cursor-pointer"
-                title="Advanced link settings & QR code"
+                title={tr("Advanced link settings & QR code")}
               >
                 <Settings size={14} />
               </button>
@@ -712,14 +713,14 @@ export function InteriorComparativeRequirementsView({
           </div>
 
           <div className="pt-2 border-t border-[hsl(var(--border))] w-full max-w-sm flex items-center justify-center gap-2">
-            <span className="text-xs text-[hsl(var(--muted-foreground))]">Want to take specs now?</span>
+            <span className="text-xs text-[hsl(var(--muted-foreground))]">{tr("Want to take specs now?")}</span>
             {!isReadOnly && canEdit && (
               <button
                 type="button"
                 onClick={onEditTeamRequirements}
                 className="text-xs font-bold text-[hsl(var(--primary))] hover:underline inline-flex items-center gap-1 cursor-pointer"
               >
-                <Pencil size={11} /> Enter Requirements Manually
+                <Pencil size={11} />{tr(" Enter Requirements Manually")}
               </button>
             )}
           </div>
@@ -732,16 +733,16 @@ export function InteriorComparativeRequirementsView({
           </div>
 
           <div className="max-w-md space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20 text-[10px] font-bold uppercase tracking-wider">
-              {isLinkStopped ? '● Link Stopped / Disabled' : '● Link Expired'}
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20 text-[0.625rem] font-bold uppercase tracking-wider">
+              {isLinkStopped ? tr("● Link Stopped / Disabled") : tr("● Link Expired")}
             </div>
             <h3 className="text-base sm:text-lg font-bold text-[hsl(var(--foreground))]">
-              {isLinkStopped ? 'Client Intake Link is Stopped' : 'Client Intake Link has Expired'}
+              {isLinkStopped ? tr("Client Intake Link is Stopped") : tr("Client Intake Link has Expired")}
             </h3>
             <p className="text-xs text-[hsl(var(--muted-foreground))] leading-relaxed">
               {isLinkStopped
-                ? 'The public requirements link is deactivated. Clients opening this link will see that it has been disabled.'
-                : 'The scheduled expiry date has passed. You can reactivate the link with a new schedule or enter requirements directly.'}
+                ? tr("The public requirements link is deactivated. Clients opening this link will see that it has been disabled.")
+                : tr("The scheduled expiry date has passed. You can reactivate the link with a new schedule or enter requirements directly.")}
             </p>
           </div>
 
@@ -754,7 +755,7 @@ export function InteriorComparativeRequirementsView({
                 className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-50"
               >
                 <RotateCcw size={13} />
-                <span>Reactivate Link (7 Days)</span>
+                <span>{tr("Reactivate Link (7 Days)")}</span>
               </button>
 
               <button
@@ -763,7 +764,7 @@ export function InteriorComparativeRequirementsView({
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
               >
                 <Pencil size={13} />
-                <span>Enter Requirements Manually</span>
+                <span>{tr("Enter Requirements Manually")}</span>
               </button>
 
               {onOpenShareModal && (
@@ -771,7 +772,7 @@ export function InteriorComparativeRequirementsView({
                   type="button"
                   onClick={onOpenShareModal}
                   className="p-2 bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl transition-all shadow-2xs active:scale-95 cursor-pointer"
-                  title="Configure custom expiry & permissions"
+                  title={tr("Configure custom expiry & permissions")}
                 >
                   <Settings size={14} />
                 </button>
@@ -788,10 +789,10 @@ export function InteriorComparativeRequirementsView({
 
           <div className="max-w-md space-y-1">
             <h3 className="text-base font-bold text-[hsl(var(--foreground))]">
-              No Requirements Logged Yet
+              {tr("No Requirements Logged Yet")}
             </h3>
             <p className="text-xs text-[hsl(var(--muted-foreground))] leading-relaxed">
-              Add project specifications directly or generate an online intake link for the client.
+              {tr("Add project specifications directly or generate an online intake link for the client.")}
             </p>
           </div>
 
@@ -803,7 +804,7 @@ export function InteriorComparativeRequirementsView({
                 className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
               >
                 <Plus size={14} />
-                <span>Create Requirements</span>
+                <span>{tr("Create Requirements")}</span>
               </button>
 
               <button
@@ -813,7 +814,7 @@ export function InteriorComparativeRequirementsView({
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
               >
                 <Share2 size={13} />
-                <span>Generate & Copy Client Link</span>
+                <span>{tr("Generate & Copy Client Link")}</span>
               </button>
 
               {onOpenShareModal && (
@@ -821,7 +822,7 @@ export function InteriorComparativeRequirementsView({
                   type="button"
                   onClick={onOpenShareModal}
                   className="p-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl transition-all shadow-xs active:scale-95 cursor-pointer"
-                  title="Configure Expiry & Permissions"
+                  title={tr("Configure Expiry & Permissions")}
                 >
                   <Settings size={14} />
                 </button>
@@ -841,20 +842,20 @@ export function InteriorComparativeRequirementsView({
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">
-                    Room Specifications ({unifiedRooms.length} {unifiedRooms.length === 1 ? 'Area' : 'Areas'})
+                    {tr("Room Specifications (")}{unifiedRooms.length} {unifiedRooms.length === 1 ? tr("Area") : tr("Areas")})
                   </h3>
                   {clientSubmittedAt ? (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 inline-flex items-center gap-1">
-                      <CheckCircle2 size={10} /> Client Submitted
+                    <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 inline-flex items-center gap-1">
+                      <CheckCircle2 size={10} />{tr(" Client Submitted")}
                     </span>
                   ) : (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
-                      Team Recorded
+                    <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
+                      {tr("Team Recorded")}
                     </span>
                   )}
                   {clientSubmittedAt && isLinkActive && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 inline-flex items-center gap-1">
-                      <Edit3 size={10} /> Link Reactivated (Client Can Edit)
+                    <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 inline-flex items-center gap-1">
+                      <Edit3 size={10} />{tr(" Link Reactivated (Client Can Edit)")}
                     </span>
                   )}
                 </div>
@@ -869,23 +870,23 @@ export function InteriorComparativeRequirementsView({
                     disabled={isGeneratingLink}
                     onClick={handleCopyLink}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] transition-all active:scale-95 cursor-pointer"
-                    title="Copy client link"
+                    title={tr("Copy client link")}
                   >
                     {copiedLink ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
-                    <span>{copiedLink ? 'Copied' : 'Share Link'}</span>
+                    <span>{copiedLink ? tr("Copied") : tr("Share Link")}</span>
                   </button>
 
                   <span
                     className={cn(
-                      "hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-semibold border",
+                      "hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[0.625rem] font-semibold border",
                       currentExpiry.isWarning
                         ? "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20"
                         : "bg-teal-500/10 text-teal-700 dark:text-teal-400 border-teal-500/20"
                     )}
-                    title={shareSettings?.expiresAt ? `Expires: ${new Date(shareSettings.expiresAt).toLocaleString()}` : 'No expiry'}
+                    title={shareSettings?.expiresAt ? `Expires: ${new Date(shareSettings.expiresAt).toLocaleString()}` : tr("No expiry")}
                   >
                     <Clock size={10} />
-                    {currentExpiry.label}
+                    {tr(currentExpiry.label)}
                   </span>
 
                   {!isReadOnly && canEdit && (
@@ -894,10 +895,10 @@ export function InteriorComparativeRequirementsView({
                       disabled={isStoppingLink}
                       onClick={handleStopLink}
                       className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-                      title="Stop client intake link"
+                      title={tr("Stop client intake link")}
                     >
                       <PowerOff size={11} />
-                      <span>{isStoppingLink ? 'Stopping...' : 'Stop Link'}</span>
+                      <span>{isStoppingLink ? tr("Stopping...") : tr("Stop Link")}</span>
                     </button>
                   )}
                 </>
@@ -905,9 +906,9 @@ export function InteriorComparativeRequirementsView({
 
               {shareSettings?.shareToken && (isLinkStopped || isLinkExpired) && (
                 <>
-                  <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20">
+                  <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[0.625rem] font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20">
                     <PowerOff size={10} />
-                    {isLinkStopped ? 'Link Disabled (Submitted)' : 'Link Expired'}
+                    {isLinkStopped ? tr("Link Disabled (Submitted)") : tr("Link Expired")}
                   </span>
                   {!isReadOnly && canEdit && (
                     <button
@@ -915,10 +916,10 @@ export function InteriorComparativeRequirementsView({
                       disabled={isUpdatingExpiry}
                       onClick={() => handleReactivateLink(168)}
                       className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-                      title="Reactivate client intake link"
+                      title={tr("Reactivate client intake link")}
                     >
                       <RotateCcw size={11} />
-                      <span>Reactivate Link</span>
+                      <span>{tr("Reactivate Link")}</span>
                     </button>
                   )}
                 </>
@@ -929,7 +930,7 @@ export function InteriorComparativeRequirementsView({
                   type="button"
                   onClick={onOpenShareModal}
                   className="p-1.5 rounded-xl text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] border border-[hsl(var(--border))] transition-all cursor-pointer"
-                  title="Link expiry & permissions settings"
+                  title={tr("Link expiry & permissions settings")}
                 >
                   <Settings size={13} />
                 </button>
@@ -941,10 +942,10 @@ export function InteriorComparativeRequirementsView({
                   disabled={isDiscarding}
                   onClick={handleDiscardRequirements}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-                  title="Discard all requirements"
+                  title={tr("Discard all requirements")}
                 >
                   <Trash2 size={12} />
-                  <span>{isDiscarding ? 'Discarding...' : 'Discard'}</span>
+                  <span>{isDiscarding ? tr("Discarding...") : tr("Discard")}</span>
                 </button>
               )}
             </div>
@@ -953,11 +954,11 @@ export function InteriorComparativeRequirementsView({
           {/* Client Stated Vision / Directives (if provided) */}
           {clientNotes && (
             <div className="bg-purple-500/[0.04] border border-purple-500/20 rounded-2xl p-3.5 sm:p-4 text-xs space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 block">
-                Client Stated Directives & Vision:
+              <span className="text-[0.625rem] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 block">
+                {tr("Client Stated Directives & Vision:")}
               </span>
               <p className="text-[hsl(var(--foreground))] italic leading-relaxed whitespace-pre-wrap">
-                &ldquo;{clientNotes}&rdquo;
+                &ldquo;{tr(clientNotes)}&rdquo;
               </p>
             </div>
           )}
@@ -965,8 +966,8 @@ export function InteriorComparativeRequirementsView({
           {/* Inspiration Gallery (if client uploaded photos) */}
           {inspirationImages.length > 0 && (
             <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-3.5 sm:p-4 space-y-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1">
-                <Sparkles size={11} className="text-pink-500" /> Client Inspiration Moodboard ({inspirationImages.length} Photos)
+              <span className="text-[0.625rem] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+                <Sparkles size={11} className="text-pink-500" />{tr(" Client Inspiration Moodboard (")}{inspirationImages.length}{tr(" Photos)")}
               </span>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
                 {inspirationImages.map((img, iIdx) => (
@@ -1021,36 +1022,36 @@ export function InteriorComparativeRequirementsView({
                       <span className="w-6 h-6 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold text-xs flex items-center justify-center shrink-0">
                         {idx + 1}
                       </span>
-                      <h4 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">{room.roomName}</h4>
+                      <h4 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">{tr(room.roomName)}</h4>
                       {room.interiorType && (
-                        <span className="text-[10px] text-[hsl(var(--muted-foreground))]">({room.interiorType})</span>
+                        <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">({tr(room.interiorType)})</span>
                       )}
                       {room.source === 'client' && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                          Client Intake
+                        <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                          {tr("Client Intake")}
                         </span>
                       )}
                       {room.source === 'merged' && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600 border border-purple-500/20">
-                          Merged
+                        <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                          {tr("Merged")}
                         </span>
                       )}
                     </div>
 
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {(room.designStyle || room.theme) && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20 flex items-center gap-1">
+                        <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20 flex items-center gap-1">
                           <Palette size={10} /> {room.designStyle || room.theme}
                         </span>
                       )}
                       {room.dimensions && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
-                          {room.dimensions}
+                        <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
+                          {tr(room.dimensions)}
                         </span>
                       )}
                       {room.budget && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
-                          {currencySymbol} {room.budget}
+                        <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                          {tr(currencySymbol)} {tr(room.budget)}
                         </span>
                       )}
                     </div>
@@ -1063,80 +1064,80 @@ export function InteriorComparativeRequirementsView({
                       {/* 1. Functional Requirements Card */}
                       <div className="bg-[hsl(var(--muted)/0.15)] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-2.5 min-w-0">
                         <div className="flex items-center justify-between pb-1.5 border-b border-[hsl(var(--border))]">
-                          <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-                            <Sliders size={12} /> Functional Requirements
+                          <span className="text-[0.625rem] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                            <Sliders size={12} />{tr(" Functional Requirements")}
                           </span>
                           {hasFunctional ? (
-                            <span className="text-[9px] font-bold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                              Specified
+                            <span className="text-[0.5625rem] font-bold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                              {tr("Specified")}
                             </span>
                           ) : (
-                            <span className="text-[9px] text-[hsl(var(--muted-foreground))]">Not specified</span>
+                            <span className="text-[0.5625rem] text-[hsl(var(--muted-foreground))]">{tr("Not specified")}</span>
                           )}
                         </div>
 
                         {room.roomUsage && (
                           <div className="min-w-0">
-                            <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Usage / Primary Purpose</span>
-                            <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.roomUsage}</span>
+                            <span className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase block">{tr("Usage / Primary Purpose")}</span>
+                            <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{tr(room.roomUsage)}</span>
                           </div>
                         )}
 
                         {room.furnitureRequirements && (
                           <div className="p-2.5 rounded-lg bg-[hsl(var(--card))] border border-[hsl(var(--border))] min-w-0 overflow-hidden">
-                            <span className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 flex items-center gap-1 mb-0.5">
-                              <Armchair size={11} className="text-emerald-600" /> Furniture & Fixtures Required
+                            <span className="text-[0.625rem] font-bold uppercase text-slate-500 dark:text-slate-400 flex items-center gap-1 mb-0.5">
+                              <Armchair size={11} className="text-emerald-600" />{tr(" Furniture & Fixtures Required")}
                             </span>
                             <p className="font-semibold text-[hsl(var(--foreground))] leading-relaxed break-words [overflow-wrap:anywhere]">
-                              {room.furnitureRequirements}
+                              {tr(room.furnitureRequirements)}
                             </p>
                           </div>
                         )}
 
                         {room.storage && (
                           <div className="min-w-0">
-                            <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Storage Units</span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.storage}</span>
+                            <span className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase block">{tr("Storage Units")}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{tr(room.storage)}</span>
                           </div>
                         )}
 
                         {room.electricalPoints && (
                           <div className="min-w-0">
-                            <span className="text-[10px] font-bold text-amber-500 uppercase flex items-center gap-1">
-                              <Zap size={11} /> Electrical / MEP Points
+                            <span className="text-[0.625rem] font-bold text-amber-500 uppercase flex items-center gap-1">
+                              <Zap size={11} />{tr(" Electrical / MEP Points")}
                             </span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.electricalPoints}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{tr(room.electricalPoints)}</span>
                           </div>
                         )}
 
                         {room.lightingRequirements && (
                           <div className="min-w-0">
-                            <span className="text-[10px] font-bold text-amber-500 uppercase flex items-center gap-1">
-                              <Sun size={11} /> Lighting Requirements
+                            <span className="text-[0.625rem] font-bold text-amber-500 uppercase flex items-center gap-1">
+                              <Sun size={11} />{tr(" Lighting Requirements")}
                             </span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.lightingRequirements}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{tr(room.lightingRequirements)}</span>
                           </div>
                         )}
 
                         {room.plumbingRequirements && (
                           <div className="min-w-0">
-                            <span className="text-[10px] font-bold text-cyan-500 uppercase flex items-center gap-1">
-                              <Droplets size={11} /> Plumbing Requirements
+                            <span className="text-[0.625rem] font-bold text-cyan-500 uppercase flex items-center gap-1">
+                              <Droplets size={11} />{tr(" Plumbing Requirements")}
                             </span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.plumbingRequirements}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{tr(room.plumbingRequirements)}</span>
                           </div>
                         )}
 
                         {room.circulation && (
                           <div className="min-w-0">
-                            <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Circulation & Clearance</span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.circulation}</span>
+                            <span className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase block">{tr("Circulation & Clearance")}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{tr(room.circulation)}</span>
                           </div>
                         )}
 
                         {!hasFunctional && (
-                          <p className="text-[11px] text-[hsl(var(--muted-foreground))] italic py-2">
-                            No functional specifications recorded for this space.
+                          <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] italic py-2">
+                            {tr("No functional specifications recorded for this space.")}
                           </p>
                         )}
                       </div>
@@ -1144,77 +1145,77 @@ export function InteriorComparativeRequirementsView({
                       {/* 2. Aesthetic Requirements Card */}
                       <div className="bg-[hsl(var(--muted)/0.15)] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-2.5 min-w-0 overflow-hidden">
                         <div className="flex items-center justify-between pb-1.5 border-b border-[hsl(var(--border))]">
-                          <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 dark:text-purple-400 flex items-center gap-1.5">
-                            <Palette size={12} /> Aesthetic Requirements
+                          <span className="text-[0.625rem] font-black uppercase tracking-wider text-purple-600 dark:text-purple-400 flex items-center gap-1.5">
+                            <Palette size={12} />{tr(" Aesthetic Requirements")}
                           </span>
                           {hasAesthetic ? (
-                            <span className="text-[9px] font-bold text-purple-600 bg-purple-500/10 px-1.5 py-0.5 rounded">
-                              Specified
+                            <span className="text-[0.5625rem] font-bold text-purple-600 bg-purple-500/10 px-1.5 py-0.5 rounded">
+                              {tr("Specified")}
                             </span>
                           ) : (
-                            <span className="text-[9px] text-[hsl(var(--muted-foreground))]">Not specified</span>
+                            <span className="text-[0.5625rem] text-[hsl(var(--muted-foreground))]">{tr("Not specified")}</span>
                           )}
                         </div>
 
                         {(room.designStyle || room.theme) && (
                           <div className="min-w-0">
-                            <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Design Style</span>
+                            <span className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase block">{tr("Design Style")}</span>
                             <span className="font-bold text-purple-700 dark:text-purple-300 break-words [overflow-wrap:anywhere] mt-0.5 block">{room.designStyle || room.theme}</span>
                           </div>
                         )}
 
                         {room.theme && room.designStyle && room.theme !== room.designStyle && (
                           <div className="min-w-0">
-                            <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Theme / Mood</span>
-                            <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.theme}</span>
+                            <span className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase block">{tr("Theme / Mood")}</span>
+                            <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{tr(room.theme)}</span>
                           </div>
                         )}
 
                         {room.colours && (
                           <div className="min-w-0">
-                            <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Colours & Palette</span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.colours}</span>
+                            <span className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase block">{tr("Colours & Palette")}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{tr(room.colours)}</span>
                           </div>
                         )}
 
                         {room.materials && (
                           <div className="min-w-0">
-                            <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Materials & Finishes</span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.materials}</span>
+                            <span className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase block">{tr("Materials & Finishes")}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{tr(room.materials)}</span>
                           </div>
                         )}
 
                         {room.flooring && (
                           <div className="min-w-0">
-                            <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Flooring Preferences</span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.flooring}</span>
+                            <span className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase block">{tr("Flooring Preferences")}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{tr(room.flooring)}</span>
                           </div>
                         )}
 
                         {room.ceiling && (
                           <div className="min-w-0">
-                            <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Ceiling & False Ceiling</span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.ceiling}</span>
+                            <span className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase block">{tr("Ceiling & False Ceiling")}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{tr(room.ceiling)}</span>
                           </div>
                         )}
 
                         {room.wallFinishes && (
                           <div className="min-w-0">
-                            <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Wall Finishes & Paneling</span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.wallFinishes}</span>
+                            <span className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase block">{tr("Wall Finishes & Paneling")}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{tr(room.wallFinishes)}</span>
                           </div>
                         )}
 
                         {room.furnitureStyle && (
                           <div className="min-w-0">
-                            <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Furniture Style</span>
-                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{room.furnitureStyle}</span>
+                            <span className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase block">{tr("Furniture Style")}</span>
+                            <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] mt-0.5 block">{tr(room.furnitureStyle)}</span>
                           </div>
                         )}
 
                         {!hasAesthetic && (
-                          <p className="text-[11px] text-[hsl(var(--muted-foreground))] italic py-2">
-                            No aesthetic requirements recorded for this space.
+                          <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] italic py-2">
+                            {tr("No aesthetic requirements recorded for this space.")}
                           </p>
                         )}
                       </div>
@@ -1223,11 +1224,11 @@ export function InteriorComparativeRequirementsView({
                     {/* Special Notes / Description */}
                     {room.description && (
                       <div className="p-3 rounded-xl bg-[hsl(var(--muted)/0.25)] border border-[hsl(var(--border))] space-y-1 min-w-0 overflow-hidden">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1.5">
-                          <Sparkles size={11} className="text-amber-500" /> Space Observations & Preferences
+                        <span className="text-[0.625rem] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1.5">
+                          <Sparkles size={11} className="text-amber-500" />{tr(" Space Observations & Preferences")}
                         </span>
                         <p className="text-[hsl(var(--foreground))] leading-relaxed italic whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-                          &ldquo;{room.description}&rdquo;
+                          &ldquo;{tr(room.description)}&rdquo;
                         </p>
                       </div>
                     )}
@@ -1246,7 +1247,7 @@ export function InteriorComparativeRequirementsView({
           onClick={() => setSelectedPhotoModal(null)}
         >
           <div className="relative max-w-3xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
-            <img loading="lazy" decoding="async" src={selectedPhotoModal} alt="Enlarged Inspiration" className="max-w-full max-h-[85vh] rounded-2xl object-contain shadow-2xl" />
+            <img loading="lazy" decoding="async" src={selectedPhotoModal} alt={tr("Enlarged Inspiration")} className="max-w-full max-h-[85vh] rounded-2xl object-contain shadow-2xl" />
             <button
               type="button"
               onClick={() => setSelectedPhotoModal(null)}

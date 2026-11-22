@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -179,7 +180,7 @@ export function InteriorReopenLeadModal({
       setReopenNotes('');
       setFollowUpType('Phone Call');
       setScheduledDate('');
-      setCustomStatus(detectedStage.status || 'Under Site Visit');
+      setCustomStatus(detectedStage.status || tr("Under Site Visit"));
       setAssignedSalesExecutive(
         leadData?.assignedSalesExecutive?._id ||
           leadData?.assignedSalesExecutive?.id ||
@@ -196,19 +197,19 @@ export function InteriorReopenLeadModal({
     e.preventDefault();
     const trimmedNotes = reopenNotes.trim();
     if (!trimmedNotes) {
-      setError('Please provide a note or reason for reopening this lead');
-      toast.error('Please provide a reopen note');
+      setError(tr("Please provide a note or reason for reopening this lead"));
+      toast.error(tr("Please provide a reopen note"));
       return;
     }
 
     if (mode === 'follow_up') {
       if (!scheduledDate) {
-        setError('Please select a scheduled date & time for the follow-up');
-        toast.error('Scheduled date is required for follow-up');
+        setError(tr("Please select a scheduled date & time for the follow-up"));
+        toast.error(tr("Scheduled date is required for follow-up"));
         return;
       }
       if (new Date(scheduledDate).getTime() < Date.now() - 60000) {
-        setError('Scheduled date & time must be in the future');
+        setError(tr("Scheduled date & time must be in the future"));
         return;
       }
     }
@@ -263,7 +264,7 @@ export function InteriorReopenLeadModal({
         interiorCrmService.createActivity(activityPayload),
       ]);
 
-      toast.success(`Lead restored to ${resolvedStatus}! All previous data preserved.`);
+      toast.success(tr("Lead restored to {{resolvedStatus}}! All previous data preserved.", { resolvedStatus: resolvedStatus }));
       queryClient.invalidateQueries({ queryKey: ['crm-leads-list'] });
       queryClient.invalidateQueries({ queryKey: ['crm-follow-ups-all'] });
       queryClient.invalidateQueries({ queryKey: ['crm-pending-activities'] });
@@ -273,7 +274,7 @@ export function InteriorReopenLeadModal({
       }
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to reopen lead');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || tr("Failed to reopen lead"));
     } finally {
       setIsSubmitting(false);
     }
@@ -304,9 +305,9 @@ export function InteriorReopenLeadModal({
                 <RotateCcw size={20} />
               </div>
               <div>
-                <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))]">Reopen Lead</h2>
+                <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))]">{tr("Reopen Lead")}</h2>
                 <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                  Restore previously completed work or resume pipeline
+                  {tr("Restore previously completed work or resume pipeline")}
                 </p>
               </div>
             </div>
@@ -328,14 +329,14 @@ export function InteriorReopenLeadModal({
               <div className="text-xs leading-relaxed flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <span className="font-bold text-[hsl(var(--foreground))] text-sm">
-                    {leadName || leadData?.name || 'Lead'}
+                    {leadName || leadData?.name || tr("Lead")}
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-600 text-white uppercase tracking-wider">
-                    Last Stage: {detectedStage.stageLabel}
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.625rem] font-black bg-indigo-600 text-white uppercase tracking-wider">
+                    {tr("Last Stage: ")}{tr(detectedStage.stageLabel)}
                   </span>
                 </div>
-                <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-1">
-                  {detectedStage.reason} ({detectedStage.badge}). All blueprints, BOQ items, measurements & quotes are safely preserved.
+                <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] mt-1">
+                  {tr(detectedStage.reason)} ({tr(detectedStage.badge)}{tr("). All blueprints, BOQ items, measurements & quotes are safely preserved.")}
                 </p>
               </div>
             </div>
@@ -343,7 +344,7 @@ export function InteriorReopenLeadModal({
             {/* Target Reopen Selection Mode */}
             <div>
               <label className="text-xs font-bold text-[hsl(var(--foreground))] mb-1.5 block">
-                How would you like to restore this lead?
+                {tr("How would you like to restore this lead?")}
               </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -354,21 +355,21 @@ export function InteriorReopenLeadModal({
                     setMode('previous');
                     if (error) setError(null);
                   }}
-                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer relative ${
+                  className={`p-3 rounded-2xl border text-start transition-all cursor-pointer relative ${
                     mode === 'previous'
                       ? 'bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/20 shadow-xs'
                       : 'bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted))] border-[hsl(var(--border))] text-[hsl(var(--foreground))]'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-500/20 px-1.5 py-0.5 rounded">
-                      Recommended
+                    <span className="text-[0.625rem] font-black uppercase tracking-wider text-emerald-600 bg-emerald-500/20 px-1.5 py-0.5 rounded">
+                      {tr("Recommended")}
                     </span>
                     <DetectedIcon size={14} className="text-emerald-600" />
                   </div>
-                  <div className="text-xs font-bold">Previous Stage</div>
-                  <div className="text-[10px] text-[hsl(var(--muted-foreground))] mt-0.5 truncate" title={detectedStage.stageLabel}>
-                    {detectedStage.stageLabel}
+                  <div className="text-xs font-bold">{tr("Previous Stage")}</div>
+                  <div className="text-[0.625rem] text-[hsl(var(--muted-foreground))] mt-0.5 truncate" title={detectedStage.stageLabel}>
+                    {tr(detectedStage.stageLabel)}
                   </div>
                 </button>
 
@@ -379,7 +380,7 @@ export function InteriorReopenLeadModal({
                     setMode('follow_up');
                     if (error) setError(null);
                   }}
-                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                  className={`p-3 rounded-2xl border text-start transition-all cursor-pointer ${
                     mode === 'follow_up'
                       ? 'bg-indigo-500/10 border-indigo-500 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20 shadow-xs'
                       : 'bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted))] border-[hsl(var(--border))] text-[hsl(var(--foreground))]'
@@ -388,9 +389,9 @@ export function InteriorReopenLeadModal({
                   <div className="flex items-center justify-between mb-1">
                     <PhoneCall size={14} className="text-indigo-600" />
                   </div>
-                  <div className="text-xs font-bold">Follow-Up</div>
-                  <div className="text-[10px] text-[hsl(var(--muted-foreground))] mt-0.5">
-                    Schedule call / meeting
+                  <div className="text-xs font-bold">{tr("Follow-Up")}</div>
+                  <div className="text-[0.625rem] text-[hsl(var(--muted-foreground))] mt-0.5">
+                    {tr("Schedule call / meeting")}
                   </div>
                 </button>
 
@@ -401,7 +402,7 @@ export function InteriorReopenLeadModal({
                     setMode('new_lead');
                     if (error) setError(null);
                   }}
-                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                  className={`p-3 rounded-2xl border text-start transition-all cursor-pointer ${
                     mode === 'new_lead'
                       ? 'bg-blue-500/10 border-blue-500 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/20 shadow-xs'
                       : 'bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted))] border-[hsl(var(--border))] text-[hsl(var(--foreground))]'
@@ -410,9 +411,9 @@ export function InteriorReopenLeadModal({
                   <div className="flex items-center justify-between mb-1">
                     <Layers size={14} className="text-blue-600" />
                   </div>
-                  <div className="text-xs font-bold">New Lead</div>
-                  <div className="text-[10px] text-[hsl(var(--muted-foreground))] mt-0.5">
-                    Restart from stage 1
+                  <div className="text-xs font-bold">{tr("New Lead")}</div>
+                  <div className="text-[0.625rem] text-[hsl(var(--muted-foreground))] mt-0.5">
+                    {tr("Restart from stage 1")}
                   </div>
                 </button>
               </div>
@@ -425,24 +426,24 @@ export function InteriorReopenLeadModal({
                   <div>
                     <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
                       <Clock size={13} className="text-indigo-600" />
-                      Follow-up Type
+                      {tr("Follow-up Type")}
                     </label>
                     <select
                       value={followUpType}
                       onChange={(e) => setFollowUpType(e.target.value)}
                       className="w-full mt-1.5 px-3 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-xs font-medium focus:border-[hsl(var(--ring))] outline-none"
                     >
-                      <option value="Phone Call">Phone Call</option>
-                      <option value="Meeting">Meeting / Demo</option>
-                      <option value="WhatsApp">WhatsApp</option>
-                      <option value="Email">Email</option>
+                      <option value="Phone Call">{tr("Phone Call")}</option>
+                      <option value="Meeting">{tr("Meeting / Demo")}</option>
+                      <option value="WhatsApp">{tr("WhatsApp")}</option>
+                      <option value="Email">{tr("Email")}</option>
                     </select>
                   </div>
 
                   <div>
                     <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
                       <Calendar size={13} className="text-indigo-600" />
-                      Date & Time *
+                      {tr("Date & Time *")}
                     </label>
                     <input
                       type="datetime-local"
@@ -460,14 +461,14 @@ export function InteriorReopenLeadModal({
                 <div>
                   <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
                     <User size={13} className="text-indigo-600" />
-                    Assign Sales Executive
+                    {tr("Assign Sales Executive")}
                   </label>
                   <select
                     value={assignedSalesExecutive}
                     onChange={(e) => setAssignedSalesExecutive(e.target.value)}
                     className="w-full mt-1.5 px-3 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-xs font-medium focus:border-[hsl(var(--ring))] outline-none"
                   >
-                    <option value="">-- Leave Unassigned / Keep Current --</option>
+                    <option value="">{tr("-- Leave Unassigned / Keep Current --")}</option>
                     {users.map((u) => (
                       <option key={u._id || u.id} value={u._id || u.id}>
                         {userLabel(u)}
@@ -482,9 +483,9 @@ export function InteriorReopenLeadModal({
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-bold text-[hsl(var(--foreground))]">
-                  Reopen Notes / Reason *
+                  {tr("Reopen Notes / Reason *")}
                 </label>
-                <span className="text-[10px] font-bold text-rose-500">Required</span>
+                <span className="text-[0.625rem] font-bold text-rose-500">{tr("Required")}</span>
               </div>
               <textarea
                 rows={3}
@@ -493,14 +494,14 @@ export function InteriorReopenLeadModal({
                   setReopenNotes(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder="Explain why the lead is being reopened (e.g., Client requested updated quotation, agreed to restart project, resolved budget)..."
+                placeholder={tr("Explain why the lead is being reopened (e.g., Client requested updated quotation, agreed to restart project, resolved budget)...")}
                 className={`w-full px-4 py-2.5 rounded-xl border bg-[hsl(var(--background))] text-xs outline-none resize-none transition-all ${
                   error
                     ? 'border-rose-500 focus:ring-2 focus:ring-rose-500/20'
                     : 'border-[hsl(var(--border))] focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20'
                 }`}
               />
-              {error && <p className="text-xs text-rose-500 font-semibold mt-1">{error}</p>}
+              {error && <p className="text-xs text-rose-500 font-semibold mt-1">{tr(error)}</p>}
             </div>
 
             {/* Actions */}
@@ -510,7 +511,7 @@ export function InteriorReopenLeadModal({
                 onClick={onClose}
                 className="px-4 py-2.5 rounded-xl text-xs font-bold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] transition-colors cursor-pointer"
               >
-                Cancel
+                {tr("Cancel")}
               </button>
               <button
                 type="submit"
@@ -519,10 +520,10 @@ export function InteriorReopenLeadModal({
               >
                 <RotateCcw size={14} className={isSubmitting ? 'animate-spin' : ''} />
                 {isSubmitting
-                  ? 'Restoring...'
+                  ? tr("Restoring...")
                   : mode === 'previous'
-                  ? `Restore to ${detectedStage.stageLabel}`
-                  : 'Reopen Lead'}
+                  ? tr("Restore to {{stageLabel}}", { stageLabel: detectedStage.stageLabel })
+                  : tr("Reopen Lead")}
               </button>
             </div>
           </form>

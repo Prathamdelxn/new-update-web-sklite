@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Handover & Closeout Management
@@ -102,7 +103,7 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
       }
     } catch (err) {
       console.error('Failed to load handover data', err);
-      if (showLoading) toast.error('Failed to load handover details');
+      if (showLoading) toast.error(tr("Failed to load handover details"));
     } finally {
       if (showLoading) setLoading(false);
     }
@@ -297,17 +298,17 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
   const handleUploadDocument = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!docName.trim()) {
-      toast.error('Please enter document title');
+      toast.error(tr("Please enter document title"));
       return;
     }
     if (!selectedFile) {
-      toast.error('Please select a file');
+      toast.error(tr("Please select a file"));
       return;
     }
 
     try {
       setUpdating(true);
-      const toastId = toast.loading('Uploading document...');
+      const toastId = toast.loading(tr("Uploading document..."));
 
       let uploadedUrl = '';
       try {
@@ -333,12 +334,12 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
       });
 
       if (res.success) {
-        toast.success('Document uploaded!');
+        toast.success(tr("Document uploaded!"));
         closeModal();
         fetchAllData(false);
       }
     } catch (err: any) {
-      toast.error(err.message || 'Failed to upload document');
+      toast.error(err.message || tr("Failed to upload document"));
     } finally {
       setUpdating(false);
     }
@@ -346,8 +347,8 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
 
   const handleDeleteDocument = async (docId: string) => {
     const ok = await confirm({
-      title: 'Delete Document',
-      message: 'Are you sure you want to delete this closeout document?',
+      title: tr("Delete Document"),
+      message: tr("Are you sure you want to delete this closeout document?"),
       confirmText: 'Delete',
       type: 'danger',
     });
@@ -356,11 +357,11 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
     try {
       const res = await interiorProjectService.updateHandover(projectId, { deleteDocumentId: docId });
       if (res.success) {
-        toast.success('Document deleted');
+        toast.success(tr("Document deleted"));
         fetchAllData(false);
       }
     } catch {
-      toast.error('Failed to delete document');
+      toast.error(tr("Failed to delete document"));
     }
   };
 
@@ -370,7 +371,7 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
 
   const handleItemClick = (href: string) => {
     if (!canOpenHref(href)) {
-      toast.error("You don't have permission to open this section");
+      toast.error(tr("You don't have permission to open this section"));
       return;
     }
     if (href === '#closeout-docs') {
@@ -399,9 +400,9 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
       {/* Clean Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Handover & Closeout Management</h2>
+          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">{tr("Handover & Closeout Management")}</h2>
           <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-            Track warranties, operation manuals, project completion checklist, and client signoffs.
+            {tr("Track warranties, operation manuals, project completion checklist, and client signoffs.")}
           </p>
         </div>
 
@@ -413,13 +414,13 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
             onClick={() => setIsCertModalOpen(true)}
           >
             <Award className="w-4 h-4 text-amber-600" />
-            Certificate
+            {tr("Certificate")}
           </Button>
 
           {canDo('handover', 'create') && (
             <Button size="sm" className="text-xs h-9 gap-1.5" onClick={() => setIsModalOpen(true)}>
               <Plus className="w-4 h-4" />
-              Add Document
+              {tr("Add Document")}
             </Button>
           )}
         </div>
@@ -447,15 +448,15 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-3xl font-extrabold tracking-tight text-[hsl(var(--foreground))]">
-                {readinessPercentage}%
+                {tr(readinessPercentage)}%
               </span>
-              <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wider mt-0.5">
-                Handover Ready
+              <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wider mt-0.5">
+                {tr("Handover Ready")}
               </span>
             </div>
           </div>
           <p className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mt-3">
-            {completedCount} of {totalCount} Requirements Met
+            {tr(completedCount)}{tr(" of ")}{tr(totalCount)}{tr(" Requirements Met")}
           </p>
         </Card>
 
@@ -464,10 +465,10 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
           <CardHeader className="p-4 px-5 border-b border-[hsl(var(--border))] flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-bold flex items-center gap-2 text-[hsl(var(--foreground))]">
               <PackageCheck className="w-4 h-4 text-[hsl(var(--primary))]" />
-              Project Handover Checklist
+              {tr("Project Handover Checklist")}
             </CardTitle>
-            <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))]">
-              {completedCount}/{totalCount} Completed
+            <span className="text-[0.6875rem] font-semibold text-[hsl(var(--muted-foreground))]">
+              {tr(completedCount)}/{tr(totalCount)}{tr(" Completed")}
             </span>
           </CardHeader>
 
@@ -476,7 +477,7 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
               <div
                 key={item.id}
                 onClick={() => handleItemClick(item.href)}
-                title={canOpenHref(item.href) ? undefined : "You don't have permission to open this section"}
+                title={canOpenHref(item.href) ? undefined : tr("You don't have permission to open this section")}
                 className={cn(
                   'flex items-center justify-between p-3 px-3.5 rounded-lg border transition-all cursor-pointer group',
                   !canOpenHref(item.href) && 'cursor-not-allowed opacity-70',
@@ -505,10 +506,10 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
                         item.passed ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--foreground))]'
                       )}
                     >
-                      {item.title}
+                      {tr(item.title)}
                     </span>
-                    <span className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                      {item.subtitle}
+                    <span className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
+                      {tr(item.subtitle)}
                     </span>
                   </div>
                 </div>
@@ -517,13 +518,13 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
                 <div className="flex items-center gap-2 shrink-0">
                   <span
                     className={cn(
-                      'text-[10px] font-bold px-2 py-0.5 rounded-md border',
+                      'text-[0.625rem] font-bold px-2 py-0.5 rounded-md border',
                       item.passed
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                         : 'bg-slate-100 text-slate-600 border-slate-200'
                     )}
                   >
-                    {item.tag}
+                    {tr(item.tag)}
                   </span>
                   <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[hsl(var(--primary))] transition-colors" />
                 </div>
@@ -537,7 +538,7 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
       <Card id="closeout-docs" className="bg-white border border-[hsl(var(--border))] rounded-xl shadow-xs overflow-hidden">
         <CardHeader className="p-4 px-5 border-b border-[hsl(var(--border))] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <CardTitle className="text-sm font-bold text-[hsl(var(--foreground))]">
-            Closeout Document Register (Warranties, Care & Appliance Manuals)
+            {tr("Closeout Document Register (Warranties, Care & Appliance Manuals)")}
           </CardTitle>
 
           {/* Search & Filter */}
@@ -545,10 +546,10 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
             <div className="relative w-44">
               <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <Input
-                placeholder="Search..."
+                placeholder={tr("Search...")}
                 value={docSearch}
                 onChange={(e) => setDocSearch(e.target.value)}
-                className="pl-8 h-8 text-xs"
+                className="ps-8 h-8 text-xs"
               />
             </div>
 
@@ -557,10 +558,10 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
               onChange={(e) => setDocFilterType(e.target.value as any)}
               className="h-8 px-2 text-xs font-medium rounded-lg border border-[hsl(var(--border))] bg-white focus:outline-none"
             >
-              <option value="all">All</option>
-              <option value="warranty">Warranties</option>
-              <option value="manual">Care & Appliance Manuals</option>
-              <option value="certificate">Certificates</option>
+              <option value="all">{tr("All")}</option>
+              <option value="warranty">{tr("Warranties")}</option>
+              <option value="manual">{tr("Care & Appliance Manuals")}</option>
+              <option value="certificate">{tr("Certificates")}</option>
             </select>
           </div>
         </CardHeader>
@@ -568,7 +569,7 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
         <CardContent className="p-4">
           {filteredDocuments.length === 0 ? (
             <div className="text-center py-8 text-xs text-[hsl(var(--muted-foreground))]">
-              No closeout manuals or certificates uploaded yet. Click &quot;Add Document&quot; above to add one.
+              {tr("No closeout manuals or certificates uploaded yet. Click \"Add Document\" above to add one.")}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -582,8 +583,8 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
                       <FileText className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <h4 className="text-xs font-semibold text-[hsl(var(--foreground))] truncate">{doc.name}</h4>
-                      <p className="text-[10px] text-[hsl(var(--muted-foreground))] uppercase font-bold tracking-wider">{doc.type}</p>
+                      <h4 className="text-xs font-semibold text-[hsl(var(--foreground))] truncate">{tr(doc.name)}</h4>
+                      <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))] uppercase font-bold tracking-wider">{tr(doc.type)}</p>
                     </div>
                   </div>
                   <div className="flex gap-1.5 shrink-0">
@@ -621,7 +622,7 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
               <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--border))]">
                 <h3 className="text-sm font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
                   <FileText className="w-4 h-4 text-[hsl(var(--primary))]" />
-                  Log Closeout Document
+                  {tr("Log Closeout Document")}
                 </h3>
                 <button onClick={closeModal} className="p-1 rounded hover:bg-slate-100 text-slate-500">
                   <X className="w-4 h-4" />
@@ -631,29 +632,29 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
               <form onSubmit={handleUploadDocument}>
                 <div className="p-4 space-y-3.5">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold">Document Title</label>
+                    <label className="text-xs font-semibold">{tr("Document Title")}</label>
                     <Input
                       required
-                      placeholder="e.g. Modular Kitchen Care Guide or Chimney Warranty"
+                      placeholder={tr("e.g. Modular Kitchen Care Guide or Chimney Warranty")}
                       value={docName}
                       onChange={(e) => setDocName(e.target.value)}
                       className="h-9 text-xs"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold">Category</label>
+                    <label className="text-xs font-semibold">{tr("Category")}</label>
                     <select
                       className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-white focus:outline-none"
                       value={docType}
                       onChange={(e) => setDocType(e.target.value)}
                     >
-                      <option value="warranty">Warranty Card / Contract</option>
-                      <option value="manual">Interior Care & Appliance Manual</option>
-                      <option value="certificate">Handover / NOC Certificate</option>
+                      <option value="warranty">{tr("Warranty Card / Contract")}</option>
+                      <option value="manual">{tr("Interior Care & Appliance Manual")}</option>
+                      <option value="certificate">{tr("Handover / NOC Certificate")}</option>
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold block mb-1">Select File</label>
+                    <label className="text-xs font-semibold block mb-1">{tr("Select File")}</label>
                     <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 flex flex-col items-center justify-center gap-1.5 hover:border-blue-400 transition-colors relative cursor-pointer bg-slate-50">
                       <input
                         type="file"
@@ -666,7 +667,7 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
                       />
                       <FileDown className="w-6 h-6 text-slate-400" />
                       <span className="text-xs font-medium text-center text-slate-700 truncate w-full">
-                        {selectedFile ? selectedFile.name : 'Click to select file'}
+                        {selectedFile ? selectedFile.name : tr("Click to select file")}
                       </span>
                     </div>
                   </div>
@@ -674,11 +675,11 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
 
                 <div className="flex items-center justify-end gap-2 p-3.5 border-t border-[hsl(var(--border))] bg-slate-50">
                   <Button variant="outline" size="sm" type="button" onClick={closeModal} className="h-8 text-xs">
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                   <Button type="submit" size="sm" disabled={updating} className="h-8 text-xs">
-                    {updating && <Loader2 className="w-3 h-3 animate-spin mr-1.5" />}
-                    Save Document
+                    {updating && <Loader2 className="w-3 h-3 animate-spin me-1.5" />}
+                    {tr("Save Document")}
                   </Button>
                 </div>
               </form>
@@ -698,11 +699,11 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
               className="w-full max-w-2xl border border-slate-200 rounded-xl bg-white shadow-2xl overflow-hidden my-6"
             >
               <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50">
-                <span className="text-sm font-bold text-slate-900">Certificate of Practical Completion</span>
+                <span className="text-sm font-bold text-slate-900">{tr("Certificate of Practical Completion")}</span>
                 <div className="flex items-center gap-2">
                   <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => window.print()}>
                     <Printer className="w-3.5 h-3.5" />
-                    Print
+                    {tr("Print")}
                   </Button>
                   <button onClick={() => setIsCertModalOpen(false)} className="p-1 rounded hover:bg-slate-200 text-slate-500">
                     <X className="w-4 h-4" />
@@ -712,29 +713,29 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
 
               <div className="p-6 space-y-5 bg-white text-slate-900">
                 <div className="text-center space-y-1 border-b pb-4">
-                  <h3 className="text-lg font-black tracking-tight">HANDOVER & PRACTICAL COMPLETION CERTIFICATE</h3>
+                  <h3 className="text-lg font-black tracking-tight">{tr("HANDOVER & PRACTICAL COMPLETION CERTIFICATE")}</h3>
                   <p className="text-xs text-slate-500">
-                    Project: <span className="font-bold text-slate-800">{project?.name || 'Project'}</span> ({project?.code || 'PRJ'})
+                    {tr("Project: ")}<span className="font-bold text-slate-800">{project?.name || tr("Project")}</span> ({project?.code || tr("PRJ")})
                   </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-slate-50 text-xs">
-                  <div><span className="text-slate-400">Client:</span> <span className="font-bold">{project?.client || 'Client'}</span></div>
-                  <div><span className="text-slate-400">Date:</span> <span className="font-bold">{new Date().toLocaleDateString('en-IN')}</span></div>
-                  <div><span className="text-slate-400">Readiness:</span> <span className="font-bold text-emerald-600">{readinessPercentage}% Complete</span></div>
-                  <div><span className="text-slate-400">Status:</span> <span className="font-bold">{readinessPercentage === 100 ? 'Ready' : 'In Progress'}</span></div>
+                  <div><span className="text-slate-400">{tr("Client:")}</span> <span className="font-bold">{project?.client || tr("Client")}</span></div>
+                  <div><span className="text-slate-400">{tr("Date:")}</span> <span className="font-bold">{new Date().toLocaleDateString('en-IN')}</span></div>
+                  <div><span className="text-slate-400">{tr("Readiness:")}</span> <span className="font-bold text-emerald-600">{tr(readinessPercentage)}{tr("% Complete")}</span></div>
+                  <div><span className="text-slate-400">{tr("Status:")}</span> <span className="font-bold">{readinessPercentage === 100 ? tr("Ready") : tr("In Progress")}</span></div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <span className="text-xs font-bold text-slate-700">Project Audit Checklist</span>
+                  <span className="text-xs font-bold text-slate-700">{tr("Project Audit Checklist")}</span>
                   <div className="border rounded-lg divide-y text-xs">
                     {checklistItems.map((c) => (
                       <div key={c.id} className="p-2.5 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           {c.passed ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> : <XCircle className="w-3.5 h-3.5 text-slate-400" />}
-                          <span>{c.title}</span>
+                          <span>{tr(c.title)}</span>
                         </div>
-                        <span className="font-semibold text-slate-600">{c.subtitle}</span>
+                        <span className="font-semibold text-slate-600">{tr(c.subtitle)}</span>
                       </div>
                     ))}
                   </div>
@@ -743,11 +744,11 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
                 <div className="grid grid-cols-2 gap-6 pt-6 border-t text-center text-xs">
                   <div className="space-y-6">
                     <div className="h-8 border-b border-dashed" />
-                    <div className="font-semibold">Project Manager</div>
+                    <div className="font-semibold">{tr("Project Manager")}</div>
                   </div>
                   <div className="space-y-6">
                     <div className="h-8 border-b border-dashed" />
-                    <div className="font-semibold">Client Representative</div>
+                    <div className="font-semibold">{tr("Client Representative")}</div>
                   </div>
                 </div>
               </div>

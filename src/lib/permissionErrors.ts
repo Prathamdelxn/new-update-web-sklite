@@ -1,3 +1,4 @@
+import { tr } from '@/i18n';
 // Turns generic error toasts into "no permission" messages when the request
 // behind them was refused with 403.
 //
@@ -22,7 +23,7 @@ export const toPermissionMessage = (message: string): string => {
   if (forbidden) {
     const detail = forbidden[1].trim();
     if (!detail || /^insufficient permissions?\.?$/i.test(detail)) {
-      return "You don't have permission to do this.";
+      return tr("You don't have permission to do this.");
     }
     return detail.charAt(0).toUpperCase() + detail.slice(1);
   }
@@ -31,11 +32,11 @@ export const toPermissionMessage = (message: string): string => {
 
   // "Failed to load plan folders" -> "You don't have permission to view plan folders"
   const failedLoad = message.match(/^Failed to (?:load|fetch)\s+(.*)$/i);
-  if (failedLoad) return `You don't have permission to view ${failedLoad[1]}`;
+  if (failedLoad) return tr("You don't have permission to view {{value}}", { value: failedLoad[1] });
 
   // "Failed to delete material" -> "You don't have permission to delete material"
   const failed = message.match(/^Failed to\s+(.*)$/i);
-  if (failed) return `You don't have permission to ${failed[1]}`;
+  if (failed) return tr("You don't have permission to {{value}}", { value: failed[1] });
 
   return message;
 };

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Port of src/components/crm/WonProjectsView.tsx, rewired to interiorProjectService
 // (interior-os backend's /projects list) instead of sky-lite's own /projects.
@@ -25,7 +26,7 @@ export function InteriorWonProjectsView() {
   });
 
   if (isLoading) {
-    return <div className="p-12 text-center text-[hsl(var(--muted-foreground))]">Loading converted projects...</div>;
+    return <div className="p-12 text-center text-[hsl(var(--muted-foreground))]">{tr("Loading converted projects...")}</div>;
   }
 
   if (!projects || projects.length === 0) {
@@ -34,9 +35,9 @@ export function InteriorWonProjectsView() {
         <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center text-amber-400 mb-4">
           <Trophy size={32} />
         </div>
-        <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))] tracking-tight">No Converted Projects Yet</h2>
+        <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))] tracking-tight">{tr("No Converted Projects Yet")}</h2>
         <p className="text-sm text-[hsl(var(--muted-foreground))] mt-2 max-w-sm">
-          Once a quotation is accepted and converted, the project will appear here for the execution team.
+          {tr("Once a quotation is accepted and converted, the project will appear here for the execution team.")}
         </p>
       </div>
     );
@@ -61,21 +62,21 @@ export function InteriorWonProjectsView() {
 
           <div className="bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-2xl p-4 mt-auto space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Final Budget</span>
+              <span className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Final Budget")}</span>
               <span className="text-sm font-black text-[hsl(var(--foreground))]">
                 ₹{(Number(project.budget?.amount ?? project.budget ?? project.totalBudget) || 0).toLocaleString('en-IN')}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Start Date</span>
+              <span className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Start Date")}</span>
               <span className="text-xs font-semibold text-[hsl(var(--foreground))]">
                 {project.startDate ? new Date(project.startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : (project.createdAt ? new Date(project.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—')}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Status</span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded uppercase bg-blue-100 text-blue-700">
-                {project.status || project.health || 'Active'}
+              <span className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Status")}</span>
+              <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded uppercase bg-blue-100 text-blue-700">
+                {project.status || project.health || tr("Active")}
               </span>
             </div>
           </div>
@@ -84,7 +85,7 @@ export function InteriorWonProjectsView() {
             onClick={() => router.push(`/interior-new/projects/${project.id || project._id}`)}
             className="w-full mt-4 bg-amber-50 text-amber-700 font-bold text-sm py-3 rounded-xl hover:bg-amber-100 transition-colors flex items-center justify-center gap-2 active:scale-95"
           >
-            Open Project Details <ArrowRight size={16} />
+            {tr("Open Project Details ")}<ArrowRight size={16} />
           </button>
         </div>
       ))}

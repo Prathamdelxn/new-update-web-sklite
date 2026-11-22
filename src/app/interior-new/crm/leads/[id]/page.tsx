@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -132,7 +133,7 @@ const { hasPermission: canDo } = usePermissions();
     if (!text) return;
     navigator.clipboard.writeText(text);
     setCopiedLocation(true);
-    toast.success('Address copied to clipboard');
+    toast.success(tr("Address copied to clipboard"));
     setTimeout(() => setCopiedLocation(false), 2000);
   };
 
@@ -183,11 +184,11 @@ const { hasPermission: canDo } = usePermissions();
     setIsDeletingDrawing(true);
     try {
       await interiorCrmService.deleteDrawing(params.id as string, drawingId);
-      toast.success(`Drawing "${drawingToDelete.title || drawingToDelete.name || 'Drawing'}" deleted successfully.`);
+      toast.success(tr("Drawing \"{{value}}\" deleted successfully.", { value: drawingToDelete.title || drawingToDelete.name || 'Drawing' }));
       setDrawingToDelete(null);
       fetchData();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || err.message || 'Failed to delete drawing');
+      toast.error(err.response?.data?.error || err.message || tr("Failed to delete drawing"));
     } finally {
       setIsDeletingDrawing(false);
     }
@@ -207,12 +208,12 @@ const { hasPermission: canDo } = usePermissions();
         action: 'approve',
         versionNumber
       });
-      toast.success(`Drawing "${file.title || file.name || 'Drawing'}" approved successfully! Live to client.`);
+      toast.success(tr("Drawing \"{{value}}\" approved successfully! Live to client.", { value: file.title || file.name || 'Drawing' }));
       setIsConfirmApproveModalOpen(false);
       setSelectedDrawingForConfirmApprove(null);
       fetchData();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || err.message || 'Failed to approve drawing');
+      toast.error(err.response?.data?.error || err.message || tr("Failed to approve drawing"));
     } finally {
       setApprovingDrawingId(null);
     }
@@ -306,7 +307,7 @@ const { hasPermission: canDo } = usePermissions();
   const handleActivitySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedRemarks = activityForm.remarks.trim();
-    if (!trimmedRemarks) return toast.error('Please enter remarks/notes for the activity');
+    if (!trimmedRemarks) return toast.error(tr("Please enter remarks/notes for the activity"));
 
     setIsSubmitting(true);
     try {
@@ -315,12 +316,12 @@ const { hasPermission: canDo } = usePermissions();
         remarks: trimmedRemarks,
         customer: params.id
       });
-      toast.success('Activity logged successfully!');
+      toast.success(tr("Activity logged successfully!"));
       setIsActivityModalOpen(false);
       setActivityForm({ type: 'Phone Call', status: 'Completed', remarks: '' });
       fetchData();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || error.message || 'Failed to log activity');
+      toast.error(error.response?.data?.message || error.message || tr("Failed to log activity"));
     } finally {
       setIsSubmitting(false);
     }
@@ -334,9 +335,9 @@ const { hasPermission: canDo } = usePermissions();
     const quoteAmount = q?.grandTotal || 0;
 
     const ok = await confirm({
-      title: 'Delete Quotation',
-      message: `Are you sure you want to delete "${displayTitle}" (${formatSmartCurrency(quoteAmount, currencySymbol).display})? This action cannot be undone.`,
-      confirmText: 'Delete Quotation',
+      title: tr("Delete Quotation"),
+      message: tr("Are you sure you want to delete \"{{displayTitle}}\" ({{display}})? This action cannot be undone.", { displayTitle: displayTitle, display: formatSmartCurrency(quoteAmount, currencySymbol).display }),
+      confirmText: tr("Delete Quotation"),
       type: 'danger',
     });
     if (!ok) return;
@@ -354,7 +355,7 @@ const { hasPermission: canDo } = usePermissions();
         remarks: `Deleted Quotation: ${quoteTitle}`,
       });
 
-      toast.success(`${quoteTitle} deleted successfully.`);
+      toast.success(tr("{{quoteTitle}} deleted successfully.", { quoteTitle: quoteTitle }));
       fetchData();
       setActiveQuotationIndex((prev) => {
         if (prev === null) return null;
@@ -366,7 +367,7 @@ const { hasPermission: canDo } = usePermissions();
         return prev;
       });
     } catch (err: any) {
-      toast.error(err.response?.data?.error || err.message || 'Failed to delete quotation');
+      toast.error(err.response?.data?.error || err.message || tr("Failed to delete quotation"));
     }
   };
 
@@ -1064,16 +1065,16 @@ const { hasPermission: canDo } = usePermissions();
     return (
       <InteriorShell>
         {isMissing ? (
-          <div className="p-8 text-rose-500 font-bold text-center">Lead not found.</div>
+          <div className="p-8 text-rose-500 font-bold text-center">{tr("Lead not found.")}</div>
         ) : (
           <div className="p-8 flex flex-col items-center gap-3 text-center">
             <p className="font-bold text-[hsl(var(--foreground))]">
-              {isLeadFetching ? 'Still loading this lead…' : "Couldn't load this lead"}
+              {isLeadFetching ? tr("Still loading this lead…") : tr("Couldn't load this lead")}
             </p>
             <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-sm">
               {status === 403
-                ? "You don't have permission to view this lead."
-                : 'The connection is slow or was interrupted. Your data is safe — try again.'}
+                ? tr("You don't have permission to view this lead.")
+                : tr("The connection is slow or was interrupted. Your data is safe — try again.")}
             </p>
             {status !== 403 && (
               <button
@@ -1082,7 +1083,7 @@ const { hasPermission: canDo } = usePermissions();
                 disabled={isLeadFetching}
                 className="px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold disabled:opacity-60 cursor-pointer"
               >
-                {isLeadFetching ? 'Retrying…' : 'Retry'}
+                {isLeadFetching ? tr("Retrying…") : tr("Retry")}
               </button>
             )}
           </div>
@@ -1096,10 +1097,10 @@ const { hasPermission: canDo } = usePermissions();
     setIsDeletingLead(true);
     try {
       await interiorCrmService.deleteCustomer(lead._id);
-      toast.success('Lead deleted successfully');
+      toast.success(tr("Lead deleted successfully"));
       router.push('/interior-new/crm');
     } catch (error: any) {
-      toast.error('Failed to delete lead');
+      toast.error(tr("Failed to delete lead"));
     } finally {
       setIsDeletingLead(false);
     }
@@ -1200,7 +1201,7 @@ const { hasPermission: canDo } = usePermissions();
             <button 
               onClick={() => router.push('/interior-new/crm')}
               className="p-2 bg-[hsl(var(--muted)/0.6)] border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] rounded-lg transition-all shrink-0 active:scale-95 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
-              title="Back to CRM Leads"
+              title={tr("Back to CRM Leads")}
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
@@ -1208,33 +1209,33 @@ const { hasPermission: canDo } = usePermissions();
             <div className="flex flex-col gap-1 min-w-0 max-w-full">
               <div className="flex items-center gap-2 flex-wrap min-w-0">
                 <h1 
-                  className="text-base sm:text-lg md:text-xl font-black text-[hsl(var(--foreground))] tracking-tight truncate max-w-[200px] xs:max-w-[280px] sm:max-w-[420px]"
+                  className="text-base sm:text-lg md:text-xl font-black text-[hsl(var(--foreground))] tracking-tight truncate max-w-[12.5rem] xs:max-w-[17.5rem] sm:max-w-[26.25rem]"
                   title={lead.name}
                 >
-                  {lead.name}
+                  {tr(lead.name)}
                 </h1>
-                <span className="font-mono bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-bold border border-[hsl(var(--border))] shrink-0">
-                  {lead.leadNumber || 'LD-XXXX'}
+                <span className="font-mono bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-2 py-0.5 rounded text-[0.625rem] sm:text-[0.6875rem] font-bold border border-[hsl(var(--border))] shrink-0">
+                  {lead.leadNumber || tr("LD-XXXX")}
                 </span>
                 {lead.leadSource && (
-                  <span className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.4)] px-2 py-0.5 rounded border border-[hsl(var(--border))] shrink-0">
-                    {lead.leadSource}
+                  <span className="text-[0.625rem] font-semibold text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.4)] px-2 py-0.5 rounded border border-[hsl(var(--border))] shrink-0">
+                    {tr(lead.leadSource)}
                   </span>
                 )}
               </div>
               
-              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[0.6875rem] sm:text-xs">
                 <a 
                   href={`tel:${lead.mobileNumber}`} 
                   className="inline-flex items-center gap-1 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] font-medium bg-[hsl(var(--muted)/0.4)] px-2 py-0.5 rounded border border-[hsl(var(--border))] transition-colors shrink-0"
                 >
-                  <Phone size={11} className="text-blue-500 shrink-0" /> {lead.mobileNumber}
+                  <Phone size={11} className="text-blue-500 shrink-0" /> {tr(lead.mobileNumber)}
                 </a>
                 {lead.email && (
                   <a 
                     href={`mailto:${lead.email}`} 
                     title={lead.email}
-                    className="inline-flex items-center gap-1 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] font-medium bg-[hsl(var(--muted)/0.4)] px-2 py-0.5 rounded border border-[hsl(var(--border))] transition-colors min-w-0 max-w-[180px] sm:max-w-[240px] overflow-hidden"
+                    className="inline-flex items-center gap-1 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] font-medium bg-[hsl(var(--muted)/0.4)] px-2 py-0.5 rounded border border-[hsl(var(--border))] transition-colors min-w-0 max-w-[11.25rem] sm:max-w-[15rem] overflow-hidden"
                   >
                     <Mail size={11} className="text-purple-500 shrink-0" />
                     <span className="truncate min-w-0 flex-1">{lead.email}</span>
@@ -1242,15 +1243,15 @@ const { hasPermission: canDo } = usePermissions();
                 )}
                 {(lead.projectLocation || lead.city) && (
                   <div 
-                    title={`Site Location: ${lead.projectLocation || lead.city}`}
+                    title={tr("Site Location: {{value}}", { value: lead.projectLocation || lead.city })}
                     onClick={() => handleCopyLocation(lead.projectLocation || lead.city)}
-                    className="inline-flex items-center gap-1 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] font-medium bg-[hsl(var(--muted)/0.4)] px-2 py-0.5 rounded border border-[hsl(var(--border))] min-w-0 max-w-[220px] xs:max-w-[300px] sm:max-w-[420px] transition-colors group cursor-pointer"
+                    className="inline-flex items-center gap-1 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] font-medium bg-[hsl(var(--muted)/0.4)] px-2 py-0.5 rounded border border-[hsl(var(--border))] min-w-0 max-w-[13.75rem] xs:max-w-[18.75rem] sm:max-w-[26.25rem] transition-colors group cursor-pointer"
                   >
                     <MapPin size={11} className="text-amber-500 shrink-0" />
                     <span className="truncate">
                       {lead.projectLocation || lead.city}
                     </span>
-                    <span title="Copy Address" className="opacity-60 group-hover:opacity-100 transition-opacity ml-0.5 shrink-0">
+                    <span title={tr("Copy Address")} className="opacity-60 group-hover:opacity-100 transition-opacity ms-0.5 shrink-0">
                       {copiedLocation ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
                     </span>
                   </div>
@@ -1309,8 +1310,8 @@ const { hasPermission: canDo } = usePermissions();
               }
 
               return (
-                <span className={cn("text-[11px] font-bold px-2.5 py-1 rounded-lg border shrink-0", badgeColor)}>
-                  {displayStatus}
+                <span className={cn("text-[0.6875rem] font-bold px-2.5 py-1 rounded-lg border shrink-0", badgeColor)}>
+                  {tr(displayStatus)}
                 </span>
               );
             })()}
@@ -1325,21 +1326,21 @@ const { hasPermission: canDo } = usePermissions();
                     router.push(`/interior-new/projects/${prjId}`);
                   }}
                   className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95"
-                  title="Open Live Project Workspace"
+                  title={tr("Open Live Project Workspace")}
                 >
-                  <ExternalLink size={12} /> View Live Project
+                  <ExternalLink size={12} />{tr(" View Live Project")}
                 </button>
               )
             ) : isLost ? (
               <div className="flex items-center gap-1.5">
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-500/10 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold">
-                  <Lock size={12} /> Lead Lost
+                  <Lock size={12} />{tr(" Lead Lost")}
                 </span>
                 {(canDo('crm_leads', 'delete')) && (
                   <button 
                     onClick={() => setIsDeleteModalOpen(true)}
                     className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg transition-all active:scale-95"
-                    title="Delete Lead"
+                    title={tr("Delete Lead")}
                   >
                     <Trash2 size={14} />
                   </button>
@@ -1353,9 +1354,9 @@ const { hasPermission: canDo } = usePermissions();
                       <button
                         onClick={() => setIsConvertToProjectOpen(true)}
                         className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95"
-                        title="Convert to Won Project"
+                        title={tr("Convert to Won Project")}
                       >
-                        <CheckCircle2 size={12} /> Convert to Project
+                        <CheckCircle2 size={12} />{tr(" Convert to Project")}
                       </button>
                     )
                   )
@@ -1369,9 +1370,9 @@ const { hasPermission: canDo } = usePermissions();
                       <button
                         onClick={() => setIsFollowUpModalOpen(true)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
-                        title="Schedule Initial Follow-up"
+                        title={tr("Schedule Initial Follow-up")}
                       >
-                        <Calendar size={12} /> Follow-up
+                        <Calendar size={12} />{tr(" Follow-up")}
                       </button>
                     )
                   )}
@@ -1380,7 +1381,7 @@ const { hasPermission: canDo } = usePermissions();
                   <button
                     onClick={() => setIsMarkAsLostOpen(true)}
                     className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg transition-all active:scale-95"
-                    title="Mark Lead as Lost"
+                    title={tr("Mark Lead as Lost")}
                   >
                     <X size={14} />
                   </button>
@@ -1390,7 +1391,7 @@ const { hasPermission: canDo } = usePermissions();
                   <button 
                     onClick={() => setIsEditModalOpen(true)}
                     className="p-1.5 bg-[hsl(var(--muted))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-lg transition-all active:scale-95"
-                    title="Edit Lead Details"
+                    title={tr("Edit Lead Details")}
                   >
                     <Pencil size={14} />
                   </button>
@@ -1400,7 +1401,7 @@ const { hasPermission: canDo } = usePermissions();
                   <button 
                     onClick={() => setIsDeleteModalOpen(true)}
                     className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg transition-all active:scale-95"
-                    title="Delete Lead"
+                    title={tr("Delete Lead")}
                   >
                     <Trash2 size={14} />
                   </button>
@@ -1418,8 +1419,8 @@ const { hasPermission: canDo } = usePermissions();
                 <Lock size={15} />
               </div>
               <div>
-                <h3 className="text-xs font-bold text-[hsl(var(--foreground))]">Lead Converted to Live Execution Project</h3>
-                <p className="text-[11px] text-[hsl(var(--muted-foreground))]">This lead is linked to an active project and is preserved in read-only mode.</p>
+                <h3 className="text-xs font-bold text-[hsl(var(--foreground))]">{tr("Lead Converted to Live Execution Project")}</h3>
+                <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">{tr("This lead is linked to an active project and is preserved in read-only mode.")}</p>
               </div>
             </div>
             {lead.linkedProject && (
@@ -1432,7 +1433,7 @@ const { hasPermission: canDo } = usePermissions();
                 }}
                 className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shrink-0 active:scale-95"
               >
-                Open Project <ExternalLink size={12} />
+                {tr("Open Project ")}<ExternalLink size={12} />
               </button>
             )}
           </div>
@@ -1446,15 +1447,15 @@ const { hasPermission: canDo } = usePermissions();
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-xs font-bold text-[hsl(var(--foreground))]">Lead Marked as Lost (Locked & Read-Only)</h3>
+                  <h3 className="text-xs font-bold text-[hsl(var(--foreground))]">{tr("Lead Marked as Lost (Locked & Read-Only)")}</h3>
                   {lead.lostReason && (
-                    <span className="px-2 py-0.5 rounded bg-rose-500/15 text-rose-600 dark:text-rose-400 text-[10px] font-bold border border-rose-500/20">
-                      Reason: {lead.lostReason}
+                    <span className="px-2 py-0.5 rounded bg-rose-500/15 text-rose-600 dark:text-rose-400 text-[0.625rem] font-bold border border-rose-500/20">
+                      {tr("Reason: ")}{tr(lead.lostReason)}
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-0.5">
-                  {lead.remarks ? `"${lead.remarks}" — ` : ''}Preserved in read-only mode.
+                <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] mt-0.5">
+                  {lead.remarks ? `"${lead.remarks}" — ` : ''}{tr("Preserved in read-only mode.")}
                 </p>
               </div>
             </div>
@@ -1487,7 +1488,7 @@ const { hasPermission: canDo } = usePermissions();
                     : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.5)]"
                 )}
               >
-                <span>{tab.label}</span>
+                <span>{tr(tab.label)}</span>
                 {isLocked && (
                   <Lock size={11} className="opacity-60 shrink-0" />
                 )}
@@ -1507,37 +1508,37 @@ const { hasPermission: canDo } = usePermissions();
                 <div className="bg-[hsl(var(--card))] p-3 rounded-xl border border-[hsl(var(--border))] flex items-center gap-2.5">
                   <span className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0"><User size={15} /></span>
                   <div className="overflow-hidden min-w-0">
-                    <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider truncate">Client Source</p>
-                    <p className="font-bold text-[hsl(var(--foreground))] text-xs truncate mt-0.5">{lead.leadSource || 'Manual Entry'}</p>
+                    <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider truncate">{tr("Client Source")}</p>
+                    <p className="font-bold text-[hsl(var(--foreground))] text-xs truncate mt-0.5">{lead.leadSource || tr("Manual Entry")}</p>
                   </div>
                 </div>
                 <div className="bg-[hsl(var(--card))] p-3 rounded-xl border border-[hsl(var(--border))] flex items-center gap-2.5">
                   <span className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0"><Building size={15} /></span>
                   <div className="overflow-hidden min-w-0">
-                    <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider truncate">Property Scope</p>
-                    <p className="font-bold text-[hsl(var(--foreground))] text-xs truncate mt-0.5">{lead.propertyType || 'Standard'}</p>
+                    <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider truncate">{tr("Property Scope")}</p>
+                    <p className="font-bold text-[hsl(var(--foreground))] text-xs truncate mt-0.5">{lead.propertyType || tr("Standard")}</p>
                   </div>
                 </div>
                 <div className="bg-[hsl(var(--card))] p-3 rounded-xl border border-[hsl(var(--border))] flex items-center gap-2.5">
                   <span className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 shrink-0"><DollarSign size={15} /></span>
                   <div className="overflow-hidden min-w-0">
-                    <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider truncate">Est. Budget</p>
+                    <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider truncate">{tr("Est. Budget")}</p>
                     <p className="font-bold text-xs truncate mt-0.5 text-emerald-600 dark:text-emerald-400">
                       {lead.quotations?.[lead.quotations.length - 1]?.grandTotal
                         ? `${currencySymbol} ${lead.quotations[lead.quotations.length - 1].grandTotal.toLocaleString()}`
-                        : lead.budgetRange || 'Pending'}
+                        : lead.budgetRange || tr("Pending")}
                     </p>
                   </div>
                 </div>
                 <div 
                   className="bg-[hsl(var(--card))] p-3 rounded-xl border border-[hsl(var(--border))] flex items-center gap-2.5 group cursor-pointer hover:border-amber-500/40 transition-all"
-                  title={`Site Location: ${lead.projectLocation || lead.city || 'Not specified'}`}
+                  title={tr("Site Location: {{value}}", { value: lead.projectLocation || lead.city || 'Not specified' })}
                   onClick={() => handleCopyLocation(lead.projectLocation || lead.city)}
                 >
                   <span className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-600 shrink-0"><MapPin size={15} /></span>
                   <div className="overflow-hidden min-w-0 flex-1">
-                    <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider truncate">Location</p>
-                    <p className="font-bold text-[hsl(var(--foreground))] text-xs truncate mt-0.5">{lead.projectLocation || lead.city || 'Not specified'}</p>
+                    <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider truncate">{tr("Location")}</p>
+                    <p className="font-bold text-[hsl(var(--foreground))] text-xs truncate mt-0.5">{lead.projectLocation || lead.city || tr("Not specified")}</p>
                   </div>
                   <span className="opacity-0 group-hover:opacity-100 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-opacity shrink-0">
                     {copiedLocation ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
@@ -1558,17 +1559,17 @@ const { hasPermission: canDo } = usePermissions();
                           <MapPin size={14} />
                         </div>
                         <div>
-                          <h3 className="text-xs font-bold text-[hsl(var(--foreground))]">Site & Project Location</h3>
+                          <h3 className="text-xs font-bold text-[hsl(var(--foreground))]">{tr("Site & Project Location")}</h3>
                         </div>
                       </div>
                       {!isReadOnly && (
                         (canDo('crm_leads', 'update')) && (
                           <button
                             onClick={() => setIsEditModalOpen(true)}
-                            className="text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 px-2 py-0.5 rounded transition-colors flex items-center gap-1"
-                            title="Edit Location & Lead Details"
+                            className="text-[0.6875rem] font-bold text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 px-2 py-0.5 rounded transition-colors flex items-center gap-1"
+                            title={tr("Edit Location & Lead Details")}
                           >
-                            <Pencil size={11} /> Edit
+                            <Pencil size={11} />{tr(" Edit")}
                           </button>
                         )
                       )}
@@ -1578,11 +1579,11 @@ const { hasPermission: canDo } = usePermissions();
                       <div className="flex items-start gap-2">
                         <MapPin size={14} className="text-amber-500 shrink-0 mt-0.5" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-0.5">
-                            Full Site Address
+                          <p className="text-[0.625rem] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-0.5">
+                            {tr("Full Site Address")}
                           </p>
                           <p className="text-xs font-semibold text-[hsl(var(--foreground))] leading-relaxed break-words">
-                            {lead.projectLocation || lead.city || 'No specific site address provided yet.'}
+                            {lead.projectLocation || lead.city || tr("No specific site address provided yet.")}
                           </p>
                         </div>
                       </div>
@@ -1592,15 +1593,15 @@ const { hasPermission: canDo } = usePermissions();
                           <button
                             type="button"
                             onClick={() => handleCopyLocation(lead.projectLocation || lead.city)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] text-[11px] font-bold text-[hsl(var(--foreground))] transition-all active:scale-95"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] text-[0.6875rem] font-bold text-[hsl(var(--foreground))] transition-all active:scale-95"
                           >
                             {copiedLocation ? (
                               <>
-                                <Check size={11} className="text-emerald-500" /> Copied Address
+                                <Check size={11} className="text-emerald-500" />{tr(" Copied Address")}
                               </>
                             ) : (
                               <>
-                                <Copy size={11} className="text-[hsl(var(--muted-foreground))]" /> Copy Address
+                                <Copy size={11} className="text-[hsl(var(--muted-foreground))]" />{tr(" Copy Address")}
                               </>
                             )}
                           </button>
@@ -1609,9 +1610,9 @@ const { hasPermission: canDo } = usePermissions();
                             href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.projectLocation || lead.city)}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-[11px] font-bold text-blue-600 transition-all active:scale-95"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-[0.6875rem] font-bold text-blue-600 transition-all active:scale-95"
                           >
-                            <ExternalLink size={11} /> Open in Maps
+                            <ExternalLink size={11} />{tr(" Open in Maps")}
                           </a>
                         </div>
                       )}
@@ -1626,7 +1627,7 @@ const { hasPermission: canDo } = usePermissions();
                           <User size={14} />
                         </div>
                         <div>
-                          <h3 className="text-xs font-bold text-[hsl(var(--foreground))]">Lead & Contact Info</h3>
+                          <h3 className="text-xs font-bold text-[hsl(var(--foreground))]">{tr("Lead & Contact Info")}</h3>
                         </div>
                       </div>
                     </div>
@@ -1634,24 +1635,24 @@ const { hasPermission: canDo } = usePermissions();
                     <div className="space-y-2 text-xs">
                       <div className="flex items-center justify-between gap-1 p-2 rounded-lg bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border)/0.6)]">
                         <span className="text-[hsl(var(--muted-foreground))] font-medium flex items-center gap-1.5 shrink-0">
-                          <User size={12} className="text-blue-500" /> Full Name
+                          <User size={12} className="text-blue-500" />{tr(" Full Name")}
                         </span>
-                        <span className="font-bold text-[hsl(var(--foreground))] break-words min-w-0">{lead.name}</span>
+                        <span className="font-bold text-[hsl(var(--foreground))] break-words min-w-0">{tr(lead.name)}</span>
                       </div>
 
                       <div className="flex items-center justify-between gap-1 p-2 rounded-lg bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border)/0.6)]">
                         <span className="text-[hsl(var(--muted-foreground))] font-medium flex items-center gap-1.5 shrink-0">
-                          <Phone size={12} className="text-emerald-500" /> Mobile
+                          <Phone size={12} className="text-emerald-500" />{tr(" Mobile")}
                         </span>
                         <a href={`tel:${lead.mobileNumber}`} className="font-bold text-blue-600 hover:underline break-all min-w-0">
-                          {lead.mobileNumber}
+                          {tr(lead.mobileNumber)}
                         </a>
                       </div>
 
                       {lead.email && (
                         <div className="flex items-center justify-between gap-1 p-2 rounded-lg bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border)/0.6)]">
                           <span className="text-[hsl(var(--muted-foreground))] font-medium flex items-center gap-1.5 shrink-0">
-                            <Mail size={12} className="text-purple-500" /> Email
+                            <Mail size={12} className="text-purple-500" />{tr(" Email")}
                           </span>
                           <a href={`mailto:${lead.email}`} className="font-bold text-blue-600 hover:underline break-all min-w-0">
                             {lead.email}
@@ -1661,19 +1662,19 @@ const { hasPermission: canDo } = usePermissions();
 
                       <div className="flex items-center justify-between gap-1 p-2 rounded-lg bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border)/0.6)]">
                         <span className="text-[hsl(var(--muted-foreground))] font-medium flex items-center gap-1.5 shrink-0">
-                          <Building size={12} className="text-indigo-500" /> Property Type
+                          <Building size={12} className="text-indigo-500" />{tr(" Property Type")}
                         </span>
-                        <span className="font-bold text-[hsl(var(--foreground))] break-words min-w-0">{lead.propertyType || 'Standard'}</span>
+                        <span className="font-bold text-[hsl(var(--foreground))] break-words min-w-0">{lead.propertyType || tr("Standard")}</span>
                       </div>
 
                       <div className="flex items-center justify-between gap-1 p-2 rounded-lg bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border)/0.6)]">
                         <span className="text-[hsl(var(--muted-foreground))] font-medium flex items-center gap-1.5 shrink-0">
-                          <DollarSign size={12} className="text-amber-500" /> Budget / Quote
+                          <DollarSign size={12} className="text-amber-500" />{tr(" Budget / Quote")}
                         </span>
                         <span className="font-bold text-emerald-600 dark:text-emerald-400 break-words min-w-0">
                           {lead.quotations?.[lead.quotations.length - 1]?.grandTotal
                             ? `${currencySymbol} ${lead.quotations[lead.quotations.length - 1].grandTotal.toLocaleString()}`
-                            : lead.budgetRange || 'Pending'}
+                            : lead.budgetRange || tr("Pending")}
                         </span>
                       </div>
                     </div>
@@ -1684,7 +1685,7 @@ const { hasPermission: canDo } = usePermissions();
                 <div className="lg:col-span-7 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 sm:p-4 min-w-0">
                   <div className="flex items-center justify-between gap-2 mb-3.5 pb-2.5 border-b border-[hsl(var(--border))]">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                      <Activity className="w-3.5 h-3.5 text-blue-500" /> Activity Timeline
+                      <Activity className="w-3.5 h-3.5 text-blue-500" />{tr(" Activity Timeline")}
                     </h3>
                     {!isReadOnly && (
                       (canDo('crm_followups', 'create')) && (
@@ -1692,20 +1693,20 @@ const { hasPermission: canDo } = usePermissions();
                           onClick={() => setIsActivityModalOpen(true)}
                           className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
                         >
-                          <Plus size={12} /> Log Note
+                          <Plus size={12} />{tr(" Log Note")}
                         </button>
                       )
                     )}
                   </div>
                   
-                  <div className="relative border-l-2 border-[hsl(var(--border))] ml-2 pl-3 sm:pl-4 space-y-3 sm:space-y-3.5">
+                  <div className="relative border-s-2 border-[hsl(var(--border))] ms-2 ps-3 sm:ps-4 space-y-3 sm:space-y-3.5">
                     {activities.length === 0 ? (
                       <div className="py-8 flex flex-col items-center text-center">
                         <div className="w-10 h-10 bg-[hsl(var(--muted))] rounded-full flex items-center justify-center text-[hsl(var(--muted-foreground))] mb-2">
                           <MessageSquare size={18} />
                         </div>
-                        <p className="text-xs font-bold text-[hsl(var(--foreground))]">No activities logged</p>
-                        <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-0.5">Keep track of calls, meetings, and notes here.</p>
+                        <p className="text-xs font-bold text-[hsl(var(--foreground))]">{tr("No activities logged")}</p>
+                        <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] mt-0.5">{tr("Keep track of calls, meetings, and notes here.")}</p>
                       </div>
                     ) : (
                       activities.map((act) => {
@@ -1730,17 +1731,17 @@ const { hasPermission: canDo } = usePermissions();
                             )}>
                               <div className="flex flex-wrap items-center justify-between gap-1 mb-1.5">
                                 <span className={cn(
-                                  "text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border",
+                                  "text-[0.5625rem] font-bold uppercase tracking-wider px-2 py-0.5 rounded border",
                                   isActOverdue
                                     ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30 font-black"
                                     : act.status === 'Pending'
                                     ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
                                     : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                                 )}>
-                                  {act.type} {act.status === 'Pending' && (isActOverdue ? '• Overdue' : '• Scheduled')}
+                                  {tr(act.type)} {act.status === 'Pending' && (isActOverdue ? tr("• Overdue") : tr("• Scheduled"))}
                                 </span>
                                 <span className={cn(
-                                  "text-[10px] font-semibold",
+                                  "text-[0.625rem] font-semibold",
                                   isActOverdue ? "text-rose-600 dark:text-rose-400 font-bold" : "text-[hsl(var(--muted-foreground))]"
                                 )}>
                                   {act.status === 'Pending' 
@@ -1749,13 +1750,13 @@ const { hasPermission: canDo } = usePermissions();
                                   }
                                 </span>
                               </div>
-                              <p className="text-xs text-[hsl(var(--foreground))] font-medium leading-relaxed break-words whitespace-pre-wrap">{act.remarks}</p>
+                              <p className="text-xs text-[hsl(var(--foreground))] font-medium leading-relaxed break-words whitespace-pre-wrap">{tr(act.remarks)}</p>
                               <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-[hsl(var(--border))]">
-                                <div className="w-4 h-4 rounded-full bg-[hsl(var(--muted))] flex items-center justify-center text-[8px] font-bold text-[hsl(var(--muted-foreground))] shrink-0">
-                                  {initial}
+                                <div className="w-4 h-4 rounded-full bg-[hsl(var(--muted))] flex items-center justify-center text-[0.5rem] font-bold text-[hsl(var(--muted-foreground))] shrink-0">
+                                  {tr(initial)}
                                 </div>
-                                <p className="text-[10px] font-medium text-[hsl(var(--muted-foreground))] truncate">
-                                  {act.status === 'Pending' ? 'Scheduled by' : 'Logged by'} <span className="text-[hsl(var(--foreground))] font-semibold">{userName}</span>
+                                <p className="text-[0.625rem] font-medium text-[hsl(var(--muted-foreground))] truncate">
+                                  {act.status === 'Pending' ? tr("Scheduled by") : tr("Logged by")} <span className="text-[hsl(var(--foreground))] font-semibold">{tr(userName)}</span>
                                 </p>
                               </div>
                             </div>
@@ -1800,12 +1801,12 @@ const { hasPermission: canDo } = usePermissions();
                   <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-600 mb-3 border border-amber-500/20">
                     <Lock size={22} />
                   </div>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[10px] font-bold uppercase tracking-wider mb-2">
-                    Phase Locked
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[0.625rem] font-bold uppercase tracking-wider mb-2">
+                    {tr("Phase Locked")}
                   </div>
-                  <h3 className="text-base font-bold text-[hsl(var(--foreground))]">Site Visit Stage is Locked</h3>
+                  <h3 className="text-base font-bold text-[hsl(var(--foreground))]">{tr("Site Visit Stage is Locked")}</h3>
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 max-w-md">
-                    Complete the Requirements phase first to unlock site visit and measurement logging.
+                    {tr("Complete the Requirements phase first to unlock site visit and measurement logging.")}
                   </p>
                   {/* Bring the lead into this stage from here — no need for the previous stage's tab */}
                   {!isReadOnly && (canDo('crm_site_visits', 'create') || canDo('crm_site_visits', 'update') || canDo('crm_requirements', 'update') || canDo('crm_leads', 'update')) && (
@@ -1813,7 +1814,7 @@ const { hasPermission: canDo } = usePermissions();
                       onClick={() => setIsSendToSiteVisitOpen(true)}
                       className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 active:scale-95 transition-all"
                     >
-                      Send to Site Visit <ArrowRight size={12} />
+                      {tr("Send to Site Visit ")}<ArrowRight size={12} />
                     </button>
                   )}
                 </div>
@@ -1848,15 +1849,15 @@ const { hasPermission: canDo } = usePermissions();
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
                               <h4 className="text-xs sm:text-sm font-bold text-rose-950 dark:text-rose-100">
-                                Site Visit Schedule Overdue
+                                {tr("Site Visit Schedule Overdue")}
                               </h4>
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-600 text-white text-[10px] font-bold uppercase tracking-wider">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-600 text-white text-[0.625rem] font-bold uppercase tracking-wider">
                                 <Clock size={10} />
                                 {getSiteVisitOverdueText(siteVisitInfo.scheduledDate)}
                               </span>
                             </div>
-                            <p className="text-[11px] text-rose-800 dark:text-rose-300 mt-0.5 leading-relaxed">
-                              Scheduled for{' '}
+                            <p className="text-[0.6875rem] text-rose-800 dark:text-rose-300 mt-0.5 leading-relaxed">
+                              {tr("Scheduled for")}{' '}
                               <strong>
                                 {new Date(siteVisitInfo.scheduledDate).toLocaleString('en-US', {
                                   weekday: 'short',
@@ -1866,7 +1867,7 @@ const { hasPermission: canDo } = usePermissions();
                                   minute: '2-digit',
                                 })}
                               </strong>{' '}
-                              has passed without survey measurements recorded.
+                              {tr("has passed without survey measurements recorded.")}
                             </p>
                           </div>
                         </div>
@@ -1877,7 +1878,7 @@ const { hasPermission: canDo } = usePermissions();
                               onClick={() => setIsSiteVisitHistoryOpen(true)}
                               className="inline-flex items-center gap-1 px-3 py-1.5 bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
                             >
-                              <History size={12} /> History ({siteVisitActivities.length})
+                              <History size={12} />{tr(" History (")}{siteVisitActivities.length})
                             </button>
                           )}
                           {!isReadOnly && (
@@ -1886,7 +1887,7 @@ const { hasPermission: canDo } = usePermissions();
                                 onClick={() => setIsSendToSiteVisitOpen(true)}
                                 className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
                               >
-                                <Calendar size={12} /> Reschedule Visit
+                                <Calendar size={12} />{tr(" Reschedule Visit")}
                               </button>
                             )
                           )}
@@ -1912,17 +1913,17 @@ const { hasPermission: canDo } = usePermissions();
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
                               <h2 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">
-                                Site Visit Briefing & Details
+                                {tr("Site Visit Briefing & Details")}
                               </h2>
                               <span className={cn(
-                                "text-[10px] font-bold px-2 py-0.5 rounded border shrink-0",
+                                "text-[0.625rem] font-bold px-2 py-0.5 rounded border shrink-0",
                                 lead.siteMeasurements
                                   ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                                   : isSiteVisitOverdue
                                   ? "bg-rose-500/15 text-rose-600 border-rose-500/30 font-black"
                                   : "bg-purple-500/10 text-purple-600 border-purple-500/20"
                               )}>
-                                {lead.siteMeasurements ? "Survey Completed" : isSiteVisitOverdue ? "Survey Overdue" : "Survey Pending"}
+                                {lead.siteMeasurements ? tr("Survey Completed") : isSiteVisitOverdue ? tr("Survey Overdue") : tr("Survey Pending")}
                               </span>
                             </div>
                           </div>
@@ -1935,7 +1936,7 @@ const { hasPermission: canDo } = usePermissions();
                               onClick={() => setIsSiteVisitHistoryOpen(true)}
                               className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
                             >
-                              <History size={12} className="text-purple-600" /> History ({siteVisitActivities.length})
+                              <History size={12} className="text-purple-600" />{tr(" History (")}{siteVisitActivities.length})
                             </button>
                           )}
 
@@ -1948,7 +1949,7 @@ const { hasPermission: canDo } = usePermissions();
                                       onClick={() => setIsSiteVisitModalOpen(true)}
                                       className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
                                     >
-                                      <Pencil size={12} /> Edit Measurements
+                                      <Pencil size={12} />{tr(" Edit Measurements")}
                                     </button>
                                   )}
                                   {['Under Site Visit', 'Measurement Done'].includes(lead.status) && (
@@ -1957,7 +1958,7 @@ const { hasPermission: canDo } = usePermissions();
                                         onClick={() => setIsSendToDrawingOpen(true)}
                                         className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
                                       >
-                                        Pass to 2D/3D Drawing <ArrowRight size={12} />
+                                        {tr("Pass to 2D/3D Drawing ")}<ArrowRight size={12} />
                                       </button>
                                     )
                                   )}
@@ -1969,7 +1970,7 @@ const { hasPermission: canDo } = usePermissions();
                                       onClick={() => setIsSendToSiteVisitOpen(true)}
                                       className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
                                     >
-                                      <Calendar size={12} /> Reschedule
+                                      <Calendar size={12} />{tr(" Reschedule")}
                                     </button>
                                   )}
                                   {(canDo('crm_site_visits', 'update')) && (
@@ -1977,7 +1978,7 @@ const { hasPermission: canDo } = usePermissions();
                                       onClick={() => setIsSiteVisitModalOpen(true)}
                                       className="inline-flex items-center gap-1 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
                                     >
-                                      <Plus size={13} /> Log Measurements
+                                      <Plus size={13} />{tr(" Log Measurements")}
                                     </button>
                                   )}
                                 </>
@@ -1990,23 +1991,23 @@ const { hasPermission: canDo } = usePermissions();
                       {/* Instructions Note Box */}
                       <div className="bg-purple-500/[0.04] border border-purple-500/20 rounded-lg p-3 space-y-2">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 flex items-center gap-1">
+                          <p className="text-[0.625rem] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 flex items-center gap-1">
                             <MessageSquare size={12} className="text-purple-600" />
-                            Site Visit Instructions
+                            {tr("Site Visit Instructions")}
                           </p>
                           {siteVisitInfo.activity?.createdAt && (
-                            <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                              Added {new Date(siteVisitInfo.activity.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
+                              {tr("Added ")}{new Date(siteVisitInfo.activity.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                             </span>
                           )}
                         </div>
                         <p className="text-xs font-medium text-[hsl(var(--foreground))] leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] bg-[hsl(var(--card))] p-2.5 rounded border border-purple-500/15">
-                          {siteVisitInfo.note || 'Lead passed to Site Visit and assigned to site team.'}
+                          {siteVisitInfo.note || tr("Lead passed to Site Visit and assigned to site team.")}
                         </p>
-                        <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-[hsl(var(--muted-foreground))] font-medium">
-                          <span>Assigned Member: <strong className="text-[hsl(var(--foreground))]">{siteVisitInfo.assignedName}</strong></span>
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-[0.625rem] text-[hsl(var(--muted-foreground))] font-medium">
+                          <span>{tr("Assigned Member: ")}<strong className="text-[hsl(var(--foreground))]">{tr(siteVisitInfo.assignedName)}</strong></span>
                           {siteVisitInfo.activity?.user && (
-                            <span>Scheduled By: <strong className="text-[hsl(var(--foreground))]">{siteVisitInfo.schedulerName}</strong></span>
+                            <span>{tr("Scheduled By: ")}<strong className="text-[hsl(var(--foreground))]">{tr(siteVisitInfo.schedulerName)}</strong></span>
                           )}
                         </div>
                       </div>
@@ -2017,31 +2018,31 @@ const { hasPermission: canDo } = usePermissions();
                           "rounded-lg p-2.5 border",
                           isSiteVisitOverdue ? "bg-rose-500/10 border-rose-500/30" : "bg-[hsl(var(--muted)/0.3)] border-[hsl(var(--border))]"
                         )}>
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
-                            <Calendar size={11} className={isSiteVisitOverdue ? "text-rose-500" : "text-purple-500"} /> Schedule
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <Calendar size={11} className={isSiteVisitOverdue ? "text-rose-500" : "text-purple-500"} />{tr(" Schedule")}
                           </p>
                           <p className={cn("font-bold text-xs mt-0.5 truncate", isSiteVisitOverdue ? "text-rose-600 font-extrabold" : "text-[hsl(var(--foreground))]")}>
                             {siteVisitInfo.scheduledDate
                               ? new Date(siteVisitInfo.scheduledDate).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-                              : 'Not scheduled'}
+                              : tr("Not scheduled")}
                           </p>
                         </div>
 
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
-                            <User size={11} className="text-blue-500" /> Assigned Member
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <User size={11} className="text-blue-500" />{tr(" Assigned Member")}
                           </p>
                           <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
-                            {siteVisitInfo.assignedName}
+                            {tr(siteVisitInfo.assignedName)}
                           </p>
                         </div>
 
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
-                            <Building size={11} className="text-emerald-500" /> Property Scope
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <Building size={11} className="text-emerald-500" />{tr(" Property Scope")}
                           </p>
                           <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
-                            {lead.propertyType || 'Residential'}
+                            {lead.propertyType || tr("Residential")}
                           </p>
                         </div>
 
@@ -2050,15 +2051,15 @@ const { hasPermission: canDo } = usePermissions();
                           onClick={() => handleCopyLocation(lead.projectLocation || lead.city)}
                         >
                           <div className="flex items-center justify-between">
-                            <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
-                              <MapPin size={11} className="text-amber-500" /> Site Location
+                            <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                              <MapPin size={11} className="text-amber-500" />{tr(" Site Location")}
                             </p>
-                            <span className="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-[0.625rem] opacity-0 group-hover:opacity-100 transition-opacity">
                               {copiedLocation ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
                             </span>
                           </div>
                           <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
-                            {lead.projectLocation || lead.city || 'Pending'}
+                            {lead.projectLocation || lead.city || tr("Pending")}
                           </p>
                         </div>
                       </div>
@@ -2072,10 +2073,10 @@ const { hasPermission: canDo } = usePermissions();
                         </div>
                         <div className="max-w-md space-y-0.5">
                           <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">
-                            Ready for On-Site Survey & Measurements
+                            {tr("Ready for On-Site Survey & Measurements")}
                           </h3>
                           <p className="text-[hsl(var(--muted-foreground))] text-xs">
-                            Capture room dimensions, ceiling heights, door/window openings, MEP points, and site photos.
+                            {tr("Capture room dimensions, ceiling heights, door/window openings, MEP points, and site photos.")}
                           </p>
                         </div>
                         {!isReadOnly && (
@@ -2084,7 +2085,7 @@ const { hasPermission: canDo } = usePermissions();
                               onClick={() => setIsSiteVisitModalOpen(true)} 
                               className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
                             >
-                              <Plus size={14} /> Log Site Visit & Measurements
+                              <Plus size={14} />{tr(" Log Site Visit & Measurements")}
                             </button>
                           )
                         )}
@@ -2099,36 +2100,36 @@ const { hasPermission: canDo } = usePermissions();
                             <div className="flex items-center justify-between pb-2 border-b border-[hsl(var(--border))]">
                               <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
                                 <Maximize2 size={14} className="text-purple-500" />
-                                Spatial Dimensions
+                                {tr("Spatial Dimensions")}
                               </h3>
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 border border-purple-500/20 shrink-0">
-                                Spatial
+                              <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 border border-purple-500/20 shrink-0">
+                                {tr("Spatial")}
                               </span>
                             </div>
 
                             <div className="grid grid-cols-2 gap-2 text-xs min-w-0">
                               <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2.5 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
-                                <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Carpet Area</p>
+                                <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Carpet Area")}</p>
                                 <p className="font-bold text-sm text-[hsl(var(--foreground))] mt-0.5 break-words [overflow-wrap:anywhere]">
-                                  {lead.siteMeasurements.carpetArea || '—'} <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-normal">Sq.Ft</span>
+                                  {lead.siteMeasurements.carpetArea || '—'} <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))] font-normal">{tr("Sq.Ft")}</span>
                                 </p>
                               </div>
                               <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2.5 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
-                                <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Ceiling Height</p>
+                                <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Ceiling Height")}</p>
                                 <p className="font-bold text-sm text-[hsl(var(--foreground))] mt-0.5 break-words [overflow-wrap:anywhere]">
-                                  {lead.siteMeasurements.ceilingHeight || '—'} <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-normal">Ft</span>
+                                  {lead.siteMeasurements.ceilingHeight || '—'} <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))] font-normal">{tr("Ft")}</span>
                                 </p>
                               </div>
                               <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2.5 border border-[hsl(var(--border))] col-span-2 min-w-0 overflow-hidden">
-                                <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Room Dimensions</p>
+                                <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Room Dimensions")}</p>
                                 <p className="font-semibold text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-                                  {lead.siteMeasurements.roomDimensions || 'Not recorded'}
+                                  {lead.siteMeasurements.roomDimensions || tr("Not recorded")}
                                 </p>
                               </div>
                               <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2.5 border border-[hsl(var(--border))] col-span-2 min-w-0 overflow-hidden">
-                                <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Rooms to Design</p>
+                                <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Rooms to Design")}</p>
                                 <p className="font-semibold text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-                                  {lead.siteMeasurements.rooms || 'Not specified'}
+                                  {lead.siteMeasurements.rooms || tr("Not specified")}
                                 </p>
                               </div>
                             </div>
@@ -2139,25 +2140,25 @@ const { hasPermission: canDo } = usePermissions();
                             <div className="flex items-center justify-between pb-2 border-b border-[hsl(var(--border))]">
                               <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
                                 <DoorOpen size={14} className="text-blue-500" />
-                                Openings & Structure
+                                {tr("Openings & Structure")}
                               </h3>
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 border border-blue-500/20 shrink-0">
-                                Structure
+                              <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 border border-blue-500/20 shrink-0">
+                                {tr("Structure")}
                               </span>
                             </div>
 
                             <div className="grid grid-cols-1 gap-2 text-xs min-w-0">
                               <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
-                                <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Door Dimensions</p>
-                                <p className="font-semibold text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.doorDimensions || 'Not recorded'}</p>
+                                <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Door Dimensions")}</p>
+                                <p className="font-semibold text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.doorDimensions || tr("Not recorded")}</p>
                               </div>
                               <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
-                                <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Window Dimensions</p>
-                                <p className="font-semibold text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.windowDimensions || 'Not recorded'}</p>
+                                <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Window Dimensions")}</p>
+                                <p className="font-semibold text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.windowDimensions || tr("Not recorded")}</p>
                               </div>
                               <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
-                                <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Wall / Column Dimensions</p>
-                                <p className="font-semibold text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.columnBeamDimensions || lead.siteMeasurements.wallThickness || 'Not recorded'}</p>
+                                <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Wall / Column Dimensions")}</p>
+                                <p className="font-semibold text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.columnBeamDimensions || lead.siteMeasurements.wallThickness || tr("Not recorded")}</p>
                               </div>
                             </div>
                           </div>
@@ -2167,25 +2168,25 @@ const { hasPermission: canDo } = usePermissions();
                             <div className="flex items-center justify-between pb-2 border-b border-[hsl(var(--border))]">
                               <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
                                 <Zap size={14} className="text-amber-500" />
-                                MEP & Utility Services
+                                {tr("MEP & Utility Services")}
                               </h3>
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 border border-amber-500/20 shrink-0">
-                                MEP
+                              <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 border border-amber-500/20 shrink-0">
+                                {tr("MEP")}
                               </span>
                             </div>
 
                             <div className="grid grid-cols-1 gap-2 text-xs min-w-0">
                               <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
-                                <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1"><Zap size={10} /> Electrical Points</p>
-                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.electricalPoints || 'None recorded'}</p>
+                                <p className="text-[0.625rem] font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1"><Zap size={10} />{tr(" Electrical Points")}</p>
+                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.electricalPoints || tr("None recorded")}</p>
                               </div>
                               <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
-                                <p className="text-[10px] font-bold text-cyan-500 uppercase tracking-wider flex items-center gap-1"><Droplets size={10} /> Plumbing Points</p>
-                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.plumbingPoints || 'None recorded'}</p>
+                                <p className="text-[0.625rem] font-bold text-cyan-500 uppercase tracking-wider flex items-center gap-1"><Droplets size={10} />{tr(" Plumbing Points")}</p>
+                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.plumbingPoints || tr("None recorded")}</p>
                               </div>
                               <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
-                                <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider flex items-center gap-1"><Wind size={10} /> AC Locations</p>
-                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.acLocations || 'None recorded'}</p>
+                                <p className="text-[0.625rem] font-bold text-emerald-500 uppercase tracking-wider flex items-center gap-1"><Wind size={10} />{tr(" AC Locations")}</p>
+                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.acLocations || tr("None recorded")}</p>
                               </div>
                             </div>
                           </div>
@@ -2195,25 +2196,25 @@ const { hasPermission: canDo } = usePermissions();
                             <div className="flex items-center justify-between pb-2 border-b border-[hsl(var(--border))]">
                               <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
                                 <Armchair size={14} className="text-emerald-500" />
-                                Furniture & Constraints
+                                {tr("Furniture & Constraints")}
                               </h3>
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 shrink-0">
-                                Notes
+                              <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 shrink-0">
+                                {tr("Notes")}
                               </span>
                             </div>
 
                             <div className="grid grid-cols-1 gap-2 text-xs min-w-0">
                               <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
-                                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Existing Furniture</p>
-                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.furnitureDimensions || 'None recorded'}</p>
+                                <p className="text-[0.625rem] font-bold text-emerald-600 uppercase tracking-wider">{tr("Existing Furniture")}</p>
+                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.furnitureDimensions || tr("None recorded")}</p>
                               </div>
                               <div className="bg-rose-500/5 rounded-lg p-2 border border-rose-500/20 min-w-0 overflow-hidden">
-                                <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">Site Constraints</p>
-                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.siteConstraints || 'None reported'}</p>
+                                <p className="text-[0.625rem] font-bold text-rose-500 uppercase tracking-wider">{tr("Site Constraints")}</p>
+                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.siteConstraints || tr("None reported")}</p>
                               </div>
                               <div className="bg-purple-500/5 rounded-lg p-2 border border-purple-500/20 min-w-0 overflow-hidden">
-                                <p className="text-[10px] font-bold text-purple-600 uppercase tracking-wider">Additional Site Notes</p>
-                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.notes || 'No notes added'}</p>
+                                <p className="text-[0.625rem] font-bold text-purple-600 uppercase tracking-wider">{tr("Additional Site Notes")}</p>
+                                <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.notes || tr("No notes added")}</p>
                               </div>
                             </div>
                           </div>
@@ -2224,10 +2225,10 @@ const { hasPermission: canDo } = usePermissions();
                           <div className="flex items-center justify-between pb-2 border-b border-[hsl(var(--border))]">
                             <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
                               <ImageIcon size={14} className="text-emerald-500" />
-                              Site Photos & Visual Records
+                              {tr("Site Photos & Visual Records")}
                             </h3>
                             <span className="text-xs font-bold text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded border border-[hsl(var(--border))]">
-                              {lead.sitePhotos?.length || 0} Photos
+                              {lead.sitePhotos?.length || 0}{tr(" Photos")}
                             </span>
                           </div>
 
@@ -2241,7 +2242,7 @@ const { hasPermission: canDo } = usePermissions();
                                   rel="noopener noreferrer"
                                   className="aspect-square rounded-lg overflow-hidden border border-[hsl(var(--border))] hover:border-[hsl(var(--primary))] transition-all relative group bg-[hsl(var(--muted)/0.3)] block"
                                 >
-                                  <img loading="lazy" decoding="async" src={photo} alt={`Site photo ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                  <img loading="lazy" decoding="async" src={photo} alt={tr("Site photo {{value}}", { value: i + 1 })} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                                     <ImageIcon className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={16} />
                                   </div>
@@ -2251,7 +2252,7 @@ const { hasPermission: canDo } = usePermissions();
                           ) : (
                             <div className="py-6 flex flex-col items-center justify-center border border-dashed border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--muted)/0.2)] text-center">
                               <ImageIcon className="w-6 h-6 text-[hsl(var(--muted-foreground))] mb-1 opacity-60" />
-                              <p className="text-xs font-bold text-[hsl(var(--foreground))]">No Site Photos Uploaded</p>
+                              <p className="text-xs font-bold text-[hsl(var(--foreground))]">{tr("No Site Photos Uploaded")}</p>
                             </div>
                           )}
                         </div>
@@ -2271,12 +2272,12 @@ const { hasPermission: canDo } = usePermissions();
                   <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-600 mb-3 border border-amber-500/20">
                     <Lock size={22} />
                   </div>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[10px] font-bold uppercase tracking-wider mb-2">
-                    Phase Locked
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[0.625rem] font-bold uppercase tracking-wider mb-2">
+                    {tr("Phase Locked")}
                   </div>
-                  <h3 className="text-base font-bold text-[hsl(var(--foreground))]">Requirements Stage is Locked</h3>
+                  <h3 className="text-base font-bold text-[hsl(var(--foreground))]">{tr("Requirements Stage is Locked")}</h3>
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 max-w-md">
-                    Complete initial follow-up to unlock requirement logging.
+                    {tr("Complete initial follow-up to unlock requirement logging.")}
                   </p>
                   {/* Bring the lead into this stage from here — no need for the previous stage's tab */}
                   {!isReadOnly && (canDo('crm_requirements', 'create') || canDo('crm_requirements', 'update') || canDo('crm_followups', 'update') || canDo('crm_leads', 'update')) && (
@@ -2284,7 +2285,7 @@ const { hasPermission: canDo } = usePermissions();
                       onClick={() => setIsSendToReqOpen(true)}
                       className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 active:scale-95 transition-all"
                     >
-                      Send to Requirements <ArrowRight size={12} />
+                      {tr("Send to Requirements ")}<ArrowRight size={12} />
                     </button>
                   )}
                 </div>
@@ -2336,15 +2337,15 @@ const { hasPermission: canDo } = usePermissions();
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
                               <h4 className="text-xs sm:text-sm font-bold text-rose-950 dark:text-rose-100">
-                                Requirements Session Overdue
+                                {tr("Requirements Session Overdue")}
                               </h4>
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-600 text-white text-[10px] font-bold uppercase tracking-wider">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-600 text-white text-[0.625rem] font-bold uppercase tracking-wider">
                                 <Clock size={10} />
                                 {getReqOverdueText(requirementsInfo.scheduledDate)}
                               </span>
                             </div>
-                            <p className="text-[11px] text-rose-800 dark:text-rose-300 mt-0.5 leading-relaxed">
-                              Discussion session for{' '}
+                            <p className="text-[0.6875rem] text-rose-800 dark:text-rose-300 mt-0.5 leading-relaxed">
+                              {tr("Discussion session for")}{' '}
                               <strong>
                                 {new Date(requirementsInfo.scheduledDate).toLocaleString('en-US', {
                                   weekday: 'short',
@@ -2354,7 +2355,7 @@ const { hasPermission: canDo } = usePermissions();
                                   minute: '2-digit',
                                 })}
                               </strong>{' '}
-                              has passed without design specifications recorded.
+                              {tr("has passed without design specifications recorded.")}
                             </p>
                           </div>
                         </div>
@@ -2364,7 +2365,7 @@ const { hasPermission: canDo } = usePermissions();
                               onClick={() => setIsSendToReqOpen(true)}
                               className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shrink-0"
                             >
-                              <Calendar size={12} /> Reschedule Session
+                              <Calendar size={12} />{tr(" Reschedule Session")}
                             </button>
                           )
                         )}
@@ -2389,10 +2390,10 @@ const { hasPermission: canDo } = usePermissions();
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
                               <h2 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">
-                                Requirements Briefing & Specifications
+                                {tr("Requirements Briefing & Specifications")}
                               </h2>
                               <span className={cn(
-                                "text-[10px] font-bold px-2 py-0.5 rounded border shrink-0",
+                                "text-[0.625rem] font-bold px-2 py-0.5 rounded border shrink-0",
                                 hasRequirements
                                   ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                                   : isReqOverdue
@@ -2400,8 +2401,8 @@ const { hasPermission: canDo } = usePermissions();
                                   : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                               )}>
                                 {hasRequirements
-                                  ? `Configured (${totalConfiguredSpaces} ${totalConfiguredSpaces === 1 ? 'Space' : 'Spaces'}${!normalizedRequirements?.length && normalizedClientRequirements?.length ? ' - Client Intake' : ''})`
-                                  : "Discussion Pending"}
+                                  ? tr("Configured ({{totalConfiguredSpaces}} {{value}}{{value2}})", { totalConfiguredSpaces: totalConfiguredSpaces, value: totalConfiguredSpaces === 1 ? 'Space' : 'Spaces', value2: !normalizedRequirements?.length && normalizedClientRequirements?.length ? ' - Client Intake' : '' })
+                                  : tr("Discussion Pending")}
                               </span>
                             </div>
                           </div>
@@ -2416,7 +2417,7 @@ const { hasPermission: canDo } = usePermissions();
                                     onClick={() => setIsReqModalOpen(true)}
                                     className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
                                   >
-                                    <Pencil size={12} /> Edit Requirements
+                                    <Pencil size={12} />{tr(" Edit Requirements")}
                                   </button>
                                 )}
                                 {['Under Requirement', 'Requirement Completed'].includes(lead.status) && (
@@ -2425,7 +2426,7 @@ const { hasPermission: canDo } = usePermissions();
                                       onClick={() => setIsSendToSiteVisitOpen(true)}
                                       className="inline-flex items-center gap-1 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
                                     >
-                                      Pass to Site Visit <ArrowRight size={12} />
+                                      {tr("Pass to Site Visit ")}<ArrowRight size={12} />
                                     </button>
                                   )
                                 )}
@@ -2437,7 +2438,7 @@ const { hasPermission: canDo } = usePermissions();
                                     onClick={() => setIsSendToReqOpen(true)}
                                     className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
                                   >
-                                    <Calendar size={12} /> Reschedule Session
+                                    <Calendar size={12} />{tr(" Reschedule Session")}
                                   </button>
                                 )}
                                 {(canDo('crm_requirements', 'create')) && (
@@ -2445,7 +2446,7 @@ const { hasPermission: canDo } = usePermissions();
                                     onClick={() => setIsReqModalOpen(true)}
                                     className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
                                   >
-                                    <Plus size={13} /> Add Requirements
+                                    <Plus size={13} />{tr(" Add Requirements")}
                                   </button>
                                 )}
                               </>
@@ -2457,12 +2458,12 @@ const { hasPermission: canDo } = usePermissions();
                       {/* Requirement Scope Notes */}
                       {requirementsInfo.note && (
                         <div className="bg-emerald-500/[0.04] border border-emerald-500/20 rounded-lg p-3 space-y-2">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+                          <p className="text-[0.625rem] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
                             <MessageSquare size={12} className="text-emerald-600" />
-                            Requirement Handover & Scope Notes
+                            {tr("Requirement Handover & Scope Notes")}
                           </p>
                           <p className="text-xs font-medium text-[hsl(var(--foreground))] leading-relaxed bg-[hsl(var(--card))] border border-emerald-500/15 p-2.5 rounded whitespace-pre-wrap">
-                            {requirementsInfo.note}
+                            {tr(requirementsInfo.note)}
                           </p>
                         </div>
                       )}
@@ -2470,40 +2471,40 @@ const { hasPermission: canDo } = usePermissions();
                       {/* 4 Metadata Badges Grid */}
                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
-                            <Calendar size={11} className="text-emerald-500" /> Schedule
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <Calendar size={11} className="text-emerald-500" />{tr(" Schedule")}
                           </p>
                           <p className={cn("font-bold text-xs mt-0.5 truncate", isReqOverdue ? "text-rose-600 font-black" : "text-[hsl(var(--foreground))]")}>
                             {requirementsInfo.scheduledDate
                               ? new Date(requirementsInfo.scheduledDate).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-                              : 'Not scheduled'}
+                              : tr("Not scheduled")}
                           </p>
                         </div>
 
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
-                            <User size={11} className="text-blue-500" /> Consultant
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <User size={11} className="text-blue-500" />{tr(" Consultant")}
                           </p>
                           <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
-                            {requirementsInfo.assignedName}
+                            {tr(requirementsInfo.assignedName)}
                           </p>
                         </div>
 
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
-                            <DollarSign size={11} className="text-amber-500" /> Target Budget
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <DollarSign size={11} className="text-amber-500" />{tr(" Target Budget")}
                           </p>
                           <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
-                            {lead.budgetRange || (lead.budget ? `${currencySymbol} ${Number(lead.budget).toLocaleString()}` : 'Not specified')}
+                            {lead.budgetRange || (lead.budget ? `${currencySymbol} ${Number(lead.budget).toLocaleString()}` : tr("Not specified"))}
                           </p>
                         </div>
 
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
-                            <Building size={11} className="text-purple-500" /> Property Scope
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <Building size={11} className="text-purple-500" />{tr(" Property Scope")}
                           </p>
                           <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
-                            {lead.propertyType || lead.projectType || 'Residential'}
+                            {lead.propertyType || lead.projectType || tr("Residential")}
                           </p>
                         </div>
                       </div>
@@ -2512,26 +2513,26 @@ const { hasPermission: canDo } = usePermissions();
                     {/* Global Scope / Timeline / Special Requests Banner if present */}
                     {(globalScopeOfWork || globalTimeline || globalSpecialRequests) && (
                       <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 sm:p-4 space-y-2.5">
-                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5 pb-2 border-b border-[hsl(var(--border))]">
-                          <Sliders size={13} className="text-blue-500" /> Overall Project Directives & Scope
+                        <h4 className="text-[0.6875rem] font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5 pb-2 border-b border-[hsl(var(--border))]">
+                          <Sliders size={13} className="text-blue-500" />{tr(" Overall Project Directives & Scope")}
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-xs">
                           {globalScopeOfWork && (
                             <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block">Scope of Work</span>
-                              <span className="font-semibold text-[hsl(var(--foreground))] mt-0.5 block">{globalScopeOfWork}</span>
+                              <span className="text-[0.625rem] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block">{tr("Scope of Work")}</span>
+                              <span className="font-semibold text-[hsl(var(--foreground))] mt-0.5 block">{tr(globalScopeOfWork)}</span>
                             </div>
                           )}
                           {globalTimeline && (
                             <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block">Target Timeline</span>
-                              <span className="font-semibold text-[hsl(var(--foreground))] mt-0.5 block">{globalTimeline}</span>
+                              <span className="text-[0.625rem] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block">{tr("Target Timeline")}</span>
+                              <span className="font-semibold text-[hsl(var(--foreground))] mt-0.5 block">{tr(globalTimeline)}</span>
                             </div>
                           )}
                           {globalSpecialRequests && (
                             <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block">Special Requests</span>
-                              <span className="font-semibold text-[hsl(var(--foreground))] mt-0.5 block">{globalSpecialRequests}</span>
+                              <span className="text-[0.625rem] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block">{tr("Special Requests")}</span>
+                              <span className="font-semibold text-[hsl(var(--foreground))] mt-0.5 block">{tr(globalSpecialRequests)}</span>
                             </div>
                           )}
                         </div>
@@ -2568,12 +2569,12 @@ const { hasPermission: canDo } = usePermissions();
                   <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-600 mb-3 border border-amber-500/20">
                     <Lock size={22} />
                   </div>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[10px] font-bold uppercase tracking-wider mb-2">
-                    Phase Locked
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[0.625rem] font-bold uppercase tracking-wider mb-2">
+                    {tr("Phase Locked")}
                   </div>
-                  <h3 className="text-base font-bold text-[hsl(var(--foreground))]">2D & 3D Drawings Stage is Locked</h3>
+                  <h3 className="text-base font-bold text-[hsl(var(--foreground))]">{tr("2D & 3D Drawings Stage is Locked")}</h3>
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 max-w-md">
-                    Complete the Site Visit & Measurements phase first to unlock drawing uploads.
+                    {tr("Complete the Site Visit & Measurements phase first to unlock drawing uploads.")}
                   </p>
                   {/* Bring the lead into this stage from here — no need for the previous stage's tab */}
                   {!isReadOnly && (canDo('crm_drawings', 'create') || canDo('crm_drawings', 'update') || canDo('crm_requirements', 'update')) && (
@@ -2581,7 +2582,7 @@ const { hasPermission: canDo } = usePermissions();
                       onClick={() => setIsSendToDrawingOpen(true)}
                       className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 active:scale-95 transition-all"
                     >
-                      Send to Drawings <ArrowRight size={12} />
+                      {tr("Send to Drawings ")}<ArrowRight size={12} />
                     </button>
                   )}
                 </div>
@@ -2678,13 +2679,13 @@ const { hasPermission: canDo } = usePermissions();
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
                               <h2 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">
-                                2D & 3D Design Drawings & Models
+                                {tr("2D & 3D Design Drawings & Models")}
                               </h2>
                               <span className={cn(
-                                "text-[10px] font-bold px-2 py-0.5 rounded border shrink-0",
+                                "text-[0.625rem] font-bold px-2 py-0.5 rounded border shrink-0",
                                 headerBadge.className
                               )}>
-                                {headerBadge.text}
+                                {tr(headerBadge.text)}
                               </span>
                             </div>
                           </div>
@@ -2699,7 +2700,7 @@ const { hasPermission: canDo } = usePermissions();
                                     onClick={() => setIsDesignModalOpen(true)}
                                     className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
                                   >
-                                    <Plus size={13} /> Upload More
+                                    <Plus size={13} />{tr(" Upload More")}
                                   </button>
                                 )}
                                 {['Under Drawing', 'Design Approved'].includes(lead.status) && (
@@ -2707,13 +2708,13 @@ const { hasPermission: canDo } = usePermissions();
                                     onClick={() => {
                                       if (!allDrawingsApproved) {
                                         if (draftDrawingsCount > 0) {
-                                          toast.error('Cannot pass to BOQ: Drawing is in Draft and requires internal approval.');
+                                          toast.error(tr("Cannot pass to BOQ: Drawing is in Draft and requires internal approval."));
                                         } else if (pendingDrawingsCount > 0) {
-                                          toast.error('Cannot pass to BOQ: Drawing approval is still pending.');
+                                          toast.error(tr("Cannot pass to BOQ: Drawing approval is still pending."));
                                         } else if (rejectedDrawingsCount > 0) {
-                                          toast.error('Cannot pass to BOQ: Some drawings are rejected.');
+                                          toast.error(tr("Cannot pass to BOQ: Some drawings are rejected."));
                                         } else {
-                                          toast.error('Cannot pass to BOQ: All drawings must be approved first.');
+                                          toast.error(tr("Cannot pass to BOQ: All drawings must be approved first."));
                                         }
                                         return;
                                       }
@@ -2726,7 +2727,7 @@ const { hasPermission: canDo } = usePermissions();
                                         : "bg-slate-200 dark:bg-slate-800 text-slate-500"
                                     )}
                                   >
-                                    Pass to BOQ <ArrowRight size={12} />
+                                    {tr("Pass to BOQ ")}<ArrowRight size={12} />
                                   </button>
                                 )}
                               </>
@@ -2736,7 +2737,7 @@ const { hasPermission: canDo } = usePermissions();
                                   onClick={() => setIsDesignModalOpen(true)}
                                   className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
                                 >
-                                  <Plus size={13} /> Upload Drawings
+                                  <Plus size={13} />{tr(" Upload Drawings")}
                                 </button>
                               )
                             )}
@@ -2749,14 +2750,14 @@ const { hasPermission: canDo } = usePermissions();
                         <div className="bg-indigo-500/[0.04] border border-indigo-500/20 rounded-lg p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
                             <Globe size={14} className="text-indigo-600 shrink-0" />
-                            <span className="text-xs font-semibold text-[hsl(var(--foreground))]">Client View-Only Portal</span>
+                            <span className="text-xs font-semibold text-[hsl(var(--foreground))]">{tr("Client View-Only Portal")}</span>
                             <span className={cn(
-                              "text-[9px] font-bold px-1.5 py-0.2 rounded border",
+                              "text-[0.5625rem] font-bold px-1.5 py-0.2 rounded border",
                               lead.shareSettings?.isPublic
                                 ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                                 : "bg-amber-500/10 text-amber-600 border-amber-500/20"
                             )}>
-                              {lead.shareSettings?.isPublic ? 'Active' : 'Unpublished'}
+                              {lead.shareSettings?.isPublic ? tr("Active") : tr("Unpublished")}
                             </span>
                           </div>
 
@@ -2766,17 +2767,17 @@ const { hasPermission: canDo } = usePermissions();
                                 href={`/share/drawing/${lead.shareSettings.shareToken}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="inline-flex items-center gap-1 px-2 py-1 bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded text-[11px] font-bold"
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded text-[0.6875rem] font-bold"
                               >
-                                <ExternalLink size={11} /> Preview
+                                <ExternalLink size={11} />{tr(" Preview")}
                               </a>
                             )}
                             {(canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_site_visits', 'update') || canDo('crm_requirements', 'update') || canDo('crm_drawings', 'update') || canDo('crm_boq', 'update') || canDo('crm_quotations', 'update')) && (
                               <button
                                 onClick={() => setIsShareModalOpen(true)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[11px] font-bold active:scale-95"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[0.6875rem] font-bold active:scale-95"
                               >
-                                <Share2 size={11} /> {lead.shareSettings?.isPublic ? 'Share Link' : 'Generate Link'}
+                                <Share2 size={11} /> {lead.shareSettings?.isPublic ? tr("Share Link") : tr("Generate Link")}
                               </button>
                             )}
                           </div>
@@ -2786,26 +2787,26 @@ const { hasPermission: canDo } = usePermissions();
                       {/* Metadata Grid */}
                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
-                            <User size={11} className="text-purple-500" /> Designer
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <User size={11} className="text-purple-500" />{tr(" Designer")}
                           </p>
                           <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
-                            {drawingInfo.assignedName}
+                            {tr(drawingInfo.assignedName)}
                           </p>
                         </div>
 
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
-                            <Palette size={11} className="text-emerald-500" /> Style
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <Palette size={11} className="text-emerald-500" />{tr(" Style")}
                           </p>
                           <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
-                            {lead.requirements?.find((r: any) => r.designStyle)?.designStyle || lead.requirements?.[0]?.theme || 'Custom Style'}
+                            {lead.requirements?.find((r: any) => r.designStyle)?.designStyle || lead.requirements?.[0]?.theme || tr("Custom Style")}
                           </p>
                         </div>
 
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
-                            <Layers size={11} className="text-cyan-500" /> Summary
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <Layers size={11} className="text-cyan-500" />{tr(" Summary")}
                           </p>
                           <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
                             {twoDFiles.length} 2D • {threeDFiles.length} 3D
@@ -2813,11 +2814,11 @@ const { hasPermission: canDo } = usePermissions();
                         </div>
 
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
-                            <Building size={11} className="text-blue-500" /> Scope
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <Building size={11} className="text-blue-500" />{tr(" Scope")}
                           </p>
                           <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
-                            {lead.propertyType || 'Execution'}
+                            {lead.propertyType || tr("Execution")}
                           </p>
                         </div>
                       </div>
@@ -2831,10 +2832,10 @@ const { hasPermission: canDo } = usePermissions();
                         </div>
                         <div className="max-w-md space-y-0.5">
                           <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">
-                            Ready for 2D & 3D Drawing Uploads
+                            {tr("Ready for 2D & 3D Drawing Uploads")}
                           </h3>
                           <p className="text-[hsl(var(--muted-foreground))] text-xs">
-                            Upload 2D layouts (Floor plans, MEP) and 3D models/photorealistic renders.
+                            {tr("Upload 2D layouts (Floor plans, MEP) and 3D models/photorealistic renders.")}
                           </p>
                         </div>
                         {!isReadOnly && (
@@ -2843,7 +2844,7 @@ const { hasPermission: canDo } = usePermissions();
                               onClick={() => setIsDesignModalOpen(true)} 
                               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
                             >
-                              <Plus size={14} /> Upload Drawings
+                              <Plus size={14} />{tr(" Upload Drawings")}
                             </button>
                           )
                         )}
@@ -2860,7 +2861,7 @@ const { hasPermission: canDo } = usePermissions();
                               designSubTab === '2d' ? "bg-blue-600 text-white" : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
                             )}
                           >
-                            <Layers size={12} /> 2D Layouts ({twoDFiles.length})
+                            <Layers size={12} />{tr(" 2D Layouts (")}{twoDFiles.length})
                           </button>
                           <button
                             type="button"
@@ -2870,7 +2871,7 @@ const { hasPermission: canDo } = usePermissions();
                               designSubTab === '3d' ? "bg-purple-600 text-white" : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
                             )}
                           >
-                            <Box size={12} /> 3D Models ({threeDFiles.length})
+                            <Box size={12} />{tr(" 3D Models (")}{threeDFiles.length})
                           </button>
                         </div>
 
@@ -2924,20 +2925,20 @@ const { hasPermission: canDo } = usePermissions();
                                   )}
 
                                   <div className="absolute top-2 left-2 flex items-center gap-1 max-w-[calc(100%-80px)] overflow-hidden">
-                                    <span className={cn("text-[8px] font-bold px-1.5 py-0.5 rounded border uppercase shrink-0", badge.color)}>
-                                      {badge.label}
+                                    <span className={cn("text-[0.5rem] font-bold px-1.5 py-0.5 rounded border uppercase shrink-0", badge.color)}>
+                                      {tr(badge.label)}
                                     </span>
-                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-black/60 text-white shrink-0">
-                                      v{versionNum}
+                                    <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded bg-black/60 text-white shrink-0">
+                                      v{tr(versionNum)}
                                     </span>
                                   </div>
 
                                   <div className="absolute top-2 right-2">
                                     <span className={cn(
-                                      "text-[8px] font-bold px-1.5 py-0.5 rounded-full text-white",
+                                      "text-[0.5rem] font-bold px-1.5 py-0.5 rounded-full text-white",
                                       isApproved ? "bg-emerald-600" : isPendingApproval ? "bg-amber-500" : isDrawingRejected ? "bg-rose-500" : "bg-slate-600"
                                     )}>
-                                      {isApproved ? "Approved" : isPendingApproval ? "Pending" : isDrawingRejected ? "Rejected" : "Draft"}
+                                      {isApproved ? tr("Approved") : isPendingApproval ? tr("Pending") : isDrawingRejected ? tr("Rejected") : tr("Draft")}
                                     </span>
                                   </div>
                                 </div>
@@ -2947,10 +2948,10 @@ const { hasPermission: canDo } = usePermissions();
                                     <p className="font-bold text-xs text-[hsl(var(--foreground))] truncate" title={file.title || file.name}>
                                       {file.title || file.name}
                                     </p>
-                                    <div className="flex items-center gap-1 mt-0.5 text-[9px] text-[hsl(var(--muted-foreground))] flex-wrap">
+                                    <div className="flex items-center gap-1 mt-0.5 text-[0.5625rem] text-[hsl(var(--muted-foreground))] flex-wrap">
                                       {file.roomTag && (
                                         <span className="font-bold text-emerald-600 bg-emerald-500/10 px-1 py-0.2 rounded border border-emerald-500/20">
-                                          {file.roomTag}
+                                          {tr(file.roomTag)}
                                         </span>
                                       )}
                                       {file.uploadedAt && <span>{new Date(file.uploadedAt).toLocaleDateString()}</span>}
@@ -2966,15 +2967,15 @@ const { hasPermission: canDo } = usePermissions();
                                             version: versionNum
                                           });
                                         }}
-                                        className="mt-1.5 p-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-md text-[9px] text-rose-700 dark:text-rose-300 cursor-pointer transition-colors max-w-full overflow-hidden"
-                                        title="Click to view full rejection reason"
+                                        className="mt-1.5 p-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-md text-[0.5625rem] text-rose-700 dark:text-rose-300 cursor-pointer transition-colors max-w-full overflow-hidden"
+                                        title={tr("Click to view full rejection reason")}
                                       >
                                         <div className="flex items-center justify-between gap-1 w-full overflow-hidden">
                                           <p className="truncate flex-1 font-medium break-all">
-                                            <strong className="font-bold">Rejected:</strong> {rejectionReason}
+                                            <strong className="font-bold">{tr("Rejected:")}</strong> {tr(rejectionReason)}
                                           </p>
-                                          <span className="text-[8px] font-bold text-rose-600 underline shrink-0 ml-1 hover:text-rose-800">
-                                            View
+                                          <span className="text-[0.5rem] font-bold text-rose-600 underline shrink-0 ms-1 hover:text-rose-800">
+                                            {tr("View")}
                                           </span>
                                         </div>
                                       </div>
@@ -2992,9 +2993,9 @@ const { hasPermission: canDo } = usePermissions();
                                                 setSelectedDrawingForSendApproval(file);
                                                 setIsSendApprovalModalOpen(true);
                                               }}
-                                              className="px-1.5 py-0.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 rounded text-[9px] font-bold"
+                                              className="px-1.5 py-0.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 rounded text-[0.5625rem] font-bold"
                                             >
-                                              <Send size={9} className="inline mr-0.5" /> Send to Approval
+                                              <Send size={9} className="inline me-0.5" />{tr(" Send to Approval")}
                                             </button>
                                           )}
                                           {isPendingApproval && (
@@ -3006,9 +3007,9 @@ const { hasPermission: canDo } = usePermissions();
                                                   setIsConfirmApproveModalOpen(true);
                                                 }}
                                                 disabled={approvingDrawingId === (file._id || file.id || file.title || file.name)}
-                                                className="px-1.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 rounded text-[9px] font-bold cursor-pointer"
+                                                className="px-1.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 rounded text-[0.5625rem] font-bold cursor-pointer"
                                               >
-                                                Approve
+                                                {tr("Approve")}
                                               </button>
                                               <button
                                                 type="button"
@@ -3016,9 +3017,9 @@ const { hasPermission: canDo } = usePermissions();
                                                   setSelectedDrawingForApproval({ ...file, initialAction: 'reject' });
                                                   setIsApprovalModalOpen(true);
                                                 }}
-                                                className="px-1.5 py-0.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded text-[9px] font-bold"
+                                                className="px-1.5 py-0.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded text-[0.5625rem] font-bold"
                                               >
-                                                Reject
+                                                {tr("Reject")}
                                               </button>
                                             </>
                                           )}
@@ -3029,9 +3030,9 @@ const { hasPermission: canDo } = usePermissions();
                                                 setSelectedDrawingForRevision(file);
                                                 setIsRevisionModalOpen(true);
                                               }}
-                                              className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 rounded text-[9px] font-bold"
+                                              className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 rounded text-[0.5625rem] font-bold"
                                             >
-                                              + Rev
+                                              {tr("+ Rev")}
                                             </button>
                                           )}
                                         </>
@@ -3045,7 +3046,7 @@ const { hasPermission: canDo } = usePermissions();
                                             type="button"
                                             onClick={() => setDrawingToDelete(file)}
                                             className="p-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-600"
-                                            title="Delete"
+                                            title={tr("Delete")}
                                           >
                                             <Trash2 size={11} />
                                           </button>
@@ -3054,10 +3055,10 @@ const { hasPermission: canDo } = usePermissions();
                                       <button
                                         type="button"
                                         onClick={() => router.push(`/interior-new/crm/leads/${params.id}/drawings/${encodeURIComponent(file._id || file.id || file.title || file.name)}`)}
-                                        className="p-1 px-1.5 rounded bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] flex items-center gap-0.5 text-[9px] font-bold"
+                                        className="p-1 px-1.5 rounded bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] flex items-center gap-0.5 text-[0.5625rem] font-bold"
                                       >
                                         <Eye size={11} />
-                                        <span>View</span>
+                                        <span>{tr("View")}</span>
                                       </button>
                                     </div>
                                   </div>
@@ -3082,12 +3083,12 @@ const { hasPermission: canDo } = usePermissions();
                   <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-600 mb-3 border border-amber-500/20">
                     <Lock size={22} />
                   </div>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[10px] font-bold uppercase tracking-wider mb-2">
-                    Phase Locked
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[0.625rem] font-bold uppercase tracking-wider mb-2">
+                    {tr("Phase Locked")}
                   </div>
-                  <h3 className="text-base font-bold text-[hsl(var(--foreground))]">BOQ Stage is Locked</h3>
+                  <h3 className="text-base font-bold text-[hsl(var(--foreground))]">{tr("BOQ Stage is Locked")}</h3>
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 max-w-md">
-                    Complete and approve drawings to unlock BOQ creation and itemized estimations.
+                    {tr("Complete and approve drawings to unlock BOQ creation and itemized estimations.")}
                   </p>
                   {/* Bring the lead into this stage from here — no need for the previous stage's tab */}
                   {!isReadOnly && (canDo('crm_boq', 'create') || canDo('crm_boq', 'update') || canDo('crm_drawings', 'update')) && (
@@ -3095,7 +3096,7 @@ const { hasPermission: canDo } = usePermissions();
                       onClick={() => setIsSendToBoqOpen(true)}
                       className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 active:scale-95 transition-all"
                     >
-                      Send to BOQ <ArrowRight size={12} />
+                      {tr("Send to BOQ ")}<ArrowRight size={12} />
                     </button>
                   )}
                 </div>
@@ -3123,10 +3124,10 @@ const { hasPermission: canDo } = usePermissions();
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
                               <h2 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">
-                                Bill of Quantities (BOQ) & Estimations
+                                {tr("Bill of Quantities (BOQ) & Estimations")}
                               </h2>
                               <span className={cn(
-                                "text-[10px] font-bold px-2 py-0.5 rounded border shrink-0",
+                                "text-[0.625rem] font-bold px-2 py-0.5 rounded border shrink-0",
                                 isBoqApproved
                                   ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                                   : isBoqPending
@@ -3138,14 +3139,14 @@ const { hasPermission: canDo } = usePermissions();
                                   : "bg-amber-500/10 text-amber-600 border-amber-500/20"
                               )}>
                                 {isBoqApproved
-                                  ? "✓ BOQ Approved"
+                                  ? tr("✓ BOQ Approved")
                                   : isBoqPending
-                                  ? "⏳ Approval Pending"
+                                  ? tr("⏳ Approval Pending")
                                   : isBoqRejected
-                                  ? "✕ Changes Requested"
+                                  ? tr("✕ Changes Requested")
                                   : hasBoqs
-                                  ? `BOQ Draft (v${activeBoq?.version || activeBoqIndex + 1})`
-                                  : "Pending"}
+                                  ? tr("BOQ Draft (v{{value}})", { value: activeBoq?.version || activeBoqIndex + 1 })
+                                  : tr("Pending")}
                               </span>
                             </div>
                           </div>
@@ -3155,7 +3156,7 @@ const { hasPermission: canDo } = usePermissions();
                           <div className="flex items-center gap-1.5 flex-wrap">
                             {isBoqLocked ? (
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))] text-xs font-bold">
-                                <Lock size={11} /> {isLost ? 'Locked (Lost)' : 'Locked (Approved)'}
+                                <Lock size={11} /> {isLost ? tr("Locked (Lost)") : tr("Locked (Approved)")}
                               </span>
                             ) : hasBoqs ? (
                               <>
@@ -3167,7 +3168,7 @@ const { hasPermission: canDo } = usePermissions();
                                     }}
                                     className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
                                   >
-                                    <Pencil size={12} /> Edit BOQ
+                                    <Pencil size={12} />{tr(" Edit BOQ")}
                                   </button>
                                 )}
                                 {isBoqApproved && (
@@ -3179,7 +3180,7 @@ const { hasPermission: canDo } = usePermissions();
                                       }}
                                       className="inline-flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all active:scale-95"
                                     >
-                                      <Plus size={13} /> New Version
+                                      <Plus size={13} />{tr(" New Version")}
                                     </button>
                                   )
                                 )}
@@ -3190,9 +3191,9 @@ const { hasPermission: canDo } = usePermissions();
                                       setIsDeleteBoqModalOpen(true);
                                     }}
                                     className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold transition-all active:scale-95 cursor-pointer"
-                                    title="Delete Active BOQ Version"
+                                    title={tr("Delete Active BOQ Version")}
                                   >
-                                    <Trash2 size={12} /> Delete
+                                    <Trash2 size={12} />{tr(" Delete")}
                                   </button>
                                 )}
 
@@ -3207,9 +3208,9 @@ const { hasPermission: canDo } = usePermissions();
                                       })
                                     }
                                     className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-2xs cursor-pointer"
-                                    title="Export Bill of Quantities to Excel (.xlsx)"
+                                    title={tr("Export Bill of Quantities to Excel (.xlsx)")}
                                   >
-                                    <FileSpreadsheet size={13} /> Export Excel
+                                    <FileSpreadsheet size={13} />{tr(" Export Excel")}
                                   </button>
                                 )}
 
@@ -3222,9 +3223,9 @@ const { hasPermission: canDo } = usePermissions();
                                     <button
                                       onClick={() => setIsSendToQuotationsOpen(true)}
                                       className="inline-flex items-center gap-1 px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
-                                      title="Pass to Quotation Phase"
+                                      title={tr("Pass to Quotation Phase")}
                                     >
-                                      Pass to Quotation <ArrowRight size={12} />
+                                      {tr("Pass to Quotation ")}<ArrowRight size={12} />
                                     </button>
                                   )
                                 )}
@@ -3235,7 +3236,7 @@ const { hasPermission: canDo } = usePermissions();
                                   onClick={() => setIsBoqModalOpen(true)}
                                   className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
                                 >
-                                  <Plus size={13} /> Create BOQ
+                                  <Plus size={13} />{tr(" Create BOQ")}
                                 </button>
                               )
                             )}
@@ -3246,24 +3247,24 @@ const { hasPermission: canDo } = usePermissions();
                       {/* Summary Metrics */}
                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Total Amount</p>
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Total Amount")}</p>
                           <p className="font-bold text-xs text-indigo-600 dark:text-indigo-400 mt-0.5">
                             {hasBoqs ? `${currencySymbol} ${boqInfo.totalAmount.toLocaleString()}` : `${currencySymbol} 0`}
                           </p>
                         </div>
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Scope Categories</p>
-                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate" title={hasBoqs ? boqInfo.categorySummary : '0 Categories'}>
-                            {hasBoqs ? boqInfo.categorySummary : '0 Categories'}
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Scope Categories")}</p>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate" title={hasBoqs ? boqInfo.categorySummary : tr("0 Categories")}>
+                            {hasBoqs ? boqInfo.categorySummary : tr("0 Categories")}
                           </p>
                         </div>
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Target Budget</p>
-                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5">{lead.budgetRange || 'Not specified'}</p>
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Target Budget")}</p>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5">{lead.budgetRange || tr("Not specified")}</p>
                         </div>
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Scope</p>
-                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5">{lead.propertyType || 'Interior'}</p>
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Scope")}</p>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5">{lead.propertyType || tr("Interior")}</p>
                         </div>
                       </div>
                     </div>
@@ -3275,10 +3276,10 @@ const { hasPermission: canDo } = usePermissions();
                         </div>
                         <div className="max-w-md space-y-0.5">
                           <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">
-                            Ready for Detailed BOQ Estimation
+                            {tr("Ready for Detailed BOQ Estimation")}
                           </h3>
                           <p className="text-[hsl(var(--muted-foreground))] text-xs">
-                            Build itemized take-offs across carpentry, ceiling, MEP, and finishes.
+                            {tr("Build itemized take-offs across carpentry, ceiling, MEP, and finishes.")}
                           </p>
                         </div>
                         {!isReadOnly && !isBoqLocked && (
@@ -3287,7 +3288,7 @@ const { hasPermission: canDo } = usePermissions();
                               onClick={() => setIsBoqModalOpen(true)} 
                               className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
                             >
-                              <Plus size={14} /> Create Initial BOQ
+                              <Plus size={14} />{tr(" Create Initial BOQ")}
                             </button>
                           )
                         )}
@@ -3297,7 +3298,7 @@ const { hasPermission: canDo } = usePermissions();
                         {lead.boqs.length > 1 && (
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-3 shadow-2xs">
                             <div className="flex items-center gap-1.5 shrink-0">
-                              <span className="text-xs font-extrabold text-[hsl(var(--foreground))]">BOQ Versions ({lead.boqs.length}):</span>
+                              <span className="text-xs font-extrabold text-[hsl(var(--foreground))]">{tr("BOQ Versions (")}{lead.boqs.length}):</span>
                             </div>
                             <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin pb-1">
                               {lead.boqs.map((q: any, idx: number) => {
@@ -3315,7 +3316,7 @@ const { hasPermission: canDo } = usePermissions();
                                     key={idx}
                                     onClick={() => setActiveBoqIndex(idx)}
                                     className={cn(
-                                      "px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 border text-left",
+                                      "px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 border text-start",
                                       isCurrent
                                         ? "bg-indigo-600 text-white border-indigo-700 shadow-xs ring-1 ring-indigo-500/30"
                                         : "bg-[hsl(var(--card))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] border-[hsl(var(--border))]"
@@ -3324,19 +3325,19 @@ const { hasPermission: canDo } = usePermissions();
                                     <div className="flex items-center gap-1.5">
                                       <span className="font-extrabold">v{q.version || idx + 1}</span>
                                       <span className={cn(
-                                        "text-[9px] uppercase px-1.5 py-0.2 rounded font-bold",
+                                        "text-[0.5625rem] uppercase px-1.5 py-0.2 rounded font-bold",
                                         isCurrent ? "bg-white/20 text-white" : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]"
                                       )}>
-                                        {q.status || 'Draft'}
+                                        {q.status || tr("Draft")}
                                       </span>
                                     </div>
                                     {(createdDateStr || creatorName) && (
                                       <span className={cn(
-                                        "text-[10px] flex items-center gap-1 opacity-90",
+                                        "text-[0.625rem] flex items-center gap-1 opacity-90",
                                         isCurrent ? "text-indigo-100" : "text-[hsl(var(--muted-foreground))]"
                                       )}>
-                                        {createdDateStr && <span>• {createdDateStr}</span>}
-                                        {creatorName && <span>by <strong>{creatorName}</strong></span>}
+                                        {createdDateStr && <span>• {tr(createdDateStr)}</span>}
+                                        {creatorName && <span>{tr("by ")}<strong>{tr(creatorName)}</strong></span>}
                                       </span>
                                     )}
                                   </button>
@@ -3389,12 +3390,12 @@ const { hasPermission: canDo } = usePermissions();
                   <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-600 mb-3 border border-amber-500/20">
                     <Lock size={22} />
                   </div>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[10px] font-bold uppercase tracking-wider mb-2">
-                    Phase Locked
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[0.625rem] font-bold uppercase tracking-wider mb-2">
+                    {tr("Phase Locked")}
                   </div>
-                  <h3 className="text-base font-bold text-[hsl(var(--foreground))]">Quotations Stage is Locked</h3>
+                  <h3 className="text-base font-bold text-[hsl(var(--foreground))]">{tr("Quotations Stage is Locked")}</h3>
                   <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1 max-w-md">
-                    Finalize the BOQ estimate first to unlock commercial proposals.
+                    {tr("Finalize the BOQ estimate first to unlock commercial proposals.")}
                   </p>
                   {/* Bring the lead into this stage from here — no need for the previous stage's tab */}
                   {!isReadOnly && (canDo('crm_quotations', 'create') || canDo('crm_quotations', 'update') || canDo('crm_boq', 'update')) && (
@@ -3402,7 +3403,7 @@ const { hasPermission: canDo } = usePermissions();
                       onClick={() => setIsSendToQuotationsOpen(true)}
                       className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 active:scale-95 transition-all"
                     >
-                      Send to Quotations <ArrowRight size={12} />
+                      {tr("Send to Quotations ")}<ArrowRight size={12} />
                     </button>
                   )}
                 </div>
@@ -3426,10 +3427,10 @@ const { hasPermission: canDo } = usePermissions();
                           <div>
                             <div className="flex items-center gap-2.5 flex-wrap">
                               <h2 className="text-sm sm:text-base font-bold text-[hsl(var(--foreground))]">
-                                Commercial Quotations & Proposals
+                                {tr("Commercial Quotations & Proposals")}
                               </h2>
                               <span className={cn(
-                                "text-[11px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 flex items-center gap-1.5",
+                                "text-[0.6875rem] font-bold px-2.5 py-0.5 rounded-full border shrink-0 flex items-center gap-1.5",
                                 hasQuotations
                                   ? isLatestQuoteRejected
                                     ? "bg-rose-500/10 text-rose-600 border-rose-500/20"
@@ -3448,11 +3449,11 @@ const { hasPermission: canDo } = usePermissions();
                                       : "bg-blue-500"
                                     : "bg-amber-500"
                                 )} />
-                                {hasQuotations ? `${lead.quotations.length} ${lead.quotations.length === 1 ? 'Proposal' : 'Proposals'} Generated` : "Pending Creation"}
+                                {hasQuotations ? `${lead.quotations.length} ${lead.quotations.length === 1 ? 'Proposal' : 'Proposals'} Generated` : tr("Pending Creation")}
                               </span>
                             </div>
                             <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                              Generate commercial proposals, apply taxes, discounts and manage client approvals.
+                              {tr("Generate commercial proposals, apply taxes, discounts and manage client approvals.")}
                             </p>
                           </div>
                         </div>
@@ -3465,7 +3466,7 @@ const { hasPermission: canDo } = usePermissions();
                                   onClick={() => setIsConvertToProjectOpen(true)}
                                   className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs"
                                 >
-                                  <CheckCircle2 size={14} /> Convert to Project
+                                  <CheckCircle2 size={14} />{tr(" Convert to Project")}
                                 </button>
                               )
                             )}
@@ -3477,7 +3478,7 @@ const { hasPermission: canDo } = usePermissions();
                               }}
                               className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
                             >
-                              <Plus size={14} /> Create Quotation
+                              <Plus size={14} />{tr(" Create Quotation")}
                             </button>
                           </div>
                         )}
@@ -3486,7 +3487,7 @@ const { hasPermission: canDo } = usePermissions();
                       {/* Summary Metrics */}
                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors min-w-0 overflow-hidden">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Grand Total</p>
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Grand Total")}</p>
                           <p 
                             className="font-extrabold text-sm sm:text-base text-blue-600 dark:text-blue-400 mt-1 truncate block"
                             title={hasQuotations ? formatSmartCurrency(quotationInfo.grandTotal, currencySymbol).exact : ''}
@@ -3495,26 +3496,26 @@ const { hasPermission: canDo } = usePermissions();
                           </p>
                           {hasQuotations && formatSmartCurrency(quotationInfo.grandTotal, currencySymbol).isLarge && (
                             <p 
-                              className="text-[10px] font-mono text-[hsl(var(--muted-foreground))] truncate block"
+                              className="text-[0.625rem] font-mono text-[hsl(var(--muted-foreground))] truncate block"
                               title={formatSmartCurrency(quotationInfo.grandTotal, currencySymbol).exact}
                             >
-                              ({formatSmartCurrency(quotationInfo.grandTotal, currencySymbol).exact})
+                              ({tr(formatSmartCurrency(quotationInfo.grandTotal, currencySymbol).exact)})
                             </p>
                           )}
                         </div>
                         <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Breakdown</p>
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Breakdown")}</p>
                           <p className="font-bold text-xs sm:text-sm text-[hsl(var(--foreground))] mt-1 truncate">
-                            {hasQuotations ? `${quotationInfo.taxPercentage}% Tax • ${quotationInfo.itemsCount} Items` : 'No items'}
+                            {hasQuotations ? tr("{{taxPercentage}}% Tax • {{itemsCount}} Items", { taxPercentage: quotationInfo.taxPercentage, itemsCount: quotationInfo.itemsCount }) : tr("No items")}
                           </p>
                         </div>
                         <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Latest Status</p>
-                          <p className="font-bold text-xs sm:text-sm text-[hsl(var(--foreground))] mt-1">{quotationInfo.currentQuote?.status || 'Generated'}</p>
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Latest Status")}</p>
+                          <p className="font-bold text-xs sm:text-sm text-[hsl(var(--foreground))] mt-1">{quotationInfo.currentQuote?.status || tr("Generated")}</p>
                         </div>
                         <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors">
-                          <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Target Budget</p>
-                          <p className="font-bold text-xs sm:text-sm text-[hsl(var(--foreground))] mt-1">{lead.budgetRange || 'Not specified'}</p>
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Target Budget")}</p>
+                          <p className="font-bold text-xs sm:text-sm text-[hsl(var(--foreground))] mt-1">{lead.budgetRange || tr("Not specified")}</p>
                         </div>
                       </div>
                     </div>
@@ -3526,10 +3527,10 @@ const { hasPermission: canDo } = usePermissions();
                         </div>
                         <div className="max-w-md space-y-1">
                           <h3 className="text-base font-bold text-[hsl(var(--foreground))]">
-                            No Quotations Created Yet
+                            {tr("No Quotations Created Yet")}
                           </h3>
                           <p className="text-[hsl(var(--muted-foreground))] text-xs">
-                            Generate itemized pricing proposals directly from the finalized BOQ, apply custom discounts and taxes.
+                            {tr("Generate itemized pricing proposals directly from the finalized BOQ, apply custom discounts and taxes.")}
                           </p>
                         </div>
                         {!isReadOnly && (
@@ -3540,7 +3541,7 @@ const { hasPermission: canDo } = usePermissions();
                             }}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer shadow-sm"
                           >
-                            <Plus size={15} /> Create First Quotation
+                            <Plus size={15} />{tr(" Create First Quotation")}
                           </button>
                         )}
                       </div>
@@ -3551,28 +3552,28 @@ const { hasPermission: canDo } = usePermissions();
                           <div className="px-4 py-3 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.25)] flex items-center justify-between gap-3">
                             <div>
                               <h3 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
-                                <span>Quotation Versions & Options</span>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                                <span>{tr("Quotation Versions & Options")}</span>
+                                <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20">
                                   {lead.quotations.length}
                                 </span>
                               </h3>
                             </div>
-                            <p className="text-[11px] text-[hsl(var(--muted-foreground))] hidden sm:block">
-                              Click &quot;View&quot; to inspect document preview or send to client
+                            <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] hidden sm:block">
+                              {tr("Click \"View\" to inspect document preview or send to client")}
                             </p>
                           </div>
 
                           <div className="overflow-x-auto">
-                            <table className="w-full text-left text-xs border-collapse">
+                            <table className="w-full text-start text-xs border-collapse">
                               <thead>
-                                <tr className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.4)] text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wider text-[10px]">
+                                <tr className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.4)] text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wider text-[0.625rem]">
                                   <th className="py-3 px-4 w-12 text-center">#</th>
-                                  <th className="py-3 px-4 min-w-[200px] max-w-[320px]">Quotation Title</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Scope / Items</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Subtotal & Tax</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Grand Total</th>
-                                  <th className="py-3 px-4 text-center whitespace-nowrap">Status</th>
-                                  <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
+                                  <th className="py-3 px-4 min-w-[12.5rem] max-w-[20rem]">{tr("Quotation Title")}</th>
+                                  <th className="py-3 px-4 whitespace-nowrap">{tr("Scope / Items")}</th>
+                                  <th className="py-3 px-4 whitespace-nowrap">{tr("Subtotal & Tax")}</th>
+                                  <th className="py-3 px-4 whitespace-nowrap">{tr("Grand Total")}</th>
+                                  <th className="py-3 px-4 text-center whitespace-nowrap">{tr("Status")}</th>
+                                  <th className="py-3 px-4 text-end whitespace-nowrap">{tr("Actions")}</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-[hsl(var(--border))]">
@@ -3605,14 +3606,14 @@ const { hasPermission: canDo } = usePermissions();
                                       className="group cursor-pointer transition-all hover:bg-[hsl(var(--muted)/0.4)]"
                                     >
                                       {/* Index */}
-                                      <td className="py-3.5 px-4 text-center font-mono text-[11px] text-[hsl(var(--muted-foreground))]">
+                                      <td className="py-3.5 px-4 text-center font-mono text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
                                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-md font-semibold text-xs bg-slate-100 dark:bg-[hsl(var(--muted))] text-slate-600 dark:text-[hsl(var(--muted-foreground))]">
                                           {idx + 1}
                                         </span>
                                       </td>
 
                                       {/* Quotation Title */}
-                                      <td className="py-3.5 px-4 font-bold text-[hsl(var(--foreground))] min-w-[200px] max-w-[320px]">
+                                      <td className="py-3.5 px-4 font-bold text-[hsl(var(--foreground))] min-w-[12.5rem] max-w-[20rem]">
                                         <div className="flex items-center gap-3 min-w-0">
                                           <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-all bg-blue-50 text-blue-600 border-blue-200 group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-500/10 dark:border-blue-500/20">
                                             <FileText size={14} />
@@ -3622,14 +3623,14 @@ const { hasPermission: canDo } = usePermissions();
                                               className="text-xs font-bold text-[hsl(var(--foreground))] block truncate"
                                               title={quoteTitle}
                                             >
-                                              {quoteTitle}
+                                              {tr(quoteTitle)}
                                             </span>
-                                            <p className="text-[10px] text-[hsl(var(--muted-foreground))] font-normal truncate">
-                                              Version {q.version || idx + 1}
-                                              {q.sourceBoqVersion && ` • BOQ v${q.sourceBoqVersion}`}
+                                            <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))] font-normal truncate">
+                                              {tr("Version ")}{q.version || idx + 1}
+                                              {q.sourceBoqVersion && tr(" • BOQ v{{sourceBoqVersion}}", { sourceBoqVersion: q.sourceBoqVersion })}
                                               {Array.isArray(q.vendorQuotes) && q.vendorQuotes.length > 0 && (
-                                                <span className="text-indigo-600 dark:text-indigo-400 font-semibold ml-1.5">
-                                                  • {q.vendorQuotes.length} Vendor {q.vendorQuotes.length === 1 ? 'Quote' : 'Quotes'}
+                                                <span className="text-indigo-600 dark:text-indigo-400 font-semibold ms-1.5">
+                                                  • {q.vendorQuotes.length}{tr(" Vendor ")}{q.vendorQuotes.length === 1 ? tr("Quote") : tr("Quotes")}
                                                 </span>
                                               )}
                                             </p>
@@ -3638,30 +3639,30 @@ const { hasPermission: canDo } = usePermissions();
                                       </td>
 
                                       {/* Items / Scope */}
-                                      <td className="py-3.5 px-4 text-[11px] text-[hsl(var(--muted-foreground))] whitespace-nowrap">
+                                      <td className="py-3.5 px-4 text-[0.6875rem] text-[hsl(var(--muted-foreground))] whitespace-nowrap">
                                         <div className="flex items-center gap-1.5">
                                           <span className="font-semibold text-slate-700 dark:text-[hsl(var(--foreground))] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-[hsl(var(--muted))] border border-slate-200/80 dark:border-[hsl(var(--border))]">
-                                            {itemCount} {itemCount === 1 ? 'item' : 'items'}
+                                            {tr(itemCount)} {itemCount === 1 ? tr("item") : tr("items")}
                                           </span>
                                         </div>
                                       </td>
 
                                       {/* Subtotal & Tax */}
-                                      <td className="py-3.5 px-4 text-[11px] text-[hsl(var(--muted-foreground))] whitespace-nowrap">
+                                      <td className="py-3.5 px-4 text-[0.6875rem] text-[hsl(var(--muted-foreground))] whitespace-nowrap">
                                         <div 
-                                          className="font-medium text-[hsl(var(--foreground))] truncate max-w-[140px]"
+                                          className="font-medium text-[hsl(var(--foreground))] truncate max-w-[8.75rem]"
                                           title={formatSmartCurrency(q.subtotal || 0, currencySymbol).exact}
                                         >
-                                          {formatSmartCurrency(q.subtotal || 0, currencySymbol).display}
+                                          {tr(formatSmartCurrency(q.subtotal || 0, currencySymbol).display)}
                                         </div>
-                                        <div className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                                          Tax: {q.taxPercentage || 0}%
+                                        <div className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
+                                          {tr("Tax: ")}{q.taxPercentage || 0}%
                                           {Number(q.discountAmount || 0) > 0 && (
                                             <span 
-                                              className="ml-1 text-emerald-600 font-semibold truncate"
+                                              className="ms-1 text-emerald-600 font-semibold truncate"
                                               title={formatSmartCurrency(Number(q.discountAmount), currencySymbol).exact}
                                             >
-                                              • Disc: {formatSmartCurrency(Number(q.discountAmount), currencySymbol).display}
+                                              {tr("• Disc: ")}{tr(formatSmartCurrency(Number(q.discountAmount), currencySymbol).display)}
                                             </span>
                                           )}
                                         </div>
@@ -3670,34 +3671,34 @@ const { hasPermission: canDo } = usePermissions();
                                       {/* Grand Total */}
                                       <td className="py-3.5 px-4 whitespace-nowrap">
                                         <span 
-                                          className="text-xs font-extrabold text-blue-600 dark:text-blue-400 truncate block max-w-[150px]"
+                                          className="text-xs font-extrabold text-blue-600 dark:text-blue-400 truncate block max-w-[9.375rem]"
                                           title={formatSmartCurrency(q.grandTotal || 0, currencySymbol).exact}
                                         >
-                                          {formatSmartCurrency(q.grandTotal || 0, currencySymbol).display}
+                                          {tr(formatSmartCurrency(q.grandTotal || 0, currencySymbol).display)}
                                         </span>
                                       </td>
 
                                       {/* Status */}
                                       <td className="py-3.5 px-4 whitespace-nowrap text-center">
                                         <span className={cn(
-                                          "text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wider inline-flex items-center gap-1",
+                                          "text-[0.625rem] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wider inline-flex items-center gap-1",
                                           getStatusBadge(status)
                                         )}>
                                           <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
-                                          {status}
+                                          {tr(status)}
                                         </span>
                                       </td>
 
                                       {/* Actions */}
-                                      <td className="py-3.5 px-4 whitespace-nowrap text-right">
+                                      <td className="py-3.5 px-4 whitespace-nowrap text-end">
                                         <div className="inline-flex items-center gap-1.5 justify-end" onClick={(e) => e.stopPropagation()}>
                                           <button
                                             type="button"
                                             onClick={() => setActiveQuotationIndex(idx)}
                                             className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs bg-white hover:bg-blue-50 text-blue-700 border border-blue-500 dark:bg-[hsl(var(--card))] dark:text-blue-400"
-                                            title="View Quotation Modal"
+                                            title={tr("View Quotation Modal")}
                                           >
-                                            <Eye size={13} /> View
+                                            <Eye size={13} />{tr(" View")}
                                           </button>
 
 
@@ -3709,9 +3710,9 @@ const { hasPermission: canDo } = usePermissions();
                                                 setIsQuotationModalOpen(true);
                                               }}
                                               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-200 transition-colors cursor-pointer shadow-xs dark:bg-[hsl(var(--card))] dark:border-[hsl(var(--border))] dark:text-[hsl(var(--foreground))]"
-                                              title="Edit Quotation"
+                                              title={tr("Edit Quotation")}
                                             >
-                                              <Pencil size={12} /> Edit
+                                              <Pencil size={12} />{tr(" Edit")}
                                             </button>
                                           )}
 
@@ -3721,7 +3722,7 @@ const { hasPermission: canDo } = usePermissions();
                                                 type="button"
                                                 onClick={() => handleDeleteQuotationByIndex(idx)}
                                                 className="inline-flex items-center justify-center p-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors cursor-pointer shadow-xs dark:bg-[hsl(var(--card))] dark:border-[hsl(var(--border))] dark:text-[hsl(var(--muted-foreground))]"
-                                                title="Delete Quotation"
+                                                title={tr("Delete Quotation")}
                                               >
                                                 <Trash2 size={13} />
                                               </button>
@@ -3759,17 +3760,17 @@ const { hasPermission: canDo } = usePermissions();
                     <Lock size={24} />
                   </div>
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-xs font-bold uppercase tracking-wider mb-2">
-                    Phase Locked
+                    {tr("Phase Locked")}
                   </div>
-                  <h3 className="text-base sm:text-lg font-bold text-[hsl(var(--foreground))]">Order Confirmation Stage is Locked</h3>
+                  <h3 className="text-base sm:text-lg font-bold text-[hsl(var(--foreground))]">{tr("Order Confirmation Stage is Locked")}</h3>
                   <p className="text-[hsl(var(--muted-foreground))] text-xs sm:text-sm mt-1 max-w-md">
-                    Create and finalize a commercial proposal in the Quotations tab first to unlock the confirmed order workflow.
+                    {tr("Create and finalize a commercial proposal in the Quotations tab first to unlock the confirmed order workflow.")}
                   </p>
                   <button
                     onClick={() => setActiveTab('quotations')}
                     className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
                   >
-                    <FileText size={14} /> Go to Quotations Tab
+                    <FileText size={14} />{tr(" Go to Quotations Tab")}
                   </button>
                 </div>
               ) : (
@@ -3800,40 +3801,40 @@ const { hasPermission: canDo } = usePermissions();
               
               <div className="flex items-center justify-between mb-4 pb-3 border-b border-[hsl(var(--border))]">
                 <div>
-                  <h2 className="text-base font-bold text-[hsl(var(--foreground))]">Log Activity Note</h2>
-                  <p className="text-xs text-[hsl(var(--muted-foreground))]">Record a touchpoint with {lead.name}</p>
+                  <h2 className="text-base font-bold text-[hsl(var(--foreground))]">{tr("Log Activity Note")}</h2>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))]">{tr("Record a touchpoint with ")}{tr(lead.name)}</p>
                 </div>
                 <button onClick={() => setIsActivityModalOpen(false)} className="p-1.5 hover:bg-[hsl(var(--accent))] rounded-lg bg-[hsl(var(--muted))] transition-colors"><X size={16} className="text-[hsl(var(--muted-foreground))]" /></button>
               </div>
 
               <form onSubmit={handleActivitySubmit} className="space-y-4">
                 <div>
-                  <label className="text-[11px] font-bold text-[hsl(var(--foreground))] uppercase tracking-wider">Activity Type</label>
+                  <label className="text-[0.6875rem] font-bold text-[hsl(var(--foreground))] uppercase tracking-wider">{tr("Activity Type")}</label>
                   <select 
                     value={activityForm.type}
                     onChange={e => setActivityForm({...activityForm, type: e.target.value})}
                     className="w-full mt-1.5 px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] text-xs font-medium focus:border-[hsl(var(--primary))] outline-none"
                   >
-                    {["Phone Call", "WhatsApp", "Meeting", "Office Visit", "Site Visit", "Email", "Status Change"].map(t => <option key={t} value={t}>{t}</option>)}
+                    {["Phone Call", "WhatsApp", "Meeting", "Office Visit", "Site Visit", "Email", "Status Change"].map(t => <option key={t} value={t}>{tr(t)}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-bold text-[hsl(var(--foreground))] uppercase tracking-wider">Remarks / Summary</label>
+                  <label className="text-[0.6875rem] font-bold text-[hsl(var(--foreground))] uppercase tracking-wider">{tr("Remarks / Summary")}</label>
                   <textarea 
                     required
                     rows={4}
                     value={activityForm.remarks}
                     onChange={e => setActivityForm({...activityForm, remarks: e.target.value})}
-                    placeholder="E.g., Client wants a modern theme, budget is strict. Next meeting next week."
+                    placeholder={tr("E.g., Client wants a modern theme, budget is strict. Next meeting next week.")}
                     className="w-full mt-1.5 px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] text-xs font-medium focus:border-[hsl(var(--primary))] outline-none resize-none"
                   />
                 </div>
 
                 <div className="pt-2 flex justify-end gap-2">
-                  <button type="button" onClick={() => setIsActivityModalOpen(false)} className="px-4 py-2 rounded-lg text-xs font-bold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] transition-colors">Cancel</button>
+                  <button type="button" onClick={() => setIsActivityModalOpen(false)} className="px-4 py-2 rounded-lg text-xs font-bold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] transition-colors">{tr("Cancel")}</button>
                   <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-lg text-xs font-bold text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] disabled:opacity-50 transition-all active:scale-95">
-                    {isSubmitting ? 'Saving...' : 'Save Activity'}
+                    {isSubmitting ? tr("Saving...") : tr("Save Activity")}
                   </button>
                 </div>
               </form>
@@ -4209,9 +4210,9 @@ const { hasPermission: canDo } = usePermissions();
               <div className="flex items-center gap-2 text-rose-800">
                 <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900">Rejection Reason</h4>
-                  <p className="text-[11px] text-slate-500 font-medium truncate max-w-xs">
-                    {viewRejectionReasonData.title} (v{viewRejectionReasonData.version})
+                  <h4 className="text-sm font-bold text-slate-900">{tr("Rejection Reason")}</h4>
+                  <p className="text-[0.6875rem] text-slate-500 font-medium truncate max-w-xs">
+                    {tr(viewRejectionReasonData.title)} (v{tr(viewRejectionReasonData.version)})
                   </p>
                 </div>
               </div>
@@ -4225,10 +4226,10 @@ const { hasPermission: canDo } = usePermissions();
             </div>
             <div className="p-5 max-h-[60vh] overflow-y-auto">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
-                Reviewer Feedback & Required Modifications
+                {tr("Reviewer Feedback & Required Modifications")}
               </p>
               <div className="p-3.5 bg-rose-50/60 border border-rose-200/80 rounded-xl text-xs sm:text-sm text-slate-900 leading-relaxed font-normal whitespace-pre-wrap break-words">
-                {viewRejectionReasonData.reason}
+                {tr(viewRejectionReasonData.reason)}
               </div>
             </div>
             <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
@@ -4237,7 +4238,7 @@ const { hasPermission: canDo } = usePermissions();
                 onClick={() => setViewRejectionReasonData(null)}
                 className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
               >
-                Close
+                {tr("Close")}
               </button>
             </div>
           </div>
@@ -4276,10 +4277,10 @@ const { hasPermission: canDo } = usePermissions();
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">
-                    Delete Drawing
+                    {tr("Delete Drawing")}
                   </h3>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1 leading-relaxed">
-                    Are you sure you want to delete drawing <strong className="text-[hsl(var(--foreground))]">"{drawingToDelete.title || drawingToDelete.name || 'this drawing'}"</strong>? This will remove all revision versions.
+                    {tr("Are you sure you want to delete drawing ")}<strong className="text-[hsl(var(--foreground))]">"{drawingToDelete.title || drawingToDelete.name || tr("this drawing")}"</strong>{tr("? This will remove all revision versions.")}
                   </p>
                 </div>
               </div>
@@ -4291,7 +4292,7 @@ const { hasPermission: canDo } = usePermissions();
                   onClick={() => setDrawingToDelete(null)}
                   className="px-3 py-1.5 text-xs font-bold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] rounded-lg transition"
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </button>
                 <button
                   type="button"
@@ -4300,7 +4301,7 @@ const { hasPermission: canDo } = usePermissions();
                   className="px-3 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition disabled:opacity-50 inline-flex items-center gap-1.5"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  {isDeletingDrawing ? 'Deleting...' : 'Delete Drawing'}
+                  {isDeletingDrawing ? tr("Deleting...") : tr("Delete Drawing")}
                 </button>
               </div>
             </motion.div>

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -92,13 +93,13 @@ export function InteriorDeleteBoqModal({
 
       toast.success(
         isDeletingSpecificVersion && !isOnlyVersion
-          ? `BOQ Version ${targetVersionNumber} deleted successfully.`
-          : 'BOQ deleted successfully.'
+          ? tr("BOQ Version {{targetVersionNumber}} deleted successfully.", { targetVersionNumber: targetVersionNumber })
+          : tr("BOQ deleted successfully.")
       );
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to delete BOQ. Please try again.');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || tr("Failed to delete BOQ. Please try again."));
     } finally {
       setIsDeleting(false);
     }
@@ -129,11 +130,11 @@ export function InteriorDeleteBoqModal({
             <div>
               <h3 className="font-extrabold text-sm text-[hsl(var(--foreground))]">
                 {isDeletingSpecificVersion && !isOnlyVersion
-                  ? `Delete BOQ Version ${targetVersionNumber}`
-                  : 'Delete BOQ Estimation'}
+                  ? tr("Delete BOQ Version {{targetVersionNumber}}", { targetVersionNumber: targetVersionNumber })
+                  : tr("Delete BOQ Estimation")}
               </h3>
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                {customerName ? `Lead: ${customerName}` : 'Estimate Removal Confirmation'}
+              <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
+                {customerName ? `Lead: ${customerName}` : tr("Estimate Removal Confirmation")}
               </p>
             </div>
           </div>
@@ -150,17 +151,15 @@ export function InteriorDeleteBoqModal({
           <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-start gap-2.5">
             <AlertTriangle size={18} className="text-rose-600 shrink-0 mt-0.5" />
             <div className="text-xs text-rose-800 dark:text-rose-300 leading-relaxed">
-              <span className="font-bold block mb-0.5">Are you sure you want to proceed?</span>
+              <span className="font-bold block mb-0.5">{tr("Are you sure you want to proceed?")}</span>
               {isDeletingSpecificVersion && !isOnlyVersion ? (
                 <>
-                  You are about to permanently delete <strong>Version {targetVersionNumber}</strong> (
-                  {currencySymbol} {(targetBoq?.totalAmount || 0).toLocaleString()}). Other BOQ versions will be preserved and
-                  re-sequenced.
+                  {tr("You are about to permanently delete ")}<strong>{tr("Version ")}{tr(targetVersionNumber)}</strong> (
+                  {tr(currencySymbol)} {(targetBoq?.totalAmount || 0).toLocaleString()}{tr("). Other BOQ versions will be preserved and re-sequenced.")}
                 </>
               ) : (
                 <>
-                  This will remove all BOQ line items and total pricing for this lead. The lead status will remain in the
-                  CRM, but the BOQ state will reset to <em>Pending</em>.
+                  {tr("This will remove all BOQ line items and total pricing for this lead. The lead status will remain in the CRM, but the BOQ state will reset to ")}<em>{tr("Pending")}</em>.
                 </>
               )}
             </div>
@@ -170,24 +169,24 @@ export function InteriorDeleteBoqModal({
             <div className="bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))] rounded-xl p-3 space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-[hsl(var(--muted-foreground))] font-medium flex items-center gap-1.5">
-                  <FileSpreadsheet size={13} className="text-blue-500" /> Version Target
+                  <FileSpreadsheet size={13} className="text-blue-500" />{tr(" Version Target")}
                 </span>
                 <span className="font-bold text-[hsl(var(--foreground))]">
-                  Version {targetVersionNumber}
+                  {tr("Version ")}{tr(targetVersionNumber)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-[hsl(var(--muted-foreground))] font-medium flex items-center gap-1.5">
-                  <Calculator size={13} className="text-emerald-500" /> Total Valuation
+                  <Calculator size={13} className="text-emerald-500" />{tr(" Total Valuation")}
                 </span>
                 <span className="font-extrabold text-emerald-600">
-                  {currencySymbol} {(targetBoq.totalAmount || 0).toLocaleString()}
+                  {tr(currencySymbol)} {(targetBoq.totalAmount || 0).toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[hsl(var(--muted-foreground))] font-medium">Scope Categories</span>
+                <span className="text-[hsl(var(--muted-foreground))] font-medium">{tr("Scope Categories")}</span>
                 <span className="font-bold text-[hsl(var(--foreground))]">
-                  {categoryLabel}
+                  {tr(categoryLabel)}
                 </span>
               </div>
             </div>
@@ -202,7 +201,7 @@ export function InteriorDeleteBoqModal({
             disabled={isDeleting}
             className="px-3.5 py-1.5 text-xs font-bold rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] transition-all cursor-pointer"
           >
-            Cancel
+            {tr("Cancel")}
           </button>
           <button
             type="button"
@@ -211,10 +210,10 @@ export function InteriorDeleteBoqModal({
             className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
           >
             {isDeleting ? (
-              'Deleting...'
+              tr("Deleting...")
             ) : (
               <>
-                <Trash2 size={13} /> Confirm Delete
+                <Trash2 size={13} />{tr(" Confirm Delete")}
               </>
             )}
           </button>

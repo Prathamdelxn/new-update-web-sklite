@@ -1,3 +1,4 @@
+import { tr } from '@/i18n';
 // =============================================================================
 // Sky-Lite Web — Shared Validation Helper Utilities for CRM Module
 // Industry-standard validation rules for Lead Management
@@ -30,21 +31,21 @@ export const PROPERTY_TYPES = ['Flat', 'Villa', 'Office', 'Shop', 'Other'] as co
  */
 export function validateName(name?: string, minLength = 2, maxLength = 50): string | null {
   if (!name || !name.trim()) {
-    return 'Full name is required';
+    return tr("Full name is required");
   }
   const cleaned = name.trim();
   if (cleaned.length < minLength) {
-    return `Full name must be at least ${minLength} characters long`;
+    return tr("Full name must be at least {{minLength}} characters long", { minLength: minLength });
   }
   if (cleaned.length > maxLength) {
-    return `Full name cannot exceed ${maxLength} characters (currently ${cleaned.length})`;
+    return tr("Full name cannot exceed {{maxLength}} characters (currently {{cleanedCount}})", { maxLength: maxLength, cleanedCount: cleaned.length });
   }
   if (/\d/.test(cleaned)) {
-    return 'Full name cannot contain numbers';
+    return tr("Full name cannot contain numbers");
   }
   const nameRegex = /^[a-zA-Z\s'.-]+$/;
   if (!nameRegex.test(cleaned)) {
-    return 'Full name can only contain letters, spaces, hyphens, and dots';
+    return tr("Full name can only contain letters, spaces, hyphens, and dots");
   }
   return null;
 }
@@ -58,23 +59,23 @@ export function validateName(name?: string, minLength = 2, maxLength = 50): stri
  */
 export function validateMobileNumber(mobile?: string, isRequired = true): string | null {
   if (!mobile || !mobile.trim()) {
-    return isRequired ? 'Mobile number is required' : null;
+    return isRequired ? tr("Mobile number is required") : null;
   }
   const cleaned = mobile.trim();
   if (/[a-zA-Z]/.test(cleaned)) {
-    return 'Mobile number cannot contain letters';
+    return tr("Mobile number cannot contain letters");
   }
   const digitsOnly = cleaned.replace(/\D/g, '');
 
   if (digitsOnly.length < 10) {
-    return `Mobile number must be at least 10 digits (currently ${digitsOnly.length})`;
+    return tr("Mobile number must be at least 10 digits (currently {{digitsOnlyCount}})", { digitsOnlyCount: digitsOnly.length });
   }
   if (digitsOnly.length > 15) {
-    return `Mobile number cannot exceed 15 digits (currently ${digitsOnly.length})`;
+    return tr("Mobile number cannot exceed 15 digits (currently {{digitsOnlyCount}})", { digitsOnlyCount: digitsOnly.length });
   }
   const phoneRegex = /^\+?[0-9\s-]{10,18}$/;
   if (!phoneRegex.test(cleaned)) {
-    return 'Please enter a valid phone number format (e.g., +1 555-019-2834)';
+    return tr("Please enter a valid phone number format (e.g., +1 555-019-2834)");
   }
   return null;
 }
@@ -101,11 +102,11 @@ export function validateEmail(email?: string, maxLength = 100): string | null {
   }
   const cleaned = email.trim();
   if (cleaned.length > maxLength) {
-    return `Email address cannot exceed ${maxLength} characters`;
+    return tr("Email address cannot exceed {{maxLength}} characters", { maxLength: maxLength });
   }
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   if (!emailRegex.test(cleaned)) {
-    return 'Please enter a valid email address (e.g., name@example.com)';
+    return tr("Please enter a valid email address (e.g., name@example.com)");
   }
   return null;
 }
@@ -123,17 +124,17 @@ export function validateProjectLocation(
   maxLength = 150
 ): string | null {
   if (!location || !location.trim()) {
-    return isRequired ? 'Project location is required' : null;
+    return isRequired ? tr("Project location is required") : null;
   }
   const cleaned = location.trim();
   if (cleaned.length < minLength) {
-    return `Project location must be at least ${minLength} characters long`;
+    return tr("Project location must be at least {{minLength}} characters long", { minLength: minLength });
   }
   if (cleaned.length > maxLength) {
-    return `Project location cannot exceed ${maxLength} characters (currently ${cleaned.length})`;
+    return tr("Project location cannot exceed {{maxLength}} characters (currently {{cleanedCount}})", { maxLength: maxLength, cleanedCount: cleaned.length });
   }
   if (!/[a-zA-Z0-9]/.test(cleaned)) {
-    return 'Please enter a valid location name';
+    return tr("Please enter a valid location name");
   }
   return null;
 }
@@ -143,10 +144,10 @@ export function validateProjectLocation(
  */
 export function validateLeadSource(source?: string): string | null {
   if (!source || !source.trim()) {
-    return 'Lead source is required';
+    return tr("Lead source is required");
   }
   if (!LEAD_SOURCES.includes(source as any)) {
-    return 'Please select a valid lead source';
+    return tr("Please select a valid lead source");
   }
   return null;
 }
@@ -156,10 +157,10 @@ export function validateLeadSource(source?: string): string | null {
  */
 export function validatePropertyType(type?: string): string | null {
   if (!type || !type.trim()) {
-    return 'Property type is required';
+    return tr("Property type is required");
   }
   if (!PROPERTY_TYPES.includes(type as any)) {
-    return 'Please select a valid property type';
+    return tr("Please select a valid property type");
   }
   return null;
 }
@@ -169,7 +170,7 @@ export function validatePropertyType(type?: string): string | null {
  */
 export function validateNonEmpty(value?: string, fieldName = 'This field'): string | null {
   if (!value || !value.trim()) {
-    return `${fieldName} is required`;
+    return tr("{{fieldName}} is required", { fieldName: tr(fieldName) });
   }
   return null;
 }
@@ -184,14 +185,14 @@ export function validateTextLength(
 ): string | null {
   const { required = false, minLength = 0, maxLength = 500 } = options;
   if (!value || !value.trim()) {
-    return required ? `${fieldName} is required` : null;
+    return required ? tr("{{fieldName}} is required", { fieldName: tr(fieldName) }) : null;
   }
   const cleaned = value.trim();
   if (minLength > 0 && cleaned.length < minLength) {
-    return `${fieldName} must be at least ${minLength} characters long`;
+    return tr("{{fieldName}} must be at least {{minLength}} characters long", { fieldName: tr(fieldName), minLength: minLength });
   }
   if (maxLength > 0 && cleaned.length > maxLength) {
-    return `${fieldName} cannot exceed ${maxLength} characters (currently ${cleaned.length})`;
+    return tr("{{fieldName}} cannot exceed {{maxLength}} characters (currently {{cleanedCount}})", { fieldName: tr(fieldName), maxLength: maxLength, cleanedCount: cleaned.length });
   }
   return null;
 }
@@ -201,11 +202,11 @@ export function validateTextLength(
  */
 export function validatePositiveNumber(value?: number | string, fieldName = 'Value'): string | null {
   if (value === undefined || value === null || value === '') {
-    return `${fieldName} is required`;
+    return tr("{{fieldName}} is required", { fieldName: tr(fieldName) });
   }
   const num = typeof value === 'number' ? value : parseFloat(value);
   if (isNaN(num) || num <= 0) {
-    return `${fieldName} must be a positive number greater than 0`;
+    return tr("{{fieldName}} must be a positive number greater than 0", { fieldName: tr(fieldName) });
   }
   return null;
 }
@@ -215,11 +216,11 @@ export function validatePositiveNumber(value?: number | string, fieldName = 'Val
  */
 export function validateNonNegativeNumber(value?: number | string, fieldName = 'Value'): string | null {
   if (value === undefined || value === null || value === '') {
-    return `${fieldName} is required`;
+    return tr("{{fieldName}} is required", { fieldName: tr(fieldName) });
   }
   const num = typeof value === 'number' ? value : parseFloat(value);
   if (isNaN(num) || num < 0) {
-    return `${fieldName} cannot be negative`;
+    return tr("{{fieldName}} cannot be negative", { fieldName: tr(fieldName) });
   }
   return null;
 }
@@ -229,11 +230,11 @@ export function validateNonNegativeNumber(value?: number | string, fieldName = '
  */
 export function validateRequiredDate(dateStr?: string, fieldName = 'Date'): string | null {
   if (!dateStr || !dateStr.trim()) {
-    return `${fieldName} is required`;
+    return tr("{{fieldName}} is required", { fieldName: tr(fieldName) });
   }
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) {
-    return `${fieldName} must be a valid date`;
+    return tr("{{fieldName}} must be a valid date", { fieldName: tr(fieldName) });
   }
   return null;
 }
@@ -263,7 +264,7 @@ export function validateFutureDate(dateStr?: string, fieldName = 'Date', allowMa
   const d = new Date(dateStr!);
   const minAllowed = Date.now() - allowMarginMinutes * 60 * 1000;
   if (d.getTime() < minAllowed) {
-    return `${fieldName} cannot be in the past`;
+    return tr("{{fieldName}} cannot be in the past", { fieldName: tr(fieldName) });
   }
   return null;
 }

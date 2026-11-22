@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Interior CRM Share Link Modal
@@ -138,7 +139,7 @@ export function InteriorCrmShareModal({
   ) => {
     if (!lead?._id) return;
     if (mode === 'drawings' && approvedCount === 0) {
-      toast.error('Cannot create share link: At least one drawing must be approved before sharing with client.');
+      toast.error(tr("Cannot create share link: At least one drawing must be approved before sharing with client."));
       return;
     }
 
@@ -159,15 +160,15 @@ export function InteriorCrmShareModal({
         setShareToken(res.data.shareToken);
         setIsPublic(true);
         if (regenerate) {
-          toast.success('Active share link refreshed successfully');
+          toast.success(tr("Active share link refreshed successfully"));
         }
         if (onUpdated) onUpdated();
       } else {
-        toast.error(res.message || 'Failed to configure share link');
+        toast.error(res.message || tr("Failed to configure share link"));
       }
     } catch (err: any) {
       console.error('Error sharing link:', err);
-      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to configure share link');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || tr("Failed to configure share link"));
     } finally {
       setLoading(false);
     }
@@ -180,14 +181,14 @@ export function InteriorCrmShareModal({
       const res = await interiorCrmService.revokeShareLink(lead._id);
       if (res.success) {
         setIsPublic(false);
-        toast.success('Share link deactivated');
+        toast.success(tr("Share link deactivated"));
         if (onUpdated) onUpdated();
       } else {
-        toast.error(res.message || 'Failed to revoke link');
+        toast.error(res.message || tr("Failed to revoke link"));
       }
     } catch (err: any) {
       console.error('Error revoking share link:', err);
-      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to revoke link');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || tr("Failed to revoke link"));
     } finally {
       setLoading(false);
     }
@@ -224,42 +225,42 @@ export function InteriorCrmShareModal({
 
   const handleCopy = async () => {
     if (mode === 'drawings' && approvedCount === 0) {
-      toast.error('Sharing is not allowed until at least one drawing is approved');
+      toast.error(tr("Sharing is not allowed until at least one drawing is approved"));
       return;
     }
     if (!isPublic) {
-      toast.error('This link is currently stopped. Click "Activate Link" below to re-enable it.');
+      toast.error(tr("This link is currently stopped. Click \"Activate Link\" below to re-enable it."));
       return;
     }
     if (isLinkExpired) {
-      toast.error('This link has expired. Click "Renew Link" above to re-enable it.');
+      toast.error(tr("This link has expired. Click \"Renew Link\" above to re-enable it."));
       return;
     }
     if (!shareUrl) {
-      toast.error('Please wait for share link to generate');
+      toast.error(tr("Please wait for share link to generate"));
       return;
     }
     const success = await copyToClipboard(shareUrl);
     if (success) {
       setCopied(true);
-      toast.success('Link copied to clipboard');
+      toast.success(tr("Link copied to clipboard"));
       setTimeout(() => setCopied(false), 2200);
     } else {
-      toast.error('Failed to copy. Please select and copy manually.');
+      toast.error(tr("Failed to copy. Please select and copy manually."));
     }
   };
 
   const handleWhatsAppShare = () => {
     if (mode === 'drawings' && approvedCount === 0) {
-      toast.error('Sharing is not allowed until at least one drawing is approved');
+      toast.error(tr("Sharing is not allowed until at least one drawing is approved"));
       return;
     }
     if (!isPublic) {
-      toast.error('This link is currently stopped. Click "Activate Link" below to re-enable it.');
+      toast.error(tr("This link is currently stopped. Click \"Activate Link\" below to re-enable it."));
       return;
     }
     if (isLinkExpired) {
-      toast.error('This link has expired. Click "Renew Link" above to re-enable it.');
+      toast.error(tr("This link has expired. Click \"Renew Link\" above to re-enable it."));
       return;
     }
     if (!shareUrl) return;
@@ -278,15 +279,15 @@ export function InteriorCrmShareModal({
 
   const handleEmailShare = () => {
     if (mode === 'drawings' && approvedCount === 0) {
-      toast.error('Sharing is not allowed until at least one drawing is approved');
+      toast.error(tr("Sharing is not allowed until at least one drawing is approved"));
       return;
     }
     if (!isPublic) {
-      toast.error('This link is currently stopped. Click "Activate Link" below to re-enable it.');
+      toast.error(tr("This link is currently stopped. Click \"Activate Link\" below to re-enable it."));
       return;
     }
     if (isLinkExpired) {
-      toast.error('This link has expired. Click "Renew Link" above to re-enable it.');
+      toast.error(tr("This link has expired. Click \"Renew Link\" above to re-enable it."));
       return;
     }
     if (!shareUrl) return;
@@ -323,12 +324,12 @@ export function InteriorCrmShareModal({
               type="button"
               onClick={onClose}
               className="absolute top-5 right-5 w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-              title="Close modal"
+              title={tr("Close modal")}
             >
               <X className="w-4 h-4" />
             </button>
 
-            <div className="flex items-start gap-3.5 pr-8">
+            <div className="flex items-start gap-3.5 pe-8">
               <div className={cn(
                 "w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-xs border",
                 mode === 'requirements'
@@ -339,12 +340,12 @@ export function InteriorCrmShareModal({
               </div>
               <div className="min-w-0">
                 <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
-                  {mode === 'requirements' ? 'Client Requirements Link' : 'Share Drawings Link'}
+                  {mode === 'requirements' ? tr("Client Requirements Link") : tr("Share Drawings Link")}
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                   {mode === 'requirements'
-                    ? 'Shareable online intake form for room wishlist & interior specifications'
-                    : 'Private client review portal for 2D plans and 3D visual concepts'}
+                    ? tr("Shareable online intake form for room wishlist & interior specifications")
+                    : tr("Private client review portal for 2D plans and 3D visual concepts")}
                 </p>
               </div>
             </div>
@@ -353,11 +354,11 @@ export function InteriorCrmShareModal({
             <div className="mt-4 flex items-center gap-2 flex-wrap text-xs">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-semibold border border-slate-200/80">
                 <User size={12} className="text-slate-400" />
-                <span className="truncate max-w-[140px]">{lead.name || 'Client'}</span>
+                <span className="truncate max-w-[8.75rem]">{lead.name || tr("Client")}</span>
                 {lead.propertyType && (
                   <>
                     <span className="text-slate-300">•</span>
-                    <span className="text-slate-500 font-normal">{lead.propertyType}</span>
+                    <span className="text-slate-500 font-normal">{tr(lead.propertyType)}</span>
                   </>
                 )}
               </div>
@@ -382,16 +383,16 @@ export function InteriorCrmShareModal({
                   )} />
                   <span>
                     {!isPublic
-                      ? 'Link Stopped'
+                      ? tr("Link Stopped")
                       : isClientSubmitted
-                      ? 'Requirements Submitted'
-                      : 'Awaiting Client Input'}
+                      ? tr("Requirements Submitted")
+                      : tr("Awaiting Client Input")}
                   </span>
                 </div>
               ) : (
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold text-xs">
                   <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                  <span>{approvedCount} Approved {approvedCount === 1 ? 'Drawing' : 'Drawings'}</span>
+                  <span>{tr(approvedCount)}{tr(" Approved ")}{approvedCount === 1 ? tr("Drawing") : tr("Drawings")}</span>
                 </div>
               )}
             </div>
@@ -404,9 +405,9 @@ export function InteriorCrmShareModal({
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 text-xs text-amber-800">
                 <AlertCircle className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
                 <div>
-                  <strong className="block font-bold text-amber-900">No Approved Drawings Yet</strong>
+                  <strong className="block font-bold text-amber-900">{tr("No Approved Drawings Yet")}</strong>
                   <span className="mt-0.5 block leading-relaxed text-amber-800/90">
-                    Clients will only see drawings after they are approved internally. Draft or pending drawings are automatically hidden from this link.
+                    {tr("Clients will only see drawings after they are approved internally. Draft or pending drawings are automatically hidden from this link.")}
                   </span>
                 </div>
               </div>
@@ -417,7 +418,7 @@ export function InteriorCrmShareModal({
                   <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between text-xs text-amber-900">
                     <div className="flex items-center gap-2.5">
                       <Clock size={16} className="text-amber-600 shrink-0" />
-                      <span>This share link has expired and is inaccessible to clients.</span>
+                      <span>{tr("This share link has expired and is inaccessible to clients.")}</span>
                     </div>
                     <button
                       type="button"
@@ -425,7 +426,7 @@ export function InteriorCrmShareModal({
                       disabled={loading}
                       className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs shrink-0 cursor-pointer transition-all shadow-xs active:scale-95"
                     >
-                      Renew Link
+                      {tr("Renew Link")}
                     </button>
                   </div>
                 )}
@@ -433,24 +434,24 @@ export function InteriorCrmShareModal({
                 {/* Share URL Input & Action Buttons */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                      {mode === 'requirements' ? 'Client Intake URL' : 'Shareable Portal URL'}
+                    <label className="text-[0.625rem] font-bold text-slate-400 uppercase tracking-wider">
+                      {mode === 'requirements' ? tr("Client Intake URL") : tr("Shareable Portal URL")}
                     </label>
                     {isPublic && !isLinkExpired ? (
-                      <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700">
+                      <span className="inline-flex items-center gap-1.5 text-[0.6875rem] font-semibold text-emerald-700">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                        <span>Live & Accessible</span>
+                        <span>{tr("Live & Accessible")}</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-rose-600">
+                      <span className="inline-flex items-center gap-1.5 text-[0.6875rem] font-semibold text-rose-600">
                         <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                        <span>{isLinkExpired ? 'Expired' : 'Stopped / Disabled'}</span>
+                        <span>{isLinkExpired ? tr("Expired") : tr("Stopped / Disabled")}</span>
                       </span>
                     )}
                   </div>
 
                   <div className="flex items-center gap-1.5 p-1.5 bg-slate-50 border border-slate-200 rounded-2xl focus-within:border-emerald-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-500/10 transition-all shadow-2xs">
-                    <div className="pl-2.5 text-slate-400">
+                    <div className="ps-2.5 text-slate-400">
                       <Link2 className="w-4 h-4" />
                     </div>
                     <input
@@ -480,7 +481,7 @@ export function InteriorCrmShareModal({
                       )}
                     >
                       {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copied ? 'Copied!' : 'Copy'}</span>
+                      <span>{copied ? tr("Copied!") : tr("Copy")}</span>
                     </button>
 
                     {isPublic && !isLinkExpired && shareUrl && (
@@ -489,7 +490,7 @@ export function InteriorCrmShareModal({
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-xl transition shrink-0"
-                        title="Open live preview in new tab"
+                        title={tr("Open live preview in new tab")}
                       >
                         <ExternalLink className="w-4 h-4" />
                       </a>
@@ -504,10 +505,10 @@ export function InteriorCrmShareModal({
                     disabled={!isPublic || isLinkExpired}
                     onClick={handleWhatsAppShare}
                     className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-emerald-50 hover:bg-emerald-100/80 text-emerald-800 border border-emerald-200/80 rounded-2xl text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                    title="Send intake link directly via WhatsApp"
+                    title={tr("Send intake link directly via WhatsApp")}
                   >
                     <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>WhatsApp</span>
+                    <span>{tr("WhatsApp")}</span>
                   </button>
 
                   <button
@@ -515,10 +516,10 @@ export function InteriorCrmShareModal({
                     disabled={!isPublic || isLinkExpired}
                     onClick={handleEmailShare}
                     className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-blue-50 hover:bg-blue-100/80 text-blue-800 border border-blue-200/80 rounded-2xl text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                    title="Send intake link via Email"
+                    title={tr("Send intake link via Email")}
                   >
                     <Mail className="w-4 h-4 text-blue-600 shrink-0" />
-                    <span>Email</span>
+                    <span>{tr("Email")}</span>
                   </button>
 
                   <button
@@ -530,10 +531,10 @@ export function InteriorCrmShareModal({
                         ? "bg-purple-600 text-white border-purple-600 shadow-purple-600/20"
                         : "bg-purple-50 hover:bg-purple-100/80 text-purple-800 border border-purple-200/80"
                     )}
-                    title="Toggle QR Code for client camera scan"
+                    title={tr("Toggle QR Code for client camera scan")}
                   >
                     <QrCode className="w-4 h-4 text-purple-600 shrink-0" />
-                    <span>{showQr ? 'Hide QR' : 'QR Code'}</span>
+                    <span>{showQr ? tr("Hide QR") : tr("QR Code")}</span>
                   </button>
                 </div>
 
@@ -548,16 +549,16 @@ export function InteriorCrmShareModal({
                     <div className="p-3 bg-white rounded-2xl shadow-xs border border-slate-200/80">
                       <img loading="lazy" decoding="async"
                         src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=0&data=${encodeURIComponent(shareUrl)}`}
-                        alt="Intake Link QR Code"
+                        alt={tr("Intake Link QR Code")}
                         className="w-32 h-32 object-contain"
                       />
                     </div>
                     <div>
                       <p className="text-xs font-bold text-slate-800">
-                        Scan with Phone Camera
+                        {tr("Scan with Phone Camera")}
                       </p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        Show this QR code to the client to open the intake form instantly on their mobile
+                      <p className="text-[0.6875rem] text-slate-500 mt-0.5">
+                        {tr("Show this QR code to the client to open the intake form instantly on their mobile")}
                       </p>
                     </div>
                   </motion.div>
@@ -567,9 +568,9 @@ export function InteriorCrmShareModal({
 
             {/* Sharing Permissions & Customization */}
             <div className="pt-3 border-t border-slate-100 space-y-3">
-              <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <h4 className="text-[0.625rem] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <Sliders size={12} />
-                <span>Link Access & Expiration</span>
+                <span>{tr("Link Access & Expiration")}</span>
               </h4>
 
               {/* Expiry Selector Card */}
@@ -580,12 +581,12 @@ export function InteriorCrmShareModal({
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs font-bold text-slate-900">
-                      Link Expiration
+                      {tr("Link Expiration")}
                     </div>
-                    <div className="text-[11px] text-slate-500 truncate">
+                    <div className="text-[0.6875rem] text-slate-500 truncate">
                       {expiresHours === null
-                        ? 'Never expires (Always active)'
-                        : `Auto-expires in ${expiresHours >= 24 ? Math.round(expiresHours / 24) + ' day(s)' : expiresHours + ' hour(s)'}`}
+                        ? tr("Never expires (Always active)")
+                        : tr("Auto-expires in {{value}}", { value: expiresHours >= 24 ? Math.round(expiresHours / 24) + ' day(s)' : expiresHours + ' hour(s)' })}
                     </div>
                   </div>
                 </div>
@@ -599,11 +600,11 @@ export function InteriorCrmShareModal({
                   }}
                   className="text-xs font-bold text-slate-800 bg-white border border-slate-200 hover:border-slate-300 rounded-xl px-3 py-1.5 outline-none cursor-pointer shadow-2xs transition-all focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10"
                 >
-                  <option value={24}>24 Hours (1 Day)</option>
-                  <option value={72}>3 Days</option>
-                  <option value={168}>7 Days (Recommended)</option>
-                  <option value={720}>30 Days (1 Month)</option>
-                  <option value="never">Never (No Expiry)</option>
+                  <option value={24}>{tr("24 Hours (1 Day)")}</option>
+                  <option value={72}>{tr("3 Days")}</option>
+                  <option value={168}>{tr("7 Days (Recommended)")}</option>
+                  <option value={720}>{tr("30 Days (1 Month)")}</option>
+                  <option value="never">{tr("Never (No Expiry)")}</option>
                 </select>
               </div>
 
@@ -616,10 +617,10 @@ export function InteriorCrmShareModal({
                     </div>
                     <div className="min-w-0">
                       <div className="text-xs font-bold text-slate-900">
-                        Allow Drawing Downloads
+                        {tr("Allow Drawing Downloads")}
                       </div>
-                      <div className="text-[11px] text-slate-500">
-                        Clients can download high-resolution CAD blueprints and 3D renders
+                      <div className="text-[0.6875rem] text-slate-500">
+                        {tr("Clients can download high-resolution CAD blueprints and 3D renders")}
                       </div>
                     </div>
                   </div>
@@ -661,10 +662,10 @@ export function InteriorCrmShareModal({
                       onClick={handleRevoke}
                       disabled={loading}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-700 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-                      title="Deactivate and stop this share link immediately"
+                      title={tr("Deactivate and stop this share link immediately")}
                     >
                       <PowerOff size={12} />
-                      <span>Deactivate / Stop</span>
+                      <span>{tr("Deactivate / Stop")}</span>
                     </button>
 
                     <button
@@ -672,17 +673,17 @@ export function InteriorCrmShareModal({
                       onClick={() => handleGenerateOrUpdate(true, expiresHours ?? 168)}
                       disabled={loading}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 shadow-2xs transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-                      title="Generate a new secure token for this link"
+                      title={tr("Generate a new secure token for this link")}
                     >
                       <RefreshCw size={12} className={loading ? "animate-spin text-slate-400" : "text-slate-500"} />
-                      <span>Regenerate</span>
+                      <span>{tr("Regenerate")}</span>
                     </button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
                       <PowerOff size={11} />
-                      <span>Link Stopped</span>
+                      <span>{tr("Link Stopped")}</span>
                     </span>
                     <button
                       type="button"
@@ -691,7 +692,7 @@ export function InteriorCrmShareModal({
                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-800 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
                     >
                       <RotateCcw size={12} />
-                      <span>Activate Link</span>
+                      <span>{tr("Activate Link")}</span>
                     </button>
                   </div>
                 )
@@ -702,13 +703,13 @@ export function InteriorCrmShareModal({
               type="button"
               onClick={onClose}
               className={cn(
-                "px-5 py-2 rounded-xl text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer ml-auto text-white",
+                "px-5 py-2 rounded-xl text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer ms-auto text-white",
                 mode === 'requirements'
                   ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/15"
                   : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/15"
               )}
             >
-              Done
+              {tr("Done")}
             </button>
           </div>
         </motion.div>

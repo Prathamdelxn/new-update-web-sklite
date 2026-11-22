@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React from 'react';
 import { useParams, usePathname } from 'next/navigation';
@@ -17,12 +18,12 @@ function NoSectionAccess({ projectId }: { projectId: string }) {
     <div className="p-6 lg:p-8">
       <div className="max-w-md mx-auto mt-8 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-8 text-center space-y-3">
         <ShieldOff className="w-9 h-9 mx-auto text-[hsl(var(--muted-foreground))]" />
-        <h2 className="text-base font-bold text-[hsl(var(--foreground))]">No access to this section</h2>
+        <h2 className="text-base font-bold text-[hsl(var(--foreground))]">{tr("No access to this section")}</h2>
         <p className="text-sm text-[hsl(var(--muted-foreground))]">
-          You don&apos;t have permission to view this part of the project. Ask an admin to update your role if you need it.
+          {tr("You don't have permission to view this part of the project. Ask an admin to update your role if you need it.")}
         </p>
         <Link href={`/interior-new/projects/${projectId}`} className="inline-block text-sm font-semibold text-[hsl(var(--primary))] hover:underline">
-          Back to project
+          {tr("Back to project")}
         </Link>
       </div>
     </div>
@@ -78,7 +79,7 @@ export default function InteriorProjectDetailLayout({ children }: { children: Re
     return (
       <InteriorShell>
         <div className="interior-os-theme flex flex-col min-h-screen">
-          <div className="flex-1 bg-[hsl(var(--background))]">{page}</div>
+          <div className="flex-1 bg-[hsl(var(--background))]">{tr(page)}</div>
         </div>
       </InteriorShell>
     );
@@ -88,7 +89,7 @@ export default function InteriorProjectDetailLayout({ children }: { children: Re
     <InteriorShell>
       <div className="interior-os-theme flex flex-col min-h-screen">
         <InteriorProjectBanner projectId={projectId} project={project} loading={loading} />
-        <div className="flex-1 bg-[hsl(var(--background))]">{page}</div>
+        <div className="flex-1 bg-[hsl(var(--background))]">{tr(page)}</div>
       </div>
     </InteriorShell>
   );

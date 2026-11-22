@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Port of src/components/modals/CreateLeadModal.tsx, rewired to interiorCrmService.
 
@@ -121,7 +122,7 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
-      toast.error('Please fix the validation errors before creating the lead');
+      toast.error(tr("Please fix the validation errors before creating the lead"));
       return;
     }
 
@@ -137,14 +138,14 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({
       };
 
       const res = await interiorCrmService.createCustomer(payload);
-      toast.success('Lead created successfully!');
+      toast.success(tr("Lead created successfully!"));
       const newLead = res?.data || res || payload;
       if (onSuccess) {
         onSuccess(newLead);
       }
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to create lead');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || tr("Failed to create lead"));
     } finally {
       setIsSubmitting(false);
     }
@@ -174,9 +175,9 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({
           {/* Header */}
           <div className="px-6 py-5 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--muted)/0.5)]">
             <div>
-              <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))]">Add New Lead</h2>
+              <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))]">{tr("Add New Lead")}</h2>
               <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                Enter prospect details to start tracking in the CRM pipeline.
+                {tr("Enter prospect details to start tracking in the CRM pipeline.")}
               </p>
             </div>
             <button
@@ -195,9 +196,9 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                      <User size={14} className="text-[hsl(var(--muted-foreground))]" /> Full Name *
+                      <User size={14} className="text-[hsl(var(--muted-foreground))]" />{tr(" Full Name *")}
                     </label>
-                    <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                    <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
                       {formData.name.length}/50
                     </span>
                   </div>
@@ -213,13 +214,13 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({
                         ? 'border-red-500 focus:ring-red-500/20'
                         : 'border-[hsl(var(--border))] focus:ring-indigo-500/20 focus:border-indigo-500'
                     }`}
-                    placeholder="e.g., Alexander Wright"
+                    placeholder={tr("e.g., Alexander Wright")}
                     required
                   />
                   {errors.name && (
                     <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
                       <AlertCircle size={12} className="shrink-0" />
-                      {errors.name}
+                      {tr(errors.name)}
                     </p>
                   )}
                 </div>
@@ -228,10 +229,10 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                      <Phone size={14} className="text-[hsl(var(--muted-foreground))]" /> Mobile Number *
+                      <Phone size={14} className="text-[hsl(var(--muted-foreground))]" />{tr(" Mobile Number *")}
                     </label>
-                    <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                      10-15 digits
+                    <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
+                      {tr("10-15 digits")}
                     </span>
                   </div>
                   <input
@@ -252,7 +253,7 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({
                   {errors.mobileNumber && (
                     <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
                       <AlertCircle size={12} className="shrink-0" />
-                      {errors.mobileNumber}
+                      {tr(errors.mobileNumber)}
                     </p>
                   )}
                 </div>
@@ -261,10 +262,10 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                      <Mail size={14} className="text-[hsl(var(--muted-foreground))]" /> Email Address
+                      <Mail size={14} className="text-[hsl(var(--muted-foreground))]" />{tr(" Email Address")}
                     </label>
-                    <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                      Optional (max 100)
+                    <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
+                      {tr("Optional (max 100)")}
                     </span>
                   </div>
                   <input
@@ -279,7 +280,7 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({
                         ? 'border-red-500 focus:ring-red-500/20'
                         : 'border-[hsl(var(--border))] focus:ring-indigo-500/20 focus:border-indigo-500'
                     }`}
-                    placeholder="e.g., client@example.com"
+                    placeholder={tr("e.g., client@example.com")}
                   />
                   {errors.email && (
                     <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
@@ -292,7 +293,7 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({
                 {/* Lead Source */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                    <Activity size={14} className="text-[hsl(var(--muted-foreground))]" /> Lead Source *
+                    <Activity size={14} className="text-[hsl(var(--muted-foreground))]" />{tr(" Lead Source *")}
                   </label>
                   <select
                     name="leadSource"
@@ -307,14 +308,14 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({
                   >
                     {LEAD_SOURCES.map((source) => (
                       <option key={source} value={source}>
-                        {source}
+                        {tr(source)}
                       </option>
                     ))}
                   </select>
                   {errors.leadSource && (
                     <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
                       <AlertCircle size={12} className="shrink-0" />
-                      {errors.leadSource}
+                      {tr(errors.leadSource)}
                     </p>
                   )}
                 </div>
@@ -322,7 +323,7 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({
                 {/* Property Type */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                    <Building size={14} className="text-[hsl(var(--muted-foreground))]" /> Property Type *
+                    <Building size={14} className="text-[hsl(var(--muted-foreground))]" />{tr(" Property Type *")}
                   </label>
                   <select
                     name="propertyType"
@@ -337,14 +338,14 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({
                   >
                     {PROPERTY_TYPES.map((type) => (
                       <option key={type} value={type}>
-                        {type}
+                        {tr(type)}
                       </option>
                     ))}
                   </select>
                   {errors.propertyType && (
                     <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
                       <AlertCircle size={12} className="shrink-0" />
-                      {errors.propertyType}
+                      {tr(errors.propertyType)}
                     </p>
                   )}
                 </div>
@@ -353,9 +354,9 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                      <MapPin size={14} className="text-[hsl(var(--muted-foreground))]" /> Project Location *
+                      <MapPin size={14} className="text-[hsl(var(--muted-foreground))]" />{tr(" Project Location *")}
                     </label>
-                    <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                    <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
                       {formData.projectLocation.length}/150
                     </span>
                   </div>
@@ -371,13 +372,13 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({
                         ? 'border-red-500 focus:ring-red-500/20'
                         : 'border-[hsl(var(--border))] focus:ring-indigo-500/20 focus:border-indigo-500'
                     }`}
-                    placeholder="e.g., West End Avenue, Suite 400"
+                    placeholder={tr("e.g., West End Avenue, Suite 400")}
                     required
                   />
                   {errors.projectLocation && (
                     <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
                       <AlertCircle size={12} className="shrink-0" />
-                      {errors.projectLocation}
+                      {tr(errors.projectLocation)}
                     </p>
                   )}
                 </div>
@@ -393,7 +394,7 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({
               disabled={isSubmitting}
               className="px-5 py-2.5 rounded-xl text-sm font-bold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] transition-colors"
             >
-              Cancel
+              {tr("Cancel")}
             </button>
             <button
               type="submit"
@@ -401,7 +402,7 @@ export const InteriorCreateLeadModal: React.FC<CreateLeadModalProps> = ({
               disabled={isSubmitting}
               className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
             >
-              {isSubmitting ? 'Creating...' : 'Create Lead'}
+              {isSubmitting ? tr("Creating...") : tr("Create Lead")}
             </button>
           </div>
         </motion.div>

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -106,11 +107,11 @@ export function InteriorBoqApprovalModal({
         completedDate: new Date(),
       });
 
-      toast.success(`BOQ Version ${versionNumber} approved successfully! Quotations phase unlocked.`);
+      toast.success(tr("BOQ Version {{versionNumber}} approved successfully! Quotations phase unlocked.", { versionNumber: versionNumber }));
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to approve BOQ.');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || tr("Failed to approve BOQ."));
     } finally {
       setIsSubmitting(false);
     }
@@ -118,11 +119,11 @@ export function InteriorBoqApprovalModal({
 
   const handleReject = async () => {
     if (!rejectionReason.trim()) {
-      toast.error('Please specify the rejection reason and required changes.');
+      toast.error(tr("Please specify the rejection reason and required changes."));
       return;
     }
     if (rejectionReason.trim().length > 500) {
-      toast.error('Rejection reason cannot exceed 500 characters.');
+      toast.error(tr("Rejection reason cannot exceed 500 characters."));
       return;
     }
     if (!customerId || !targetBoq) return;
@@ -149,11 +150,11 @@ export function InteriorBoqApprovalModal({
         completedDate: new Date(),
       });
 
-      toast.info(`BOQ Version ${versionNumber} rejected. Reason logged for revisions.`);
+      toast.info(tr("BOQ Version {{versionNumber}} rejected. Reason logged for revisions.", { versionNumber: versionNumber }));
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to reject BOQ.');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || tr("Failed to reject BOQ."));
     } finally {
       setIsSubmitting(false);
     }
@@ -208,13 +209,13 @@ export function InteriorBoqApprovalModal({
             <div>
               <h3 className="font-extrabold text-sm text-[hsl(var(--foreground))]">
                 {isApproveMode 
-                  ? 'Confirm BOQ Approval' 
+                  ? tr("Confirm BOQ Approval") 
                   : isRejectMode 
-                  ? 'Reject BOQ & Request Changes' 
-                  : 'Review & Internal BOQ Approval'}
+                  ? tr("Reject BOQ & Request Changes") 
+                  : tr("Review & Internal BOQ Approval")}
               </h3>
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                {customerName ? `Lead: ${customerName}` : 'Estimate Review'} • Version {versionNumber}
+              <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
+                {customerName ? `Lead: ${customerName}` : tr("Estimate Review")}{tr(" • Version ")}{tr(versionNumber)}
               </p>
             </div>
           </div>
@@ -233,9 +234,8 @@ export function InteriorBoqApprovalModal({
             <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-xl flex items-start gap-2.5 text-xs text-emerald-950 shadow-xs">
               <CheckCircle2 size={18} className="shrink-0 mt-0.5 text-emerald-600" />
               <div className="leading-relaxed font-medium text-emerald-950">
-                You are approving <strong className="font-extrabold text-slate-950">BOQ Version {versionNumber}</strong> valued at{' '}
-                <strong className="font-black text-emerald-700">{currencySymbol} {totalBoqAmount.toLocaleString()}</strong>. 
-                Once confirmed, this estimation is approved and unlocks the <strong className="font-bold text-slate-950">Quotation phase</strong>.
+                {tr("You are approving ")}<strong className="font-extrabold text-slate-950">{tr("BOQ Version ")}{tr(versionNumber)}</strong>{tr(" valued at")}{' '}
+                <strong className="font-black text-emerald-700">{tr(currencySymbol)} {totalBoqAmount.toLocaleString()}</strong>{tr(". Once confirmed, this estimation is approved and unlocks the ")}<strong className="font-bold text-slate-950">{tr("Quotation phase")}</strong>.
               </div>
             </div>
           )}
@@ -244,7 +244,7 @@ export function InteriorBoqApprovalModal({
             <div className="p-3.5 bg-rose-50 border border-rose-300 rounded-xl flex items-start gap-2.5 text-xs text-rose-950 shadow-xs">
               <AlertCircle size={18} className="shrink-0 mt-0.5 text-rose-600" />
               <div className="leading-relaxed font-medium text-rose-950">
-                You are rejecting <strong className="font-extrabold text-slate-950">BOQ Version {versionNumber}</strong>. Please provide specific feedback and reasons below so the estimator can revise the line items.
+                {tr("You are rejecting ")}<strong className="font-extrabold text-slate-950">{tr("BOQ Version ")}{tr(versionNumber)}</strong>{tr(". Please provide specific feedback and reasons below so the estimator can revise the line items.")}
               </div>
             </div>
           )}
@@ -263,7 +263,7 @@ export function InteriorBoqApprovalModal({
                 )}
               >
                 <CheckCircle2 size={16} className={actionType === 'approve' ? 'text-emerald-600' : ''} />
-                <span>Approve BOQ</span>
+                <span>{tr("Approve BOQ")}</span>
               </button>
               <button
                 type="button"
@@ -276,7 +276,7 @@ export function InteriorBoqApprovalModal({
                 )}
               >
                 <XCircle size={16} className={actionType === 'reject' ? 'text-rose-600' : ''} />
-                <span>Request Changes</span>
+                <span>{tr("Request Changes")}</span>
               </button>
             </div>
           )}
@@ -286,37 +286,37 @@ export function InteriorBoqApprovalModal({
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2.5 text-xs text-slate-900">
               <div className="flex items-center justify-between">
                 <span className="text-slate-600 font-semibold flex items-center gap-1.5">
-                  <FileSpreadsheet size={13} className="text-indigo-600" /> Estimation
+                  <FileSpreadsheet size={13} className="text-indigo-600" />{tr(" Estimation")}
                 </span>
-                <span className="font-bold text-slate-900">Version {versionNumber}</span>
+                <span className="font-bold text-slate-900">{tr("Version ")}{tr(versionNumber)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-600 font-semibold flex items-center gap-1.5">
-                  <Calculator size={13} className="text-emerald-600" /> Total Value
+                  <Calculator size={13} className="text-emerald-600" />{tr(" Total Value")}
                 </span>
                 <span className="font-black text-emerald-700 text-sm">
-                  {currencySymbol} {totalBoqAmount.toLocaleString()}
+                  {tr(currencySymbol)} {totalBoqAmount.toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-600 font-semibold">Scope Categories</span>
+                <span className="text-slate-600 font-semibold">{tr("Scope Categories")}</span>
                 <span className="font-bold text-slate-900">
-                  {categoryLabel}
+                  {tr(categoryLabel)}
                 </span>
               </div>
               {targetBoq.assignedReviewerName && (
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-600 font-semibold">Submitted To</span>
+                  <span className="text-slate-600 font-semibold">{tr("Submitted To")}</span>
                   <span className="font-bold text-indigo-700">
-                    {targetBoq.assignedReviewerName}
+                    {tr(targetBoq.assignedReviewerName)}
                   </span>
                 </div>
               )}
               {targetBoq.submissionNotes && (
-                <div className="pt-2 border-t border-slate-200 text-[11px] min-w-0 overflow-hidden">
-                  <span className="font-bold text-slate-700">Estimator Focus / Handover Note:</span>
+                <div className="pt-2 border-t border-slate-200 text-[0.6875rem] min-w-0 overflow-hidden">
+                  <span className="font-bold text-slate-700">{tr("Estimator Focus / Handover Note:")}</span>
                   <p className="text-slate-950 italic mt-0.5 whitespace-pre-wrap font-semibold break-all [word-break:break-word] [overflow-wrap:anywhere]">
-                    "{targetBoq.submissionNotes}"
+                    "{tr(targetBoq.submissionNotes)}"
                   </p>
                 </div>
               )}
@@ -328,9 +328,9 @@ export function InteriorBoqApprovalModal({
             <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-2.5 text-xs text-amber-950">
               <AlertTriangle size={16} className="shrink-0 mt-0.5 text-amber-600" />
               <div className="leading-relaxed">
-                <strong className="font-bold text-amber-900">Over Target Budget:</strong> BOQ total of {currencySymbol} {formatMillionBillion(totalBoqAmount)}{' '}
-                exceeds client's target budget of {currencySymbol} {formatMillionBillion(maxBudget || 0)} by{' '}
-                <strong className="font-black text-amber-950">{currencySymbol} {formatMillionBillion(excessAmount)}</strong>.
+                <strong className="font-bold text-amber-900">{tr("Over Target Budget:")}</strong>{tr(" BOQ total of ")}{tr(currencySymbol)} {formatMillionBillion(totalBoqAmount)}{' '}
+                {tr("exceeds client's target budget of ")}{tr(currencySymbol)} {formatMillionBillion(maxBudget || 0)}{tr(" by")}{' '}
+                <strong className="font-black text-amber-950">{tr(currencySymbol)} {formatMillionBillion(excessAmount)}</strong>.
               </div>
             </div>
           )}
@@ -340,9 +340,9 @@ export function InteriorBoqApprovalModal({
             <div className="space-y-1.5 animate-fadeIn">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-rose-600 flex items-center gap-1.5">
-                  <AlertCircle size={13} /> Rejection Reason / Required Revisions <span className="text-rose-500">*</span>
+                  <AlertCircle size={13} />{tr(" Rejection Reason / Required Revisions ")}<span className="text-rose-500">*</span>
                 </label>
-                <span className="text-[10px] text-rose-500 font-mono">
+                <span className="text-[0.625rem] text-rose-500 font-mono">
                   {rejectionReason.length}/500
                 </span>
               </div>
@@ -351,7 +351,7 @@ export function InteriorBoqApprovalModal({
                 maxLength={500}
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="e.g. Rate for ceiling panelling is incorrect; please update hardware fittings to Hafele."
+                placeholder={tr("e.g. Rate for ceiling panelling is incorrect; please update hardware fittings to Hafele.")}
                 className="w-full px-3 py-2 rounded-xl border border-rose-500/40 bg-[hsl(var(--background))] text-xs font-medium text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 transition-all resize-none"
                 autoFocus
               />
@@ -367,7 +367,7 @@ export function InteriorBoqApprovalModal({
             disabled={isSubmitting}
             className="px-4 py-2 text-xs font-bold rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] transition-all cursor-pointer"
           >
-            Cancel
+            {tr("Cancel")}
           </button>
           
           {isApproveMode && (
@@ -378,10 +378,10 @@ export function InteriorBoqApprovalModal({
               className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
             >
               {isSubmitting ? (
-                'Approving...'
+                tr("Approving...")
               ) : (
                 <>
-                  <CheckCircle2 size={14} /> Confirm Approval
+                  <CheckCircle2 size={14} />{tr(" Confirm Approval")}
                 </>
               )}
             </button>
@@ -395,10 +395,10 @@ export function InteriorBoqApprovalModal({
               className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
             >
               {isSubmitting ? (
-                'Rejecting...'
+                tr("Rejecting...")
               ) : (
                 <>
-                  <XCircle size={14} /> Confirm Rejection
+                  <XCircle size={14} />{tr(" Confirm Rejection")}
                 </>
               )}
             </button>

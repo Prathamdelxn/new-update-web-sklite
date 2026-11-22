@@ -1,10 +1,12 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — InteriorOS Modern Enterprise Settings & Workspace
 // Aligned with Projects, Vendors, Users & Roles, and Audit Management UI Layout
 // =============================================================================
 
+import { LanguageSelector } from '@/components/interior/LanguageSwitcher';
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -221,7 +223,7 @@ export default function InteriorSettingsView() {
     if (!orgForm.slug) return;
     navigator.clipboard.writeText(orgForm.slug);
     setCopiedSlug(true);
-    toast.success('Workspace slug copied to clipboard!');
+    toast.success(tr("Workspace slug copied to clipboard!"));
     setTimeout(() => setCopiedSlug(false), 2000);
   };
 
@@ -229,7 +231,7 @@ export default function InteriorSettingsView() {
   const handleSaveOrganization = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orgForm.name.trim()) {
-      toast.error('Organization name is required');
+      toast.error(tr("Organization name is required"));
       return;
     }
     setSavingOrg(true);
@@ -265,9 +267,9 @@ export default function InteriorSettingsView() {
         }
       }
       window.dispatchEvent(new Event('interior-org-updated'));
-      toast.success('Organization settings saved successfully');
+      toast.success(tr("Organization settings saved successfully"));
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update organization settings');
+      toast.error(error.response?.data?.message || tr("Failed to update organization settings"));
     } finally {
       setSavingOrg(false);
     }
@@ -278,7 +280,7 @@ export default function InteriorSettingsView() {
     e.preventDefault();
     const userId = currentUser?._id || currentUser?.id;
     if (!userId) {
-      toast.error('User identifier not found');
+      toast.error(tr("User identifier not found"));
       return;
     }
     setSavingProfile(true);
@@ -299,9 +301,9 @@ export default function InteriorSettingsView() {
       };
       localStorage.setItem('interiorUser', JSON.stringify(updatedUser));
       setCurrentUser(updatedUser);
-      toast.success('Profile updated successfully');
+      toast.success(tr("Profile updated successfully"));
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update profile');
+      toast.error(error.response?.data?.message || tr("Failed to update profile"));
     } finally {
       setSavingProfile(false);
     }
@@ -311,15 +313,15 @@ export default function InteriorSettingsView() {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!passwordForm.currentPassword) {
-      toast.error('Current password is required');
+      toast.error(tr("Current password is required"));
       return;
     }
     if (passwordForm.newPassword.length < 8) {
-      toast.error('New password must be at least 8 characters');
+      toast.error(tr("New password must be at least 8 characters"));
       return;
     }
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast.error('New passwords do not match');
+      toast.error(tr("New passwords do not match"));
       return;
     }
     setSavingPwd(true);
@@ -328,10 +330,10 @@ export default function InteriorSettingsView() {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword,
       });
-      toast.success('Password updated successfully');
+      toast.success(tr("Password updated successfully"));
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error: any) {
-      toast.error(error.response?.data?.error || error.response?.data?.message || 'Failed to update password');
+      toast.error(error.response?.data?.error || error.response?.data?.message || tr("Failed to update password"));
     } finally {
       setSavingPwd(false);
     }
@@ -382,7 +384,7 @@ export default function InteriorSettingsView() {
   // Loading skeleton matching other pages
   if (loading) {
     return (
-      <div className="interior-os-theme min-h-full p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto overflow-x-hidden font-sans">
+      <div className="interior-os-theme min-h-full p-4 sm:p-6 lg:p-8 space-y-6 max-w-[100rem] mx-auto overflow-x-hidden font-sans">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80 animate-pulse">
           <div className="space-y-2">
             <div className="h-7 w-64 bg-slate-200 rounded-lg" />
@@ -402,28 +404,28 @@ export default function InteriorSettingsView() {
   }
 
   return (
-    <div className="interior-os-theme min-h-full p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto overflow-x-hidden font-sans">
+    <div className="interior-os-theme min-h-full p-4 sm:p-6 lg:p-8 space-y-6 max-w-[100rem] mx-auto overflow-x-hidden font-sans">
       
       {/* ── 1. Page Header & Live Status ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Settings & Preferences
+              {tr("Settings & Preferences")}
             </h1>
             <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-              {orgForm.name || 'Workspace'}
+              {orgForm.name || tr("Workspace")}
             </span>
           </div>
           <p className="text-sm text-slate-500 mt-1">
-            Manage organization details, currency localization, security credentials, and workspace preferences.
+            {tr("Manage organization details, currency localization, security credentials, and workspace preferences.")}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-200 text-slate-700 shadow-2xs">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Live Sync Active
+            {tr("Live Sync Active")}
           </span>
         </div>
       </div>
@@ -436,7 +438,7 @@ export default function InteriorSettingsView() {
           onClick={() => canReadSettings && setActiveTab('general')}
           disabled={!canReadSettings}
           className={cn(
-            'bg-white border rounded-xl p-3 text-left transition-all duration-150 flex items-center gap-3 group cursor-pointer',
+            'bg-white border rounded-xl p-3 text-start transition-all duration-150 flex items-center gap-3 group cursor-pointer',
             activeTab === 'general'
               ? 'border-blue-600 shadow-[0_0_0_1px_rgba(37,99,235,1)] bg-blue-50/20'
               : 'border-slate-200 shadow-2xs hover:border-slate-300'
@@ -449,12 +451,12 @@ export default function InteriorSettingsView() {
             <Building2 className="w-4.5 h-4.5" />
           </div>
           <div className="min-w-0 flex-1">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block leading-tight">Company</span>
+            <span className="text-[0.6875rem] font-semibold text-slate-500 uppercase tracking-wider block leading-tight">{tr("Company")}</span>
             <div className="text-sm font-bold text-slate-900 truncate mt-0.5" title={orgForm.name}>
-              {orgForm.name || 'Workspace'}
+              {orgForm.name || tr("Workspace")}
             </div>
-            <span className="text-[11px] text-slate-400 font-mono truncate block">
-              {orgForm.slug || 'workspace'}
+            <span className="text-[0.6875rem] text-slate-400 font-mono truncate block">
+              {orgForm.slug || tr("workspace")}
             </span>
           </div>
         </button>
@@ -464,7 +466,7 @@ export default function InteriorSettingsView() {
           type="button"
           onClick={() => setActiveTab('profile')}
           className={cn(
-            'bg-white border rounded-xl p-3 text-left transition-all duration-150 flex items-center gap-3 group cursor-pointer',
+            'bg-white border rounded-xl p-3 text-start transition-all duration-150 flex items-center gap-3 group cursor-pointer',
             activeTab === 'profile'
               ? 'border-indigo-600 shadow-[0_0_0_1px_rgba(79,70,229,1)] bg-indigo-50/20'
               : 'border-slate-200 shadow-2xs hover:border-slate-300'
@@ -477,12 +479,12 @@ export default function InteriorSettingsView() {
             <User className="w-4.5 h-4.5" />
           </div>
           <div className="min-w-0 flex-1">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block leading-tight">Account</span>
+            <span className="text-[0.6875rem] font-semibold text-slate-500 uppercase tracking-wider block leading-tight">{tr("Account")}</span>
             <div className="text-sm font-bold text-slate-900 truncate mt-0.5">
-              {profileForm.firstName ? `${profileForm.firstName} ${profileForm.lastName || ''}`.trim() : 'User Profile'}
+              {profileForm.firstName ? `${profileForm.firstName} ${profileForm.lastName || ''}`.trim() : tr("User Profile")}
             </div>
-            <span className="text-[11px] text-slate-400 capitalize truncate block">
-              {roleName}
+            <span className="text-[0.6875rem] text-slate-400 capitalize truncate block">
+              {tr(roleName)}
             </span>
           </div>
         </button>
@@ -493,7 +495,7 @@ export default function InteriorSettingsView() {
           onClick={() => canReadSettings && setActiveTab('localization')}
           disabled={!canReadSettings}
           className={cn(
-            'bg-white border rounded-xl p-3 text-left transition-all duration-150 flex items-center gap-3 group cursor-pointer',
+            'bg-white border rounded-xl p-3 text-start transition-all duration-150 flex items-center gap-3 group cursor-pointer',
             activeTab === 'localization'
               ? 'border-emerald-600 shadow-[0_0_0_1px_rgba(16,185,129,1)] bg-emerald-50/20'
               : 'border-slate-200 shadow-2xs hover:border-slate-300'
@@ -506,12 +508,12 @@ export default function InteriorSettingsView() {
             <Globe2 className="w-4.5 h-4.5" />
           </div>
           <div className="min-w-0 flex-1">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block leading-tight">Currency & Region</span>
+            <span className="text-[0.6875rem] font-semibold text-slate-500 uppercase tracking-wider block leading-tight">{tr("Currency & Region")}</span>
             <div className="text-sm font-bold text-slate-900 truncate mt-0.5">
-              {orgForm.currency} ({orgForm.currencySymbol})
+              {tr(orgForm.currency)} ({tr(orgForm.currencySymbol)})
             </div>
-            <span className="text-[11px] text-slate-400 truncate block">
-              {orgForm.country}
+            <span className="text-[0.6875rem] text-slate-400 truncate block">
+              {tr(orgForm.country)}
             </span>
           </div>
         </button>
@@ -521,7 +523,7 @@ export default function InteriorSettingsView() {
           type="button"
           onClick={() => setActiveTab('security')}
           className={cn(
-            'bg-white border rounded-xl p-3 text-left transition-all duration-150 flex items-center gap-3 group cursor-pointer',
+            'bg-white border rounded-xl p-3 text-start transition-all duration-150 flex items-center gap-3 group cursor-pointer',
             activeTab === 'security'
               ? 'border-purple-600 shadow-[0_0_0_1px_rgba(147,51,234,1)] bg-purple-50/20'
               : 'border-slate-200 shadow-2xs hover:border-slate-300'
@@ -534,12 +536,12 @@ export default function InteriorSettingsView() {
             <Lock className="w-4.5 h-4.5" />
           </div>
           <div className="min-w-0 flex-1">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block leading-tight">Security</span>
+            <span className="text-[0.6875rem] font-semibold text-slate-500 uppercase tracking-wider block leading-tight">{tr("Security")}</span>
             <div className="text-sm font-bold text-slate-900 truncate mt-0.5">
-              Password & Auth
+              {tr("Password & Auth")}
             </div>
-            <span className="text-[11px] text-emerald-600 font-semibold truncate block">
-              Active Protection
+            <span className="text-[0.6875rem] text-emerald-600 font-semibold truncate block">
+              {tr("Active Protection")}
             </span>
           </div>
         </button>
@@ -562,15 +564,15 @@ export default function InteriorSettingsView() {
               )}
             >
               <Icon className="w-3.5 h-3.5" />
-              <span>{item.label}</span>
+              <span>{tr(item.label)}</span>
               {item.badge && (
                 <span
                   className={cn(
-                    'text-[10px] px-1.5 py-0.2 rounded font-bold uppercase',
+                    'text-[0.625rem] px-1.5 py-0.2 rounded font-bold uppercase',
                     isSelected ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-600'
                   )}
                 >
-                  {item.badge}
+                  {tr(item.badge)}
                 </span>
               )}
             </button>
@@ -584,9 +586,9 @@ export default function InteriorSettingsView() {
         {activeTab === 'general' && (
           <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xs overflow-hidden">
             <div className="p-5 sm:p-6 border-b border-slate-100">
-              <h2 className="text-base font-bold text-slate-900">Company Information</h2>
+              <h2 className="text-base font-bold text-slate-900">{tr("Company Information")}</h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Your organization details appear on project invoices, purchase orders, and client quotation headers.
+                {tr("Your organization details appear on project invoices, purchase orders, and client quotation headers.")}
               </p>
             </div>
 
@@ -595,14 +597,14 @@ export default function InteriorSettingsView() {
                 {/* Organization Name Input */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700">
-                    Organization Legal Name *
+                    {tr("Organization Legal Name *")}
                   </label>
                   <input
                     type="text"
                     required
                     value={orgForm.name}
                     onChange={(e) => setOrgForm({ ...orgForm, name: e.target.value })}
-                    placeholder="e.g. Acme Interior Design & Fitout"
+                    placeholder={tr("e.g. Acme Interior Design & Fitout")}
                     className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                   />
                 </div>
@@ -611,7 +613,7 @@ export default function InteriorSettingsView() {
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-slate-700">
-                      Workspace Identifier
+                      {tr("Workspace Identifier")}
                     </label>
                     <button
                       type="button"
@@ -619,7 +621,7 @@ export default function InteriorSettingsView() {
                       className="text-xs font-medium text-blue-600 hover:underline flex items-center gap-1 cursor-pointer"
                     >
                       {copiedSlug ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                      <span>{copiedSlug ? 'Copied' : 'Copy'}</span>
+                      <span>{copiedSlug ? tr("Copied") : tr("Copy")}</span>
                     </button>
                   </div>
                   <div className="relative">
@@ -636,22 +638,22 @@ export default function InteriorSettingsView() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {/* Company Email */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">Official Contact Email</label>
+                  <label className="text-xs font-semibold text-slate-700">{tr("Official Contact Email")}</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     <input
                       type="email"
                       value={orgForm.email}
                       onChange={(e) => setOrgForm({ ...orgForm, email: e.target.value })}
-                      placeholder="info@company.com"
-                      className="w-full pl-8 pr-3.5 py-2 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                      placeholder={tr("info@company.com")}
+                      className="w-full ps-8 pe-3.5 py-2 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                     />
                   </div>
                 </div>
 
                 {/* Company Phone */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">Official Contact Phone</label>
+                  <label className="text-xs font-semibold text-slate-700">{tr("Official Contact Phone")}</label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     <input
@@ -659,7 +661,7 @@ export default function InteriorSettingsView() {
                       value={orgForm.phone}
                       onChange={(e) => setOrgForm({ ...orgForm, phone: e.target.value })}
                       placeholder="+91 98765 43210"
-                      className="w-full pl-8 pr-3.5 py-2 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                      className="w-full ps-8 pe-3.5 py-2 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                     />
                   </div>
                 </div>
@@ -667,15 +669,15 @@ export default function InteriorSettingsView() {
 
               {/* Address Street */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700">Street / Office Address</label>
+                <label className="text-xs font-semibold text-slate-700">{tr("Street / Office Address")}</label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                   <input
                     type="text"
                     value={orgForm.address}
                     onChange={(e) => setOrgForm({ ...orgForm, address: e.target.value })}
-                    placeholder="Floor 4, Skyline Towers, Business Bay"
-                    className="w-full pl-8 pr-3.5 py-2 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                    placeholder={tr("Floor 4, Skyline Towers, Business Bay")}
+                    className="w-full ps-8 pe-3.5 py-2 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                   />
                 </div>
               </div>
@@ -683,31 +685,31 @@ export default function InteriorSettingsView() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 {/* City */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">City</label>
+                  <label className="text-xs font-semibold text-slate-700">{tr("City")}</label>
                   <input
                     type="text"
                     value={orgForm.city}
                     onChange={(e) => setOrgForm({ ...orgForm, city: e.target.value })}
-                    placeholder="e.g. Pune"
+                    placeholder={tr("e.g. Pune")}
                     className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                   />
                 </div>
 
                 {/* State */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">State / Region</label>
+                  <label className="text-xs font-semibold text-slate-700">{tr("State / Region")}</label>
                   <input
                     type="text"
                     value={orgForm.state}
                     onChange={(e) => setOrgForm({ ...orgForm, state: e.target.value })}
-                    placeholder="e.g. Maharashtra"
+                    placeholder={tr("e.g. Maharashtra")}
                     className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                   />
                 </div>
 
                 {/* Postal Code */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">Postal / Pin Code</label>
+                  <label className="text-xs font-semibold text-slate-700">{tr("Postal / Pin Code")}</label>
                   <input
                     type="text"
                     value={orgForm.pincode}
@@ -720,27 +722,27 @@ export default function InteriorSettingsView() {
 
               {/* Tax / GSTIN */}
               <div className="space-y-1.5 max-w-sm">
-                <label className="text-xs font-semibold text-slate-700">Tax Registration / GSTIN</label>
+                <label className="text-xs font-semibold text-slate-700">{tr("Tax Registration / GSTIN")}</label>
                 <input
                   type="text"
                   value={orgForm.gstNumber}
                   onChange={(e) => setOrgForm({ ...orgForm, gstNumber: e.target.value })}
-                  placeholder="27AAAAA0000A1Z5"
+                  placeholder={tr("27AAAAA0000A1Z5")}
                   className="w-full px-3.5 py-2 text-xs font-mono rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                 />
               </div>
 
               <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                 {!canUpdateSettings && (
-                  <p className="text-xs text-amber-600 font-medium">Read-only view. Organization admin or settings update permission required to modify.</p>
+                  <p className="text-xs text-amber-600 font-medium">{tr("Read-only view. Organization admin or settings update permission required to modify.")}</p>
                 )}
                 <button
                   type="submit"
                   disabled={savingOrg || !canUpdateSettings}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-2xs transition-all disabled:opacity-50 cursor-pointer ml-auto active:scale-[0.98]"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-2xs transition-all disabled:opacity-50 cursor-pointer ms-auto active:scale-[0.98]"
                 >
                   {savingOrg ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                  <span>{savingOrg ? 'Saving...' : 'Save Organization Details'}</span>
+                  <span>{savingOrg ? tr("Saving...") : tr("Save Organization Details")}</span>
                 </button>
               </div>
             </form>
@@ -749,11 +751,23 @@ export default function InteriorSettingsView() {
 
         {/* TAB 2: Personal Profile */}
         {activeTab === 'profile' && (
+          <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xs overflow-hidden mb-5">
+            <div className="p-5 sm:p-6 border-b border-slate-100">
+              <h2 className="text-base font-bold text-slate-900">{tr("Language")}</h2>
+              <p className="text-xs text-slate-500 mt-0.5">{tr("Choose the language for the app. Arabic switches the layout to right-to-left.")}</p>
+            </div>
+            <div className="p-5 sm:p-6">
+              <LanguageSelector />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'profile' && (
           <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xs overflow-hidden">
             <div className="p-5 sm:p-6 border-b border-slate-100">
-              <h2 className="text-base font-bold text-slate-900">Personal Information</h2>
+              <h2 className="text-base font-bold text-slate-900">{tr("Personal Information")}</h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Manage your personal profile identity, phone number, and account credentials.
+                {tr("Manage your personal profile identity, phone number, and account credentials.")}
               </p>
             </div>
 
@@ -762,11 +776,11 @@ export default function InteriorSettingsView() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
                 <div className="flex items-center gap-3.5">
                   <div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-600 to-blue-500 text-white font-bold text-base flex items-center justify-center shrink-0 shadow-2xs">
-                    {userInitials}
+                    {tr(userInitials)}
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-slate-900">
-                      {profileForm.firstName ? `${profileForm.firstName} ${profileForm.lastName || ''}`.trim() : 'Account User'}
+                      {profileForm.firstName ? `${profileForm.firstName} ${profileForm.lastName || ''}`.trim() : tr("Account User")}
                     </h3>
                     <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
                       <Mail className="w-3.5 h-3.5 text-slate-400" />
@@ -776,19 +790,19 @@ export default function InteriorSettingsView() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[0.6875rem] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    Verified Email
+                    {tr("Verified Email")}
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 capitalize">
-                    {roleName}
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[0.6875rem] font-semibold bg-blue-50 text-blue-700 border border-blue-200 capitalize">
+                    {tr(roleName)}
                   </span>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">First Name *</label>
+                  <label className="text-xs font-semibold text-slate-700">{tr("First Name *")}</label>
                   <input
                     type="text"
                     required
@@ -799,7 +813,7 @@ export default function InteriorSettingsView() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">Last Name *</label>
+                  <label className="text-xs font-semibold text-slate-700">{tr("Last Name *")}</label>
                   <input
                     type="text"
                     required
@@ -811,7 +825,7 @@ export default function InteriorSettingsView() {
               </div>
 
               <div className="space-y-1.5 max-w-md">
-                <label className="text-xs font-semibold text-slate-700">Contact Number</label>
+                <label className="text-xs font-semibold text-slate-700">{tr("Contact Number")}</label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                   <input
@@ -819,7 +833,7 @@ export default function InteriorSettingsView() {
                     value={profileForm.phone}
                     onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
                     placeholder="+91 98765 43210"
-                    className="w-full pl-8 pr-3.5 py-2 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                    className="w-full ps-8 pe-3.5 py-2 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                   />
                 </div>
               </div>
@@ -831,7 +845,7 @@ export default function InteriorSettingsView() {
                   className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-2xs transition-all disabled:opacity-50 cursor-pointer active:scale-[0.98]"
                 >
                   {savingProfile ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                  <span>{savingProfile ? 'Saving...' : 'Save Profile Changes'}</span>
+                  <span>{savingProfile ? tr("Saving...") : tr("Save Profile Changes")}</span>
                 </button>
               </div>
             </form>
@@ -842,9 +856,9 @@ export default function InteriorSettingsView() {
         {activeTab === 'localization' && (
           <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xs overflow-hidden">
             <div className="p-5 sm:p-6 border-b border-slate-100">
-              <h2 className="text-base font-bold text-slate-900">Currency & Regional Standards</h2>
+              <h2 className="text-base font-bold text-slate-900">{tr("Currency & Regional Standards")}</h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Selecting your country automatically configures default project currencies, symbols, and timezone.
+                {tr("Selecting your country automatically configures default project currencies, symbols, and timezone.")}
               </p>
             </div>
 
@@ -853,20 +867,20 @@ export default function InteriorSettingsView() {
               <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-base shadow-2xs shrink-0">
-                    {orgForm.currencySymbol}
+                    {tr(orgForm.currencySymbol)}
                   </div>
                   <div>
-                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Standard Display Currency</p>
+                    <p className="text-[0.6875rem] font-semibold text-slate-500 uppercase tracking-wider">{tr("Standard Display Currency")}</p>
                     <p className="text-base font-bold text-slate-900">
-                      {orgForm.currency} ({orgForm.currencySymbol})
+                      {tr(orgForm.currency)} ({tr(orgForm.currencySymbol)})
                     </p>
                   </div>
                 </div>
 
-                <div className="sm:text-right">
-                  <p className="text-[11px] text-slate-500 uppercase tracking-wider">BOQ / Quote Format Preview</p>
+                <div className="sm:text-end">
+                  <p className="text-[0.6875rem] text-slate-500 uppercase tracking-wider">{tr("BOQ / Quote Format Preview")}</p>
                   <p className="text-sm font-mono font-bold text-blue-700">
-                    {orgForm.currencySymbol} 1,250,000.00
+                    {tr(orgForm.currencySymbol)} 1,250,000.00
                   </p>
                 </div>
               </div>
@@ -874,7 +888,7 @@ export default function InteriorSettingsView() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700">
-                    Country / Jurisdiction
+                    {tr("Country / Jurisdiction")}
                   </label>
                   <select
                     value={orgForm.countryCode}
@@ -883,7 +897,7 @@ export default function InteriorSettingsView() {
                   >
                     {countries.map((c) => (
                       <option key={c.cca2} value={c.cca2}>
-                        {c.flag} {c.name} ({c.currencyCode})
+                        {tr(c.flag)} {tr(c.name)} ({tr(c.currencyCode)})
                       </option>
                     ))}
                   </select>
@@ -891,23 +905,23 @@ export default function InteriorSettingsView() {
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700">
-                    Date Format
+                    {tr("Date Format")}
                   </label>
                   <select
                     value={orgForm.dateFormat}
                     onChange={(e) => setOrgForm({ ...orgForm, dateFormat: e.target.value })}
                     className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all cursor-pointer"
                   >
-                    <option value="DD/MM/YYYY">DD/MM/YYYY (e.g. 12/10/2026)</option>
-                    <option value="MM/DD/YYYY">MM/DD/YYYY (e.g. 10/12/2026)</option>
-                    <option value="YYYY-MM-DD">YYYY-MM-DD (ISO standard)</option>
+                    <option value="DD/MM/YYYY">{tr("DD/MM/YYYY (e.g. 12/10/2026)")}</option>
+                    <option value="MM/DD/YYYY">{tr("MM/DD/YYYY (e.g. 10/12/2026)")}</option>
+                    <option value="YYYY-MM-DD">{tr("YYYY-MM-DD (ISO standard)")}</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">Primary Timezone</label>
+                  <label className="text-xs font-semibold text-slate-700">{tr("Primary Timezone")}</label>
                   <input
                     type="text"
                     disabled
@@ -917,7 +931,7 @@ export default function InteriorSettingsView() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">Currency Symbol</label>
+                  <label className="text-xs font-semibold text-slate-700">{tr("Currency Symbol")}</label>
                   <input
                     type="text"
                     disabled
@@ -929,15 +943,15 @@ export default function InteriorSettingsView() {
 
               <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                 {!canUpdateSettings && (
-                  <p className="text-xs text-amber-600 font-medium">Read-only view. Organization admin or settings update permission required to modify.</p>
+                  <p className="text-xs text-amber-600 font-medium">{tr("Read-only view. Organization admin or settings update permission required to modify.")}</p>
                 )}
                 <button
                   type="submit"
                   disabled={savingOrg || !canUpdateSettings}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-2xs transition-all disabled:opacity-50 cursor-pointer ml-auto active:scale-[0.98]"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-2xs transition-all disabled:opacity-50 cursor-pointer ms-auto active:scale-[0.98]"
                 >
                   {savingOrg ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                  <span>{savingOrg ? 'Saving...' : 'Apply Regional Settings'}</span>
+                  <span>{savingOrg ? tr("Saving...") : tr("Apply Regional Settings")}</span>
                 </button>
               </div>
             </form>
@@ -948,15 +962,15 @@ export default function InteriorSettingsView() {
         {activeTab === 'security' && (
           <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xs overflow-hidden">
             <div className="p-5 sm:p-6 border-b border-slate-100">
-              <h2 className="text-base font-bold text-slate-900">Password & Authentication</h2>
+              <h2 className="text-base font-bold text-slate-900">{tr("Password & Authentication")}</h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Ensure your account is protected with a secure password containing symbols and mixed casing.
+                {tr("Ensure your account is protected with a secure password containing symbols and mixed casing.")}
               </p>
             </div>
 
             <form onSubmit={handleChangePassword} className="p-5 sm:p-6 space-y-5 max-w-xl">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700">Current Password *</label>
+                <label className="text-xs font-semibold text-slate-700">{tr("Current Password *")}</label>
                 <div className="relative">
                   <input
                     type={showCurrentPwd ? 'text' : 'password'}
@@ -964,7 +978,7 @@ export default function InteriorSettingsView() {
                     value={passwordForm.currentPassword}
                     onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
                     placeholder="••••••••••••"
-                    className="w-full px-3.5 py-2 pr-10 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                    className="w-full px-3.5 py-2 pe-10 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                   />
                   <button
                     type="button"
@@ -977,15 +991,15 @@ export default function InteriorSettingsView() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700">New Password *</label>
+                <label className="text-xs font-semibold text-slate-700">{tr("New Password *")}</label>
                 <div className="relative">
                   <input
                     type={showNewPwd ? 'text' : 'password'}
                     required
                     value={passwordForm.newPassword}
                     onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                    placeholder="At least 8 characters"
-                    className="w-full px-3.5 py-2 pr-10 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                    placeholder={tr("At least 8 characters")}
+                    className="w-full px-3.5 py-2 pe-10 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                   />
                   <button
                     type="button"
@@ -1005,16 +1019,16 @@ export default function InteriorSettingsView() {
                         style={{ width: passwordStrength.width }}
                       />
                     </div>
-                    <div className="flex items-center justify-between text-[11px] text-slate-500">
-                      <span>Strength: <strong className="text-slate-800">{passwordStrength.label}</strong></span>
-                      <span>Use uppercase, numbers & special characters</span>
+                    <div className="flex items-center justify-between text-[0.6875rem] text-slate-500">
+                      <span>{tr("Strength: ")}<strong className="text-slate-800">{tr(passwordStrength.label)}</strong></span>
+                      <span>{tr("Use uppercase, numbers & special characters")}</span>
                     </div>
                   </div>
                 )}
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700">Confirm New Password *</label>
+                <label className="text-xs font-semibold text-slate-700">{tr("Confirm New Password *")}</label>
                 <input
                   type="password"
                   required
@@ -1032,7 +1046,7 @@ export default function InteriorSettingsView() {
                   className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-2xs transition-all disabled:opacity-50 cursor-pointer active:scale-[0.98]"
                 >
                   {savingPwd ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <KeyRound className="w-3.5 h-3.5" />}
-                  <span>{savingPwd ? 'Updating...' : 'Update Password'}</span>
+                  <span>{savingPwd ? tr("Updating...") : tr("Update Password")}</span>
                 </button>
               </div>
             </form>

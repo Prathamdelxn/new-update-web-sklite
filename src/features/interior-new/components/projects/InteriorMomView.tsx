@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Interior-New MOM (Minutes of Meeting) View
@@ -79,8 +80,8 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
 
   const handleDeleteMom = async (mom: any) => {
     const ok = await confirm({
-      title: 'Delete Minutes of Meeting',
-      message: `Are you sure you want to delete "${mom.title}"? This action cannot be undone.`,
+      title: tr("Delete Minutes of Meeting"),
+      message: tr("Are you sure you want to delete \"{{title}}\"? This action cannot be undone.", { title: mom.title }),
       confirmText: 'Delete',
       type: 'danger',
     });
@@ -88,11 +89,11 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
     try {
       setDeletingMomId(mom._id);
       await interiorProjectService.deleteMom(projectId, mom._id);
-      toast.success('Meeting minutes deleted');
+      toast.success(tr("Meeting minutes deleted"));
       setMoms((prev) => prev.filter((m) => m._id !== mom._id));
     } catch (err: any) {
       console.error(err);
-      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to delete meeting minutes');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || tr("Failed to delete meeting minutes"));
     } finally {
       setDeletingMomId(null);
     }
@@ -107,7 +108,7 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
       }
     } catch (err) {
       console.error('Failed to load MOMs', err);
-      toast.error('Failed to fetch meeting minutes list');
+      toast.error(tr("Failed to fetch meeting minutes list"));
     } finally {
       setIsLoading(false);
     }
@@ -129,7 +130,7 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
   const handleSubmitManualMOM = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !agenda || !notes) {
-      toast.error('Please fill in title, agenda, and notes');
+      toast.error(tr("Please fill in title, agenda, and notes"));
       return;
     }
 
@@ -146,10 +147,10 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
       };
       if (editingMomId) {
         await interiorProjectService.updateMom(projectId, { momId: editingMomId, ...payload });
-        toast.success('Meeting minutes updated');
+        toast.success(tr("Meeting minutes updated"));
       } else {
         await interiorProjectService.createMom(projectId, payload);
-        toast.success('Meeting Minutes logged successfully!');
+        toast.success(tr("Meeting Minutes logged successfully!"));
       }
       setIsManualModalOpen(false);
       resetForm();
@@ -158,7 +159,7 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
       console.error(err);
       toast.error(
         err?.response?.data?.error || err?.response?.data?.message ||
-          (editingMomId ? 'Failed to update meeting minutes' : 'Failed to log meeting minutes')
+          (editingMomId ? tr("Failed to update meeting minutes") : tr("Failed to log meeting minutes"))
       );
     } finally {
       setIsCreating(false);
@@ -170,16 +171,16 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Minutes of Meeting (MOM)</h2>
+          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">{tr("Minutes of Meeting (MOM)")}</h2>
           <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-            Log consultant discussions, client alignments, and assign site action items.
+            {tr("Log consultant discussions, client alignments, and assign site action items.")}
           </p>
         </div>
         <div className="flex gap-3">
           {canDo('mom', 'create') && (
             <Button onClick={openCreateModal}>
-              <Plus className="w-4 h-4 mr-2" />
-              Manual Log
+              <Plus className="w-4 h-4 me-2" />
+              {tr("Manual Log")}
             </Button>
           )}
           {/* AI Bot invite/sync (inviteMomBot/syncMomBot) intentionally skipped — meeting-bot integration is out of scope */}
@@ -192,7 +193,7 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
         </div>
       ) : moms.length === 0 ? (
         <Card className="p-8 text-center text-sm text-[hsl(var(--muted-foreground))]">
-          No meeting records logged yet. Use Manual Log to get started.
+          {tr("No meeting records logged yet. Use Manual Log to get started.")}
         </Card>
       ) : (
         <div className="space-y-6">
@@ -202,9 +203,9 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
                 <div className="flex items-center gap-2.5">
                   <ClipboardList className="w-5 h-5 text-[hsl(var(--primary))]" />
                   <div>
-                    <h3 className="font-bold text-sm text-[hsl(var(--foreground))]">{mom.title}</h3>
+                    <h3 className="font-bold text-sm text-[hsl(var(--foreground))]">{tr(mom.title)}</h3>
                     <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                      Held: {new Date(mom.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      {tr("Held: ")}{new Date(mom.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </p>
                   </div>
                 </div>
@@ -212,14 +213,14 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
                   {mom.attendees && mom.attendees.length > 0 && (
                     <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--muted-foreground))] bg-[hsl(var(--card))] px-2.5 py-1 rounded-md border border-[hsl(var(--border))]">
                       <Users className="w-3.5 h-3.5" />
-                      Attendees: <span className="font-semibold text-[hsl(var(--foreground))]">{mom.attendees.join(', ')}</span>
+                      {tr("Attendees: ")}<span className="font-semibold text-[hsl(var(--foreground))]">{mom.attendees.join(', ')}</span>
                     </div>
                   )}
                   {canDo('mom', 'update') && (
                     <button
                       type="button"
                       onClick={() => openEditModal(mom)}
-                      title="Edit MOM"
+                      title={tr("Edit MOM")}
                       className="p-1.5 rounded-md text-[hsl(var(--muted-foreground))] hover:text-blue-600 hover:bg-blue-50 transition-colors"
                     >
                       <Pencil className="w-4 h-4" />
@@ -230,7 +231,7 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
                       type="button"
                       onClick={() => handleDeleteMom(mom)}
                       disabled={deletingMomId === mom._id}
-                      title="Delete MOM"
+                      title={tr("Delete MOM")}
                       className="p-1.5 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
                     >
                       {deletingMomId === mom._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
@@ -243,26 +244,26 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
                   {/* Left Column: Agenda & Notes */}
                   <div className="space-y-3">
                     <div>
-                      <h4 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Agenda</h4>
-                      <p className="text-sm mt-1 whitespace-pre-wrap">{mom.agenda}</p>
+                      <h4 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Agenda")}</h4>
+                      <p className="text-sm mt-1 whitespace-pre-wrap">{tr(mom.agenda)}</p>
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Discussion Notes</h4>
-                      <div className="text-sm mt-1 whitespace-pre-wrap max-w-none">{mom.notes}</div>
+                      <h4 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Discussion Notes")}</h4>
+                      <div className="text-sm mt-1 whitespace-pre-wrap max-w-none">{tr(mom.notes)}</div>
                     </div>
                   </div>
 
                   {/* Right Column: Action Items */}
                   <div>
-                    <h4 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-2">Assigned Action Items</h4>
+                    <h4 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-2">{tr("Assigned Action Items")}</h4>
                     {!mom.actionItems || mom.actionItems.length === 0 ? (
-                      <p className="text-xs text-[hsl(var(--muted-foreground))]">No action items logged.</p>
+                      <p className="text-xs text-[hsl(var(--muted-foreground))]">{tr("No action items logged.")}</p>
                     ) : (
                       <div className="space-y-2">
                         {mom.actionItems.map((item: any, i: number) => (
                           <div key={i} className="flex items-center gap-2 p-2 border border-[hsl(var(--border))] rounded-md bg-[hsl(var(--muted)/0.1)]">
                             <CheckSquare className="w-4 h-4 text-emerald-500 shrink-0" />
-                            <span className="text-xs font-medium text-[hsl(var(--foreground))]">{item.description}</span>
+                            <span className="text-xs font-medium text-[hsl(var(--foreground))]">{tr(item.description)}</span>
                           </div>
                         ))}
                       </div>
@@ -288,7 +289,7 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
                   <FileText className="w-4 h-4 text-[hsl(var(--primary))]" />
-                  {editingMomId ? 'Edit Minutes of Meeting (MOM)' : 'Log Minutes of Meeting (MOM)'}
+                  {editingMomId ? tr("Edit Minutes of Meeting (MOM)") : tr("Log Minutes of Meeting (MOM)")}
                 </h3>
                 <button onClick={closeModal} className="p-1 rounded hover:bg-[hsl(var(--muted))]">
                   <X className="w-4 h-4" />
@@ -299,36 +300,36 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
                 <div className="p-5 space-y-4 max-h-[65vh] overflow-y-auto">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold">Meeting Title</label>
-                      <Input required placeholder="e.g. Weekly MEP Coordination Align" value={title} onChange={(e) => setTitle(e.target.value)} />
+                      <label className="text-xs font-semibold">{tr("Meeting Title")}</label>
+                      <Input required placeholder={tr("e.g. Weekly MEP Coordination Align")} value={title} onChange={(e) => setTitle(e.target.value)} />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold">Meeting Date</label>
+                      <label className="text-xs font-semibold">{tr("Meeting Date")}</label>
                       <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold">Attendees (comma-separated)</label>
-                    <Input placeholder="e.g. Alex Morgan (PM), Sarah Jenkins (Designer), Client Rep" value={attendees} onChange={(e) => setAttendees(e.target.value)} />
+                    <label className="text-xs font-semibold">{tr("Attendees (comma-separated)")}</label>
+                    <Input placeholder={tr("e.g. Alex Morgan (PM), Sarah Jenkins (Designer), Client Rep")} value={attendees} onChange={(e) => setAttendees(e.target.value)} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold">Meeting Agenda</label>
+                    <label className="text-xs font-semibold">{tr("Meeting Agenda")}</label>
                     <textarea
                       required
                       rows={2}
                       className="w-full px-3 py-2 text-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:outline-none"
-                      placeholder="Specify meeting agenda topics..."
+                      placeholder={tr("Specify meeting agenda topics...")}
                       value={agenda}
                       onChange={(e) => setAgenda(e.target.value)}
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold">Discussion Notes</label>
+                    <label className="text-xs font-semibold">{tr("Discussion Notes")}</label>
                     <textarea
                       required
                       rows={3}
                       className="w-full px-3 py-2 text-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:outline-none"
-                      placeholder="Specify key discussion outcomes..."
+                      placeholder={tr("Specify key discussion outcomes...")}
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                     />
@@ -337,14 +338,14 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
                   {/* Action items checklist */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Action Items</h4>
+                      <h4 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Action Items")}</h4>
                       <Button type="button" variant="outline" size="sm" onClick={addActionRow}>
-                        Add Action
+                        {tr("Add Action")}
                       </Button>
                     </div>
                     {actionItems.map((item, idx) => (
                       <div key={idx} className="flex items-center gap-2">
-                        <Input placeholder="Action Item description..." value={item.description} onChange={(e) => updateActionRow(idx, e.target.value)} />
+                        <Input placeholder={tr("Action Item description...")} value={item.description} onChange={(e) => updateActionRow(idx, e.target.value)} />
                         <button
                           type="button"
                           onClick={() => removeActionRow(idx)}
@@ -360,11 +361,11 @@ export default function InteriorMomView({ projectId }: InteriorMomViewProps) {
 
                 <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
                   <Button variant="outline" type="button" onClick={closeModal}>
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                   <Button type="submit" disabled={isCreating}>
-                    {isCreating && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    {editingMomId ? 'Save Changes' : 'Save MOM'}
+                    {isCreating && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+                    {editingMomId ? tr("Save Changes") : tr("Save MOM")}
                   </Button>
                 </div>
               </form>

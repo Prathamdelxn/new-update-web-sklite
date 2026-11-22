@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -227,7 +228,7 @@ export function InteriorSendQuotationModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) {
-      toast.error('Please fix the errors before sending.');
+      toast.error(tr("Please fix the errors before sending."));
       return;
     }
 
@@ -250,16 +251,16 @@ export function InteriorSendQuotationModal({
       });
 
       if (sendTarget === 'customer') {
-        toast.success(`Quotation sent to ${emailToSend} for approval! Status updated to 'Sent'.`);
+        toast.success(tr("Quotation sent to {{emailToSend}} for approval! Status updated to 'Sent'.", { emailToSend: emailToSend }));
       } else {
-        toast.success(`Quotation copy dispatched to ${nameToSend || emailToSend}!`);
+        toast.success(tr("Quotation copy dispatched to {{value}}!", { value: nameToSend || emailToSend }));
       }
 
       onSuccess();
       onClose();
     } catch (err: any) {
       console.error('Failed to send quotation email:', err);
-      toast.error(err?.response?.data?.error || err?.response?.data?.message || err?.message || 'Failed to send quotation email.');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || err?.message || tr("Failed to send quotation email."));
     } finally {
       setIsSubmitting(false);
     }
@@ -285,13 +286,13 @@ export function InteriorSendQuotationModal({
               </div>
               <div>
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  Send Quotation Document
+                  {tr("Send Quotation Document")}
                   <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-indigo-100 text-indigo-700">
-                    {qtnNumber}
+                    {tr(qtnNumber)}
                   </span>
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Deliver formatted quotation document with itemized breakdown & pricing
+                  {tr("Deliver formatted quotation document with itemized breakdown & pricing")}
                 </p>
               </div>
             </div>
@@ -313,14 +314,14 @@ export function InteriorSendQuotationModal({
                   <FileText className="w-4 h-4 text-indigo-600" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-800">{qtnTitle}</div>
-                  <div className="text-[11px] text-slate-500">
-                    {itemsCount} {itemsCount === 1 ? 'Item' : 'Items'} • Client: <span className="font-semibold text-slate-700">{customerName}</span>
+                  <div className="text-xs font-bold text-slate-800">{tr(qtnTitle)}</div>
+                  <div className="text-[0.6875rem] text-slate-500">
+                    {tr(itemsCount)} {itemsCount === 1 ? tr("Item") : tr("Items")}{tr(" • Client: ")}<span className="font-semibold text-slate-700">{tr(customerName)}</span>
                   </div>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-[10px] uppercase font-bold text-slate-400">Total Amount</div>
+              <div className="text-end">
+                <div className="text-[0.625rem] uppercase font-bold text-slate-400">{tr("Total Amount")}</div>
                 <div className="text-xs sm:text-sm font-extrabold text-indigo-600">
                   {formatExactCurrency(grandTotal)}
                 </div>
@@ -337,14 +338,14 @@ export function InteriorSendQuotationModal({
               {/* Recipient Target Selector */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Recipient Option
+                  {tr("Recipient Option")}
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   {/* Option 1: Customer */}
                   <button
                     type="button"
                     onClick={() => handleTargetChange('customer')}
-                    className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                    className={`p-3 rounded-xl border text-start flex flex-col justify-between transition-all cursor-pointer ${
                       sendTarget === 'customer'
                         ? 'border-indigo-600 bg-indigo-50/50 ring-2 ring-indigo-500/20 shadow-xs'
                         : 'border-slate-200 hover:border-slate-300 bg-white'
@@ -359,9 +360,9 @@ export function InteriorSendQuotationModal({
                       )}
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-slate-900">Send to Lead / Customer</div>
-                      <div className="text-[10px] text-slate-500 leading-tight mt-0.5">
-                        For Quotation Approval (sets status to <span className="font-semibold text-indigo-600">Sent</span>)
+                      <div className="text-xs font-bold text-slate-900">{tr("Send to Lead / Customer")}</div>
+                      <div className="text-[0.625rem] text-slate-500 leading-tight mt-0.5">
+                        {tr("For Quotation Approval (sets status to ")}<span className="font-semibold text-indigo-600">{tr("Sent")}</span>)
                       </div>
                     </div>
                   </button>
@@ -370,7 +371,7 @@ export function InteriorSendQuotationModal({
                   <button
                     type="button"
                     onClick={() => handleTargetChange('vendor')}
-                    className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                    className={`p-3 rounded-xl border text-start flex flex-col justify-between transition-all cursor-pointer ${
                       sendTarget !== 'customer'
                         ? 'border-indigo-600 bg-indigo-50/50 ring-2 ring-indigo-500/20 shadow-xs'
                         : 'border-slate-200 hover:border-slate-300 bg-white'
@@ -385,9 +386,9 @@ export function InteriorSendQuotationModal({
                       )}
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-slate-900">Send to Vendor or Others</div>
-                      <div className="text-[10px] text-slate-500 leading-tight mt-0.5">
-                        Pick a vendor from list for Material RFQ / Partner copy
+                      <div className="text-xs font-bold text-slate-900">{tr("Send to Vendor or Others")}</div>
+                      <div className="text-[0.625rem] text-slate-500 leading-tight mt-0.5">
+                        {tr("Pick a vendor from list for Material RFQ / Partner copy")}
                       </div>
                     </div>
                   </button>
@@ -407,34 +408,34 @@ export function InteriorSendQuotationModal({
                       </div>
                       <div>
                         <div className="text-xs font-bold text-slate-900">
-                          {customerName}
+                          {tr(customerName)}
                         </div>
-                        <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
+                        <div className="text-[0.6875rem] text-slate-500 flex items-center gap-1.5">
                           <Mail className="w-3 h-3 text-slate-400" />
-                          <span>{customerEmail || <span className="text-rose-600 font-semibold">No email address on lead profile</span>}</span>
+                          <span>{customerEmail || <span className="text-rose-600 font-semibold">{tr("No email address on lead profile")}</span>}</span>
                         </div>
                       </div>
                     </div>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                      Lead Client
+                    <span className="px-2 py-0.5 rounded-full text-[0.625rem] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      {tr("Lead Client")}
                     </span>
                   </div>
 
                   {errors.email && (
-                    <p className="text-[11px] text-rose-500 font-medium px-1">{errors.email}</p>
+                    <p className="text-[0.6875rem] text-rose-500 font-medium px-1">{errors.email}</p>
                   )}
 
                   {/* Additional Note Input */}
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
-                      <span>Additional Note / Remarks (Optional)</span>
-                      <span className="text-[10px] text-slate-400 font-normal">Included in email & PDF</span>
+                      <span>{tr("Additional Note / Remarks (Optional)")}</span>
+                      <span className="text-[0.625rem] text-slate-400 font-normal">{tr("Included in email & PDF")}</span>
                     </label>
                     <textarea
                       rows={3}
                       value={additionalNote}
                       onChange={(e) => setAdditionalNote(e.target.value)}
-                      placeholder="Add an optional personal note, payment terms, or review remarks (e.g. 'Looking forward to your feedback and approval to commence work')..."
+                      placeholder={tr("Add an optional personal note, payment terms, or review remarks (e.g. 'Looking forward to your feedback and approval to commence work')...")}
                       className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none leading-relaxed shadow-2xs"
                     />
                   </div>
@@ -445,7 +446,7 @@ export function InteriorSendQuotationModal({
                   {/* Toggle between Registered Vendor List & Manual Custom Recipient */}
                   <div className="flex items-center justify-between">
                     <label className="block text-xs font-bold text-slate-700">
-                      {isManualRecipient ? 'Custom Recipient Details' : 'Choose Vendor from List'}
+                      {isManualRecipient ? tr("Custom Recipient Details") : tr("Choose Vendor from List")}
                     </label>
                     <button
                       type="button"
@@ -456,12 +457,12 @@ export function InteriorSendQuotationModal({
                           handleSwitchToManualRecipient();
                         }
                       }}
-                      className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer transition-colors"
+                      className="text-[0.6875rem] font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer transition-colors"
                     >
                       {isManualRecipient ? (
-                        <>🏢 Back to Vendor List</>
+                        <>{tr("🏢 Back to Vendor List")}</>
                       ) : (
-                        <>✉️ Or Enter Custom Email Manually</>
+                        <>{tr("✉️ Or Enter Custom Email Manually")}</>
                       )}
                     </button>
                   </div>
@@ -477,8 +478,8 @@ export function InteriorSendQuotationModal({
                             type="text"
                             value={vendorSearchQuery}
                             onChange={(e) => setVendorSearchQuery(e.target.value)}
-                            placeholder="Search vendors by name, category, email..."
-                            className="w-full pl-8.5 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                            placeholder={tr("Search vendors by name, category, email...")}
+                            className="w-full ps-8.5 pe-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                           />
                         </div>
                         {categoriesList.length > 2 && (
@@ -489,7 +490,7 @@ export function InteriorSendQuotationModal({
                           >
                             {categoriesList.map((cat) => (
                               <option key={cat} value={cat}>
-                                {cat}
+                                {tr(cat)}
                               </option>
                             ))}
                           </select>
@@ -501,23 +502,23 @@ export function InteriorSendQuotationModal({
                         {isLoadingVendors ? (
                           <div className="py-8 flex flex-col items-center justify-center text-slate-400 text-xs">
                             <div className="w-5 h-5 border-2 border-indigo-600/30 border-t-indigo-600 rounded-full animate-spin mb-2" />
-                            Loading registered vendors...
+                            {tr("Loading registered vendors...")}
                           </div>
                         ) : filteredVendors.length === 0 ? (
                           <div className="p-6 text-center">
                             <Building2 className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                            <p className="text-xs font-bold text-slate-700">No vendors found</p>
-                            <p className="text-[11px] text-slate-500 mt-0.5">
+                            <p className="text-xs font-bold text-slate-700">{tr("No vendors found")}</p>
+                            <p className="text-[0.6875rem] text-slate-500 mt-0.5">
                               {vendorSearchQuery
-                                ? 'No vendors match your search filters.'
-                                : 'No registered vendors available in system yet.'}
+                                ? tr("No vendors match your search filters.")
+                                : tr("No registered vendors available in system yet.")}
                             </p>
                             <button
                               type="button"
                               onClick={handleSwitchToManualRecipient}
                               className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors cursor-pointer"
                             >
-                              <Plus className="w-3.5 h-3.5" /> Enter Recipient Email Manually
+                              <Plus className="w-3.5 h-3.5" />{tr(" Enter Recipient Email Manually")}
                             </button>
                           </div>
                         ) : (
@@ -554,39 +555,39 @@ export function InteriorSendQuotationModal({
                                     <div className="min-w-0">
                                       <div className="flex items-center gap-2">
                                         <span className="text-xs font-bold text-slate-900 truncate">
-                                          {vName}
+                                          {tr(vName)}
                                         </span>
                                         {(v.vendorCode || v._id) && (
-                                          <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 border border-purple-200 shrink-0">
+                                          <span className="text-[0.625rem] font-mono font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 border border-purple-200 shrink-0">
                                             {v.vendorCode || `VND-${String(v._id).slice(-3).toUpperCase()}`}
                                           </span>
                                         )}
-                                        <span className="text-[10px] px-1.5 py-0.2 rounded font-medium bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
-                                          {vCategory}
+                                        <span className="text-[0.625rem] px-1.5 py-0.2 rounded font-medium bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
+                                          {tr(vCategory)}
                                         </span>
                                       </div>
-                                      <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5 truncate">
+                                      <div className="text-[0.6875rem] text-slate-500 flex items-center gap-2 mt-0.5 truncate">
                                         {vEmail && (
                                           <span className="flex items-center gap-1">
                                             <Mail className="w-3 h-3 text-slate-400" />
-                                            <span className="truncate">{vEmail}</span>
+                                            <span className="truncate">{tr(vEmail)}</span>
                                           </span>
                                         )}
                                         {vContact && (
                                           <span className="text-slate-400">
-                                            • {vContact}
+                                            • {tr(vContact)}
                                           </span>
                                         )}
                                         {vPhone && (
                                           <span className="text-slate-400">
-                                            • {vPhone}
+                                            • {tr(vPhone)}
                                           </span>
                                         )}
                                       </div>
                                     </div>
                                   </div>
 
-                                  <div className="shrink-0 pl-2">
+                                  <div className="shrink-0 ps-2">
                                     {isSelected ? (
                                       <div className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-xs">
                                         <Check className="w-3 h-3" />
@@ -609,31 +610,31 @@ export function InteriorSendQuotationModal({
                             <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0" />
                             <div className="min-w-0 truncate">
                               <span className="font-bold text-indigo-950">
-                                Selected: {selectedVendorObj.name || selectedVendorObj.companyName}
+                                {tr("Selected: ")}{selectedVendorObj.name || selectedVendorObj.companyName}
                               </span>
-                              <span className="text-[11px] text-indigo-700 block truncate">
-                                Sending to: {selectedVendorObj.email || <span className="text-rose-600 font-semibold">No email (please edit)</span>}
+                              <span className="text-[0.6875rem] text-indigo-700 block truncate">
+                                {tr("Sending to: ")}{selectedVendorObj.email || <span className="text-rose-600 font-semibold">{tr("No email (please edit)")}</span>}
                               </span>
                             </div>
                           </div>
                           <button
                             type="button"
                             onClick={() => setSelectedVendorId('')}
-                            className="text-[10px] font-bold text-slate-500 hover:text-slate-800 px-2 py-1 bg-white border border-slate-200 rounded-lg cursor-pointer shrink-0"
+                            className="text-[0.625rem] font-bold text-slate-500 hover:text-slate-800 px-2 py-1 bg-white border border-slate-200 rounded-lg cursor-pointer shrink-0"
                           >
-                            Clear
+                            {tr("Clear")}
                           </button>
                         </div>
                       ) : (
                         errors.name && (
-                          <p className="text-[11px] text-rose-500 font-medium px-1">
-                            {errors.name}
+                          <p className="text-[0.6875rem] text-rose-500 font-medium px-1">
+                            {tr(errors.name)}
                           </p>
                         )
                       )}
 
                       {errors.email && (
-                        <p className="text-[11px] text-rose-500 font-medium px-1">
+                        <p className="text-[0.6875rem] text-rose-500 font-medium px-1">
                           {errors.email}
                         </p>
                       )}
@@ -644,7 +645,7 @@ export function InteriorSendQuotationModal({
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
                           <label className="block text-xs font-medium text-slate-700 mb-1">
-                            Recipient / Company Name <span className="text-rose-500">*</span>
+                            {tr("Recipient / Company Name ")}<span className="text-rose-500">*</span>
                           </label>
                           <input
                             type="text"
@@ -653,17 +654,17 @@ export function InteriorSendQuotationModal({
                               setRecipientName(e.target.value);
                               if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
                             }}
-                            placeholder="e.g. Apex Hardware Supplies"
+                            placeholder={tr("e.g. Apex Hardware Supplies")}
                             className={`w-full px-3 py-2 text-xs bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${
                               errors.name ? 'border-rose-400 bg-rose-50/20' : 'border-slate-200 focus:border-indigo-500'
                             }`}
                           />
-                          {errors.name && <p className="text-[11px] text-rose-500 mt-1">{errors.name}</p>}
+                          {errors.name && <p className="text-[0.6875rem] text-rose-500 mt-1">{tr(errors.name)}</p>}
                         </div>
 
                         <div>
                           <label className="block text-xs font-medium text-slate-700 mb-1">
-                            Recipient Email Address <span className="text-rose-500">*</span>
+                            {tr("Recipient Email Address ")}<span className="text-rose-500">*</span>
                           </label>
                           <input
                             type="email"
@@ -672,12 +673,12 @@ export function InteriorSendQuotationModal({
                               setRecipientEmail(e.target.value);
                               if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
                             }}
-                            placeholder="vendor@example.com"
+                            placeholder={tr("vendor@example.com")}
                             className={`w-full px-3 py-2 text-xs bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${
                               errors.email ? 'border-rose-400 bg-rose-50/20' : 'border-slate-200 focus:border-indigo-500'
                             }`}
                           />
-                          {errors.email && <p className="text-[11px] text-rose-500 mt-1">{errors.email}</p>}
+                          {errors.email && <p className="text-[0.6875rem] text-rose-500 mt-1">{errors.email}</p>}
                         </div>
                       </div>
                     </div>
@@ -686,14 +687,14 @@ export function InteriorSendQuotationModal({
                   {/* Additional Note Input for Vendor */}
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
-                      <span>Additional Note / RFQ Instructions (Optional)</span>
-                      <span className="text-[10px] text-slate-400 font-normal">Included in email & PDF</span>
+                      <span>{tr("Additional Note / RFQ Instructions (Optional)")}</span>
+                      <span className="text-[0.625rem] text-slate-400 font-normal">{tr("Included in email & PDF")}</span>
                     </label>
                     <textarea
                       rows={2}
                       value={additionalNote}
                       onChange={(e) => setAdditionalNote(e.target.value)}
-                      placeholder="Add delivery timeline requirements, site location notes, or proposal deadlines..."
+                      placeholder={tr("Add delivery timeline requirements, site location notes, or proposal deadlines...")}
                       className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none leading-relaxed shadow-2xs"
                     />
                   </div>
@@ -709,7 +710,7 @@ export function InteriorSendQuotationModal({
                 disabled={isSubmitting}
                 className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-200/70 rounded-xl transition-colors cursor-pointer"
               >
-                Cancel
+                {tr("Cancel")}
               </button>
 
               <button
@@ -720,7 +721,7 @@ export function InteriorSendQuotationModal({
                 {isSubmitting ? (
                   <>
                     <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Sending with Attachment...</span>
+                    <span>{tr("Sending with Attachment...")}</span>
                   </>
                 ) : (
                   <>
@@ -728,11 +729,11 @@ export function InteriorSendQuotationModal({
                     <span>
                       {sendTarget === 'customer'
                         ? quotation?.status === 'Sent'
-                          ? 'Resend for Customer Approval'
-                          : 'Send for Customer Approval'
+                          ? tr("Resend for Customer Approval")
+                          : tr("Send for Customer Approval")
                         : selectedVendorObj
-                        ? `Send Quotation to ${selectedVendorObj.name || 'Vendor'}`
-                        : 'Send to Vendor / Other'}
+                        ? tr("Send Quotation to {{value}}", { value: selectedVendorObj.name || 'Vendor' })
+                        : tr("Send to Vendor / Other")}
                     </span>
                   </>
                 )}

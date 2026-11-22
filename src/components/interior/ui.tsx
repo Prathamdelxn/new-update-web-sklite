@@ -1,3 +1,4 @@
+import { tr } from '@/i18n';
 // =============================================================================
 // Sky-Lite Web — Interior-OS visual parity shim
 // Minimal Card/Button primitives matching interior-os-frontend's
@@ -99,13 +100,13 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           'placeholder:text-[hsl(var(--muted-foreground))]',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] focus-visible:ring-offset-1 focus-visible:border-[hsl(var(--ring))]',
           'disabled:cursor-not-allowed disabled:opacity-50',
-          icon && 'pl-10',
+          icon && 'ps-10',
           error && 'border-[hsl(var(--destructive))] focus-visible:ring-[hsl(var(--destructive))]',
           className
         )}
         {...props}
       />
-      {error && <p className="mt-1.5 text-xs text-[hsl(var(--destructive))]">{error}</p>}
+      {error && <p className="mt-1.5 text-xs text-[hsl(var(--destructive))]">{tr(error)}</p>}
     </div>
   )
 );

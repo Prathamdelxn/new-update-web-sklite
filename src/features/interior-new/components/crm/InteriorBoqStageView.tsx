@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Dedicated BOQ Estimation View with All / Pending / Completed Filter Tabs, Search, and Stage Handlers
 
@@ -110,13 +111,13 @@ const { hasPermission: canDo } = usePermissions();
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search BOQs..."
+              placeholder={tr("Search BOQs...")}
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-8 pr-8 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+              className="w-full ps-8 pe-8 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
             />
             {searchTerm && (
               <button
@@ -145,7 +146,7 @@ const { hasPermission: canDo } = usePermissions();
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               )}
             >
-              All ({leads.length})
+              {tr("All (")}{leads.length})
             </button>
             <button
               onClick={() => {
@@ -159,7 +160,7 @@ const { hasPermission: canDo } = usePermissions();
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               )}
             >
-              Pending ({pendingCount})
+              {tr("Pending (")}{tr(pendingCount)})
             </button>
             <button
               onClick={() => {
@@ -173,7 +174,7 @@ const { hasPermission: canDo } = usePermissions();
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               )}
             >
-              Completed ({completedCount})
+              {tr("Completed (")}{tr(completedCount)})
             </button>
           </div>
         </div>
@@ -186,11 +187,11 @@ const { hasPermission: canDo } = usePermissions();
             <div className="w-12 h-12 sm:w-14 sm:h-14 bg-blue-500/10 border border-blue-500/20 text-blue-600 rounded-2xl flex items-center justify-center mb-3">
               <Calculator size={24} />
             </div>
-            <h3 className="text-sm sm:text-base font-extrabold text-[hsl(var(--foreground))] mb-1">No BOQs Found</h3>
+            <h3 className="text-sm sm:text-base font-extrabold text-[hsl(var(--foreground))] mb-1">{tr("No BOQs Found")}</h3>
             <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-md mx-auto">
               {searchTerm || filterState !== 'all'
-                ? 'No leads match your current BOQ filter.'
-                : 'Leads moved to "Under BOQ Creation" will appear here for cost estimation and bill of quantities.'}
+                ? tr("No leads match your current BOQ filter.")
+                : tr("Leads moved to \"Under BOQ Creation\" will appear here for cost estimation and bill of quantities.")}
             </p>
           </div>
         ) : (
@@ -225,24 +226,24 @@ const { hasPermission: canDo } = usePermissions();
                         </div>
                         <div className="min-w-0 flex-1">
                           <h4 
-                            className="text-xs font-bold text-[hsl(var(--foreground))] truncate max-w-[150px] sm:max-w-[220px]"
+                            className="text-xs font-bold text-[hsl(var(--foreground))] truncate max-w-[9.375rem] sm:max-w-[13.75rem]"
                             title={lead.name}
                           >
-                            {lead.name}
+                            {tr(lead.name)}
                           </h4>
-                          <div className="flex items-center gap-1.5 text-[10px]">
+                          <div className="flex items-center gap-1.5 text-[0.625rem]">
                             <span className="font-mono text-blue-600 bg-blue-500/10 px-1.5 py-0.2 rounded border border-blue-500/20 font-bold shrink-0">
-                              {lead.leadNumber || 'LD-XXXX'}
+                              {lead.leadNumber || tr("LD-XXXX")}
                             </span>
                             <span className="text-[hsl(var(--muted-foreground))]">•</span>
-                            <span className="text-[hsl(var(--muted-foreground))] truncate">{lead.mobileNumber}</span>
+                            <span className="text-[hsl(var(--muted-foreground))] truncate">{tr(lead.mobileNumber)}</span>
                           </div>
                         </div>
                       </div>
 
                       <span
                         className={cn(
-                          'shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border',
+                          'shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[0.5625rem] font-black uppercase tracking-wider border',
                           latestBoq?.status === 'approved'
                             ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                             : latestBoq?.status === 'pending_approval'
@@ -255,39 +256,39 @@ const { hasPermission: canDo } = usePermissions();
                         )}
                       >
                         {latestBoq?.status === 'approved'
-                          ? '✓ BOQ Approved'
+                          ? tr("✓ BOQ Approved")
                           : latestBoq?.status === 'pending_approval'
-                          ? '⏳ Review Pending'
+                          ? tr("⏳ Review Pending")
                           : latestBoq?.status === 'rejected'
-                          ? '✕ Rejected'
+                          ? tr("✕ Rejected")
                           : hasBoqs
-                          ? 'Draft BOQ'
-                          : 'Pending BOQ'}
+                          ? tr("Draft BOQ")
+                          : tr("Pending BOQ")}
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between gap-2 text-[11px] bg-[hsl(var(--muted)/0.4)] p-2 rounded-xl border border-[hsl(var(--border)/0.5)]">
+                    <div className="flex items-center justify-between gap-2 text-[0.6875rem] bg-[hsl(var(--muted)/0.4)] p-2 rounded-xl border border-[hsl(var(--border)/0.5)]">
                       <div className="flex items-center gap-1.5 truncate">
                         <Building2 size={11} className="text-blue-500 shrink-0" />
-                        <span className="truncate text-[hsl(var(--foreground))]">{lead.propertyType || 'Residential'}</span>
+                        <span className="truncate text-[hsl(var(--foreground))]">{lead.propertyType || tr("Residential")}</span>
                       </div>
-                      <div className="text-[10px] text-emerald-600 font-bold shrink-0">
-                        {hasBoqs ? `${currencySymbol} ${(latestBoq?.totalAmount || 0).toLocaleString()}` : 'No estimate'}
+                      <div className="text-[0.625rem] text-emerald-600 font-bold shrink-0">
+                        {hasBoqs ? `${currencySymbol} ${(latestBoq?.totalAmount || 0).toLocaleString()}` : tr("No estimate")}
                       </div>
                     </div>
 
                     {hasBoqs && (
-                      <div className="flex items-center justify-between text-[10px] text-[hsl(var(--muted-foreground))] px-1">
-                        <span>v{lead.boqs.length} • {latestBoq?.createdAt ? new Date(latestBoq.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Recent'}</span>
-                        <span className="truncate max-w-[130px]">by {latestBoq?.createdByName || (latestBoq?.createdBy?.firstName ? `${latestBoq.createdBy.firstName} ${latestBoq.createdBy.lastName || ''}`.trim() : null) || 'Team'}</span>
+                      <div className="flex items-center justify-between text-[0.625rem] text-[hsl(var(--muted-foreground))] px-1">
+                        <span>v{lead.boqs.length} • {latestBoq?.createdAt ? new Date(latestBoq.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : tr("Recent")}</span>
+                        <span className="truncate max-w-[8.125rem]">{tr("by ")}{latestBoq?.createdByName || (latestBoq?.createdBy?.firstName ? `${latestBoq.createdBy.firstName} ${latestBoq.createdBy.lastName || ''}`.trim() : null) || tr("Team")}</span>
                       </div>
                     )}
 
                     {/* Actions Ribbon */}
                     <div className="flex items-center justify-between gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
                       {isQuotationApproved ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                          <Lock size={11} /> Locked (Quote Approved)
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[0.625rem] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                          <Lock size={11} />{tr(" Locked (Quote Approved)")}
                         </span>
                       ) : (
                         <div className="flex items-center gap-1.5 flex-wrap w-full justify-between">
@@ -299,10 +300,10 @@ const { hasPermission: canDo } = usePermissions();
                                   (canDo('crm_boq', 'approve')) && (
                                     <button
                                       onClick={() => onApproveBoq(lead._id)}
-                                      className="inline-flex items-center gap-0.5 px-2 py-1.5 bg-emerald-600 text-white rounded-lg text-[11px] font-bold active:scale-95 cursor-pointer"
-                                      title="Approve BOQ"
+                                      className="inline-flex items-center gap-0.5 px-2 py-1.5 bg-emerald-600 text-white rounded-lg text-[0.6875rem] font-bold active:scale-95 cursor-pointer"
+                                      title={tr("Approve BOQ")}
                                     >
-                                      <CheckCircle2 size={10} /> Approve
+                                      <CheckCircle2 size={10} />{tr(" Approve")}
                                     </button>
                                   )
                                 )}
@@ -310,10 +311,10 @@ const { hasPermission: canDo } = usePermissions();
                                   (canDo('crm_boq', 'approve')) && (
                                     <button
                                       onClick={() => onRejectBoq(lead._id)}
-                                      className="inline-flex items-center gap-0.5 px-2 py-1.5 bg-rose-600 text-white rounded-lg text-[11px] font-bold active:scale-95 cursor-pointer"
-                                      title="Reject / Request Changes"
+                                      className="inline-flex items-center gap-0.5 px-2 py-1.5 bg-rose-600 text-white rounded-lg text-[0.6875rem] font-bold active:scale-95 cursor-pointer"
+                                      title={tr("Reject / Request Changes")}
                                     >
-                                      <XCircle size={10} /> Reject
+                                      <XCircle size={10} />{tr(" Reject")}
                                     </button>
                                   )
                                 )}
@@ -324,10 +325,10 @@ const { hasPermission: canDo } = usePermissions();
                               (canDo('crm_boq', 'update')) && (
                                 <button
                                   onClick={() => onSendForApproval(lead._id)}
-                                  className="inline-flex items-center gap-1 px-2 py-1.5 bg-indigo-600 text-white rounded-lg text-[11px] font-bold active:scale-95 cursor-pointer"
-                                  title="Send BOQ for Approval"
+                                  className="inline-flex items-center gap-1 px-2 py-1.5 bg-indigo-600 text-white rounded-lg text-[0.6875rem] font-bold active:scale-95 cursor-pointer"
+                                  title={tr("Send BOQ for Approval")}
                                 >
-                                  <Send size={10} /> Send Approval
+                                  <Send size={10} />{tr(" Send Approval")}
                                 </button>
                               )
                             )}
@@ -342,13 +343,13 @@ const { hasPermission: canDo } = usePermissions();
                                     ? 'p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
                                     : 'gap-1 px-2.5 py-1.5 bg-blue-600 text-white'
                                 )}
-                                title={(hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? 'Edit BOQ' : hasBoqs ? 'Approved BOQs are final — create a new version' : 'Create BOQ'}
+                                title={(hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? tr("Edit BOQ") : hasBoqs ? tr("Approved BOQs are final — create a new version") : tr("Create BOQ")}
                               >
                               {(hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? (
                                 <Pencil size={13} className="text-blue-600" />
                               ) : (
                                 <>
-                                  <Plus size={11} /> {hasBoqs ? 'New Version' : 'Create BOQ'}
+                                  <Plus size={11} /> {hasBoqs ? tr("New Version") : tr("Create BOQ")}
                                 </>
                               )}
                               </button>
@@ -366,7 +367,7 @@ const { hasPermission: canDo } = usePermissions();
                                   })
                                 }
                                 className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 border border-emerald-500/20 rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
-                                title="Export BOQ to Excel (.xlsx)"
+                                title={tr("Export BOQ to Excel (.xlsx)")}
                               >
                                 <FileSpreadsheet size={13} />
                               </button>
@@ -378,7 +379,7 @@ const { hasPermission: canDo } = usePermissions();
                                 <button
                                   onClick={() => onDeleteBoq(lead._id)}
                                   className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
-                                  title="Delete BOQ"
+                                  title={tr("Delete BOQ")}
                                 >
                                   <Trash2 size={13} />
                                 </button>
@@ -389,17 +390,17 @@ const { hasPermission: canDo } = usePermissions();
                           {hasBoqs &&
                             onPassToQuotations &&
                             (isPassedToNext ? (
-                              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
-                                Passed
+                              <span className="text-[0.625rem] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
+                                {tr("Passed")}
                               </span>
                             ) : latestBoq?.status === 'approved' ? (
                               (canDo('crm_boq', 'update') || canDo('crm_quotations', 'update') || canDo('crm_quotations', 'create')) && (
                                 <button
                                   onClick={() => onPassToQuotations(lead._id)}
                                   className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition-all bg-blue-600 text-white cursor-pointer shadow-xs"
-                                  title="Pass to Quotation"
+                                  title={tr("Pass to Quotation")}
                                 >
-                                  Pass <ArrowRight size={11} />
+                                  {tr("Pass ")}<ArrowRight size={11} />
                                 </button>
                               )
                             ) : null)}
@@ -413,14 +414,14 @@ const { hasPermission: canDo } = usePermissions();
 
             {/* DESKTOP TABLE VIEW (>= md) - Senior Enterprise CRM Table */}
             <div className="hidden md:block w-full overflow-hidden">
-              <table className="w-full text-left text-xs border-collapse table-fixed">
-                <thead className="bg-[hsl(var(--muted)/0.45)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] text-[11px] font-bold uppercase tracking-wider">
+              <table className="w-full text-start text-xs border-collapse table-fixed">
+                <thead className="bg-[hsl(var(--muted)/0.45)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] text-[0.6875rem] font-bold uppercase tracking-wider">
                   <tr>
-                    <th className="px-4.5 py-3 rounded-tl-2xl w-[26%]">Lead & Contact</th>
-                    <th className="px-4 py-3 w-[20%]">Property & Location</th>
-                    <th className="px-4 py-3 w-[22%]">BOQ Value & Status</th>
-                    <th className="px-4 py-3 w-[12%]">Pipeline</th>
-                    <th className="px-4.5 py-3 text-right rounded-tr-2xl w-[20%]">Actions</th>
+                    <th className="px-4.5 py-3 rounded-ss-2xl w-[26%]">{tr("Lead & Contact")}</th>
+                    <th className="px-4 py-3 w-[20%]">{tr("Property & Location")}</th>
+                    <th className="px-4 py-3 w-[22%]">{tr("BOQ Value & Status")}</th>
+                    <th className="px-4 py-3 w-[12%]">{tr("Pipeline")}</th>
+                    <th className="px-4.5 py-3 text-end rounded-se-2xl w-[20%]">{tr("Actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border)/0.7)]">
@@ -460,17 +461,17 @@ const { hasPermission: canDo } = usePermissions();
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span 
-                                  className="font-bold text-xs text-[hsl(var(--foreground))] group-hover:text-blue-600 transition-colors truncate max-w-[160px] lg:max-w-[220px]"
+                                  className="font-bold text-xs text-[hsl(var(--foreground))] group-hover:text-blue-600 transition-colors truncate max-w-[10rem] lg:max-w-[13.75rem]"
                                   title={lead.name}
                                 >
-                                  {lead.name}
+                                  {tr(lead.name)}
                                 </span>
-                                <span className="text-[10px] font-mono font-bold text-blue-600 bg-blue-500/10 px-1.5 py-0.2 rounded border border-blue-500/20 shrink-0">
-                                  {lead.leadNumber || 'LD-XXXX'}
+                                <span className="text-[0.625rem] font-mono font-bold text-blue-600 bg-blue-500/10 px-1.5 py-0.2 rounded border border-blue-500/20 shrink-0">
+                                  {lead.leadNumber || tr("LD-XXXX")}
                                 </span>
                               </div>
-                              <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[hsl(var(--muted-foreground))]">
-                                <span className="font-medium text-[hsl(var(--foreground))] truncate">{lead.mobileNumber}</span>
+                              <div className="flex items-center gap-2 mt-0.5 text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
+                                <span className="font-medium text-[hsl(var(--foreground))] truncate">{tr(lead.mobileNumber)}</span>
                               </div>
                             </div>
                           </div>
@@ -479,13 +480,13 @@ const { hasPermission: canDo } = usePermissions();
                         {/* 2. Property & Location */}
                         <td className="px-4 py-3 max-w-0">
                           <div className="min-w-0 space-y-0.5">
-                            <div className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--foreground))] min-w-0" title={lead.propertyType || 'Residential'}>
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--foreground))] min-w-0" title={lead.propertyType || tr("Residential")}>
                               <Home size={12} className="text-amber-500 shrink-0" />
-                              <span className="truncate block">{lead.propertyType || 'Residential'}</span>
+                              <span className="truncate block">{lead.propertyType || tr("Residential")}</span>
                             </div>
-                            <div className="flex items-center gap-1 text-[11px] text-[hsl(var(--muted-foreground))] min-w-0" title={lead.projectLocation || lead.city || 'Location Pending'}>
+                            <div className="flex items-center gap-1 text-[0.6875rem] text-[hsl(var(--muted-foreground))] min-w-0" title={lead.projectLocation || lead.city || tr("Location Pending")}>
                               <MapPin size={11} className="shrink-0 text-blue-500" />
-                              <span className="truncate block">{lead.projectLocation || lead.city || 'Location Pending'}</span>
+                              <span className="truncate block">{lead.projectLocation || lead.city || tr("Location Pending")}</span>
                             </div>
                           </div>
                         </td>
@@ -496,14 +497,14 @@ const { hasPermission: canDo } = usePermissions();
                             <div className="space-y-1 min-w-0">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span 
-                                  className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-700 text-[10px] font-bold border border-blue-500/20 max-w-[140px] truncate"
-                                  title={latestBoq?.title || `BOQ v${lead.boqs.length}`}
+                                  className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-700 text-[0.625rem] font-bold border border-blue-500/20 max-w-[8.75rem] truncate"
+                                  title={latestBoq?.title || tr("BOQ v{{boqsCount}}", { boqsCount: lead.boqs.length })}
                                 >
                                   <FileSpreadsheet size={10} className="shrink-0" />
-                                  <span className="truncate">v{lead.boqs.length} ({latestBoq?.title || 'Main'})</span>
+                                  <span className="truncate">v{lead.boqs.length} ({latestBoq?.title || tr("Main")})</span>
                                 </span>
                                 <span className={cn(
-                                  "inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-extrabold border tracking-wider uppercase",
+                                  "inline-flex items-center px-1.5 py-0.2 rounded text-[0.5625rem] font-extrabold border tracking-wider uppercase",
                                   isBoqApproved
                                     ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
                                     : isBoqPending
@@ -512,25 +513,25 @@ const { hasPermission: canDo } = usePermissions();
                                     ? "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30"
                                     : "bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/30"
                                 )}>
-                                  {isBoqApproved ? "Approved" : isBoqPending ? "Pending Review" : isBoqRejected ? "Rejected" : "Draft"}
+                                  {isBoqApproved ? tr("Approved") : isBoqPending ? tr("Pending Review") : isBoqRejected ? tr("Rejected") : tr("Draft")}
                                 </span>
                               </div>
                               {latestBoq?.totalAmount ? (
                                 <div className="text-xs font-extrabold text-emerald-600 flex items-center justify-between gap-1">
-                                  <span>{currencySymbol} {latestBoq.totalAmount.toLocaleString()}</span>
-                                  <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-normal">
+                                  <span>{tr(currencySymbol)} {latestBoq.totalAmount.toLocaleString()}</span>
+                                  <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))] font-normal">
                                     {latestBoq.createdAt ? new Date(latestBoq.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''}
                                   </span>
                                 </div>
                               ) : null}
                               {(latestBoq?.createdByName || latestBoq?.createdBy?.firstName) && (
-                                <div className="text-[10px] text-[hsl(var(--muted-foreground))] truncate" title={`Created by ${latestBoq.createdByName || `${latestBoq.createdBy.firstName} ${latestBoq.createdBy.lastName || ''}`.trim()}`}>
-                                  by <span className="font-semibold text-[hsl(var(--foreground))]">{latestBoq.createdByName || `${latestBoq.createdBy.firstName} ${latestBoq.createdBy.lastName || ''}`.trim()}</span>
+                                <div className="text-[0.625rem] text-[hsl(var(--muted-foreground))] truncate" title={tr("Created by {{value}}", { value: latestBoq.createdByName || `${latestBoq.createdBy.firstName} ${latestBoq.createdBy.lastName || ''}`.trim() })}>
+                                  {tr("by ")}<span className="font-semibold text-[hsl(var(--foreground))]">{latestBoq.createdByName || `${latestBoq.createdBy.firstName} ${latestBoq.createdBy.lastName || ''}`.trim()}</span>
                                 </div>
                               )}
                             </div>
                           ) : (
-                            <span className="text-[11px] text-[hsl(var(--muted-foreground))] italic">No BOQ generated</span>
+                            <span className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] italic">{tr("No BOQ generated")}</span>
                           )}
                         </td>
 
@@ -538,25 +539,25 @@ const { hasPermission: canDo } = usePermissions();
                         <td className="px-4 py-3">
                           <span
                             className={cn(
-                              'inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold tracking-tight uppercase border',
+                              'inline-flex items-center px-2 py-0.5 rounded-full text-[0.5625rem] font-bold tracking-tight uppercase border',
                               hasBoqs
                                 ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                                 : 'bg-blue-500/10 text-blue-600 border-blue-500/20'
                             )}
                           >
-                            {lead.status}
+                            {tr(lead.status)}
                           </span>
                         </td>
 
                         {/* 5. Actions */}
-                        <td className="px-4.5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                        <td className="px-4.5 py-3 text-end" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-1.5 flex-wrap">
                             {isQuotationApproved ? (
                               <span
-                                className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-lg text-[11px] font-bold"
-                                title="Quotation is approved, BOQ locked"
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-lg text-[0.6875rem] font-bold"
+                                title={tr("Quotation is approved, BOQ locked")}
                               >
-                                <Lock size={10} /> Locked
+                                <Lock size={10} />{tr(" Locked")}
                               </span>
                             ) : (
                               <>
@@ -568,7 +569,7 @@ const { hasPermission: canDo } = usePermissions();
                                         <button
                                           onClick={() => onApproveBoq(lead._id)}
                                           className="p-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                          title="Approve BOQ"
+                                          title={tr("Approve BOQ")}
                                         >
                                           <CheckCircle2 size={13} />
                                         </button>
@@ -579,7 +580,7 @@ const { hasPermission: canDo } = usePermissions();
                                         <button
                                           onClick={() => onRejectBoq(lead._id)}
                                           className="p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                          title="Reject / Request Changes"
+                                          title={tr("Reject / Request Changes")}
                                         >
                                           <XCircle size={13} />
                                         </button>
@@ -593,9 +594,9 @@ const { hasPermission: canDo } = usePermissions();
                                     <button
                                       onClick={() => onSendForApproval(lead._id)}
                                       className="inline-flex items-center gap-1 px-2 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                      title="Send BOQ for Approval"
+                                      title={tr("Send BOQ for Approval")}
                                     >
-                                      <Send size={11} /> Approval
+                                      <Send size={11} />{tr(" Approval")}
                                     </button>
                                   )
                                 )}
@@ -610,13 +611,13 @@ const { hasPermission: canDo } = usePermissions();
                                         ? "p-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
                                         : "gap-1 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
                                     )}
-                                    title={(hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? 'Edit BOQ' : hasBoqs ? 'Approved BOQs are final — create a new version' : 'Create BOQ'}
+                                    title={(hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? tr("Edit BOQ") : hasBoqs ? tr("Approved BOQs are final — create a new version") : tr("Create BOQ")}
                                   >
                                     {(hasBoqs && lead.boqs[lead.boqs.length - 1]?.status !== 'approved') ? (
                                       <Pencil size={13} className="text-blue-600" />
                                     ) : (
                                       <>
-                                        <Plus size={11} className="text-blue-600" />{hasBoqs ? 'New Version' : 'BOQ'}
+                                        <Plus size={11} className="text-blue-600" />{hasBoqs ? tr("New Version") : tr("BOQ")}
                                       </>
                                     )}
                                   </button>
@@ -634,7 +635,7 @@ const { hasPermission: canDo } = usePermissions();
                                       })
                                     }
                                     className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 border border-emerald-500/20 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                    title="Export BOQ to Excel (.xlsx)"
+                                    title={tr("Export BOQ to Excel (.xlsx)")}
                                   >
                                     <FileSpreadsheet size={13} />
                                   </button>
@@ -646,7 +647,7 @@ const { hasPermission: canDo } = usePermissions();
                                     <button
                                       onClick={() => onDeleteBoq(lead._id)}
                                       className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                      title="Delete BOQ"
+                                      title={tr("Delete BOQ")}
                                     >
                                       <Trash2 size={13} />
                                     </button>
@@ -657,19 +658,19 @@ const { hasPermission: canDo } = usePermissions();
                                   onPassToQuotations &&
                                   (isPassedToNext ? (
                                     <span
-                                      className="inline-flex items-center gap-1 px-2 py-1 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[11px] font-bold"
-                                      title="Passed to Quotations"
+                                      className="inline-flex items-center gap-1 px-2 py-1 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[0.6875rem] font-bold"
+                                      title={tr("Passed to Quotations")}
                                     >
-                                      Passed
+                                      {tr("Passed")}
                                     </span>
                                   ) : isBoqApproved ? (
                                     (canDo('crm_boq', 'update') || canDo('crm_quotations', 'update') || canDo('crm_quotations', 'create')) && (
                                       <button
                                         onClick={() => onPassToQuotations(lead._id)}
                                         className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
-                                        title="Pass to Quotation Phase"
+                                        title={tr("Pass to Quotation Phase")}
                                       >
-                                        Pass <ArrowRight size={11} />
+                                        {tr("Pass ")}<ArrowRight size={11} />
                                       </button>
                                     )
                                   ) : null)}
@@ -681,7 +682,7 @@ const { hasPermission: canDo } = usePermissions();
                                 <button
                                   onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
                                   className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
-                                  title="Mark as Lost"
+                                  title={tr("Mark as Lost")}
                                 >
                                   <XCircle size={13} />
                                 </button>
@@ -703,13 +704,13 @@ const { hasPermission: canDo } = usePermissions();
           <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-[hsl(var(--card))] border-t border-[hsl(var(--border))] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[hsl(var(--muted-foreground))] font-medium">
               <span>
-                Showing <strong>{(currentPage - 1) * pageSize + 1}</strong> to{' '}
-                <strong>{Math.min(currentPage * pageSize, filteredLeads.length)}</strong> of{' '}
-                <strong>{filteredLeads.length}</strong> BOQ records
+                {tr("Showing ")}<strong>{(currentPage - 1) * pageSize + 1}</strong>{tr(" to")}{' '}
+                <strong>{Math.min(currentPage * pageSize, filteredLeads.length)}</strong>{tr(" of")}{' '}
+                <strong>{filteredLeads.length}</strong>{tr(" BOQ records")}
               </span>
 
-              <div className="flex items-center gap-1.5 ml-auto sm:ml-2">
-                <span>Per page:</span>
+              <div className="flex items-center gap-1.5 ms-auto sm:ms-2">
+                <span>{tr("Per page:")}</span>
                 <select
                   value={pageSize}
                   onChange={(e) => {
@@ -731,12 +732,12 @@ const { hasPermission: canDo } = usePermissions();
                   onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                   disabled={currentPage === 1}
                   className="p-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                  title="Previous Page"
+                  title={tr("Previous Page")}
                 >
                   <ChevronLeft size={15} />
                 </button>
 
-                <div className="flex items-center gap-1 px-1 overflow-x-auto max-w-[200px] sm:max-w-none">
+                <div className="flex items-center gap-1 px-1 overflow-x-auto max-w-[12.5rem] sm:max-w-none">
                   {[...Array(totalPages)].map((_, i) => {
                     const pageNum = i + 1;
                     return (
@@ -750,7 +751,7 @@ const { hasPermission: canDo } = usePermissions();
                             : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]'
                         )}
                       >
-                        {pageNum}
+                        {tr(pageNum)}
                       </button>
                     );
                   })}
@@ -760,7 +761,7 @@ const { hasPermission: canDo } = usePermissions();
                   onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
                   disabled={currentPage === totalPages}
                   className="p-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                  title="Next Page"
+                  title={tr("Next Page")}
                 >
                   <ChevronRight size={15} />
                 </button>

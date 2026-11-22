@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
@@ -204,7 +205,7 @@ export default function InteriorSiteDetailsView() {
       setCustomerData(customer || null);
     } catch (err) {
       console.error('Failed to load site details:', err);
-      toast.error('Failed to load site details');
+      toast.error(tr("Failed to load site details"));
     } finally {
       setLoading(false);
     }
@@ -240,14 +241,14 @@ export default function InteriorSiteDetailsView() {
     const hours = Math.round(diffMs / (1000 * 60 * 60));
     if (hours < 1) {
       const mins = Math.max(1, Math.round(diffMs / (1000 * 60)));
-      return { label: `Expires in ${mins}m`, isWarning: true };
+      return { label: tr('Expires in {{mins}}m', { mins }), isWarning: true };
     }
     if (hours < 24) {
-      return { label: `Expires in ${hours}h`, isWarning: hours <= 3 };
+      return { label: tr('Expires in {{hours}}h', { hours }), isWarning: hours <= 3 };
     }
     const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
     const expDateStr = new Date(shareSettings.expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    return { label: `Expires in ${days}d (${expDateStr})`, isWarning: false };
+    return { label: tr('Expires in {{days}}d ({{expDateStr}})', { days, expDateStr }), isWarning: false };
   };
 
   const currentExpiry = getExpiryDisplay();
@@ -262,11 +263,11 @@ export default function InteriorSiteDetailsView() {
 
   const getOrFetchUrl = async (): Promise<string | null> => {
     if (isLinkStopped) {
-      toast.error('Sharing link is currently stopped. Click "Reactivate" to enable it.');
+      toast.error(tr("Sharing link is currently stopped. Click \"Reactivate\" to enable it."));
       return null;
     }
     if (isLinkExpired) {
-      toast.error('Sharing link has expired. Click "Reactivate" to enable it.');
+      toast.error(tr("Sharing link has expired. Click \"Reactivate\" to enable it."));
       return null;
     }
     if (clientFormUrl) return clientFormUrl;
@@ -277,7 +278,7 @@ export default function InteriorSiteDetailsView() {
     }
     const customerId = cust?._id;
     if (!customerId) {
-      toast.error('Site profile ID is missing.');
+      toast.error(tr("Site profile ID is missing."));
       return null;
     }
 
@@ -297,7 +298,7 @@ export default function InteriorSiteDetailsView() {
       throw new Error(res?.error || res?.message || 'Failed to generate share link');
     } catch (err: any) {
       console.error('Error generating share link:', err);
-      toast.error(err?.response?.data?.error || err?.message || 'Failed to create share link');
+      toast.error(err?.response?.data?.error || err?.message || tr("Failed to create share link"));
       return null;
     } finally {
       setIsGeneratingLink(false);
@@ -320,10 +321,10 @@ export default function InteriorSiteDetailsView() {
         document.body.removeChild(input);
       }
       setCopiedLink(true);
-      toast.success('Shareable Client Intake Link copied to clipboard!');
+      toast.success(tr("Shareable Client Intake Link copied to clipboard!"));
       setTimeout(() => setCopiedLink(false), 2500);
     } catch {
-      toast.error('Failed to copy to clipboard.');
+      toast.error(tr("Failed to copy to clipboard."));
     }
   };
 
@@ -347,17 +348,17 @@ export default function InteriorSiteDetailsView() {
     const customerId = cust?._id;
     if (!customerId) return;
 
-    if (!confirm('Stop Client Intake Link? The link will be deactivated immediately and clients opening it will be blocked.')) {
+    if (!confirm(tr("Stop Client Intake Link? The link will be deactivated immediately and clients opening it will be blocked."))) {
       return;
     }
 
     setIsStoppingLink(true);
     try {
       await interiorCrmService.revokeShareLink(customerId);
-      toast.success('Client intake link stopped.');
+      toast.success(tr("Client intake link stopped."));
       await loadSiteDetails();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || 'Failed to stop link');
+      toast.error(err?.response?.data?.message || err?.message || tr("Failed to stop link"));
     } finally {
       setIsStoppingLink(false);
     }
@@ -391,10 +392,10 @@ export default function InteriorSiteDetailsView() {
           : hours === 720
           ? '30 days'
           : `${hours} hours`;
-      toast.success(`Link expiry set to ${label}.`);
+      toast.success(tr("Link expiry set to {{label}}.", { label: label }));
       await loadSiteDetails();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || 'Failed to update link expiry');
+      toast.error(err?.response?.data?.message || err?.message || tr("Failed to update link expiry"));
     } finally {
       setIsUpdatingExpiry(false);
     }
@@ -416,10 +417,10 @@ export default function InteriorSiteDetailsView() {
         allowDownload: false,
         expiresHours: hours,
       });
-      toast.success('Client intake link reactivated!');
+      toast.success(tr("Client intake link reactivated!"));
       await loadSiteDetails();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || 'Failed to reactivate link');
+      toast.error(err?.response?.data?.message || err?.message || tr("Failed to reactivate link"));
     } finally {
       setIsUpdatingExpiry(false);
     }
@@ -547,12 +548,12 @@ export default function InteriorSiteDetailsView() {
             sitePhotos: updated,
           });
         }
-        toast.success(`Successfully uploaded ${validUrls.length} photo${validUrls.length > 1 ? 's' : ''}`);
+        toast.success(tr("Successfully uploaded {{validUrlsCount}} photo{{value}}", { validUrlsCount: validUrls.length, value: validUrls.length > 1 ? 's' : '' }));
         await loadSiteDetails();
       }
     } catch (err: any) {
       console.error('Failed to upload photos:', err);
-      toast.error('Failed to upload some or all photos');
+      toast.error(tr("Failed to upload some or all photos"));
     } finally {
       setUploadingPhotos(false);
       if (e.target) e.target.value = '';
@@ -688,14 +689,14 @@ export default function InteriorSiteDetailsView() {
             )}
           >
             <ClipboardList size={14} />
-            <span>Design Requirements</span>
+            <span>{tr("Design Requirements")}</span>
             <span
               className={cn(
-                'text-[10px] px-1.5 py-0.5 rounded-md font-semibold',
+                'text-[0.625rem] px-1.5 py-0.5 rounded-md font-semibold',
                 activeTab === 'requirements' ? 'bg-white/20 text-white' : 'bg-emerald-500/10 text-emerald-600'
               )}
             >
-              {requirements.length} Spaces
+              {requirements.length}{tr(" Spaces")}
             </span>
           </button>
 
@@ -709,15 +710,15 @@ export default function InteriorSiteDetailsView() {
             )}
           >
             <Ruler size={14} />
-            <span>Site Visit & Measurements</span>
+            <span>{tr("Site Visit & Measurements")}</span>
             {hasMeasurements && (
               <span
                 className={cn(
-                  'text-[10px] px-1.5 py-0.5 rounded-md font-semibold',
+                  'text-[0.625rem] px-1.5 py-0.5 rounded-md font-semibold',
                   activeTab === 'measurements' ? 'bg-white/20 text-white' : 'bg-purple-500/10 text-purple-600'
                 )}
               >
-                {siteMeasurements?.carpetArea ? `${siteMeasurements.carpetArea} sqft` : 'Active'}
+                {siteMeasurements?.carpetArea ? `${siteMeasurements.carpetArea} sqft` : tr("Active")}
               </span>
             )}
           </button>
@@ -732,10 +733,10 @@ export default function InteriorSiteDetailsView() {
             )}
           >
             <Camera size={14} />
-            <span>Site Photos</span>
+            <span>{tr("Site Photos")}</span>
             <span
               className={cn(
-                'text-[10px] px-1.5 py-0.5 rounded-md font-semibold',
+                'text-[0.625rem] px-1.5 py-0.5 rounded-md font-semibold',
                 activeTab === 'photos' ? 'bg-white/20 text-white' : 'bg-blue-500/10 text-blue-600'
               )}
             >
@@ -753,7 +754,7 @@ export default function InteriorSiteDetailsView() {
             )}
           >
             <Layers size={14} />
-            <span>View All</span>
+            <span>{tr("View All")}</span>
           </button>
         </div>
       </div>
@@ -774,35 +775,35 @@ export default function InteriorSiteDetailsView() {
                 <div>
                   <h3 className="text-sm font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
                     <ClipboardList size={16} className="text-emerald-600" />
-                    Client Design Requirements & Specifications
+                    {tr("Client Design Requirements & Specifications")}
                   </h3>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                    Functional and aesthetic specifications captured for room execution.
+                    {tr("Functional and aesthetic specifications captured for room execution.")}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-md">
-                    {requirements.length} Spaces to Execute
+                    {requirements.length}{tr(" Spaces to Execute")}
                   </span>
                   {isLinkActive ? (
                     <button
                       onClick={handleCopyLink}
                       disabled={isGeneratingLink}
                       className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-500/10 hover:bg-indigo-500/20 px-2.5 py-1 rounded-md border border-indigo-500/20 transition-colors active:scale-[0.98] cursor-pointer"
-                      title="Copy shareable client intake link"
+                      title={tr("Copy shareable client intake link")}
                     >
                       {copiedLink ? <Check size={11} className="text-emerald-500" /> : <Share2 size={11} />}
-                      {copiedLink ? 'Copied' : 'Share Intake Link'}
+                      {copiedLink ? tr("Copied") : tr("Share Intake Link")}
                     </button>
                   ) : (isLinkStopped || isLinkExpired) ? (
                     <button
                       onClick={() => handleReactivateLink(168)}
                       disabled={isUpdatingExpiry}
                       className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400 hover:text-amber-800 bg-amber-500/10 hover:bg-amber-500/20 px-2.5 py-1 rounded-md border border-amber-500/20 transition-colors active:scale-[0.98] cursor-pointer"
-                      title="Reactivate intake link"
+                      title={tr("Reactivate intake link")}
                     >
                       <RotateCcw size={11} />
-                      Reactivate Link
+                      {tr("Reactivate Link")}
                     </button>
                   ) : null}
                   {canEditReq && (
@@ -810,7 +811,7 @@ export default function InteriorSiteDetailsView() {
                       onClick={handleOpenReqModal}
                       className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-md border border-emerald-500/20 transition-colors active:scale-[0.98]"
                     >
-                      <PenTool size={11} /> {hasRequirements ? 'Edit Requirements' : '+ Add Requirements'}
+                      <PenTool size={11} /> {hasRequirements ? tr("Edit Requirements") : tr("+ Add Requirements")}
                     </button>
                   )}
                 </div>
@@ -826,57 +827,57 @@ export default function InteriorSiteDetailsView() {
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">
-                          Shareable Client Intake & Questionnaire Link
+                          {tr("Shareable Client Intake & Questionnaire Link")}
                         </h4>
                         {activeCustomer?.clientRequirementsSubmittedAt ? (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 inline-flex items-center gap-1">
-                            <CheckCircle2 size={10} /> Client Wishlist Received
+                          <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 inline-flex items-center gap-1">
+                            <CheckCircle2 size={10} />{tr(" Client Wishlist Received")}
                           </span>
                         ) : isLinkActive ? (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 inline-flex items-center gap-1">
+                          <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 inline-flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
-                            Awaiting Client Input
+                            {tr("Awaiting Client Input")}
                           </span>
                         ) : isLinkStopped ? (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20 inline-flex items-center gap-1">
+                          <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20 inline-flex items-center gap-1">
                             <PowerOff size={10} />
-                            Link Stopped
+                            {tr("Link Stopped")}
                           </span>
                         ) : isLinkExpired ? (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 inline-flex items-center gap-1">
+                          <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 inline-flex items-center gap-1">
                             <Clock size={10} />
-                            Link Expired
+                            {tr("Link Expired")}
                           </span>
                         ) : (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-600 border border-slate-500/20">
-                            Not Active
+                          <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-600 border border-slate-500/20">
+                            {tr("Not Active")}
                           </span>
                         )}
 
                         {isLinkActive && (
                           <span
                             className={cn(
-                              "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border",
+                              "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[0.625rem] font-bold border",
                               currentExpiry.isWarning
                                 ? "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20"
                                 : "bg-teal-500/10 text-teal-700 dark:text-teal-400 border-teal-500/20"
                             )}
                           >
                             <Clock size={10} />
-                            {currentExpiry.label}
+                            {tr(currentExpiry.label)}
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-0.5">
+                      <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] mt-0.5">
                         {activeCustomer?.clientRequirementsSubmittedAt
-                          ? `Client submitted wishlist on ${new Date(activeCustomer.clientRequirementsSubmittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                          ? tr("Client submitted wishlist on {{value}}", { value: new Date(activeCustomer.clientRequirementsSubmittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) })
                           : isLinkStopped
-                          ? 'This questionnaire link has been stopped. Reactivate it to allow the client to access and fill the form.'
+                          ? tr("This questionnaire link has been stopped. Reactivate it to allow the client to access and fill the form.")
                           : isLinkExpired
-                          ? 'This questionnaire link has expired. Reactivate it to set a new expiry window.'
+                          ? tr("This questionnaire link has expired. Reactivate it to set a new expiry window.")
                           : isLinkActive
-                          ? 'Clients can open this link on mobile or desktop to choose styles, upload inspiration images, and specify room requirements.'
-                          : 'Generate an interactive intake form so the client can submit their preferences online.'}
+                          ? tr("Clients can open this link on mobile or desktop to choose styles, upload inspiration images, and specify room requirements.")
+                          : tr("Generate an interactive intake form so the client can submit their preferences online.")}
                       </p>
                     </div>
                   </div>
@@ -890,10 +891,10 @@ export default function InteriorSiteDetailsView() {
                           disabled={isGeneratingLink}
                           onClick={handleCopyLink}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-semibold transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-                          title="Copy public link"
+                          title={tr("Copy public link")}
                         >
                           {copiedLink ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
-                          <span>{copiedLink ? 'Copied' : 'Copy Link'}</span>
+                          <span>{copiedLink ? tr("Copied") : tr("Copy Link")}</span>
                         </button>
 
                         <button
@@ -901,20 +902,20 @@ export default function InteriorSiteDetailsView() {
                           disabled={isGeneratingLink}
                           onClick={handleShareWhatsApp}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-                          title="Send link on WhatsApp"
+                          title={tr("Send link on WhatsApp")}
                         >
                           <MessageCircle size={12} />
-                          <span className="hidden sm:inline">WhatsApp</span>
+                          <span className="hidden sm:inline">{tr("WhatsApp")}</span>
                         </button>
 
                         <button
                           type="button"
                           onClick={handleOpenEmailModal}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-all active:scale-95 cursor-pointer"
-                          title="Email Questionnaire to Client"
+                          title={tr("Email Questionnaire to Client")}
                         >
                           <Mail size={12} />
-                          <span className="hidden sm:inline">Email</span>
+                          <span className="hidden sm:inline">{tr("Email")}</span>
                         </button>
 
                         {clientFormUrl && (
@@ -923,7 +924,7 @@ export default function InteriorSiteDetailsView() {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-semibold transition-all"
-                            title="Preview Client Intake Form in New Tab"
+                            title={tr("Preview Client Intake Form in New Tab")}
                           >
                             <ExternalLink size={12} />
                           </a>
@@ -951,15 +952,15 @@ export default function InteriorSiteDetailsView() {
                               const val = e.target.value === 'never' ? null : Number(e.target.value);
                               handleChangeExpiry(val);
                             }}
-                            className="bg-transparent text-[11px] font-semibold text-[hsl(var(--foreground))] outline-none cursor-pointer"
-                            title="Schedule link expiry duration"
+                            className="bg-transparent text-[0.6875rem] font-semibold text-[hsl(var(--foreground))] outline-none cursor-pointer"
+                            title={tr("Schedule link expiry duration")}
                           >
                             <option value="24" className="bg-[hsl(var(--card))]">24h</option>
                             <option value="72" className="bg-[hsl(var(--card))]">3d</option>
                             <option value="168" className="bg-[hsl(var(--card))]">7d</option>
                             <option value="720" className="bg-[hsl(var(--card))]">30d</option>
-                            <option value="never" className="bg-[hsl(var(--card))]">Never</option>
-                            <option value="custom" disabled hidden className="bg-[hsl(var(--card))]">Custom</option>
+                            <option value="never" className="bg-[hsl(var(--card))]">{tr("Never")}</option>
+                            <option value="custom" disabled hidden className="bg-[hsl(var(--card))]">{tr("Custom")}</option>
                           </select>
                         </div>
 
@@ -968,10 +969,10 @@ export default function InteriorSiteDetailsView() {
                           disabled={isStoppingLink}
                           onClick={handleStopLink}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-                          title="Deactivate link"
+                          title={tr("Deactivate link")}
                         >
                           <PowerOff size={11} />
-                          <span className="hidden sm:inline">Stop</span>
+                          <span className="hidden sm:inline">{tr("Stop")}</span>
                         </button>
                       </>
                     ) : (isLinkStopped || isLinkExpired) ? (
@@ -980,10 +981,10 @@ export default function InteriorSiteDetailsView() {
                         disabled={isUpdatingExpiry}
                         onClick={() => handleReactivateLink(168)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 transition-all active:scale-95 cursor-pointer"
-                        title="Reactivate client link"
+                        title={tr("Reactivate client link")}
                       >
                         <RotateCcw size={12} />
-                        <span>Reactivate Link</span>
+                        <span>{tr("Reactivate Link")}</span>
                       </button>
                     ) : (
                       <button
@@ -991,10 +992,10 @@ export default function InteriorSiteDetailsView() {
                         disabled={isGeneratingLink}
                         onClick={handleCopyLink}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-                        title="Generate and copy shareable client link"
+                        title={tr("Generate and copy shareable client link")}
                       >
                         <Share2 size={12} />
-                        <span>Generate Link</span>
+                        <span>{tr("Generate Link")}</span>
                       </button>
                     )}
 
@@ -1002,7 +1003,7 @@ export default function InteriorSiteDetailsView() {
                       type="button"
                       onClick={handleOpenShareModal}
                       className="p-1.5 bg-[hsl(var(--muted)/0.5)] hover:bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg transition-all active:scale-95 cursor-pointer"
-                      title="Link Settings, Permissions & QR Code"
+                      title={tr("Link Settings, Permissions & QR Code")}
                     >
                       <Settings size={13} />
                     </button>
@@ -1011,8 +1012,8 @@ export default function InteriorSiteDetailsView() {
 
                 {activeCustomer?.clientRequirementsNotes && (
                   <div className="text-xs text-[hsl(var(--foreground))] italic bg-[hsl(var(--muted)/0.3)] px-3 py-2 rounded-lg border border-[hsl(var(--border))] break-words [overflow-wrap:anywhere]">
-                    <span className="font-semibold not-italic text-emerald-600">Client Note: </span>
-                    "{activeCustomer.clientRequirementsNotes}"
+                    <span className="font-semibold not-italic text-emerald-600">{tr("Client Note: ")}</span>
+                    "{tr(activeCustomer.clientRequirementsNotes)}"
                   </div>
                 )}
               </div>
@@ -1024,9 +1025,9 @@ export default function InteriorSiteDetailsView() {
                     <DollarSign size={17} />
                   </div>
                   <div className="overflow-hidden min-w-0">
-                    <p className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Estimated Budget</p>
+                    <p className="text-[0.625rem] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Estimated Budget")}</p>
                     <p className="font-bold text-xs text-[hsl(var(--foreground))] truncate mt-0.5">
-                      {activeCustomer?.budgetRange || (projectInfo?.budget?.amount ? `₹${projectInfo.budget.amount.toLocaleString()}` : 'Not recorded')}
+                      {activeCustomer?.budgetRange || (projectInfo?.budget?.amount ? `₹${projectInfo.budget.amount.toLocaleString()}` : tr("Not recorded"))}
                     </p>
                   </div>
                 </div>
@@ -1036,9 +1037,9 @@ export default function InteriorSiteDetailsView() {
                     <Layers size={17} />
                   </div>
                   <div className="overflow-hidden min-w-0">
-                    <p className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Interior Type</p>
+                    <p className="text-[0.625rem] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Interior Type")}</p>
                     <p className="font-bold text-xs text-[hsl(var(--foreground))] truncate mt-0.5">
-                      {requirements[0]?.interiorType || activeCustomer?.propertyType || projectInfo?.type || 'Residential'}
+                      {requirements[0]?.interiorType || activeCustomer?.propertyType || projectInfo?.type || tr("Residential")}
                     </p>
                   </div>
                 </div>
@@ -1048,9 +1049,9 @@ export default function InteriorSiteDetailsView() {
                     <Palette size={17} />
                   </div>
                   <div className="overflow-hidden min-w-0">
-                    <p className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Primary Theme</p>
+                    <p className="text-[0.625rem] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Primary Theme")}</p>
                     <p className="font-bold text-xs text-[hsl(var(--foreground))] truncate mt-0.5">
-                      {requirements.find((r: any) => r.designStyle)?.designStyle || requirements[0]?.theme || 'Custom Spec'}
+                      {requirements.find((r: any) => r.designStyle)?.designStyle || requirements[0]?.theme || tr("Custom Spec")}
                     </p>
                   </div>
                 </div>
@@ -1086,22 +1087,22 @@ export default function InteriorSiteDetailsView() {
                             <span className="w-6 h-6 rounded-md bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
                               {idx + 1}
                             </span>
-                            <h4 className="font-bold text-sm sm:text-base text-[hsl(var(--foreground))] truncate min-w-0">{req.roomName || 'General Space'}</h4>
+                            <h4 className="font-bold text-sm sm:text-base text-[hsl(var(--foreground))] truncate min-w-0">{req.roomName || tr("General Space")}</h4>
                           </div>
 
                           <div className="flex flex-wrap items-center gap-2 shrink-0">
                             {(req.source === 'client' || isClientSubmittedOnly) && (
-                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-md flex items-center gap-1">
-                                <Sparkles size={10} /> Client Wishlist
+                              <span className="text-[0.625rem] font-bold uppercase tracking-wider px-2 py-0.5 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-md flex items-center gap-1">
+                                <Sparkles size={10} />{tr(" Client Wishlist")}
                               </span>
                             )}
                             {req.interiorType && (
-                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-[hsl(var(--muted)/0.5)] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))] rounded-md">
-                                {req.interiorType}
+                              <span className="text-[0.625rem] font-bold uppercase tracking-wider px-2 py-0.5 bg-[hsl(var(--muted)/0.5)] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))] rounded-md">
+                                {tr(req.interiorType)}
                               </span>
                             )}
                             {(req.designStyle || req.theme) && (
-                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-md flex items-center gap-1">
+                              <span className="text-[0.625rem] font-bold uppercase tracking-wider px-2 py-0.5 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-md flex items-center gap-1">
                                 <Palette size={10} /> {req.designStyle || req.theme}
                               </span>
                             )}
@@ -1111,122 +1112,122 @@ export default function InteriorSiteDetailsView() {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-w-0">
                           {/* Functional Specs */}
                           <div className="bg-[hsl(var(--muted)/0.25)] border border-[hsl(var(--border))] rounded-lg p-3.5 space-y-2 text-xs min-w-0 overflow-hidden">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1.5 pb-2 border-b border-[hsl(var(--border))]">
-                              <Sliders size={12} /> Functional Requirements
+                            <p className="text-[0.625rem] font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1.5 pb-2 border-b border-[hsl(var(--border))]">
+                              <Sliders size={12} />{tr(" Functional Requirements")}
                             </p>
                             <div className="divide-y divide-[hsl(var(--border)/0.5)] pt-0.5">
                               {req.roomUsage && (
                                 <div className="py-1.5 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 min-w-0 first:pt-0 last:pb-0">
-                                  <span className="text-[11px] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">Usage</span>
-                                  <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{req.roomUsage}</span>
+                                  <span className="text-[0.6875rem] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">{tr("Usage")}</span>
+                                  <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{tr(req.roomUsage)}</span>
                                 </div>
                               )}
                               {req.furnitureRequirements && (
                                 <div className="py-1.5 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 min-w-0 first:pt-0 last:pb-0">
-                                  <span className="text-[11px] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">Furniture</span>
-                                  <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{req.furnitureRequirements}</span>
+                                  <span className="text-[0.6875rem] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">{tr("Furniture")}</span>
+                                  <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{tr(req.furnitureRequirements)}</span>
                                 </div>
                               )}
                               {req.storage && (
                                 <div className="py-1.5 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 min-w-0 first:pt-0 last:pb-0">
-                                  <span className="text-[11px] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">Storage</span>
-                                  <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{req.storage}</span>
+                                  <span className="text-[0.6875rem] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">{tr("Storage")}</span>
+                                  <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{tr(req.storage)}</span>
                                 </div>
                               )}
                               {req.electricalPoints && (
                                 <div className="py-1.5 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 min-w-0 first:pt-0 last:pb-0">
-                                  <span className="text-[11px] font-medium text-amber-500 uppercase tracking-wider sm:w-28 shrink-0 flex items-center gap-1">
-                                    <Zap size={11} /> Electrical
+                                  <span className="text-[0.6875rem] font-medium text-amber-500 uppercase tracking-wider sm:w-28 shrink-0 flex items-center gap-1">
+                                    <Zap size={11} />{tr(" Electrical")}
                                   </span>
-                                  <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{req.electricalPoints}</span>
+                                  <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{tr(req.electricalPoints)}</span>
                                 </div>
                               )}
                               {req.lightingRequirements && (
                                 <div className="py-1.5 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 min-w-0 first:pt-0 last:pb-0">
-                                  <span className="text-[11px] font-medium text-amber-500 uppercase tracking-wider sm:w-28 shrink-0 flex items-center gap-1">
-                                    <Sun size={11} /> Lighting
+                                  <span className="text-[0.6875rem] font-medium text-amber-500 uppercase tracking-wider sm:w-28 shrink-0 flex items-center gap-1">
+                                    <Sun size={11} />{tr(" Lighting")}
                                   </span>
-                                  <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{req.lightingRequirements}</span>
+                                  <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{tr(req.lightingRequirements)}</span>
                                 </div>
                               )}
                               {req.plumbingRequirements && (
                                 <div className="py-1.5 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 min-w-0 first:pt-0 last:pb-0">
-                                  <span className="text-[11px] font-medium text-cyan-600 uppercase tracking-wider sm:w-28 shrink-0 flex items-center gap-1">
-                                    <Droplets size={11} /> Plumbing
+                                  <span className="text-[0.6875rem] font-medium text-cyan-600 uppercase tracking-wider sm:w-28 shrink-0 flex items-center gap-1">
+                                    <Droplets size={11} />{tr(" Plumbing")}
                                   </span>
-                                  <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{req.plumbingRequirements}</span>
+                                  <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{tr(req.plumbingRequirements)}</span>
                                 </div>
                               )}
                               {req.circulation && (
                                 <div className="py-1.5 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 min-w-0 first:pt-0 last:pb-0">
-                                  <span className="text-[11px] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">Circulation</span>
-                                  <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{req.circulation}</span>
+                                  <span className="text-[0.6875rem] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">{tr("Circulation")}</span>
+                                  <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{tr(req.circulation)}</span>
                                 </div>
                               )}
-                              {!hasFunctional && <p className="text-[11px] text-[hsl(var(--muted-foreground))] italic py-2">No functional requirements recorded.</p>}
+                              {!hasFunctional && <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] italic py-2">{tr("No functional requirements recorded.")}</p>}
                             </div>
                           </div>
 
                           {/* Aesthetic Specs */}
                           <div className="bg-[hsl(var(--muted)/0.25)] border border-[hsl(var(--border))] rounded-lg p-3.5 space-y-2 text-xs min-w-0 overflow-hidden">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-purple-600 flex items-center gap-1.5 pb-2 border-b border-[hsl(var(--border))]">
-                              <Palette size={12} /> Aesthetic Requirements
+                            <p className="text-[0.625rem] font-bold uppercase tracking-wider text-purple-600 flex items-center gap-1.5 pb-2 border-b border-[hsl(var(--border))]">
+                              <Palette size={12} />{tr(" Aesthetic Requirements")}
                             </p>
                             <div className="divide-y divide-[hsl(var(--border)/0.5)] pt-0.5">
                               {(req.designStyle || req.theme) && (
                                 <div className="py-1.5 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 min-w-0 first:pt-0 last:pb-0">
-                                  <span className="text-[11px] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">Style</span>
+                                  <span className="text-[0.6875rem] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">{tr("Style")}</span>
                                   <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{req.designStyle || req.theme}</span>
                                 </div>
                               )}
                               {req.colours && (
                                 <div className="py-1.5 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 min-w-0 first:pt-0 last:pb-0">
-                                  <span className="text-[11px] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">Colours</span>
-                                  <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{req.colours}</span>
+                                  <span className="text-[0.6875rem] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">{tr("Colours")}</span>
+                                  <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{tr(req.colours)}</span>
                                 </div>
                               )}
                               {req.materials && (
                                 <div className="py-1.5 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 min-w-0 first:pt-0 last:pb-0">
-                                  <span className="text-[11px] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">Materials</span>
-                                  <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{req.materials}</span>
+                                  <span className="text-[0.6875rem] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">{tr("Materials")}</span>
+                                  <span className="font-semibold text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{tr(req.materials)}</span>
                                 </div>
                               )}
                               {req.flooring && (
                                 <div className="py-1.5 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 min-w-0 first:pt-0 last:pb-0">
-                                  <span className="text-[11px] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">Flooring</span>
-                                  <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{req.flooring}</span>
+                                  <span className="text-[0.6875rem] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">{tr("Flooring")}</span>
+                                  <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{tr(req.flooring)}</span>
                                 </div>
                               )}
                               {req.ceiling && (
                                 <div className="py-1.5 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 min-w-0 first:pt-0 last:pb-0">
-                                  <span className="text-[11px] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">Ceiling</span>
-                                  <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{req.ceiling}</span>
+                                  <span className="text-[0.6875rem] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">{tr("Ceiling")}</span>
+                                  <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{tr(req.ceiling)}</span>
                                 </div>
                               )}
                               {req.wallFinishes && (
                                 <div className="py-1.5 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 min-w-0 first:pt-0 last:pb-0">
-                                  <span className="text-[11px] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">Walls</span>
-                                  <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{req.wallFinishes}</span>
+                                  <span className="text-[0.6875rem] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">{tr("Walls")}</span>
+                                  <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{tr(req.wallFinishes)}</span>
                                 </div>
                               )}
                               {req.furnitureStyle && (
                                 <div className="py-1.5 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 min-w-0 first:pt-0 last:pb-0">
-                                  <span className="text-[11px] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">Furniture Style</span>
-                                  <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{req.furnitureStyle}</span>
+                                  <span className="text-[0.6875rem] font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider sm:w-28 shrink-0">{tr("Furniture Style")}</span>
+                                  <span className="font-medium text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere] flex-1">{tr(req.furnitureStyle)}</span>
                                 </div>
                               )}
-                              {!hasAesthetic && <p className="text-[11px] text-[hsl(var(--muted-foreground))] italic py-2">No aesthetic requirements recorded.</p>}
+                              {!hasAesthetic && <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] italic py-2">{tr("No aesthetic requirements recorded.")}</p>}
                             </div>
                           </div>
                         </div>
 
                         {req.description && (
                           <div className="bg-[hsl(var(--muted)/0.25)] border border-[hsl(var(--border))] rounded-lg p-3 min-w-0 overflow-hidden">
-                            <p className="text-[10px] font-bold text-emerald-600 uppercase flex items-center gap-1 mb-1">
-                              <Sparkles size={11} /> Specific Notes
+                            <p className="text-[0.625rem] font-bold text-emerald-600 uppercase flex items-center gap-1 mb-1">
+                              <Sparkles size={11} />{tr(" Specific Notes")}
                             </p>
                             <p className="text-xs text-[hsl(var(--foreground))] font-medium leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-                              {req.description}
+                              {tr(req.description)}
                             </p>
                           </div>
                         )}
@@ -1239,16 +1240,16 @@ export default function InteriorSiteDetailsView() {
                   <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto">
                     <ClipboardList size={22} />
                   </div>
-                  <h4 className="font-bold text-sm text-[hsl(var(--foreground))]">No Requirements Logged</h4>
+                  <h4 className="font-bold text-sm text-[hsl(var(--foreground))]">{tr("No Requirements Logged")}</h4>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-sm mx-auto">
-                    Configure room-by-room functional and aesthetic specifications for this project.
+                    {tr("Configure room-by-room functional and aesthetic specifications for this project.")}
                   </p>
                   {canEditReq && (
                     <button
                       onClick={handleOpenReqModal}
                       className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-colors active:scale-[0.98]"
                     >
-                      <Plus size={13} /> Add Room Requirements
+                      <Plus size={13} />{tr(" Add Room Requirements")}
                     </button>
                   )}
                 </div>
@@ -1269,14 +1270,14 @@ export default function InteriorSiteDetailsView() {
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
                 <Ruler size={16} className="text-purple-600" />
-                Site Visit & Spatial Measurements
+                {tr("Site Visit & Spatial Measurements")}
               </h3>
               {canEditSiteVisit && (
                 <button
                   onClick={handleOpenSiteVisitModal}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-600 hover:text-purple-700 bg-purple-500/10 hover:bg-purple-500/20 px-3 py-1.5 rounded-lg border border-purple-500/20 transition-colors active:scale-[0.98]"
                 >
-                  <Pencil size={12} /> {hasMeasurements ? 'Edit Measurements' : '+ Log Measurements'}
+                  <Pencil size={12} /> {hasMeasurements ? tr("Edit Measurements") : tr("+ Log Measurements")}
                 </button>
               )}
             </div>
@@ -1284,13 +1285,13 @@ export default function InteriorSiteDetailsView() {
             {(activeCustomer?.remarks || siteMeasurements?.notes || activeCustomer?.siteVisitScheduledDate) && (
               <div className="bg-purple-500/[0.04] border border-purple-500/20 rounded-xl p-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 flex items-center gap-1.5">
+                  <p className="text-[0.6875rem] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 flex items-center gap-1.5">
                     <FileText size={13} className="text-purple-600" />
-                    Site Visit Briefing & Notes
+                    {tr("Site Visit Briefing & Notes")}
                   </p>
                   {activeCustomer?.siteVisitScheduledDate && (
-                    <span className="text-[10px] font-semibold text-purple-700 dark:text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20">
-                      Scheduled: {new Date(activeCustomer.siteVisitScheduledDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    <span className="text-[0.625rem] font-semibold text-purple-700 dark:text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20">
+                      {tr("Scheduled: ")}{new Date(activeCustomer.siteVisitScheduledDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
                   )}
                 </div>
@@ -1309,50 +1310,50 @@ export default function InteriorSiteDetailsView() {
                   <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
                       <Maximize2 size={15} className="text-purple-500" />
-                      Room & Spatial Dimensions
+                      {tr("Room & Spatial Dimensions")}
                     </h3>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 border border-purple-500/20">
-                      Spatial
+                    <span className="text-[0.625rem] font-semibold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                      {tr("Spatial")}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2.5 min-w-0">
                     <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-3 border border-[hsl(var(--border))] min-w-0">
-                      <p className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">Carpet Area</p>
+                      <p className="text-[0.625rem] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">{tr("Carpet Area")}</p>
                       <p className="font-bold text-sm text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
-                        {siteMeasurements.carpetArea || '—'} <span className="text-[10px] font-medium text-[hsl(var(--muted-foreground))]">Sq.Ft</span>
+                        {siteMeasurements.carpetArea || '—'} <span className="text-[0.625rem] font-medium text-[hsl(var(--muted-foreground))]">{tr("Sq.Ft")}</span>
                       </p>
                     </div>
 
                     <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-3 border border-[hsl(var(--border))] min-w-0">
-                      <p className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">Ceiling Height</p>
+                      <p className="text-[0.625rem] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">{tr("Ceiling Height")}</p>
                       <p className="font-bold text-sm text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
-                        {siteMeasurements.ceilingHeight || '—'} <span className="text-[10px] font-medium text-[hsl(var(--muted-foreground))]">Ft</span>
+                        {siteMeasurements.ceilingHeight || '—'} <span className="text-[0.625rem] font-medium text-[hsl(var(--muted-foreground))]">{tr("Ft")}</span>
                       </p>
                     </div>
 
                     <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-3 border border-[hsl(var(--border))] col-span-2 min-w-0">
-                      <p className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <Maximize2 size={11} className="text-purple-500" /> Room Dimensions (L × W)
+                      <p className="text-[0.625rem] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
+                        <Maximize2 size={11} className="text-purple-500" />{tr(" Room Dimensions (L × W)")}
                       </p>
                       <p className="font-medium text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
-                        {siteMeasurements.roomDimensions || 'Not recorded'}
+                        {siteMeasurements.roomDimensions || tr("Not recorded")}
                       </p>
                     </div>
 
                     <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-3 border border-[hsl(var(--border))] col-span-2 min-w-0">
-                      <p className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <Layers size={11} className="text-indigo-500" /> Floor-to-Ceiling Height
+                      <p className="text-[0.625rem] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
+                        <Layers size={11} className="text-indigo-500" />{tr(" Floor-to-Ceiling Height")}
                       </p>
                       <p className="font-medium text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
-                        {siteMeasurements.floorToCeilingHeight || 'Not recorded'}
+                        {siteMeasurements.floorToCeilingHeight || tr("Not recorded")}
                       </p>
                     </div>
 
                     <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-3 border border-[hsl(var(--border))] col-span-2 min-w-0">
-                      <p className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">Rooms to Design</p>
+                      <p className="text-[0.625rem] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">{tr("Rooms to Design")}</p>
                       <p className="font-medium text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
-                        {siteMeasurements.rooms || 'Not specified'}
+                        {siteMeasurements.rooms || tr("Not specified")}
                       </p>
                     </div>
                   </div>
@@ -1363,47 +1364,47 @@ export default function InteriorSiteDetailsView() {
                   <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
                       <DoorOpen size={15} className="text-blue-500" />
-                      Openings & Structural Specs
+                      {tr("Openings & Structural Specs")}
                     </h3>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 border border-blue-500/20">
-                      Structure
+                    <span className="text-[0.625rem] font-semibold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                      {tr("Structure")}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-1 gap-2.5 min-w-0">
                     <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-3 border border-[hsl(var(--border))] min-w-0">
-                      <p className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <DoorOpen size={11} className="text-blue-500" /> Door Dimensions
+                      <p className="text-[0.625rem] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
+                        <DoorOpen size={11} className="text-blue-500" />{tr(" Door Dimensions")}
                       </p>
                       <p className="font-medium text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
-                        {siteMeasurements.doorDimensions || 'Not recorded'}
+                        {siteMeasurements.doorDimensions || tr("Not recorded")}
                       </p>
                     </div>
 
                     <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-3 border border-[hsl(var(--border))] min-w-0">
-                      <p className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <Maximize2 size={11} className="text-sky-500" /> Window Dimensions
+                      <p className="text-[0.625rem] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
+                        <Maximize2 size={11} className="text-sky-500" />{tr(" Window Dimensions")}
                       </p>
                       <p className="font-medium text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
-                        {siteMeasurements.windowDimensions || 'Not recorded'}
+                        {siteMeasurements.windowDimensions || tr("Not recorded")}
                       </p>
                     </div>
 
                     <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-3 border border-[hsl(var(--border))] min-w-0">
-                      <p className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <Columns size={11} className="text-amber-500" /> Wall Thickness
+                      <p className="text-[0.625rem] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
+                        <Columns size={11} className="text-amber-500" />{tr(" Wall Thickness")}
                       </p>
                       <p className="font-medium text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
-                        {siteMeasurements.wallThickness || 'Not recorded'}
+                        {siteMeasurements.wallThickness || tr("Not recorded")}
                       </p>
                     </div>
 
                     <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-3 border border-[hsl(var(--border))] min-w-0">
-                      <p className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <Columns size={11} className="text-orange-500" /> Column / Beam Dimensions
+                      <p className="text-[0.625rem] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1 flex items-center gap-1">
+                        <Columns size={11} className="text-orange-500" />{tr(" Column / Beam Dimensions")}
                       </p>
                       <p className="font-medium text-xs text-[hsl(var(--foreground))] break-words [overflow-wrap:anywhere]">
-                        {siteMeasurements.columnBeamDimensions || 'Not recorded'}
+                        {siteMeasurements.columnBeamDimensions || tr("Not recorded")}
                       </p>
                     </div>
                   </div>
@@ -1414,38 +1415,38 @@ export default function InteriorSiteDetailsView() {
                   <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
                       <Zap size={15} className="text-amber-500" />
-                      MEP & Utility Services
+                      {tr("MEP & Utility Services")}
                     </h3>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20">
-                      MEP
+                    <span className="text-[0.625rem] font-semibold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                      {tr("MEP")}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-1 gap-2.5 min-w-0">
                     <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-3 border border-[hsl(var(--border))] min-w-0">
-                      <p className="text-[10px] font-semibold text-amber-500 uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <Zap size={11} /> Existing Electrical Points
+                      <p className="text-[0.625rem] font-semibold text-amber-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                        <Zap size={11} />{tr(" Existing Electrical Points")}
                       </p>
                       <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
-                        {siteMeasurements.electricalPoints || 'No electrical notes recorded'}
+                        {siteMeasurements.electricalPoints || tr("No electrical notes recorded")}
                       </p>
                     </div>
 
                     <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-3 border border-[hsl(var(--border))] min-w-0">
-                      <p className="text-[10px] font-semibold text-cyan-600 uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <Droplets size={11} /> Plumbing Points
+                      <p className="text-[0.625rem] font-semibold text-cyan-600 uppercase tracking-wider mb-1 flex items-center gap-1">
+                        <Droplets size={11} />{tr(" Plumbing Points")}
                       </p>
                       <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
-                        {siteMeasurements.plumbingPoints || 'No plumbing points recorded'}
+                        {siteMeasurements.plumbingPoints || tr("No plumbing points recorded")}
                       </p>
                     </div>
 
                     <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-3 border border-[hsl(var(--border))] min-w-0">
-                      <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <Wind size={11} /> AC Locations & Piping
+                      <p className="text-[0.625rem] font-semibold text-emerald-600 uppercase tracking-wider mb-1 flex items-center gap-1">
+                        <Wind size={11} />{tr(" AC Locations & Piping")}
                       </p>
                       <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
-                        {siteMeasurements.acLocations || 'No AC locations recorded'}
+                        {siteMeasurements.acLocations || tr("No AC locations recorded")}
                       </p>
                     </div>
                   </div>
@@ -1456,38 +1457,38 @@ export default function InteriorSiteDetailsView() {
                   <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
                       <Armchair size={15} className="text-emerald-500" />
-                      Furniture & Site Constraints
+                      {tr("Furniture & Site Constraints")}
                     </h3>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                      Conditions
+                    <span className="text-[0.625rem] font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                      {tr("Conditions")}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-1 gap-2.5 min-w-0">
                     <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-3 border border-[hsl(var(--border))] min-w-0">
-                      <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <Armchair size={11} /> Existing Furniture Dimensions
+                      <p className="text-[0.625rem] font-semibold text-emerald-600 uppercase tracking-wider mb-1 flex items-center gap-1">
+                        <Armchair size={11} />{tr(" Existing Furniture Dimensions")}
                       </p>
                       <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
-                        {siteMeasurements.furnitureDimensions || 'No furniture dimensions recorded'}
+                        {siteMeasurements.furnitureDimensions || tr("No furniture dimensions recorded")}
                       </p>
                     </div>
 
                     <div className="bg-rose-500/[0.08] rounded-lg p-3 border border-rose-500/20 min-w-0">
-                      <p className="text-[10px] font-semibold text-rose-500 uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <AlertTriangle size={11} /> Site Constraints & Limitations
+                      <p className="text-[0.625rem] font-semibold text-rose-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                        <AlertTriangle size={11} />{tr(" Site Constraints & Limitations")}
                       </p>
                       <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
-                        {siteMeasurements.siteConstraints || 'None reported'}
+                        {siteMeasurements.siteConstraints || tr("None reported")}
                       </p>
                     </div>
 
                     <div className="bg-purple-500/[0.08] rounded-lg p-3 border border-purple-500/20 min-w-0">
-                      <p className="text-[10px] font-semibold text-purple-600 uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <FileText size={11} /> Additional Site Notes
+                      <p className="text-[0.625rem] font-semibold text-purple-600 uppercase tracking-wider mb-1 flex items-center gap-1">
+                        <FileText size={11} />{tr(" Additional Site Notes")}
                       </p>
                       <p className="font-medium text-xs text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
-                        {siteMeasurements.notes || 'No notes added'}
+                        {siteMeasurements.notes || tr("No notes added")}
                       </p>
                     </div>
                   </div>
@@ -1498,16 +1499,16 @@ export default function InteriorSiteDetailsView() {
                 <div className="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center mx-auto">
                   <Ruler size={22} />
                 </div>
-                <h4 className="font-bold text-sm text-[hsl(var(--foreground))]">No Spatial Measurements Recorded</h4>
+                <h4 className="font-bold text-sm text-[hsl(var(--foreground))]">{tr("No Spatial Measurements Recorded")}</h4>
                 <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-sm mx-auto">
-                  Log carpet area, ceiling heights, door/window openings, and MEP utilities.
+                  {tr("Log carpet area, ceiling heights, door/window openings, and MEP utilities.")}
                 </p>
                 {canEditSiteVisit && (
                   <button
                     onClick={handleOpenSiteVisitModal}
                     className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-colors active:scale-[0.98]"
                   >
-                    <Plus size={13} /> Log Measurements Now
+                    <Plus size={13} />{tr(" Log Measurements Now")}
                   </button>
                 )}
               </div>
@@ -1529,10 +1530,10 @@ export default function InteriorSiteDetailsView() {
                 <div className="flex items-center gap-2">
                   <ImageIcon size={16} className="text-blue-500" />
                   <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))]">
-                    Site Photos & Visual Records
+                    {tr("Site Photos & Visual Records")}
                   </h3>
                   <span className="text-xs font-semibold text-blue-600 bg-blue-500/10 px-2.5 py-0.5 rounded-md border border-blue-500/20">
-                    {sitePhotos.length} Photos
+                    {sitePhotos.length}{tr(" Photos")}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1543,7 +1544,7 @@ export default function InteriorSiteDetailsView() {
                       className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 rounded-lg border border-blue-500/20 transition-colors active:scale-[0.98] disabled:opacity-50"
                     >
                       {uploadingPhotos ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
-                      {uploadingPhotos ? 'Uploading...' : 'Upload Photos'}
+                      {uploadingPhotos ? tr("Uploading...") : tr("Upload Photos")}
                     </button>
                   )}
                   {canEditSiteVisit && (
@@ -1551,7 +1552,7 @@ export default function InteriorSiteDetailsView() {
                       onClick={handleOpenSiteVisitModal}
                       className="inline-flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] hover:bg-[hsl(var(--muted)/0.8)] px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] transition-colors active:scale-[0.98]"
                     >
-                      <Pencil size={12} /> Manage in Visit
+                      <Pencil size={12} />{tr(" Manage in Visit")}
                     </button>
                   )}
                 </div>
@@ -1572,7 +1573,7 @@ export default function InteriorSiteDetailsView() {
                       >
                         <img loading="lazy" decoding="async"
                           src={photoUrl}
-                          alt={`Site Photo ${idx + 1}`}
+                          alt={tr("Site Photo {{value}}", { value: idx + 1 })}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors flex items-center justify-center">
@@ -1585,8 +1586,8 @@ export default function InteriorSiteDetailsView() {
               ) : (
                 <div className="py-10 flex flex-col items-center justify-center border border-dashed border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--muted)/0.2)] text-center space-y-2">
                   <ImageIcon className="w-8 h-8 text-[hsl(var(--muted-foreground))] opacity-60" />
-                  <p className="text-xs font-bold text-[hsl(var(--foreground))]">No Site Photos Uploaded</p>
-                  <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Upload site inspection photos & progress views.</p>
+                  <p className="text-xs font-bold text-[hsl(var(--foreground))]">{tr("No Site Photos Uploaded")}</p>
+                  <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">{tr("Upload site inspection photos & progress views.")}</p>
                   {canEditPhotos && (
                     <button
                       onClick={() => fileInputRef.current?.click()}
@@ -1594,7 +1595,7 @@ export default function InteriorSiteDetailsView() {
                       className="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-colors active:scale-[0.98] disabled:opacity-50"
                     >
                       {uploadingPhotos ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
-                      {uploadingPhotos ? 'Uploading...' : 'Upload Site Photos'}
+                      {uploadingPhotos ? tr("Uploading...") : tr("Upload Site Photos")}
                     </button>
                   )}
                 </div>

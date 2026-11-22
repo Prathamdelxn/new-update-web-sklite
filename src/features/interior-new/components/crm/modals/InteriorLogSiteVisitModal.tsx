@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -111,12 +112,12 @@ export const InteriorLogSiteVisitModal = ({
 
     Array.from(files).forEach((file) => {
       if (!validImageTypes.includes(file.type) && !file.type.startsWith('image/')) {
-        toast.error(`"${file.name}" is not a supported image file. Please upload JPEG, PNG, or WEBP.`);
+        toast.error(tr("\"{{name}}\" is not a supported image file. Please upload JPEG, PNG, or WEBP.", { name: file.name }));
         return;
       }
 
       if (file.size > MAX_FILE_SIZE) {
-        toast.error(`"${file.name}" exceeds the 15MB maximum file size.`);
+        toast.error(tr("\"{{name}}\" exceeds the 15MB maximum file size.", { name: file.name }));
         return;
       }
 
@@ -199,7 +200,7 @@ export const InteriorLogSiteVisitModal = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
-      toast.error('Please fill in all required measurement fields with valid numbers');
+      toast.error(tr("Please fill in all required measurement fields with valid numbers"));
       return;
     }
     setIsSubmitting(true);
@@ -242,14 +243,14 @@ export const InteriorLogSiteVisitModal = ({
         console.warn('Activity log skipped:', actErr);
       }
 
-      toast.success('Site visit measurements saved successfully!');
+      toast.success(tr("Site visit measurements saved successfully!"));
       if (onSuccess) {
         onSuccess({ _id: customerId, ...updatePayload });
       }
       onClose();
     } catch (error: any) {
       console.error('Failed to log site visit:', error);
-      toast.error(error?.response?.data?.error || error?.response?.data?.message || error?.message || 'Failed to save site visit');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || error?.message || tr("Failed to save site visit"));
     } finally {
       setIsSubmitting(false);
     }
@@ -273,10 +274,10 @@ export const InteriorLogSiteVisitModal = ({
             </div>
             <div>
               <h2 className="text-lg font-black text-[hsl(var(--foreground))] tracking-tight">
-                Log Site Visit & Measurements
+                {tr("Log Site Visit & Measurements")}
               </h2>
               <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                Record detailed spatial dimensions, MEP points, structural constraints, and site photos.
+                {tr("Record detailed spatial dimensions, MEP points, structural constraints, and site photos.")}
               </p>
             </div>
           </div>
@@ -298,11 +299,11 @@ export const InteriorLogSiteVisitModal = ({
                 <FileText size={16} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300">
-                  Site Visit Instructions / Briefing Note
+                <p className="text-[0.6875rem] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300">
+                  {tr("Site Visit Instructions / Briefing Note")}
                 </p>
                 <p className="text-xs text-[hsl(var(--foreground))] mt-1 font-medium whitespace-pre-wrap leading-relaxed">
-                  {instructions}
+                  {tr(instructions)}
                 </p>
               </div>
             </div>
@@ -313,7 +314,7 @@ export const InteriorLogSiteVisitModal = ({
             <div className="flex items-center gap-2 pb-2 border-b border-[hsl(var(--border))]">
               <Ruler size={16} className="text-purple-500" />
               <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))]">
-                Room & Spatial Dimensions
+                {tr("Room & Spatial Dimensions")}
               </h3>
             </div>
 
@@ -321,21 +322,21 @@ export const InteriorLogSiteVisitModal = ({
               <div>
                 <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5 flex items-center gap-1.5">
                   <Maximize2 size={13} className="text-purple-500" />
-                  Room Length × Width
+                  {tr("Room Length × Width")}
                 </label>
                 <input
                   type="text"
                   value={measurements.roomDimensions}
                   onChange={(e) => setMeasurements({ ...measurements, roomDimensions: e.target.value })}
                   className="w-full bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                  placeholder="e.g. Living: 18'x12', Bed: 14'x11'"
+                  placeholder={tr("e.g. Living: 18'x12', Bed: 14'x11'")}
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5 flex items-center gap-1.5">
                   <Layers size={13} className="text-purple-500" />
-                  Ceiling Height (Ft) <span className="text-red-500">*</span>
+                  {tr("Ceiling Height (Ft) ")}<span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -351,27 +352,27 @@ export const InteriorLogSiteVisitModal = ({
                   }`}
                   placeholder="e.g. 10.5"
                 />
-                {errors.ceilingHeight && <p className="text-[10px] text-red-500 mt-1">{errors.ceilingHeight}</p>}
+                {errors.ceilingHeight && <p className="text-[0.625rem] text-red-500 mt-1">{tr(errors.ceilingHeight)}</p>}
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5 flex items-center gap-1.5">
                   <Layers size={13} className="text-indigo-500" />
-                  Floor-to-Ceiling Height
+                  {tr("Floor-to-Ceiling Height")}
                 </label>
                 <input
                   type="text"
                   value={measurements.floorToCeilingHeight}
                   onChange={(e) => setMeasurements({ ...measurements, floorToCeilingHeight: e.target.value })}
                   className="w-full bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                  placeholder="e.g. 9.8 ft finish to slab"
+                  placeholder={tr("e.g. 9.8 ft finish to slab")}
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5 flex items-center gap-1.5">
                   <Ruler size={13} className="text-emerald-500" />
-                  Carpet Area (Sq.Ft) <span className="text-red-500">*</span>
+                  {tr("Carpet Area (Sq.Ft) ")}<span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -387,13 +388,13 @@ export const InteriorLogSiteVisitModal = ({
                   }`}
                   placeholder="e.g. 1200"
                 />
-                {errors.carpetArea && <p className="text-[10px] text-red-500 mt-1">{errors.carpetArea}</p>}
+                {errors.carpetArea && <p className="text-[0.625rem] text-red-500 mt-1">{tr(errors.carpetArea)}</p>}
               </div>
 
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5 flex items-center gap-1.5">
                   <Columns size={13} className="text-blue-500" />
-                  Rooms to Design (e.g. 3-Bed Apartment) <span className="text-red-500">*</span>
+                  {tr("Rooms to Design (e.g. 3-Bed Apartment) ")}<span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -407,9 +408,9 @@ export const InteriorLogSiteVisitModal = ({
                       ? 'border-red-500 focus:ring-2 focus:ring-red-500/20'
                       : 'border-[hsl(var(--border))] focus:ring-2 focus:ring-[hsl(var(--ring))]'
                   }`}
-                  placeholder="e.g. Living, Foyer, Kitchen, Master Bedroom, Kids Bedroom"
+                  placeholder={tr("e.g. Living, Foyer, Kitchen, Master Bedroom, Kids Bedroom")}
                 />
-                {errors.rooms && <p className="text-[10px] text-red-500 mt-1">{errors.rooms}</p>}
+                {errors.rooms && <p className="text-[0.625rem] text-red-500 mt-1">{tr(errors.rooms)}</p>}
               </div>
             </div>
           </div>
@@ -419,7 +420,7 @@ export const InteriorLogSiteVisitModal = ({
             <div className="flex items-center gap-2 pb-2 border-b border-[hsl(var(--border))]">
               <DoorOpen size={16} className="text-blue-500" />
               <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))]">
-                Openings & Structural Elements
+                {tr("Openings & Structural Elements")}
               </h3>
             </div>
 
@@ -427,56 +428,56 @@ export const InteriorLogSiteVisitModal = ({
               <div>
                 <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5 flex items-center gap-1.5">
                   <DoorOpen size={13} className="text-blue-500" />
-                  Door Dimensions
+                  {tr("Door Dimensions")}
                 </label>
                 <input
                   type="text"
                   value={measurements.doorDimensions}
                   onChange={(e) => setMeasurements({ ...measurements, doorDimensions: e.target.value })}
                   className="w-full bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                  placeholder="e.g. Main: 3.5'×7', Internal: 3'×7', Bath: 2.5'×7'"
+                  placeholder={tr("e.g. Main: 3.5'×7', Internal: 3'×7', Bath: 2.5'×7'")}
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5 flex items-center gap-1.5">
                   <Maximize2 size={13} className="text-sky-500" />
-                  Window Dimensions
+                  {tr("Window Dimensions")}
                 </label>
                 <input
                   type="text"
                   value={measurements.windowDimensions}
                   onChange={(e) => setMeasurements({ ...measurements, windowDimensions: e.target.value })}
                   className="w-full bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                  placeholder="e.g. Living sliding 6'×5', Bed 4'×4' with 2.5' sill"
+                  placeholder={tr("e.g. Living sliding 6'×5', Bed 4'×4' with 2.5' sill")}
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5 flex items-center gap-1.5">
                   <Columns size={13} className="text-amber-500" />
-                  Wall Thickness
+                  {tr("Wall Thickness")}
                 </label>
                 <input
                   type="text"
                   value={measurements.wallThickness}
                   onChange={(e) => setMeasurements({ ...measurements, wallThickness: e.target.value })}
                   className="w-full bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                  placeholder="e.g. Outer: 9 inch, Partition: 4.5 inch"
+                  placeholder={tr("e.g. Outer: 9 inch, Partition: 4.5 inch")}
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5 flex items-center gap-1.5">
                   <Columns size={13} className="text-orange-500" />
-                  Column / Beam Dimensions
+                  {tr("Column / Beam Dimensions")}
                 </label>
                 <input
                   type="text"
                   value={measurements.columnBeamDimensions}
                   onChange={(e) => setMeasurements({ ...measurements, columnBeamDimensions: e.target.value })}
                   className="w-full bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                  placeholder="e.g. Columns: 9in x 18in, Beam drop: 12in from ceiling"
+                  placeholder={tr("e.g. Columns: 9in x 18in, Beam drop: 12in from ceiling")}
                 />
               </div>
             </div>
@@ -487,7 +488,7 @@ export const InteriorLogSiteVisitModal = ({
             <div className="flex items-center gap-2 pb-2 border-b border-[hsl(var(--border))]">
               <Zap size={16} className="text-amber-500" />
               <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))]">
-                MEP & Services (Electrical, Plumbing, AC)
+                {tr("MEP & Services (Electrical, Plumbing, AC)")}
               </h3>
             </div>
 
@@ -495,39 +496,39 @@ export const InteriorLogSiteVisitModal = ({
               <div>
                 <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5 flex items-center gap-1.5">
                   <Zap size={13} className="text-amber-500" />
-                  Existing Electrical Points
+                  {tr("Existing Electrical Points")}
                 </label>
                 <textarea
                   value={measurements.electricalPoints}
                   onChange={(e) => setMeasurements({ ...measurements, electricalPoints: e.target.value })}
                   className="w-full bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all h-20 resize-none placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                  placeholder="e.g. DB near entrance, 6A/16A points on TV wall, bedside 2-way switches"
+                  placeholder={tr("e.g. DB near entrance, 6A/16A points on TV wall, bedside 2-way switches")}
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5 flex items-center gap-1.5">
                   <Droplets size={13} className="text-cyan-500" />
-                  Plumbing Points
+                  {tr("Plumbing Points")}
                 </label>
                 <textarea
                   value={measurements.plumbingPoints}
                   onChange={(e) => setMeasurements({ ...measurements, plumbingPoints: e.target.value })}
                   className="w-full bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all h-20 resize-none placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                  placeholder="e.g. Kitchen sink inlet/drain, RO water point, washbasin trap locations"
+                  placeholder={tr("e.g. Kitchen sink inlet/drain, RO water point, washbasin trap locations")}
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5 flex items-center gap-1.5">
                   <Wind size={13} className="text-emerald-500" />
-                  AC Locations & Piping
+                  {tr("AC Locations & Piping")}
                 </label>
                 <textarea
                   value={measurements.acLocations}
                   onChange={(e) => setMeasurements({ ...measurements, acLocations: e.target.value })}
                   className="w-full bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all h-20 resize-none placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                  placeholder="e.g. Split AC provision on north wall, copper piping route, outdoor unit in utility"
+                  placeholder={tr("e.g. Split AC provision on north wall, copper piping route, outdoor unit in utility")}
                 />
               </div>
             </div>
@@ -538,7 +539,7 @@ export const InteriorLogSiteVisitModal = ({
             <div className="flex items-center gap-2 pb-2 border-b border-[hsl(var(--border))]">
               <Armchair size={16} className="text-emerald-500" />
               <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))]">
-                Existing Furniture & Site Constraints
+                {tr("Existing Furniture & Site Constraints")}
               </h3>
             </div>
 
@@ -546,33 +547,33 @@ export const InteriorLogSiteVisitModal = ({
               <div>
                 <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5 flex items-center gap-1.5">
                   <Armchair size={13} className="text-emerald-500" />
-                  Existing Furniture Dimensions
+                  {tr("Existing Furniture Dimensions")}
                 </label>
                 <textarea
                   value={measurements.furnitureDimensions}
                   onChange={(e) => setMeasurements({ ...measurements, furnitureDimensions: e.target.value })}
                   className="w-full bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all h-20 resize-none placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                  placeholder="e.g. Client retaining king bed 6'x6.5', 6-seater dining table 5'x3'"
+                  placeholder={tr("e.g. Client retaining king bed 6'x6.5', 6-seater dining table 5'x3'")}
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5 flex items-center gap-1.5">
                   <AlertTriangle size={13} className="text-rose-500" />
-                  Any Site Constraints
+                  {tr("Any Site Constraints")}
                 </label>
                 <textarea
                   value={measurements.siteConstraints}
                   onChange={(e) => setMeasurements({ ...measurements, siteConstraints: e.target.value })}
                   className="w-full bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all h-20 resize-none placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                  placeholder="e.g. No heavy drilling allowed after 6 PM, 4th floor staircase only, dampness on east wall"
+                  placeholder={tr("e.g. No heavy drilling allowed after 6 PM, 4th floor staircase only, dampness on east wall")}
                 />
               </div>
 
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5 flex items-center gap-1.5">
                   <FileText size={13} className="text-slate-500" />
-                  Additional Site Notes / Observations
+                  {tr("Additional Site Notes / Observations")}
                 </label>
                 <textarea
                   value={measurements.notes}
@@ -585,9 +586,9 @@ export const InteriorLogSiteVisitModal = ({
                       ? 'border-red-500 focus:ring-2 focus:ring-red-500/20'
                       : 'border-[hsl(var(--border))] focus:ring-2 focus:ring-[hsl(var(--ring))]'
                   }`}
-                  placeholder="Enter any additional remarks, client preferences observed on site..."
+                  placeholder={tr("Enter any additional remarks, client preferences observed on site...")}
                 />
-                {errors.notes && <p className="text-[10px] text-red-500 mt-1">{errors.notes}</p>}
+                {errors.notes && <p className="text-[0.625rem] text-red-500 mt-1">{tr(errors.notes)}</p>}
               </div>
             </div>
           </div>
@@ -597,7 +598,7 @@ export const InteriorLogSiteVisitModal = ({
             <div className="flex items-center gap-2 pb-2 border-b border-[hsl(var(--border))]">
               <ImageIcon size={16} className="text-emerald-500" />
               <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))]">
-                Site Photos ({photos.length})
+                {tr("Site Photos (")}{photos.length})
               </h3>
             </div>
 
@@ -613,9 +614,9 @@ export const InteriorLogSiteVisitModal = ({
                 className="mx-auto text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] transition-colors mb-2"
                 size={32}
               />
-              <p className="text-xs font-bold text-[hsl(var(--foreground))]">Click or drag photos to upload</p>
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-0.5">
-                High resolution images of rooms, walls, electrical boards, windows & site condition
+              <p className="text-xs font-bold text-[hsl(var(--foreground))]">{tr("Click or drag photos to upload")}</p>
+              <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] mt-0.5">
+                {tr("High resolution images of rooms, walls, electrical boards, windows & site condition")}
               </p>
             </div>
 
@@ -647,14 +648,14 @@ export const InteriorLogSiteVisitModal = ({
               onClick={onClose}
               className="flex-1 px-4 py-2.5 rounded-xl font-bold text-xs text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] transition-colors"
             >
-              Cancel
+              {tr("Cancel")}
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
               className="flex-1 px-4 py-2.5 rounded-xl font-bold text-xs text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] transition-colors disabled:opacity-50 .2)]"
             >
-              {isSubmitting ? 'Saving Measurements...' : 'Save Site Visit Measurements'}
+              {isSubmitting ? tr("Saving Measurements...") : tr("Save Site Visit Measurements")}
             </button>
           </div>
         </form>

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Port of src/components/modals/ScheduleFollowUpModal.tsx, rewired to interiorCrmService.
 // `users` entries come from the interior-os backend's User model (firstName/lastName),
@@ -125,7 +126,7 @@ export function InteriorScheduleFollowUpModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
-      toast.error('Please fix the errors in the form');
+      toast.error(tr("Please fix the errors in the form"));
       return;
     }
 
@@ -151,7 +152,7 @@ export function InteriorScheduleFollowUpModal({
         interiorCrmService.updateCustomer(customerId, customerUpdates),
       ]);
 
-      toast.success(initialData?._id ? 'Follow-up rescheduled successfully!' : 'Follow-up scheduled successfully!');
+      toast.success(initialData?._id ? tr("Follow-up rescheduled successfully!") : tr("Follow-up scheduled successfully!"));
       queryClient.invalidateQueries({ queryKey: ['crm-follow-ups-all'] });
       queryClient.invalidateQueries({ queryKey: ['crm-leads-list'] });
       queryClient.invalidateQueries({ queryKey: ['crm-follow-ups'] });
@@ -161,7 +162,7 @@ export function InteriorScheduleFollowUpModal({
       onClose();
       setErrors({});
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to schedule follow-up');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || tr("Failed to schedule follow-up"));
     } finally {
       setIsSubmitting(false);
     }
@@ -175,10 +176,10 @@ export function InteriorScheduleFollowUpModal({
         <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))]">
-              {initialData?._id ? 'Reschedule Follow-up' : 'Schedule Follow-up'}
+              {initialData?._id ? tr("Reschedule Follow-up") : tr("Schedule Follow-up")}
             </h2>
-            <p className="text-sm text-[hsl(var(--muted-foreground))] truncate max-w-full" title={customerName ? `Plan a future touchpoint with ${customerName}` : 'Plan a future touchpoint'}>
-              {initialData?._id ? 'Update scheduled touchpoint date, time & notes' : 'Plan a future touchpoint'} 
+            <p className="text-sm text-[hsl(var(--muted-foreground))] truncate max-w-full" title={customerName ? tr("Plan a future touchpoint with {{customerName}}", { customerName: customerName }) : tr("Plan a future touchpoint")}>
+              {initialData?._id ? tr("Update scheduled touchpoint date, time & notes") : tr("Plan a future touchpoint")} 
             </p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-[hsl(var(--muted))] rounded-xl cursor-pointer"><X size={20} className="text-[hsl(var(--muted-foreground))]" /></button>
@@ -188,11 +189,11 @@ export function InteriorScheduleFollowUpModal({
         {initialData && initialData._id && (
           <div className="mb-5 bg-blue-500/5 border border-blue-500/20 rounded-2xl p-3.5 space-y-1.5 min-w-0 overflow-hidden">
             <div className="flex items-center justify-between gap-2 min-w-0">
-              <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1.5 shrink-0">
-                <History size={12} /> Previous Schedule (Reference)
+              <span className="text-[0.625rem] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1.5 shrink-0">
+                <History size={12} />{tr(" Previous Schedule (Reference)")}
               </span>
-              <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded-md border border-[hsl(var(--border))] shrink-0">
-                {initialData.type || 'Follow-up'}
+              <span className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded-md border border-[hsl(var(--border))] shrink-0">
+                {initialData.type || tr("Follow-up")}
               </span>
             </div>
             {initialData.scheduledDate && (
@@ -212,12 +213,12 @@ export function InteriorScheduleFollowUpModal({
             )}
             {initialData.remarks && (
               <p className="text-xs text-[hsl(var(--muted-foreground))] italic bg-[hsl(var(--muted)/0.4)] p-2 rounded-xl border border-[hsl(var(--border)/0.5)] mt-1 break-words [overflow-wrap:anywhere] whitespace-pre-wrap min-w-0">
-                "{initialData.remarks}"
+                "{tr(initialData.remarks)}"
               </p>
             )}
             {assignedUserDisplayName && (
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))] truncate">
-                Assigned: <strong className="text-[hsl(var(--foreground))]">{assignedUserDisplayName}</strong>
+              <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] truncate">
+                {tr("Assigned: ")}<strong className="text-[hsl(var(--foreground))]">{tr(assignedUserDisplayName)}</strong>
               </p>
             )}
           </div>
@@ -229,7 +230,7 @@ export function InteriorScheduleFollowUpModal({
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5 h-5">
                 <Phone size={13} className="text-[hsl(var(--muted-foreground))]" />
-                Follow-up Type *
+                {tr("Follow-up Type *")}
               </label>
               <select
                 value={form.type}
@@ -237,7 +238,7 @@ export function InteriorScheduleFollowUpModal({
                 className="w-full h-11 px-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
               >
                 {["Phone Call", "WhatsApp", "Meeting", "Office Visit", "Site Visit"].map(t => (
-                  <option key={t} value={t}>{t}</option>
+                  <option key={t} value={t}>{tr(t)}</option>
                 ))}
               </select>
             </div>
@@ -246,7 +247,7 @@ export function InteriorScheduleFollowUpModal({
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5 h-5">
                 <Calendar size={13} className="text-[hsl(var(--muted-foreground))]" />
-                Date & Time <span className="text-red-500">*</span>
+                {tr("Date & Time ")}<span className="text-red-500">*</span>
               </label>
               <input
                 type="datetime-local"
@@ -269,9 +270,9 @@ export function InteriorScheduleFollowUpModal({
                 }`}
               />
               {errors.scheduledDate && (
-                <p className="text-[11px] font-semibold text-red-500 mt-1 flex items-center gap-1">
+                <p className="text-[0.6875rem] font-semibold text-red-500 mt-1 flex items-center gap-1">
                   <AlertCircle size={11} className="shrink-0" />
-                  {errors.scheduledDate}
+                  {tr(errors.scheduledDate)}
                 </p>
               )}
             </div>
@@ -281,7 +282,7 @@ export function InteriorScheduleFollowUpModal({
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5 h-5">
               <User size={13} className="text-[hsl(var(--muted-foreground))]" />
-              Assign Member <span className="text-red-500">*</span>
+              {tr("Assign Member ")}<span className="text-red-500">*</span>
             </label>
             <select
               value={form.assignedSalesExecutive}
@@ -295,7 +296,7 @@ export function InteriorScheduleFollowUpModal({
                   : 'border-[hsl(var(--border))] focus:ring-blue-500/20 focus:border-blue-500'
               }`}
             >
-              <option value="">Select team member...</option>
+              <option value="">{tr("Select team member...")}</option>
               {users.map(u => (
                 <option key={u._id || u.id || u.clerkUserId} value={u._id || u.id || u.clerkUserId}>
                   {userLabel(u)}
@@ -303,9 +304,9 @@ export function InteriorScheduleFollowUpModal({
               ))}
             </select>
             {errors.assignedSalesExecutive && (
-              <p className="text-[11px] font-semibold text-red-500 mt-1 flex items-center gap-1">
+              <p className="text-[0.6875rem] font-semibold text-red-500 mt-1 flex items-center gap-1">
                 <AlertCircle size={11} className="shrink-0" />
-                {errors.assignedSalesExecutive}
+                {tr(errors.assignedSalesExecutive)}
               </p>
             )}
           </div>
@@ -314,7 +315,7 @@ export function InteriorScheduleFollowUpModal({
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5 h-5">
               <FileText size={13} className="text-[hsl(var(--muted-foreground))]" />
-              Follow-up Goal / Notes <span className="text-red-500">*</span>
+              {tr("Follow-up Goal / Notes ")}<span className="text-red-500">*</span>
             </label>
             <textarea
               rows={3}
@@ -323,7 +324,7 @@ export function InteriorScheduleFollowUpModal({
                 setForm({...form, remarks: e.target.value});
                 if (errors.remarks) setErrors({ ...errors, remarks: null });
               }}
-              placeholder="e.g. Call client regarding modular kitchen preferences and budget range..."
+              placeholder={tr("e.g. Call client regarding modular kitchen preferences and budget range...")}
               className={`w-full px-3.5 py-2.5 rounded-xl border bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 transition-all resize-none ${
                 errors.remarks
                   ? 'border-red-500 focus:ring-red-500/20 focus:border-red-500'
@@ -331,9 +332,9 @@ export function InteriorScheduleFollowUpModal({
               }`}
             />
             {errors.remarks && (
-              <p className="text-[11px] font-semibold text-red-500 mt-1 flex items-center gap-1">
+              <p className="text-[0.6875rem] font-semibold text-red-500 mt-1 flex items-center gap-1">
                 <AlertCircle size={11} className="shrink-0" />
-                {errors.remarks}
+                {tr(errors.remarks)}
               </p>
             )}
           </div>
@@ -345,14 +346,14 @@ export function InteriorScheduleFollowUpModal({
               disabled={isSubmitting}
               className="px-4 py-2.5 text-xs font-bold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] rounded-xl cursor-pointer transition-colors"
             >
-              Cancel
+              {tr("Cancel")}
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
               className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 cursor-pointer transition-all"
             >
-              {isSubmitting ? 'Saving...' : initialData?._id ? 'Confirm Reschedule' : 'Save Follow-up'}
+              {isSubmitting ? tr("Saving...") : initialData?._id ? tr("Confirm Reschedule") : tr("Save Follow-up")}
             </button>
           </div>
         </form>

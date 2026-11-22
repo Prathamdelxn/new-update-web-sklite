@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // InteriorOS — Work Breakdown Structure (WBS) & Activity Execution
@@ -184,6 +185,25 @@ const getAllDescendantIds = (node: any): string[] => {
     return map;
   }, [wbsData, tasks]);
 
+  // Deep link from the Gantt chart (?node=<id>): expand, scroll to and flash that WBS package
+  const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
+  useEffect(() => {
+    if (loading || wbsData.length === 0 || typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    const nodeId = url.searchParams.get('node');
+    if (!nodeId) return;
+    url.searchParams.delete('node');
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+    if (!wbsData.some((n: any) => String(n.id) === nodeId)) return;
+    setExpandedNodes((prev) => (prev.includes(nodeId) ? prev : [...prev, nodeId]));
+    setFocusedNodeId(nodeId);
+    requestAnimationFrame(() =>
+      document.getElementById(`wbs-node-${nodeId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    );
+    const timer = setTimeout(() => setFocusedNodeId(null), 2500);
+    return () => clearTimeout(timer);
+  }, [loading, wbsData]);
+
   const toggleNode = (id: string) => {
     setExpandedNodes((prev) => (prev.includes(id) ? prev.filter((nodeId) => nodeId !== id) : [...prev, id]));
   };
@@ -208,7 +228,7 @@ const getAllDescendantIds = (node: any): string[] => {
   // Add initial activity into Create WBS form
   const handleAddInitialActivity = () => {
     if (!newActivityName.trim()) {
-      toast.error('Please enter an Activity Name');
+      toast.error(tr("Please enter an Activity Name"));
       return;
     }
     const item: InitialActivityItem = {
@@ -249,12 +269,12 @@ const getAllDescendantIds = (node: any): string[] => {
   const handleSaveNode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nodeName.trim()) {
-      toast.error('Please enter a WBS Name');
+      toast.error(tr("Please enter a WBS Name"));
       return;
     }
 
     if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
-      toast.error('Start Date must be before or equal to End Date');
+      toast.error(tr("Start Date must be before or equal to End Date"));
       return;
     }
 
@@ -298,16 +318,16 @@ const getAllDescendantIds = (node: any): string[] => {
             console.warn('Failed to add initial activity', taskErr);
           }
         }
-        toast.success(`WBS created with ${initialActivities.length} activit${initialActivities.length > 1 ? 'ies' : 'y'}!`);
+        toast.success(tr("WBS created with {{initialActivitiesCount}} activit{{value}}!", { initialActivitiesCount: initialActivities.length, value: initialActivities.length > 1 ? 'ies' : 'y' }));
       } else {
-        toast.success(modalMode === 'create' ? 'WBS element created successfully' : 'WBS element updated successfully');
+        toast.success(modalMode === 'create' ? tr("WBS element created successfully") : tr("WBS element updated successfully"));
       }
 
       setIsModalOpen(false);
       fetchData();
     } catch (err: any) {
       console.error('Save WBS Node failed', err);
-      toast.error(err?.response?.data?.error || 'Failed to save WBS element');
+      toast.error(err?.response?.data?.error || tr("Failed to save WBS element"));
     } finally {
       setSubmitting(false);
     }
@@ -316,18 +336,18 @@ const getAllDescendantIds = (node: any): string[] => {
   // Delete WBS Node
   const handleDeleteNode = async (type: string, id: string, name: string) => {
     const ok = await confirm({
-      title: 'Delete WBS Element',
-      message: `Are you sure you want to delete "${name}"? Any linked activities will also be removed.`,
-      confirmText: 'Delete WBS',
+      title: tr("Delete WBS Element"),
+      message: tr("Are you sure you want to delete \"{{name}}\"? Any linked activities will also be removed.", { name: name }),
+      confirmText: tr("Delete WBS"),
       type: 'danger',
     });
     if (!ok) return;
     try {
       await interiorProjectService.deleteWbsNode(projectId, type || 'building', id);
-      toast.success('WBS element deleted successfully');
+      toast.success(tr("WBS element deleted successfully"));
       fetchData();
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || 'Failed to delete WBS element');
+      toast.error(err?.response?.data?.error || tr("Failed to delete WBS element"));
     }
   };
 
@@ -368,20 +388,20 @@ const getAllDescendantIds = (node: any): string[] => {
   // Delete Activity / Task
   const handleDeleteActivity = async (taskId: string, taskName: string) => {
     const ok = await confirm({
-      title: 'Delete Activity',
-      message: `Are you sure you want to delete activity "${taskName}"?`,
-      confirmText: 'Delete Activity',
+      title: tr("Delete Activity"),
+      message: tr("Are you sure you want to delete activity \"{{taskName}}\"?", { taskName: taskName }),
+      confirmText: tr("Delete Activity"),
       type: 'danger',
     });
     if (!ok) return;
 
     try {
       await interiorProjectService.deleteTask(projectId, taskId);
-      toast.success('Activity deleted successfully');
+      toast.success(tr("Activity deleted successfully"));
       fetchData();
     } catch (err: any) {
       console.error('Delete activity error', err);
-      toast.error(err?.response?.data?.error || 'Failed to delete activity');
+      toast.error(err?.response?.data?.error || tr("Failed to delete activity"));
     }
   };
 
@@ -389,12 +409,12 @@ const getAllDescendantIds = (node: any): string[] => {
   const handleSaveActivity = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activityName.trim()) {
-      toast.error('Please enter an Activity Name');
+      toast.error(tr("Please enter an Activity Name"));
       return;
     }
 
     if (activityStartDate && activityEndDate && new Date(activityStartDate) > new Date(activityEndDate)) {
-      toast.error('Start Date must be before or equal to End Date');
+      toast.error(tr("Start Date must be before or equal to End Date"));
       return;
     }
 
@@ -404,12 +424,12 @@ const getAllDescendantIds = (node: any): string[] => {
     const wbsMax = targetWbsNode?.endDate ? String(targetWbsNode.endDate).split('T')[0] : null;
 
     if (wbsMin && activityStartDate && activityStartDate < wbsMin) {
-      toast.error(`Activity Start Date (${activityStartDate}) cannot be earlier than WBS "${targetWbsNode?.name || ''}" Start Date (${wbsMin})`);
+      toast.error(tr("Activity Start Date ({{activityStartDate}}) cannot be earlier than WBS \"{{value}}\" Start Date ({{wbsMin}})", { activityStartDate: activityStartDate, value: targetWbsNode?.name || '', wbsMin: wbsMin }));
       return;
     }
 
     if (wbsMax && activityEndDate && activityEndDate > wbsMax) {
-      toast.error(`Activity End Date (${activityEndDate}) cannot be later than WBS "${targetWbsNode?.name || ''}" End Date (${wbsMax})`);
+      toast.error(tr("Activity End Date ({{activityEndDate}}) cannot be later than WBS \"{{value}}\" End Date ({{wbsMax}})", { activityEndDate: activityEndDate, value: targetWbsNode?.name || '', wbsMax: wbsMax }));
       return;
     }
 
@@ -428,13 +448,13 @@ const getAllDescendantIds = (node: any): string[] => {
         };
         const res = await interiorProjectService.updateTask(projectId, editingTaskId, payload);
         if (res?.success || res?.data) {
-          toast.success('Activity updated successfully!');
+          toast.success(tr("Activity updated successfully!"));
           setIsActivityModalOpen(false);
           fetchData();
         }
       } else {
         if (!selectedNodeForActivity?.id) {
-          toast.error('Please select a WBS element');
+          toast.error(tr("Please select a WBS element"));
           return;
         }
         const payload: any = {
@@ -453,7 +473,7 @@ const getAllDescendantIds = (node: any): string[] => {
 
         const res = await interiorProjectService.createTask(projectId, payload);
         if (res?.success || res?.data) {
-          toast.success('Activity created under WBS element!');
+          toast.success(tr("Activity created under WBS element!"));
           setIsActivityModalOpen(false);
           if (!expandedNodes.includes(selectedNodeForActivity.id)) {
             setExpandedNodes((prev) => [...prev, selectedNodeForActivity.id]);
@@ -463,7 +483,7 @@ const getAllDescendantIds = (node: any): string[] => {
       }
     } catch (err: any) {
       console.error('Save Activity error', err);
-      toast.error(err?.response?.data?.error || 'Failed to save activity');
+      toast.error(err?.response?.data?.error || tr("Failed to save activity"));
     } finally {
       setSubmittingActivity(false);
     }
@@ -479,10 +499,10 @@ const getAllDescendantIds = (node: any): string[] => {
         progress: newProgress,
         completedAt: newStatus === 'completed' ? new Date().toISOString() : null,
       });
-      toast.success(newStatus === 'completed' ? 'Activity completed!' : 'Activity reopened');
+      toast.success(newStatus === 'completed' ? tr("Activity completed!") : tr("Activity reopened"));
       fetchData();
     } catch (err) {
-      toast.error('Failed to update activity');
+      toast.error(tr("Failed to update activity"));
     }
   };
 
@@ -511,13 +531,13 @@ const getAllDescendantIds = (node: any): string[] => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Work Breakdown Structure (WBS)</h2>
-            <span className="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-              {wbsData.length} WBS Elements • {tasks.length} Activities
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">{tr("Work Breakdown Structure (WBS)")}</h2>
+            <span className="px-2 py-0.5 text-[0.6875rem] font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+              {wbsData.length}{tr(" WBS Elements • ")}{tasks.length}{tr(" Activities")}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Define work breakdown elements, planning dates, scope of work, and actionable activities.
+            {tr("Define work breakdown elements, planning dates, scope of work, and actionable activities.")}
           </p>
         </div>
 
@@ -528,7 +548,7 @@ const getAllDescendantIds = (node: any): string[] => {
               className="shadow-xs font-semibold flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer transition-colors"
             >
               <Plus className="w-4 h-4" />
-              Create WBS
+              {tr("Create WBS")}
             </Button>
           )}
         </div>
@@ -543,8 +563,8 @@ const getAllDescendantIds = (node: any): string[] => {
           {wbsData.length === 0 ? (
             <div className="text-center py-16 text-sm text-slate-500">
               <FolderTree className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-              <p className="font-semibold text-slate-700">No WBS elements defined yet</p>
-              <p className="text-xs text-slate-400 mt-0.5">Click &quot;Create WBS&quot; to initialize your project work breakdown elements.</p>
+              <p className="font-semibold text-slate-700">{tr("No WBS elements defined yet")}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{tr("Click \"Create WBS\" to initialize your project work breakdown elements.")}</p>
               <div className="mt-4">
                 {canDo('wbs', 'create') && (
                   <Button
@@ -552,7 +572,7 @@ const getAllDescendantIds = (node: any): string[] => {
                     className="shadow-xs font-semibold inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer transition-colors"
                   >
                     <Plus className="w-4 h-4" />
-                    Create WBS
+                    {tr("Create WBS")}
                   </Button>
                 )}
               </div>
@@ -565,7 +585,11 @@ const getAllDescendantIds = (node: any): string[] => {
                 const dateRange = formatDateRange(node.startDate, node.endDate);
 
                 return (
-                  <div key={node.id} className="select-none bg-white rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
+                  <div
+                    key={node.id}
+                    id={`wbs-node-${node.id}`}
+                    className={`select-none bg-white rounded-xl border overflow-hidden shadow-2xs transition-shadow duration-500 ${focusedNodeId === node.id ? 'border-blue-500 ring-2 ring-blue-400/60' : 'border-slate-200'}`}
+                  >
                     {/* WBS Row */}
                     <div className="flex items-center justify-between p-3.5 group hover:bg-slate-50/70 transition-colors">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -583,28 +607,28 @@ const getAllDescendantIds = (node: any): string[] => {
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-bold text-slate-900 truncate">{node.name}</span>
+                            <span className="text-sm font-bold text-slate-900 truncate">{tr(node.name)}</span>
 
                             {/* Status badge */}
                             {node.status === 'inactive' ? (
-                              <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-100 text-slate-500 border border-slate-200">
-                                Inactive
+                              <span className="px-2 py-0.5 text-[0.625rem] font-bold rounded-md bg-slate-100 text-slate-500 border border-slate-200">
+                                {tr("Inactive")}
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/80">
-                                Active
+                              <span className="px-2 py-0.5 text-[0.625rem] font-bold rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                                {tr("Active")}
                               </span>
                             )}
 
                             {/* Activities count & progress */}
                             {directTasks.length > 0 && (
                               <div className="flex items-center gap-1.5">
-                                <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                                  {directTasks.filter((t: any) => t.status === 'completed').length}/{directTasks.length} Activities
+                                <span className="px-2 py-0.5 text-[0.625rem] font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                                  {directTasks.filter((t: any) => t.status === 'completed').length}/{directTasks.length}{tr(" Activities")}
                                 </span>
                                 <span
                                   className={cn(
-                                    'px-1.5 py-0.5 text-[10px] font-bold rounded',
+                                    'px-1.5 py-0.5 text-[0.625rem] font-bold rounded',
                                     directTasks.every((t: any) => t.status === 'completed')
                                       ? 'bg-emerald-100 text-emerald-800'
                                       : 'bg-slate-100 text-slate-700'
@@ -622,13 +646,13 @@ const getAllDescendantIds = (node: any): string[] => {
                           {/* Secondary line: Description and Dates */}
                           <div className="flex items-center gap-3 text-xs text-slate-500 mt-1 flex-wrap">
                             {node.description && (
-                              <span className="truncate max-w-sm text-slate-600" title={node.description}>
-                                {node.description}
+                              <span className="truncate max-w-sm text-slate-600" title={tr(node.description)}>
+                                {tr(node.description)}
                               </span>
                             )}
                             {dateRange && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium text-[11px] border border-slate-200">
-                                <Calendar size={12} className="text-blue-600" /> {dateRange}
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium text-[0.6875rem] border border-slate-200">
+                                <Calendar size={12} className="text-blue-600" /> {tr(dateRange)}
                               </span>
                             )}
                           </div>
@@ -636,15 +660,15 @@ const getAllDescendantIds = (node: any): string[] => {
                       </div>
 
                       {/* Row Actions */}
-                      <div className="flex items-center gap-2 shrink-0 ml-3">
+                      <div className="flex items-center gap-2 shrink-0 ms-3">
                         {canDo('tasks', 'create') && (
                           <Button
                             size="sm"
                             className="h-8 px-2.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 shadow-xs cursor-pointer"
                             onClick={() => handleOpenAddActivity(node)}
-                            title="Add Activity under this WBS element"
+                            title={tr("Add Activity under this WBS element")}
                           >
-                            <Plus className="w-3.5 h-3.5" /> Activity
+                            <Plus className="w-3.5 h-3.5" />{tr(" Activity")}
                           </Button>
                         )}
 
@@ -654,7 +678,7 @@ const getAllDescendantIds = (node: any): string[] => {
                             size="sm"
                             className="h-8 w-8 p-0 bg-white hover:bg-slate-100 text-slate-600 border-slate-200 cursor-pointer"
                             onClick={() => handleOpenEditModal(node)}
-                            title="Edit WBS element"
+                            title={tr("Edit WBS element")}
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </Button>
@@ -666,7 +690,7 @@ const getAllDescendantIds = (node: any): string[] => {
                             size="sm"
                             className="h-8 w-8 p-0 bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 border-slate-200 hover:border-rose-200 cursor-pointer"
                             onClick={() => handleDeleteNode(node.type, node.id, node.name)}
-                            title="Delete WBS element"
+                            title={tr("Delete WBS element")}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
@@ -681,18 +705,18 @@ const getAllDescendantIds = (node: any): string[] => {
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: 'auto', opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          className="overflow-hidden border-t border-slate-100 bg-slate-50/50 p-3 pl-11"
+                          className="overflow-hidden border-t border-slate-100 bg-slate-50/50 p-3 ps-11"
                         >
                           {directTasks.length === 0 ? (
                             <div className="p-3 rounded-lg border border-dashed border-slate-200 bg-white flex items-center justify-between text-xs text-slate-500">
-                              <span>No activities created under this WBS element yet.</span>
+                              <span>{tr("No activities created under this WBS element yet.")}</span>
                               {canDo('tasks', 'create') && (
                                 <button
                                   type="button"
                                   onClick={() => handleOpenAddActivity(node)}
                                   className="text-blue-600 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
                                 >
-                                  <Plus size={12} /> Add First Activity
+                                  <Plus size={12} />{tr(" Add First Activity")}
                                 </button>
                               )}
                             </div>
@@ -744,16 +768,16 @@ const getAllDescendantIds = (node: any): string[] => {
                                               isDone && 'line-through text-slate-400'
                                             )}
                                           >
-                                            {task.name}
+                                            {tr(task.name)}
                                           </span>
 
-                                          <span className={cn('px-1.5 py-0.2 text-[9px] font-bold rounded uppercase', priority.color)}>
-                                            {priority.label}
+                                          <span className={cn('px-1.5 py-0.2 text-[0.5625rem] font-bold rounded uppercase', priority.color)}>
+                                            {tr(priority.label)}
                                           </span>
 
                                           <span
                                             className={cn(
-                                              'px-1.5 py-0.2 text-[9px] font-semibold rounded',
+                                              'px-1.5 py-0.2 text-[0.5625rem] font-semibold rounded',
                                               task.status === 'completed'
                                                 ? 'bg-emerald-100 text-emerald-800'
                                                 : task.status === 'in_progress'
@@ -761,41 +785,41 @@ const getAllDescendantIds = (node: any): string[] => {
                                                 : 'bg-slate-100 text-slate-700'
                                             )}
                                           >
-                                            {task.status === 'completed' ? 'Done' : task.status === 'in_progress' ? 'In Progress' : 'To Do'}
+                                            {task.status === 'completed' ? tr("Done") : task.status === 'in_progress' ? tr("In Progress") : tr("To Do")}
                                           </span>
 
                                           {/* Assigned Person / Unassigned */}
                                           {assigneeName ? (
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-md bg-blue-50 text-blue-700 border border-blue-200/80">
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[0.625rem] font-semibold rounded-md bg-blue-50 text-blue-700 border border-blue-200/80">
                                               <User size={11} className="text-blue-600" />
-                                              {assigneeName}
+                                              {tr(assigneeName)}
                                             </span>
                                           ) : (
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-md bg-slate-100 text-slate-500 border border-slate-200">
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[0.625rem] font-medium rounded-md bg-slate-100 text-slate-500 border border-slate-200">
                                               <User size={11} className="text-slate-400" />
-                                              Unassigned
+                                              {tr("Unassigned")}
                                             </span>
                                           )}
 
                                           {/* Milestone Badge */}
                                           {task.isMilestone && (
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-md bg-purple-50 text-purple-700 border border-purple-200">
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[0.625rem] font-bold rounded-md bg-purple-50 text-purple-700 border border-purple-200">
                                               <MilestoneIcon size={11} className="text-purple-600" />
-                                              Milestone
+                                              {tr("Milestone")}
                                             </span>
                                           )}
                                         </div>
 
                                         {(task.description || dateRange) && (
-                                          <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1 flex-wrap">
+                                          <div className="flex items-center gap-3 text-[0.6875rem] text-slate-400 mt-1 flex-wrap">
                                             {task.description && (
-                                              <span className="truncate max-w-sm text-slate-500" title={task.description}>
-                                                {task.description}
+                                              <span className="truncate max-w-sm text-slate-500" title={tr(task.description)}>
+                                                {tr(task.description)}
                                               </span>
                                             )}
                                             {dateRange && (
                                               <span className="flex items-center gap-1 text-slate-500">
-                                                <Calendar size={11} className="text-blue-600" /> {dateRange}
+                                                <Calendar size={11} className="text-blue-600" /> {tr(dateRange)}
                                               </span>
                                             )}
                                           </div>
@@ -804,7 +828,7 @@ const getAllDescendantIds = (node: any): string[] => {
                                     </div>
 
                                     {/* Activity Actions: Edit & Delete */}
-                                    <div className="flex items-center gap-1 shrink-0 ml-2">
+                                    <div className="flex items-center gap-1 shrink-0 ms-2">
                                       {canDo('tasks', 'update') && (
                                         <button
                                           type="button"
@@ -813,7 +837,7 @@ const getAllDescendantIds = (node: any): string[] => {
                                             handleOpenEditActivity(task, node);
                                           }}
                                           className="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
-                                          title="Edit Activity"
+                                          title={tr("Edit Activity")}
                                         >
                                           <Edit2 className="w-3.5 h-3.5" />
                                         </button>
@@ -826,7 +850,7 @@ const getAllDescendantIds = (node: any): string[] => {
                                             handleDeleteActivity(task._id || task.id, task.name);
                                           }}
                                           className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                                          title="Delete Activity"
+                                          title={tr("Delete Activity")}
                                         >
                                           <Trash2 className="w-3.5 h-3.5" />
                                         </button>
@@ -866,10 +890,10 @@ const getAllDescendantIds = (node: any): string[] => {
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-slate-900">
-                      {modalMode === 'create' ? 'Create WBS' : 'Edit WBS'}
+                      {modalMode === 'create' ? tr("Create WBS") : tr("Edit WBS")}
                     </h3>
                     <p className="text-xs text-slate-500">
-                      Define the scope, timeline, and activities for this WBS element
+                      {tr("Define the scope, timeline, and activities for this WBS element")}
                     </p>
                   </div>
                 </div>
@@ -886,12 +910,12 @@ const getAllDescendantIds = (node: any): string[] => {
                 {/* 1. WBS Name * */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-800 flex items-center gap-1">
-                    <span>WBS Name</span>
+                    <span>{tr("WBS Name")}</span>
                     <span className="text-rose-500">*</span>
                   </label>
                   <Input
                     required
-                    placeholder="e.g. Kitchen Cabinetry"
+                    placeholder={tr("e.g. Kitchen Cabinetry")}
                     value={nodeName}
                     onChange={(e) => setNodeName(e.target.value)}
                     className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 font-medium shadow-2xs"
@@ -900,10 +924,10 @@ const getAllDescendantIds = (node: any): string[] => {
 
                 {/* 2. Description */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-800">Description</label>
+                  <label className="text-xs font-semibold text-slate-800">{tr("Description")}</label>
                   <textarea
                     rows={3}
-                    placeholder="Define the scope of this WBS element..."
+                    placeholder={tr("Define the scope of this WBS element...")}
                     value={nodeDescription}
                     onChange={(e) => setNodeDescription(e.target.value)}
                     className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 resize-none font-normal leading-relaxed shadow-2xs"
@@ -912,10 +936,10 @@ const getAllDescendantIds = (node: any): string[] => {
 
                 {/* 3. Planning Dates */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-900 tracking-tight">Planning Dates</label>
+                  <label className="text-xs font-bold text-slate-900 tracking-tight">{tr("Planning Dates")}</label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <span className="text-[11px] font-medium text-slate-600">Planned Start Date</span>
+                      <span className="text-[0.6875rem] font-medium text-slate-600">{tr("Planned Start Date")}</span>
                       <div className="relative">
                         <Input
                           type="date"
@@ -928,7 +952,7 @@ const getAllDescendantIds = (node: any): string[] => {
                     </div>
 
                     <div className="space-y-1">
-                      <span className="text-[11px] font-medium text-slate-600">Planned End Date</span>
+                      <span className="text-[0.6875rem] font-medium text-slate-600">{tr("Planned End Date")}</span>
                       <div className="relative">
                         <Input
                           type="date"
@@ -944,7 +968,7 @@ const getAllDescendantIds = (node: any): string[] => {
 
                 {/* 4. Status Radio Selector */}
                 <div className="space-y-2 pt-1">
-                  <label className="text-xs font-bold text-slate-900 tracking-tight">Status</label>
+                  <label className="text-xs font-bold text-slate-900 tracking-tight">{tr("Status")}</label>
                   <div className="flex items-center gap-6">
                     <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-800">
                       <input
@@ -955,7 +979,7 @@ const getAllDescendantIds = (node: any): string[] => {
                         onChange={() => setStatus('active')}
                         className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer"
                       />
-                      <span>Active</span>
+                      <span>{tr("Active")}</span>
                     </label>
 
                     <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-800">
@@ -967,7 +991,7 @@ const getAllDescendantIds = (node: any): string[] => {
                         onChange={() => setStatus('inactive')}
                         className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer"
                       />
-                      <span>Inactive</span>
+                      <span>{tr("Inactive")}</span>
                     </label>
                   </div>
                 </div>
@@ -978,15 +1002,15 @@ const getAllDescendantIds = (node: any): string[] => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
                         <CheckSquare size={14} className="text-blue-600" />
-                        <span className="text-xs font-bold text-slate-900">Add Activities / Tasks</span>
-                        <span className="text-[10px] text-slate-500 bg-slate-200/80 px-1.5 py-0.2 rounded font-medium">Optional</span>
+                        <span className="text-xs font-bold text-slate-900">{tr("Add Activities / Tasks")}</span>
+                        <span className="text-[0.625rem] text-slate-500 bg-slate-200/80 px-1.5 py-0.2 rounded font-medium">{tr("Optional")}</span>
                       </div>
                       <button
                         type="button"
                         onClick={() => setShowActivitySection(!showActivitySection)}
                         className="text-xs font-semibold text-blue-600 hover:text-blue-700 cursor-pointer flex items-center gap-1"
                       >
-                        {showActivitySection ? 'Hide' : '+ Add Activity'}
+                        {showActivitySection ? tr("Hide") : tr("+ Add Activity")}
                       </button>
                     </div>
 
@@ -994,7 +1018,7 @@ const getAllDescendantIds = (node: any): string[] => {
                       <div className="space-y-2.5 pt-1">
                         <div className="flex flex-col sm:flex-row gap-2">
                           <Input
-                            placeholder="Activity name (e.g. Base Cabinet Framing)"
+                            placeholder={tr("Activity name (e.g. Base Cabinet Framing)")}
                             value={newActivityName}
                             onChange={(e) => setNewActivityName(e.target.value)}
                             onKeyDown={(e) => {
@@ -1010,10 +1034,10 @@ const getAllDescendantIds = (node: any): string[] => {
                             value={newActivityPriority}
                             onChange={(e) => setNewActivityPriority(e.target.value)}
                           >
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                            <option value="critical">Critical</option>
+                            <option value="low">{tr("Low")}</option>
+                            <option value="medium">{tr("Medium")}</option>
+                            <option value="high">{tr("High")}</option>
+                            <option value="critical">{tr("Critical")}</option>
                           </select>
                           <Button
                             type="button"
@@ -1021,23 +1045,23 @@ const getAllDescendantIds = (node: any): string[] => {
                             size="sm"
                             className="h-9 px-3 text-xs shrink-0 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
                           >
-                            <Plus size={13} /> Add
+                            <Plus size={13} />{tr(" Add")}
                           </Button>
                         </div>
 
                         <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
                           {members.length > 0 && (
-                            <div className="flex items-center gap-2 flex-1 min-w-[180px]">
-                              <span className="text-[11px] text-slate-500 shrink-0">Assign To:</span>
+                            <div className="flex items-center gap-2 flex-1 min-w-[11.25rem]">
+                              <span className="text-[0.6875rem] text-slate-500 shrink-0">{tr("Assign To:")}</span>
                               <select
                                 className="h-8 px-2 text-xs rounded-lg border border-slate-300 bg-white text-slate-900 flex-1 cursor-pointer"
                                 value={newActivityAssignee}
                                 onChange={(e) => setNewActivityAssignee(e.target.value)}
                               >
-                                <option value="">Unassigned</option>
+                                <option value="">{tr("Unassigned")}</option>
                                 {members.map((m) => (
                                   <option key={m.id} value={m.id}>
-                                    {m.name} ({m.role})
+                                    {tr(m.name)} ({tr(m.role)})
                                   </option>
                                 ))}
                               </select>
@@ -1052,7 +1076,7 @@ const getAllDescendantIds = (node: any): string[] => {
                               className="w-3.5 h-3.5 rounded text-purple-600 border-slate-300 focus:ring-purple-500 cursor-pointer"
                             />
                             <MilestoneIcon size={12} className="text-purple-600" />
-                            <span>Milestone Activity</span>
+                            <span>{tr("Milestone Activity")}</span>
                           </label>
                         </div>
                       </div>
@@ -1060,7 +1084,7 @@ const getAllDescendantIds = (node: any): string[] => {
 
                     {/* List of pending initial activities */}
                     {initialActivities.length > 0 && (
-                      <div className="space-y-1.5 pt-1 max-h-36 overflow-y-auto pr-1">
+                      <div className="space-y-1.5 pt-1 max-h-36 overflow-y-auto pe-1">
                         {initialActivities.map((act) => {
                           const member = members.find((m) => String(m.id) === String(act.assigneeId));
                           return (
@@ -1070,22 +1094,22 @@ const getAllDescendantIds = (node: any): string[] => {
                             >
                               <div className="flex items-center gap-2 min-w-0 flex-1 flex-wrap">
                                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
-                                <span className="font-medium text-slate-800 truncate">{act.name}</span>
-                                <span className="px-1.5 py-0.2 text-[9px] font-bold rounded uppercase bg-slate-100 text-slate-600">
-                                  {act.priority}
+                                <span className="font-medium text-slate-800 truncate">{tr(act.name)}</span>
+                                <span className="px-1.5 py-0.2 text-[0.5625rem] font-bold rounded uppercase bg-slate-100 text-slate-600">
+                                  {tr(act.priority)}
                                 </span>
                                 {member?.name ? (
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[9px] font-medium">
-                                    <User size={9} /> {member.name}
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[0.5625rem] font-medium">
+                                    <User size={9} /> {tr(member.name)}
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-slate-100 text-slate-500 border border-slate-200 text-[9px] font-medium">
-                                    <User size={9} /> Unassigned
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-slate-100 text-slate-500 border border-slate-200 text-[0.5625rem] font-medium">
+                                    <User size={9} />{tr(" Unassigned")}
                                   </span>
                                 )}
                                 {act.isMilestone && (
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200 text-[9px] font-bold">
-                                    <MilestoneIcon size={9} className="text-purple-600" /> Milestone
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200 text-[0.5625rem] font-bold">
+                                    <MilestoneIcon size={9} className="text-purple-600" />{tr(" Milestone")}
                                   </span>
                                 )}
                               </div>
@@ -1113,14 +1137,14 @@ const getAllDescendantIds = (node: any): string[] => {
                   >
                     {submitting ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" /> Saving WBS...
+                        <Loader2 className="w-4 h-4 animate-spin" />{tr(" Saving WBS...")}
                       </>
                     ) : modalMode === 'create' ? (
                       initialActivities.length > 0
-                        ? `Create WBS & ${initialActivities.length} Activit${initialActivities.length > 1 ? 'ies' : 'y'}`
-                        : 'Create WBS'
+                        ? tr("Create WBS & {{initialActivitiesCount}} Activit{{value}}", { initialActivitiesCount: initialActivities.length, value: initialActivities.length > 1 ? 'ies' : 'y' })
+                        : tr("Create WBS")
                     ) : (
-                      'Save Changes'
+                      tr("Save Changes")
                     )}
                   </button>
                 </div>
@@ -1148,10 +1172,10 @@ const getAllDescendantIds = (node: any): string[] => {
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-slate-900">
-                      {activityModalMode === 'create' ? 'Add Activity / Task' : 'Edit Activity / Task'}
+                      {activityModalMode === 'create' ? tr("Add Activity / Task") : tr("Edit Activity / Task")}
                     </h3>
                     <p className="text-xs text-slate-500">
-                      WBS Element: <span className="font-semibold text-blue-700">{selectedNodeForActivity?.name}</span>
+                      {tr("WBS Element: ")}<span className="font-semibold text-blue-700">{tr(selectedNodeForActivity?.name)}</span>
                     </p>
                   </div>
                 </div>
@@ -1170,9 +1194,9 @@ const getAllDescendantIds = (node: any): string[] => {
                   <div className="flex items-center gap-2.5 p-3 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-900">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                     <div className="text-xs">
-                      <span className="font-bold">Completed Activity (Locked)</span>
-                      <p className="text-[11px] text-emerald-700 mt-0.5">
-                        This activity has been marked as completed and verified. Planning dates, trade scope, and details are locked.
+                      <span className="font-bold">{tr("Completed Activity (Locked)")}</span>
+                      <p className="text-[0.6875rem] text-emerald-700 mt-0.5">
+                        {tr("This activity has been marked as completed and verified. Planning dates, trade scope, and details are locked.")}
                       </p>
                     </div>
                   </div>
@@ -1181,13 +1205,13 @@ const getAllDescendantIds = (node: any): string[] => {
                 {/* 1. Activity Name * */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-800 flex items-center gap-1">
-                    <span>Activity Name</span>
+                    <span>{tr("Activity Name")}</span>
                     <span className="text-rose-500">*</span>
                   </label>
                   <Input
                     required
                     disabled={activityModalMode === 'edit' && activityStatus === 'completed'}
-                    placeholder="e.g. Base Cabinet Framing & Fitting"
+                    placeholder={tr("e.g. Base Cabinet Framing & Fitting")}
                     value={activityName}
                     onChange={(e) => setActivityName(e.target.value)}
                     className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 font-medium shadow-2xs disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
@@ -1196,11 +1220,11 @@ const getAllDescendantIds = (node: any): string[] => {
 
                 {/* 2. Description */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-800">Description / Work Scope</label>
+                  <label className="text-xs font-semibold text-slate-800">{tr("Description / Work Scope")}</label>
                   <textarea
                     rows={2}
                     disabled={activityModalMode === 'edit' && activityStatus === 'completed'}
-                    placeholder="Provide specific execution details..."
+                    placeholder={tr("Provide specific execution details...")}
                     value={activityDescription}
                     onChange={(e) => setActivityDescription(e.target.value)}
                     className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 resize-none font-normal leading-relaxed shadow-2xs disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
@@ -1210,49 +1234,49 @@ const getAllDescendantIds = (node: any): string[] => {
                 {/* 3. Priority, Status & Assignee */}
                 <div className={cn('grid gap-3', activityModalMode === 'edit' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2')}>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-800">Priority</label>
+                    <label className="text-xs font-semibold text-slate-800">{tr("Priority")}</label>
                     <select
                       disabled={activityModalMode === 'edit' && activityStatus === 'completed'}
                       className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 font-medium shadow-2xs cursor-pointer disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
                       value={activityPriority}
                       onChange={(e) => setActivityPriority(e.target.value)}
                     >
-                      <option value="low">Low Priority</option>
-                      <option value="medium">Medium Priority</option>
-                      <option value="high">High Priority</option>
-                      <option value="critical">Critical Path</option>
+                      <option value="low">{tr("Low Priority")}</option>
+                      <option value="medium">{tr("Medium Priority")}</option>
+                      <option value="high">{tr("High Priority")}</option>
+                      <option value="critical">{tr("Critical Path")}</option>
                     </select>
                   </div>
 
                   {activityModalMode === 'edit' && (
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-800">Status</label>
+                      <label className="text-xs font-semibold text-slate-800">{tr("Status")}</label>
                       <select
                         disabled={activityModalMode === 'edit' && activityStatus === 'completed'}
                         className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 font-medium shadow-2xs cursor-pointer disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
                         value={activityStatus}
                         onChange={(e) => setActivityStatus(e.target.value)}
                       >
-                        <option value="todo">To Do</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="in_review">In Review</option>
-                        <option value="completed">Completed</option>
+                        <option value="todo">{tr("To Do")}</option>
+                        <option value="in_progress">{tr("In Progress")}</option>
+                        <option value="in_review">{tr("In Review")}</option>
+                        <option value="completed">{tr("Completed")}</option>
                       </select>
                     </div>
                   )}
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-800">Assignee</label>
+                    <label className="text-xs font-semibold text-slate-800">{tr("Assignee")}</label>
                     <select
                       disabled={activityModalMode === 'edit' && activityStatus === 'completed'}
                       className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 font-medium shadow-2xs cursor-pointer disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
                       value={activityAssigneeId}
                       onChange={(e) => setActivityAssigneeId(e.target.value)}
                     >
-                      <option value="">Unassigned</option>
+                      <option value="">{tr("Unassigned")}</option>
                       {members.map((m) => (
                         <option key={m.id} value={m.id}>
-                          {m.name} ({m.role})
+                          {tr(m.name)} ({tr(m.role)})
                         </option>
                       ))}
                     </select>
@@ -1268,17 +1292,17 @@ const getAllDescendantIds = (node: any): string[] => {
                   return (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold text-slate-900 tracking-tight">Planning Dates</label>
+                        <label className="text-xs font-bold text-slate-900 tracking-tight">{tr("Planning Dates")}</label>
                         {(wbsMinDate || wbsMaxDate) && (
-                          <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                            WBS Scope: {wbsMinDate || 'Any'} to {wbsMaxDate || 'Any'}
+                          <span className="text-[0.625rem] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                            {tr("WBS Scope: ")}{wbsMinDate || tr("Any")}{tr(" to ")}{wbsMaxDate || tr("Any")}
                           </span>
                         )}
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1">
-                          <span className="text-[11px] font-medium text-slate-600">Start Date</span>
+                          <span className="text-[0.6875rem] font-medium text-slate-600">{tr("Start Date")}</span>
                           <Input
                             type="date"
                             disabled={activityModalMode === 'edit' && activityStatus === 'completed'}
@@ -1291,7 +1315,7 @@ const getAllDescendantIds = (node: any): string[] => {
                         </div>
 
                         <div className="space-y-1">
-                          <span className="text-[11px] font-medium text-slate-600">End Date</span>
+                          <span className="text-[0.6875rem] font-medium text-slate-600">{tr("End Date")}</span>
                           <Input
                             type="date"
                             disabled={activityModalMode === 'edit' && activityStatus === 'completed'}
@@ -1323,14 +1347,14 @@ const getAllDescendantIds = (node: any): string[] => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs font-bold text-purple-950 flex items-center gap-1">
-                          <MilestoneIcon size={12} className="text-purple-600" /> Mark as Milestone Activity
+                          <MilestoneIcon size={12} className="text-purple-600" />{tr(" Mark as Milestone Activity")}
                         </span>
-                        <span className="px-1.5 py-0.2 text-[9px] font-bold rounded uppercase bg-purple-100 text-purple-700">
-                          Milestones Tab
+                        <span className="px-1.5 py-0.2 text-[0.5625rem] font-bold rounded uppercase bg-purple-100 text-purple-700">
+                          {tr("Milestones Tab")}
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        Automatically links and displays this activity in the project&apos;s Milestones tracking section.
+                      <p className="text-[0.6875rem] text-slate-500 mt-0.5">
+                        {tr("Automatically links and displays this activity in the project's Milestones tracking section.")}
                       </p>
                     </div>
                   </label>
@@ -1344,7 +1368,7 @@ const getAllDescendantIds = (node: any): string[] => {
                       onClick={() => setIsActivityModalOpen(false)}
                       className="w-full py-3 px-4 bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200 rounded-full font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs"
                     >
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Activity Completed & Locked — Close
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />{tr(" Activity Completed & Locked — Close")}
                     </button>
                   ) : (
                     <button
@@ -1354,10 +1378,10 @@ const getAllDescendantIds = (node: any): string[] => {
                     >
                       {submittingActivity ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin" /> {activityModalMode === 'create' ? 'Creating Activity...' : 'Saving Changes...'}
+                          <Loader2 className="w-4 h-4 animate-spin" /> {activityModalMode === 'create' ? tr("Creating Activity...") : tr("Saving Changes...")}
                         </>
                       ) : (
-                        activityModalMode === 'create' ? 'Create Activity' : 'Save Changes'
+                        activityModalMode === 'create' ? tr("Create Activity") : tr("Save Changes")
                       )}
                     </button>
                   )}

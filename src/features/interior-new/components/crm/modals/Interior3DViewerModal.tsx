@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import {
@@ -287,7 +288,7 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
 
     const onError = (err: any) => {
       console.error('Error loading 3D Model:', err);
-      setLoadError('Failed to parse 3D model geometry. The file might require bundled texture assets.');
+      setLoadError(tr("Failed to parse 3D model geometry. The file might require bundled texture assets."));
       setLoading(false);
     };
 
@@ -309,7 +310,7 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
         );
       }
     } catch (e: any) {
-      setLoadError(e.message || 'Failed to initialize 3D loader');
+      setLoadError(e.message || tr("Failed to initialize 3D loader"));
       setLoading(false);
     }
 
@@ -438,24 +439,24 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
               <div className="overflow-hidden min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-sm sm:text-base font-bold text-[hsl(var(--foreground))] truncate max-w-xs sm:max-w-md" title={activeName}>
-                    {activeName}
+                    {tr(activeName)}
                   </h2>
                   <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 border border-indigo-500/20 shrink-0">
-                    {fileExt.toUpperCase()} {isDirect3DFormat ? '3D Model' : 'Drawing'}
+                    {fileExt.toUpperCase()} {isDirect3DFormat ? tr("3D Model") : tr("Drawing")}
                   </span>
                   {file.roomTag && (
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
-                      {file.roomTag}
+                      {tr(file.roomTag)}
                     </span>
                   )}
                 </div>
                 <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[hsl(var(--muted-foreground))] flex-wrap">
-                  <span>Viewing <strong className="text-indigo-600 font-bold">Version v{activeVersionNum}</strong></span>
+                  <span>{tr("Viewing ")}<strong className="text-indigo-600 font-bold">{tr("Version v")}{tr(activeVersionNum)}</strong></span>
                   {activeUploadedAt && (
-                    <span>• Uploaded {new Date(activeUploadedAt).toLocaleDateString()}</span>
+                    <span>{tr("• Uploaded ")}{new Date(activeUploadedAt).toLocaleDateString()}</span>
                   )}
                   {activeReviewerName && (
-                    <span>• Reviewer: <strong className="text-[hsl(var(--foreground))]">{activeReviewerName}</strong></span>
+                    <span>{tr("• Reviewer: ")}<strong className="text-[hsl(var(--foreground))]">{tr(activeReviewerName)}</strong></span>
                   )}
                 </div>
               </div>
@@ -472,10 +473,10 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                     ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
                     : 'bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]'
                 }`}
-                title="View all version changes & logs"
+                title={tr("View all version changes & logs")}
               >
                 <History size={14} />
-                <span>Versions ({allVersions.length})</span>
+                <span>{tr("Versions (")}{allVersions.length})</span>
               </button>
 
               <button
@@ -483,21 +484,21 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                 onClick={(e) => handleDownloadFile(e, activeUrl, activeName)}
                 disabled={isDownloading === activeUrl}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] text-xs font-bold rounded-xl transition-all border border-[hsl(var(--border))] cursor-pointer disabled:opacity-50"
-                title={`Download v${activeVersionNum} File`}
+                title={tr("Download v{{activeVersionNum}} File", { activeVersionNum: activeVersionNum })}
               >
                 {isDownloading === activeUrl ? (
                   <Loader2 size={14} className="animate-spin" />
                 ) : (
                   <Download size={14} />
                 )}
-                <span>Download v{activeVersionNum}</span>
+                <span>{tr("Download v")}{tr(activeVersionNum)}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setIsFullscreen(!isFullscreen)}
                 className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] rounded-xl transition-colors cursor-pointer"
-                title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+                title={isFullscreen ? tr("Exit Fullscreen") : tr("Fullscreen")}
               >
                 {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
               </button>
@@ -506,7 +507,7 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                 type="button"
                 onClick={onClose}
                 className="p-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-full transition-colors cursor-pointer"
-                title="Close"
+                title={tr("Close")}
               >
                 <X size={18} />
               </button>
@@ -517,7 +518,7 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
           <div className="flex items-center justify-between px-4 sm:px-6 py-2 bg-slate-900 border-b border-slate-800 text-white text-xs overflow-x-auto scrollbar-none gap-3">
             <div className="flex items-center gap-1.5 shrink-0">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1 flex items-center gap-1">
-                <History size={12} className="text-indigo-400" /> Select Version:
+                <History size={12} className="text-indigo-400" />{tr(" Select Version:")}
               </span>
               {allVersions.map((ver: any) => {
                 const isSelected = ver.versionNumber === activeVersionNum;
@@ -535,10 +536,10 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                         : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
                     }`}
                   >
-                    <span>v{ver.versionNumber}</span>
+                    <span>v{tr(ver.versionNumber)}</span>
                     <StatusIcon size={11} className={isSelected ? 'text-white' : statusPill.dot.replace('bg-', 'text-')} />
                     {ver.versionNumber === allVersions[allVersions.length - 1]?.versionNumber && (
-                      <span className="text-[9px] px-1 py-0.2 bg-white/20 rounded font-extrabold text-white">Latest</span>
+                      <span className="text-[9px] px-1 py-0.2 bg-white/20 rounded font-extrabold text-white">{tr("Latest")}</span>
                     )}
                   </button>
                 );
@@ -553,7 +554,7 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                 return (
                   <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${statusPill.bg}`}>
                     <StatusIcon size={12} />
-                    <span>v{activeVersionNum} Status: {statusPill.label}</span>
+                    <span>v{tr(activeVersionNum)}{tr(" Status: ")}{tr(statusPill.label)}</span>
                   </span>
                 );
               })()}
@@ -573,9 +574,9 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                   {loading && (
                     <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-sm text-white">
                       <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-3" />
-                      <p className="font-bold text-sm">Loading 3D Model (v{activeVersionNum})...</p>
+                      <p className="font-bold text-sm">{tr("Loading 3D Model (v")}{tr(activeVersionNum)})...</p>
                       {loadingProgress > 0 && (
-                        <p className="text-xs text-indigo-300 mt-1">{loadingProgress}% downloaded</p>
+                        <p className="text-xs text-indigo-300 mt-1">{tr(loadingProgress)}{tr("% downloaded")}</p>
                       )}
                     </div>
                   )}
@@ -586,8 +587,8 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                       <div className="w-16 h-16 rounded-3xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-4">
                         <Box size={32} />
                       </div>
-                      <h3 className="text-lg font-black mb-1">3D File (v{activeVersionNum}) Ready for Download</h3>
-                      <p className="text-xs text-slate-400 max-w-md mb-6">{loadError}</p>
+                      <h3 className="text-lg font-black mb-1">{tr("3D File (v")}{tr(activeVersionNum)}{tr(") Ready for Download")}</h3>
+                      <p className="text-xs text-slate-400 max-w-md mb-6">{tr(loadError)}</p>
                       <button
                         type="button"
                         onClick={(e) => handleDownloadFile(e, activeUrl, activeName)}
@@ -599,7 +600,7 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                         ) : (
                           <Download size={15} />
                         )}
-                        <span>Download {fileExt.toUpperCase()} File</span>
+                        <span>{tr("Download ")}{fileExt.toUpperCase()}{tr(" File")}</span>
                       </button>
                     </div>
                   )}
@@ -616,10 +617,10 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                             ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
                             : 'text-slate-400 hover:text-white hover:bg-slate-800'
                         }`}
-                        title="Toggle Auto Rotation"
+                        title={tr("Toggle Auto Rotation")}
                       >
                         {isAutoRotating ? <Pause size={14} /> : <Play size={14} />}
-                        <span>Orbit</span>
+                        <span>{tr("Orbit")}</span>
                       </button>
 
                       {/* Wireframe */}
@@ -631,10 +632,10 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                             ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
                             : 'text-slate-400 hover:text-white hover:bg-slate-800'
                         }`}
-                        title="Toggle Wireframe"
+                        title={tr("Toggle Wireframe")}
                       >
                         <Layers size={14} />
-                        <span>Wireframe</span>
+                        <span>{tr("Wireframe")}</span>
                       </button>
 
                       {/* Reset Camera */}
@@ -642,10 +643,10 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                         type="button"
                         onClick={resetCamera}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-                        title="Reset View"
+                        title={tr("Reset View")}
                       >
                         <RotateCcw size={14} />
-                        <span>Reset</span>
+                        <span>{tr("Reset")}</span>
                       </button>
 
                       <div className="w-[1px] h-5 bg-slate-700 mx-1" />
@@ -666,7 +667,7 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                               bgColor === bg.color ? 'border-indigo-400 scale-110' : 'border-slate-600 hover:scale-105'
                             }`}
                             style={{ backgroundColor: bg.color }}
-                            title={bg.label}
+                            title={tr(bg.label)}
                           />
                         ))}
                       </div>
@@ -695,9 +696,9 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                   <div className="w-20 h-20 rounded-3xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-5 shadow-2xs">
                     <Box size={40} />
                   </div>
-                  <h3 className="text-xl font-bold mb-2">{activeName}</h3>
+                  <h3 className="text-xl font-bold mb-2">{tr(activeName)}</h3>
                   <p className="text-xs text-slate-400 max-w-md mb-6 leading-relaxed">
-                    This <strong>.{fileExt.toUpperCase()}</strong> architectural format for <strong>v{activeVersionNum}</strong> is optimized for native CAD & modeling engines (AutoCAD, SketchUp, Revit, 3ds Max).
+                    {tr("This ")}<strong>.{fileExt.toUpperCase()}</strong>{tr(" architectural format for ")}<strong>v{tr(activeVersionNum)}</strong>{tr(" is optimized for native CAD & modeling engines (AutoCAD, SketchUp, Revit, 3ds Max).")}
                   </p>
                   <div className="flex items-center gap-3">
                     <button
@@ -711,7 +712,7 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                       ) : (
                         <Download size={16} />
                       )}
-                      <span>Download v{activeVersionNum} ({fileExt.toUpperCase()})</span>
+                      <span>{tr("Download v")}{tr(activeVersionNum)} ({fileExt.toUpperCase()})</span>
                     </button>
                   </div>
                 </div>
@@ -725,8 +726,8 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                       <div className="p-3 bg-rose-950/90 border border-rose-800/80 rounded-xl text-xs text-rose-200 backdrop-blur-md shadow-lg flex items-start gap-2.5">
                         <XCircle size={15} className="text-rose-400 shrink-0 mt-0.5" />
                         <div>
-                          <p className="font-bold text-rose-300">Rejection Reason for v{activeVersionNum}:</p>
-                          <p className="text-[11px] text-rose-100 mt-0.5 font-medium">{activeRejectionReason}</p>
+                          <p className="font-bold text-rose-300">{tr("Rejection Reason for v")}{tr(activeVersionNum)}:</p>
+                          <p className="text-[11px] text-rose-100 mt-0.5 font-medium">{tr(activeRejectionReason)}</p>
                         </div>
                       </div>
                     )}
@@ -734,8 +735,8 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                       <div className="p-3 bg-slate-900/90 border border-slate-700/80 rounded-xl text-xs text-slate-200 backdrop-blur-md shadow-lg flex items-start gap-2.5">
                         <AlertCircle size={15} className="text-indigo-400 shrink-0 mt-0.5" />
                         <div>
-                          <p className="font-bold text-indigo-300">Version v{activeVersionNum} Notes:</p>
-                          <p className="text-[11px] text-slate-300 mt-0.5 font-medium">{activeInternalNotes}</p>
+                          <p className="font-bold text-indigo-300">{tr("Version v")}{tr(activeVersionNum)}{tr(" Notes:")}</p>
+                          <p className="text-[11px] text-slate-300 mt-0.5 font-medium">{tr(activeInternalNotes)}</p>
                         </div>
                       </div>
                     )}
@@ -757,7 +758,7 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                   <div className="p-4 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--muted)/0.4)]">
                     <div className="flex items-center gap-2">
                       <History size={16} className="text-indigo-600" />
-                      <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">Version History</h3>
+                      <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">{tr("Version History")}</h3>
                     </div>
                     <button
                       type="button"
@@ -787,17 +788,17 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-black text-[hsl(var(--foreground))]">
-                                Version v{ver.versionNumber}
+                                {tr("Version v")}{tr(ver.versionNumber)}
                               </span>
                               {ver.versionNumber === allVersions[allVersions.length - 1]?.versionNumber && (
                                 <span className="text-[9px] px-1.5 py-0.2 bg-indigo-600 text-white rounded-md font-bold">
-                                  Current
+                                  {tr("Current")}
                                 </span>
                               )}
                             </div>
                             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold border ${statusPill.bg}`}>
                               <StatusIcon size={10} />
-                              {statusPill.label}
+                              {tr(statusPill.label)}
                             </span>
                           </div>
 
@@ -815,7 +816,7 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                             {ver.assignedReviewerName && (
                               <div className="flex items-center gap-1">
                                 <User size={11} className="text-slate-400" />
-                                <span>Reviewer: {ver.assignedReviewerName}</span>
+                                <span>{tr("Reviewer: ")}{tr(ver.assignedReviewerName)}</span>
                               </div>
                             )}
                           </div>
@@ -823,19 +824,19 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                           {/* Version Specific Notes */}
                           {(ver.approvalStatus === 'internally_rejected' || ver.status === 'internally_rejected') && (ver.rejectionReason || ver.internalNotes) && (
                             <div className="p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 rounded-lg text-[10px] text-rose-800 dark:text-rose-300">
-                              <strong>Rejection Reason (v{ver.versionNumber}):</strong> {ver.rejectionReason || ver.internalNotes}
+                              <strong>{tr("Rejection Reason (v")}{tr(ver.versionNumber)}):</strong> {ver.rejectionReason || ver.internalNotes}
                             </div>
                           )}
 
                           {ver.approvalStatus !== 'internally_rejected' && ver.status !== 'internally_rejected' && ver.internalNotes && (
                             <div className="p-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] text-slate-700 dark:text-slate-300">
-                              <strong>Revision Changelog:</strong> {ver.internalNotes}
+                              <strong>{tr("Revision Changelog:")}</strong> {tr(ver.internalNotes)}
                             </div>
                           )}
 
                           <div className="flex items-center justify-between pt-1">
                             <span className="text-[10px] text-indigo-600 font-bold flex items-center gap-1">
-                              {isSelected ? 'Currently Viewing' : 'Click to View'}
+                              {isSelected ? tr("Currently Viewing") : tr("Click to View")}
                               <ChevronRight size={11} />
                             </span>
                             <button
@@ -843,7 +844,7 @@ export const Interior3DViewerModal = ({ isOpen, onClose, file }: Props) => {
                               onClick={(e) => handleDownloadFile(e, ver.url, ver.name || `drawing-v${ver.versionNumber}`)}
                               disabled={isDownloading === ver.url}
                               className="p-1 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] rounded transition cursor-pointer disabled:opacity-50"
-                              title="Download this version"
+                              title={tr("Download this version")}
                             >
                               {isDownloading === ver.url ? (
                                 <Loader2 size={12} className="animate-spin" />

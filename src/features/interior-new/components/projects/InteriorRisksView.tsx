@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Port of interior-os-frontend's projects/[projectId]/risks/page.tsx.
 
@@ -41,7 +42,7 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
       }
     } catch (err) {
       console.error('Failed to load risks', err);
-      toast.error('Failed to fetch Risk Register');
+      toast.error(tr("Failed to fetch Risk Register"));
     } finally {
       setLoading(false);
     }
@@ -55,7 +56,7 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
   const handleSubmitRisk = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!description || !probability || !impact) {
-      toast.error('Please fill in description, probability, and impact');
+      toast.error(tr("Please fill in description, probability, and impact"));
       return;
     }
 
@@ -78,13 +79,13 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
       }
 
       if (res?.success) {
-        toast.success(editRiskId ? 'Risk updated successfully!' : 'Risk logged successfully!');
+        toast.success(editRiskId ? tr("Risk updated successfully!") : tr("Risk logged successfully!"));
         closeModal();
         fetchRisks();
       }
     } catch (err) {
       console.error('Risk submit fail', err);
-      toast.error(editRiskId ? 'Failed to update risk' : 'Failed to log risk');
+      toast.error(editRiskId ? tr("Failed to update risk") : tr("Failed to log risk"));
     } finally {
       setSubmitting(false);
     }
@@ -92,8 +93,8 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
 
   const handleDeleteRisk = async (riskId: string) => {
     const ok = await confirm({
-      title: 'Delete Risk',
-      message: 'Are you sure you want to delete this risk? This action cannot be undone.',
+      title: tr("Delete Risk"),
+      message: tr("Are you sure you want to delete this risk? This action cannot be undone."),
       confirmText: 'Delete',
       type: 'danger',
     });
@@ -103,12 +104,12 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
       setLoading(true);
       const res = await interiorProjectService.deleteRisk(projectId, riskId);
       if (res?.success) {
-        toast.success('Risk deleted successfully!');
+        toast.success(tr("Risk deleted successfully!"));
         fetchRisks();
       }
     } catch (err) {
       console.error('Delete risk fail', err);
-      toast.error('Failed to delete risk');
+      toast.error(tr("Failed to delete risk"));
     } finally {
       setLoading(false);
     }
@@ -153,15 +154,15 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Risk Register</h2>
+          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">{tr("Risk Register")}</h2>
           <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-            Log execution, procurement, design, and vendor threats with probability-impact heatmap mitigation plans.
+            {tr("Log execution, procurement, design, and vendor threats with probability-impact heatmap mitigation plans.")}
           </p>
         </div>
         {canDo('risks', 'create') && (
           <Button onClick={openNewModal}>
-            <Plus className="w-4 h-4 mr-2" />
-            Log Risk
+            <Plus className="w-4 h-4 me-2" />
+            {tr("Log Risk")}
           </Button>
         )}
       </div>
@@ -170,32 +171,32 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
         <Card className="lg:col-span-1">
           <CardHeader className="pb-2 flex flex-row items-center gap-2">
             <Grid className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-            <CardTitle className="text-base font-semibold">Severity Heatmap</CardTitle>
+            <CardTitle className="text-base font-semibold">{tr("Severity Heatmap")}</CardTitle>
           </CardHeader>
           <CardContent className="p-4">
             <div className="grid grid-cols-4 gap-1 text-center font-bold text-xs select-none">
-              <div className="h-10 flex items-center justify-center text-[10px] text-[hsl(var(--muted-foreground))]">P / I</div>
-              <div className="h-10 flex items-center justify-center text-[10px] text-[hsl(var(--muted-foreground))] uppercase">Low</div>
-              <div className="h-10 flex items-center justify-center text-[10px] text-[hsl(var(--muted-foreground))] uppercase">Medium</div>
-              <div className="h-10 flex items-center justify-center text-[10px] text-[hsl(var(--muted-foreground))] uppercase">High</div>
+              <div className="h-10 flex items-center justify-center text-[0.625rem] text-[hsl(var(--muted-foreground))]">P / I</div>
+              <div className="h-10 flex items-center justify-center text-[0.625rem] text-[hsl(var(--muted-foreground))] uppercase">{tr("Low")}</div>
+              <div className="h-10 flex items-center justify-center text-[0.625rem] text-[hsl(var(--muted-foreground))] uppercase">{tr("Medium")}</div>
+              <div className="h-10 flex items-center justify-center text-[0.625rem] text-[hsl(var(--muted-foreground))] uppercase">{tr("High")}</div>
 
-              <div className="h-12 flex items-center justify-center text-[10px] text-[hsl(var(--muted-foreground))] uppercase">High</div>
+              <div className="h-12 flex items-center justify-center text-[0.625rem] text-[hsl(var(--muted-foreground))] uppercase">{tr("High")}</div>
               <div className="h-12 bg-amber-500/20 text-amber-700 flex items-center justify-center rounded">{getMatrixCount('high', 'low')}</div>
               <div className="h-12 bg-red-400/30 text-red-600 flex items-center justify-center rounded">{getMatrixCount('high', 'medium')}</div>
               <div className="h-12 bg-red-600/30 text-red-700 flex items-center justify-center rounded font-extrabold">{getMatrixCount('high', 'high')}</div>
 
-              <div className="h-12 flex items-center justify-center text-[10px] text-[hsl(var(--muted-foreground))] uppercase">Medium</div>
+              <div className="h-12 flex items-center justify-center text-[0.625rem] text-[hsl(var(--muted-foreground))] uppercase">{tr("Medium")}</div>
               <div className="h-12 bg-green-500/10 text-green-600 flex items-center justify-center rounded">{getMatrixCount('medium', 'low')}</div>
               <div className="h-12 bg-amber-500/20 text-amber-700 flex items-center justify-center rounded">{getMatrixCount('medium', 'medium')}</div>
               <div className="h-12 bg-red-400/30 text-red-600 flex items-center justify-center rounded">{getMatrixCount('medium', 'high')}</div>
 
-              <div className="h-12 flex items-center justify-center text-[10px] text-[hsl(var(--muted-foreground))] uppercase">Low</div>
+              <div className="h-12 flex items-center justify-center text-[0.625rem] text-[hsl(var(--muted-foreground))] uppercase">{tr("Low")}</div>
               <div className="h-12 bg-green-500/10 text-green-600 flex items-center justify-center rounded">{getMatrixCount('low', 'low')}</div>
               <div className="h-12 bg-green-500/10 text-green-600 flex items-center justify-center rounded">{getMatrixCount('low', 'medium')}</div>
               <div className="h-12 bg-amber-500/20 text-amber-700 flex items-center justify-center rounded">{getMatrixCount('low', 'high')}</div>
             </div>
-            <p className="text-[10px] text-[hsl(var(--muted-foreground))] text-center mt-3">
-              Heatmap numbers count active logged project risks.
+            <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))] text-center mt-3">
+              {tr("Heatmap numbers count active logged project risks.")}
             </p>
           </CardContent>
         </Card>
@@ -207,25 +208,25 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
             </div>
           ) : risks.length === 0 ? (
             <Card className="p-8 text-center text-sm text-[hsl(var(--muted-foreground))]">
-              No active risks logged. Click &quot;Log Risk&quot; to register project threats.
+              {tr("No active risks logged. Click \"Log Risk\" to register project threats.")}
             </Card>
           ) : (
             risks.map((risk) => (
               <Card key={risk._id} className="hover:border-[hsl(var(--primary)/0.3)] transition-all">
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-center justify-between text-xs flex-wrap gap-2">
-                    <span className="px-1.5 py-0.5 rounded font-bold uppercase tracking-wider font-mono bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] text-[10px]">
+                    <span className="px-1.5 py-0.5 rounded font-bold uppercase tracking-wider font-mono bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] text-[0.625rem]">
                       {String(risk.category).replace('_', ' ')}
                     </span>
-                    <span className={cn('px-2.5 py-0.5 rounded-full text-[10px] font-bold border uppercase', getScoreColor(risk.score))}>
-                      Severity Score: {risk.score} ({risk.probability} × {risk.impact})
+                    <span className={cn('px-2.5 py-0.5 rounded-full text-[0.625rem] font-bold border uppercase', getScoreColor(risk.score))}>
+                      {tr("Severity Score: ")}{tr(risk.score)} ({tr(risk.probability)} × {tr(risk.impact)})
                     </span>
-                    <div className="flex items-center gap-2 ml-auto">
+                    <div className="flex items-center gap-2 ms-auto">
                       {canDo('risks', 'update') && (
                         <button
                           onClick={() => openEditModal(risk)}
                           className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-blue-500 hover:bg-blue-50 rounded transition-colors"
-                          title="Edit Risk"
+                          title={tr("Edit Risk")}
                         >
                           <Edit className="w-4 h-4" />
                         </button>
@@ -234,18 +235,18 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
                         <button
                           onClick={() => handleDeleteRisk(risk._id)}
                           className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                          title="Delete Risk"
+                          title={tr("Delete Risk")}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       )}
                     </div>
                   </div>
-                  <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">{risk.description}</h3>
+                  <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">{tr(risk.description)}</h3>
                   {risk.mitigationPlan && (
                     <div className="p-2.5 rounded border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.25)] text-xs space-y-1">
-                      <p className="font-semibold text-[hsl(var(--foreground))]">Mitigation Strategy:</p>
-                      <p className="text-[hsl(var(--muted-foreground))]">{risk.mitigationPlan}</p>
+                      <p className="font-semibold text-[hsl(var(--foreground))]">{tr("Mitigation Strategy:")}</p>
+                      <p className="text-[hsl(var(--muted-foreground))]">{tr(risk.mitigationPlan)}</p>
                     </div>
                   )}
                 </CardContent>
@@ -267,7 +268,7 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-[hsl(var(--primary))]" />
-                  {editRiskId ? 'Edit Project Risk' : 'Log Project Risk'}
+                  {editRiskId ? tr("Edit Project Risk") : tr("Log Project Risk")}
                 </h3>
                 <button onClick={closeModal} className="p-1 rounded hover:bg-[hsl(var(--muted))]">
                   <X className="w-4 h-4" />
@@ -277,55 +278,55 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
               <form onSubmit={handleSubmitRisk}>
                 <div className="p-5 space-y-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold">Risk Description</label>
-                    <Input required placeholder="e.g. Delayed HVAC supply might slip ceiling layout handover" value={description} onChange={(e) => setDescription(e.target.value)} />
+                    <label className="text-xs font-semibold">{tr("Risk Description")}</label>
+                    <Input required placeholder={tr("e.g. Delayed HVAC supply might slip ceiling layout handover")} value={description} onChange={(e) => setDescription(e.target.value)} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold">Threat Category</label>
+                    <label className="text-xs font-semibold">{tr("Threat Category")}</label>
                     <select
                       className="w-full px-3 py-2 text-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:outline-none"
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
                     >
-                      <option value="design">Design Mismatch</option>
-                      <option value="procurement">Procurement & Sourcing</option>
-                      <option value="site_execution">Site Execution Blocker</option>
-                      <option value="client">Client Change Request</option>
-                      <option value="vendor">Vendor Compliance</option>
+                      <option value="design">{tr("Design Mismatch")}</option>
+                      <option value="procurement">{tr("Procurement & Sourcing")}</option>
+                      <option value="site_execution">{tr("Site Execution Blocker")}</option>
+                      <option value="client">{tr("Client Change Request")}</option>
+                      <option value="vendor">{tr("Vendor Compliance")}</option>
                     </select>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold">Probability</label>
+                      <label className="text-xs font-semibold">{tr("Probability")}</label>
                       <select
                         className="w-full px-3 py-2 text-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:outline-none"
                         value={probability}
                         onChange={(e) => setProbability(e.target.value)}
                       >
-                        <option value="low">Low (1)</option>
-                        <option value="medium">Medium (2)</option>
-                        <option value="high">High (3)</option>
+                        <option value="low">{tr("Low (1)")}</option>
+                        <option value="medium">{tr("Medium (2)")}</option>
+                        <option value="high">{tr("High (3)")}</option>
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold">Impact Level</label>
+                      <label className="text-xs font-semibold">{tr("Impact Level")}</label>
                       <select
                         className="w-full px-3 py-2 text-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:outline-none"
                         value={impact}
                         onChange={(e) => setImpact(e.target.value)}
                       >
-                        <option value="low">Low (1)</option>
-                        <option value="medium">Medium (2)</option>
-                        <option value="high">High (3)</option>
+                        <option value="low">{tr("Low (1)")}</option>
+                        <option value="medium">{tr("Medium (2)")}</option>
+                        <option value="high">{tr("High (3)")}</option>
                       </select>
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold">Mitigation Strategy Plan</label>
+                    <label className="text-xs font-semibold">{tr("Mitigation Strategy Plan")}</label>
                     <textarea
                       rows={3}
                       className="w-full px-3 py-2 text-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:outline-none"
-                      placeholder="Specify corrective actions checklist..."
+                      placeholder={tr("Specify corrective actions checklist...")}
                       value={mitigationPlan}
                       onChange={(e) => setMitigationPlan(e.target.value)}
                     />
@@ -334,11 +335,11 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
 
                 <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
                   <Button variant="outline" type="button" onClick={closeModal}>
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                   <Button type="submit" disabled={submitting}>
-                    {submitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    {editRiskId ? 'Update Risk' : 'Log Risk'}
+                    {submitting && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+                    {editRiskId ? tr("Update Risk") : tr("Log Risk")}
                   </Button>
                 </div>
               </form>

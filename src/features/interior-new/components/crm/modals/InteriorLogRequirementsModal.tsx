@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
@@ -253,12 +254,12 @@ export const InteriorLogRequirementsModal = ({
       roomName: `${source.roomName || 'Room'} (Copy)`
     };
     setRequirements((prev) => [...prev, cloned]);
-    toast.success('Room requirement duplicated');
+    toast.success(tr("Room requirement duplicated"));
   };
 
   const removeRoom = (index: number) => {
     if (requirements.length === 1) {
-      toast.error('You need at least one room requirement.');
+      toast.error(tr("You need at least one room requirement."));
       return;
     }
     setRequirements((prev) => prev.filter((_, i) => i !== index));
@@ -291,10 +292,10 @@ export const InteriorLogRequirementsModal = ({
 
   const handleDiscardSaved = async () => {
     if (hasPassedToSiteVisit) {
-      toast.error('Cannot discard requirements after lead has been passed to Site Visit.');
+      toast.error(tr("Cannot discard requirements after lead has been passed to Site Visit."));
       return;
     }
-    if (!confirm('Are you sure you want to discard all logged requirements for this lead? All rooms will be cleared.')) {
+    if (!confirm(tr("Are you sure you want to discard all logged requirements for this lead? All rooms will be cleared."))) {
       return;
     }
     setIsSubmitting(true);
@@ -310,11 +311,11 @@ export const InteriorLogRequirementsModal = ({
         remarks: 'Discarded/reset all room requirements.',
         completedDate: new Date(),
       });
-      toast.success('Requirements discarded successfully.');
+      toast.success(tr("Requirements discarded successfully."));
       onClose();
       if (onSuccess) onSuccess();
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || err.message || 'Failed to discard requirements');
+      toast.error(err?.response?.data?.error || err.message || tr("Failed to discard requirements"));
     } finally {
       setIsSubmitting(false);
     }
@@ -325,14 +326,14 @@ export const InteriorLogRequirementsModal = ({
 
     let hasError = false;
     if (!budgetRange || !budgetRange.trim()) {
-      setBudgetError('Target estimated budget is required');
+      setBudgetError(tr("Target estimated budget is required"));
       hasError = true;
     } else {
       setBudgetError(null);
     }
 
     if (requirements.length === 0) {
-      toast.error('Please add at least one room requirement.');
+      toast.error(tr("Please add at least one room requirement."));
       return;
     }
 
@@ -346,7 +347,7 @@ export const InteriorLogRequirementsModal = ({
     setRoomErrors(newRoomErrors);
 
     if (hasError) {
-      toast.error('Please fill in all required fields');
+      toast.error(tr("Please fill in all required fields"));
       return;
     }
 
@@ -401,14 +402,14 @@ export const InteriorLogRequirementsModal = ({
         console.warn('Activity log skipped:', actErr);
       }
 
-      toast.success('Design requirements saved successfully!');
+      toast.success(tr("Design requirements saved successfully!"));
       if (onSuccess) {
         onSuccess({ _id: customerId, ...updatePayload });
       }
       onClose();
     } catch (error: any) {
       console.error('Failed to save requirements:', error);
-      toast.error(error?.response?.data?.error || error?.response?.data?.message || error?.message || 'Failed to save requirements');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || error?.message || tr("Failed to save requirements"));
     } finally {
       setIsSubmitting(false);
     }
@@ -432,10 +433,10 @@ export const InteriorLogRequirementsModal = ({
             </div>
             <div>
               <h2 className="text-lg font-black text-[hsl(var(--foreground))] tracking-tight">
-                Client Design Requirements & Specifications
+                {tr("Client Design Requirements & Specifications")}
               </h2>
               <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                Structure requirements by Functional needs, Aesthetic styles, and Interior Type.
+                {tr("Structure requirements by Functional needs, Aesthetic styles, and Interior Type.")}
               </p>
             </div>
           </div>
@@ -459,10 +460,10 @@ export const InteriorLogRequirementsModal = ({
                 </div>
                 <div>
                   <span className="text-xs font-bold text-[hsl(var(--foreground))] block">
-                    Client Submitted {clientRequirements.length} Space(s) through Online Intake Link
+                    {tr("Client Submitted ")}{clientRequirements.length}{tr(" Space(s) through Online Intake Link")}
                   </span>
-                  <span className="text-[11px] text-[hsl(var(--muted-foreground))] block">
-                    You can load the customer's requested rooms & aesthetic wishes directly into your technical specifications form.
+                  <span className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] block">
+                    {tr("You can load the customer's requested rooms & aesthetic wishes directly into your technical specifications form.")}
                   </span>
                 </div>
               </div>
@@ -493,11 +494,11 @@ export const InteriorLogRequirementsModal = ({
                       description: cr.description || cr.notes || cr.remarks || '',
                     }))
                   );
-                  toast.success(`Pre-filled ${clientRequirements.length} spaces from client wishlist!`);
+                  toast.success(tr("Pre-filled {{clientRequirementsCount}} spaces from client wishlist!", { clientRequirementsCount: clientRequirements.length }));
                 }}
                 className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shrink-0 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
-                <Copy size={13} /> Pre-fill from Client Wishlist
+                <Copy size={13} />{tr(" Pre-fill from Client Wishlist")}
               </button>
             </div>
           )}
@@ -511,10 +512,10 @@ export const InteriorLogRequirementsModal = ({
                 </div>
                 <div>
                   <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--foreground))]">
-                    Target Estimated Budget <span className="text-red-500">*</span>
+                    {tr("Target Estimated Budget ")}<span className="text-red-500">*</span>
                   </h3>
-                  <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                    Client's target budget or approved commercial budget range for this interior scope.
+                  <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
+                    {tr("Client's target budget or approved commercial budget range for this interior scope.")}
                   </p>
                 </div>
               </div>
@@ -531,7 +532,7 @@ export const InteriorLogRequirementsModal = ({
                     if (budgetError) setBudgetError(null);
                   }}
                   placeholder={budgetPlaceholder}
-                  className={`w-full bg-[hsl(var(--background))] border rounded-2xl pl-9 pr-4 py-2.5 text-xs font-bold text-[hsl(var(--foreground))] outline-none transition-all ${
+                  className={`w-full bg-[hsl(var(--background))] border rounded-2xl ps-9 pe-4 py-2.5 text-xs font-bold text-[hsl(var(--foreground))] outline-none transition-all ${
                     budgetError
                       ? 'border-red-500 focus:ring-2 focus:ring-red-500/20'
                       : 'border-[hsl(var(--border))] focus:ring-2 focus:ring-[hsl(var(--ring))]'
@@ -539,12 +540,12 @@ export const InteriorLogRequirementsModal = ({
                   disabled={isReadOnly}
                 />
               </div>
-              {budgetError && <p className="text-[10px] text-red-500 -mt-1 font-medium">{budgetError}</p>}
+              {budgetError && <p className="text-[0.625rem] text-red-500 -mt-1 font-medium">{tr(budgetError)}</p>}
 
               {/* Quick Budget Selection Chips */}
               {!isReadOnly && (
                 <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                  <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] mr-1">Quick Presets:</span>
+                  <span className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] me-1">{tr("Quick Presets:")}</span>
                   {quickPresets.map((chip) => (
                     <button
                       key={chip}
@@ -553,13 +554,13 @@ export const InteriorLogRequirementsModal = ({
                         setBudgetRange(chip);
                         if (budgetError) setBudgetError(null);
                       }}
-                      className={`text-[10px] font-bold px-2.5 py-1 rounded-xl border transition-all ${
+                      className={`text-[0.625rem] font-bold px-2.5 py-1 rounded-xl border transition-all ${
                         budgetRange === chip
                           ? 'bg-amber-500 text-white border-amber-600 shadow-sm'
                           : 'bg-[hsl(var(--background))] text-[hsl(var(--muted-foreground))] hover:border-amber-500/50 hover:text-[hsl(var(--foreground))]'
                       }`}
                     >
-                      {chip}
+                      {tr(chip)}
                     </button>
                   ))}
                 </div>
@@ -597,7 +598,7 @@ export const InteriorLogRequirementsModal = ({
                               });
                             }
                           }}
-                          placeholder="e.g. Master Bedroom, Living Room, Executive Office *"
+                          placeholder={tr("e.g. Master Bedroom, Living Room, Executive Office *")}
                           className={`w-full bg-[hsl(var(--background))] border rounded-xl px-3 py-2 text-xs font-bold text-[hsl(var(--foreground))] outline-none placeholder:font-normal ${
                             roomErrors[index]?.roomName
                               ? 'border-red-500 focus:ring-2 focus:ring-red-500/20'
@@ -607,13 +608,13 @@ export const InteriorLogRequirementsModal = ({
                           disabled={isReadOnly}
                         />
                         {roomErrors[index]?.roomName && (
-                          <p className="text-[10px] text-red-500 mt-1 font-medium">{roomErrors[index].roomName}</p>
+                          <p className="text-[0.625rem] text-red-500 mt-1 font-medium">{tr(roomErrors[index].roomName)}</p>
                         )}
                       </div>
 
                       {req.interiorType && (
-                        <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-[hsl(var(--background))] border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hidden sm:inline-block">
-                          {req.interiorType}
+                        <span className="text-[0.625rem] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-[hsl(var(--background))] border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hidden sm:inline-block">
+                          {tr(req.interiorType)}
                         </span>
                       )}
                     </div>
@@ -625,7 +626,7 @@ export const InteriorLogRequirementsModal = ({
                             type="button"
                             onClick={() => duplicateRoom(index)}
                             className="p-2 hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-xl transition-colors"
-                            title="Duplicate room"
+                            title={tr("Duplicate room")}
                           >
                             <Copy size={15} />
                           </button>
@@ -633,7 +634,7 @@ export const InteriorLogRequirementsModal = ({
                             type="button"
                             onClick={() => removeRoom(index)}
                             className="p-2 hover:bg-rose-500/10 text-[hsl(var(--muted-foreground))] hover:text-rose-600 rounded-xl transition-colors"
-                            title="Remove room"
+                            title={tr("Remove room")}
                           >
                             <Trash2 size={15} />
                           </button>
@@ -654,8 +655,8 @@ export const InteriorLogRequirementsModal = ({
                     <div className="p-5 md:p-6 space-y-5">
                       {/* 1. Type of Interior Selector */}
                       <div className="space-y-2">
-                        <label className="block text-[11px] font-black uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
-                          Type of Interior
+                        <label className="block text-[0.6875rem] font-black uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                          {tr("Type of Interior")}
                         </label>
                         <div className="flex flex-wrap gap-2">
                           {INTERIOR_TYPES.map((t) => {
@@ -674,7 +675,7 @@ export const InteriorLogRequirementsModal = ({
                                 }`}
                               >
                                 <Icon size={13} />
-                                {t.label}
+                                {tr(t.label)}
                               </button>
                             );
                           })}
@@ -693,7 +694,7 @@ export const InteriorLogRequirementsModal = ({
                           }`}
                         >
                           <Sliders size={14} />
-                          Functional Requirements
+                          {tr("Functional Requirements")}
                         </button>
 
                         <button
@@ -706,7 +707,7 @@ export const InteriorLogRequirementsModal = ({
                           }`}
                         >
                           <Palette size={14} />
-                          Aesthetic Requirements
+                          {tr("Aesthetic Requirements")}
                         </button>
 
                         <button
@@ -719,7 +720,7 @@ export const InteriorLogRequirementsModal = ({
                           }`}
                         >
                           <Sparkles size={14} />
-                          Observations & Notes
+                          {tr("Observations & Notes")}
                         </button>
                       </div>
 
@@ -728,7 +729,7 @@ export const InteriorLogRequirementsModal = ({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-200">
                           <div>
                             <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5">
-                              Room Usage & Primary Purpose
+                              {tr("Room Usage & Primary Purpose")}
                             </label>
                             <input
                               type="text"
@@ -736,13 +737,13 @@ export const InteriorLogRequirementsModal = ({
                               onChange={(e) => updateRoom(index, 'roomUsage', e.target.value)}
                               disabled={isReadOnly}
                               className="w-full bg-[hsl(var(--muted)/0.4)] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                              placeholder="e.g. Master sleeping & dressing, Formal entertaining, Executive cabin"
+                              placeholder={tr("e.g. Master sleeping & dressing, Formal entertaining, Executive cabin")}
                             />
                           </div>
 
                           <div>
                             <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5">
-                              Furniture Requirements
+                              {tr("Furniture Requirements")}
                             </label>
                             <input
                               type="text"
@@ -750,13 +751,13 @@ export const InteriorLogRequirementsModal = ({
                               onChange={(e) => updateRoom(index, 'furnitureRequirements', e.target.value)}
                               disabled={isReadOnly}
                               className="w-full bg-[hsl(var(--muted)/0.4)] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                              placeholder="e.g. King-size hydraulic bed with upholstered headboard, 2 side tables, study desk"
+                              placeholder={tr("e.g. King-size hydraulic bed with upholstered headboard, 2 side tables, study desk")}
                             />
                           </div>
 
                           <div>
                             <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5">
-                              Storage Requirements
+                              {tr("Storage Requirements")}
                             </label>
                             <input
                               type="text"
@@ -764,14 +765,14 @@ export const InteriorLogRequirementsModal = ({
                               onChange={(e) => updateRoom(index, 'storage', e.target.value)}
                               disabled={isReadOnly}
                               className="w-full bg-[hsl(var(--muted)/0.4)] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                              placeholder="e.g. 3-door floor-to-ceiling sliding wardrobe, overhead loft, hidden shoe rack"
+                              placeholder={tr("e.g. 3-door floor-to-ceiling sliding wardrobe, overhead loft, hidden shoe rack")}
                             />
                           </div>
 
                           <div>
                             <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5 flex items-center gap-1.5">
                               <Zap size={13} className="text-amber-500" />
-                              Electrical Points
+                              {tr("Electrical Points")}
                             </label>
                             <input
                               type="text"
@@ -779,14 +780,14 @@ export const InteriorLogRequirementsModal = ({
                               onChange={(e) => updateRoom(index, 'electricalPoints', e.target.value)}
                               disabled={isReadOnly}
                               className="w-full bg-[hsl(var(--muted)/0.4)] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                              placeholder="e.g. 2-way bedside switches, 16A AC point, TV & soundbar console wiring, USB docks"
+                              placeholder={tr("e.g. 2-way bedside switches, 16A AC point, TV & soundbar console wiring, USB docks")}
                             />
                           </div>
 
                           <div>
                             <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5 flex items-center gap-1.5">
                               <Sun size={13} className="text-amber-500" />
-                              Lighting Requirements
+                              {tr("Lighting Requirements")}
                             </label>
                             <input
                               type="text"
@@ -794,14 +795,14 @@ export const InteriorLogRequirementsModal = ({
                               onChange={(e) => updateRoom(index, 'lightingRequirements', e.target.value)}
                               disabled={isReadOnly}
                               className="w-full bg-[hsl(var(--muted)/0.4)] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                              placeholder="e.g. 3000K warm white cove lighting, recessed spot lights, bedside reading lamps"
+                              placeholder={tr("e.g. 3000K warm white cove lighting, recessed spot lights, bedside reading lamps")}
                             />
                           </div>
 
                           <div>
                             <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5 flex items-center gap-1.5">
                               <Droplets size={13} className="text-cyan-500" />
-                              Plumbing Requirements
+                              {tr("Plumbing Requirements")}
                             </label>
                             <input
                               type="text"
@@ -809,13 +810,13 @@ export const InteriorLogRequirementsModal = ({
                               onChange={(e) => updateRoom(index, 'plumbingRequirements', e.target.value)}
                               disabled={isReadOnly}
                               className="w-full bg-[hsl(var(--muted)/0.4)] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                              placeholder="e.g. Under-counter basin with hot/cold mixer, geyser provision, RO inlet"
+                              placeholder={tr("e.g. Under-counter basin with hot/cold mixer, geyser provision, RO inlet")}
                             />
                           </div>
 
                           <div className="md:col-span-2">
                             <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5">
-                              Circulation & Space Clearance
+                              {tr("Circulation & Space Clearance")}
                             </label>
                             <input
                               type="text"
@@ -823,7 +824,7 @@ export const InteriorLogRequirementsModal = ({
                               onChange={(e) => updateRoom(index, 'circulation', e.target.value)}
                               disabled={isReadOnly}
                               className="w-full bg-[hsl(var(--muted)/0.4)] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                              placeholder="e.g. Minimum 3ft walkway around bed, handicap accessibility, unobstructed door swing"
+                              placeholder={tr("e.g. Minimum 3ft walkway around bed, handicap accessibility, unobstructed door swing")}
                             />
                           </div>
                         </div>
@@ -834,8 +835,8 @@ export const InteriorLogRequirementsModal = ({
                         <div className="space-y-4 animate-in fade-in duration-200">
                           {/* Popular styles quick chips */}
                           <div>
-                            <label className="block text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1.5">
-                              Quick Style Presets
+                            <label className="block text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1.5">
+                              {tr("Quick Style Presets")}
                             </label>
                             <div className="flex flex-wrap gap-1.5">
                               {POPULAR_STYLES.map((style) => (
@@ -844,13 +845,13 @@ export const InteriorLogRequirementsModal = ({
                                   type="button"
                                   disabled={isReadOnly}
                                   onClick={() => updateRoom(index, 'designStyle', style)}
-                                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors border ${
+                                  className={`px-2.5 py-1 rounded-lg text-[0.6875rem] font-medium transition-colors border ${
                                     req.designStyle === style
                                       ? 'bg-emerald-600 text-white border-emerald-600'
                                       : 'bg-[hsl(var(--muted)/0.5)] hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))]'
                                   }`}
                                 >
-                                  {style}
+                                  {tr(style)}
                                 </button>
                               ))}
                             </div>
@@ -859,7 +860,7 @@ export const InteriorLogRequirementsModal = ({
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5">
-                                Design Style
+                                {tr("Design Style")}
                               </label>
                               <input
                                 type="text"
@@ -867,13 +868,13 @@ export const InteriorLogRequirementsModal = ({
                                 onChange={(e) => updateRoom(index, 'designStyle', e.target.value)}
                                 disabled={isReadOnly}
                                 className="w-full bg-[hsl(var(--muted)/0.4)] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                                placeholder="e.g. Modern Minimalist, Japandi, Industrial"
+                                placeholder={tr("e.g. Modern Minimalist, Japandi, Industrial")}
                               />
                             </div>
 
                             <div>
                               <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5">
-                                Colours & Palette
+                                {tr("Colours & Palette")}
                               </label>
                               <input
                                 type="text"
@@ -881,13 +882,13 @@ export const InteriorLogRequirementsModal = ({
                                 onChange={(e) => updateRoom(index, 'colours', e.target.value)}
                                 disabled={isReadOnly}
                                 className="w-full bg-[hsl(var(--muted)/0.4)] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                                placeholder="e.g. Warm beige, Olive green accent, Charcoal grey, Walnut wood"
+                                placeholder={tr("e.g. Warm beige, Olive green accent, Charcoal grey, Walnut wood")}
                               />
                             </div>
 
                             <div>
                               <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5">
-                                Materials & Finishes
+                                {tr("Materials & Finishes")}
                               </label>
                               <input
                                 type="text"
@@ -895,13 +896,13 @@ export const InteriorLogRequirementsModal = ({
                                 onChange={(e) => updateRoom(index, 'materials', e.target.value)}
                                 disabled={isReadOnly}
                                 className="w-full bg-[hsl(var(--muted)/0.4)] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                                placeholder="e.g. Natural teak veneer, Fluted glass, Brushed brass handles, Quartz tops"
+                                placeholder={tr("e.g. Natural teak veneer, Fluted glass, Brushed brass handles, Quartz tops")}
                               />
                             </div>
 
                             <div>
                               <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5">
-                                Flooring Preferences
+                                {tr("Flooring Preferences")}
                               </label>
                               <input
                                 type="text"
@@ -909,13 +910,13 @@ export const InteriorLogRequirementsModal = ({
                                 onChange={(e) => updateRoom(index, 'flooring', e.target.value)}
                                 disabled={isReadOnly}
                                 className="w-full bg-[hsl(var(--muted)/0.4)] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                                placeholder="e.g. 4x2 Vitrified matte tiles, Hardwood parquet, Italian marble"
+                                placeholder={tr("e.g. 4x2 Vitrified matte tiles, Hardwood parquet, Italian marble")}
                               />
                             </div>
 
                             <div>
                               <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5">
-                                Ceiling & False Ceiling
+                                {tr("Ceiling & False Ceiling")}
                               </label>
                               <input
                                 type="text"
@@ -923,13 +924,13 @@ export const InteriorLogRequirementsModal = ({
                                 onChange={(e) => updateRoom(index, 'ceiling', e.target.value)}
                                 disabled={isReadOnly}
                                 className="w-full bg-[hsl(var(--muted)/0.4)] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                                placeholder="e.g. Minimal peripheral gypsum ceiling with shadow gap & LED strip"
+                                placeholder={tr("e.g. Minimal peripheral gypsum ceiling with shadow gap & LED strip")}
                               />
                             </div>
 
                             <div>
                               <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5">
-                                Wall Finishes & Paneling
+                                {tr("Wall Finishes & Paneling")}
                               </label>
                               <input
                                 type="text"
@@ -937,13 +938,13 @@ export const InteriorLogRequirementsModal = ({
                                 onChange={(e) => updateRoom(index, 'wallFinishes', e.target.value)}
                                 disabled={isReadOnly}
                                 className="w-full bg-[hsl(var(--muted)/0.4)] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                                placeholder="e.g. Limewash texture on bed back wall, Charcoal louvers on TV panel"
+                                placeholder={tr("e.g. Limewash texture on bed back wall, Charcoal louvers on TV panel")}
                               />
                             </div>
 
                             <div className="md:col-span-2">
                               <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5">
-                                Furniture Style & Upholstery
+                                {tr("Furniture Style & Upholstery")}
                               </label>
                               <input
                                 type="text"
@@ -951,7 +952,7 @@ export const InteriorLogRequirementsModal = ({
                                 onChange={(e) => updateRoom(index, 'furnitureStyle', e.target.value)}
                                 disabled={isReadOnly}
                                 className="w-full bg-[hsl(var(--muted)/0.4)] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.6)]"
-                                placeholder="e.g. Low-profile modular frame, Boucle upholstery, Curved Scandinavian armchair"
+                                placeholder={tr("e.g. Low-profile modular frame, Boucle upholstery, Curved Scandinavian armchair")}
                               />
                             </div>
                           </div>
@@ -963,14 +964,14 @@ export const InteriorLogRequirementsModal = ({
                         <div className="space-y-4 animate-in fade-in duration-200">
                           <div>
                             <label className="block text-xs font-bold text-[hsl(var(--muted-foreground))] mb-1.5">
-                              Specific Room Instructions / Observations
+                              {tr("Specific Room Instructions / Observations")}
                             </label>
                             <textarea
                               value={req.description || ''}
                               onChange={(e) => updateRoom(index, 'description', e.target.value)}
                               disabled={isReadOnly}
                               className="w-full bg-[hsl(var(--muted)/0.4)] border border-[hsl(var(--border))] rounded-xl px-3.5 py-2.5 text-xs text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none h-28 resize-none placeholder:text-[hsl(var(--muted-foreground)/0.6)] leading-relaxed"
-                              placeholder="Enter any custom client requests, specific dimensions, appliances to fit, or constraints..."
+                              placeholder={tr("Enter any custom client requests, specific dimensions, appliances to fit, or constraints...")}
                             />
                           </div>
                         </div>
@@ -988,7 +989,7 @@ export const InteriorLogRequirementsModal = ({
               onClick={addRoom}
               className="w-full py-4 border-2 border-dashed border-[hsl(var(--border))] rounded-2xl text-xs font-bold text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--primary)/0.4)] hover:bg-[hsl(var(--accent))] transition-all flex items-center justify-center gap-2"
             >
-              <Plus size={16} /> Add Another Room / Space
+              <Plus size={16} />{tr(" Add Another Room / Space")}
             </button>
           )}
 
@@ -1000,10 +1001,10 @@ export const InteriorLogRequirementsModal = ({
                 disabled={isSubmitting}
                 onClick={handleDiscardSaved}
                 className="px-3.5 py-2.5 rounded-xl font-bold text-xs text-rose-600 hover:text-rose-700 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 transition-colors inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                title="Discard all saved requirements"
+                title={tr("Discard all saved requirements")}
               >
                 <Trash2 size={13} />
-                <span>Discard All</span>
+                <span>{tr("Discard All")}</span>
               </button>
             )}
             <button
@@ -1011,7 +1012,7 @@ export const InteriorLogRequirementsModal = ({
               onClick={onClose}
               className="flex-1 px-4 py-2.5 rounded-xl font-bold text-xs text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] transition-colors"
             >
-              {isReadOnly ? 'Close' : 'Cancel'}
+              {isReadOnly ? tr("Close") : tr("Cancel")}
             </button>
             {!isReadOnly && (
               <button
@@ -1019,7 +1020,7 @@ export const InteriorLogRequirementsModal = ({
                 disabled={isSubmitting}
                 className="flex-1 px-4 py-2.5 rounded-xl font-bold text-xs text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] transition-colors disabled:opacity-50"
               >
-                {isSubmitting ? 'Saving Requirements...' : 'Save Design Requirements'}
+                {isSubmitting ? tr("Saving Requirements...") : tr("Save Design Requirements")}
               </button>
             )}
           </div>

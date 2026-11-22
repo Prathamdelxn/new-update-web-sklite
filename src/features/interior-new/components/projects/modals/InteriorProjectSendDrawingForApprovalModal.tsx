@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState } from 'react';
 import {
@@ -69,7 +70,7 @@ export const InteriorProjectSendDrawingForApprovalModal: React.FC<Props> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!assignedReviewer) {
-      toast.error('Please select a project team member / manager to review and approve this drawing.');
+      toast.error(tr("Please select a project team member / manager to review and approve this drawing."));
       return;
     }
 
@@ -89,11 +90,11 @@ export const InteriorProjectSendDrawingForApprovalModal: React.FC<Props> = ({
         submittedAt: new Date().toISOString()
       });
 
-      toast.success(`Drawing sent to ${assignedReviewerName || 'reviewer'} for approval!`);
+      toast.success(tr("Drawing sent to {{value}} for approval!", { value: assignedReviewerName || 'reviewer' }));
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || err.message || 'Failed to send drawing for approval');
+      toast.error(err.response?.data?.error || err.message || tr("Failed to send drawing for approval"));
     } finally {
       setIsSubmitting(false);
     }
@@ -121,10 +122,10 @@ export const InteriorProjectSendDrawingForApprovalModal: React.FC<Props> = ({
               </div>
               <div>
                 <h3 className="text-base font-bold text-slate-900">
-                  Send Drawing for Approval
+                  {tr("Send Drawing for Approval")}
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Assign a project lead or manager to review specifications & verify layout
+                  {tr("Assign a project lead or manager to review specifications & verify layout")}
                 </p>
               </div>
             </div>
@@ -133,7 +134,7 @@ export const InteriorProjectSendDrawingForApprovalModal: React.FC<Props> = ({
               onClick={onClose}
               disabled={isSubmitting}
               className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200/60 transition"
-              title="Close modal"
+              title={tr("Close modal")}
             >
               <X className="w-5 h-5" />
             </button>
@@ -148,23 +149,23 @@ export const InteriorProjectSendDrawingForApprovalModal: React.FC<Props> = ({
               </div>
               <div className="min-w-0 flex-1">
                 <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate" title={drawingTitle}>
-                  {drawingTitle}
+                  {tr(drawingTitle)}
                 </h4>
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider ${badgeInfo.color}`}>
-                    {badgeInfo.label}
+                  <span className={`text-[0.5625rem] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider ${badgeInfo.color}`}>
+                    {tr(badgeInfo.label)}
                   </span>
-                  <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
-                    Version v{currentVersion}
+                  <span className="text-[0.625rem] font-extrabold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                    {tr("Version v")}{tr(currentVersion)}
                   </span>
                   {drawing.drawingNumber && (
-                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                      #{drawing.drawingNumber}
+                    <span className="text-[0.625rem] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                      #{tr(drawing.drawingNumber)}
                     </span>
                   )}
                   {drawing.discipline && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
-                      {drawing.discipline}
+                    <span className="text-[0.625rem] font-bold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                      {tr(drawing.discipline)}
                     </span>
                   )}
                 </div>
@@ -175,16 +176,16 @@ export const InteriorProjectSendDrawingForApprovalModal: React.FC<Props> = ({
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <User className="w-3.5 h-3.5 text-blue-600" />
-                Select Approver / Reviewer <span className="text-rose-500">*</span>
+                {tr("Select Approver / Reviewer ")}<span className="text-rose-500">*</span>
               </label>
               <div className="relative">
                 <select
                   required
                   value={assignedReviewer}
                   onChange={(e) => setAssignedReviewer(e.target.value)}
-                  className="w-full pl-3.5 pr-10 py-2.5 text-sm font-medium rounded-xl border border-slate-300 bg-white text-slate-900 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 shadow-2xs cursor-pointer transition"
+                  className="w-full ps-3.5 pe-10 py-2.5 text-sm font-medium rounded-xl border border-slate-300 bg-white text-slate-900 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 shadow-2xs cursor-pointer transition"
                 >
-                  <option value="" className="text-slate-400">-- Choose Project Lead / Manager --</option>
+                  <option value="" className="text-slate-400">{tr("-- Choose Project Lead / Manager --")}</option>
                   {users.map((u) => {
                     const uId = u._id || u.id || u.clerkUserId;
                     return (
@@ -198,8 +199,8 @@ export const InteriorProjectSendDrawingForApprovalModal: React.FC<Props> = ({
                   ▼
                 </div>
               </div>
-              <p className="text-[11px] text-slate-500">
-                The reviewer will be notified to review the blueprint, place inspection pins, and approve or request changes.
+              <p className="text-[0.6875rem] text-slate-500">
+                {tr("The reviewer will be notified to review the blueprint, place inspection pins, and approve or request changes.")}
               </p>
             </div>
 
@@ -207,13 +208,13 @@ export const InteriorProjectSendDrawingForApprovalModal: React.FC<Props> = ({
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <MessageSquare className="w-3.5 h-3.5 text-blue-600" />
-                Submission Notes / Scope Covered (Optional)
+                {tr("Submission Notes / Scope Covered (Optional)")}
               </label>
               <textarea
                 rows={3}
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                placeholder="E.g., Updated electrical conduit layout per client discussion, revised structural beam cutouts..."
+                placeholder={tr("E.g., Updated electrical conduit layout per client discussion, revised structural beam cutouts...")}
                 className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 shadow-2xs transition resize-none placeholder:text-slate-400"
               />
             </div>
@@ -226,7 +227,7 @@ export const InteriorProjectSendDrawingForApprovalModal: React.FC<Props> = ({
                 disabled={isSubmitting}
                 className="px-4 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
               >
-                Cancel
+                {tr("Cancel")}
               </button>
               <button
                 type="submit"
@@ -236,12 +237,12 @@ export const InteriorProjectSendDrawingForApprovalModal: React.FC<Props> = ({
                 {isSubmitting ? (
                   <>
                     <Clock className="w-4 h-4 animate-spin" />
-                    Sending...
+                    {tr("Sending...")}
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    Send for Approval
+                    {tr("Send for Approval")}
                   </>
                 )}
               </button>

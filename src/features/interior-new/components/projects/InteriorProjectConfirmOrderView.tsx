@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Interior Project Confirm Order View
@@ -114,7 +115,7 @@ export default function InteriorProjectConfirmOrderView() {
       }
     } catch (err) {
       console.error('Failed to load project confirmed order:', err);
-      toast.error((err as any)?.response?.data?.error || 'Failed to load order confirmation data');
+      toast.error((err as any)?.response?.data?.error || tr("Failed to load order confirmation data"));
     } finally {
       setLoading(false);
     }

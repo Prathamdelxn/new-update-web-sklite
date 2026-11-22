@@ -1,5 +1,6 @@
 'use client';
 
+import { tr } from '@/i18n'; // no-op outside the interior app (English)
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Info, CheckCircle, X } from 'lucide-react';
@@ -176,11 +177,11 @@ export const ConfirmProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 </div>
 
                 <h3 className="text-xl font-extrabold text-[hsl(var(--foreground))] tracking-tight mb-2 w-full min-w-0 break-words [overflow-wrap:anywhere] break-all px-2">
-                  {modalState.title}
+                  {tr(modalState.title)}
                 </h3>
 
                 <p className="text-sm text-[hsl(var(--muted-foreground))] leading-relaxed mb-5 w-full min-w-0 break-words [overflow-wrap:anywhere] break-all px-2">
-                  {modalState.message}
+                  {tr(modalState.message)}
                 </p>
 
                 {modalState.mode === 'prompt' && (
@@ -192,7 +193,7 @@ export const ConfirmProvider: React.FC<{ children: React.ReactNode }> = ({ child
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') handleClose(modalState.inputValue);
                     }}
-                    placeholder={modalState.placeholder}
+                    placeholder={tr(modalState.placeholder)}
                     className="w-full px-4 py-3 mb-6 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:border-indigo-500 outline-none"
                   />
                 )}
@@ -204,7 +205,7 @@ export const ConfirmProvider: React.FC<{ children: React.ReactNode }> = ({ child
                       onClick={() => handleClose(modalState.mode === 'prompt' ? null : false)}
                       className="flex-1 py-3 px-4 rounded-xl bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] font-semibold text-sm transition-all border border-[hsl(var(--border))] active:scale-[0.98]"
                     >
-                      {modalState.cancelText}
+                      {tr(modalState.cancelText)}
                     </button>
                   )}
                   <button
@@ -214,7 +215,7 @@ export const ConfirmProvider: React.FC<{ children: React.ReactNode }> = ({ child
                     }
                     className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm shadow-lg transition-all active:scale-[0.98] ${getButtonStyles()}`}
                   >
-                    {modalState.confirmText}
+                    {tr(modalState.confirmText)}
                   </button>
                 </div>
               </div>

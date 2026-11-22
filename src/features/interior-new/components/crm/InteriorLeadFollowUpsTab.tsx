@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useMemo } from 'react';
 import {
@@ -219,12 +220,12 @@ const { hasPermission: canDo } = usePermissions();
           <Calendar size={28} />
         </div>
         <h3 className="text-base sm:text-xl font-black text-[hsl(var(--foreground))]">
-          {isLeadProgressed ? 'Initial Follow-up Phase Completed' : 'No Follow-ups Scheduled'}
+          {isLeadProgressed ? tr("Initial Follow-up Phase Completed") : tr("No Follow-ups Scheduled")}
         </h3>
         <p className="text-[hsl(var(--muted-foreground))] text-xs sm:text-sm mt-1.5 mb-6 max-w-md leading-relaxed">
           {isLeadProgressed
-            ? `This lead has already moved to the "${lead?.status || 'Site Visit'}" stage. Initial follow-up phase is complete.`
-            : 'Schedule initial client touchpoints (calls, WhatsApp, or meetings) to capture client requirements before planning the site visit.'}
+            ? tr("This lead has already moved to the \"{{value}}\" stage. Initial follow-up phase is complete.", { value: lead?.status || 'Site Visit' })
+            : tr("Schedule initial client touchpoints (calls, WhatsApp, or meetings) to capture client requirements before planning the site visit.")}
         </p>
         {!isConverted && !isLeadProgressed && (
           (canDo('crm_followups', 'create')) && (
@@ -232,7 +233,7 @@ const { hasPermission: canDo } = usePermissions();
               onClick={onScheduleFollowUp}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 shadow-sm cursor-pointer"
             >
-              <Plus size={15} /> Schedule Initial Follow-up
+              <Plus size={15} />{tr(" Schedule Initial Follow-up")}
             </button>
           )
         )}
@@ -261,10 +262,10 @@ const { hasPermission: canDo } = usePermissions();
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-sm sm:text-base font-black text-[hsl(var(--foreground))]">
-                  {currentFollowUp.type || 'Follow-up'} Touchpoint
+                  {currentFollowUp.type || tr("Follow-up")}{tr(" Touchpoint")}
                 </h2>
                 <span className={cn(
-                  "text-[10px] font-bold px-2.5 py-0.5 rounded-md border flex items-center gap-1.5",
+                  "text-[0.625rem] font-bold px-2.5 py-0.5 rounded-md border flex items-center gap-1.5",
                   isPending
                     ? isOverdue
                       ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30 font-black"
@@ -275,21 +276,21 @@ const { hasPermission: canDo } = usePermissions();
                     isOverdue ? (
                       <>
                         <span className="inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
-                        Overdue ({getOverdueText(currentFollowUp.scheduledDate)})
+                        {tr("Overdue (")}{getOverdueText(currentFollowUp.scheduledDate)})
                       </>
-                    ) : 'Pending Touchpoint'
-                  ) : isLeadProgressed ? 'Stage Completed' : 'Completed'}
+                    ) : tr("Pending Touchpoint")
+                  ) : isLeadProgressed ? tr("Stage Completed") : tr("Completed")}
                 </span>
                 {allFollowUps.length > 1 && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))]">
-                    {allFollowUps.length} Total Logs
+                  <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-md bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))]">
+                    {allFollowUps.length}{tr(" Total Logs")}
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))] flex items-center gap-1.5 mt-0.5">
+              <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] flex items-center gap-1.5 mt-0.5">
                 <Clock size={11} className={isOverdue ? "text-rose-500 shrink-0" : "shrink-0"} />
                 <span>
-                  {isPending ? 'Scheduled for: ' : 'Logged on: '}
+                  {isPending ? tr("Scheduled for: ") : tr("Logged on: ")}
                   <strong className={cn(
                     "font-semibold",
                     isOverdue ? "text-rose-600 dark:text-rose-400 font-bold" : "text-[hsl(var(--foreground))]"
@@ -322,9 +323,9 @@ const { hasPermission: canDo } = usePermissions();
                           ? "bg-rose-600 hover:bg-rose-700 text-white shadow-xs"
                           : "bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]"
                       )}
-                      title="Reschedule Follow-up Date & Time"
+                      title={tr("Reschedule Follow-up Date & Time")}
                     >
-                      <Calendar size={13} /> Reschedule Follow-up
+                      <Calendar size={13} />{tr(" Reschedule Follow-up")}
                     </button>
                   )}
                   {!isOverdue && canSendToSiteVisit && (
@@ -332,9 +333,9 @@ const { hasPermission: canDo } = usePermissions();
                       <button
                         onClick={onSendToRequirements || onSendToSiteVisit}
                         className="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
-                        title="Complete follow-up & send lead to Requirements stage"
+                        title={tr("Complete follow-up & send lead to Requirements stage")}
                       >
-                        <PenTool size={13} /> Complete & Send to Requirements
+                        <PenTool size={13} />{tr(" Complete & Send to Requirements")}
                       </button>
                     )
                   )}
@@ -342,7 +343,7 @@ const { hasPermission: canDo } = usePermissions();
               ) : (
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                    <CheckCircle2 size={13} /> Follow-up Phase Completed (Lead in {lead?.status || 'Site Visit'})
+                    <CheckCircle2 size={13} />{tr(" Follow-up Phase Completed (Lead in ")}{lead?.status || tr("Site Visit")})
                   </span>
                 </div>
               )}
@@ -356,7 +357,7 @@ const { hasPermission: canDo } = usePermissions();
             <div className="flex items-center gap-2">
               <AlertTriangle size={14} className="text-rose-600 dark:text-rose-400 shrink-0" />
               <span>
-                Scheduled window has expired. Please contact client and reschedule or proceed to the next stage.
+                {tr("Scheduled window has expired. Please contact client and reschedule or proceed to the next stage.")}
               </span>
             </div>
           </div>
@@ -373,10 +374,10 @@ const { hasPermission: canDo } = usePermissions();
           <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 sm:p-5 shadow-xs space-y-3.5 min-w-0 overflow-hidden">
             <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
               <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-2">
-                <FileText size={14} className="text-blue-500" /> Touchpoint Objective & Goal
+                <FileText size={14} className="text-blue-500" />{tr(" Touchpoint Objective & Goal")}
               </h3>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
-                Active Note
+              <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
+                {tr("Active Note")}
               </span>
             </div>
 
@@ -384,29 +385,29 @@ const { hasPermission: canDo } = usePermissions();
               "p-3.5 rounded-xl border text-xs sm:text-sm font-medium leading-relaxed whitespace-pre-wrap selection:bg-blue-500/20 break-words [overflow-wrap:anywhere]",
               isOverdue ? "bg-rose-500/5 border-rose-500/20 text-[hsl(var(--foreground))]" : "bg-[hsl(var(--muted)/0.3)] border-[hsl(var(--border))] text-[hsl(var(--foreground))]"
             )}>
-              {currentFollowUp.remarks || 'No notes or objectives recorded for this touchpoint.'}
+              {currentFollowUp.remarks || tr("No notes or objectives recorded for this touchpoint.")}
             </div>
 
             {/* Quick Spec Matrix (2x2 Compact Grid) */}
             <div className="grid grid-cols-2 gap-2.5 pt-1">
               <div className="bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))] rounded-xl p-2.5 min-w-0">
-                <p className="text-[9px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-0.5">Channel</p>
+                <p className="text-[0.5625rem] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-0.5">{tr("Channel")}</p>
                 <div className="flex items-center gap-1.5 font-bold text-xs text-[hsl(var(--foreground))] min-w-0">
                   {getTypeIcon(currentFollowUp.type, "w-3.5 h-3.5 shrink-0")}
-                  <span className="truncate">{currentFollowUp.type || 'Phone Call'}</span>
+                  <span className="truncate">{currentFollowUp.type || tr("Phone Call")}</span>
                 </div>
               </div>
 
               <div className="bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))] rounded-xl p-2.5 min-w-0">
-                <p className="text-[9px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-0.5">Assigned To</p>
+                <p className="text-[0.5625rem] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-0.5">{tr("Assigned To")}</p>
                 <div className="flex items-center gap-1.5 font-bold text-xs text-[hsl(var(--foreground))] min-w-0">
                   <User size={12} className="text-purple-500 shrink-0" />
-                  <span className="truncate" title={assignedUserName}>{assignedUserName}</span>
+                  <span className="truncate" title={assignedUserName}>{tr(assignedUserName)}</span>
                 </div>
               </div>
 
               <div className="bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))] rounded-xl p-2.5 min-w-0">
-                <p className="text-[9px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-0.5">Client Mobile</p>
+                <p className="text-[0.5625rem] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-0.5">{tr("Client Mobile")}</p>
                 <a href={`tel:${lead?.mobileNumber}`} className="flex items-center gap-1.5 font-bold text-xs text-blue-600 hover:underline min-w-0">
                   <Phone size={12} className="shrink-0" />
                   <span className="truncate">{lead?.mobileNumber || '—'}</span>
@@ -414,10 +415,10 @@ const { hasPermission: canDo } = usePermissions();
               </div>
 
               <div className="bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))] rounded-xl p-2.5 min-w-0">
-                <p className="text-[9px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-0.5">Project City</p>
+                <p className="text-[0.5625rem] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-0.5">{tr("Project City")}</p>
                 <div className="flex items-center gap-1.5 font-bold text-xs text-[hsl(var(--foreground))] min-w-0">
                   <MapPin size={12} className="text-amber-500 shrink-0" />
-                  <span className="truncate">{lead?.city || lead?.projectLocation || 'Standard'}</span>
+                  <span className="truncate">{lead?.city || lead?.projectLocation || tr("Standard")}</span>
                 </div>
               </div>
             </div>
@@ -430,15 +431,15 @@ const { hasPermission: canDo } = usePermissions();
             <div className="flex items-center gap-2">
               <History size={16} className="text-blue-500" />
               <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-[hsl(var(--foreground))]">
-                Follow-up History & Past Touchpoints
+                {tr("Follow-up History & Past Touchpoints")}
               </h3>
             </div>
-            <span className="text-[10px] font-bold bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-2 py-0.5 rounded border border-[hsl(var(--border))]">
-              {allFollowUps.length} {allFollowUps.length === 1 ? 'Record' : 'Records'}
+            <span className="text-[0.625rem] font-bold bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-2 py-0.5 rounded border border-[hsl(var(--border))]">
+              {allFollowUps.length} {allFollowUps.length === 1 ? tr("Record") : tr("Records")}
             </span>
           </div>
 
-          <div className="relative border-l-2 border-[hsl(var(--border))] ml-2.5 sm:ml-4 pl-4 sm:pl-6 space-y-4 sm:space-y-5 min-w-0">
+          <div className="relative border-s-2 border-[hsl(var(--border))] ms-2.5 sm:ms-4 ps-4 sm:ps-6 space-y-4 sm:space-y-5 min-w-0">
             {allFollowUps.map((item: any, idx: number) => {
               const isItemActive = item._id === currentFollowUp?._id;
               const itemUser = getUserDisplayName(item.user);
@@ -472,10 +473,10 @@ const { hasPermission: canDo } = usePermissions();
                           {getTypeIcon(item.type, "w-3 h-3")}
                         </span>
                         <span className="text-xs font-bold text-[hsl(var(--foreground))]">
-                          {item.type || 'Follow-up'}
+                          {item.type || tr("Follow-up")}
                         </span>
                         <span className={cn(
-                          "text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded border",
+                          "text-[0.5625rem] font-black uppercase tracking-wider px-1.5 py-0.2 rounded border",
                           isItemActive
                             ? isItemOverdue
                               ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30"
@@ -486,15 +487,15 @@ const { hasPermission: canDo } = usePermissions();
                         )}>
                           {isItemActive
                             ? isItemOverdue
-                              ? 'Active • Overdue'
+                              ? tr("Active • Overdue")
                               : isLeadProgressed
-                              ? 'Stage Progressed'
-                              : 'Active Schedule'
-                            : 'Past Touchpoint'}
+                              ? tr("Stage Progressed")
+                              : tr("Active Schedule")
+                            : tr("Past Touchpoint")}
                         </span>
                       </div>
 
-                      <span className="text-[10px] sm:text-[11px] font-medium text-[hsl(var(--muted-foreground))]">
+                      <span className="text-[0.625rem] sm:text-[0.6875rem] font-medium text-[hsl(var(--muted-foreground))]">
                         {new Date(itemDate).toLocaleString('en-US', {
                           month: 'short',
                           day: 'numeric',
@@ -505,16 +506,16 @@ const { hasPermission: canDo } = usePermissions();
                     </div>
 
                     <p className="text-xs text-[hsl(var(--foreground))] font-medium leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-                      {item.remarks || 'No notes logged.'}
+                      {item.remarks || tr("No notes logged.")}
                     </p>
 
-                    <div className="flex items-center justify-between text-[10px] text-[hsl(var(--muted-foreground))] pt-1 border-t border-[hsl(var(--border)/0.5)]">
-                      <span className="truncate max-w-[200px] sm:max-w-xs">
-                        Handled by: <strong className="text-[hsl(var(--foreground))]">{itemUser}</strong>
+                    <div className="flex items-center justify-between text-[0.625rem] text-[hsl(var(--muted-foreground))] pt-1 border-t border-[hsl(var(--border)/0.5)]">
+                      <span className="truncate max-w-[12.5rem] sm:max-w-xs">
+                        {tr("Handled by: ")}<strong className="text-[hsl(var(--foreground))]">{tr(itemUser)}</strong>
                       </span>
                       {item.createdAt && (
                         <span className="shrink-0">
-                          Logged: {new Date(item.createdAt).toLocaleDateString()}
+                          {tr("Logged: ")}{new Date(item.createdAt).toLocaleDateString()}
                         </span>
                       )}
                     </div>

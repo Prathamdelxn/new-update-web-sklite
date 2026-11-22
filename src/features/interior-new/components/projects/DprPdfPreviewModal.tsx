@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — DPR PDF Preview & Download Modal
@@ -36,7 +37,7 @@ export const DprPdfPreviewModal: React.FC<DprPdfPreviewModalProps> = ({
     try {
       setDownloading(true);
       await downloadDprPdf(dpr, project);
-      toast.success('DPR PDF generated and downloaded successfully');
+      toast.success(tr("DPR PDF generated and downloaded successfully"));
     } catch (err: any) {
       console.error('Error generating PDF:', err);
       toast.error('Failed to download PDF: ' + (err?.message || err));
@@ -50,7 +51,7 @@ export const DprPdfPreviewModal: React.FC<DprPdfPreviewModalProps> = ({
       printDpr(dpr, project);
     } catch (err: any) {
       console.error('Error printing:', err);
-      toast.error('Failed to open print dialog');
+      toast.error(tr("Failed to open print dialog"));
     }
   };
 
@@ -72,10 +73,10 @@ export const DprPdfPreviewModal: React.FC<DprPdfPreviewModalProps> = ({
                 <FileText className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-[hsl(var(--foreground))]">Daily Progress Report (DPR) Preview</h3>
+                <h3 className="text-base font-bold text-[hsl(var(--foreground))]">{tr("Daily Progress Report (DPR) Preview")}</h3>
                 <p className="text-xs text-[hsl(var(--muted-foreground))]">
                   {project?.name ? `${project.name} • ` : ''}
-                  {dpr.date ? new Date(dpr.date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : 'Report'}
+                  {dpr.date ? new Date(dpr.date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : tr("Report")}
                 </p>
               </div>
             </div>
@@ -84,18 +85,18 @@ export const DprPdfPreviewModal: React.FC<DprPdfPreviewModalProps> = ({
               {canExport && (
                 <Button variant="outline" size="sm" onClick={handlePrint} className="gap-1.5">
                   <Printer className="w-4 h-4" />
-                  <span className="hidden sm:inline">Print</span>
+                  <span className="hidden sm:inline">{tr("Print")}</span>
                 </Button>
               )}
               {canExport && (
                 <Button size="sm" onClick={handleDownload} disabled={downloading} className="gap-1.5">
                   {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                  <span>{downloading ? 'Exporting...' : 'Download PDF'}</span>
+                  <span>{downloading ? tr("Exporting...") : tr("Download PDF")}</span>
                 </Button>
               )}
               <button
                 onClick={onClose}
-                className="p-1.5 ml-1 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]"
+                className="p-1.5 ms-1 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -104,25 +105,25 @@ export const DprPdfPreviewModal: React.FC<DprPdfPreviewModalProps> = ({
 
           {/* Sheet Preview Area */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100 dark:bg-zinc-900 flex justify-center">
-            <div className="w-full max-w-[780px] bg-white shadow-xl rounded border border-slate-200 overflow-hidden text-black">
+            <div className="w-full max-w-[48.75rem] bg-white shadow-xl rounded border border-slate-200 overflow-hidden text-black">
               <iframe
                 srcDoc={htmlPreview}
-                title="DPR PDF Preview"
-                className="w-full h-[680px] border-none bg-white"
+                title={tr("DPR PDF Preview")}
+                className="w-full h-[42.5rem] border-none bg-white"
               />
             </div>
           </div>
 
           {/* Footer Actions */}
           <div className="flex items-center justify-between px-6 py-3 border-t border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs text-[hsl(var(--muted-foreground))]">
-            <span>Format: Standard A4 Official Daily Progress Report Sheet</span>
+            <span>{tr("Format: Standard A4 Official Daily Progress Report Sheet")}</span>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={onClose}>
-                Close
+                {tr("Close")}
               </Button>
               {canExport && (
                 <Button size="sm" onClick={handleDownload} disabled={downloading}>
-                  {downloading ? 'Downloading...' : 'Download PDF'}
+                  {downloading ? tr("Downloading...") : tr("Download PDF")}
                 </Button>
               )}
             </div>

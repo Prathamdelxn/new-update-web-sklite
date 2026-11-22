@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Interior-OS Modern Streamlined Project Card
@@ -168,7 +169,7 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
       <div
         role="article"
         tabIndex={0}
-        aria-label={`Project: ${project.name}, Status: ${health.label}, Progress: ${progressVal}%`}
+        aria-label={tr("Project: {{name}}, Status: {{label}}, Progress: {{progressVal}}%", { name: project.name, label: health.label, progressVal: progressVal })}
         onKeyDown={handleKeyDown}
         onClick={() => onOpen(project)}
         className={cn(
@@ -184,34 +185,34 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
         {/* Top Row: Monospace Code + Type + Status Badge */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0">
-            <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200/60 shrink-0">
-              {project.code || 'PRJ'}
+            <span className="font-mono text-[0.6875rem] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200/60 shrink-0">
+              {project.code || tr("PRJ")}
             </span>
             {project.type && (
-              <span className="text-xs font-medium text-slate-400 truncate max-w-[120px]" title={project.type}>
-                {project.type}
+              <span className="text-xs font-medium text-slate-400 truncate max-w-[7.5rem]" title={project.type}>
+                {tr(project.type)}
               </span>
             )}
           </div>
 
           <span
             className={cn(
-              'px-2 py-0.5 text-[11px] font-semibold rounded-full border inline-flex items-center gap-1.5 shrink-0',
+              'px-2 py-0.5 text-[0.6875rem] font-semibold rounded-full border inline-flex items-center gap-1.5 shrink-0',
               health.badge
             )}
           >
             <span className={cn('w-1.5 h-1.5 rounded-full', health.dot)} />
-            {health.label}
+            {tr(health.label)}
           </span>
         </div>
 
         {/* Project Title & Client/Location Subtitle */}
         <div className="space-y-0.5">
           <h3
-            className="text-[15px] sm:text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 leading-snug"
+            className="text-[0.9375rem] sm:text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 leading-snug"
             title={project.name}
           >
-            {project.name}
+            {tr(project.name)}
           </h3>
           
         </div>
@@ -220,20 +221,20 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
         <div className="space-y-2 pt-1">
           <div className="flex items-baseline justify-between">
             <div>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
-                Budget
+              <span className="text-[0.625rem] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
+                {tr("Budget")}
               </span>
               <span className="text-sm sm:text-base font-bold text-slate-900">
-                {formattedBudget}
+                {tr(formattedBudget)}
               </span>
             </div>
 
-            <div className="text-right">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
-                Progress
+            <div className="text-end">
+              <span className="text-[0.625rem] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
+                {tr("Progress")}
               </span>
               <span className="text-xs sm:text-sm font-bold text-slate-900">
-                {progressVal}%
+                {tr(progressVal)}%
               </span>
             </div>
           </div>
@@ -255,17 +256,17 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
 
         {/* Clean Footer Row: Single Deadline on Left + Actions on Right */}
         <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-1.5 text-slate-500 text-[11px] truncate max-w-[150px]">
+          <div className="flex items-center gap-1.5 text-slate-500 text-[0.6875rem] truncate max-w-[9.375rem]">
             <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span className="truncate">{deadlineText}</span>
+            <span className="truncate">{tr(deadlineText)}</span>
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
             {canEdit && onEdit && (
               <button
                 type="button"
-                aria-label={`Edit project ${project.name}`}
-                title="Edit Project"
+                aria-label={tr("Edit project {{name}}", { name: project.name })}
+                title={tr("Edit Project")}
                 onClick={(e) => {
                   e.stopPropagation();
                   onEdit(project);
@@ -279,8 +280,8 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
             {canDelete && onDelete && (
               <button
                 type="button"
-                aria-label={`Delete project ${project.name}`}
-                title="Delete Project"
+                aria-label={tr("Delete project {{name}}", { name: project.name })}
+                title={tr("Delete Project")}
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete(project);
@@ -294,7 +295,7 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
             <div className="w-px h-3 bg-slate-200 mx-0.5" />
 
             <span className="text-blue-600 font-semibold inline-flex items-center gap-0.5 text-xs group-hover:text-blue-700">
-              <span>View</span>
+              <span>{tr("View")}</span>
               <ArrowUpRight className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </span>
           </div>

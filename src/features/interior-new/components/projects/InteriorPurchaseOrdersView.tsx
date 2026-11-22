@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Port of interior-os-frontend's projects/[projectId]/purchase-orders/page.tsx.
 // This is the simple tabular PO register view (distinct from the kanban
@@ -42,7 +43,7 @@ export default function InteriorPurchaseOrdersView({ projectId }: InteriorPurcha
       }
     } catch (err) {
       console.error('Failed to load POs', err);
-      toast.error('Failed to fetch Purchase Order logs');
+      toast.error(tr("Failed to fetch Purchase Order logs"));
     } finally {
       setLoading(false);
     }
@@ -56,7 +57,7 @@ export default function InteriorPurchaseOrdersView({ projectId }: InteriorPurcha
   const handleSubmitPO = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!materialName || !vendorName || !amount) {
-      toast.error('Please fill in all required fields');
+      toast.error(tr("Please fill in all required fields"));
       return;
     }
 
@@ -72,7 +73,7 @@ export default function InteriorPurchaseOrdersView({ projectId }: InteriorPurcha
 
       const res = await interiorProjectService.createPurchaseOrder(projectId, payload);
       if (res.success) {
-        toast.success('Purchase Order logged successfully!');
+        toast.success(tr("Purchase Order logged successfully!"));
         setIsModalOpen(false);
         setMaterialName('');
         setVendorName('');
@@ -82,7 +83,7 @@ export default function InteriorPurchaseOrdersView({ projectId }: InteriorPurcha
         fetchPOs();
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to create PO');
+      toast.error(err.response?.data?.error || tr("Failed to create PO"));
     } finally {
       setSubmitting(false);
     }
@@ -112,15 +113,15 @@ export default function InteriorPurchaseOrdersView({ projectId }: InteriorPurcha
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Purchase Orders Register</h2>
+          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">{tr("Purchase Orders Register")}</h2>
           <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-            Log financial contracts, purchase workflows, and vendor closeouts.
+            {tr("Log financial contracts, purchase workflows, and vendor closeouts.")}
           </p>
         </div>
         {canDo('procurement', 'create') && (
           <Button onClick={() => setIsModalOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Create PO
+            <Plus className="w-4 h-4 me-2" />
+            {tr("Create PO")}
           </Button>
         )}
       </div>
@@ -131,35 +132,35 @@ export default function InteriorPurchaseOrdersView({ projectId }: InteriorPurcha
         </div>
       ) : pos.length === 0 ? (
         <Card className="p-8 text-center text-sm text-[hsl(var(--muted-foreground))]">
-          No Purchase Orders created yet. Click &quot;Create PO&quot; to log materials procurement.
+          {tr("No Purchase Orders created yet. Click \"Create PO\" to log materials procurement.")}
         </Card>
       ) : (
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
+            <table className="w-full text-sm text-start">
               <thead>
                 <tr className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.2)]">
-                  <th className="py-3.5 px-4 font-bold text-[hsl(var(--muted-foreground))]">PO Number</th>
-                  <th className="py-3.5 px-4 font-bold text-[hsl(var(--muted-foreground))]">Material Description</th>
-                  <th className="py-3.5 px-4 font-bold text-[hsl(var(--muted-foreground))]">Vendor</th>
-                  <th className="py-3.5 px-4 font-bold text-[hsl(var(--muted-foreground))]">Amount</th>
-                  <th className="py-3.5 px-4 font-bold text-[hsl(var(--muted-foreground))]">Delivery Date</th>
-                  <th className="py-3.5 px-4 font-bold text-[hsl(var(--muted-foreground))]">Status</th>
+                  <th className="py-3.5 px-4 font-bold text-[hsl(var(--muted-foreground))]">{tr("PO Number")}</th>
+                  <th className="py-3.5 px-4 font-bold text-[hsl(var(--muted-foreground))]">{tr("Material Description")}</th>
+                  <th className="py-3.5 px-4 font-bold text-[hsl(var(--muted-foreground))]">{tr("Vendor")}</th>
+                  <th className="py-3.5 px-4 font-bold text-[hsl(var(--muted-foreground))]">{tr("Amount")}</th>
+                  <th className="py-3.5 px-4 font-bold text-[hsl(var(--muted-foreground))]">{tr("Delivery Date")}</th>
+                  <th className="py-3.5 px-4 font-bold text-[hsl(var(--muted-foreground))]">{tr("Status")}</th>
                 </tr>
               </thead>
               <tbody>
                 {pos.map((po) => (
                   <tr key={po._id} className="border-b border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)] transition-colors">
-                    <td className="py-3 px-4 font-mono text-xs font-bold text-[hsl(var(--foreground))]">{po.poNumber}</td>
-                    <td className="py-3 px-4 font-medium text-[hsl(var(--foreground))]">{po.materialName}</td>
-                    <td className="py-3 px-4 text-[hsl(var(--muted-foreground))]">{po.vendorName}</td>
+                    <td className="py-3 px-4 font-mono text-xs font-bold text-[hsl(var(--foreground))]">{tr(po.poNumber)}</td>
+                    <td className="py-3 px-4 font-medium text-[hsl(var(--foreground))]">{tr(po.materialName)}</td>
+                    <td className="py-3 px-4 text-[hsl(var(--muted-foreground))]">{tr(po.vendorName)}</td>
                     <td className="py-3 px-4 font-semibold text-[hsl(var(--foreground))]">{formatCost(po.amount)}</td>
                     <td className="py-3 px-4 text-[hsl(var(--muted-foreground))]">
                       {po.deliveryDate ? new Date(po.deliveryDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
                     </td>
                     <td className="py-3 px-4">
-                      <span className={cn('px-2 py-0.5 text-[10px] font-semibold uppercase rounded-full border', getStatusStyle(po.status))}>
-                        {po.status}
+                      <span className={cn('px-2 py-0.5 text-[0.625rem] font-semibold uppercase rounded-full border', getStatusStyle(po.status))}>
+                        {tr(po.status)}
                       </span>
                     </td>
                   </tr>
@@ -183,7 +184,7 @@ export default function InteriorPurchaseOrdersView({ projectId }: InteriorPurcha
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
                   <FileText className="w-4 h-4 text-[hsl(var(--primary))]" />
-                  Issue Purchase Order (PO)
+                  {tr("Issue Purchase Order (PO)")}
                 </h3>
                 <button onClick={() => setIsModalOpen(false)} className="p-1 rounded hover:bg-[hsl(var(--muted))]">
                   <X className="w-4 h-4" />
@@ -193,45 +194,45 @@ export default function InteriorPurchaseOrdersView({ projectId }: InteriorPurcha
               <form onSubmit={handleSubmitPO}>
                 <div className="p-5 space-y-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold">Material Description</label>
-                    <Input required placeholder="e.g. Double Glazed Acoustic Glass Panels" value={materialName} onChange={(e) => setMaterialName(e.target.value)} />
+                    <label className="text-xs font-semibold">{tr("Material Description")}</label>
+                    <Input required placeholder={tr("e.g. Double Glazed Acoustic Glass Panels")} value={materialName} onChange={(e) => setMaterialName(e.target.value)} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold">Vendor Name</label>
-                    <Input required placeholder="e.g. Saint Gobain Glass Ltd" value={vendorName} onChange={(e) => setVendorName(e.target.value)} />
+                    <label className="text-xs font-semibold">{tr("Vendor Name")}</label>
+                    <Input required placeholder={tr("e.g. Saint Gobain Glass Ltd")} value={vendorName} onChange={(e) => setVendorName(e.target.value)} />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold">Amount (INR)</label>
+                      <label className="text-xs font-semibold">{tr("Amount (INR)")}</label>
                       <Input required type="number" min={0} placeholder="e.g. 250000" value={amount} onChange={(e) => setAmount(e.target.value)} />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold">Status</label>
+                      <label className="text-xs font-semibold">{tr("Status")}</label>
                       <select
                         className="w-full px-3 py-2 text-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:outline-none"
                         value={status}
                         onChange={(e) => setStatus(e.target.value)}
                       >
-                        <option value="pending">Pending Approval</option>
-                        <option value="approved">Approved</option>
-                        <option value="ordered">Ordered</option>
-                        <option value="delivered">Delivered</option>
+                        <option value="pending">{tr("Pending Approval")}</option>
+                        <option value="approved">{tr("Approved")}</option>
+                        <option value="ordered">{tr("Ordered")}</option>
+                        <option value="delivered">{tr("Delivered")}</option>
                       </select>
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold">Expected Delivery Date</label>
+                    <label className="text-xs font-semibold">{tr("Expected Delivery Date")}</label>
                     <Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
                   </div>
                 </div>
 
                 <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
                   <Button variant="outline" type="button" onClick={() => setIsModalOpen(false)}>
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                   <Button type="submit" disabled={submitting}>
-                    {submitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    Create PO
+                    {submitting && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+                    {tr("Create PO")}
                   </Button>
                 </div>
               </form>

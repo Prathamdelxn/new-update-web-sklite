@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState } from 'react';
 import {
@@ -60,7 +61,7 @@ export const InteriorSendDrawingForApprovalModal: React.FC<Props> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!assignedReviewer) {
-      toast.error('Please select a team member to review and approve this drawing.');
+      toast.error(tr("Please select a team member to review and approve this drawing."));
       return;
     }
 
@@ -79,11 +80,11 @@ export const InteriorSendDrawingForApprovalModal: React.FC<Props> = ({
         versionNumber: currentVersion
       });
 
-      toast.success(`Drawing sent to ${assignedReviewerName || 'team member'} for internal review!`);
+      toast.success(tr("Drawing sent to {{value}} for internal review!", { value: assignedReviewerName || 'team member' }));
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || err.message || 'Failed to send drawing for approval');
+      toast.error(err.response?.data?.error || err.message || tr("Failed to send drawing for approval"));
     } finally {
       setIsSubmitting(false);
     }
@@ -111,10 +112,10 @@ export const InteriorSendDrawingForApprovalModal: React.FC<Props> = ({
               </div>
               <div>
                 <h3 className="text-base font-bold text-slate-900">
-                  Send for Internal Approval
+                  {tr("Send for Internal Approval")}
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Assign a team member to verify drawing before client publishing
+                  {tr("Assign a team member to verify drawing before client publishing")}
                 </p>
               </div>
             </div>
@@ -123,7 +124,7 @@ export const InteriorSendDrawingForApprovalModal: React.FC<Props> = ({
               onClick={onClose}
               disabled={isSubmitting}
               className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200/60 transition"
-              title="Close modal"
+              title={tr("Close modal")}
             >
               <X className="w-5 h-5" />
             </button>
@@ -138,18 +139,18 @@ export const InteriorSendDrawingForApprovalModal: React.FC<Props> = ({
               </div>
               <div className="min-w-0 flex-1">
                 <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate" title={drawingTitle}>
-                  {drawingTitle}
+                  {tr(drawingTitle)}
                 </h4>
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider ${badgeInfo.color}`}>
-                    {badgeInfo.label}
+                  <span className={`text-[0.5625rem] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider ${badgeInfo.color}`}>
+                    {tr(badgeInfo.label)}
                   </span>
-                  <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
-                    Version v{currentVersion}
+                  <span className="text-[0.625rem] font-extrabold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    {tr("Version v")}{tr(currentVersion)}
                   </span>
                   {drawing.roomTag && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      {drawing.roomTag}
+                    <span className="text-[0.625rem] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      {tr(drawing.roomTag)}
                     </span>
                   )}
                 </div>
@@ -160,16 +161,16 @@ export const InteriorSendDrawingForApprovalModal: React.FC<Props> = ({
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <User className="w-3.5 h-3.5 text-indigo-600" />
-                Select Approver / Reviewer <span className="text-rose-500">*</span>
+                {tr("Select Approver / Reviewer ")}<span className="text-rose-500">*</span>
               </label>
               <div className="relative">
                 <select
                   required
                   value={assignedReviewer}
                   onChange={(e) => setAssignedReviewer(e.target.value)}
-                  className="w-full pl-3.5 pr-10 py-2.5 text-sm font-medium rounded-xl border border-slate-300 bg-white text-slate-900 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 shadow-2xs cursor-pointer transition"
+                  className="w-full ps-3.5 pe-10 py-2.5 text-sm font-medium rounded-xl border border-slate-300 bg-white text-slate-900 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 shadow-2xs cursor-pointer transition"
                 >
-                  <option value="" className="text-slate-400">-- Choose Team Member / Reviewer --</option>
+                  <option value="" className="text-slate-400">{tr("-- Choose Team Member / Reviewer --")}</option>
                   {users.map((u) => {
                     const uId = u._id || u.id || u.clerkUserId;
                     return (
@@ -191,7 +192,7 @@ export const InteriorSendDrawingForApprovalModal: React.FC<Props> = ({
                 disabled={isSubmitting}
                 className="px-4 py-2 text-sm font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl shadow-2xs transition"
               >
-                Cancel
+                {tr("Cancel")}
               </button>
 
               <button
@@ -200,7 +201,7 @@ export const InteriorSendDrawingForApprovalModal: React.FC<Props> = ({
                 className="inline-flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 shadow-sm shadow-indigo-600/20 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="w-4 h-4" />
-                {isSubmitting ? 'Sending Request...' : 'Send for Approval'}
+                {isSubmitting ? tr("Sending Request...") : tr("Send for Approval")}
               </button>
             </div>
           </form>

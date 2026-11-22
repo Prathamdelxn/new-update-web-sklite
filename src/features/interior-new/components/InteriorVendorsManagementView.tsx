@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Interior-OS Organization-Level Vendor Management View
@@ -146,7 +147,7 @@ export default function InteriorVendorsManagementView() {
       }
     } catch (err: any) {
       console.error('Failed to load vendors', err);
-      toast.error('Failed to load vendors list.');
+      toast.error(tr("Failed to load vendors list."));
     } finally {
       setLoading(false);
     }
@@ -168,11 +169,11 @@ export default function InteriorVendorsManagementView() {
     try {
       setIsDeleting(true);
       await interiorProjectService.deleteVendor(vendorId);
-      toast.success(`Vendor "${vendorToDelete.name}" deleted successfully.`);
+      toast.success(tr("Vendor \"{{name}}\" deleted successfully.", { name: vendorToDelete.name }));
       setVendorToDelete(null);
       fetchVendors();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to delete vendor');
+      toast.error(error?.response?.data?.message || tr("Failed to delete vendor"));
     } finally {
       setIsDeleting(false);
     }
@@ -258,14 +259,14 @@ export default function InteriorVendorsManagementView() {
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-slate-900">
-              Organization Vendors & Subcontractors
+              {tr("Organization Vendors & Subcontractors")}
             </h2>
-            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-              {dbVendors.length} {dbVendors.length === 1 ? 'Partner' : 'Partners'}
+            <span className="text-[0.625rem] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+              {dbVendors.length} {dbVendors.length === 1 ? tr("Partner") : tr("Partners")}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Manage organization-wide trade partners, material suppliers, and contact details.
+            {tr("Manage organization-wide trade partners, material suppliers, and contact details.")}
           </p>
         </div>
 
@@ -274,7 +275,7 @@ export default function InteriorVendorsManagementView() {
             onClick={fetchVendors}
             disabled={loading}
             className="p-2 rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors cursor-pointer shadow-2xs"
-            title="Refresh vendor list"
+            title={tr("Refresh vendor list")}
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -287,7 +288,7 @@ export default function InteriorVendorsManagementView() {
               }}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
             >
-              + Add Vendor
+              {tr("+ Add Vendor")}
             </button>
           )}
         </div>
@@ -303,14 +304,14 @@ export default function InteriorVendorsManagementView() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search vendors by name, category, contact, email, GSTIN..."
-              className="w-full pl-8 pr-8 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all"
+              placeholder={tr("Search vendors by name, category, contact, email, GSTIN...")}
+              className="w-full ps-8 pe-8 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                title="Clear search"
+                title={tr("Clear search")}
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -323,15 +324,15 @@ export default function InteriorVendorsManagementView() {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="h-8.5 pl-3 pr-8 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer appearance-none shadow-2xs"
-                title="Filter by Category"
+                className="h-8.5 ps-3 pe-8 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer appearance-none shadow-2xs"
+                title={tr("Filter by Category")}
               >
-                <option value="All">All Categories</option>
+                <option value="All">{tr("All Categories")}</option>
                 {categories
                   .filter((cat) => cat !== 'All')
                   .map((cat) => (
                     <option key={cat} value={cat}>
-                      {cat}
+                      {tr(cat)}
                     </option>
                   ))}
               </select>
@@ -347,13 +348,13 @@ export default function InteriorVendorsManagementView() {
                   ? 'bg-blue-50 text-blue-700 border-blue-200'
                   : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
               )}
-              title="Toggle Advanced Filters"
+              title={tr("Toggle Advanced Filters")}
             >
               <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
-              <span className="hidden sm:inline">Filters</span>
+              <span className="hidden sm:inline">{tr("Filters")}</span>
               {activeFilterCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-semibold flex items-center justify-center">
-                  {activeFilterCount}
+                <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[0.625rem] font-semibold flex items-center justify-center">
+                  {tr(activeFilterCount)}
                 </span>
               )}
               <ChevronDown
@@ -374,7 +375,7 @@ export default function InteriorVendorsManagementView() {
                     ? 'bg-white text-blue-600 shadow-xs font-semibold'
                     : 'text-slate-400 hover:text-slate-700'
                 )}
-                title="Grid Cards View"
+                title={tr("Grid Cards View")}
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
@@ -386,7 +387,7 @@ export default function InteriorVendorsManagementView() {
                     ? 'bg-white text-blue-600 shadow-xs font-semibold'
                     : 'text-slate-400 hover:text-slate-700'
                 )}
-                title="Table List View"
+                title={tr("Table List View")}
               >
                 <List className="w-4 h-4" />
               </button>
@@ -408,13 +409,13 @@ export default function InteriorVendorsManagementView() {
                 {/* Category Dropdown */}
                 <div className="md:col-span-4 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-slate-700">Vendor Category</label>
+                    <label className="text-xs font-semibold text-slate-700">{tr("Vendor Category")}</label>
                     {selectedCategory !== 'All' && (
                       <button
                         onClick={() => setSelectedCategory('All')}
                         className="text-xs font-medium text-blue-600 hover:underline cursor-pointer"
                       >
-                        Reset
+                        {tr("Reset")}
                       </button>
                     )}
                   </div>
@@ -423,12 +424,12 @@ export default function InteriorVendorsManagementView() {
                     onChange={(e) => setSelectedCategory(e.target.value)}
                     className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white cursor-pointer"
                   >
-                    <option value="All">All Categories</option>
+                    <option value="All">{tr("All Categories")}</option>
                     {categories
                       .filter((c) => c !== 'All')
                       .map((cat) => (
                         <option key={cat} value={cat}>
-                          {cat}
+                          {tr(cat)}
                         </option>
                       ))}
                   </select>
@@ -437,13 +438,13 @@ export default function InteriorVendorsManagementView() {
                 {/* Status Filter */}
                 <div className="md:col-span-3 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-slate-700">Partner Status</label>
+                    <label className="text-xs font-semibold text-slate-700">{tr("Partner Status")}</label>
                     {statusFilter !== 'all' && (
                       <button
                         onClick={() => setStatusFilter('all')}
                         className="text-xs font-medium text-blue-600 hover:underline cursor-pointer"
                       >
-                        Reset
+                        {tr("Reset")}
                       </button>
                     )}
                   </div>
@@ -452,24 +453,24 @@ export default function InteriorVendorsManagementView() {
                     onChange={(e) => setStatusFilter(e.target.value as any)}
                     className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white cursor-pointer"
                   >
-                    <option value="all">All Statuses</option>
-                    <option value="Active">Active Only</option>
-                    <option value="Inactive">Inactive</option>
+                    <option value="all">{tr("All Statuses")}</option>
+                    <option value="Active">{tr("Active Only")}</option>
+                    <option value="Inactive">{tr("Inactive")}</option>
                   </select>
                 </div>
 
                 {/* Sort Order Dropdown */}
                 <div className="md:col-span-3 space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">Sort Order</label>
+                  <label className="text-xs font-semibold text-slate-700">{tr("Sort Order")}</label>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
                     className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white cursor-pointer"
                   >
-                    <option value="newest">Recently Added (Default)</option>
-                    <option value="name-asc">Vendor Name: A → Z</option>
-                    <option value="name-desc">Vendor Name: Z → A</option>
-                    <option value="category">Category</option>
+                    <option value="newest">{tr("Recently Added (Default)")}</option>
+                    <option value="name-asc">{tr("Vendor Name: A → Z")}</option>
+                    <option value="name-desc">{tr("Vendor Name: Z → A")}</option>
+                    <option value="category">{tr("Category")}</option>
                   </select>
                 </div>
 
@@ -485,10 +486,10 @@ export default function InteriorVendorsManagementView() {
                       className="w-full py-1.5 px-3 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-xs font-medium text-slate-600 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
-                      Reset Filters
+                      {tr("Reset Filters")}
                     </button>
                   ) : (
-                    <span className="text-xs text-slate-400 text-right w-full">Default sorting applied</span>
+                    <span className="text-xs text-slate-400 text-end w-full">{tr("Default sorting applied")}</span>
                   )}
                 </div>
               </div>
@@ -505,13 +506,13 @@ export default function InteriorVendorsManagementView() {
           <Truck className="w-10 h-10 text-slate-400 mx-auto mb-3" />
           <p className="font-bold text-base text-slate-900">
             {searchQuery || activeFilterCount > 0
-              ? 'No matching vendors found'
-              : 'No vendors registered yet'}
+              ? tr("No matching vendors found")
+              : tr("No vendors registered yet")}
           </p>
           <p className="text-xs text-slate-500 mt-1 mb-4">
             {searchQuery || activeFilterCount > 0
-              ? 'Try adjusting your search query or filters.'
-              : 'Click "+ Add Vendor" to register suppliers and subcontractors for your organization.'}
+              ? tr("Try adjusting your search query or filters.")
+              : tr("Click \"+ Add Vendor\" to register suppliers and subcontractors for your organization.")}
           </p>
           {canDo('vendors', 'create') && (
             <button
@@ -521,7 +522,7 @@ export default function InteriorVendorsManagementView() {
               }}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
             >
-              + Add Vendor
+              {tr("+ Add Vendor")}
             </button>
           )}
         </Card>
@@ -556,21 +557,21 @@ export default function InteriorVendorsManagementView() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <h3 className="text-base font-bold text-slate-900 truncate" title={vendor.name}>
-                            {vendor.name}
+                            {tr(vendor.name)}
                           </h3>
                           <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
-                            {vendorCode}
+                            {tr(vendorCode)}
                           </span>
                         </div>
 
                         <div className="flex items-center gap-1.5 flex-wrap mt-1">
                           <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
-                            {category}
+                            {tr(category)}
                           </span>
 
                           {vendor.gstNumber && (
-                            <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 border border-slate-200">
-                              GST: {vendor.gstNumber}
+                            <span className="text-[0.6875rem] font-mono font-medium px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 border border-slate-200">
+                              {tr("GST: ")}{tr(vendor.gstNumber)}
                             </span>
                           )}
                         </div>
@@ -585,7 +586,7 @@ export default function InteriorVendorsManagementView() {
                             setEditingVendor(vendor);
                             setIsAddVendorOpen(true);
                           }}
-                          title="Edit Vendor"
+                          title={tr("Edit Vendor")}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
                         >
                           <Pencil className="w-4 h-4" />
@@ -594,7 +595,7 @@ export default function InteriorVendorsManagementView() {
                       {canDo('vendors', 'delete') && (
                         <button
                           onClick={() => setVendorToDelete(vendor)}
-                          title="Delete Vendor"
+                          title={tr("Delete Vendor")}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -608,7 +609,7 @@ export default function InteriorVendorsManagementView() {
                     {/* Contact Person */}
                     <div className="flex items-center gap-2.5">
                       <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span className="text-slate-400 w-14 shrink-0">Contact</span>
+                      <span className="text-slate-400 w-14 shrink-0">{tr("Contact")}</span>
                       <span className="font-medium text-slate-800 truncate">
                         {vendor.contactPerson || <span className="text-slate-400 italic font-normal">—</span>}
                       </span>
@@ -617,7 +618,7 @@ export default function InteriorVendorsManagementView() {
                     {/* Email */}
                     <div className="flex items-center gap-2.5">
                       <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span className="text-slate-400 w-14 shrink-0">Email</span>
+                      <span className="text-slate-400 w-14 shrink-0">{tr("Email")}</span>
                       {vendor.email ? (
                         <a
                           href={`mailto:${vendor.email}`}
@@ -634,13 +635,13 @@ export default function InteriorVendorsManagementView() {
                     {/* Phone */}
                     <div className="flex items-center gap-2.5">
                       <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span className="text-slate-400 w-14 shrink-0">Phone</span>
+                      <span className="text-slate-400 w-14 shrink-0">{tr("Phone")}</span>
                       {vendor.phoneNumber ? (
                         <a
                           href={`tel:${vendor.phoneNumber}`}
                           className="font-mono text-slate-800 hover:text-blue-600 hover:underline"
                         >
-                          {vendor.phoneNumber}
+                          {tr(vendor.phoneNumber)}
                         </a>
                       ) : (
                         <span className="text-slate-400 italic font-normal">—</span>
@@ -650,7 +651,7 @@ export default function InteriorVendorsManagementView() {
                     {/* Address */}
                     <div className="flex items-start gap-2.5">
                       <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
-                      <span className="text-slate-400 w-14 shrink-0">Address</span>
+                      <span className="text-slate-400 w-14 shrink-0">{tr("Address")}</span>
                       <span className="text-slate-600 truncate flex-1" title={vendor.address}>
                         {vendor.address || <span className="text-slate-400 italic font-normal">—</span>}
                       </span>
@@ -663,7 +664,7 @@ export default function InteriorVendorsManagementView() {
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                     <span className="text-xs font-medium text-emerald-700">
-                      {status} Partner
+                      {tr(status)}{tr(" Partner")}
                     </span>
                   </div>
 
@@ -673,21 +674,21 @@ export default function InteriorVendorsManagementView() {
                         href={`https://wa.me/${vendor.phoneNumber.replace(/[^0-9]/g, '')}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        title="Chat on WhatsApp"
+                        title={tr("Chat on WhatsApp")}
                         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors"
                       >
                         <MessageCircle className="w-3.5 h-3.5" />
-                        <span>WhatsApp</span>
+                        <span>{tr("WhatsApp")}</span>
                       </a>
                     )}
                     {vendor.email && (
                       <a
                         href={`mailto:${vendor.email}`}
-                        title="Send Email"
+                        title={tr("Send Email")}
                         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors"
                       >
                         <Mail className="w-3.5 h-3.5" />
-                        <span>Email</span>
+                        <span>{tr("Email")}</span>
                       </a>
                     )}
                   </div>
@@ -705,16 +706,16 @@ export default function InteriorVendorsManagementView() {
         >
           <Card className="overflow-hidden border border-slate-200/90 rounded-2xl bg-white shadow-2xs">
             <div className="overflow-x-auto min-w-full">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-start text-xs">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50/75 text-slate-500 uppercase font-bold text-[10px] tracking-wider">
-                    <th className="py-3.5 px-4">Vendor & Code</th>
-                    <th className="py-3.5 px-4">Category</th>
-                    <th className="py-3.5 px-4">Contact Person</th>
-                    <th className="py-3.5 px-4">Email & Phone</th>
-                    <th className="py-3.5 px-4">Address</th>
-                    <th className="py-3.5 px-4">Status</th>
-                    <th className="py-3.5 px-4 text-right">Actions</th>
+                  <tr className="border-b border-slate-200 bg-slate-50/75 text-slate-500 uppercase font-bold text-[0.625rem] tracking-wider">
+                    <th className="py-3.5 px-4">{tr("Vendor & Code")}</th>
+                    <th className="py-3.5 px-4">{tr("Category")}</th>
+                    <th className="py-3.5 px-4">{tr("Contact Person")}</th>
+                    <th className="py-3.5 px-4">{tr("Email & Phone")}</th>
+                    <th className="py-3.5 px-4">{tr("Address")}</th>
+                    <th className="py-3.5 px-4">{tr("Status")}</th>
+                    <th className="py-3.5 px-4 text-end">{tr("Actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -738,18 +739,18 @@ export default function InteriorVendorsManagementView() {
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
                                 <span
-                                  className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate max-w-[200px]"
+                                  className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate max-w-[12.5rem]"
                                   title={vendor.name}
                                 >
-                                  {vendor.name}
+                                  {tr(vendor.name)}
                                 </span>
-                                <span className="font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
-                                  {vendorCode}
+                                <span className="font-mono text-[0.625rem] font-semibold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
+                                  {tr(vendorCode)}
                                 </span>
                               </div>
                               {vendor.gstNumber && (
-                                <span className="text-[10px] font-mono text-slate-400 block truncate">
-                                  GST: {vendor.gstNumber}
+                                <span className="text-[0.625rem] font-mono text-slate-400 block truncate">
+                                  {tr("GST: ")}{tr(vendor.gstNumber)}
                                 </span>
                               )}
                             </div>
@@ -759,7 +760,7 @@ export default function InteriorVendorsManagementView() {
                         {/* Category */}
                         <td className="py-3.5 px-4">
                           <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
-                            {category}
+                            {tr(category)}
                           </span>
                         </td>
 
@@ -768,7 +769,7 @@ export default function InteriorVendorsManagementView() {
                           {vendor.contactPerson ? (
                             <div className="flex items-center gap-1.5">
                               <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                              <span className="truncate max-w-[150px]">{vendor.contactPerson}</span>
+                              <span className="truncate max-w-[9.375rem]">{tr(vendor.contactPerson)}</span>
                             </div>
                           ) : (
                             <span className="text-slate-400 italic">—</span>
@@ -781,7 +782,7 @@ export default function InteriorVendorsManagementView() {
                             {vendor.email ? (
                               <a
                                 href={`mailto:${vendor.email}`}
-                                className="text-blue-600 hover:underline truncate block max-w-[180px] font-medium"
+                                className="text-blue-600 hover:underline truncate block max-w-[11.25rem] font-medium"
                                 title={vendor.email}
                               >
                                 {vendor.email}
@@ -790,9 +791,9 @@ export default function InteriorVendorsManagementView() {
                             {vendor.phoneNumber ? (
                               <a
                                 href={`tel:${vendor.phoneNumber}`}
-                                className="text-slate-600 hover:text-blue-600 font-mono text-[11px] block"
+                                className="text-slate-600 hover:text-blue-600 font-mono text-[0.6875rem] block"
                               >
-                                {vendor.phoneNumber}
+                                {tr(vendor.phoneNumber)}
                               </a>
                             ) : null}
                             {!vendor.email && !vendor.phoneNumber && (
@@ -802,11 +803,11 @@ export default function InteriorVendorsManagementView() {
                         </td>
 
                         {/* Address */}
-                        <td className="py-3.5 px-4 text-slate-600 max-w-[200px] truncate" title={vendor.address}>
+                        <td className="py-3.5 px-4 text-slate-600 max-w-[12.5rem] truncate" title={vendor.address}>
                           {vendor.address ? (
                             <div className="flex items-center gap-1.5">
                               <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                              <span className="truncate">{vendor.address}</span>
+                              <span className="truncate">{tr(vendor.address)}</span>
                             </div>
                           ) : (
                             <span className="text-slate-400 italic">—</span>
@@ -815,21 +816,21 @@ export default function InteriorVendorsManagementView() {
 
                         {/* Status */}
                         <td className="py-3.5 px-4 whitespace-nowrap">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[0.6875rem] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                            {status}
+                            {tr(status)}
                           </span>
                         </td>
 
                         {/* Actions */}
-                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        <td className="py-3.5 px-4 text-end whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1">
                             {vendor.phoneNumber && (
                               <a
                                 href={`https://wa.me/${vendor.phoneNumber.replace(/[^0-9]/g, '')}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                title="Chat on WhatsApp"
+                                title={tr("Chat on WhatsApp")}
                                 className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
                               >
                                 <MessageCircle className="w-4 h-4" />
@@ -838,7 +839,7 @@ export default function InteriorVendorsManagementView() {
                             {vendor.email && (
                               <a
                                 href={`mailto:${vendor.email}`}
-                                title="Send Email"
+                                title={tr("Send Email")}
                                 className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
                               >
                                 <Mail className="w-4 h-4" />
@@ -850,7 +851,7 @@ export default function InteriorVendorsManagementView() {
                                   setEditingVendor(vendor);
                                   setIsAddVendorOpen(true);
                                 }}
-                                title="Edit Vendor"
+                                title={tr("Edit Vendor")}
                                 className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
                               >
                                 <Pencil className="w-4 h-4" />
@@ -859,7 +860,7 @@ export default function InteriorVendorsManagementView() {
                             {canDo('vendors', 'delete') && (
                               <button
                                 onClick={() => setVendorToDelete(vendor)}
-                                title="Delete Vendor"
+                                title={tr("Delete Vendor")}
                                 className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -910,9 +911,9 @@ export default function InteriorVendorsManagementView() {
                   <AlertTriangle className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">Delete Vendor</h3>
+                  <h3 className="text-base font-bold text-slate-900">{tr("Delete Vendor")}</h3>
                   <p className="text-xs text-slate-500 mt-1">
-                    Are you sure you want to remove <span className="font-bold text-slate-800">"{vendorToDelete?.name}"</span> from the organization directory? This action cannot be undone.
+                    {tr("Are you sure you want to remove ")}<span className="font-bold text-slate-800">"{tr(vendorToDelete?.name)}"</span>{tr(" from the organization directory? This action cannot be undone.")}
                   </p>
                 </div>
               </div>
@@ -924,7 +925,7 @@ export default function InteriorVendorsManagementView() {
                   disabled={isDeleting}
                   className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </button>
                 <button
                   type="button"
@@ -933,7 +934,7 @@ export default function InteriorVendorsManagementView() {
                   className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors flex items-center gap-1.5 shadow-sm disabled:opacity-50 cursor-pointer"
                 >
                   {isDeleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  {isDeleting ? 'Deleting...' : 'Delete Vendor'}
+                  {isDeleting ? tr("Deleting...") : tr("Delete Vendor")}
                 </button>
               </div>
             </motion.div>

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Interior-New Projects Dashboard & Cards (Senior Developer UI/UX)
@@ -108,7 +109,7 @@ type FilterStatus = 'all' | 'on-track' | 'at-risk' | 'delayed' | 'completed';
 
 function InteriorNewProjectsSkeleton() {
   return (
-    <div className="interior-os-theme min-h-full p-3 sm:p-4 lg:p-6 space-y-4 max-w-[1600px] mx-auto overflow-x-hidden animate-pulse font-sans">
+    <div className="interior-os-theme min-h-full p-3 sm:p-4 lg:p-6 space-y-4 max-w-[100rem] mx-auto overflow-x-hidden animate-pulse font-sans">
       {/* 1. Page Header Skeleton */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/80">
         <div className="flex items-center gap-2.5">
@@ -366,12 +367,12 @@ export default function InteriorNewProjectsView() {
       setDeleteLoading(true);
       const id = projectToDelete.id || projectToDelete._id;
       await interiorApiClient.delete(`/projects/${id}`);
-      toast.success('Project deleted successfully');
+      toast.success(tr("Project deleted successfully"));
       setProjectToDelete(null);
       await loadProjects();
     } catch (err) {
       console.error('Failed to delete project', err);
-      toast.error('Failed to delete project');
+      toast.error(tr("Failed to delete project"));
     } finally {
       setDeleteLoading(false);
     }
@@ -383,7 +384,7 @@ export default function InteriorNewProjectsView() {
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
       const firstMsg = Object.values(errors)[0];
-      toast.error(firstMsg || 'Please correct the highlighted form errors before submitting.');
+      toast.error(firstMsg || tr("Please correct the highlighted form errors before submitting."));
       return;
     }
     setFormErrors({});
@@ -409,10 +410,10 @@ export default function InteriorNewProjectsView() {
 
       if (editingProjectId) {
         await interiorApiClient.put(`/projects/${editingProjectId}`, payload);
-        toast.success('Project updated successfully!');
+        toast.success(tr("Project updated successfully!"));
       } else {
         await interiorApiClient.post('/projects', payload);
-        toast.success('Project created successfully!');
+        toast.success(tr("Project created successfully!"));
       }
       handleCloseDialog();
       await loadProjects();
@@ -524,7 +525,7 @@ export default function InteriorNewProjectsView() {
   const openProject = (project: any) => {
     const id = project.id || project._id;
     if (!id) {
-      toast.error('This project has no valid identifier.');
+      toast.error(tr("This project has no valid identifier."));
       return;
     }
     router.push(`/interior-new/projects/${id}`);
@@ -543,21 +544,21 @@ export default function InteriorNewProjectsView() {
   }
 
   return (
-    <div className="interior-os-theme min-h-full p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto overflow-x-hidden font-sans">
+    <div className="interior-os-theme min-h-full p-4 sm:p-6 lg:p-8 space-y-6 max-w-[100rem] mx-auto overflow-x-hidden font-sans">
       
       {/* ── 1. Page Header & Primary Action ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Projects
+              {tr("Projects")}
             </h1>
             <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-              {projects.length} Total
+              {projects.length}{tr(" Total")}
             </span>
           </div>
           <p className="text-sm text-slate-500 mt-1">
-            Manage interior fit-out projects, contract budgets, execution progress, and milestones.
+            {tr("Manage interior fit-out projects, contract budgets, execution progress, and milestones.")}
           </p>
         </div>
 
@@ -572,7 +573,7 @@ export default function InteriorNewProjectsView() {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium shadow-xs transition-all active:scale-[0.98]"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
-                <span>New Project</span>
+                <span>{tr("New Project")}</span>
               </button>
             )
           )}
@@ -586,7 +587,7 @@ export default function InteriorNewProjectsView() {
           type="button"
           onClick={() => setStatusFilter('all')}
           className={cn(
-            'bg-white border rounded-xl p-3 text-left transition-all duration-150 flex items-center gap-3 group',
+            'bg-white border rounded-xl p-3 text-start transition-all duration-150 flex items-center gap-3 group',
             statusFilter === 'all'
               ? 'border-blue-600 shadow-[0_0_0_1px_rgba(37,99,235,1)] bg-blue-50/20'
               : 'border-slate-200 shadow-2xs hover:border-slate-300'
@@ -599,10 +600,10 @@ export default function InteriorNewProjectsView() {
             <Building2 className="w-4.5 h-4.5" />
           </div>
           <div className="min-w-0 flex-1">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block leading-tight">Total</span>
+            <span className="text-[0.6875rem] font-semibold text-slate-500 uppercase tracking-wider block leading-tight">{tr("Total")}</span>
             <div className="flex items-baseline gap-1.5 mt-0.5">
               <span className="text-xl font-bold text-slate-900">{stats.total}</span>
-              <span className="text-[11px] text-slate-500">projects</span>
+              <span className="text-[0.6875rem] text-slate-500">{tr("projects")}</span>
             </div>
           </div>
         </button>
@@ -612,7 +613,7 @@ export default function InteriorNewProjectsView() {
           type="button"
           onClick={() => setStatusFilter('on-track')}
           className={cn(
-            'bg-white border rounded-xl p-3 text-left transition-all duration-150 flex items-center gap-3 group',
+            'bg-white border rounded-xl p-3 text-start transition-all duration-150 flex items-center gap-3 group',
             statusFilter === 'on-track'
               ? 'border-emerald-600 shadow-[0_0_0_1px_rgba(16,185,129,1)] bg-emerald-50/20'
               : 'border-slate-200 shadow-2xs hover:border-slate-300'
@@ -625,11 +626,11 @@ export default function InteriorNewProjectsView() {
             <TrendingUp className="w-4.5 h-4.5" />
           </div>
           <div className="min-w-0 flex-1">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block leading-tight">On Track</span>
+            <span className="text-[0.6875rem] font-semibold text-slate-500 uppercase tracking-wider block leading-tight">{tr("On Track")}</span>
             <div className="flex items-baseline gap-1.5 mt-0.5">
-              <span className="text-xl font-bold text-slate-900">{stats.onTrackCount}</span>
-              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
-                Active
+              <span className="text-xl font-bold text-slate-900">{tr(stats.onTrackCount)}</span>
+              <span className="text-[0.625rem] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+                {tr("Active")}
               </span>
             </div>
           </div>
@@ -640,7 +641,7 @@ export default function InteriorNewProjectsView() {
           type="button"
           onClick={() => setStatusFilter('at-risk')}
           className={cn(
-            'bg-white border rounded-xl p-3 text-left transition-all duration-150 flex items-center gap-3 group',
+            'bg-white border rounded-xl p-3 text-start transition-all duration-150 flex items-center gap-3 group',
             statusFilter === 'at-risk' || statusFilter === 'delayed'
               ? 'border-amber-600 shadow-[0_0_0_1px_rgba(245,158,11,1)] bg-amber-50/20'
               : 'border-slate-200 shadow-2xs hover:border-slate-300'
@@ -653,10 +654,10 @@ export default function InteriorNewProjectsView() {
             <AlertTriangle className="w-4.5 h-4.5" />
           </div>
           <div className="min-w-0 flex-1">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block leading-tight">At Risk</span>
+            <span className="text-[0.6875rem] font-semibold text-slate-500 uppercase tracking-wider block leading-tight">{tr("At Risk")}</span>
             <div className="flex items-baseline gap-1.5 mt-0.5">
-              <span className="text-xl font-bold text-slate-900">{stats.atRiskCount}</span>
-              <span className="text-[11px] text-slate-500">delayed</span>
+              <span className="text-xl font-bold text-slate-900">{tr(stats.atRiskCount)}</span>
+              <span className="text-[0.6875rem] text-slate-500">{tr("delayed")}</span>
             </div>
           </div>
         </button>
@@ -666,7 +667,7 @@ export default function InteriorNewProjectsView() {
           type="button"
           onClick={() => setStatusFilter('completed')}
           className={cn(
-            'bg-white border rounded-xl p-3 text-left transition-all duration-150 flex items-center gap-3 group',
+            'bg-white border rounded-xl p-3 text-start transition-all duration-150 flex items-center gap-3 group',
             statusFilter === 'completed'
               ? 'border-indigo-600 shadow-[0_0_0_1px_rgba(79,70,229,1)] bg-indigo-50/20'
               : 'border-slate-200 shadow-2xs hover:border-slate-300'
@@ -679,10 +680,10 @@ export default function InteriorNewProjectsView() {
             <CheckCircle2 className="w-4.5 h-4.5" />
           </div>
           <div className="min-w-0 flex-1">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block leading-tight">Completed</span>
+            <span className="text-[0.6875rem] font-semibold text-slate-500 uppercase tracking-wider block leading-tight">{tr("Completed")}</span>
             <div className="flex items-baseline gap-1.5 mt-0.5">
-              <span className="text-xl font-bold text-slate-900">{stats.completedCount}</span>
-              <span className="text-[11px] text-slate-500">finished</span>
+              <span className="text-xl font-bold text-slate-900">{tr(stats.completedCount)}</span>
+              <span className="text-[0.6875rem] text-slate-500">{tr("finished")}</span>
             </div>
           </div>
         </button>
@@ -698,10 +699,10 @@ export default function InteriorNewProjectsView() {
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search projects by name, code, client, city..."
+              placeholder={tr("Search projects by name, code, client, city...")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-8 py-1.5 text-xs sm:text-sm rounded-lg border border-slate-200 bg-slate-50/70 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+              className="w-full ps-9 pe-8 py-1.5 text-xs sm:text-sm rounded-lg border border-slate-200 bg-slate-50/70 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
             />
             {search && (
               <button
@@ -723,13 +724,13 @@ export default function InteriorNewProjectsView() {
                   ? 'bg-blue-50 text-blue-700 border-blue-200'
                   : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
               )}
-              title="Toggle Advanced Filters"
+              title={tr("Toggle Advanced Filters")}
             >
               <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
-              <span className="hidden sm:inline">Filters</span>
+              <span className="hidden sm:inline">{tr("Filters")}</span>
               {activeFilterCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-semibold flex items-center justify-center">
-                  {activeFilterCount}
+                <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[0.625rem] font-semibold flex items-center justify-center">
+                  {tr(activeFilterCount)}
                 </span>
               )}
               <ChevronDown className={cn('w-3.5 h-3.5 text-slate-400 transition-transform duration-200', isFilterOpen && 'rotate-180')} />
@@ -745,7 +746,7 @@ export default function InteriorNewProjectsView() {
                     ? 'bg-white text-blue-600 shadow-xs font-semibold'
                     : 'text-slate-400 hover:text-slate-700'
                 )}
-                title="Grid Cards View"
+                title={tr("Grid Cards View")}
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
@@ -757,7 +758,7 @@ export default function InteriorNewProjectsView() {
                     ? 'bg-white text-blue-600 shadow-xs font-semibold'
                     : 'text-slate-400 hover:text-slate-700'
                 )}
-                title="Table List View"
+                title={tr("Table List View")}
               >
                 <List className="w-4 h-4" />
               </button>
@@ -780,14 +781,14 @@ export default function InteriorNewProjectsView() {
                 <div className="md:col-span-6 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-slate-700">
-                      Project Category / Type
+                      {tr("Project Category / Type")}
                     </label>
                     {typeFilter !== 'all' && (
                       <button
                         onClick={() => setTypeFilter('all')}
                         className="text-xs font-medium text-blue-600 hover:underline"
                       >
-                        Reset Type
+                        {tr("Reset Type")}
                       </button>
                     )}
                   </div>
@@ -801,7 +802,7 @@ export default function InteriorNewProjectsView() {
                           : 'bg-white text-slate-600 border-slate-200 hover:text-slate-900 hover:bg-slate-50'
                       )}
                     >
-                      All Types
+                      {tr("All Types")}
                     </button>
                     {projectTypes.map((t) => (
                       <button
@@ -814,7 +815,7 @@ export default function InteriorNewProjectsView() {
                             : 'bg-white text-slate-600 border-slate-200 hover:text-slate-900 hover:bg-slate-50'
                         )}
                       >
-                        {t}
+                        {tr(t)}
                       </button>
                     ))}
                   </div>
@@ -823,19 +824,19 @@ export default function InteriorNewProjectsView() {
                 {/* Sort By Dropdown */}
                 <div className="md:col-span-4 space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700">
-                    Sort Order
+                    {tr("Sort Order")}
                   </label>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as SortOption)}
                     className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white"
                   >
-                    <option value="newest">Recently Added (Default)</option>
-                    <option value="budget-high">Budget: High → Low</option>
-                    <option value="budget-low">Budget: Low → High</option>
-                    <option value="progress-high">Progress: High → Low</option>
-                    <option value="progress-low">Progress: Low → High</option>
-                    <option value="name">Project Name: A → Z</option>
+                    <option value="newest">{tr("Recently Added (Default)")}</option>
+                    <option value="budget-high">{tr("Budget: High → Low")}</option>
+                    <option value="budget-low">{tr("Budget: Low → High")}</option>
+                    <option value="progress-high">{tr("Progress: High → Low")}</option>
+                    <option value="progress-low">{tr("Progress: Low → High")}</option>
+                    <option value="name">{tr("Project Name: A → Z")}</option>
                   </select>
                 </div>
 
@@ -850,10 +851,10 @@ export default function InteriorNewProjectsView() {
                       className="w-full py-1.5 px-3 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-xs font-medium text-slate-600 transition-all flex items-center justify-center gap-1.5"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
-                      Reset Filters
+                      {tr("Reset Filters")}
                     </button>
                   ) : (
-                    <span className="text-xs text-slate-400 text-right w-full">Default sorting applied</span>
+                    <span className="text-xs text-slate-400 text-end w-full">{tr("Default sorting applied")}</span>
                   )}
                 </div>
               </div>
@@ -864,28 +865,28 @@ export default function InteriorNewProjectsView() {
         {/* Active Filter Chips Line */}
         {(activeFilterCount > 0 || search || statusFilter !== 'all') && (
           <div className="flex items-center gap-1.5 flex-wrap pt-1 text-xs border-t border-slate-200/60">
-            <span className="text-xs font-medium text-slate-400">Active:</span>
+            <span className="text-xs font-medium text-slate-400">{tr("Active:")}</span>
             {search && (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 text-xs border border-slate-200">
-                Search: &quot;{search}&quot;
+                {tr("Search: \"")}{tr(search)}&quot;
                 <X className="w-3.5 h-3.5 cursor-pointer hover:text-rose-600" onClick={() => setSearch('')} />
               </span>
             )}
             {statusFilter !== 'all' && (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 text-xs border border-blue-200">
-                Status: {statusFilter.replace('-', ' ')}
+                {tr("Status: ")}{statusFilter.replace('-', ' ')}
                 <X className="w-3.5 h-3.5 cursor-pointer hover:text-rose-600" onClick={() => setStatusFilter('all')} />
               </span>
             )}
             {typeFilter !== 'all' && (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 text-xs border border-blue-200">
-                Type: {typeFilter}
+                {tr("Type: ")}{tr(typeFilter)}
                 <X className="w-3.5 h-3.5 cursor-pointer hover:text-rose-600" onClick={() => setTypeFilter('all')} />
               </span>
             )}
             {sortBy !== 'newest' && (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 text-xs border border-blue-200">
-                Sort: {sortBy.replace('-', ' ')}
+                {tr("Sort: ")}{sortBy.replace('-', ' ')}
                 <X className="w-3.5 h-3.5 cursor-pointer hover:text-rose-600" onClick={() => setSortBy('newest')} />
               </span>
             )}
@@ -896,9 +897,9 @@ export default function InteriorNewProjectsView() {
                 setSortBy('newest');
                 setStatusFilter('all');
               }}
-              className="text-xs font-medium text-rose-600 hover:underline ml-1"
+              className="text-xs font-medium text-rose-600 hover:underline ms-1"
             >
-              Clear all
+              {tr("Clear all")}
             </button>
           </div>
         )}
@@ -911,11 +912,11 @@ export default function InteriorNewProjectsView() {
             <Building2 className="w-7 h-7" />
           </div>
           <div>
-            <h3 className="text-base sm:text-lg font-bold text-[hsl(var(--foreground))]">No Projects Found</h3>
+            <h3 className="text-base sm:text-lg font-bold text-[hsl(var(--foreground))]">{tr("No Projects Found")}</h3>
             <p className="text-xs sm:text-sm text-[hsl(var(--muted-foreground))] max-w-sm mt-1">
               {search || statusFilter !== 'all'
-                ? 'No projects match your active search or filter criteria. Try resetting filters.'
-                : 'Create your first interior fit-out project to begin tracking milestones and budgets.'}
+                ? tr("No projects match your active search or filter criteria. Try resetting filters.")
+                : tr("Create your first interior fit-out project to begin tracking milestones and budgets.")}
             </p>
           </div>
           {search || statusFilter !== 'all' ? (
@@ -928,7 +929,7 @@ export default function InteriorNewProjectsView() {
                 setTypeFilter('all');
               }}
             >
-              Clear Filters
+              {tr("Clear Filters")}
             </Button>
           ) : (
             <Button
@@ -938,7 +939,7 @@ export default function InteriorNewProjectsView() {
               }}
             >
               <Plus className="w-4 h-4" />
-              Create Project
+              {tr("Create Project")}
             </Button>
           )}
         </div>
@@ -968,18 +969,18 @@ export default function InteriorNewProjectsView() {
         /* ── TABLE LIST VIEW ── */
         <Card className="overflow-hidden border border-[hsl(var(--border))] rounded-2xl">
           <div className="overflow-x-auto min-w-full">
-            <table className="w-full text-left text-xs sm:text-sm">
+            <table className="w-full text-start text-xs sm:text-sm">
               <thead>
-                <tr className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.4)] text-[hsl(var(--muted-foreground))] uppercase font-bold text-[10px] tracking-wider">
-                  <th className="py-3.5 px-4">Project & Code</th>
-                  <th className="py-3.5 px-4">Client</th>
-                  <th className="py-3.5 px-4">Health Status</th>
-                  <th className="py-3.5 px-4">Progress</th>
-                  <th className="py-3.5 px-4">Contract Budget</th>
-                  <th className="py-3.5 px-4">Start Date</th>
-                  <th className="py-3.5 px-4">City</th>
-                  <th className="py-3.5 px-4">Team</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
+                <tr className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.4)] text-[hsl(var(--muted-foreground))] uppercase font-bold text-[0.625rem] tracking-wider">
+                  <th className="py-3.5 px-4">{tr("Project & Code")}</th>
+                  <th className="py-3.5 px-4">{tr("Client")}</th>
+                  <th className="py-3.5 px-4">{tr("Health Status")}</th>
+                  <th className="py-3.5 px-4">{tr("Progress")}</th>
+                  <th className="py-3.5 px-4">{tr("Contract Budget")}</th>
+                  <th className="py-3.5 px-4">{tr("Start Date")}</th>
+                  <th className="py-3.5 px-4">{tr("City")}</th>
+                  <th className="py-3.5 px-4">{tr("Team")}</th>
+                  <th className="py-3.5 px-4 text-end">{tr("Actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[hsl(var(--border))]">
@@ -1000,14 +1001,14 @@ export default function InteriorNewProjectsView() {
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-lg bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center shrink-0 font-bold font-mono text-xs">
-                            {project.code?.slice(-3) || 'PRJ'}
+                            {project.code?.slice(-3) || tr("PRJ")}
                           </div>
                           <div>
                             <p className="font-bold text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))] transition-colors line-clamp-1">
-                              {project.name}
+                              {tr(project.name)}
                             </p>
-                            <span className="text-[10px] font-mono text-[hsl(var(--muted-foreground))]">
-                              {project.code} • {project.type || 'General'}
+                            <span className="text-[0.625rem] font-mono text-[hsl(var(--muted-foreground))]">
+                              {project.code} • {project.type || tr("General")}
                             </span>
                           </div>
                         </div>
@@ -1018,18 +1019,18 @@ export default function InteriorNewProjectsView() {
                       <td className="py-3.5 px-4">
                         <span
                           className={cn(
-                            'px-2.5 py-0.5 text-[10px] font-bold rounded-full border inline-flex items-center gap-1.5',
+                            'px-2.5 py-0.5 text-[0.625rem] font-bold rounded-full border inline-flex items-center gap-1.5',
                             health.bgColor,
                             health.textColor,
                             health.borderColor
                           )}
                         >
                           <span className={cn('w-1.5 h-1.5 rounded-full', health.dotColor)} />
-                          {health.label}
+                          {tr(health.label)}
                         </span>
                       </td>
                       <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-2 max-w-[120px]">
+                        <div className="flex items-center gap-2 max-w-[7.5rem]">
                           <div className="flex-1 h-1.5 bg-[hsl(var(--muted))] rounded-full overflow-hidden">
                             <div
                               className={cn('h-full rounded-full bg-gradient-to-r', health.barGradient)}
@@ -1037,7 +1038,7 @@ export default function InteriorNewProjectsView() {
                             />
                           </div>
                           <span className="text-xs font-mono font-bold text-[hsl(var(--foreground))]">
-                            {progressVal}%
+                            {tr(progressVal)}%
                           </span>
                         </div>
                       </td>
@@ -1056,7 +1057,7 @@ export default function InteriorNewProjectsView() {
                           <span>{project.teamSize || 1}</span>
                         </div>
                       </td>
-                      <td className="py-3.5 px-4 text-right">
+                      <td className="py-3.5 px-4 text-end">
                         <div className="flex items-center justify-end gap-1">
                           {canDo('projects', 'update') && (
                             <button
@@ -1080,7 +1081,7 @@ export default function InteriorNewProjectsView() {
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           )}
-                          <ArrowUpRight className="w-4 h-4 ml-1 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] group-hover:translate-x-0.5 transition-all" />
+                          <ArrowUpRight className="w-4 h-4 ms-1 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] group-hover:translate-x-0.5 transition-all" />
                         </div>
                       </td>
                     </tr>
@@ -1109,10 +1110,10 @@ export default function InteriorNewProjectsView() {
                   </div>
                   <div>
                     <h3 className="text-sm sm:text-lg font-black text-[hsl(var(--foreground))]">
-                      {editingProjectId ? 'Edit Project Parameters' : 'Create New Interior Fit-Out'}
+                      {editingProjectId ? tr("Edit Project Parameters") : tr("Create New Interior Fit-Out")}
                     </h3>
-                    <p className="text-[11px] sm:text-xs text-[hsl(var(--muted-foreground))]">
-                      {editingProjectId ? 'Update budget, timeline, and location' : 'Configure project delivery specifications'}
+                    <p className="text-[0.6875rem] sm:text-xs text-[hsl(var(--muted-foreground))]">
+                      {editingProjectId ? tr("Update budget, timeline, and location") : tr("Configure project delivery specifications")}
                     </p>
                   </div>
                 </div>
@@ -1129,58 +1130,58 @@ export default function InteriorNewProjectsView() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                     <div className="space-y-1.5 sm:col-span-2">
                       <label className="text-xs font-bold text-[hsl(var(--foreground))]">
-                        Project Name <span className="text-rose-500">*</span>
+                        {tr("Project Name ")}<span className="text-rose-500">*</span>
                       </label>
                       <Input
                         required
                         maxLength={80}
-                        placeholder="e.g. Skyline Tower C — 4th Floor"
+                        placeholder={tr("e.g. Skyline Tower C — 4th Floor")}
                         value={formData.name}
                         onChange={(e) => updateFormField('name', e.target.value)}
                         className={cn(formErrors.name && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
                       />
                       {formErrors.name && (
-                        <p className="text-[11px] font-medium text-rose-500 flex items-center gap-1 mt-1">
+                        <p className="text-[0.6875rem] font-medium text-rose-500 flex items-center gap-1 mt-1">
                           <AlertCircle className="w-3 h-3 shrink-0" />
-                          {formErrors.name}
+                          {tr(formErrors.name)}
                         </p>
                       )}
                     </div>
 
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-[hsl(var(--foreground))]">
-                        Client / Customer Name <span className="text-rose-500">*</span>
+                        {tr("Client / Customer Name ")}<span className="text-rose-500">*</span>
                       </label>
                       <Input
                         required
                         maxLength={60}
-                        placeholder="e.g. Horizon Commercial Ltd"
+                        placeholder={tr("e.g. Horizon Commercial Ltd")}
                         value={formData.client}
                         onChange={(e) => updateFormField('client', e.target.value)}
                         className={cn(formErrors.client && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
                       />
                       {formErrors.client && (
-                        <p className="text-[11px] font-medium text-rose-500 flex items-center gap-1 mt-1">
+                        <p className="text-[0.6875rem] font-medium text-rose-500 flex items-center gap-1 mt-1">
                           <AlertCircle className="w-3 h-3 shrink-0" />
-                          {formErrors.client}
+                          {tr(formErrors.client)}
                         </p>
                       )}
                     </div>
 
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-[hsl(var(--foreground))]">
-                        Project Category / Type
+                        {tr("Project Category / Type")}
                       </label>
                       <select
                         className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1.5 focus:ring-[hsl(var(--primary))]"
                         value={formData.type}
                         onChange={(e) => updateFormField('type', e.target.value)}
                       >
-                        <option value="Commercial Office">Commercial Office</option>
-                        <option value="Residential">Residential</option>
-                        <option value="Tech Office">Tech Office</option>
-                        <option value="Co-working Space">Co-working Space</option>
-                        <option value="General">General</option>
+                        <option value="Commercial Office">{tr("Commercial Office")}</option>
+                        <option value="Residential">{tr("Residential")}</option>
+                        <option value="Tech Office">{tr("Tech Office")}</option>
+                        <option value="Co-working Space">{tr("Co-working Space")}</option>
+                        <option value="General">{tr("General")}</option>
                       </select>
                     </div>
                   </div>
@@ -1189,7 +1190,7 @@ export default function InteriorNewProjectsView() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4 pt-2 border-t border-[hsl(var(--border)/0.5)]">
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5 text-[hsl(var(--primary))]" /> Start Date <span className="text-rose-500">*</span>
+                        <Calendar className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />{tr(" Start Date ")}<span className="text-rose-500">*</span>
                       </label>
                       <Input
                         required
@@ -1199,15 +1200,15 @@ export default function InteriorNewProjectsView() {
                         className={cn(formErrors.startDate && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
                       />
                       {formErrors.startDate && (
-                        <p className="text-[11px] font-medium text-rose-500 flex items-center gap-1 mt-1">
+                        <p className="text-[0.6875rem] font-medium text-rose-500 flex items-center gap-1 mt-1">
                           <AlertCircle className="w-3 h-3 shrink-0" />
-                          {formErrors.startDate}
+                          {tr(formErrors.startDate)}
                         </p>
                       )}
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5 text-amber-500" /> Target Completion Date <span className="text-rose-500">*</span>
+                        <Calendar className="w-3.5 h-3.5 text-amber-500" />{tr(" Target Completion Date ")}<span className="text-rose-500">*</span>
                       </label>
                       <Input
                         required
@@ -1217,9 +1218,9 @@ export default function InteriorNewProjectsView() {
                         className={cn(formErrors.endDate && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
                       />
                       {formErrors.endDate && (
-                        <p className="text-[11px] font-medium text-rose-500 flex items-center gap-1 mt-1">
+                        <p className="text-[0.6875rem] font-medium text-rose-500 flex items-center gap-1 mt-1">
                           <AlertCircle className="w-3 h-3 shrink-0" />
-                          {formErrors.endDate}
+                          {tr(formErrors.endDate)}
                         </p>
                       )}
                     </div>
@@ -1229,7 +1230,7 @@ export default function InteriorNewProjectsView() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4 pt-2 border-t border-[hsl(var(--border)/0.5)]">
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1">
-                        <Wallet className="w-3.5 h-3.5 text-emerald-600" /> Contract Budget ({currencySymbol}) <span className="text-rose-500">*</span>
+                        <Wallet className="w-3.5 h-3.5 text-emerald-600" />{tr(" Contract Budget (")}{tr(currencySymbol)}) <span className="text-rose-500">*</span>
                       </label>
                       <Input
                         required
@@ -1242,27 +1243,27 @@ export default function InteriorNewProjectsView() {
                         className={cn(formErrors.budgetAmount && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
                       />
                       {formErrors.budgetAmount && (
-                        <p className="text-[11px] font-medium text-rose-500 flex items-center gap-1 mt-1">
+                        <p className="text-[0.6875rem] font-medium text-rose-500 flex items-center gap-1 mt-1">
                           <AlertCircle className="w-3 h-3 shrink-0" />
-                          {formErrors.budgetAmount}
+                          {tr(formErrors.budgetAmount)}
                         </p>
                       )}
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-rose-500" /> City
+                        <MapPin className="w-3.5 h-3.5 text-rose-500" />{tr(" City")}
                       </label>
                       <Input
                         maxLength={50}
-                        placeholder="e.g. New York"
+                        placeholder={tr("e.g. New York")}
                         value={formData.city}
                         onChange={(e) => updateFormField('city', e.target.value)}
                         className={cn(formErrors.city && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
                       />
                       {formErrors.city && (
-                        <p className="text-[11px] font-medium text-rose-500 flex items-center gap-1 mt-1">
+                        <p className="text-[0.6875rem] font-medium text-rose-500 flex items-center gap-1 mt-1">
                           <AlertCircle className="w-3 h-3 shrink-0" />
-                          {formErrors.city}
+                          {tr(formErrors.city)}
                         </p>
                       )}
                     </div>
@@ -1270,26 +1271,26 @@ export default function InteriorNewProjectsView() {
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-[hsl(var(--foreground))]">
-                      Site Address
+                      {tr("Site Address")}
                     </label>
                     <Input
                       maxLength={120}
-                      placeholder="e.g. 100 Madison Ave, Floor 14"
+                      placeholder={tr("e.g. 100 Madison Ave, Floor 14")}
                       value={formData.address}
                       onChange={(e) => updateFormField('address', e.target.value)}
                       className={cn(formErrors.address && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500')}
                     />
                     {formErrors.address && (
-                      <p className="text-[11px] font-medium text-rose-500 flex items-center gap-1 mt-1">
+                      <p className="text-[0.6875rem] font-medium text-rose-500 flex items-center gap-1 mt-1">
                         <AlertCircle className="w-3 h-3 shrink-0" />
-                        {formErrors.address}
+                        {tr(formErrors.address)}
                       </p>
                     )}
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-[hsl(var(--foreground))]">
-                      Project Notes & Scope Description
+                      {tr("Project Notes & Scope Description")}
                     </label>
                     <textarea
                       rows={3}
@@ -1298,14 +1299,14 @@ export default function InteriorNewProjectsView() {
                         'w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-1.5 focus:ring-[hsl(var(--primary))]',
                         formErrors.description && 'border-rose-500 ring-1 ring-rose-500 focus:border-rose-500 focus:ring-rose-500'
                       )}
-                      placeholder="Specify fit-out highlights, architectural scope..."
+                      placeholder={tr("Specify fit-out highlights, architectural scope...")}
                       value={formData.description}
                       onChange={(e) => updateFormField('description', e.target.value)}
                     />
                     {formErrors.description && (
-                      <p className="text-[11px] font-medium text-rose-500 flex items-center gap-1 mt-1">
+                      <p className="text-[0.6875rem] font-medium text-rose-500 flex items-center gap-1 mt-1">
                         <AlertCircle className="w-3 h-3 shrink-0" />
-                        {formErrors.description}
+                        {tr(formErrors.description)}
                       </p>
                     )}
                   </div>
@@ -1313,11 +1314,11 @@ export default function InteriorNewProjectsView() {
 
                 <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 p-4 sm:p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)] shrink-0">
                   <Button variant="outline" type="button" onClick={handleCloseDialog} className="w-full sm:w-auto">
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                   <Button type="submit" disabled={createLoading} className="w-full sm:w-auto font-semibold">
-                    {createLoading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    {editingProjectId ? 'Save Changes' : 'Create Project'}
+                    {createLoading && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+                    {editingProjectId ? tr("Save Changes") : tr("Create Project")}
                   </Button>
                 </div>
               </form>
@@ -1342,25 +1343,25 @@ export default function InteriorNewProjectsView() {
                     <AlertTriangle className="w-5 h-5 text-rose-600" />
                   </div>
                   <div>
-                    <h3 className="text-base font-black text-[hsl(var(--foreground))]">Delete Project</h3>
-                    <p className="text-xs text-[hsl(var(--muted-foreground))]">Irreversible operation</p>
+                    <h3 className="text-base font-black text-[hsl(var(--foreground))]">{tr("Delete Project")}</h3>
+                    <p className="text-xs text-[hsl(var(--muted-foreground))]">{tr("Irreversible operation")}</p>
                   </div>
                 </div>
                 <p className="text-xs sm:text-sm text-[hsl(var(--muted-foreground))] mt-2 leading-relaxed">
-                  Are you sure you want to delete <span className="font-bold text-[hsl(var(--foreground))]">{projectToDelete.name}</span>? All linked tasks, milestones, and reports will be soft-deleted.
+                  {tr("Are you sure you want to delete ")}<span className="font-bold text-[hsl(var(--foreground))]">{tr(projectToDelete.name)}</span>{tr("? All linked tasks, milestones, and reports will be soft-deleted.")}
                 </p>
               </div>
               <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 p-4 sm:p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
                 <Button variant="outline" onClick={() => setProjectToDelete(null)} disabled={deleteLoading} className="w-full sm:w-auto">
-                  Cancel
+                  {tr("Cancel")}
                 </Button>
                 <Button
                   onClick={confirmDelete}
                   disabled={deleteLoading}
                   className="w-full sm:w-auto bg-rose-600 hover:bg-rose-700 text-white font-bold border-transparent"
                 >
-                  {deleteLoading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                  Confirm Delete
+                  {deleteLoading && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+                  {tr("Confirm Delete")}
                 </Button>
               </div>
             </motion.div>

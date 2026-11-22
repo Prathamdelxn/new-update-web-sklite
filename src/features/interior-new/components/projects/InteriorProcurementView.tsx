@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Port of interior-os-frontend's projects/[projectId]/procurement/page.tsx.
 // Uses window.confirm instead of the source app's useConfirm dialog context
@@ -187,11 +188,11 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   const handleRecordPaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!payingPo || !paymentForm.amount || parseFloat(paymentForm.amount) <= 0) {
-      toast.error('Please enter a valid payment amount');
+      toast.error(tr("Please enter a valid payment amount"));
       return;
     }
     if (!paymentForm.referenceNo.trim()) {
-      toast.error('Reference / UTR number is required');
+      toast.error(tr("Reference / UTR number is required"));
       return;
     }
 
@@ -211,11 +212,11 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
         projectLocation: paymentForm.projectLocation?.trim(),
         invoiceNo: paymentForm.invoiceNo?.trim(),
       });
-      toast.success('Vendor payment recorded successfully in Payments Outflow!');
+      toast.success(tr("Vendor payment recorded successfully in Payments Outflow!"));
       setIsPayModalOpen(false);
       invalidateProcurementData();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to record payment');
+      toast.error(err?.response?.data?.message || tr("Failed to record payment"));
     } finally {
       setIsSubmittingPayment(false);
     }
@@ -228,15 +229,15 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
   const handleAddItem = () => {
     if (!newItem.name.trim()) {
-      toast.error('Please select a Product Name before adding the item');
+      toast.error(tr("Please select a Product Name before adding the item"));
       return;
     }
     if (newItem.quantity <= 0) {
-      toast.error('Quantity must be greater than zero');
+      toast.error(tr("Quantity must be greater than zero"));
       return;
     }
     if (newItem.unitPrice < 0) {
-      toast.error('Rate cannot be negative');
+      toast.error(tr("Rate cannot be negative"));
       return;
     }
     setPoItems((prev) => [...prev, { ...newItem }]);
@@ -262,14 +263,14 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
           productName: newMaterialName?.replace(' ||CLOSED||', ''),
           unit: newMaterialUnit,
         });
-        toast.success('Material updated successfully');
+        toast.success(tr("Material updated successfully"));
       } else {
         await interiorProjectService.createInventoryMaterial(projectId, {
           productName: newMaterialName?.replace(' ||CLOSED||', ''),
           unit: newMaterialUnit,
           initialStock: newMaterialStock === '' ? 0 : Number(newMaterialStock),
         });
-        toast.success('Material added to inventory successfully');
+        toast.success(tr("Material added to inventory successfully"));
       }
       setNewMaterialName('');
       setNewMaterialUnit('');
@@ -279,7 +280,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       invalidateProcurementData();
     } catch (err: any) {
       console.error('Failed to create/update material', err);
-      toast.error(err.response?.data?.error || err.response?.data?.message || 'Failed to save material');
+      toast.error(err.response?.data?.error || err.response?.data?.message || tr("Failed to save material"));
     } finally {
       setCreatingMaterial(false);
     }
@@ -287,18 +288,18 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
   const handleDeleteMaterial = async (item: any) => {
     const ok = await confirm({
-      title: 'Delete Material',
-      message: 'Are you sure you want to delete this material? This will permanently remove it from inventory.',
+      title: tr("Delete Material"),
+      message: tr("Are you sure you want to delete this material? This will permanently remove it from inventory."),
       confirmText: 'Delete',
       type: 'danger',
     });
     if (!ok) return;
     try {
       await interiorProjectService.deleteInventoryMaterial(projectId, item._id);
-      toast.success('Material deleted successfully');
+      toast.success(tr("Material deleted successfully"));
       invalidateProcurementData();
     } catch (err: any) {
-      toast.error('Failed to delete material');
+      toast.error(tr("Failed to delete material"));
       console.error(err);
     }
   };
@@ -310,7 +311,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   const handleCreatePO = async (e: React.FormEvent) => {
     e.preventDefault();
     if (poItems.length === 0) {
-      toast.error('Please add at least one item to the Purchase Order');
+      toast.error(tr("Please add at least one item to the Purchase Order"));
       return;
     }
     try {
@@ -321,7 +322,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
         deliveryDate: deliveryDate || undefined,
         status: activePipeline === 'requested' ? 'requested' : 'pending',
       });
-      toast.success(activePipeline === 'requested' ? 'Material request created successfully' : 'Purchase Order created successfully');
+      toast.success(activePipeline === 'requested' ? tr("Material request created successfully") : tr("Purchase Order created successfully"));
       setIsAddPoOpen(false);
       setVendorName('');
       setDeliveryDate('');
@@ -329,7 +330,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       invalidateProcurementData();
     } catch (err: any) {
       console.error('Failed to create PO', err);
-      toast.error(err.response?.data?.error || err.response?.data?.message || 'Failed to create Purchase Order');
+      toast.error(err.response?.data?.error || err.response?.data?.message || tr("Failed to create Purchase Order"));
     } finally {
       setCreatingPo(false);
     }
@@ -346,7 +347,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       invalidateProcurementData();
     } catch (err) {
       console.error('Failed to update status', err);
-      toast.error('Failed to update PO status');
+      toast.error(tr("Failed to update PO status"));
       invalidateProcurementData();
     } finally {
       setUpdatingPo(false);
@@ -402,18 +403,18 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
             materialName: selectedPo.materialName?.replace(' ||CLOSED||', '').trim(),
             poLink: poLink
           });
-          toast.success('Vendor selected, PO approved, and Email Sent automatically!');
+          toast.success(tr("Vendor selected, PO approved, and Email Sent automatically!"));
         } catch (emailErr) {
           console.error('Failed to send automated email', emailErr);
-          toast.error('PO approved, but failed to send automated email.');
+          toast.error(tr("PO approved, but failed to send automated email."));
         }
       } else if (targetPhone) {
         // Fallback to WhatsApp if no email is found but a phone number is present
         const waMessage = encodeURIComponent(`Hello ${vendorName},\n\nWe are pleased to inform you that you have been awarded the Purchase Order for ${selectedPo.materialName?.replace(' ||CLOSED||', '').trim()}.\n\nPlease review your PO details here:\n${poLink}\n\nThank you.`);
         window.open(`https://wa.me/${targetPhone}?text=${waMessage}`, '_blank');
-        toast.success('Vendor selected and PO approved! Opened WhatsApp.');
+        toast.success(tr("Vendor selected and PO approved! Opened WhatsApp."));
       } else {
-        toast.success('Vendor selected and PO approved!');
+        toast.success(tr("Vendor selected and PO approved!"));
       }
 
       setIsDetailOpen(false);
@@ -421,7 +422,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       invalidateProcurementData();
     } catch (err) {
       console.error('Failed to update vendor', err);
-      toast.error('Failed to update vendor');
+      toast.error(tr("Failed to update vendor"));
       invalidateProcurementData();
     } finally {
       setUpdatingPo(false);
@@ -495,9 +496,9 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
     if (selectedPo.status === 'approved') {
       const formattedAmount = formatCost(selectedPo.amount || 0);
       const ok = await confirm({
-        title: 'Approve & Lock PO',
-        message: `You are about to assign this PO to ${selectedPo.vendorName || 'the vendor'} and lock in the final rates at ${formattedAmount}. This cannot be easily undone. Do you want to proceed?`,
-        confirmText: 'Approve PO',
+        title: tr("Approve & Lock PO"),
+        message: tr("You are about to assign this PO to {{value}} and lock in the final rates at {{formattedAmount}}. This cannot be easily undone. Do you want to proceed?", { value: selectedPo.vendorName || 'the vendor', formattedAmount: formattedAmount }),
+        confirmText: tr("Approve PO"),
         type: 'warning',
       });
       if (!ok) return;
@@ -514,11 +515,11 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
       if (selectedPo.status === 'approved') {
         await autoCreatePaymentForPo(selectedPo);
       }
-      toast.success('PO Details saved successfully');
+      toast.success(tr("PO Details saved successfully"));
       invalidateProcurementData();
     } catch (err: any) {
       console.error('Failed to save PO details', err);
-      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to save details');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || tr("Failed to save details"));
     } finally {
       setUpdatingPo(false);
     }
@@ -527,21 +528,21 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   const handleDeletePO = async () => {
     if (!selectedPo) return;
     const ok = await confirm({
-      title: 'Delete Purchase Order',
-      message: 'Are you sure you want to delete this Purchase Order? This will permanently delete the PO and its material history.',
-      confirmText: 'Delete PO',
+      title: tr("Delete Purchase Order"),
+      message: tr("Are you sure you want to delete this Purchase Order? This will permanently delete the PO and its material history."),
+      confirmText: tr("Delete PO"),
       type: 'danger',
     });
     if (!ok) return;
     try {
       setUpdatingPo(true);
       await interiorProjectService.deletePurchaseOrder(projectId, selectedPo._id);
-      toast.success('Purchase Order deleted successfully');
+      toast.success(tr("Purchase Order deleted successfully"));
       setIsDetailOpen(false);
       setSelectedPo(null);
       invalidateProcurementData();
     } catch (err) {
-      toast.error('Failed to delete Purchase Order');
+      toast.error(tr("Failed to delete Purchase Order"));
       console.error('Failed to delete PO', err);
     } finally {
       setUpdatingPo(false);
@@ -555,7 +556,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
     const available = selectedStock.totalReceived - selectedStock.installedQuantity;
     if (qty > available) {
-      setInstallError(`Cannot use more than available stock (${available} ${selectedStock.unit})`);
+      setInstallError(tr("Cannot use more than available stock ({{available}} {{unit}})", { available: available, unit: selectedStock.unit }));
       return;
     }
 
@@ -567,14 +568,14 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
         quantity: qty,
         notes: installNotes || undefined,
       });
-      toast.success('Material usage logged successfully');
+      toast.success(tr("Material usage logged successfully"));
       setIsInstallOpen(false);
       setInstallQty('');
       setInstallNotes('');
       invalidateProcurementData();
     } catch (err: any) {
       console.error('Failed to log material usage', err);
-      setInstallError(err.response?.data?.message || 'Failed to log material usage');
+      setInstallError(err.response?.data?.message || tr("Failed to log material usage"));
     } finally {
       setLoggingInstall(false);
     }
@@ -605,34 +606,34 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
     <div className="p-6 lg:p-8 space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Procurement & Inventory</h2>
+        <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">{tr("Procurement & Inventory")}</h2>
         <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-          Manage trade orders, track deliveries, and log materials installed on-site.
+          {tr("Manage trade orders, track deliveries, and log materials installed on-site.")}
         </p>
       </div>
 
       {/* Aggregate Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <Card className="p-4 flex items-center justify-between border-l-4 border-l-blue-500">
+        <Card className="p-4 flex items-center justify-between border-s-4 border-s-blue-500">
           <div>
-            <p className="text-xs text-[hsl(var(--muted-foreground))]">Total Procurement Budget</p>
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">{tr("Total Procurement Budget")}</p>
             <p className="text-xl font-bold mt-1">{formatCost(pos.reduce((acc: number, c: any) => acc + (c.amount || 0), 0))}</p>
           </div>
           <ShoppingCart className="w-8 h-8 text-blue-500/20" />
         </Card>
-        <Card className="p-4 flex items-center justify-between border-l-4 border-l-amber-500">
+        <Card className="p-4 flex items-center justify-between border-s-4 border-s-amber-500">
           <div>
-            <p className="text-xs text-[hsl(var(--muted-foreground))]">Active Purchase Orders</p>
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">{tr("Active Purchase Orders")}</p>
             <p className="text-xl font-bold mt-1">
-              {pos.filter((po: any) => ['approved'].includes(po.status)).length} POs
+              {pos.filter((po: any) => ['approved'].includes(po.status)).length}{tr(" POs")}
             </p>
           </div>
           <Truck className="w-8 h-8 text-amber-500/20" />
         </Card>
-        <Card className="p-4 flex items-center justify-between border-l-4 border-l-emerald-500">
+        <Card className="p-4 flex items-center justify-between border-s-4 border-s-emerald-500">
           <div>
-            <p className="text-xs text-[hsl(var(--muted-foreground))]">POs Received / Delivered</p>
-            <p className="text-xl font-bold mt-1">{pos.filter((po: any) => po.status === 'delivered').length} POs</p>
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">{tr("POs Received / Delivered")}</p>
+            <p className="text-xl font-bold mt-1">{pos.filter((po: any) => po.status === 'delivered').length}{tr(" POs")}</p>
           </div>
           <Package className="w-8 h-8 text-emerald-500/20" />
         </Card>
@@ -650,7 +651,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                   : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
               )}
             >
-              Procurement Board
+              {tr("Procurement Board")}
             </button>
             <button
               onClick={() => setActiveTab('inventory')}
@@ -661,7 +662,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                   : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
               )}
             >
-              Inventory Management
+              {tr("Inventory Management")}
             </button>
           </div>
         </div>
@@ -671,16 +672,16 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
               {activePipeline === 'requested' && (
                 canDo('procurement', 'create') && (
                   <Button onClick={() => setIsAddPoOpen(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Request Material
+                    <Plus className="w-4 h-4 me-2" />
+                    {tr("Request Material")}
                   </Button>
                 )
               )}
               {activePipeline === 'pending' && (
                 canDo('procurement', 'create') && (
                   <Button onClick={() => setIsAddPoOpen(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create PO
+                    <Plus className="w-4 h-4 me-2" />
+                    {tr("Create PO")}
                   </Button>
                 )
               )}
@@ -694,8 +695,8 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                 setNewMaterialStock(0);
                 setIsCreateMaterialOpen(true);
               }}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Material
+                <Plus className="w-4 h-4 me-2" />
+                {tr("Add Material")}
               </Button>
             )
           )}
@@ -726,9 +727,9 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                           isActive ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--muted-foreground))]'
                         )}
                       />
-                      <span className="whitespace-nowrap">{pipe.label}</span>
+                      <span className="whitespace-nowrap">{tr(pipe.label)}</span>
                       <span className={cn(
-                        'px-1.5 py-0.5 rounded-full text-[10px] ml-1 flex items-center justify-center min-w-[20px]',
+                        'px-1.5 py-0.5 rounded-full text-[0.625rem] ms-1 flex items-center justify-center min-w-[1.25rem]',
                         isActive ? 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]' : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
                       )}>
                         {items.length}
@@ -736,7 +737,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                       {isActive && (
                         <motion.div
                           layoutId="interiorProcurementFlowTabUnderline"
-                          className="absolute left-0 right-0 bottom-0 h-[3px] bg-[hsl(var(--primary))] rounded-t-full"
+                          className="absolute start-0 end-0 bottom-0 h-[0.1875rem] bg-[hsl(var(--primary))] rounded-t-full"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ type: 'spring', stiffness: 500, damping: 30 }}
@@ -793,20 +794,20 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                     className="p-5 border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] shadow-sm space-y-4 hover:border-[hsl(var(--primary)/0.3)] hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
                   >
                     <div>
-                      <div className="flex items-start justify-between gap-3 text-[11px] mb-2">
+                      <div className="flex items-start justify-between gap-3 text-[0.6875rem] mb-2">
                         <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                          <span className="font-mono font-medium text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded-md whitespace-nowrap">{item.poNumber}</span>
+                          <span className="font-mono font-medium text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded-md whitespace-nowrap">{tr(item.poNumber)}</span>
                           {isFullyPaid ? (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap bg-emerald-100 text-emerald-800 border border-emerald-200">
-                              Paid
+                            <span className="px-2 py-0.5 rounded-full text-[0.625rem] font-bold whitespace-nowrap bg-emerald-100 text-emerald-800 border border-emerald-200">
+                              {tr("Paid")}
                             </span>
                           ) : isPartiallyPaid ? (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap bg-amber-100 text-amber-800 border border-amber-200">
-                              Part Paid ({currencySymbol} {poPaidAmount})
+                            <span className="px-2 py-0.5 rounded-full text-[0.625rem] font-bold whitespace-nowrap bg-amber-100 text-amber-800 border border-amber-200">
+                              {tr("Part Paid (")}{tr(currencySymbol)} {tr(poPaidAmount)})
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap bg-slate-100 text-slate-600 border border-slate-200">
-                              Unpaid
+                            <span className="px-2 py-0.5 rounded-full text-[0.625rem] font-bold whitespace-nowrap bg-slate-100 text-slate-600 border border-slate-200">
+                              {tr("Unpaid")}
                             </span>
                           )}
                         </div>
@@ -814,11 +815,11 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                       </div>
                       <h4 className="text-base font-bold text-[hsl(var(--foreground))] line-clamp-1">{item.materialName?.replace(' ||CLOSED||', '')}</h4>
                       {item.status !== 'requested' && item.vendorName && item.vendorName !== 'Unassigned' && (
-                        <p className="text-xs text-[hsl(var(--muted-foreground))] truncate mt-1">Vendor: {item.vendorName}</p>
+                        <p className="text-xs text-[hsl(var(--muted-foreground))] truncate mt-1">{tr("Vendor: ")}{tr(item.vendorName)}</p>
                       )}
                     </div>
                     <div className="flex items-center justify-between border-t border-[hsl(var(--border))] pt-3 text-xs text-[hsl(var(--muted-foreground))]">
-                      <span className="font-medium">{item.items?.length || 1} product(s)</span>
+                      <span className="font-medium">{item.items?.length || 1}{tr(" product(s)")}</span>
                       {item.deliveryDate && (
                         <span className="flex items-center gap-1.5 font-medium">
                           <Clock className="w-4 h-4 text-blue-500" />
@@ -840,13 +841,13 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                               invalidateProcurementData();
                             } catch (err) {
                               console.error('Failed to update status to RFQ', err);
-                              toast.error((err as any)?.response?.data?.message || 'Failed to update RFQ status');
+                              toast.error((err as any)?.response?.data?.message || tr("Failed to update RFQ status"));
                             }
                           }}
                           className="w-full mt-2"
                           size="sm"
                         >
-                          Request for RFQ
+                          {tr("Request for RFQ")}
                         </Button>
                       )
                     )}
@@ -861,7 +862,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                           className="w-full mt-2 bg-emerald-500 hover:bg-emerald-600 text-white"
                           size="sm"
                         >
-                          Receive Material
+                          {tr("Receive Material")}
                         </Button>
                       )
                     )}
@@ -888,7 +889,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                           className="w-full mt-2 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 cursor-pointer flex items-center justify-center gap-1.5"
                         >
                           <CreditCard className="w-3.5 h-3.5" />
-                          Pay Vendor ({currencySymbol} {suggestedPayment.toLocaleString()})
+                          {tr("Pay Vendor (")}{tr(currencySymbol)} {suggestedPayment.toLocaleString()})
                         </Button>
                       )
                     )}
@@ -900,8 +901,8 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
             {pos.filter((po: any) => po.status === activePipeline).length === 0 && (
               <div className="text-center py-16">
                 <Package className="w-12 h-12 text-[hsl(var(--muted-foreground))] opacity-20 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">No Purchase Orders</h3>
-                <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">There are no orders in this stage currently.</p>
+                <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">{tr("No Purchase Orders")}</h3>
+                <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">{tr("There are no orders in this stage currently.")}</p>
               </div>
             )}
           </div>
@@ -912,9 +913,9 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
           {inventory.length === 0 ? (
             <Card className="p-12 text-center border border-dashed border-[hsl(var(--border))]">
               <Package className="w-12 h-12 text-[hsl(var(--muted-foreground))] mx-auto mb-3 opacity-40" />
-              <h3 className="text-sm font-bold">No Products in Inventory</h3>
+              <h3 className="text-sm font-bold">{tr("No Products in Inventory")}</h3>
               <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1 max-w-sm mx-auto">
-                Click "Add Material" to define your master catalog of materials!
+                {tr("Click \"Add Material\" to define your master catalog of materials!")}
               </p>
             </Card>
           ) : (
@@ -924,17 +925,17 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                 const percentInstalled = Math.round((item.installedQuantity / item.totalReceived) * 100) || 0;
 
                 return (
-                  <Card key={item._id} className="overflow-hidden flex flex-col h-[400px]">
+                  <Card key={item._id} className="overflow-hidden flex flex-col h-[25rem]">
                     <div className="p-4 bg-[hsl(var(--muted)/0.15)] border-b border-[hsl(var(--border))] space-y-4 shrink-0">
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1 min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <Package className="w-4 h-4 shrink-0 text-[hsl(var(--primary))]" />
-                            <h3 className="text-sm font-bold text-[hsl(var(--foreground))] truncate">{item.productName}</h3>
+                            <h3 className="text-sm font-bold text-[hsl(var(--foreground))] truncate">{tr(item.productName)}</h3>
                           </div>
                           <div className="flex items-center justify-between">
                             <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                              Unit: <span className="font-semibold text-[hsl(var(--foreground))]">{item.unit}</span>
+                              {tr("Unit: ")}<span className="font-semibold text-[hsl(var(--foreground))]">{tr(item.unit)}</span>
                             </p>
                             <div className="flex items-center gap-1">
                               {canDo('inventory', 'update') && (
@@ -944,12 +945,12 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                   setNewMaterialUnit(item.unit);
                                   setNewMaterialStock(''); // Not updated on edit
                                   setIsCreateMaterialOpen(true);
-                                }} className="p-1 text-[hsl(var(--muted-foreground))] hover:text-blue-500 rounded hover:bg-blue-50 transition-colors" title="Edit Material">
+                                }} className="p-1 text-[hsl(var(--muted-foreground))] hover:text-blue-500 rounded hover:bg-blue-50 transition-colors" title={tr("Edit Material")}>
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
                               )}
                               {canDo('inventory', 'delete') && (
-                                <button onClick={() => handleDeleteMaterial(item)} className="p-1 text-[hsl(var(--muted-foreground))] hover:text-red-500 rounded hover:bg-red-50 transition-colors" title="Delete Material">
+                                <button onClick={() => handleDeleteMaterial(item)} className="p-1 text-[hsl(var(--muted-foreground))] hover:text-red-500 rounded hover:bg-red-50 transition-colors" title={tr("Delete Material")}>
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                               )}
@@ -966,36 +967,36 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                             size="sm"
                             className="text-xs h-8 px-3 shrink-0"
                           >
-                            <Wrench className="w-3 h-3 mr-1.5" /> Log Used
+                            <Wrench className="w-3 h-3 me-1.5" />{tr(" Log Used")}
                           </Button>
                         )}
                       </div>
 
                       <div className="grid grid-cols-3 gap-2 text-center bg-[hsl(var(--card))] p-3 rounded-lg border border-[hsl(var(--border))]">
-                        <div className="space-y-0.5 border-r border-[hsl(var(--border))]">
-                          <span className="text-[9px] font-semibold text-[hsl(var(--muted-foreground))] uppercase">Delivered</span>
+                        <div className="space-y-0.5 border-e border-[hsl(var(--border))]">
+                          <span className="text-[0.5625rem] font-semibold text-[hsl(var(--muted-foreground))] uppercase">{tr("Delivered")}</span>
                           <p className="text-xs font-extrabold text-[hsl(var(--foreground))]">
-                            {item.totalReceived}
+                            {tr(item.totalReceived)}
                           </p>
                         </div>
-                        <div className="space-y-0.5 border-r border-[hsl(var(--border))]">
-                          <span className="text-[9px] font-semibold text-emerald-500 uppercase">Used</span>
+                        <div className="space-y-0.5 border-e border-[hsl(var(--border))]">
+                          <span className="text-[0.5625rem] font-semibold text-emerald-500 uppercase">{tr("Used")}</span>
                           <p className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
-                            {item.installedQuantity}
+                            {tr(item.installedQuantity)}
                           </p>
                         </div>
                         <div className="space-y-0.5">
-                          <span className="text-[9px] font-semibold text-blue-500 uppercase">Available</span>
+                          <span className="text-[0.5625rem] font-semibold text-blue-500 uppercase">{tr("Available")}</span>
                           <p className="text-xs font-extrabold text-blue-600 dark:text-blue-400">
-                            {available}
+                            {tr(available)}
                           </p>
                         </div>
                       </div>
 
                       <div className="space-y-1.5">
-                        <div className="flex items-center justify-between text-[10px] text-[hsl(var(--muted-foreground))] font-semibold uppercase">
-                          <span>Usage Progress</span>
-                          <span>{percentInstalled}%</span>
+                        <div className="flex items-center justify-between text-[0.625rem] text-[hsl(var(--muted-foreground))] font-semibold uppercase">
+                          <span>{tr("Usage Progress")}</span>
+                          <span>{tr(percentInstalled)}%</span>
                         </div>
                         <div className="h-1.5 rounded-full bg-[hsl(var(--muted))] overflow-hidden">
                           <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${percentInstalled}%` }} />
@@ -1004,29 +1005,29 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                     </div>
 
                     <div className="p-4 bg-[hsl(var(--card))] flex-1 flex flex-col overflow-hidden">
-                      <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider flex items-center gap-1.5 mb-3 shrink-0">
-                        <History className="w-3.5 h-3.5" /> Usage History
+                      <span className="text-[0.625rem] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider flex items-center gap-1.5 mb-3 shrink-0">
+                        <History className="w-3.5 h-3.5" />{tr(" Usage History")}
                       </span>
-                      <div className="flex-1 overflow-y-auto pr-2 scrollbar-none">
+                      <div className="flex-1 overflow-y-auto pe-2 scrollbar-none">
                         {item.installHistory && item.installHistory.length > 0 ? (
                           <div className="divide-y divide-[hsl(var(--border))]">
                             {item.installHistory.map((log: any, index: number) => (
                               <div key={log._id || index} className="py-2.5 flex flex-col gap-1 text-xs">
                                 <div className="flex items-center justify-between">
-                                  <p className="font-semibold text-[hsl(var(--foreground))] text-[11px]">
-                                    +<span className="text-emerald-600 dark:text-emerald-400">{log.quantity} {item.unit}</span>
+                                  <p className="font-semibold text-[hsl(var(--foreground))] text-[0.6875rem]">
+                                    +<span className="text-emerald-600 dark:text-emerald-400">{log.quantity} {tr(item.unit)}</span>
                                   </p>
-                                  <span className="text-[9px] text-[hsl(var(--muted-foreground))] font-mono">
+                                  <span className="text-[0.5625rem] text-[hsl(var(--muted-foreground))] font-mono">
                                     {new Date(log.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                                   </span>
                                 </div>
-                                {log.notes && <p className="text-[10px] text-[hsl(var(--muted-foreground))] line-clamp-2">{log.notes}</p>}
+                                {log.notes && <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))] line-clamp-2">{tr(log.notes)}</p>}
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <p className="text-[10px] text-[hsl(var(--muted-foreground))] italic text-center py-4">
-                            No materials used yet.
+                          <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))] italic text-center py-4">
+                            {tr("No materials used yet.")}
                           </p>
                         )}
                       </div>
@@ -1051,7 +1052,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
             >
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5 text-[hsl(var(--primary))]" /> Request Material
+                  <ShoppingCart className="w-5 h-5 text-[hsl(var(--primary))]" />{tr(" Request Material")}
                 </h3>
                 <button onClick={() => setIsAddPoOpen(false)} className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">
                   <X className="w-4 h-4" />
@@ -1061,12 +1062,12 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
               <form onSubmit={handleCreatePO}>
                 <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Target Delivery Date</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">{tr("Target Delivery Date")}</label>
                     <Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
                   </div>
 
                   <div className="border border-[hsl(var(--border))] rounded-lg p-3.5 space-y-3 bg-[hsl(var(--muted)/0.1)]">
-                    <span className="text-[10px] uppercase font-bold text-[hsl(var(--foreground))] tracking-wider">Add Materials Line</span>
+                    <span className="text-[0.625rem] uppercase font-bold text-[hsl(var(--foreground))] tracking-wider">{tr("Add Materials Line")}</span>
 
                     <div className="space-y-2">
                       <select
@@ -1074,21 +1075,21 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         onChange={(e) => handleMaterialChange(e.target.value)}
                         className="w-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))] appearance-none"
                       >
-                        <option value="" disabled>Select Material from Catalog...</option>
+                        <option value="" disabled>{tr("Select Material from Catalog...")}</option>
                         {inventory.map((m: any) => (
-                          <option key={m._id} value={m.productName}>{m.productName}</option>
+                          <option key={m._id} value={m.productName}>{tr(m.productName)}</option>
                         ))}
                       </select>
                       <div className="grid grid-cols-3 gap-2">
                         <Input
                           type="number"
                           min="1"
-                          placeholder="Qty"
+                          placeholder={tr("Qty")}
                           value={newItem.quantity || ''}
                           onChange={(e) => setNewItem({ ...newItem, quantity: parseInt(e.target.value) || 0 })}
                         />
                         <Input
-                          placeholder="Unit"
+                          placeholder={tr("Unit")}
                           value={newItem.unit}
                           disabled
                           className="bg-slate-50 opacity-70 cursor-not-allowed"
@@ -1096,7 +1097,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         <Input
                           type="number"
                           min="0"
-                          placeholder={`Rate (${currencySymbol})`}
+                          placeholder={tr("Rate ({{currencySymbol}})", { currencySymbol: currencySymbol })}
                           value={newItem.unitPrice || ''}
                           onChange={(e) => setNewItem({ ...newItem, unitPrice: parseFloat(e.target.value) || 0 })}
                         />
@@ -1107,25 +1108,25 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         variant="outline"
                         className="w-full text-xs font-bold py-1"
                       >
-                        <Plus className="w-3.5 h-3.5 mr-1" /> Add Item Line
+                        <Plus className="w-3.5 h-3.5 me-1" />{tr(" Add Item Line")}
                       </Button>
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider">Order Item Details</span>
+                    <span className="text-[0.625rem] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider">{tr("Order Item Details")}</span>
                     {poItems.length === 0 ? (
-                      <p className="text-[11px] text-[hsl(var(--muted-foreground))] italic p-4 text-center border border-dashed border-[hsl(var(--border))] rounded-lg">
-                        No items added. Add at least one line above.
+                      <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] italic p-4 text-center border border-dashed border-[hsl(var(--border))] rounded-lg">
+                        {tr("No items added. Add at least one line above.")}
                       </p>
                     ) : (
-                      <div className="border border-[hsl(var(--border))] rounded-lg divide-y divide-[hsl(var(--border))] max-h-[140px] overflow-y-auto">
+                      <div className="border border-[hsl(var(--border))] rounded-lg divide-y divide-[hsl(var(--border))] max-h-[8.75rem] overflow-y-auto">
                         {poItems.map((item, idx) => (
                           <div key={idx} className="p-2.5 flex items-center justify-between text-xs bg-[hsl(var(--card))]">
                             <div className="min-w-0 flex-1">
-                              <p className="font-bold truncate text-[hsl(var(--foreground))]">{item.name}</p>
-                              <p className="text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
-                                {item.quantity} {item.unit} @ {formatCost(item.unitPrice)} each
+                              <p className="font-bold truncate text-[hsl(var(--foreground))]">{tr(item.name)}</p>
+                              <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))] font-mono">
+                                {item.quantity} {tr(item.unit)} @ {formatCost(item.unitPrice)}{tr(" each")}
                               </p>
                             </div>
                             <div className="flex items-center gap-3 shrink-0">
@@ -1146,7 +1147,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
                   {poItems.length > 0 && (
                     <div className="p-3 border border-[hsl(var(--primary)/0.2)] rounded-lg bg-[hsl(var(--primary)/0.03)] flex items-center justify-between text-xs font-bold">
-                      <span className="text-[hsl(var(--muted-foreground))] uppercase">PO Total Cost</span>
+                      <span className="text-[hsl(var(--muted-foreground))] uppercase">{tr("PO Total Cost")}</span>
                       <span className="text-sm font-extrabold text-[hsl(var(--primary))] font-mono">
                         {formatCost(poItems.reduce((acc, it) => acc + it.quantity * it.unitPrice, 0))}
                       </span>
@@ -1156,11 +1157,11 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
                 <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
                   <Button variant="outline" type="button" onClick={() => setIsAddPoOpen(false)}>
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                   <Button type="submit" disabled={creatingPo || poItems.length === 0}>
-                    {creatingPo && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    Submit Request
+                    {creatingPo && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+                    {tr("Submit Request")}
                   </Button>
                 </div>
               </form>
@@ -1181,9 +1182,9 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
             >
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <div>
-                  <span className="text-[10px] font-mono font-bold bg-[hsl(var(--muted))] px-2 py-0.5 rounded-full uppercase">{selectedPo.poNumber}</span>
+                  <span className="text-[0.625rem] font-mono font-bold bg-[hsl(var(--muted))] px-2 py-0.5 rounded-full uppercase">{tr(selectedPo.poNumber)}</span>
                   <h3 className="text-base font-bold mt-1 text-[hsl(var(--foreground))]">
-                    {selectedPo.status === 'requested' ? 'Material Request Details' : selectedPo.status === 'rfq' ? 'RFQ Details' : 'Purchase Order Details'}
+                    {selectedPo.status === 'requested' ? tr("Material Request Details") : selectedPo.status === 'rfq' ? tr("RFQ Details") : tr("Purchase Order Details")}
                   </h3>
                 </div>
                 <button onClick={() => setIsDetailOpen(false)} className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">
@@ -1195,16 +1196,16 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                 {selectedPo.status === 'requested' ? (
                   <div className="space-y-6">
                     <div className="space-y-0.5 border border-[hsl(var(--border))] rounded-lg p-3 bg-[hsl(var(--muted)/0.1)]">
-                      <span className="font-semibold text-[hsl(var(--muted-foreground))] block uppercase text-[10px]">Target Delivery Date</span>
+                      <span className="font-semibold text-[hsl(var(--muted-foreground))] block uppercase text-[0.625rem]">{tr("Target Delivery Date")}</span>
                       <span className="font-bold text-[hsl(var(--foreground))]">
-                        {selectedPo.deliveryDate ? new Date(selectedPo.deliveryDate).toLocaleDateString() : 'Not specified'}
+                        {selectedPo.deliveryDate ? new Date(selectedPo.deliveryDate).toLocaleDateString() : tr("Not specified")}
                       </span>
                     </div>
 
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider flex items-center gap-1.5">
-                          Requested Materials
+                        <span className="text-[0.625rem] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider flex items-center gap-1.5">
+                          {tr("Requested Materials")}
                         </span>
                       </div>
                       <div className="border border-[hsl(var(--border))] rounded-lg divide-y divide-[hsl(var(--border))]">
@@ -1212,10 +1213,10 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                           selectedPo.items.map((item: any, idx: number) => (
                             <div key={idx} className="p-3 flex items-center justify-between text-xs bg-[hsl(var(--card))]">
                               <div>
-                                <p className="font-bold text-[hsl(var(--foreground))]">{item.name}</p>
+                                <p className="font-bold text-[hsl(var(--foreground))]">{tr(item.name)}</p>
                               </div>
                               <span className="font-bold font-mono text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.3)] px-2 py-1 rounded">
-                                {item.quantity} {item.unit}
+                                {item.quantity} {tr(item.unit)}
                               </span>
                             </div>
                           ))
@@ -1225,7 +1226,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                               <p className="font-bold text-[hsl(var(--foreground))]">{selectedPo.materialName?.replace(' ||CLOSED||', '')}</p>
                             </div>
                             <span className="font-bold font-mono text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.3)] px-2 py-1 rounded">
-                              1 unit
+                              {tr("1 unit")}
                             </span>
                           </div>
                         )}
@@ -1236,8 +1237,8 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                   <div className="space-y-6">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider flex items-center gap-1.5">
-                          Requested Materials
+                        <span className="text-[0.625rem] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider flex items-center gap-1.5">
+                          {tr("Requested Materials")}
                         </span>
                       </div>
                       <div className="border border-[hsl(var(--border))] rounded-lg divide-y divide-[hsl(var(--border))]">
@@ -1245,10 +1246,10 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                           selectedPo.items.map((item: any, idx: number) => (
                             <div key={idx} className="p-3 flex items-center justify-between text-xs bg-[hsl(var(--card))]">
                               <div>
-                                <p className="font-bold text-[hsl(var(--foreground))]">{item.name}</p>
+                                <p className="font-bold text-[hsl(var(--foreground))]">{tr(item.name)}</p>
                               </div>
                               <span className="font-bold font-mono text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.3)] px-2 py-1 rounded">
-                                {item.quantity} {item.unit}
+                                {item.quantity} {tr(item.unit)}
                               </span>
                             </div>
                           ))
@@ -1258,7 +1259,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                               <p className="font-bold text-[hsl(var(--foreground))]">{selectedPo.materialName?.replace(' ||CLOSED||', '')}</p>
                             </div>
                             <span className="font-bold font-mono text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.3)] px-2 py-1 rounded">
-                              1 unit
+                              {tr("1 unit")}
                             </span>
                           </div>
                         )}
@@ -1268,29 +1269,29 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                     {/* Link & Expiration Info */}
                     <div className="p-4 bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30 rounded-xl space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className={`text-[10px] uppercase font-bold flex items-center gap-1.5 ${isLinkActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500'}`}>
+                        <span className={`text-[0.625rem] uppercase font-bold flex items-center gap-1.5 ${isLinkActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500'}`}>
                           <FileText className="w-3.5 h-3.5" />
-                          {isLinkActive ? 'Public RFQ Link Active' : 'RFQ Link Expired'}
+                          {isLinkActive ? tr("Public RFQ Link Active") : tr("RFQ Link Expired")}
                         </span>
 
                         {isLinkActive ? (
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold text-rose-500 bg-rose-50 dark:bg-rose-950/30 px-2 py-1 rounded border border-rose-100 dark:border-rose-900/30">
-                              Expires in:
+                            <span className="text-[0.625rem] font-bold text-rose-500 bg-rose-50 dark:bg-rose-950/30 px-2 py-1 rounded border border-rose-100 dark:border-rose-900/30">
+                              {tr("Expires in:")}
                             </span>
                             <select
                               value={linkExpiry}
                               onChange={(e) => setLinkExpiry(e.target.value)}
                               className="text-xs bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-800 rounded px-1 py-0.5 text-rose-600 focus:outline-none"
                             >
-                              <option value="12h">12 Hours</option>
-                              <option value="1d">1 Day</option>
-                              <option value="2d">2 Days</option>
+                              <option value="12h">{tr("12 Hours")}</option>
+                              <option value="1d">{tr("1 Day")}</option>
+                              <option value="2d">{tr("2 Days")}</option>
                             </select>
                           </div>
                         ) : (
-                          <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
-                            Deactivated
+                          <span className="text-[0.625rem] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                            {tr("Deactivated")}
                           </span>
                         )}
                       </div>
@@ -1309,22 +1310,22 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                           onClick={() => {
                             const url = `${window.location.origin}/rfq/${selectedPo._id}`;
                             navigator.clipboard.writeText(url);
-                            toast.success('Link copied!');
+                            toast.success(tr("Link copied!"));
                           }}
                         >
-                          Copy
+                          {tr("Copy")}
                         </Button>
                       </div>
 
                       <div className="flex items-center justify-between pt-2 border-t border-indigo-100 dark:border-indigo-900/30">
-                        <span className="text-[10px] text-indigo-600/70 dark:text-indigo-400/70">
-                          {isLinkActive ? 'Vendors can currently submit quotes' : 'No longer accepting quotes'}
+                        <span className="text-[0.625rem] text-indigo-600/70 dark:text-indigo-400/70">
+                          {isLinkActive ? tr("Vendors can currently submit quotes") : tr("No longer accepting quotes")}
                         </span>
                         {canDo('procurement', 'update') && (
                           <Button
                             size="sm"
                             variant={isLinkActive ? 'destructive' : 'outline'}
-                            className="h-6 text-[10px] px-2"
+                            className="h-6 text-[0.625rem] px-2"
                             onClick={async () => {
                               const newIsLinkActive = !isLinkActive;
                               setIsLinkActive(newIsLinkActive);
@@ -1337,15 +1338,15 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                   });
                                   setSelectedPo((prev: any) => prev ? { ...prev, isLinkActive: newIsLinkActive, materialName: cleanMaterialName } : prev);
                                   invalidateProcurementData();
-                                  toast.success(newIsLinkActive ? 'Link reactivated' : 'Link manually expired');
+                                  toast.success(newIsLinkActive ? tr("Link reactivated") : tr("Link manually expired"));
                                 } catch (err) {
-                                  toast.error('Failed to update link status');
+                                  toast.error(tr("Failed to update link status"));
                                   setIsLinkActive(!newIsLinkActive);
                                 }
                               }
                             }}
                           >
-                            {isLinkActive ? 'Force Expire Now' : 'Reactivate Link'}
+                            {isLinkActive ? tr("Force Expire Now") : tr("Reactivate Link")}
                           </Button>
                         )}
                       </div>
@@ -1353,8 +1354,8 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
                     {isLinkActive && vendors && vendors.length > 0 && (
                       <div className="space-y-3">
-                        <span className="text-[10px] uppercase font-bold text-[hsl(var(--foreground))] tracking-wider flex items-center gap-1.5">
-                          <Mail className="w-3.5 h-3.5" /> Share RFQ Link with Vendors
+                        <span className="text-[0.625rem] uppercase font-bold text-[hsl(var(--foreground))] tracking-wider flex items-center gap-1.5">
+                          <Mail className="w-3.5 h-3.5" />{tr(" Share RFQ Link with Vendors")}
                         </span>
                         <div className="border border-[hsl(var(--border))] rounded-lg divide-y divide-[hsl(var(--border))] bg-[hsl(var(--card))] max-h-48 overflow-y-auto">
                           {vendors.map((vendor: any) => {
@@ -1367,30 +1368,30 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                               <div key={vendor._id} className="p-3 flex items-center justify-between text-xs hover:bg-[hsl(var(--muted)/0.3)] transition-colors">
                                 <div>
                                   <div className="flex items-center gap-2">
-                                    <p className="font-bold text-[hsl(var(--foreground))]">{vendor.name}</p>
+                                    <p className="font-bold text-[hsl(var(--foreground))]">{tr(vendor.name)}</p>
                                     {(vendor.vendorCode || vendor._id) && (
-                                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800 shrink-0">
+                                      <span className="text-[0.625rem] font-mono font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800 shrink-0">
                                         {vendor.vendorCode || `VND-${String(vendor._id).slice(-3).toUpperCase()}`}
                                       </span>
                                     )}
                                   </div>
-                                  <p className="text-[9px] text-[hsl(var(--muted-foreground))]">{vendor.email || vendor.phoneNumber || 'No contact info'}</p>
+                                  <p className="text-[0.5625rem] text-[hsl(var(--muted-foreground))]">{vendor.email || vendor.phoneNumber || tr("No contact info")}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    className="h-7 text-[10px] flex items-center gap-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-900/50 dark:text-emerald-400 dark:hover:bg-emerald-900/20"
+                                    className="h-7 text-[0.625rem] flex items-center gap-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-900/50 dark:text-emerald-400 dark:hover:bg-emerald-900/20"
                                     onClick={() => window.open(`https://wa.me/${(vendor.phoneNumber || '').replace(/[^0-9]/g, '')}?text=${waMessage}`, '_blank')}
                                     disabled={!vendor.phoneNumber}
                                   >
-                                    WhatsApp
+                                    {tr("WhatsApp")}
                                   </Button>
                                   {canDo('procurement', 'update') && (
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      className="h-7 text-[10px] flex items-center gap-1"
+                                      className="h-7 text-[0.625rem] flex items-center gap-1"
                                       onClick={async () => {
                                         try {
                                           await interiorApiClient.post('/procurement/send-rfq', {
@@ -1404,18 +1405,18 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                             newSet.add(vendor._id);
                                             return { ...prev, [selectedPo._id]: newSet };
                                           });
-                                          toast.success(`RFQ sent to ${vendor.name} via email!`);
+                                          toast.success(tr("RFQ sent to {{name}} via email!", { name: vendor.name }));
                                         } catch (err) {
                                           console.error('Failed to send RFQ email', err);
-                                          toast.error(`Failed to send email to ${vendor.name}`);
+                                          toast.error(tr("Failed to send email to {{name}}", { name: vendor.name }));
                                         }
                                       }}
                                       disabled={!vendor.email || sentEmailVendorIdsByPo[selectedPo._id]?.has(vendor._id)}
                                     >
                                       {sentEmailVendorIdsByPo[selectedPo._id]?.has(vendor._id) ? (
-                                        <><CheckCircle2 className="w-3 h-3 text-green-500" /> Sent</>
+                                        <><CheckCircle2 className="w-3 h-3 text-green-500" />{tr(" Sent")}</>
                                       ) : (
-                                        <><Mail className="w-3 h-3" /> Email</>
+                                        <><Mail className="w-3 h-3" />{tr(" Email")}</>
                                       )}
                                     </Button>
                                   )}
@@ -1429,8 +1430,8 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
                     {isLinkActive ? (
                       <div className="space-y-3">
-                        <span className="text-[10px] uppercase font-bold text-[hsl(var(--foreground))] tracking-wider flex items-center gap-1.5">
-                          <History className="w-3.5 h-3.5" /> Quotes Received So Far
+                        <span className="text-[0.625rem] uppercase font-bold text-[hsl(var(--foreground))] tracking-wider flex items-center gap-1.5">
+                          <History className="w-3.5 h-3.5" />{tr(" Quotes Received So Far")}
                         </span>
                         <div className="space-y-2">
                           {selectedPo.quotes && selectedPo.quotes.length > 0 ? (
@@ -1444,28 +1445,28 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                 <div key={idx} className="border border-[hsl(var(--border))] rounded-lg overflow-hidden bg-[hsl(var(--card))] shadow-sm">
                                   <div className="p-3 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--muted)/0.2)]">
                                     <div>
-                                      <p className="font-bold text-xs">{quote.vendorName}</p>
-                                      <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                                        Submitted {new Date(quote.submittedAt).toLocaleDateString()}
+                                      <p className="font-bold text-xs">{tr(quote.vendorName)}</p>
+                                      <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
+                                        {tr("Submitted ")}{new Date(quote.submittedAt).toLocaleDateString()}
                                       </p>
                                     </div>
-                                    <div className="text-right">
+                                    <div className="text-end">
                                       <p className="font-mono font-bold text-sm text-[hsl(var(--foreground))]">
-                                        {currencySymbol} {myTotal.toLocaleString()}
+                                        {tr(currencySymbol)} {myTotal.toLocaleString()}
                                       </p>
-                                      <span className="text-[9px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-bold border border-indigo-100">Quote Received</span>
+                                      <span className="text-[0.5625rem] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-bold border border-indigo-100">{tr("Quote Received")}</span>
                                     </div>
                                   </div>
                                   <div className="p-3 space-y-3">
                                     <div className="space-y-1.5">
-                                      <p className="text-[9px] uppercase font-bold text-[hsl(var(--muted-foreground))]">Item Rates</p>
+                                      <p className="text-[0.5625rem] uppercase font-bold text-[hsl(var(--muted-foreground))]">{tr("Item Rates")}</p>
                                       <div className="divide-y divide-[hsl(var(--border))] bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-md">
                                         {(selectedPo.items && selectedPo.items.length > 0 ? selectedPo.items : [{ _id: 'item-1', name: selectedPo.materialName?.replace(' ||CLOSED||', '') || 'Material', quantity: 1, unit: 'unit' }]).map((item: any, itemIdx: number) => {
                                           const rate = quote.rates?.find((r: any) => r.itemId === (item._id || item.id) || r.name === item.name);
                                           return (
-                                            <div key={itemIdx} className="p-2 flex items-center justify-between text-[10px]">
-                                              <span className="font-medium text-[hsl(var(--foreground))]">{item.name}</span>
-                                              <span className="font-mono text-[hsl(var(--muted-foreground))]">{currencySymbol}{rate?.unitPrice || 0}</span>
+                                            <div key={itemIdx} className="p-2 flex items-center justify-between text-[0.625rem]">
+                                              <span className="font-medium text-[hsl(var(--foreground))]">{tr(item.name)}</span>
+                                              <span className="font-mono text-[hsl(var(--muted-foreground))]">{tr(currencySymbol)}{rate?.unitPrice || 0}</span>
                                             </div>
                                           );
                                         })}
@@ -1473,8 +1474,8 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                     </div>
                                     {(quote.notes || quote.remarks) && (
                                       <div className="bg-amber-50 dark:bg-amber-950/20 p-2 rounded-md border border-amber-100 dark:border-amber-900/30">
-                                        <p className="text-[9px] uppercase font-bold text-amber-800 dark:text-amber-500 mb-0.5">Remarks</p>
-                                        <p className="text-[10px] text-amber-900/80 dark:text-amber-200/70 whitespace-pre-wrap">{quote.notes || quote.remarks}</p>
+                                        <p className="text-[0.5625rem] uppercase font-bold text-amber-800 dark:text-amber-500 mb-0.5">{tr("Remarks")}</p>
+                                        <p className="text-[0.625rem] text-amber-900/80 dark:text-amber-200/70 whitespace-pre-wrap">{quote.notes || quote.remarks}</p>
                                       </div>
                                     )}
                                   </div>
@@ -1483,22 +1484,22 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                             })
                           ) : (
                             <div className="p-3 border border-dashed border-[hsl(var(--border))] rounded-lg flex items-center justify-center bg-[hsl(var(--muted)/0.3)] opacity-70">
-                              <p className="text-[10px] text-[hsl(var(--muted-foreground))] italic">Waiting for vendors to submit quotes...</p>
+                              <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))] italic">{tr("Waiting for vendors to submit quotes...")}</p>
                             </div>
                           )}
                         </div>
-                        <p className="text-[9px] text-[hsl(var(--muted-foreground))] text-center mt-2 leading-relaxed">
-                          Wait for the link to expire, or force expire it to view the detailed comparison matrix.
+                        <p className="text-[0.5625rem] text-[hsl(var(--muted-foreground))] text-center mt-2 leading-relaxed">
+                          {tr("Wait for the link to expire, or force expire it to view the detailed comparison matrix.")}
                         </p>
                       </div>
                     ) : (
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] uppercase font-bold text-[hsl(var(--foreground))] tracking-wider flex items-center gap-1.5">
-                            <History className="w-3.5 h-3.5" /> Vendor Quotation Comparison
+                          <span className="text-[0.625rem] uppercase font-bold text-[hsl(var(--foreground))] tracking-wider flex items-center gap-1.5">
+                            <History className="w-3.5 h-3.5" />{tr(" Vendor Quotation Comparison")}
                           </span>
-                          <span className="text-[10px] bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-2 py-0.5 rounded-full font-bold">
-                            {selectedPo.quotes?.length || 0} Quotes
+                          <span className="text-[0.625rem] bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-2 py-0.5 rounded-full font-bold">
+                            {selectedPo.quotes?.length || 0}{tr(" Quotes")}
                           </span>
                         </div>
 
@@ -1529,42 +1530,42 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                     <div className={`p-4 border-b flex items-start justify-between ${isLowest ? 'border-emerald-500/20 bg-emerald-50/30 dark:bg-emerald-900/20' : 'border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]'}`}>
                                       <div>
                                         <div className="flex items-center gap-2">
-                                          <h4 className="font-bold text-sm text-[hsl(var(--foreground))]">{quote.vendorName}</h4>
+                                          <h4 className="font-bold text-sm text-[hsl(var(--foreground))]">{tr(quote.vendorName)}</h4>
                                           {isLowest && (
-                                            <span className="text-[9px] font-bold uppercase bg-emerald-100 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded-md dark:bg-emerald-900/40 dark:text-emerald-400 dark:border-emerald-800">
-                                              Lowest Bid
+                                            <span className="text-[0.5625rem] font-bold uppercase bg-emerald-100 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded-md dark:bg-emerald-900/40 dark:text-emerald-400 dark:border-emerald-800">
+                                              {tr("Lowest Bid")}
                                             </span>
                                           )}
                                         </div>
-                                        <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-0.5">
-                                          Submitted on {new Date(quote.submittedAt).toLocaleDateString()}
+                                        <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))] mt-0.5">
+                                          {tr("Submitted on ")}{new Date(quote.submittedAt).toLocaleDateString()}
                                         </p>
                                       </div>
-                                      <div className="text-right">
-                                        <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase font-bold mb-0.5">Total Cost</p>
+                                      <div className="text-end">
+                                        <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase font-bold mb-0.5">{tr("Total Cost")}</p>
                                         <p className={`font-mono font-bold text-base ${isLowest ? 'text-emerald-600 dark:text-emerald-400' : 'text-[hsl(var(--foreground))]'}`}>
-                                          {currencySymbol} {myTotal.toLocaleString()}
+                                          {tr(currencySymbol)} {myTotal.toLocaleString()}
                                         </p>
                                       </div>
                                     </div>
 
                                     <div className="p-4 space-y-4">
                                       <div className="space-y-2">
-                                        <p className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))]">Item Breakdown</p>
+                                        <p className="text-[0.625rem] uppercase font-bold text-[hsl(var(--muted-foreground))]">{tr("Item Breakdown")}</p>
                                         <div className="border border-[hsl(var(--border))] rounded-lg divide-y divide-[hsl(var(--border))] bg-[hsl(var(--background))]">
                                           {(selectedPo.items && selectedPo.items.length > 0 ? selectedPo.items : [{ _id: 'item-1', name: selectedPo.materialName?.replace(' ||CLOSED||', '') || 'Material', quantity: 1, unit: 'unit' }]).map((item: any, itemIdx: number) => {
                                             const rate = quote.rates?.find((r: any) => r.itemId === (item._id || item.id) || r.name === item.name);
                                             const itemTotal = (rate?.unitPrice || 0) * (item.quantity || 1);
                                             return (
                                               <div key={itemIdx} className="p-2.5 flex items-center justify-between text-xs">
-                                                <div className="min-w-0 flex-1 pr-4">
-                                                  <p className="font-semibold text-[hsl(var(--foreground))] truncate">{item.name}</p>
-                                                  <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                                                    {item.quantity} {item.unit} &times; {currencySymbol}{rate?.unitPrice || 0}
+                                                <div className="min-w-0 flex-1 pe-4">
+                                                  <p className="font-semibold text-[hsl(var(--foreground))] truncate">{tr(item.name)}</p>
+                                                  <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
+                                                    {item.quantity} {tr(item.unit)} &times; {tr(currencySymbol)}{rate?.unitPrice || 0}
                                                   </p>
                                                 </div>
                                                 <div className="font-mono font-medium text-[hsl(var(--foreground))] shrink-0">
-                                                  {currencySymbol} {itemTotal.toLocaleString()}
+                                                  {tr(currencySymbol)} {itemTotal.toLocaleString()}
                                                 </div>
                                               </div>
                                             );
@@ -1574,7 +1575,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
                                       {(quote.notes || quote.remarks) && (
                                         <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-lg border border-amber-100 dark:border-amber-900/30">
-                                          <p className="text-[10px] uppercase font-bold text-amber-800 dark:text-amber-500 mb-1">Vendor Remarks</p>
+                                          <p className="text-[0.625rem] uppercase font-bold text-amber-800 dark:text-amber-500 mb-1">{tr("Vendor Remarks")}</p>
                                           <p className="text-xs text-amber-900/80 dark:text-amber-200/70 whitespace-pre-wrap">{quote.notes || quote.remarks}</p>
                                         </div>
                                       )}
@@ -1588,9 +1589,9 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                           onClick={() => handleUpdateVendor(quote.vendorName)}
                                         >
                                           {isLowest ? (
-                                            <><CheckCircle2 className="w-4 h-4 mr-2" /> Award PO to {quote.vendorName}</>
+                                            <><CheckCircle2 className="w-4 h-4 me-2" />{tr(" Award PO to ")}{tr(quote.vendorName)}</>
                                           ) : (
-                                            `Award PO to ${quote.vendorName}`
+                                            tr("Award PO to {{vendorName}}", { vendorName: quote.vendorName })
                                           )}
                                         </Button>
                                       )}
@@ -1603,14 +1604,14 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         ) : (
                           <div className="p-6 border border-dashed border-[hsl(var(--border))] rounded-xl flex flex-col items-center justify-center bg-[hsl(var(--muted)/0.2)]">
                             <History className="w-8 h-8 text-[hsl(var(--muted-foreground))] opacity-20 mb-2" />
-                            <p className="text-sm font-semibold text-[hsl(var(--foreground))]">No quotes submitted yet</p>
-                            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1 text-center max-w-[250px]">
-                              Vendors haven't submitted any quotes. You can send them a reminder using the share links above.
+                            <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{tr("No quotes submitted yet")}</p>
+                            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1 text-center max-w-[15.625rem]">
+                              {tr("Vendors haven't submitted any quotes. You can send them a reminder using the share links above.")}
                             </p>
                           </div>
                         )}
-                        <p className="text-[9px] text-[hsl(var(--muted-foreground))] text-center mt-4 leading-relaxed max-w-sm mx-auto">
-                          Awarding a PO will automatically convert this request to an Approved Purchase Order and lock in the winning rates.
+                        <p className="text-[0.5625rem] text-[hsl(var(--muted-foreground))] text-center mt-4 leading-relaxed max-w-sm mx-auto">
+                          {tr("Awarding a PO will automatically convert this request to an Approved Purchase Order and lock in the winning rates.")}
                         </p>
                       </div>
                     )}
@@ -1622,16 +1623,16 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                       <div className="grid grid-cols-2 gap-4 text-xs">
                         <div className="space-y-1 border border-[hsl(var(--border))] rounded-lg p-2.5 bg-[hsl(var(--muted)/0.1)]">
                           <div className="flex items-center justify-between">
-                            <span className="font-semibold text-[hsl(var(--muted-foreground))] uppercase text-[10px]">Approved Vendor</span>
+                            <span className="font-semibold text-[hsl(var(--muted-foreground))] uppercase text-[0.625rem]">{tr("Approved Vendor")}</span>
                             {isApprovedOrLocked && (
-                              <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
-                                <Lock className="w-2.5 h-2.5" /> Locked
+                              <span className="text-[0.5625rem] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
+                                <Lock className="w-2.5 h-2.5" />{tr(" Locked")}
                               </span>
                             )}
                           </div>
                           {isApprovedOrLocked ? (
                             <p className="font-bold text-xs text-[hsl(var(--foreground))] py-1.5 px-2 bg-[hsl(var(--muted)/0.4)] rounded border border-[hsl(var(--border))] truncate">
-                              {selectedPo.vendorName || 'Not Assigned'}
+                              {selectedPo.vendorName || tr("Not Assigned")}
                             </p>
                           ) : (
                             <select
@@ -1640,23 +1641,23 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                               onChange={(e) => setSelectedPo({ ...selectedPo, vendorName: e.target.value })}
                               className="w-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-md px-2 py-1.5 text-xs font-semibold text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                             >
-                              <option value="" disabled>Select Approved Vendor...</option>
+                              <option value="" disabled>{tr("Select Approved Vendor...")}</option>
                               {vendors.map((v: any) => (
-                                <option key={v._id} value={v.name}>{v.name}</option>
+                                <option key={v._id} value={v.name}>{tr(v.name)}</option>
                               ))}
                             </select>
                           )}
                         </div>
                         <div className="space-y-0.5 border border-[hsl(var(--border))] rounded-lg p-2.5 bg-[hsl(var(--muted)/0.1)]">
-                          <span className="font-semibold text-[hsl(var(--muted-foreground))] block uppercase text-[10px]">Target Date</span>
+                          <span className="font-semibold text-[hsl(var(--muted-foreground))] block uppercase text-[0.625rem]">{tr("Target Date")}</span>
                           <span className="font-bold text-[hsl(var(--foreground))]">
-                            {selectedPo.deliveryDate ? new Date(selectedPo.deliveryDate).toLocaleDateString() : 'Not specified'}
+                            {selectedPo.deliveryDate ? new Date(selectedPo.deliveryDate).toLocaleDateString() : tr("Not specified")}
                           </span>
                         </div>
                       </div>
 
                       <div className="space-y-2 border border-[hsl(var(--border))] rounded-lg p-4 bg-[hsl(var(--card))]">
-                        <span className="text-[10px] uppercase font-bold text-[hsl(var(--foreground))] tracking-wider block">Procurement Status Pipeline</span>
+                        <span className="text-[0.625rem] uppercase font-bold text-[hsl(var(--foreground))] tracking-wider block">{tr("Procurement Status Pipeline")}</span>
                         <div className="relative">
                           <select
                             value={selectedPo.status}
@@ -1670,17 +1671,17 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                             }}
                             className="w-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-xs font-semibold text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                           >
-                            <option value="pending">Planned (Pending)</option>
-                            <option value="rfq">RFQ (Quotation Stage)</option>
-                            <option value="approved">Approved PO</option>
-                            <option value="partially_delivered">Partially Delivered</option>
-                            <option value="delivered">Delivered (Loads to Inventory)</option>
-                            <option value="rejected">Rejected</option>
+                            <option value="pending">{tr("Planned (Pending)")}</option>
+                            <option value="rfq">{tr("RFQ (Quotation Stage)")}</option>
+                            <option value="approved">{tr("Approved PO")}</option>
+                            <option value="partially_delivered">{tr("Partially Delivered")}</option>
+                            <option value="delivered">{tr("Delivered (Loads to Inventory)")}</option>
+                            <option value="rejected">{tr("Rejected")}</option>
                           </select>
                           {updatingPo && <Loader2 className="absolute right-3 top-2.5 w-4 h-4 animate-spin text-[hsl(var(--primary))]" />}
                         </div>
-                        <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1 leading-normal">
-                          Changing the status to &quot;Delivered&quot; automatically inserts these materials into your inventory system for site installation logging.
+                        <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))] mt-1 leading-normal">
+                          {tr("Changing the status to \"Delivered\" automatically inserts these materials into your inventory system for site installation logging.")}
                         </p>
                       </div>
 
@@ -1696,29 +1697,29 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                         if (parsedGrns && parsedGrns.length > 0) {
                           return (
                             <div className="space-y-3">
-                              <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider flex items-center gap-1">
-                                <CheckCircle2 className="w-3.5 h-3.5" /> Delivery Proofs (GRN)
+                              <span className="text-[0.625rem] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5" />{tr(" Delivery Proofs (GRN)")}
                               </span>
                               {parsedGrns.map((grn: any, idx: number) => (
                                 <div key={idx} className="border border-emerald-200 bg-emerald-50/50 rounded-md p-2 flex items-center justify-between">
                                   <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs flex-1">
                                     <div>
-                                      <p className="text-[9px] font-semibold text-emerald-600/70 uppercase">Challan No.</p>
-                                      <p className="font-bold text-emerald-900 leading-tight">{grn.challanNumber}</p>
+                                      <p className="text-[0.5625rem] font-semibold text-emerald-600/70 uppercase">{tr("Challan No.")}</p>
+                                      <p className="font-bold text-emerald-900 leading-tight">{tr(grn.challanNumber)}</p>
                                     </div>
                                     <div>
-                                      <p className="text-[9px] font-semibold text-emerald-600/70 uppercase">Received On</p>
+                                      <p className="text-[0.5625rem] font-semibold text-emerald-600/70 uppercase">{tr("Received On")}</p>
                                       <p className="font-bold text-emerald-900 leading-tight">{grn.receivedAt ? new Date(grn.receivedAt).toLocaleDateString() : 'N/A'}</p>
                                     </div>
                                     {grn.receivedBy && (
                                       <div className="col-span-2">
-                                        <p className="text-[9px] font-semibold text-emerald-600/70 uppercase">Received By</p>
-                                        <p className="font-bold text-emerald-900 leading-tight">{grn.receivedBy}</p>
+                                        <p className="text-[0.5625rem] font-semibold text-emerald-600/70 uppercase">{tr("Received By")}</p>
+                                        <p className="font-bold text-emerald-900 leading-tight">{tr(grn.receivedBy)}</p>
                                       </div>
                                     )}
                                   </div>
                                   {(grn.proofUrl || grn.invoiceUrl) && (
-                                    <div className="shrink-0 ml-2">
+                                    <div className="shrink-0 ms-2">
                                       <button
                                         type="button"
                                         onClick={(e) => {
@@ -1726,7 +1727,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                           setViewingImages({ proofUrl: grn.proofUrl, invoiceUrl: grn.invoiceUrl });
                                         }}
                                         className="p-1.5 text-emerald-700 bg-emerald-100/70 hover:bg-emerald-200/70 rounded-md transition-colors"
-                                        title="View Proof & Invoice"
+                                        title={tr("View Proof & Invoice")}
                                       >
                                         <Eye className="w-4 h-4" />
                                       </button>
@@ -1742,18 +1743,18 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider flex items-center gap-1.5">
-                            Ordered Products List
+                          <span className="text-[0.625rem] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider flex items-center gap-1.5">
+                            {tr("Ordered Products List")}
                             {isApprovedOrLocked && (
-                              <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-900/40">
-                                <Lock className="w-2.5 h-2.5" /> Rates Locked
+                              <span className="text-[0.5625rem] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-900/40">
+                                <Lock className="w-2.5 h-2.5" />{tr(" Rates Locked")}
                               </span>
                             )}
                           </span>
                           {!isApprovedOrLocked && (
                             canDo('procurement', 'update') && (
-                              <button onClick={handleSaveRates} disabled={updatingPo} className="text-[10px] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] px-2 py-1 rounded font-bold hover:bg-[hsl(var(--primary)/0.2)] flex items-center gap-1 transition-colors">
-                                {updatingPo ? <Loader2 className="w-3 h-3 animate-spin" /> : null} Save Rates
+                              <button onClick={handleSaveRates} disabled={updatingPo} className="text-[0.625rem] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] px-2 py-1 rounded font-bold hover:bg-[hsl(var(--primary)/0.2)] flex items-center gap-1 transition-colors">
+                                {updatingPo ? <Loader2 className="w-3 h-3 animate-spin" /> : null}{tr(" Save Rates")}
                               </button>
                             )
                           )}
@@ -1763,24 +1764,24 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                             selectedPo.items.map((item: any, idx: number) => (
                               <div key={idx} className="p-3 flex items-center justify-between text-xs bg-[hsl(var(--card))]">
                                 <div>
-                                  <p className="font-bold text-[hsl(var(--foreground))]">{item.name}</p>
-                                  <div className="flex items-center gap-1 mt-1 text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
-                                    <span>{item.quantity} {item.unit} @ </span>
+                                  <p className="font-bold text-[hsl(var(--foreground))]">{tr(item.name)}</p>
+                                  <div className="flex items-center gap-1 mt-1 text-[0.625rem] text-[hsl(var(--muted-foreground))] font-mono">
+                                    <span>{item.quantity} {tr(item.unit)} @ </span>
                                     {isApprovedOrLocked ? (
-                                      <span className="font-bold text-[hsl(var(--foreground))]">{currencySymbol} {item.unitPrice || 0}</span>
+                                      <span className="font-bold text-[hsl(var(--foreground))]">{tr(currencySymbol)} {item.unitPrice || 0}</span>
                                     ) : (
                                       <>
-                                        <span>{currencySymbol}</span>
+                                        <span>{tr(currencySymbol)}</span>
                                         <input
                                           type="number"
                                           min="0"
                                           value={item.unitPrice || ''}
                                           onChange={(e) => handleLocalRateChange(idx, parseFloat(e.target.value) || 0)}
-                                          className="w-16 px-1 py-0.5 border border-[hsl(var(--border))] rounded bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:border-[hsl(var(--primary))] text-right"
+                                          className="w-16 px-1 py-0.5 border border-[hsl(var(--border))] rounded bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:border-[hsl(var(--primary))] text-end"
                                         />
                                       </>
                                     )}
-                                    <span>each</span>
+                                    <span>{tr("each")}</span>
                                   </div>
                                 </div>
                                 <span className="font-bold font-mono text-[hsl(var(--foreground))]">{formatCost(item.quantity * (item.unitPrice || 0))}</span>
@@ -1790,13 +1791,13 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                             <div className="p-3 flex items-center justify-between text-xs bg-[hsl(var(--card))]">
                               <div>
                                 <p className="font-bold text-[hsl(var(--foreground))]">{selectedPo.materialName?.replace(' ||CLOSED||', '')}</p>
-                                <div className="flex items-center gap-1 mt-1 text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
-                                  <span>1 unit @ </span>
+                                <div className="flex items-center gap-1 mt-1 text-[0.625rem] text-[hsl(var(--muted-foreground))] font-mono">
+                                  <span>{tr("1 unit @ ")}</span>
                                   {isApprovedOrLocked ? (
-                                    <span className="font-bold text-[hsl(var(--foreground))]">{currencySymbol} {selectedPo.amount || 0}</span>
+                                    <span className="font-bold text-[hsl(var(--foreground))]">{tr(currencySymbol)} {selectedPo.amount || 0}</span>
                                   ) : (
                                     <>
-                                      <span>{currencySymbol}</span>
+                                      <span>{tr(currencySymbol)}</span>
                                       <input
                                         type="number"
                                         min="0"
@@ -1805,11 +1806,11 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                                           const newAmount = parseFloat(e.target.value) || 0;
                                           setSelectedPo({ ...selectedPo, amount: newAmount });
                                         }}
-                                        className="w-16 px-1 py-0.5 border border-[hsl(var(--border))] rounded bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:border-[hsl(var(--primary))] text-right"
+                                        className="w-16 px-1 py-0.5 border border-[hsl(var(--border))] rounded bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:border-[hsl(var(--primary))] text-end"
                                       />
                                     </>
                                   )}
-                                  <span>each</span>
+                                  <span>{tr("each")}</span>
                                 </div>
                               </div>
                               <span className="font-bold font-mono text-[hsl(var(--foreground))]">{formatCost(selectedPo.amount)}</span>
@@ -1823,7 +1824,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
                 {selectedPo.status !== 'requested' && selectedPo.status !== 'rfq' && (
                   <div className="p-4 border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--muted)/0.25)] flex items-center justify-between text-xs font-bold">
-                    <span className="text-[hsl(var(--muted-foreground))] uppercase">Total Amount</span>
+                    <span className="text-[hsl(var(--muted-foreground))] uppercase">{tr("Total Amount")}</span>
                     <span className="text-sm font-extrabold text-[hsl(var(--foreground))] font-mono">{formatCost(selectedPo.amount)}</span>
                   </div>
                 )}
@@ -1832,7 +1833,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
               <div className="p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)] flex items-center gap-3">
                 {canDo('procurement', 'delete') && (
                   <Button onClick={handleDeletePO} variant="outline" className="w-full text-red-500 hover:bg-red-50 hover:text-red-700 border-red-200">
-                    <Trash2 className="w-4 h-4 mr-2" /> {selectedPo.status === 'requested' ? 'Delete Request' : 'Delete PO'}
+                    <Trash2 className="w-4 h-4 me-2" /> {selectedPo.status === 'requested' ? tr("Delete Request") : tr("Delete PO")}
                   </Button>
                 )}
                 {selectedPo.status !== 'requested' && selectedPo.status !== 'rfq' && (
@@ -1845,7 +1846,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                       className="w-full"
                       disabled={updatingPo}
                     >
-                      {updatingPo ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} Submit Details
+                      {updatingPo ? <Loader2 className="w-4 h-4 me-2 animate-spin" /> : null}{tr(" Submit Details")}
                     </Button>
                   )
                 )}
@@ -1867,7 +1868,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
             >
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
-                  <Wrench className="w-5 h-5 text-emerald-500" /> Log Material Usage
+                  <Wrench className="w-5 h-5 text-emerald-500" />{tr(" Log Material Usage")}
                 </h3>
                 <button onClick={() => setIsInstallOpen(false)} className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">
                   <X className="w-4 h-4" />
@@ -1877,21 +1878,21 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
               <form onSubmit={handleLogInstallation}>
                 <div className="p-5 space-y-4">
                   <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-lg text-xs space-y-1">
-                    <p className="font-bold text-emerald-800 dark:text-emerald-400">Material Name: {selectedStock.productName}</p>
+                    <p className="font-bold text-emerald-800 dark:text-emerald-400">{tr("Material Name: ")}{tr(selectedStock.productName)}</p>
                     <p className="text-emerald-700 dark:text-emerald-500">
-                      Available Stock: <span className="font-bold">{selectedStock.totalReceived - selectedStock.installedQuantity} {selectedStock.unit}</span>
+                      {tr("Available Stock: ")}<span className="font-bold">{selectedStock.totalReceived - selectedStock.installedQuantity} {tr(selectedStock.unit)}</span>
                     </p>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Quantity to Use ({selectedStock.unit}) *</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">{tr("Quantity to Use (")}{tr(selectedStock.unit)}) *</label>
                     <Input required type="number" min="1" placeholder="e.g. 10" value={installQty} onChange={(e) => setInstallQty(e.target.value)} />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Usage Notes / Comments</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">{tr("Usage Notes / Comments")}</label>
                     <Input
-                      placeholder="e.g. Used primary copper lines on Floor 4, Zone Alpha"
+                      placeholder={tr("e.g. Used primary copper lines on Floor 4, Zone Alpha")}
                       value={installNotes}
                       onChange={(e) => setInstallNotes(e.target.value)}
                     />
@@ -1900,18 +1901,18 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                   {installError && (
                     <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 text-xs text-red-600 dark:text-red-400 flex items-start gap-2">
                       <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                      <span>{installError}</span>
+                      <span>{tr(installError)}</span>
                     </div>
                   )}
                 </div>
 
                 <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
                   <Button variant="outline" type="button" onClick={() => setIsInstallOpen(false)}>
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                   <Button type="submit" disabled={loggingInstall || !installQty}>
-                    {loggingInstall && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    Confirm Usage
+                    {loggingInstall && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+                    {tr("Confirm Usage")}
                   </Button>
                 </div>
               </form>
@@ -1932,7 +1933,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
             >
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
-                  <Package className="w-5 h-5 text-[hsl(var(--primary))]" /> Add New Material
+                  <Package className="w-5 h-5 text-[hsl(var(--primary))]" />{tr(" Add New Material")}
                 </h3>
                 <button onClick={() => setIsCreateMaterialOpen(false)} className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">
                   <X className="w-4 h-4" />
@@ -1942,28 +1943,28 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
               <form onSubmit={handleCreateMaterial}>
                 <div className="p-5 space-y-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Material Name *</label>
-                    <Input required placeholder="e.g. Copper pipes 22mm" value={newMaterialName} onChange={(e) => setNewMaterialName(e.target.value)} />
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">{tr("Material Name *")}</label>
+                    <Input required placeholder={tr("e.g. Copper pipes 22mm")} value={newMaterialName} onChange={(e) => setNewMaterialName(e.target.value)} />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Measurement Unit *</label>
-                    <Input required placeholder="e.g. rm, nos, sqft" value={newMaterialUnit} onChange={(e) => setNewMaterialUnit(e.target.value)} />
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">{tr("Measurement Unit *")}</label>
+                    <Input required placeholder={tr("e.g. rm, nos, sqft")} value={newMaterialUnit} onChange={(e) => setNewMaterialUnit(e.target.value)} />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Initial Stock (Default: 0)</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">{tr("Initial Stock (Default: 0)")}</label>
                     <Input type="number" min="0" placeholder="0" value={newMaterialStock} onChange={(e) => setNewMaterialStock(e.target.value === '' ? '' : parseInt(e.target.value, 10))} />
                   </div>
                 </div>
 
                 <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
                   <Button variant="outline" type="button" onClick={() => setIsCreateMaterialOpen(false)}>
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                   <Button type="submit" disabled={creatingMaterial || !newMaterialName || !newMaterialUnit}>
-                    {creatingMaterial && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    Save Material
+                    {creatingMaterial && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+                    {tr("Save Material")}
                   </Button>
                 </div>
               </form>
@@ -1985,10 +1986,10 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))] shrink-0">
                 <div>
                   <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
-                    <CreditCard className="w-5 h-5 text-emerald-500" /> Record Vendor Payment
+                    <CreditCard className="w-5 h-5 text-emerald-500" />{tr(" Record Vendor Payment")}
                   </h3>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                    PO {payingPo.poNumber} • {payingPo.vendorName || 'Vendor'}
+                    {tr("PO ")}{tr(payingPo.poNumber)} • {payingPo.vendorName || tr("Vendor")}
                   </p>
                 </div>
                 <button onClick={() => setIsPayModalOpen(false)} className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">
@@ -1999,14 +2000,14 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
               <form onSubmit={handleRecordPaymentSubmit} className="flex flex-col overflow-hidden">
                 <div className="p-5 space-y-4 overflow-y-auto">
                   <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-lg text-xs space-y-1">
-                    <p className="font-bold text-emerald-800 dark:text-emerald-400">Material: {payingPo.materialName?.replace(' ||CLOSED||', '')}</p>
+                    <p className="font-bold text-emerald-800 dark:text-emerald-400">{tr("Material: ")}{payingPo.materialName?.replace(' ||CLOSED||', '')}</p>
                     <p className="text-emerald-700 dark:text-emerald-500">
-                      Total PO Amount: <span className="font-bold">{currencySymbol} {(payingPo.amount || 0).toLocaleString()}</span>
+                      {tr("Total PO Amount: ")}<span className="font-bold">{tr(currencySymbol)} {(payingPo.amount || 0).toLocaleString()}</span>
                     </p>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Payment Amount ({currencySymbol}) *</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">{tr("Payment Amount (")}{tr(currencySymbol)}) *</label>
                     <Input
                       required
                       type="number"
@@ -2019,22 +2020,22 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Payment Method *</label>
+                      <label className="text-xs font-semibold text-[hsl(var(--foreground))]">{tr("Payment Method *")}</label>
                       <select
                         value={paymentForm.paymentMethod}
                         onChange={(e: any) => setPaymentForm({ ...paymentForm, paymentMethod: e.target.value })}
                         className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
                       >
-                        <option value="Bank Transfer">Bank Transfer / NEFT</option>
-                        <option value="UPI">UPI</option>
-                        <option value="Cheque">Cheque</option>
-                        <option value="RTGS/NEFT">RTGS</option>
-                        <option value="Cash">Cash</option>
+                        <option value="Bank Transfer">{tr("Bank Transfer / NEFT")}</option>
+                        <option value="UPI">{tr("UPI")}</option>
+                        <option value="Cheque">{tr("Cheque")}</option>
+                        <option value="RTGS/NEFT">{tr("RTGS")}</option>
+                        <option value="Cash">{tr("Cash")}</option>
                       </select>
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Payment Date *</label>
+                      <label className="text-xs font-semibold text-[hsl(var(--foreground))]">{tr("Payment Date *")}</label>
                       <Input
                         required
                         type="date"
@@ -2045,46 +2046,46 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Ref / Transaction / Cheque No. *</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">{tr("Ref / Transaction / Cheque No. *")}</label>
                     <Input
                       required
-                      placeholder="e.g. TXN-982109283"
+                      placeholder={tr("e.g. TXN-982109283")}
                       value={paymentForm.referenceNo}
                       onChange={(e) => setPaymentForm({ ...paymentForm, referenceNo: e.target.value })}
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Remarks / Notes</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">{tr("Remarks / Notes")}</label>
                     <Input
-                      placeholder="e.g. 50% advance for material delivery"
+                      placeholder={tr("e.g. 50% advance for material delivery")}
                       value={paymentForm.remarks}
                       onChange={(e) => setPaymentForm({ ...paymentForm, remarks: e.target.value })}
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Project Name</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">{tr("Project Name")}</label>
                     <Input
-                      placeholder="e.g. Skyline Residency"
+                      placeholder={tr("e.g. Skyline Residency")}
                       value={paymentForm.projectName}
                       onChange={(e) => setPaymentForm({ ...paymentForm, projectName: e.target.value })}
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Project Location</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">{tr("Project Location")}</label>
                     <Input
-                      placeholder="e.g. Mumbai, MH"
+                      placeholder={tr("e.g. Mumbai, MH")}
                       value={paymentForm.projectLocation}
                       onChange={(e) => setPaymentForm({ ...paymentForm, projectLocation: e.target.value })}
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Invoice No.</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">{tr("Invoice No.")}</label>
                     <Input
-                      placeholder="e.g. INV-2023-001"
+                      placeholder={tr("e.g. INV-2023-001")}
                       value={paymentForm.invoiceNo}
                       onChange={(e) => setPaymentForm({ ...paymentForm, invoiceNo: e.target.value })}
                     />
@@ -2093,11 +2094,11 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
 
                 <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)] shrink-0">
                   <Button variant="outline" type="button" onClick={() => setIsPayModalOpen(false)}>
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                   <Button type="submit" disabled={isSubmittingPayment || !paymentForm.amount || !paymentForm.referenceNo}>
-                    {isSubmittingPayment && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    Confirm &amp; Record Payment
+                    {isSubmittingPayment && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+                    {tr("Confirm & Record Payment")}
                   </Button>
                 </div>
               </form>
@@ -2119,7 +2120,7 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
             >
               <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--border))]">
                 <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
-                  <Camera className="w-5 h-5 text-[hsl(var(--primary))]" /> Document Viewer
+                  <Camera className="w-5 h-5 text-[hsl(var(--primary))]" />{tr(" Document Viewer")}
                 </h3>
                 <button onClick={() => setViewingImages(null)} className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">
                   <X className="w-4 h-4" />
@@ -2128,23 +2129,23 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-[hsl(var(--muted)/0.2)]">
                 {viewingImages.proofUrl ? (
                   <div className="space-y-2">
-                    <h4 className="text-sm font-bold text-center text-[hsl(var(--foreground))]">Delivery Proof</h4>
-                    <img loading="lazy" decoding="async" src={viewingImages.proofUrl} alt="Delivery Proof" className="w-full h-auto rounded-lg shadow-sm border border-[hsl(var(--border))]" />
+                    <h4 className="text-sm font-bold text-center text-[hsl(var(--foreground))]">{tr("Delivery Proof")}</h4>
+                    <img loading="lazy" decoding="async" src={viewingImages.proofUrl} alt={tr("Delivery Proof")} className="w-full h-auto rounded-lg shadow-sm border border-[hsl(var(--border))]" />
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-full min-h-[200px] border-2 border-dashed border-[hsl(var(--border))] rounded-lg text-[hsl(var(--muted-foreground))] text-sm">
-                    No Delivery Proof Uploaded
+                  <div className="flex items-center justify-center h-full min-h-[12.5rem] border-2 border-dashed border-[hsl(var(--border))] rounded-lg text-[hsl(var(--muted-foreground))] text-sm">
+                    {tr("No Delivery Proof Uploaded")}
                   </div>
                 )}
 
                 {viewingImages.invoiceUrl ? (
                   <div className="space-y-2">
-                    <h4 className="text-sm font-bold text-center text-[hsl(var(--foreground))]">Invoice</h4>
-                    <img loading="lazy" decoding="async" src={viewingImages.invoiceUrl} alt="Invoice" className="w-full h-auto rounded-lg shadow-sm border border-[hsl(var(--border))]" />
+                    <h4 className="text-sm font-bold text-center text-[hsl(var(--foreground))]">{tr("Invoice")}</h4>
+                    <img loading="lazy" decoding="async" src={viewingImages.invoiceUrl} alt={tr("Invoice")} className="w-full h-auto rounded-lg shadow-sm border border-[hsl(var(--border))]" />
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-full min-h-[200px] border-2 border-dashed border-[hsl(var(--border))] rounded-lg text-[hsl(var(--muted-foreground))] text-sm">
-                    No Invoice Uploaded
+                  <div className="flex items-center justify-center h-full min-h-[12.5rem] border-2 border-dashed border-[hsl(var(--border))] rounded-lg text-[hsl(var(--muted-foreground))] text-sm">
+                    {tr("No Invoice Uploaded")}
                   </div>
                 )}
               </div>

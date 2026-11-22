@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Interior CRM Drawing Approval Confirmation Modal
@@ -65,10 +66,10 @@ export const InteriorDrawingConfirmApproveModal: React.FC<Props> = ({
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-900 leading-tight">
-                  Approve Drawing?
+                  {tr("Approve Drawing?")}
                 </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Internal verification & publishing
+                <p className="text-[0.6875rem] text-slate-500 mt-0.5">
+                  {tr("Internal verification & publishing")}
                 </p>
               </div>
             </div>
@@ -78,7 +79,7 @@ export const InteriorDrawingConfirmApproveModal: React.FC<Props> = ({
               onClick={onClose}
               disabled={isSubmitting}
               className="p-1 text-slate-400 hover:text-slate-700 rounded-md hover:bg-slate-200/60 transition cursor-pointer disabled:opacity-40"
-              title="Close"
+              title={tr("Close")}
             >
               <X className="w-4 h-4" />
             </button>
@@ -93,18 +94,18 @@ export const InteriorDrawingConfirmApproveModal: React.FC<Props> = ({
               </div>
               <div className="min-w-0 flex-1">
                 <h4 className="text-xs font-bold text-slate-900 truncate" title={drawingTitle}>
-                  {drawingTitle}
+                  {tr(drawingTitle)}
                 </h4>
                 <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                  <span className={`text-[9px] font-black px-1.5 py-0.2 rounded border uppercase tracking-wider ${badgeInfo.color}`}>
-                    {badgeInfo.label}
+                  <span className={`text-[0.5625rem] font-black px-1.5 py-0.2 rounded border uppercase tracking-wider ${badgeInfo.color}`}>
+                    {tr(badgeInfo.label)}
                   </span>
-                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
-                    Version v{versionNum}
+                  <span className="text-[0.625rem] font-bold px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    {tr("Version v")}{tr(versionNum)}
                   </span>
                   {drawing.roomTag && (
-                    <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      {drawing.roomTag}
+                    <span className="text-[0.625rem] font-semibold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      {tr(drawing.roomTag)}
                     </span>
                   )}
                 </div>
@@ -113,12 +114,12 @@ export const InteriorDrawingConfirmApproveModal: React.FC<Props> = ({
 
             {/* Explanatory banner */}
             <div className="p-3 bg-emerald-50/70 border border-emerald-200/80 rounded-xl space-y-1 text-xs">
-              <div className="flex items-center gap-1.5 text-emerald-900 font-bold text-[11px]">
+              <div className="flex items-center gap-1.5 text-emerald-900 font-bold text-[0.6875rem]">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span>What happens next:</span>
+                <span>{tr("What happens next:")}</span>
               </div>
-              <p className="text-[11px] text-emerald-950/80 leading-relaxed pl-5">
-                This drawing will be marked as <strong className="text-emerald-900">Internally Approved</strong> and will become visible to {leadName ? <strong>{leadName}</strong> : 'the client'} on the public share link portal.
+              <p className="text-[0.6875rem] text-emerald-950/80 leading-relaxed ps-5">
+                {tr("This drawing will be marked as ")}<strong className="text-emerald-900">{tr("Internally Approved")}</strong>{tr(" and will become visible to ")}{leadName ? <strong>{tr(leadName)}</strong> : tr("the client")}{tr(" on the public share link portal.")}
               </p>
             </div>
           </div>
@@ -131,7 +132,7 @@ export const InteriorDrawingConfirmApproveModal: React.FC<Props> = ({
               disabled={isSubmitting}
               className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl transition cursor-pointer disabled:opacity-50 shadow-2xs"
             >
-              Cancel
+              {tr("Cancel")}
             </button>
 
             <button
@@ -143,12 +144,12 @@ export const InteriorDrawingConfirmApproveModal: React.FC<Props> = ({
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Approving...</span>
+                  <span>{tr("Approving...")}</span>
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Confirm Approval</span>
+                  <span>{tr("Confirm Approval")}</span>
                 </>
               )}
             </button>

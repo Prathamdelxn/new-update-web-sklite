@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Interior-OS Quotation Detailed Split-View Modal
@@ -312,7 +313,7 @@ const { hasPermission: canDo } = usePermissions();
     const customerName = lead?.name || 'Customer';
     setVendorCustomSubject(`RFQ / Material Quotation Reference (${qtnNumber}) — ${customerName}`);
     setVendorCustomMessage(
-      `Dear Vendor Partner,\n\nPlease find attached the quotation line items and specifications (${qtnNumber}) for project "${customerName}".\n\n• Scope: ${itemsCount} items\n• Reference Total: ${formatExactCurrency(grandTotal)}\n\nKindly review and share your availability and proposal at the earliest.`
+      tr("Dear Vendor Partner,\n\nPlease find attached the quotation line items and specifications ({{qtnNumber}}) for project \"{{customerName}}\".\n\n• Scope: {{itemsCount}} items\n• Reference Total: {{formatExactCurrency}}\n\nKindly review and share your availability and proposal at the earliest.", { qtnNumber: qtnNumber, customerName: customerName, itemsCount: itemsCount, formatExactCurrency: formatExactCurrency(grandTotal) })
     );
     setSideView('send_vendor');
   };
@@ -353,11 +354,11 @@ const { hasPermission: canDo } = usePermissions();
         remarks: `Quotation ${qtnNumber} (${quoteTitle}) marked as "${newStatus}"`,
       });
 
-      toast.success(`Quotation status updated to "${newStatus}".`);
+      toast.success(tr("Quotation status updated to \"{{newStatus}}\".", { newStatus: newStatus }));
       onSuccess();
       fetchActivities();
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to update quotation status');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || tr("Failed to update quotation status"));
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -368,9 +369,9 @@ const { hasPermission: canDo } = usePermissions();
     if (quotationIndex === null || !lead?.quotations || !quote) return;
     const displayTitle = quoteTitle.length > 50 ? `${quoteTitle.slice(0, 50)}...` : quoteTitle;
     const ok = await confirm({
-      title: `Delete Quotation?`,
-      message: `Are you sure you want to delete "${displayTitle}" (${qtnNumber}) with ${itemsCount} items (${formatSmartCurrency(grandTotal, currencySymbol).display})? This action cannot be undone.`,
-      confirmText: 'Delete Quotation',
+      title: tr("Delete Quotation?"),
+      message: tr("Are you sure you want to delete \"{{displayTitle}}\" ({{qtnNumber}}) with {{itemsCount}} items ({{display}})? This action cannot be undone.", { displayTitle: displayTitle, qtnNumber: qtnNumber, itemsCount: itemsCount, display: formatSmartCurrency(grandTotal, currencySymbol).display }),
+      confirmText: tr("Delete Quotation"),
       type: 'danger',
     });
     if (!ok) return;
@@ -390,12 +391,12 @@ const { hasPermission: canDo } = usePermissions();
         remarks: `Deleted Quotation: ${quoteTitle} (${qtnNumber})`,
       });
 
-      toast.success(`Quotation "${quoteTitle}" deleted successfully.`);
+      toast.success(tr("Quotation \"{{quoteTitle}}\" deleted successfully.", { quoteTitle: quoteTitle }));
       onClose();
       onSuccess();
     } catch (err: any) {
       console.error('Failed to delete quotation:', err);
-      toast.error(err?.response?.data?.error || err?.response?.data?.message || err?.message || 'Failed to delete quotation');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || err?.message || tr("Failed to delete quotation"));
     } finally {
       setIsDeletingQuotation(false);
     }
@@ -409,7 +410,7 @@ const { hasPermission: canDo } = usePermissions();
 
     if (isManualVendor) {
       if (!manualVendorEmail.trim() || !manualVendorEmail.includes('@')) {
-        toast.error('Please enter a valid vendor email address.');
+        toast.error(tr("Please enter a valid vendor email address."));
         return;
       }
       emailToSend = manualVendorEmail.trim();
@@ -417,13 +418,13 @@ const { hasPermission: canDo } = usePermissions();
     } else {
       const selectedVendor = vendorsList.find((v) => (v._id || v.id) === selectedVendorId);
       if (!selectedVendor) {
-        toast.error('Please select a vendor from the list.');
+        toast.error(tr("Please select a vendor from the list."));
         return;
       }
       emailToSend = (selectedVendor.email || selectedVendor.contactEmail || '').trim();
       nameToSend = (selectedVendor.name || selectedVendor.companyName || '').trim();
       if (!emailToSend || !emailToSend.includes('@')) {
-        toast.error(`Selected vendor "${nameToSend}" does not have a valid email address.`);
+        toast.error(tr("Selected vendor \"{{nameToSend}}\" does not have a valid email address.", { nameToSend: nameToSend }));
         return;
       }
     }
@@ -471,7 +472,7 @@ const { hasPermission: canDo } = usePermissions();
         quote.sentVendors.unshift(newSentVendor);
       }
 
-      toast.success(`Quotation copy dispatched to ${nameToSend} (${emailToSend})!`);
+      toast.success(tr("Quotation copy dispatched to {{nameToSend}} ({{emailToSend}})!", { nameToSend: nameToSend, emailToSend: emailToSend }));
       setSelectedVendorId('');
       setManualVendorEmail('');
       setManualVendorName('');
@@ -480,7 +481,7 @@ const { hasPermission: canDo } = usePermissions();
       setSideView('overview');
     } catch (err: any) {
       console.error('Failed to send quotation to vendor:', err);
-      toast.error(err?.response?.data?.error || err?.response?.data?.message || err?.message || 'Failed to send quotation to vendor.');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || err?.message || tr("Failed to send quotation to vendor."));
     } finally {
       setIsSendingVendor(false);
     }
@@ -491,7 +492,7 @@ const { hasPermission: canDo } = usePermissions();
     if (e) e.preventDefault();
     const emailToSend = clientRecipientEmail.trim();
     if (!emailToSend || !emailToSend.includes('@')) {
-      toast.error('Please enter a valid client email address.');
+      toast.error(tr("Please enter a valid client email address."));
       return;
     }
 
@@ -526,13 +527,13 @@ const { hasPermission: canDo } = usePermissions();
         quote.dispatches.unshift(newClientDispatch);
       }
 
-      toast.success(`Quotation sent to ${lead.name} (${emailToSend})! Status updated to 'Sent'.`);
+      toast.success(tr("Quotation sent to {{name}} ({{emailToSend}})! Status updated to 'Sent'.", { name: lead.name, emailToSend: emailToSend }));
       fetchActivities();
       onSuccess();
       setSideView('overview');
     } catch (err: any) {
       console.error('Failed to send quotation to client:', err);
-      toast.error(err?.response?.data?.error || err?.response?.data?.message || err?.message || 'Failed to send quotation to client.');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || err?.message || tr("Failed to send quotation to client."));
     } finally {
       setIsSendingClient(false);
     }
@@ -617,14 +618,14 @@ const { hasPermission: canDo } = usePermissions();
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="text-sm sm:text-base font-extrabold text-slate-900 truncate">
-                    {quoteTitle}
+                    {tr(quoteTitle)}
                   </h3>
                   <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                    {qtnNumber}
+                    {tr(qtnNumber)}
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 truncate">
-                  Client: <span className="font-bold text-slate-800">{lead?.name}</span> • Total Scope: <span className="font-bold text-slate-800">{itemsCount} Items</span> ({formatExactCurrency(grandTotal)})
+                <p className="text-[0.6875rem] text-slate-500 truncate">
+                  {tr("Client: ")}<span className="font-bold text-slate-800">{tr(lead?.name)}</span>{tr(" • Total Scope: ")}<span className="font-bold text-slate-800">{tr(itemsCount)}{tr(" Items")}</span> ({formatExactCurrency(grandTotal)})
                 </p>
               </div>
             </div>
@@ -635,9 +636,9 @@ const { hasPermission: canDo } = usePermissions();
                   type="button"
                   onClick={handlePrint}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors cursor-pointer shadow-2xs"
-                  title="Print or Save PDF"
+                  title={tr("Print or Save PDF")}
                 >
-                  <Printer size={13} /> Print / PDF
+                  <Printer size={13} />{tr(" Print / PDF")}
                 </button>
               )}
 
@@ -648,9 +649,9 @@ const { hasPermission: canDo } = usePermissions();
                     disabled={isDeletingQuotation}
                     onClick={handleDeleteQuotation}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-rose-50 text-rose-600 hover:text-rose-700 border border-rose-200 hover:border-rose-300 transition-colors cursor-pointer shadow-2xs disabled:opacity-50"
-                    title="Delete Quotation"
+                    title={tr("Delete Quotation")}
                   >
-                    <Trash2 size={13} /> {isDeletingQuotation ? 'Deleting...' : 'Delete'}
+                    <Trash2 size={13} /> {isDeletingQuotation ? tr("Deleting...") : tr("Delete")}
                   </button>
                 )
               )}
@@ -661,7 +662,7 @@ const { hasPermission: canDo } = usePermissions();
                 type="button"
                 onClick={onClose}
                 className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                title="Close"
+                title={tr("Close")}
               >
                 <X size={18} />
               </button>
@@ -671,7 +672,7 @@ const { hasPermission: canDo } = usePermissions();
           {/* Main 2-Column Split View Body */}
           <div className="grid grid-cols-1 lg:grid-cols-12 flex-1 min-h-0 overflow-hidden">
             {/* LEFT SIDE: Pure A4 Document Preview (60-65% width) */}
-            <div className="lg:col-span-7 xl:col-span-8 overflow-y-auto p-4 sm:p-6 bg-slate-100/70 border-b lg:border-b-0 lg:border-r border-slate-200">
+            <div className="lg:col-span-7 xl:col-span-8 overflow-y-auto p-4 sm:p-6 bg-slate-100/70 border-b lg:border-b-0 lg:border-e border-slate-200">
               <QuotationPreview
                 lead={lead}
                 quotationIndex={quotationIndex}
@@ -694,10 +695,10 @@ const { hasPermission: canDo } = usePermissions();
                     {isSentToClient && (
                       <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 shadow-2xs">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                            Quotation Status & Decision
+                          <span className="text-[0.625rem] font-bold uppercase tracking-wider text-slate-500">
+                            {tr("Quotation Status & Decision")}
                           </span>
-                          <span className="text-[11px] font-semibold text-slate-400">v{quote?.version || 1}</span>
+                          <span className="text-[0.6875rem] font-semibold text-slate-400">v{quote?.version || 1}</span>
                         </div>
 
                         {/* 1-Step Status Decision & State Card */}
@@ -707,16 +708,16 @@ const { hasPermission: canDo } = usePermissions();
                               <div className="flex items-center gap-2">
                                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
                                 <span className="text-xs font-black uppercase tracking-wider text-emerald-800">
-                                  Client Approved
+                                  {tr("Client Approved")}
                                 </span>
                               </div>
-                              <span className="text-[10px] font-bold text-emerald-700 px-2 py-0.5 rounded-md bg-emerald-100 border border-emerald-300">
-                                Confirmed
+                              <span className="text-[0.625rem] font-bold text-emerald-700 px-2 py-0.5 rounded-md bg-emerald-100 border border-emerald-300">
+                                {tr("Confirmed")}
                               </span>
                             </div>
 
-                            <p className="text-[11px] text-emerald-700 leading-snug">
-                              This quotation has been approved by the client.
+                            <p className="text-[0.6875rem] text-emerald-700 leading-snug">
+                              {tr("This quotation has been approved by the client.")}
                             </p>
                           </div>
                         ) : status === 'Rejected' ? (
@@ -725,16 +726,16 @@ const { hasPermission: canDo } = usePermissions();
                               <div className="flex items-center gap-2">
                                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
                                 <span className="text-xs font-black uppercase tracking-wider text-rose-800">
-                                  Quotation Rejected
+                                  {tr("Quotation Rejected")}
                                 </span>
                               </div>
-                              <span className="text-[10px] font-bold text-rose-700 px-2 py-0.5 rounded-md bg-rose-100 border border-rose-300">
-                                Declined
+                              <span className="text-[0.625rem] font-bold text-rose-700 px-2 py-0.5 rounded-md bg-rose-100 border border-rose-300">
+                                {tr("Declined")}
                               </span>
                             </div>
 
-                            <p className="text-[11px] text-rose-700 leading-snug">
-                              This quotation was marked as rejected by the client.
+                            <p className="text-[0.6875rem] text-rose-700 leading-snug">
+                              {tr("This quotation was marked as rejected by the client.")}
                             </p>
                           </div>
                         ) : (
@@ -743,7 +744,7 @@ const { hasPermission: canDo } = usePermissions();
                               <div className="flex items-center gap-2">
                                 <span className={cn('w-2 h-2 rounded-full animate-pulse', statusConfig.dot)} />
                                 <span className="text-xs font-black uppercase tracking-wider">
-                                  {statusConfig.label}
+                                  {tr(statusConfig.label)}
                                 </span>
                               </div>
                             </div>
@@ -760,7 +761,7 @@ const { hasPermission: canDo } = usePermissions();
                                       className="py-2.5 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-98"
                                     >
                                       <CheckCircle2 size={14} />
-                                      <span>Client Approved</span>
+                                      <span>{tr("Client Approved")}</span>
                                     </button>
                                   )}
 
@@ -773,7 +774,7 @@ const { hasPermission: canDo } = usePermissions();
                                       className="py-2.5 px-3 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-98"
                                     >
                                       <XCircle size={14} />
-                                      <span>Reject</span>
+                                      <span>{tr("Reject")}</span>
                                     </button>
                                   )}
                                 </div>
@@ -789,10 +790,10 @@ const { hasPermission: canDo } = usePermissions();
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
                           <History size={14} className="text-indigo-600" />
-                          <span>Where We Sent the Quotation</span>
+                          <span>{tr("Where We Sent the Quotation")}</span>
                         </div>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                          {dispatchHistory.length} {dispatchHistory.length === 1 ? 'Dispatch' : 'Dispatches'}
+                        <span className="text-[0.625rem] px-2 py-0.5 rounded-full font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                          {dispatchHistory.length} {dispatchHistory.length === 1 ? tr("Dispatch") : tr("Dispatches")}
                         </span>
                       </div>
 
@@ -804,7 +805,7 @@ const { hasPermission: canDo } = usePermissions();
                           className="py-2 px-2.5 rounded-xl text-xs font-bold bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs active:scale-98"
                         >
                           <Send size={12} className="text-indigo-600" />
-                          <span>{isSentToClient ? 'Resend to Client' : 'Send to Client'}</span>
+                          <span>{isSentToClient ? tr("Resend to Client") : tr("Send to Client")}</span>
                         </button>
 
                         <button
@@ -813,23 +814,23 @@ const { hasPermission: canDo } = usePermissions();
                           className="py-2 px-2.5 rounded-xl text-xs font-bold bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs active:scale-98"
                         >
                           <Building2 size={12} className="text-emerald-600" />
-                          <span>Send to Vendor</span>
+                          <span>{tr("Send to Vendor")}</span>
                         </button>
                       </div>
 
                       {/* Dispatch History Items */}
                       {isLoadingActivities ? (
                         <div className="py-4 text-center text-xs text-slate-400">
-                          Loading dispatch tracking...
+                          {tr("Loading dispatch tracking...")}
                         </div>
                       ) : dispatchHistory.length === 0 ? (
                         <div className="p-4 rounded-xl bg-white border border-slate-200 text-center space-y-2">
                           <Mail size={22} className="text-slate-300 mx-auto" />
                           <p className="text-xs font-bold text-slate-700">
-                            Not Dispatched Yet
+                            {tr("Not Dispatched Yet")}
                           </p>
-                          <p className="text-[11px] text-slate-500">
-                            Send this quotation to the client or any vendor partner directly from the options above.
+                          <p className="text-[0.6875rem] text-slate-500">
+                            {tr("Send this quotation to the client or any vendor partner directly from the options above.")}
                           </p>
                         </div>
                       ) : (
@@ -863,37 +864,37 @@ const { hasPermission: canDo } = usePermissions();
                                       {item.recipientName
                                         ? `${isVendor ? 'Vendor' : 'Client'}: ${item.recipientName}`
                                         : isVendor
-                                        ? 'Vendor Partner Copy'
-                                        : 'Client Approval Dispatch'}
+                                        ? tr("Vendor Partner Copy")
+                                        : tr("Client Approval Dispatch")}
                                     </span>
                                   </div>
-                                  <span className="text-[10px] text-slate-400 shrink-0 font-medium">
-                                    {formattedDate}
+                                  <span className="text-[0.625rem] text-slate-400 shrink-0 font-medium">
+                                    {tr(formattedDate)}
                                   </span>
                                 </div>
 
                                 {item.quotationTitle && (
                                   <div className="flex items-center gap-1.5 flex-wrap">
-                                    <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">
-                                      📄 {item.quotationTitle}
+                                    <span className="text-[0.625rem] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">
+                                      📄 {tr(item.quotationTitle)}
                                     </span>
                                     {item.recipientEmail && (
-                                      <span className="text-[10px] text-slate-500 font-mono">
-                                        ✉️ {item.recipientEmail}
+                                      <span className="text-[0.625rem] text-slate-500 font-mono">
+                                        ✉️ {tr(item.recipientEmail)}
                                       </span>
                                     )}
                                   </div>
                                 )}
 
-                                <p className="text-[11px] text-slate-600 leading-snug break-words">
-                                  {item.remarks}
+                                <p className="text-[0.6875rem] text-slate-600 leading-snug break-words">
+                                  {tr(item.remarks)}
                                 </p>
 
-                                <div className="flex items-center justify-between text-[10px] pt-1 border-t border-slate-100">
+                                <div className="flex items-center justify-between text-[0.625rem] pt-1 border-t border-slate-100">
                                   <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold">
-                                    <CheckCircle2 size={11} /> Dispatched via Email
+                                    <CheckCircle2 size={11} />{tr(" Dispatched via Email")}
                                   </span>
-                                  <span className="text-slate-400 font-medium">PDF Attached</span>
+                                  <span className="text-slate-400 font-medium">{tr("PDF Attached")}</span>
                                 </div>
                               </div>
                             );
@@ -904,13 +905,13 @@ const { hasPermission: canDo } = usePermissions();
 
                     {/* COMMERCIAL BREAKDOWN */}
                     <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 shadow-2xs">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                        Commercial Breakdown
+                      <div className="text-[0.625rem] font-bold uppercase tracking-wider text-slate-500">
+                        {tr("Commercial Breakdown")}
                       </div>
 
                       <div className="space-y-1.5 text-xs">
                         <div className="flex items-center justify-between text-slate-600">
-                          <span>Subtotal ({itemsCount} items):</span>
+                          <span>{tr("Subtotal (")}{tr(itemsCount)}{tr(" items):")}</span>
                           <span className="font-semibold text-slate-800">
                             {formatExactCurrency(Number(quote.subtotal || 0))}
                           </span>
@@ -918,7 +919,7 @@ const { hasPermission: canDo } = usePermissions();
 
                         {Boolean(quote.taxPercentage) && (
                           <div className="flex items-center justify-between text-slate-600">
-                            <span>GST ({quote.taxPercentage}%):</span>
+                            <span>{tr("GST (")}{tr(quote.taxPercentage)}%):</span>
                             <span className="font-semibold text-slate-800">
                               {formatExactCurrency(Number(quote.tax || 0))}
                             </span>
@@ -927,13 +928,13 @@ const { hasPermission: canDo } = usePermissions();
 
                         {Boolean(quote.discount || quote.discountAmount) && (
                           <div className="flex items-center justify-between text-emerald-600 font-semibold">
-                            <span>Discount:</span>
+                            <span>{tr("Discount:")}</span>
                             <span>-{formatExactCurrency(Number(quote.discount || quote.discountAmount || 0))}</span>
                           </div>
                         )}
 
                         <div className="flex items-center justify-between text-sm font-extrabold text-slate-900 pt-2 border-t border-slate-200">
-                          <span>Grand Total:</span>
+                          <span>{tr("Grand Total:")}</span>
                           <span className="text-indigo-600">
                             {formatExactCurrency(grandTotal)}
                           </span>
@@ -952,7 +953,7 @@ const { hasPermission: canDo } = usePermissions();
                             className="w-full py-2 px-3 rounded-xl text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 hover:border-rose-300 flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
                           >
                             <Trash2 size={13} />
-                            <span>{isDeletingQuotation ? 'Deleting Quotation...' : 'Delete This Quotation'}</span>
+                            <span>{isDeletingQuotation ? tr("Deleting Quotation...") : tr("Delete This Quotation")}</span>
                           </button>
                         )}
                       </div>
@@ -961,7 +962,7 @@ const { hasPermission: canDo } = usePermissions();
                 </div>
 
                 {/* SLIDE 2: DISPATCH PANEL */}
-                <div className="w-1/2 h-full overflow-y-auto p-5 sm:p-6 flex flex-col justify-between shrink-0 space-y-4 bg-slate-50/40 border-l border-slate-200">
+                <div className="w-1/2 h-full overflow-y-auto p-5 sm:p-6 flex flex-col justify-between shrink-0 space-y-4 bg-slate-50/40 border-s border-slate-200">
                   {sideView === 'send_vendor' ? (
                     <div className="space-y-3.5 flex-1 flex flex-col justify-between">
                       <div className="space-y-3.5">
@@ -972,11 +973,11 @@ const { hasPermission: canDo } = usePermissions();
                             onClick={() => setSideView('overview')}
                             className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors cursor-pointer py-1 px-2 rounded-lg hover:bg-slate-100"
                           >
-                            <ArrowLeft size={14} /> Back
+                            <ArrowLeft size={14} />{tr(" Back")}
                           </button>
                           <div className="flex items-center gap-1.5 text-xs font-extrabold text-emerald-800">
                             <Building2 size={14} className="text-emerald-600" />
-                            <span>Send to Vendor</span>
+                            <span>{tr("Send to Vendor")}</span>
                           </div>
                         </div>
 
@@ -989,11 +990,11 @@ const { hasPermission: canDo } = usePermissions();
                               setManualVendorEmail('');
                             }}
                             className={cn(
-                              'flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all cursor-pointer text-center',
+                              'flex-1 py-1.5 px-2 rounded-lg text-[0.6875rem] font-bold transition-all cursor-pointer text-center',
                               !isManualVendor ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
                             )}
                           >
-                            Select Vendor ({vendorsList.length})
+                            {tr("Select Vendor (")}{vendorsList.length})
                           </button>
                           <button
                             type="button"
@@ -1002,11 +1003,11 @@ const { hasPermission: canDo } = usePermissions();
                               setSelectedVendorId('');
                             }}
                             className={cn(
-                              'flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all cursor-pointer text-center',
+                              'flex-1 py-1.5 px-2 rounded-lg text-[0.6875rem] font-bold transition-all cursor-pointer text-center',
                               isManualVendor ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
                             )}
                           >
-                            + Other Email
+                            {tr("+ Other Email")}
                           </button>
                         </div>
 
@@ -1019,8 +1020,8 @@ const { hasPermission: canDo } = usePermissions();
                                 type="text"
                                 value={vendorSearchQuery}
                                 onChange={(e) => setVendorSearchQuery(e.target.value)}
-                                placeholder="Search vendor by name, category, email..."
-                                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 placeholder:text-slate-400 shadow-2xs"
+                                placeholder={tr("Search vendor by name, category, email...")}
+                                className="w-full ps-9 pe-3 py-2 text-xs rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 placeholder:text-slate-400 shadow-2xs"
                               />
                             </div>
 
@@ -1033,25 +1034,25 @@ const { hasPermission: canDo } = usePermissions();
                                     type="button"
                                     onClick={() => setSelectedCategoryFilter(cat)}
                                     className={cn(
-                                      'px-2.5 py-1 rounded-full text-[10px] font-bold shrink-0 transition-colors cursor-pointer',
+                                      'px-2.5 py-1 rounded-full text-[0.625rem] font-bold shrink-0 transition-colors cursor-pointer',
                                       selectedCategoryFilter === cat
                                         ? 'bg-emerald-600 text-white shadow-2xs'
                                         : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                                     )}
                                   >
-                                    {cat}
+                                    {tr(cat)}
                                   </button>
                                 ))}
                               </div>
                             )}
 
                             {/* Scrollable Vendor List */}
-                            <div className="space-y-1.5 max-h-[55vh] overflow-y-auto pr-1">
+                            <div className="space-y-1.5 max-h-[55vh] overflow-y-auto pe-1">
                               {isLoadingVendors ? (
-                                <div className="py-8 text-center text-xs text-slate-400">Loading vendors...</div>
+                                <div className="py-8 text-center text-xs text-slate-400">{tr("Loading vendors...")}</div>
                               ) : filteredVendors.length === 0 ? (
                                 <div className="py-8 text-center text-xs text-slate-400">
-                                  {vendorSearchQuery ? 'No vendors match your search' : 'No vendors found in directory'}
+                                  {vendorSearchQuery ? tr("No vendors match your search") : tr("No vendors found in directory")}
                                 </div>
                               ) : (
                                 filteredVendors.map((v) => {
@@ -1077,23 +1078,23 @@ const { hasPermission: canDo } = usePermissions();
                                     >
                                       <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-1.5 flex-wrap">
-                                          <span className="font-bold text-slate-900 truncate">{vName}</span>
+                                          <span className="font-bold text-slate-900 truncate">{tr(vName)}</span>
                                           {(v.vendorCode || v._id) && (
-                                            <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 border border-purple-200 shrink-0">
+                                            <span className="text-[0.5625rem] font-mono font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 border border-purple-200 shrink-0">
                                               {v.vendorCode || `VND-${String(v._id).slice(-3).toUpperCase()}`}
                                             </span>
                                           )}
-                                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-semibold shrink-0">
-                                            {vCat}
+                                          <span className="text-[0.5625rem] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-semibold shrink-0">
+                                            {tr(vCat)}
                                           </span>
                                           {isAlreadySent && (
-                                            <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-700 font-bold border border-emerald-200 shrink-0">
-                                              Already Sent
+                                            <span className="text-[0.5625rem] px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-700 font-bold border border-emerald-200 shrink-0">
+                                              {tr("Already Sent")}
                                             </span>
                                           )}
                                         </div>
-                                        <div className="text-[11px] text-slate-500 truncate mt-0.5">
-                                          {vEmail || 'No email saved'}
+                                        <div className="text-[0.6875rem] text-slate-500 truncate mt-0.5">
+                                          {vEmail || tr("No email saved")}
                                         </div>
                                       </div>
 
@@ -1114,25 +1115,25 @@ const { hasPermission: canDo } = usePermissions();
                         ) : (
                           <div className="space-y-3 p-3.5 bg-white border border-slate-200 rounded-xl">
                             <div>
-                              <label className="block text-[11px] font-bold text-slate-700 mb-1">Recipient Name:</label>
+                              <label className="block text-[0.6875rem] font-bold text-slate-700 mb-1">{tr("Recipient Name:")}</label>
                               <input
                                 type="text"
                                 value={manualVendorName}
                                 onChange={(e) => setManualVendorName(e.target.value)}
-                                placeholder="e.g. Apex Woodworks / John"
+                                placeholder={tr("e.g. Apex Woodworks / John")}
                                 className="w-full px-3 py-2 text-xs rounded-lg bg-slate-50 border border-slate-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800"
                               />
                             </div>
 
                             <div>
-                              <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                                Vendor Email Address <span className="text-rose-500">*</span>
+                              <label className="block text-[0.6875rem] font-bold text-slate-700 mb-1">
+                                {tr("Vendor Email Address ")}<span className="text-rose-500">*</span>
                               </label>
                               <input
                                 type="email"
                                 value={manualVendorEmail}
                                 onChange={(e) => setManualVendorEmail(e.target.value)}
-                                placeholder="vendor@company.com"
+                                placeholder={tr("vendor@company.com")}
                                 className="w-full px-3 py-2 text-xs rounded-lg bg-slate-50 border border-slate-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800"
                               />
                             </div>
@@ -1152,10 +1153,10 @@ const { hasPermission: canDo } = usePermissions();
                             <Send size={13} />
                             <span>
                               {isSendingVendor
-                                ? 'Dispatching to Vendor...'
+                                ? tr("Dispatching to Vendor...")
                                 : selectedVendorId && sentVendorIds.has(selectedVendorId)
-                                ? 'Resend Quotation to Vendor'
-                                : 'Send Quotation to Vendor'}
+                                ? tr("Resend Quotation to Vendor")
+                                : tr("Send Quotation to Vendor")}
                             </span>
                           </button>
                         )}
@@ -1171,32 +1172,32 @@ const { hasPermission: canDo } = usePermissions();
                             onClick={() => setSideView('overview')}
                             className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors cursor-pointer py-1 px-2 rounded-lg hover:bg-slate-100"
                           >
-                            <ArrowLeft size={14} /> Back
+                            <ArrowLeft size={14} />{tr(" Back")}
                           </button>
                           <div className="flex items-center gap-1.5 text-xs font-extrabold text-indigo-700">
                             <Send size={14} className="text-indigo-600" />
-                            <span>Send to Client</span>
+                            <span>{tr("Send to Client")}</span>
                           </div>
                         </div>
 
                         {/* Recipient Details */}
                         <div className="p-3.5 bg-white border border-slate-200 rounded-xl space-y-3">
                           <div>
-                            <label className="block text-[11px] font-bold text-slate-700 mb-1">Client Name:</label>
+                            <label className="block text-[0.6875rem] font-bold text-slate-700 mb-1">{tr("Client Name:")}</label>
                             <div className="px-3 py-2 bg-slate-50 rounded-lg border border-slate-200 text-xs font-bold text-slate-800">
-                              {lead?.name || 'Customer'}
+                              {lead?.name || tr("Customer")}
                             </div>
                           </div>
 
                           <div>
-                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                              Client Email Address <span className="text-rose-500">*</span>
+                            <label className="block text-[0.6875rem] font-bold text-slate-700 mb-1">
+                              {tr("Client Email Address ")}<span className="text-rose-500">*</span>
                             </label>
                             <input
                               type="email"
                               value={clientRecipientEmail}
                               onChange={(e) => setClientRecipientEmail(e.target.value)}
-                              placeholder="client@example.com"
+                              placeholder={tr("client@example.com")}
                               className="w-full px-3 py-2 text-xs rounded-lg bg-slate-50 border border-slate-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
                             />
                           </div>
@@ -1204,14 +1205,14 @@ const { hasPermission: canDo } = usePermissions();
 
                         {/* Additional Note */}
                         <div>
-                          <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                            Cover Note / Custom Message (Optional):
+                          <label className="block text-[0.6875rem] font-bold text-slate-700 mb-1">
+                            {tr("Cover Note / Custom Message (Optional):")}
                           </label>
                           <textarea
                             rows={4}
                             value={clientAdditionalNote}
                             onChange={(e) => setClientAdditionalNote(e.target.value)}
-                            placeholder="Dear client, please review our detailed interior proposal and quotation. Let us know if you have any questions..."
+                            placeholder={tr("Dear client, please review our detailed interior proposal and quotation. Let us know if you have any questions...")}
                             className="w-full px-3 py-2 text-xs rounded-lg bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
                           />
                         </div>
@@ -1227,7 +1228,7 @@ const { hasPermission: canDo } = usePermissions();
                             className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 active:scale-98"
                           >
                             <Send size={13} />
-                            <span>{isSendingClient ? 'Sending for Client Approval...' : 'Send for Client Approval'}</span>
+                            <span>{isSendingClient ? tr("Sending for Client Approval...") : tr("Send for Client Approval")}</span>
                           </button>
                         )}
                       </div>

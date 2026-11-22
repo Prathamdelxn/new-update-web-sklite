@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Interior-New Executive Dashboard
@@ -100,7 +101,7 @@ function InteriorNewDashboardSkeleton() {
                 <div className="h-4 w-20 bg-slate-200/60 rounded-md" />
               </div>
             </div>
-            <div className="h-[280px] w-full bg-slate-50 border border-slate-100 rounded-xl flex items-end p-4 gap-4">
+            <div className="h-[17.5rem] w-full bg-slate-50 border border-slate-100 rounded-xl flex items-end p-4 gap-4">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
@@ -135,7 +136,7 @@ function InteriorNewDashboardSkeleton() {
           {/* CRM Pipeline */}
           <div className="bg-white border border-slate-200/90 rounded-xl p-6 shadow-none">
             <div className="h-5 w-40 bg-slate-200/90 rounded-md mb-4" />
-            <div className="h-[200px] bg-slate-50 border border-slate-100 rounded-xl flex items-end p-4 gap-3">
+            <div className="h-[12.5rem] bg-slate-50 border border-slate-100 rounded-xl flex items-end p-4 gap-3">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div
                   key={i}
@@ -149,7 +150,7 @@ function InteriorNewDashboardSkeleton() {
           {/* Procurement */}
           <div className="bg-white border border-slate-200/90 rounded-xl p-6 shadow-none">
             <div className="h-5 w-32 bg-slate-200/90 rounded-md mb-4" />
-            <div className="h-[200px] bg-slate-50 border border-slate-100 rounded-xl flex items-end p-4 gap-3">
+            <div className="h-[12.5rem] bg-slate-50 border border-slate-100 rounded-xl flex items-end p-4 gap-3">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div
                   key={i}
@@ -240,20 +241,20 @@ export default function InteriorNewDashboardView() {
         <div className="max-w-xl mx-auto mt-10 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-8 text-center space-y-4">
           <FolderKanban className="w-10 h-10 mx-auto text-[hsl(var(--muted-foreground))]" />
           <div>
-            <h2 className="text-lg font-bold text-[hsl(var(--foreground))]">Welcome{user?.firstName ? `, ${user.firstName}` : ''}</h2>
+            <h2 className="text-lg font-bold text-[hsl(var(--foreground))]">{tr("Welcome")}{user?.firstName ? `, ${user.firstName}` : ''}</h2>
             <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
-              Your role doesn&apos;t include the Dashboard. Open the sections you work in:
+              {tr("Your role doesn't include the Dashboard. Open the sections you work in:")}
             </p>
           </div>
           <div className="flex flex-wrap justify-center gap-2">
             {navAccess.projects !== false && (
               <Link href="/interior-new/projects" className="px-4 py-2 rounded-lg text-sm font-semibold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]">
-                Projects
+                {tr("Projects")}
               </Link>
             )}
             {navAccess.crm && (
               <Link href="/interior-new/crm" className="px-4 py-2 rounded-lg text-sm font-semibold border border-[hsl(var(--border))] text-[hsl(var(--foreground))]">
-                CRM
+                {tr("CRM")}
               </Link>
             )}
           </div>
@@ -291,17 +292,17 @@ export default function InteriorNewDashboardView() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold tracking-tight capitalize text-[hsl(var(--foreground))]">
-            Good {getGreeting()}, {user?.firstName || 'there'}
+            {tr("Good ")}{getGreeting()}, {user?.firstName || tr("there")}
           </h1>
           <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
-            Here&apos;s the live status of your organizational fit-out portfolio today.
+            {tr("Here's the live status of your organizational fit-out portfolio today.")}
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           <Button variant="outline" size="sm" onClick={handleManualRefresh} disabled={refreshing}>
-            {refreshing ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <RefreshCw className="w-3.5 h-3.5 mr-1.5" />}
-            Refresh
+            {refreshing ? <Loader2 className="w-3.5 h-3.5 animate-spin me-1.5" /> : <RefreshCw className="w-3.5 h-3.5 me-1.5" />}
+            {tr("Refresh")}
           </Button>
         </div>
       </div>
@@ -318,8 +319,8 @@ export default function InteriorNewDashboardView() {
                       <kpi.icon className="w-4 h-4" style={{ color: kpi.color }} />
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{kpi.value}</p>
-                  <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{kpi.title}</p>
+                  <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{tr(kpi.value)}</p>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{tr(kpi.title)}</p>
                 </CardContent>
               </Card>
             </div>
@@ -331,20 +332,20 @@ export default function InteriorNewDashboardView() {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-base font-semibold">Progress Trend</CardTitle>
+                <CardTitle className="text-base font-semibold">{tr("Progress Trend")}</CardTitle>
                 <div className="flex items-center gap-4 text-xs text-[hsl(var(--muted-foreground))]">
                   <span className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-[hsl(var(--chart-1))]" />
-                    Planned
+                    {tr("Planned")}
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-[hsl(var(--chart-2))]" />
-                    Actual
+                    {tr("Actual")}
                   </span>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="h-[280px] outline-none focus:outline-none [&_*]:outline-none">
+                <div className="h-[17.5rem] outline-none focus:outline-none [&_*]:outline-none">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart style={{ outline: 'none' }} data={data?.progressTrend || []} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
                       <defs>
@@ -381,10 +382,10 @@ export default function InteriorNewDashboardView() {
           <div>
             <Card className="h-full">
               <CardHeader className="pb-2">
-                <CardTitle className="text-base font-semibold">Project Health</CardTitle>
+                <CardTitle className="text-base font-semibold">{tr("Project Health")}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[200px] outline-none focus:outline-none [&_*]:outline-none">
+                <div className="h-[12.5rem] outline-none focus:outline-none [&_*]:outline-none">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart style={{ outline: 'none' }}>
                       <Pie
@@ -419,7 +420,7 @@ export default function InteriorNewDashboardView() {
                   {/* Centre label: number of active projects counted */}
                   {/* <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <span className="text-2xl font-bold text-[hsl(var(--foreground))]">{healthTotal}</span>
-                    <span className="text-[11px] text-[hsl(var(--muted-foreground))]">
+                    <span className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
                       {healthTotal === 1 ? 'Project' : 'Projects'}
                     </span>
                   </div> */}
@@ -429,9 +430,9 @@ export default function InteriorNewDashboardView() {
                     <div key={item.name} className="flex items-center justify-between text-sm">
                       <span className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                        <span className="text-[hsl(var(--muted-foreground))]">{item.name}</span>
+                        <span className="text-[hsl(var(--muted-foreground))]">{tr(item.name)}</span>
                       </span>
-                      <span className="font-medium text-[hsl(var(--foreground))]">{item.value}</span>
+                      <span className="font-medium text-[hsl(var(--foreground))]">{tr(item.value)}</span>
                     </div>
                   ))}
                 </div>
@@ -447,11 +448,11 @@ export default function InteriorNewDashboardView() {
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <Users className="w-4 h-4 text-blue-500" />
-                  CRM Lead Pipeline
+                  {tr("CRM Lead Pipeline")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[200px] outline-none focus:outline-none [&_*]:outline-none">
+                <div className="h-[12.5rem] outline-none focus:outline-none [&_*]:outline-none">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart style={{ outline: 'none' }} data={data?.leadsPipeline || []} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
@@ -478,11 +479,11 @@ export default function InteriorNewDashboardView() {
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <BarChart3 className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                  Procurement
+                  {tr("Procurement")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[200px] outline-none focus:outline-none [&_*]:outline-none">
+                <div className="h-[12.5rem] outline-none focus:outline-none [&_*]:outline-none">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart style={{ outline: 'none' }} data={data?.procurementData || []} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
@@ -507,18 +508,18 @@ export default function InteriorNewDashboardView() {
           <div>
             <Card className="h-full">
               <CardHeader className="pb-2">
-                <CardTitle className="text-base font-semibold">Top Projects</CardTitle>
+                <CardTitle className="text-base font-semibold">{tr("Top Projects")}</CardTitle>
               </CardHeader>
               <CardContent>
                 {!data?.topProjects || data.topProjects.length === 0 ? (
                   <div className="py-10 text-center space-y-2">
                     <FolderKanban className="w-8 h-8 mx-auto text-[hsl(var(--muted-foreground)/0.4)]" />
-                    <p className="text-xs text-[hsl(var(--muted-foreground))]">No active projects yet</p>
+                    <p className="text-xs text-[hsl(var(--muted-foreground))]">{tr("No active projects yet")}</p>
                     <Link
                       href="/interior-new/projects"
                       className="inline-block text-xs font-semibold text-[hsl(var(--primary))] hover:underline cursor-pointer"
                     >
-                      View all projects
+                      {tr("View all projects")}
                     </Link>
                   </div>
                 ) : (
@@ -526,8 +527,8 @@ export default function InteriorNewDashboardView() {
                     {data.topProjects.map((project) => (
                       <div key={project.id}>
                         <div className="flex items-center justify-between mb-1">
-                          <p className="text-sm font-medium text-[hsl(var(--foreground))] truncate max-w-[180px]">{project.name}</p>
-                          <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">{project.progress}%</span>
+                          <p className="text-sm font-medium text-[hsl(var(--foreground))] truncate max-w-[11.25rem]">{tr(project.name)}</p>
+                          <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">{tr(project.progress)}%</span>
                         </div>
                         <div className="w-full h-1.5 bg-[hsl(var(--muted))] rounded-full overflow-hidden">
                           <div
@@ -550,12 +551,12 @@ export default function InteriorNewDashboardView() {
           <div className="lg:col-span-3">
             <Card className="h-full">
               <CardHeader className="pb-2">
-                <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
+                <CardTitle className="text-base font-semibold">{tr("Recent Activity")}</CardTitle>
               </CardHeader>
               <CardContent>
                 {!data?.recentActivities || data.recentActivities.length === 0 ? (
                   <p className="text-xs text-[hsl(var(--muted-foreground))] py-6 text-center">
-                    No recent activity recorded yet.
+                    {tr("No recent activity recorded yet.")}
                   </p>
                 ) : (
                   <div className="space-y-3">
@@ -573,9 +574,9 @@ export default function InteriorNewDashboardView() {
                           }`}
                         />
                         <div className="min-w-0">
-                          <p className="text-sm text-[hsl(var(--foreground))] truncate" title={activity.action}>{activity.action}</p>
+                          <p className="text-sm text-[hsl(var(--foreground))] truncate" title={activity.action}>{tr(activity.action)}</p>
                           <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">
-                            {activity.project} · {activity.time}
+                            {tr(activity.project)} · {tr(activity.time)}
                           </p>
                         </div>
                       </div>

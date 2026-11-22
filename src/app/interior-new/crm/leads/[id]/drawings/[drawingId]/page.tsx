@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Architectural Drawing Studio
@@ -474,7 +475,7 @@ const { hasPermission: canDo } = usePermissions();
 
       const handleError = (err: any) => {
         console.error('3D Load error', err);
-        setLoad3DError('Could not render 3D preview in browser. You can inspect drawing metadata directly.');
+        setLoad3DError(tr("Could not render 3D preview in browser. You can inspect drawing metadata directly."));
         setLoading3D(false);
       };
 
@@ -494,7 +495,7 @@ const { hasPermission: canDo } = usePermissions();
         const loader = new GLTFLoader();
         loader.load(activeUrl, (gltf) => handleModelLoaded(gltf.scene), onProgress, handleError);
       } else {
-        setLoad3DError(`Preview unavailable for .${ext.toUpperCase()} files.`);
+        setLoad3DError(tr("Preview unavailable for .{{ext}} files.", { ext: ext.toUpperCase() }));
         setLoading3D(false);
       }
 
@@ -529,7 +530,7 @@ const { hasPermission: canDo } = usePermissions();
     })().catch((err) => {
       console.error('3D engine failed to load', err);
       if (!cancelled) {
-        setLoad3DError('Could not load the 3D viewer. Check your connection and try again.');
+        setLoad3DError(tr("Could not load the 3D viewer. Check your connection and try again."));
         setLoading3D(false);
       }
     });
@@ -550,10 +551,10 @@ const { hasPermission: canDo } = usePermissions();
         action: 'approve',
         versionNumber: activeVersionNum
       });
-      toast.success(`Drawing Version v${activeVersionNum} approved!`);
+      toast.success(tr("Drawing Version v{{activeVersionNum}} approved!", { activeVersionNum: activeVersionNum }));
       loadDrawingData();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to approve drawing');
+      toast.error(err?.response?.data?.message || tr("Failed to approve drawing"));
     } finally {
       setApprovingDirect(false);
     }
@@ -563,7 +564,7 @@ const { hasPermission: canDo } = usePermissions();
     if (typeof window !== 'undefined') {
       navigator.clipboard.writeText(window.location.href);
       setCopiedLink(true);
-      toast.success('Drawing link copied');
+      toast.success(tr("Drawing link copied"));
       setTimeout(() => setCopiedLink(false), 2000);
     }
   };
@@ -702,8 +703,8 @@ const { hasPermission: canDo } = usePermissions();
           <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 mb-3 shadow-2xs">
             <Loader2 className="w-5 h-5 animate-spin" />
           </div>
-          <h2 className="text-sm font-semibold text-slate-900">Loading Drawing Studio</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Fetching blueprint specifications and revision history...</p>
+          <h2 className="text-sm font-semibold text-slate-900">{tr("Loading Drawing Studio")}</h2>
+          <p className="text-xs text-slate-500 mt-0.5">{tr("Fetching blueprint specifications and revision history...")}</p>
         </div>
       </InteriorShell>
     );
@@ -716,10 +717,10 @@ const { hasPermission: canDo } = usePermissions();
       <InteriorShell>
         <div className="p-16 flex flex-col items-center justify-center min-h-[70vh] text-center max-w-md mx-auto gap-3">
           <h2 className="text-base font-semibold text-slate-900">
-            {isDrawingLeadFetching ? 'Still loading this drawing…' : "Couldn't load this drawing"}
+            {isDrawingLeadFetching ? tr("Still loading this drawing…") : tr("Couldn't load this drawing")}
           </h2>
           <p className="text-xs text-slate-500 leading-relaxed">
-            The connection is slow or was interrupted. Your data is safe — try again.
+            {tr("The connection is slow or was interrupted. Your data is safe — try again.")}
           </p>
           <button
             type="button"
@@ -727,7 +728,7 @@ const { hasPermission: canDo } = usePermissions();
             disabled={isDrawingLeadFetching}
             className="px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold disabled:opacity-60 cursor-pointer"
           >
-            {isDrawingLeadFetching ? 'Retrying…' : 'Retry'}
+            {isDrawingLeadFetching ? tr("Retrying…") : tr("Retry")}
           </button>
         </div>
       </InteriorShell>
@@ -741,15 +742,15 @@ const { hasPermission: canDo } = usePermissions();
           <div className="w-12 h-12 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 mb-3">
             <AlertCircle className="w-6 h-6" />
           </div>
-          <h2 className="text-base font-semibold text-slate-900">Drawing Not Found</h2>
+          <h2 className="text-base font-semibold text-slate-900">{tr("Drawing Not Found")}</h2>
           <p className="text-xs text-slate-500 mt-1 mb-5 leading-relaxed">
-            The requested drawing file may have been relocated or is unavailable for this lead account.
+            {tr("The requested drawing file may have been relocated or is unavailable for this lead account.")}
           </p>
           <Link
             href={`/interior-new/crm/leads/${customerId}`}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition-colors"
           >
-            <ArrowLeft size={14} /> Return to Lead Workspace
+            <ArrowLeft size={14} />{tr(" Return to Lead Workspace")}
           </Link>
         </div>
       </InteriorShell>
@@ -786,24 +787,24 @@ const { hasPermission: canDo } = usePermissions();
                   }
                 }}
                 className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors shrink-0 cursor-pointer"
-                title={`Return to ${sectionLabel}`}
+                title={tr("Return to {{sectionLabel}}", { sectionLabel: sectionLabel })}
               >
                 <ArrowLeft size={15} />
               </button>
 
               <div className="flex items-center gap-2 min-w-0">
                 <nav className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                  <Link href="/interior-new/crm" className="hover:text-slate-900 transition-colors">CRM</Link>
+                  <Link href="/interior-new/crm" className="hover:text-slate-900 transition-colors">{tr("CRM")}</Link>
                   <ChevronRight size={11} className="text-slate-400 shrink-0" />
-                  <Link href={returnHref} className="hover:text-slate-900 transition-colors truncate max-w-[130px]">
-                    {lead?.name || 'Lead'}
+                  <Link href={returnHref} className="hover:text-slate-900 transition-colors truncate max-w-[8.125rem]">
+                    {lead?.name || tr("Lead")}
                   </Link>
                   <ChevronRight size={11} className="text-slate-400 shrink-0" />
                   <Link href={returnHref} className="text-slate-500 hover:text-slate-900 transition-colors">
-                    {sectionLabel}
+                    {tr(sectionLabel)}
                   </Link>
                   <ChevronRight size={11} className="text-slate-400 shrink-0" />
-                  <span className="text-slate-900 font-semibold truncate max-w-[240px]">{activeTitle}</span>
+                  <span className="text-slate-900 font-semibold truncate max-w-[15rem]">{tr(activeTitle)}</span>
                 </nav>
               </div>
             </div>
@@ -819,10 +820,10 @@ const { hasPermission: canDo } = usePermissions();
                     ? 'bg-slate-900 text-white border-slate-900'
                     : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
                 }`}
-                title="Toggle Version Details & Audit History"
+                title={tr("Toggle Version Details & Audit History")}
               >
                 {showSidePanel ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />}
-                <span>Version & Audit ({allVersions.length})</span>
+                <span>{tr("Version & Audit (")}{allVersions.length})</span>
               </button>
 
               {isCurrentVersionDraft && (
@@ -832,7 +833,7 @@ const { hasPermission: canDo } = usePermissions();
                     onClick={() => setIsSendApprovalModalOpen(true)}
                     className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
                   >
-                    <Send size={13} /> Send for Approval
+                    <Send size={13} />{tr(" Send for Approval")}
                   </button>
                 )
               )}
@@ -845,7 +846,7 @@ const { hasPermission: canDo } = usePermissions();
                       onClick={() => setIsApprovalModalOpen(true)}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors cursor-pointer"
                     >
-                      <XCircle size={13} /> Rejected
+                      <XCircle size={13} />{tr(" Rejected")}
                     </button>
                   )}
                   {canDo('crm_drawings', 'approve') && (
@@ -855,7 +856,7 @@ const { hasPermission: canDo } = usePermissions();
                       disabled={approvingDirect}
                       className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer disabled:opacity-50"
                     >
-                      <CheckCircle2 size={13} /> Approve (v{activeVersionNum})
+                      <CheckCircle2 size={13} />{tr(" Approve (v")}{tr(activeVersionNum)})
                     </button>
                   )}
                 </>
@@ -868,7 +869,7 @@ const { hasPermission: canDo } = usePermissions();
                     onClick={() => setIsRevisionModalOpen(true)}
                     className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
                   >
-                    <UploadCloud size={13} /> + Upload Revision (v{allVersions.length + 1})
+                    <UploadCloud size={13} />{tr(" + Upload Revision (v")}{allVersions.length + 1})
                   </button>
                 )
               )}
@@ -883,7 +884,7 @@ const { hasPermission: canDo } = usePermissions();
           <div className="w-full px-4 sm:px-6 py-2 flex items-center justify-between gap-4 overflow-x-auto">
             <div className="flex items-center gap-2 shrink-0">
               <span className="text-xs font-medium text-slate-500 mr-1 flex items-center gap-1">
-                <History size={13} /> Versions:
+                <History size={13} />{tr(" Versions:")}
               </span>
 
               {allVersions.map((ver: any) => {
@@ -907,13 +908,13 @@ const { hasPermission: canDo } = usePermissions();
                         : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
                     }`}
                   >
-                    <span>v{ver.versionNumber}</span>
+                    <span>v{tr(ver.versionNumber)}</span>
                     <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : statusPill.dot}`} />
                     {isLatest && (
-                      <span className={`text-[9px] px-1 rounded uppercase font-semibold ${
+                      <span className={`text-[0.5625rem] px-1 rounded uppercase font-semibold ${
                         isSelected ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
                       }`}>
-                        Latest
+                        {tr("Latest")}
                       </span>
                     )}
                   </button>
@@ -927,9 +928,9 @@ const { hasPermission: canDo } = usePermissions();
                 onClick={() => setShowSidePanel(!showSidePanel)}
                 className="hover:text-slate-900 font-medium flex items-center gap-1 cursor-pointer"
               >
-                <span>Status:</span>
-                <span className={`inline-flex items-center gap-1 px-2 py-0.2 rounded text-[11px] font-semibold border ${activeStatusInfo.bg}`}>
-                  <StatusIcon size={11} /> {activeStatusInfo.label}
+                <span>{tr("Status:")}</span>
+                <span className={`inline-flex items-center gap-1 px-2 py-0.2 rounded text-[0.6875rem] font-semibold border ${activeStatusInfo.bg}`}>
+                  <StatusIcon size={11} /> {tr(activeStatusInfo.label)}
                 </span>
               </button>
               
@@ -955,9 +956,9 @@ const { hasPermission: canDo } = usePermissions();
                     activeStatus === 'internally_rejected' ? 'bg-rose-500' :
                     activeStatus === 'pending_internal_approval' ? 'bg-amber-500' : 'bg-slate-400'
                   }`} />
-                  <span className="text-slate-700 text-[11px] font-mono font-semibold">v{activeVersionNum}</span>
+                  <span className="text-slate-700 text-[0.6875rem] font-mono font-semibold">v{tr(activeVersionNum)}</span>
                   {zoomLevel !== 1 && isImageFormat && (
-                    <span className="text-indigo-600 text-[10px] font-mono font-semibold ml-0.5">
+                    <span className="text-indigo-600 text-[0.625rem] font-mono font-semibold ml-0.5">
                       {Math.round(zoomLevel * 100)}%
                     </span>
                   )}
@@ -988,9 +989,9 @@ const { hasPermission: canDo } = usePermissions();
                     {loading3D && (
                       <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/90 backdrop-blur-xs text-slate-800">
                         <Loader2 className="w-6 h-6 text-indigo-600 animate-spin mb-2" />
-                        <p className="text-xs font-semibold text-slate-800">Rendering 3D Model...</p>
+                        <p className="text-xs font-semibold text-slate-800">{tr("Rendering 3D Model...")}</p>
                         {loading3DProgress > 0 && (
-                          <p className="text-[11px] text-slate-500 mt-0.5 font-mono">{loading3DProgress}%</p>
+                          <p className="text-[0.6875rem] text-slate-500 mt-0.5 font-mono">{tr(loading3DProgress)}%</p>
                         )}
                       </div>
                     )}
@@ -1000,8 +1001,8 @@ const { hasPermission: canDo } = usePermissions();
                         <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 flex items-center justify-center mb-3 shadow-xs">
                           <Box size={22} />
                         </div>
-                        <h3 className="text-sm font-semibold text-slate-900 mb-1">3D Viewport Notice</h3>
-                        <p className="text-xs text-slate-500 max-w-sm">{load3DError}</p>
+                        <h3 className="text-sm font-semibold text-slate-900 mb-1">{tr("3D Viewport Notice")}</h3>
+                        <p className="text-xs text-slate-500 max-w-sm">{tr(load3DError)}</p>
                       </div>
                     )}
                   </>
@@ -1024,7 +1025,7 @@ const { hasPermission: canDo } = usePermissions();
                     <iframe
                       src={`${activeUrl}#toolbar=1&navpanes=0`}
                       title={activeTitle}
-                      className="w-full h-full min-h-[680px] rounded-lg bg-white border border-slate-200 shadow-xs"
+                      className="w-full h-full min-h-[42.5rem] rounded-lg bg-white border border-slate-200 shadow-xs"
                     />
                   </div>
                 ) : (
@@ -1032,9 +1033,9 @@ const { hasPermission: canDo } = usePermissions();
                     <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 text-slate-600 flex items-center justify-center mb-3 shadow-sm">
                       <Box size={24} />
                     </div>
-                    <h3 className="text-sm font-semibold text-slate-900 mb-1">CAD / BIM Model</h3>
+                    <h3 className="text-sm font-semibold text-slate-900 mb-1">{tr("CAD / BIM Model")}</h3>
                     <p className="text-xs text-slate-500 max-w-sm">
-                      CAD/BIM model file available in native CAD suites.
+                      {tr("CAD/BIM model file available in native CAD suites.")}
                     </p>
                   </div>
                 )}
@@ -1054,10 +1055,10 @@ const { hasPermission: canDo } = usePermissions();
                         className={`px-2.5 py-1.5 rounded text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer ${
                           isAutoRotating ? 'bg-slate-900 text-white shadow-xs' : 'hover:bg-slate-100 text-slate-700'
                         }`}
-                        title="Toggle Turntable"
+                        title={tr("Toggle Turntable")}
                       >
                         {isAutoRotating ? <Pause size={13} /> : <Play size={13} />}
-                        <span className="text-[11px]">Rotate</span>
+                        <span className="text-[0.6875rem]">{tr("Rotate")}</span>
                       </button>
 
                       <button
@@ -1083,10 +1084,10 @@ const { hasPermission: canDo } = usePermissions();
                         className={`px-2.5 py-1.5 rounded text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer ${
                           isWireframe ? 'bg-slate-900 text-white shadow-xs' : 'hover:bg-slate-100 text-slate-700'
                         }`}
-                        title="Toggle Wireframe Mesh"
+                        title={tr("Toggle Wireframe Mesh")}
                       >
                         <Layers size={13} />
-                        <span className="text-[11px]">Wireframe</span>
+                        <span className="text-[0.6875rem]">{tr("Wireframe")}</span>
                       </button>
 
                       <div className="w-px h-4 bg-slate-200 mx-0.5" />
@@ -1106,7 +1107,7 @@ const { hasPermission: canDo } = usePermissions();
                               bgColor === bg.color ? 'border-indigo-600 scale-110 shadow-xs ring-1 ring-indigo-500' : 'border-slate-300 opacity-70 hover:opacity-100'
                             }`}
                             style={{ backgroundColor: bg.color }}
-                            title={bg.label}
+                            title={tr(bg.label)}
                           />
                         ))}
                       </div>
@@ -1117,7 +1118,7 @@ const { hasPermission: canDo } = usePermissions();
                         type="button"
                         onClick={() => setZoomLevel((z) => Math.max(0.1, Number((z / 1.25).toFixed(2))))}
                         className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
-                        title="Zoom Out (-)"
+                        title={tr("Zoom Out (-)")}
                       >
                         <ZoomOut size={14} />
                       </button>
@@ -1129,8 +1130,8 @@ const { hasPermission: canDo } = usePermissions();
                           setPanPosition({ x: 0, y: 0 });
                           setRotation(0);
                         }}
-                        className="px-2 py-1 text-[11px] font-mono font-medium text-slate-700 hover:text-slate-900 rounded hover:bg-slate-100 transition-colors"
-                        title="Reset View (0 / Double-Click)"
+                        className="px-2 py-1 text-[0.6875rem] font-mono font-medium text-slate-700 hover:text-slate-900 rounded hover:bg-slate-100 transition-colors"
+                        title={tr("Reset View (0 / Double-Click)")}
                       >
                         {Math.round(zoomLevel * 100)}%
                       </button>
@@ -1139,7 +1140,7 @@ const { hasPermission: canDo } = usePermissions();
                         type="button"
                         onClick={() => setZoomLevel((z) => Math.min(10, Number((z * 1.25).toFixed(2))))}
                         className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
-                        title="Zoom In (+)"
+                        title={tr("Zoom In (+)")}
                       >
                         <ZoomIn size={14} />
                       </button>
@@ -1150,7 +1151,7 @@ const { hasPermission: canDo } = usePermissions();
                         type="button"
                         onClick={() => setRotation((r) => (r + 90) % 360)}
                         className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
-                        title="Rotate 90°"
+                        title={tr("Rotate 90°")}
                       >
                         <RotateCw size={14} />
                       </button>
@@ -1163,7 +1164,7 @@ const { hasPermission: canDo } = usePermissions();
                           setPanPosition({ x: 0, y: 0 });
                         }}
                         className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
-                        title="Reset View"
+                        title={tr("Reset View")}
                       >
                         <RotateCcw size={14} />
                       </button>
@@ -1179,10 +1180,10 @@ const { hasPermission: canDo } = usePermissions();
                     className={`px-2.5 py-1.5 rounded text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer ${
                       showSidePanel ? 'bg-slate-900 text-white shadow-xs' : 'hover:bg-slate-100 text-slate-700'
                     }`}
-                    title="Toggle Version Details & Audit History"
+                    title={tr("Toggle Version Details & Audit History")}
                   >
                     <History size={13} />
-                    <span className="text-[11px]">Audit ({allVersions.length})</span>
+                    <span className="text-[0.6875rem]">{tr("Audit (")}{allVersions.length})</span>
                   </button>
                 </div>
               </div>
@@ -1198,21 +1199,21 @@ const { hasPermission: canDo } = usePermissions();
                   animate={{ width: 380, opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}
                   transition={{ duration: 0.2, ease: 'easeInOut' }}
-                  className="w-[380px] max-w-[90vw] bg-white border-l border-slate-200 flex flex-col shrink-0 overflow-hidden shadow-2xl z-30"
+                  className="w-[23.75rem] max-w-[90vw] bg-white border-l border-slate-200 flex flex-col shrink-0 overflow-hidden shadow-2xl z-30"
                 >
                   {/* Drawer Header */}
                   <div className="p-3.5 px-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
                     <div className="flex items-center gap-2">
                       <History size={15} className="text-slate-700" />
                       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                        Version & Audit History
+                        {tr("Version & Audit History")}
                       </h3>
                     </div>
                     <button
                       type="button"
                       onClick={() => setShowSidePanel(false)}
                       className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-200/80 transition-colors cursor-pointer"
-                      title="Close Panel"
+                      title={tr("Close Panel")}
                     >
                       <X size={15} />
                     </button>
@@ -1230,7 +1231,7 @@ const { hasPermission: canDo } = usePermissions();
                             : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
-                        Version v{activeVersionNum}
+                        {tr("Version v")}{tr(activeVersionNum)}
                       </button>
                       <button
                         type="button"
@@ -1241,8 +1242,8 @@ const { hasPermission: canDo } = usePermissions();
                             : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
-                        <span>All Revisions</span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-700 font-semibold">
+                        <span>{tr("All Revisions")}</span>
+                        <span className="text-[0.625rem] px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-700 font-semibold">
                           {allVersions.length}
                         </span>
                       </button>
@@ -1257,10 +1258,10 @@ const { hasPermission: canDo } = usePermissions();
                         {/* Status Banner */}
                         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                            Approval State
+                            {tr("Approval State")}
                           </span>
                           <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium border ${activeStatusInfo.bg}`}>
-                            <StatusIcon size={12} /> {activeStatusInfo.label}
+                            <StatusIcon size={12} /> {tr(activeStatusInfo.label)}
                           </span>
                         </div>
 
@@ -1269,10 +1270,10 @@ const { hasPermission: canDo } = usePermissions();
                           <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg space-y-1.5">
                             <div className="flex items-center gap-1.5 text-rose-800 font-semibold text-xs">
                               <XCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                              <span>Required Changes for v{activeVersionNum}:</span>
+                              <span>{tr("Required Changes for v")}{tr(activeVersionNum)}:</span>
                             </div>
                             <p className="text-xs text-rose-950 font-normal bg-white p-2.5 rounded border border-rose-200/80 leading-relaxed">
-                              {activeRejectionReason}
+                              {tr(activeRejectionReason)}
                             </p>
                           </div>
                         )}
@@ -1282,10 +1283,10 @@ const { hasPermission: canDo } = usePermissions();
                           <div className="p-3 bg-indigo-50/60 border border-indigo-200 rounded-lg space-y-1.5">
                             <div className="flex items-center gap-1.5 text-indigo-900 font-semibold text-xs">
                               <Sparkles className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                              <span>Revision Notes:</span>
+                              <span>{tr("Revision Notes:")}</span>
                             </div>
                             <p className="text-xs text-indigo-950 font-normal bg-white p-2.5 rounded border border-indigo-200/80 leading-relaxed">
-                              {activeInternalNotes}
+                              {tr(activeInternalNotes)}
                             </p>
                           </div>
                         )}
@@ -1295,10 +1296,10 @@ const { hasPermission: canDo } = usePermissions();
                           <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-1.5">
                             <div className="flex items-center gap-1.5 text-amber-900 font-semibold text-xs">
                               <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                              <span>Client Feedback:</span>
+                              <span>{tr("Client Feedback:")}</span>
                             </div>
                             <p className="text-xs text-amber-950 font-normal bg-white p-2.5 rounded border border-amber-200/80 leading-relaxed">
-                              {activeClientFeedback}
+                              {tr(activeClientFeedback)}
                             </p>
                           </div>
                         )}
@@ -1309,16 +1310,16 @@ const { hasPermission: canDo } = usePermissions();
                             <div className="flex items-center justify-between gap-2 text-blue-900 font-semibold text-xs">
                               <span className="flex items-center gap-1.5">
                                 <MessageSquare className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                                <span>Design Brief & Layer Guidelines:</span>
+                                <span>{tr("Design Brief & Layer Guidelines:")}</span>
                               </span>
                               {drawingHandoff.createdAt && (
-                                <span className="text-[10px] text-blue-600/80 font-normal">
+                                <span className="text-[0.625rem] text-blue-600/80 font-normal">
                                   {new Date(drawingHandoff.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                 </span>
                               )}
                             </div>
                             <p className="text-xs text-blue-950 font-normal bg-white p-2.5 rounded border border-blue-200/80 leading-relaxed whitespace-pre-wrap">
-                              {drawingHandoff.note}
+                              {tr(drawingHandoff.note)}
                             </p>
                           </div>
                         )}
@@ -1326,37 +1327,37 @@ const { hasPermission: canDo } = usePermissions();
                         {/* Key Specifications List */}
                         <div className="space-y-2.5 text-xs">
                           <div className="flex items-center justify-between text-slate-600 py-1.5 border-b border-slate-50">
-                            <span className="text-slate-500">Drawing Title</span>
-                            <span className="font-medium text-slate-900 truncate max-w-[190px]" title={activeTitle}>{activeTitle}</span>
+                            <span className="text-slate-500">{tr("Drawing Title")}</span>
+                            <span className="font-medium text-slate-900 truncate max-w-[11.875rem]" title={activeTitle}>{tr(activeTitle)}</span>
                           </div>
                           <div className="flex items-center justify-between text-slate-600 py-1.5 border-b border-slate-50">
-                            <span className="text-slate-500">File Name</span>
-                            <span className="font-medium text-slate-900 truncate max-w-[190px]" title={activeName}>{activeName}</span>
+                            <span className="text-slate-500">{tr("File Name")}</span>
+                            <span className="font-medium text-slate-900 truncate max-w-[11.875rem]" title={activeName}>{tr(activeName)}</span>
                           </div>
                           <div className="flex items-center justify-between text-slate-600 py-1.5 border-b border-slate-50">
-                            <span className="text-slate-500">Upload Date</span>
+                            <span className="text-slate-500">{tr("Upload Date")}</span>
                             <span className="font-medium text-slate-900">
-                              {activeUploadedAt ? new Date(activeUploadedAt).toLocaleString() : 'Recent'}
+                              {activeUploadedAt ? new Date(activeUploadedAt).toLocaleString() : tr("Recent")}
                             </span>
                           </div>
                           <div className="flex items-center justify-between text-slate-600 py-1.5 border-b border-slate-50">
-                            <span className="text-slate-500">Assigned Reviewer</span>
+                            <span className="text-slate-500">{tr("Assigned Reviewer")}</span>
                             <span className="font-medium text-slate-900">
-                              {activeReviewerName || 'Design Lead'}
+                              {activeReviewerName || tr("Design Lead")}
                             </span>
                           </div>
                           {drawing.roomTag && (
                             <div className="flex items-center justify-between text-slate-600 py-1.5 border-b border-slate-50">
-                              <span className="text-slate-500">Room Location</span>
+                              <span className="text-slate-500">{tr("Room Location")}</span>
                               <span className="font-medium text-slate-900">
-                                {drawing.roomTag}
+                                {tr(drawing.roomTag)}
                               </span>
                             </div>
                           )}
                           <div className="flex items-center justify-between text-slate-600 py-1.5">
-                            <span className="text-slate-500">Blueprint Category</span>
+                            <span className="text-slate-500">{tr("Blueprint Category")}</span>
                             <span className="font-medium text-slate-900">
-                              {drawing.category || 'Architectural Blueprint'}
+                              {drawing.category || tr("Architectural Blueprint")}
                             </span>
                           </div>
                         </div>
@@ -1386,27 +1387,27 @@ const { hasPermission: canDo } = usePermissions();
                             >
                               <div className="flex items-center justify-between">
                                 <span className="font-semibold text-xs text-slate-900">
-                                  Version v{ver.versionNumber}
+                                  {tr("Version v")}{tr(ver.versionNumber)}
                                 </span>
-                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border ${pill.bg}`}>
-                                  <Icon size={10} /> {pill.label}
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[0.625rem] font-medium border ${pill.bg}`}>
+                                  <Icon size={10} /> {tr(pill.label)}
                                 </span>
                               </div>
 
-                              <p className="text-[11px] text-slate-600 truncate" title={drawing?.title || ver.title || ver.name || activeTitle}>
+                              <p className="text-[0.6875rem] text-slate-600 truncate" title={drawing?.title || ver.title || ver.name || activeTitle}>
                                 {drawing?.title || ver.title || ver.name || activeTitle}
                               </p>
 
                               {ver.rejectionReason && (
-                                <p className="text-[10px] text-rose-700 bg-rose-50 p-1.5 rounded truncate">
-                                  {ver.rejectionReason}
+                                <p className="text-[0.625rem] text-rose-700 bg-rose-50 p-1.5 rounded truncate">
+                                  {tr(ver.rejectionReason)}
                                 </p>
                               )}
 
-                              <div className="flex items-center justify-between pt-1 text-[10px] text-slate-400 border-t border-slate-100">
+                              <div className="flex items-center justify-between pt-1 text-[0.625rem] text-slate-400 border-t border-slate-100">
                                 <span>{ver.uploadedAt ? new Date(ver.uploadedAt).toLocaleDateString() : 'v' + ver.versionNumber}</span>
                                 <span className="font-medium text-slate-900">
-                                  {isSelected ? 'Active in Viewport' : 'Switch Version'} &rarr;
+                                  {isSelected ? tr("Active in Viewport") : tr("Switch Version")} &rarr;
                                 </span>
                               </div>
                             </div>

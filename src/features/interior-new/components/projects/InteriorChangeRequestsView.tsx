@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Interior-New Change Requests View
@@ -98,7 +99,7 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
       }
     } catch (err) {
       console.error('Failed to load change requests', err);
-      toast.error('Failed to fetch change request list');
+      toast.error(tr("Failed to fetch change request list"));
     } finally {
       setLoading(false);
     }
@@ -115,14 +116,14 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
       setActionLoading(true);
       const res = await interiorProjectService.createChangeRequest(projectId, formData);
       if (res?.success) {
-        toast.success('Change request created successfully!');
+        toast.success(tr("Change request created successfully!"));
         await fetchChangeRequests();
         setShowCreateModal(false);
         setFormData(emptyFormData);
       }
     } catch (err) {
       console.error('Failed to create change request', err);
-      toast.error('Failed to create change request');
+      toast.error(tr("Failed to create change request"));
     } finally {
       setActionLoading(false);
     }
@@ -139,7 +140,7 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
       }
     } catch (err) {
       console.error('Failed to update change request status', err);
-      toast.error('Failed to update change request status');
+      toast.error(tr("Failed to update change request status"));
     } finally {
       setActionLoading(false);
     }
@@ -151,12 +152,12 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
       setActionLoading(true);
       const res = await interiorProjectService.approveChangeRequest(projectId, selectedCr._id);
       if (res?.success) {
-        toast.success('Change request approved! Variation order generated.');
+        toast.success(tr("Change request approved! Variation order generated."));
         await fetchChangeRequests();
       }
     } catch (err) {
       console.error('Failed to approve change request', err);
-      toast.error('Failed to approve change request');
+      toast.error(tr("Failed to approve change request"));
     } finally {
       setActionLoading(false);
     }
@@ -171,13 +172,13 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
+    <div className="p-6 space-y-6 max-w-[100rem] mx-auto">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-[hsl(var(--foreground))] tracking-tight">Change Request Management</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-[hsl(var(--foreground))] tracking-tight">{tr("Change Request Management")}</h2>
           <p className="text-xs md:text-sm text-[hsl(var(--muted-foreground))]">
-            Evaluate, design-review, and forecast project variations before execution.
+            {tr("Evaluate, design-review, and forecast project variations before execution.")}
           </p>
         </div>
         {canDo('change_requests', 'create') && (
@@ -186,7 +187,7 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
             className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary)/0.9)] shadow-lg shadow-[hsl(var(--primary)/0.25)] transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            Request a Change
+            {tr("Request a Change")}
           </button>
         )}
       </div>
@@ -194,11 +195,11 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
       {/* Main Panel layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Side: List of Change Requests */}
-        <div className="lg:col-span-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl shadow-sm overflow-hidden flex flex-col h-[750px]">
+        <div className="lg:col-span-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl shadow-sm overflow-hidden flex flex-col h-[46.875rem]">
           <div className="p-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--card))] flex items-center gap-2">
             <Layers className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-            <h3 className="text-sm font-semibold">Change Requests</h3>
-            <span className="ml-auto px-2 py-0.5 text-[10px] font-bold rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
+            <h3 className="text-sm font-semibold">{tr("Change Requests")}</h3>
+            <span className="ms-auto px-2 py-0.5 text-[0.625rem] font-bold rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
               {changeRequests.length}
             </span>
           </div>
@@ -206,7 +207,7 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
           <div className="flex-1 overflow-y-auto divide-y divide-[hsl(var(--border))]">
             {changeRequests.length === 0 ? (
               <div className="p-8 text-center text-xs text-[hsl(var(--muted-foreground))]">
-                No change requests logged yet. Click &quot;Request a Change&quot; to get started.
+                {tr("No change requests logged yet. Click \"Request a Change\" to get started.")}
               </div>
             ) : (
               changeRequests.map((cr) => (
@@ -214,20 +215,20 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
                   key={cr._id}
                   onClick={() => setSelectedCr(cr)}
                   className={cn(
-                    'p-4 cursor-pointer hover:bg-[hsl(var(--muted)/0.3)] transition-all space-y-2 border-l-2',
+                    'p-4 cursor-pointer hover:bg-[hsl(var(--muted)/0.3)] transition-all space-y-2 border-s-2',
                     selectedCr?._id === cr._id ? 'bg-[hsl(var(--muted)/0.5)] border-[hsl(var(--primary))]' : 'border-transparent'
                   )}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-bold text-[hsl(var(--foreground))]">{cr.crNumber}</span>
-                    <span className={cn('px-2.5 py-0.5 rounded-full text-[10px] font-semibold border capitalize', getStatusBadge(cr.status))}>
-                      {cr.status?.replace('_', ' ')}
+                    <span className="font-mono text-xs font-bold text-[hsl(var(--foreground))]">{tr(cr.crNumber)}</span>
+                    <span className={cn('px-2.5 py-0.5 rounded-full text-[0.625rem] font-semibold border capitalize', getStatusBadge(cr.status))}>
+                      {tr(cr.status?.replace('_', ' '))}
                     </span>
                   </div>
-                  <p className="text-xs text-[hsl(var(--foreground))] font-medium line-clamp-2">{cr.description}</p>
-                  <div className="flex items-center justify-between pt-1 text-[10px] text-[hsl(var(--muted-foreground))]">
+                  <p className="text-xs text-[hsl(var(--foreground))] font-medium line-clamp-2">{tr(cr.description)}</p>
+                  <div className="flex items-center justify-between pt-1 text-[0.625rem] text-[hsl(var(--muted-foreground))]">
                     <span className="capitalize">
-                      {cr.category} • Priority: <span className="font-semibold capitalize text-[hsl(var(--foreground))]">{cr.priority}</span>
+                      {tr(cr.category)}{tr(" • Priority: ")}<span className="font-semibold capitalize text-[hsl(var(--foreground))]">{tr(cr.priority)}</span>
                     </span>
                     <span>{new Date(cr.requestedDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</span>
                   </div>
@@ -240,32 +241,32 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
         {/* Right Side: Selected Details View */}
         <div className="lg:col-span-8 space-y-6">
           {selectedCr ? (
-            <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl shadow-sm overflow-hidden flex flex-col h-[750px]">
+            <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl shadow-sm overflow-hidden flex flex-col h-[46.875rem]">
               {/* Detail Header */}
               <div className="p-6 border-b border-[hsl(var(--border))] bg-[hsl(var(--card))] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <div className="flex items-center gap-2.5">
-                    <span className="font-mono text-lg font-bold tracking-wider text-[hsl(var(--foreground))]">{selectedCr.crNumber}</span>
-                    <span className={cn('px-2 py-0.5 rounded text-[10px] uppercase font-bold', getPriorityColor(selectedCr.priority))}>{selectedCr.priority}</span>
+                    <span className="font-mono text-lg font-bold tracking-wider text-[hsl(var(--foreground))]">{tr(selectedCr.crNumber)}</span>
+                    <span className={cn('px-2 py-0.5 rounded text-[0.625rem] uppercase font-bold', getPriorityColor(selectedCr.priority))}>{tr(selectedCr.priority)}</span>
                     <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                      Requested by{' '}
+                      {tr("Requested by")}{' '}
                       <span className="font-semibold text-[hsl(var(--foreground))]">
-                        {selectedCr.requestedBy?.firstName} {selectedCr.requestedBy?.lastName}
+                        {tr(selectedCr.requestedBy?.firstName)} {tr(selectedCr.requestedBy?.lastName)}
                       </span>
                     </span>
                   </div>
-                  <div className="text-[11px] text-[hsl(var(--muted-foreground))] mt-1.5 flex items-center gap-2">
-                    <span className="capitalize font-semibold text-[hsl(var(--foreground))]">{selectedCr.category} Change</span>
+                  <div className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] mt-1.5 flex items-center gap-2">
+                    <span className="capitalize font-semibold text-[hsl(var(--foreground))]">{tr(selectedCr.category)}{tr(" Change")}</span>
                     <span>•</span>
                     <span>
-                      Area Affected: <span className="text-[hsl(var(--foreground))]">{selectedCr.areaAffected || 'Not Specified'}</span>
+                      {tr("Area Affected: ")}<span className="text-[hsl(var(--foreground))]">{selectedCr.areaAffected || tr("Not Specified")}</span>
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <span className={cn('px-3 py-1 rounded-full text-xs font-semibold border capitalize', getStatusBadge(selectedCr.status))}>
-                    {selectedCr.status?.replace('_', ' ')}
+                    {tr(selectedCr.status?.replace('_', ' '))}
                   </span>
                 </div>
               </div>
@@ -274,8 +275,8 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
               <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 {/* Workflow Tracker */}
                 <div className="space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Approval Workflow</h4>
-                  <div className="grid grid-cols-7 gap-1 bg-[hsl(var(--muted)/0.2)] p-2.5 rounded-lg border border-[hsl(var(--border))] text-[10px] text-center font-medium">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">{tr("Approval Workflow")}</h4>
+                  <div className="grid grid-cols-7 gap-1 bg-[hsl(var(--muted)/0.2)] p-2.5 rounded-lg border border-[hsl(var(--border))] text-[0.625rem] text-center font-medium">
                     {workflowSteps.map((step, idx) => {
                       const isCompleted = workflowSteps.findIndex((s) => s.key === selectedCr.status) >= idx || selectedCr.status === 'approved';
                       const isActive = selectedCr.status === step.key;
@@ -292,11 +293,11 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
                           </div>
                           <span
                             className={cn(
-                              'text-[8px] font-semibold tracking-tight whitespace-nowrap',
+                              'text-[0.5rem] font-semibold tracking-tight whitespace-nowrap',
                               isActive ? 'text-[hsl(var(--primary))]' : isCompleted ? 'text-emerald-500' : 'text-[hsl(var(--muted-foreground))]'
                             )}
                           >
-                            {step.label}
+                            {tr(step.label)}
                           </span>
                         </div>
                       );
@@ -308,15 +309,15 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
 
                 {/* Scope Comparison */}
                 <div className="space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Scope & Design Changes</h4>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">{tr("Scope & Design Changes")}</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="p-4 bg-[hsl(var(--muted)/0.2)] border border-[hsl(var(--border))] rounded-lg">
-                      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Current Approved Design</span>
-                      <p className="text-xs font-medium text-[hsl(var(--foreground))]">{selectedCr.currentDesign || 'No description provided.'}</p>
+                      <span className="text-[0.5625rem] font-bold text-slate-500 uppercase tracking-wider block mb-1">{tr("Current Approved Design")}</span>
+                      <p className="text-xs font-medium text-[hsl(var(--foreground))]">{selectedCr.currentDesign || tr("No description provided.")}</p>
                     </div>
                     <div className="p-4 bg-blue-500/5 border border-blue-500/20 rounded-lg">
-                      <span className="text-[9px] font-bold text-blue-500 uppercase tracking-wider block mb-1">Proposed Variation Design</span>
-                      <p className="text-xs font-medium text-[hsl(var(--foreground))]">{selectedCr.proposedDesign || 'No description provided.'}</p>
+                      <span className="text-[0.5625rem] font-bold text-blue-500 uppercase tracking-wider block mb-1">{tr("Proposed Variation Design")}</span>
+                      <p className="text-xs font-medium text-[hsl(var(--foreground))]">{selectedCr.proposedDesign || tr("No description provided.")}</p>
                     </div>
                   </div>
                 </div>
@@ -324,12 +325,12 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
                 {/* Description & Reason */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs leading-relaxed">
                   <div className="space-y-1">
-                    <span className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Description of Change</span>
-                    <p className="text-xs text-[hsl(var(--foreground))] font-medium">{selectedCr.description}</p>
+                    <span className="text-[0.5625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase block">{tr("Description of Change")}</span>
+                    <p className="text-xs text-[hsl(var(--foreground))] font-medium">{tr(selectedCr.description)}</p>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase block">Reason for Modification</span>
-                    <p className="text-xs text-[hsl(var(--foreground))] font-medium">{selectedCr.reasonForChange || 'No reason specified.'}</p>
+                    <span className="text-[0.5625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase block">{tr("Reason for Modification")}</span>
+                    <p className="text-xs text-[hsl(var(--foreground))] font-medium">{selectedCr.reasonForChange || tr("No reason specified.")}</p>
                   </div>
                 </div>
               </div>
@@ -345,7 +346,7 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
                           disabled={actionLoading}
                           className="px-4 py-2 text-xs font-semibold border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] cursor-pointer disabled:opacity-50"
                         >
-                          Submit for Review
+                          {tr("Submit for Review")}
                         </button>
                       )
                     )}
@@ -356,7 +357,7 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
                           disabled={actionLoading}
                           className="px-4 py-2 text-xs font-semibold border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] cursor-pointer disabled:opacity-50"
                         >
-                          Move to Design Review
+                          {tr("Move to Design Review")}
                         </button>
                       )
                     )}
@@ -367,7 +368,7 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
                           disabled={actionLoading}
                           className="px-4 py-2 text-xs font-semibold border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] cursor-pointer disabled:opacity-50"
                         >
-                          Move to PM Review
+                          {tr("Move to PM Review")}
                         </button>
                       )
                     )}
@@ -378,7 +379,7 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
                           disabled={actionLoading}
                           className="px-4 py-2 text-xs font-semibold border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] cursor-pointer disabled:opacity-50"
                         >
-                          Move to Commercial Review
+                          {tr("Move to Commercial Review")}
                         </button>
                       )
                     )}
@@ -389,7 +390,7 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
                           disabled={actionLoading}
                           className="px-4 py-2 text-xs font-semibold border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] cursor-pointer disabled:opacity-50"
                         >
-                          Move to Client Review
+                          {tr("Move to Client Review")}
                         </button>
                       )
                     )}
@@ -400,7 +401,7 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
                         disabled={actionLoading}
                         className="px-4 py-2 text-xs font-semibold border border-rose-200 text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 cursor-pointer disabled:opacity-50"
                       >
-                        Reject Request
+                        {tr("Reject Request")}
                       </button>
                     )}
                   </div>
@@ -409,12 +410,12 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
                     {selectedCr.status === 'approved' ? (
                       <>
                         <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                        <span>This request was approved and generated a Variation Order.</span>
+                        <span>{tr("This request was approved and generated a Variation Order.")}</span>
                       </>
                     ) : (
                       <>
                         <XCircle className="w-4 h-4 text-rose-500" />
-                        <span>This request was rejected.</span>
+                        <span>{tr("This request was rejected.")}</span>
                       </>
                     )}
                   </div>
@@ -428,16 +429,16 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
                       className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 cursor-pointer shadow-lg shadow-emerald-500/10 disabled:opacity-50"
                     >
                       {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                      Approve & Generate VO
+                      {tr("Approve & Generate VO")}
                     </button>
                   )
                 )}
               </div>
             </div>
           ) : (
-            <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-12 text-center text-slate-500 h-[500px] flex flex-col items-center justify-center">
+            <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-12 text-center text-slate-500 h-[31.25rem] flex flex-col items-center justify-center">
               <AlertCircle className="w-12 h-12 text-slate-300 mb-3" />
-              <p>No Change Request selected.</p>
+              <p>{tr("No Change Request selected.")}</p>
             </div>
           )}
         </div>
@@ -450,7 +451,7 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
             <div className="p-5 border-b border-[hsl(var(--border))] flex items-center justify-between">
               <h3 className="font-bold text-base flex items-center gap-2">
                 <Plus className="w-5 h-5 text-[hsl(var(--primary))]" />
-                Create Change Request
+                {tr("Create Change Request")}
               </h3>
               <button onClick={() => setShowCreateModal(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
                 <XCircle className="w-5 h-5" />
@@ -460,41 +461,41 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
             <form onSubmit={handleCreateCr} className="flex-1 overflow-y-auto p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold">Category</label>
+                  <label className="text-xs font-semibold">{tr("Category")}</label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     className="w-full bg-[hsl(var(--muted)/0.2)] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-[hsl(var(--primary))]"
                   >
-                    <option value="design">Design Change</option>
-                    <option value="material">Material Change</option>
-                    <option value="layout">Layout Change</option>
-                    <option value="mep">MEP Change</option>
-                    <option value="scope">Scope Change</option>
-                    <option value="other">Other</option>
+                    <option value="design">{tr("Design Change")}</option>
+                    <option value="material">{tr("Material Change")}</option>
+                    <option value="layout">{tr("Layout Change")}</option>
+                    <option value="mep">{tr("MEP Change")}</option>
+                    <option value="scope">{tr("Scope Change")}</option>
+                    <option value="other">{tr("Other")}</option>
                   </select>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold">Priority</label>
+                  <label className="text-xs font-semibold">{tr("Priority")}</label>
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
                     className="w-full bg-[hsl(var(--muted)/0.2)] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-[hsl(var(--primary))]"
                   >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="critical">Critical</option>
+                    <option value="low">{tr("Low")}</option>
+                    <option value="medium">{tr("Medium")}</option>
+                    <option value="high">{tr("High")}</option>
+                    <option value="critical">{tr("Critical")}</option>
                   </select>
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold">Area Affected</label>
+                <label className="text-xs font-semibold">{tr("Area Affected")}</label>
                 <input
                   type="text"
-                  placeholder="e.g. Master Bedroom, Kitchen Counter"
+                  placeholder={tr("e.g. Master Bedroom, Kitchen Counter")}
                   value={formData.areaAffected}
                   onChange={(e) => setFormData({ ...formData, areaAffected: e.target.value })}
                   className="w-full bg-[hsl(var(--muted)/0.2)] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-[hsl(var(--primary))]"
@@ -502,11 +503,11 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold">Description of Change</label>
+                <label className="text-xs font-semibold">{tr("Description of Change")}</label>
                 <textarea
                   required
                   rows={2}
-                  placeholder="Describe the requested change in detail..."
+                  placeholder={tr("Describe the requested change in detail...")}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full bg-[hsl(var(--muted)/0.2)] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-[hsl(var(--primary))]"
@@ -515,10 +516,10 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold">Current Design / Material</label>
+                  <label className="text-xs font-semibold">{tr("Current Design / Material")}</label>
                   <textarea
                     rows={2}
-                    placeholder="Standard design specifications currently approved..."
+                    placeholder={tr("Standard design specifications currently approved...")}
                     value={formData.currentDesign}
                     onChange={(e) => setFormData({ ...formData, currentDesign: e.target.value })}
                     className="w-full bg-[hsl(var(--muted)/0.2)] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-[hsl(var(--primary))]"
@@ -526,10 +527,10 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold">Proposed Design / Material</label>
+                  <label className="text-xs font-semibold">{tr("Proposed Design / Material")}</label>
                   <textarea
                     rows={2}
-                    placeholder="Proposed change or alternative specifications..."
+                    placeholder={tr("Proposed change or alternative specifications...")}
                     value={formData.proposedDesign}
                     onChange={(e) => setFormData({ ...formData, proposedDesign: e.target.value })}
                     className="w-full bg-[hsl(var(--muted)/0.2)] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-[hsl(var(--primary))]"
@@ -538,10 +539,10 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold">Reason for Change</label>
+                <label className="text-xs font-semibold">{tr("Reason for Change")}</label>
                 <textarea
                   rows={2}
-                  placeholder="Why is this change necessary?"
+                  placeholder={tr("Why is this change necessary?")}
                   value={formData.reasonForChange}
                   onChange={(e) => setFormData({ ...formData, reasonForChange: e.target.value })}
                   className="w-full bg-[hsl(var(--muted)/0.2)] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-[hsl(var(--primary))]"
@@ -554,14 +555,14 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
                   onClick={() => setShowCreateModal(false)}
                   className="px-4 py-2 text-xs font-semibold border border-[hsl(var(--border))] rounded-lg hover:bg-[hsl(var(--muted))] cursor-pointer"
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading}
                   className="px-4 py-2 text-xs font-bold rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary)/0.9)] cursor-pointer disabled:opacity-50"
                 >
-                  {actionLoading ? 'Saving...' : 'Create Request'}
+                  {actionLoading ? tr("Saving...") : tr("Create Request")}
                 </button>
               </div>
             </form>

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Port of src/components/modals/SendToQuotationsModal.tsx, rewired to interiorCrmService.
 
@@ -53,7 +54,7 @@ export function InteriorSendToQuotationsModal({ isOpen, onClose, customerId, onS
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      toast.error(newErrors.remarks || 'Please fill in all required fields.');
+      toast.error(newErrors.remarks || tr("Please fill in all required fields."));
       return;
     }
 
@@ -81,13 +82,13 @@ export function InteriorSendToQuotationsModal({ isOpen, onClose, customerId, onS
         }),
       ]);
 
-      toast.success('Successfully passed to Quotation phase!');
+      toast.success(tr("Successfully passed to Quotation phase!"));
       if (onSuccess) {
         onSuccess({ _id: customerId, ...updatePayload });
       }
       onClose();
     } catch (error: any) {
-      toast.error('Failed to pass to quotations');
+      toast.error(tr("Failed to pass to quotations"));
     } finally {
       setIsSubmitting(false);
     }
@@ -115,10 +116,10 @@ export function InteriorSendToQuotationsModal({ isOpen, onClose, customerId, onS
             </div>
             <div>
               <h2 className="text-lg font-black text-[hsl(var(--foreground))]">
-                Pass to Quotations
+                {tr("Pass to Quotations")}
               </h2>
               <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                Assign a team member and document handover requirements.
+                {tr("Assign a team member and document handover requirements.")}
               </p>
             </div>
           </div>
@@ -135,7 +136,7 @@ export function InteriorSendToQuotationsModal({ isOpen, onClose, customerId, onS
           <div>
             <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5 mb-1.5">
               <User size={13} className="text-indigo-500" />
-              <span>Assign Member</span>
+              <span>{tr("Assign Member")}</span>
               <span className="text-rose-500 font-black">*</span>
             </label>
             <select
@@ -149,14 +150,14 @@ export function InteriorSendToQuotationsModal({ isOpen, onClose, customerId, onS
               }`}
               required
             >
-              <option value="">-- Select Member (Required) --</option>
+              <option value="">{tr("-- Select Member (Required) --")}</option>
               {users.map(u => (
                 <option key={u._id || u.id} value={u._id || u.id}>{userLabel(u)}</option>
               ))}
             </select>
             {errors.member && (
-              <p className="text-[11px] font-semibold text-rose-500 flex items-center gap-1 mt-1">
-                <AlertCircle size={12} /> {errors.member}
+              <p className="text-[0.6875rem] font-semibold text-rose-500 flex items-center gap-1 mt-1">
+                <AlertCircle size={12} /> {tr(errors.member)}
               </p>
             )}
           </div>
@@ -165,10 +166,10 @@ export function InteriorSendToQuotationsModal({ isOpen, onClose, customerId, onS
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
                 <MessageSquare size={13} className="text-indigo-500" />
-                <span>Handover Notes & Pricing Assumptions</span>
+                <span>{tr("Handover Notes & Pricing Assumptions")}</span>
                 <span className="text-rose-500 font-black">*</span>
               </label>
-              <span className={`text-[10px] font-mono ${remarks.length >= 500 ? 'text-rose-500 font-bold' : 'text-[hsl(var(--muted-foreground))]'}`}>
+              <span className={`text-[0.625rem] font-mono ${remarks.length >= 500 ? 'text-rose-500 font-bold' : 'text-[hsl(var(--muted-foreground))]'}`}>
                 {remarks.length}/500
               </span>
             </div>
@@ -181,14 +182,14 @@ export function InteriorSendToQuotationsModal({ isOpen, onClose, customerId, onS
                 setRemarks(e.target.value);
                 if (errors.remarks) setErrors(prev => ({ ...prev, remarks: undefined }));
               }}
-              placeholder="Enter client payment terms, target discount constraints, milestone breakdown requirements, or specific notes for the quotation..."
+              placeholder={tr("Enter client payment terms, target discount constraints, milestone breakdown requirements, or specific notes for the quotation...")}
               className={`w-full px-4 py-3 rounded-xl border bg-[hsl(var(--background))] text-xs font-medium text-[hsl(var(--foreground))] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none resize-none transition-all placeholder:text-[hsl(var(--muted-foreground))] ${
                 errors.remarks ? 'border-rose-500' : 'border-[hsl(var(--border))]'
               }`}
             />
             {errors.remarks && (
-              <p className="text-[11px] font-semibold text-rose-500 flex items-center gap-1 mt-1">
-                <AlertCircle size={12} /> {errors.remarks}
+              <p className="text-[0.6875rem] font-semibold text-rose-500 flex items-center gap-1 mt-1">
+                <AlertCircle size={12} /> {tr(errors.remarks)}
               </p>
             )}
           </div>
@@ -199,14 +200,14 @@ export function InteriorSendToQuotationsModal({ isOpen, onClose, customerId, onS
               onClick={onClose}
               className="px-5 py-2.5 rounded-xl text-xs font-bold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] transition-colors"
             >
-              Cancel
+              {tr("Cancel")}
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
               className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-all active:scale-95 shadow-sm shadow-indigo-600/20"
             >
-              {isSubmitting ? 'Passing...' : 'Pass to Quotations ➔'}
+              {isSubmitting ? tr("Passing...") : tr("Pass to Quotations ➔")}
             </button>
           </div>
         </form>

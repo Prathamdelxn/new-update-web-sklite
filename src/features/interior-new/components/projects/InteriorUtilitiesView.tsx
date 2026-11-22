@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Port of interior-os-frontend's projects/[projectId]/utilities/page.tsx.
 // TanStack/sonner/zustand replaced with local useState/useEffect + interiorProjectService.
@@ -38,7 +39,7 @@ export default function InteriorUtilitiesView({ projectId }: InteriorUtilitiesVi
       if (res.success && res.data) setSystems(res.data);
     } catch (err) {
       console.error('Failed to load utilities', err);
-      toast.error('Failed to fetch Utilities checklists');
+      toast.error(tr("Failed to fetch Utilities checklists"));
     } finally {
       setLoading(false);
     }
@@ -71,13 +72,13 @@ export default function InteriorUtilitiesView({ projectId }: InteriorUtilitiesVi
       });
 
       if (res.success) {
-        toast.success('Utility commissioning checkpoint updated!');
+        toast.success(tr("Utility commissioning checkpoint updated!"));
         setIsModalOpen(false);
         fetchUtilities();
       }
     } catch (err) {
       console.error('Failed to update checkpoint', err);
-      toast.error('Failed to save checkpoint update');
+      toast.error(tr("Failed to save checkpoint update"));
     } finally {
       setUpdating(false);
     }
@@ -96,9 +97,9 @@ export default function InteriorUtilitiesView({ projectId }: InteriorUtilitiesVi
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Systems Commissioning & Utilities</h2>
+        <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">{tr("Systems Commissioning & Utilities")}</h2>
         <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-          Verify and signoff test checklists for Electrical, HVAC, PHE, Fire Fighting, STP, and ELV networks.
+          {tr("Verify and signoff test checklists for Electrical, HVAC, PHE, Fire Fighting, STP, and ELV networks.")}
         </p>
       </div>
 
@@ -115,7 +116,7 @@ export default function InteriorUtilitiesView({ projectId }: InteriorUtilitiesVi
                   <CardTitle className="text-sm font-bold uppercase tracking-wide">{sys.system.replace('_', ' ')}</CardTitle>
                 </div>
                 <div className="text-xs font-semibold">
-                  Progress: <span className="text-[hsl(var(--primary))]">{sys.actualProgress}%</span>
+                  {tr("Progress: ")}<span className="text-[hsl(var(--primary))]">{tr(sys.actualProgress)}%</span>
                 </div>
               </CardHeader>
               <CardContent className="p-5 space-y-3">
@@ -131,12 +132,12 @@ export default function InteriorUtilitiesView({ projectId }: InteriorUtilitiesVi
                       className="flex items-center justify-between p-2.5 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.35)] transition-all cursor-pointer"
                     >
                       <div className="space-y-0.5">
-                        <p className="text-xs font-bold text-[hsl(var(--foreground))]">{cp.name}</p>
-                        {cp.readings && <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Readings: {cp.readings}</p>}
+                        <p className="text-xs font-bold text-[hsl(var(--foreground))]">{tr(cp.name)}</p>
+                        {cp.readings && <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">{tr("Readings: ")}{tr(cp.readings)}</p>}
                       </div>
                       <span
                         className={cn(
-                          'px-2 py-0.5 rounded text-[9px] uppercase font-bold border',
+                          'px-2 py-0.5 rounded text-[0.5625rem] uppercase font-bold border',
                           cp.status === 'passed'
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                             : cp.status === 'failed'
@@ -144,7 +145,7 @@ export default function InteriorUtilitiesView({ projectId }: InteriorUtilitiesVi
                             : 'bg-slate-50 text-slate-700 border-slate-200'
                         )}
                       >
-                        {cp.status}
+                        {tr(cp.status)}
                       </span>
                     </div>
                   ))}
@@ -165,7 +166,7 @@ export default function InteriorUtilitiesView({ projectId }: InteriorUtilitiesVi
               className="w-full max-w-md border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] shadow-2xl overflow-hidden"
             >
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
-                <h3 className="text-base font-bold text-[hsl(var(--foreground))]">Update Checkpoint: {selectedCheckpoint?.name}</h3>
+                <h3 className="text-base font-bold text-[hsl(var(--foreground))]">{tr("Update Checkpoint: ")}{tr(selectedCheckpoint?.name)}</h3>
                 <button onClick={() => setIsModalOpen(false)} className="p-1 rounded hover:bg-[hsl(var(--muted))]">
                   <X className="w-4 h-4" />
                 </button>
@@ -174,23 +175,23 @@ export default function InteriorUtilitiesView({ projectId }: InteriorUtilitiesVi
               <form onSubmit={handleSaveCheckpoint}>
                 <div className="p-5 space-y-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold">Test Audit Status</label>
+                    <label className="text-xs font-semibold">{tr("Test Audit Status")}</label>
                     <select
                       className="w-full px-3 py-2 text-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:outline-none"
                       value={checkpointStatus}
                       onChange={(e) => setCheckpointStatus(e.target.value)}
                     >
-                      <option value="pending">Pending Check</option>
-                      <option value="passed">Passed Test</option>
-                      <option value="failed">Failed Test</option>
+                      <option value="pending">{tr("Pending Check")}</option>
+                      <option value="passed">{tr("Passed Test")}</option>
+                      <option value="failed">{tr("Failed Test")}</option>
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold">Logged Readings / Notes</label>
-                    <Input placeholder="e.g. Pressure 10.2 Bar for 2 hours" value={checkpointReadings} onChange={(e) => setCheckpointReadings(e.target.value)} />
+                    <label className="text-xs font-semibold">{tr("Logged Readings / Notes")}</label>
+                    <Input placeholder={tr("e.g. Pressure 10.2 Bar for 2 hours")} value={checkpointReadings} onChange={(e) => setCheckpointReadings(e.target.value)} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold">Overall System Commissioning Progress (%)</label>
+                    <label className="text-xs font-semibold">{tr("Overall System Commissioning Progress (%)")}</label>
                     <Input
                       type="number"
                       min={0}
@@ -203,11 +204,11 @@ export default function InteriorUtilitiesView({ projectId }: InteriorUtilitiesVi
 
                 <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
                   <Button variant="outline" type="button" onClick={() => setIsModalOpen(false)}>
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                   <Button type="submit" disabled={updating}>
-                    {updating && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    Save Changes
+                    {updating && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+                    {tr("Save Changes")}
                   </Button>
                 </div>
               </form>

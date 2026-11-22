@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Enhanced Leads Table with Search, Filter, Sort, Pagination, CSV Export, Grid/Table Switcher & Stage Handlers
 
@@ -328,13 +329,13 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search leads by name, phone, lead ID, location..."
+              placeholder={tr("Search leads by name, phone, lead ID, location...")}
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-8 pr-8 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+              className="w-full ps-8 pe-8 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
             />
             {searchTerm && (
               <button
@@ -359,13 +360,13 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                   ? 'bg-blue-50 text-blue-700 border-blue-200'
                   : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
               )}
-              title="Toggle Filters"
+              title={tr("Toggle Filters")}
             >
               <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
-              <span className="hidden sm:inline">Filters</span>
+              <span className="hidden sm:inline">{tr("Filters")}</span>
               {activeFiltersCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-semibold flex items-center justify-center">
-                  {activeFiltersCount}
+                <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[0.625rem] font-semibold flex items-center justify-center">
+                  {tr(activeFiltersCount)}
                 </span>
               )}
               <ChevronDown
@@ -386,7 +387,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                     ? 'bg-white text-blue-600 shadow-xs font-semibold'
                     : 'text-slate-400 hover:text-slate-700'
                 )}
-                title="Grid Cards View"
+                title={tr("Grid Cards View")}
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
@@ -398,7 +399,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                     ? 'bg-white text-blue-600 shadow-xs font-semibold'
                     : 'text-slate-400 hover:text-slate-700'
                 )}
-                title="Table List View"
+                title={tr("Table List View")}
               >
                 <List className="w-4 h-4" />
               </button>
@@ -410,10 +411,10 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                 onClick={handleExportCSV}
                 disabled={filteredLeads.length === 0}
                 className="h-8.5 inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 transition-all disabled:opacity-50 cursor-pointer shadow-2xs"
-                title="Export visible leads to CSV"
+                title={tr("Export visible leads to CSV")}
               >
                 <Download className="w-3.5 h-3.5 text-slate-500" />
-                <span className="hidden md:inline">Export</span>
+                <span className="hidden md:inline">{tr("Export")}</span>
               </button>
             )}
           </div>
@@ -433,7 +434,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                 {/* Source Filter */}
                 <div className="lg:col-span-3 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-slate-700">Lead Source</label>
+                    <label className="text-xs font-semibold text-slate-700">{tr("Lead Source")}</label>
                     {sourceFilter !== 'all' && (
                       <button
                         onClick={() => {
@@ -442,7 +443,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                         }}
                         className="text-xs font-medium text-blue-600 hover:underline cursor-pointer"
                       >
-                        Reset
+                        {tr("Reset")}
                       </button>
                     )}
                   </div>
@@ -454,10 +455,10 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                     }}
                     className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white cursor-pointer"
                   >
-                    <option value="all">All Sources</option>
+                    <option value="all">{tr("All Sources")}</option>
                     {availableSources.map((s) => (
                       <option key={s} value={s}>
-                        {s}
+                        {tr(s)}
                       </option>
                     ))}
                   </select>
@@ -466,7 +467,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                 {/* Property Type Filter */}
                 <div className="lg:col-span-3 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-slate-700">Property Type</label>
+                    <label className="text-xs font-semibold text-slate-700">{tr("Property Type")}</label>
                     {propertyFilter !== 'all' && (
                       <button
                         onClick={() => {
@@ -475,7 +476,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                         }}
                         className="text-xs font-medium text-blue-600 hover:underline cursor-pointer"
                       >
-                        Reset
+                        {tr("Reset")}
                       </button>
                     )}
                   </div>
@@ -487,10 +488,10 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                     }}
                     className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white cursor-pointer"
                   >
-                    <option value="all">All Property Types</option>
+                    <option value="all">{tr("All Property Types")}</option>
                     {availableProperties.map((p) => (
                       <option key={p} value={p}>
-                        {p}
+                        {tr(p)}
                       </option>
                     ))}
                   </select>
@@ -500,7 +501,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                 {activeTab === 'leads' ? (
                   <div className="lg:col-span-3 space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-slate-700">Pipeline Status</label>
+                      <label className="text-xs font-semibold text-slate-700">{tr("Pipeline Status")}</label>
                       {statusFilter !== 'all' && (
                         <button
                           onClick={() => {
@@ -509,7 +510,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                           }}
                           className="text-xs font-medium text-blue-600 hover:underline cursor-pointer"
                         >
-                          Reset
+                          {tr("Reset")}
                         </button>
                       )}
                     </div>
@@ -521,10 +522,10 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                       }}
                       className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white cursor-pointer"
                     >
-                      <option value="all">All Statuses</option>
+                      <option value="all">{tr("All Statuses")}</option>
                       {availableStatuses.map((st) => (
                         <option key={st} value={st}>
-                          {st}
+                          {tr(st)}
                         </option>
                       ))}
                     </select>
@@ -533,7 +534,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
 
                 {/* Sort Order */}
                 <div className={cn(activeTab === 'leads' ? 'lg:col-span-3' : 'lg:col-span-6', 'space-y-1.5')}>
-                  <label className="text-xs font-semibold text-slate-700">Sort Order</label>
+                  <label className="text-xs font-semibold text-slate-700">{tr("Sort Order")}</label>
                   <select
                     value={sortBy}
                     onChange={(e: any) => {
@@ -542,10 +543,10 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                     }}
                     className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white cursor-pointer"
                   >
-                    <option value="newest">Recently Created (Default)</option>
-                    <option value="oldest">Oldest First</option>
-                    <option value="name_asc">Name: A → Z</option>
-                    <option value="name_desc">Name: Z → A</option>
+                    <option value="newest">{tr("Recently Created (Default)")}</option>
+                    <option value="oldest">{tr("Oldest First")}</option>
+                    <option value="name_asc">{tr("Name: A → Z")}</option>
+                    <option value="name_desc">{tr("Name: Z → A")}</option>
                   </select>
                 </div>
               </div>
@@ -558,7 +559,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                     className="py-1.5 px-3 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-xs font-medium text-slate-600 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
-                    Reset Filters
+                    {tr("Reset Filters")}
                   </button>
                 </div>
               )}
@@ -573,18 +574,18 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
           <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 mb-3">
             <User size={24} />
           </div>
-          <h3 className="text-sm sm:text-base font-bold text-slate-900">No Leads Found</h3>
+          <h3 className="text-sm sm:text-base font-bold text-slate-900">{tr("No Leads Found")}</h3>
           <p className="text-xs text-slate-500 max-w-sm mt-1 mb-4">
             {hasActiveFilters
-              ? 'No leads matched your search or active filter criteria.'
-              : "You don't have any leads in this stage yet."}
+              ? tr("No leads matched your search or active filter criteria.")
+              : tr("You don't have any leads in this stage yet.")}
           </p>
           {hasActiveFilters && (
             <button
               onClick={resetFilters}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-xs"
             >
-              Clear All Filters
+              {tr("Clear All Filters")}
             </button>
           )}
         </div>
@@ -617,11 +618,11 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                       </div>
                       <div className="min-w-0 flex-1">
                         <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate" title={lead.name}>
-                          {lead.name}
+                          {tr(lead.name)}
                         </h4>
-                        <div className="flex items-center gap-1.5 mt-0.5 text-[11px]">
+                        <div className="flex items-center gap-1.5 mt-0.5 text-[0.6875rem]">
                           <span className="font-mono font-semibold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 shrink-0">
-                            {lead.leadNumber || 'LD-XXXX'}
+                            {lead.leadNumber || tr("LD-XXXX")}
                           </span>
                           <span className="text-slate-400 truncate">
                             {new Date(lead.createdAt).toLocaleDateString()}
@@ -630,8 +631,8 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                       </div>
                     </div>
 
-                    <span className={cn('shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-tight uppercase border', statusInfo.style)}>
-                      {statusInfo.label}
+                    <span className={cn('shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[0.625rem] font-bold tracking-tight uppercase border', statusInfo.style)}>
+                      {tr(statusInfo.label)}
                     </span>
                   </div>
 
@@ -640,27 +641,27 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 truncate">
                         <Building className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                        <span className="truncate font-semibold text-slate-800">{lead.propertyType || 'Interior Project'}</span>
+                        <span className="truncate font-semibold text-slate-800">{lead.propertyType || tr("Interior Project")}</span>
                       </div>
                       {lead.budgetRange && (
                         <span className="font-bold text-emerald-600 text-xs shrink-0">
-                          ₹{lead.budgetRange}
+                          ₹{tr(lead.budgetRange)}
                         </span>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-1.5 truncate text-slate-500 text-[11px]">
+                    <div className="flex items-center gap-1.5 truncate text-slate-500 text-[0.6875rem]">
                       <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span className="truncate">{lead.projectLocation || 'Location pending'}</span>
+                      <span className="truncate">{lead.projectLocation || tr("Location pending")}</span>
                     </div>
 
-                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200/60 text-[11px]">
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200/60 text-[0.6875rem]">
                       <div className="flex items-center gap-1.5 truncate text-slate-500">
                         <UserCircle className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                        <span className="truncate">{assignedName || 'Unassigned'}</span>
+                        <span className="truncate">{assignedName || tr("Unassigned")}</span>
                       </div>
-                      <span className="px-1.5 py-0.2 rounded bg-slate-200/60 text-slate-600 font-medium text-[10px] shrink-0">
-                        {lead.leadSource || 'Direct'}
+                      <span className="px-1.5 py-0.2 rounded bg-slate-200/60 text-slate-600 font-medium text-[0.625rem] shrink-0">
+                        {lead.leadSource || tr("Direct")}
                       </span>
                     </div>
                   </div>
@@ -672,9 +673,9 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                     <a
                       href={`tel:${lead.mobileNumber}`}
                       className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold border border-emerald-200 transition-all cursor-pointer"
-                      title="Call Lead"
+                      title={tr("Call Lead")}
                     >
-                      <Phone className="w-3 h-3" /> Call
+                      <Phone className="w-3 h-3" />{tr(" Call")}
                     </a>
                     {rawDigits.length >= 10 && (
                       <a
@@ -682,9 +683,9 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-semibold transition-all cursor-pointer"
-                        title="Chat on WhatsApp"
+                        title={tr("Chat on WhatsApp")}
                       >
-                        <MessageCircle className="w-3 h-3" /> WhatsApp
+                        <MessageCircle className="w-3 h-3" />{tr(" WhatsApp")}
                       </a>
                     )}
                   </div>
@@ -694,9 +695,9 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                       <button
                         onClick={() => onPassToFollowUp(lead._id)}
                         className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white rounded-lg text-xs font-semibold border border-blue-200 transition-all cursor-pointer"
-                        title="Schedule Follow-up"
+                        title={tr("Schedule Follow-up")}
                       >
-                        <Calendar className="w-3 h-3" /> Follow-up
+                        <Calendar className="w-3 h-3" />{tr(" Follow-up")}
                       </button>
                     )}
                     {lead.status !== 'Won' && lead.status !== 'Converted' ? (
@@ -705,7 +706,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                           <button
                             onClick={() => onEdit(lead)}
                             className="p-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition-all cursor-pointer"
-                            title="Edit Lead"
+                            title={tr("Edit Lead")}
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
@@ -714,7 +715,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                           <button
                             onClick={() => onDelete(lead)}
                             className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 transition-all cursor-pointer"
-                            title="Delete Lead"
+                            title={tr("Delete Lead")}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -724,13 +725,13 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                             onClick={() => onReopenLead(lead._id)}
                             className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-semibold cursor-pointer"
                           >
-                            <RotateCcw className="w-3 h-3" /> Reopen
+                            <RotateCcw className="w-3 h-3" />{tr(" Reopen")}
                           </button>
                         )}
                       </>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200">
-                        <Lock className="w-3 h-3" /> Won
+                      <span className="inline-flex items-center gap-1 text-[0.6875rem] font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200">
+                        <Lock className="w-3 h-3" />{tr(" Won")}
                       </span>
                     )}
                   </div>
@@ -764,14 +765,14 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                       </div>
                       <div className="min-w-0 flex-1">
                         <h4
-                          className="text-xs font-bold text-slate-900 truncate leading-snug max-w-[160px] sm:max-w-[240px]"
+                          className="text-xs font-bold text-slate-900 truncate leading-snug max-w-[10rem] sm:max-w-[15rem]"
                           title={lead.name}
                         >
-                          {lead.name}
+                          {tr(lead.name)}
                         </h4>
-                        <div className="flex items-center gap-1.5 mt-0.5 text-[10px]">
+                        <div className="flex items-center gap-1.5 mt-0.5 text-[0.625rem]">
                           <span className="font-mono font-semibold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 shrink-0">
-                            {lead.leadNumber || 'LD-XXXX'}
+                            {lead.leadNumber || tr("LD-XXXX")}
                           </span>
                           <span className="text-slate-400 truncate">
                             {new Date(lead.createdAt).toLocaleDateString()}
@@ -780,36 +781,36 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                       </div>
                     </div>
 
-                    <span className={cn('shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border', statusInfo.style)}>
-                      {statusInfo.label}
+                    <span className={cn('shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[0.5625rem] font-bold uppercase tracking-wider border', statusInfo.style)}>
+                      {tr(statusInfo.label)}
                     </span>
                   </div>
 
                   {/* Middle Row: Info Grid */}
-                  <div className="grid grid-cols-2 gap-1.5 text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                  <div className="grid grid-cols-2 gap-1.5 text-[0.6875rem] bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                     <div className="flex items-center gap-1.5 truncate">
                       <Building size={12} className="shrink-0 text-amber-500" />
-                      <span className="truncate font-semibold text-slate-800">{lead.propertyType || 'Project'}</span>
+                      <span className="truncate font-semibold text-slate-800">{lead.propertyType || tr("Project")}</span>
                     </div>
                     <div className="flex items-center gap-1.5 truncate">
                       <MapPin size={12} className="shrink-0 text-slate-400" />
-                      <span className="truncate text-slate-500">{lead.projectLocation || 'Location pending'}</span>
+                      <span className="truncate text-slate-500">{lead.projectLocation || tr("Location pending")}</span>
                     </div>
                     {lead.budgetRange && (
                       <div className="flex items-center gap-1.5 truncate">
                         <span className="text-emerald-600 font-bold">₹</span>
-                        <span className="truncate font-bold text-emerald-600">{lead.budgetRange}</span>
+                        <span className="truncate font-bold text-emerald-600">{tr(lead.budgetRange)}</span>
                       </div>
                     )}
                     {assignedName ? (
                       <div className="flex items-center gap-1.5 truncate">
                         <UserCircle size={12} className="shrink-0 text-blue-500" />
-                        <span className="truncate text-slate-600">{assignedName}</span>
+                        <span className="truncate text-slate-600">{tr(assignedName)}</span>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1.5 truncate text-[10px] text-slate-400">
+                      <div className="flex items-center gap-1.5 truncate text-[0.625rem] text-slate-400">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                        <span className="truncate">Unassigned</span>
+                        <span className="truncate">{tr("Unassigned")}</span>
                       </div>
                     )}
                   </div>
@@ -820,9 +821,9 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                       <a
                         href={`tel:${lead.mobileNumber}`}
                         className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold border border-emerald-200 transition-all cursor-pointer"
-                        title="Call Lead"
+                        title={tr("Call Lead")}
                       >
-                        <Phone size={12} /> Call
+                        <Phone size={12} />{tr(" Call")}
                       </a>
                       {rawDigits.length >= 10 && (
                         <a
@@ -830,9 +831,9 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                           target="_blank"
                           rel="noreferrer"
                           className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-semibold transition-all cursor-pointer"
-                          title="Chat on WhatsApp"
+                          title={tr("Chat on WhatsApp")}
                         >
-                          <MessageCircle size={12} /> WhatsApp
+                          <MessageCircle size={12} />{tr(" WhatsApp")}
                         </a>
                       )}
                     </div>
@@ -843,9 +844,9 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                           <button
                             onClick={() => onPassToFollowUp(lead._id)}
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-semibold border border-blue-200 hover:bg-blue-600 hover:text-white transition-all cursor-pointer"
-                            title="Schedule Follow-up"
+                            title={tr("Schedule Follow-up")}
                           >
-                            <Calendar size={12} /> Follow-up
+                            <Calendar size={12} />{tr(" Follow-up")}
                           </button>
                         )
                       )}
@@ -857,7 +858,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                               <button
                                 onClick={() => onEdit(lead)}
                                 className="p-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 cursor-pointer"
-                                title="Edit Lead"
+                                title={tr("Edit Lead")}
                               >
                                 <Pencil size={13} />
                               </button>
@@ -868,7 +869,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                               <button
                                 onClick={() => onDelete(lead)}
                                 className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 cursor-pointer"
-                                title="Delete Lead"
+                                title={tr("Delete Lead")}
                               >
                                 <Trash2 size={13} />
                               </button>
@@ -876,8 +877,8 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                           )}
                         </>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200">
-                          <Lock size={10} /> Won
+                        <span className="inline-flex items-center gap-1 text-[0.625rem] font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200">
+                          <Lock size={10} />{tr(" Won")}
                         </span>
                       )}
                     </div>
@@ -889,14 +890,14 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
 
           {/* DESKTOP TABLE VIEW (>= md) */}
           <div className="hidden md:block w-full overflow-hidden">
-            <table className="w-full text-left text-xs border-collapse table-fixed">
-              <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 text-[11px] font-bold uppercase tracking-wider">
+            <table className="w-full text-start text-xs border-collapse table-fixed">
+              <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 text-[0.6875rem] font-bold uppercase tracking-wider">
                 <tr>
-                  <th className="px-4.5 py-3 w-[28%]">Lead & Contact</th>
-                  <th className="px-4 py-3 w-[22%]">Property & Location</th>
-                  <th className="px-4 py-3 w-[18%]">Stage & Source</th>
-                  <th className="px-4 py-3 w-[16%]">Assigned Rep</th>
-                  <th className="px-4.5 py-3 text-right w-[16%]">Actions</th>
+                  <th className="px-4.5 py-3 w-[28%]">{tr("Lead & Contact")}</th>
+                  <th className="px-4 py-3 w-[22%]">{tr("Property & Location")}</th>
+                  <th className="px-4 py-3 w-[18%]">{tr("Stage & Source")}</th>
+                  <th className="px-4 py-3 w-[16%]">{tr("Assigned Rep")}</th>
+                  <th className="px-4.5 py-3 text-end w-[16%]">{tr("Actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -924,22 +925,22 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span
-                                className="font-bold text-xs text-slate-900 group-hover:text-blue-600 transition-colors truncate max-w-[160px] lg:max-w-[220px]"
+                                className="font-bold text-xs text-slate-900 group-hover:text-blue-600 transition-colors truncate max-w-[10rem] lg:max-w-[13.75rem]"
                                 title={lead.name}
                               >
-                                {lead.name}
+                                {tr(lead.name)}
                               </span>
-                              <span className="text-[10px] font-mono font-semibold text-purple-700 bg-purple-50 px-1.5 py-0.2 rounded border border-purple-200 shrink-0">
-                                {lead.leadNumber || 'LD-XXXX'}
+                              <span className="text-[0.625rem] font-mono font-semibold text-purple-700 bg-purple-50 px-1.5 py-0.2 rounded border border-purple-200 shrink-0">
+                                {lead.leadNumber || tr("LD-XXXX")}
                               </span>
                             </div>
-                            <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500" onClick={(e) => e.stopPropagation()}>
-                              <span className="font-medium text-slate-700 truncate">{lead.mobileNumber}</span>
+                            <div className="flex items-center gap-2 mt-0.5 text-[0.6875rem] text-slate-500" onClick={(e) => e.stopPropagation()}>
+                              <span className="font-medium text-slate-700 truncate">{tr(lead.mobileNumber)}</span>
                               <div className="flex items-center gap-1 shrink-0">
                                 <a
                                   href={`tel:${lead.mobileNumber}`}
                                   className="p-0.5 rounded text-slate-400 hover:text-emerald-600 transition-colors"
-                                  title="Call Lead"
+                                  title={tr("Call Lead")}
                                 >
                                   <Phone size={11} />
                                 </a>
@@ -949,14 +950,14 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                                     target="_blank"
                                     rel="noreferrer"
                                     className="p-0.5 rounded text-slate-400 hover:text-emerald-600 transition-colors"
-                                    title="WhatsApp"
+                                    title={tr("WhatsApp")}
                                   >
                                     <MessageCircle size={11} />
                                   </a>
                                 )}
                               </div>
                               {lead.email && (
-                                <span className="hidden xl:inline-block truncate max-w-[110px] text-[10px]" title={lead.email}>
+                                <span className="hidden xl:inline-block truncate max-w-[6.875rem] text-[0.625rem]" title={lead.email}>
                                   • {lead.email}
                                 </span>
                               )}
@@ -968,13 +969,13 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                       {/* 2. Property & Location */}
                       <td className="px-4 py-3 max-w-0">
                         <div className="min-w-0 space-y-0.5">
-                          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 min-w-0" title={lead.propertyType || 'Interior Project'}>
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 min-w-0" title={lead.propertyType || tr("Interior Project")}>
                             <Building size={12} className="text-amber-500 shrink-0" />
-                            <span className="truncate block">{lead.propertyType || 'Interior Project'}</span>
+                            <span className="truncate block">{lead.propertyType || tr("Interior Project")}</span>
                           </div>
-                          <div className="flex items-center gap-1 text-[11px] text-slate-500 min-w-0" title={lead.projectLocation || 'Location pending'}>
+                          <div className="flex items-center gap-1 text-[0.6875rem] text-slate-500 min-w-0" title={lead.projectLocation || tr("Location pending")}>
                             <MapPin size={11} className="shrink-0 text-slate-400" />
-                            <span className="truncate block">{lead.projectLocation || 'Location pending'}</span>
+                            <span className="truncate block">{lead.projectLocation || tr("Location pending")}</span>
                           </div>
                         </div>
                       </td>
@@ -985,16 +986,16 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                           <div>
                             <span
                               className={cn(
-                                'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-tight uppercase border',
+                                'inline-flex items-center px-2 py-0.5 rounded-full text-[0.625rem] font-bold tracking-tight uppercase border',
                                 statusInfo.style
                               )}
                             >
-                              {statusInfo.label}
+                              {tr(statusInfo.label)}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-slate-500">
-                            <span className="bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 font-medium truncate max-w-[110px]" title={lead.leadSource || 'Direct'}>
-                              {lead.leadSource || 'Direct'}
+                          <div className="flex items-center gap-1.5 flex-wrap text-[0.625rem] text-slate-500">
+                            <span className="bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 font-medium truncate max-w-[6.875rem]" title={lead.leadSource || tr("Direct")}>
+                              {lead.leadSource || tr("Direct")}
                             </span>
                             <span>{new Date(lead.createdAt).toLocaleDateString()}</span>
                           </div>
@@ -1005,21 +1006,21 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                       <td className="px-4 py-3">
                         {assignedName ? (
                           <div
-                            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200 max-w-[140px] truncate"
+                            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200 max-w-[8.75rem] truncate"
                             title={assignedName}
                           >
                             <UserCircle size={13} className="text-blue-600 shrink-0" />
-                            <span className="truncate">{assignedName}</span>
+                            <span className="truncate">{tr(assignedName)}</span>
                           </div>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-[11px] text-slate-400 italic">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> Unassigned
+                          <span className="inline-flex items-center gap-1 text-[0.6875rem] text-slate-400 italic">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />{tr(" Unassigned")}
                           </span>
                         )}
                       </td>
 
                       {/* 5. Actions */}
-                      <td className="px-4.5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-4.5 py-3 text-end" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1.5">
                           {/* Tab Specific Stage Actions */}
                           {activeTab === 'drawing' && onUploadDesign && (
@@ -1028,7 +1029,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                                 onClick={() => onUploadDesign(lead._id)}
                                 className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-xs"
                               >
-                                Upload
+                                {tr("Upload")}
                               </button>
                             )
                           )}
@@ -1039,7 +1040,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                                 onClick={() => onPassToBoq(lead._id)}
                                 className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-cyan-600 text-white hover:bg-cyan-700 rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-xs"
                               >
-                                Pass <ArrowRight size={11} />
+                                {tr("Pass ")}<ArrowRight size={11} />
                               </button>
                             )
                           )}
@@ -1051,8 +1052,8 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
 
                               if (isQuotationApproved) {
                                 return (
-                                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-lg text-[11px] font-semibold" title="Quotation is approved, BOQ locked">
-                                    <Lock size={10} /> Locked
+                                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-lg text-[0.6875rem] font-semibold" title={tr("Quotation is approved, BOQ locked")}>
+                                    <Lock size={10} />{tr(" Locked")}
                                   </span>
                                 );
                               }
@@ -1067,9 +1068,9 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                                         ? "gap-1 px-2.5 py-1.5 bg-teal-600 text-white hover:bg-teal-700"
                                         : "p-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200"
                                     )}
-                                    title={(!lead.boqs || lead.boqs.length === 0) ? 'Create BOQ' : 'Edit BOQ'}
+                                    title={(!lead.boqs || lead.boqs.length === 0) ? tr("Create BOQ") : tr("Edit BOQ")}
                                   >
-                                    {(!lead.boqs || lead.boqs.length === 0) ? '+ BOQ' : <Pencil size={13} className="text-teal-600" />}
+                                    {(!lead.boqs || lead.boqs.length === 0) ? tr("+ BOQ") : <Pencil size={13} className="text-teal-600" />}
                                   </button>
                                 )
                               );
@@ -1082,7 +1083,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                                 onClick={() => onPassToQuotations(lead._id)}
                                 className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-600 hover:text-white rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-xs"
                               >
-                                Pass <ArrowRight size={11} />
+                                {tr("Pass ")}<ArrowRight size={11} />
                               </button>
                             )
                           )}
@@ -1095,7 +1096,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                                   <button
                                     onClick={() => onPassToFollowUp(lead._id)}
                                     className="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-all border border-blue-200 cursor-pointer"
-                                    title="Schedule Follow-up"
+                                    title={tr("Schedule Follow-up")}
                                   >
                                     <Calendar size={13} />
                                   </button>
@@ -1109,7 +1110,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                                       <button
                                         onClick={() => onEdit(lead)}
                                         className="p-1.5 bg-white hover:bg-slate-100 text-slate-700 rounded-lg transition-all border border-slate-200 cursor-pointer"
-                                        title="Edit Lead"
+                                        title={tr("Edit Lead")}
                                       >
                                         <Pencil size={13} />
                                       </button>
@@ -1121,7 +1122,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                                       <button
                                         onClick={() => onDelete(lead)}
                                         className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition-all border border-rose-200 cursor-pointer"
-                                        title="Delete Lead"
+                                        title={tr("Delete Lead")}
                                       >
                                         <Trash2 size={13} />
                                       </button>
@@ -1133,10 +1134,10 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                                       <button
                                         onClick={() => onReopenLead(lead._id)}
                                         className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg transition-all border border-emerald-200 cursor-pointer font-semibold text-xs"
-                                        title="Reopen Lost Lead"
+                                        title={tr("Reopen Lost Lead")}
                                       >
                                         <RotateCcw size={12} />
-                                        <span>Reopen</span>
+                                        <span>{tr("Reopen")}</span>
                                       </button>
                                     )
                                   )}
@@ -1146,7 +1147,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                                       <button
                                         onClick={() => onMarkAsLost(lead._id)}
                                         className="p-1.5 bg-orange-50 hover:bg-orange-100 text-orange-600 rounded-lg transition-all border border-orange-200 cursor-pointer"
-                                        title="Mark as Lost"
+                                        title={tr("Mark as Lost")}
                                       >
                                         <XCircle size={13} />
                                       </button>
@@ -1154,8 +1155,8 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                                   )}
                                 </>
                               ) : (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-lg" title="Converted to Project (Locked)">
-                                  <Lock size={10} /> Locked
+                                <span className="inline-flex items-center gap-1 text-[0.625rem] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-lg" title={tr("Converted to Project (Locked)")}>
+                                  <Lock size={10} />{tr(" Locked")}
                                 </span>
                               )}
                             </>
@@ -1176,13 +1177,13 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
         <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-white rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs">
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-slate-500 font-medium">
             <span>
-              Showing <strong>{(currentPage - 1) * pageSize + 1}</strong> to{' '}
-              <strong>{Math.min(currentPage * pageSize, filteredLeads.length)}</strong> of{' '}
-              <strong>{filteredLeads.length}</strong> leads
+              {tr("Showing ")}<strong>{(currentPage - 1) * pageSize + 1}</strong>{tr(" to")}{' '}
+              <strong>{Math.min(currentPage * pageSize, filteredLeads.length)}</strong>{tr(" of")}{' '}
+              <strong>{filteredLeads.length}</strong>{tr(" leads")}
             </span>
 
-            <div className="flex items-center gap-1.5 ml-auto sm:ml-2">
-              <span>Per page:</span>
+            <div className="flex items-center gap-1.5 ms-auto sm:ms-2">
+              <span>{tr("Per page:")}</span>
               <select
                 value={pageSize}
                 onChange={(e) => {
@@ -1205,12 +1206,12 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                 onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                 disabled={currentPage === 1}
                 className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
-                title="Previous Page"
+                title={tr("Previous Page")}
               >
                 <ChevronLeft size={15} />
               </button>
 
-              <div className="flex items-center gap-1 px-1 overflow-x-auto max-w-[200px] sm:max-w-none">
+              <div className="flex items-center gap-1 px-1 overflow-x-auto max-w-[12.5rem] sm:max-w-none">
                 {[...Array(totalPages)].map((_, i) => {
                   const pageNum = i + 1;
                   if (
@@ -1229,7 +1230,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                             : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                         )}
                       >
-                        {pageNum}
+                        {tr(pageNum)}
                       </button>
                     );
                   }
@@ -1248,7 +1249,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                 onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
                 disabled={currentPage === totalPages}
                 className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
-                title="Next Page"
+                title={tr("Next Page")}
               >
                 <ChevronRight size={15} />
               </button>

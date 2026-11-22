@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Interior-OS Audit Management Page
@@ -29,9 +30,9 @@ export default function InteriorAuditPage() {
           <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-600 mb-4">
             <ShieldAlert className="w-8 h-8" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Access Denied</h2>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">{tr("Access Denied")}</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mt-2 mb-6">
-            The Audit Management section is restricted to Organization Administrators and Super Admins only.
+            {tr("The Audit Management section is restricted to Organization Administrators and Super Admins only.")}
           </p>
           <Button
             onClick={() => router.push('/interior-new')}
@@ -39,7 +40,7 @@ export default function InteriorAuditPage() {
             className="flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
+            {tr("Back to Dashboard")}
           </Button>
         </div>
       </InteriorShell>

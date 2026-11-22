@@ -1,3 +1,4 @@
+import { tr } from '@/i18n';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, X, Camera, CheckCircle2 } from 'lucide-react';
@@ -77,13 +78,13 @@ export const InteriorGRNModal = ({ isOpen, onClose, po, onSubmit }: InteriorGRNM
     if (!file) return;
     const objectUrl = URL.createObjectURL(file);
     setUrl(objectUrl);
-    toast.success('Photo attached!');
+    toast.success(tr("Photo attached!"));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!challanNumber) {
-      toast.error('Please enter the Challan/Receipt Number.');
+      toast.error(tr("Please enter the Challan/Receipt Number."));
       return;
     }
     try {
@@ -96,7 +97,7 @@ export const InteriorGRNModal = ({ isOpen, onClose, po, onSubmit }: InteriorGRNM
       onClose();
     } catch (err) {
       console.error(err);
-      toast.error('Failed to submit GRN.');
+      toast.error(tr("Failed to submit GRN."));
     } finally {
       setSubmitting(false);
     }
@@ -114,8 +115,8 @@ export const InteriorGRNModal = ({ isOpen, onClose, po, onSubmit }: InteriorGRNM
           >
             <div className="p-5 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--muted)/0.3)]">
               <div>
-                <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">Receive Material (GRN)</h3>
-                <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">Verify delivered quantities for PO: {po.poNumber}</p>
+                <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">{tr("Receive Material (GRN)")}</h3>
+                <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{tr("Verify delivered quantities for PO: ")}{tr(po.poNumber)}</p>
               </div>
               <button onClick={onClose} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">
                 <X className="w-4 h-4" />
@@ -127,18 +128,18 @@ export const InteriorGRNModal = ({ isOpen, onClose, po, onSubmit }: InteriorGRNM
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Challan / Receipt No. *</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">{tr("Challan / Receipt No. *")}</label>
                     <Input 
                       required 
-                      placeholder="e.g. CHL-2026-882" 
+                      placeholder={tr("e.g. CHL-2026-882")} 
                       value={challanNumber} 
                       onChange={(e) => setChallanNumber(e.target.value)} 
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Received By / Recorded Person (Optional)</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">{tr("Received By / Recorded Person (Optional)")}</label>
                     <Input 
-                      placeholder="e.g. John Doe" 
+                      placeholder={tr("e.g. John Doe")} 
                       value={receivedBy} 
                       onChange={(e) => setReceivedBy(e.target.value)} 
                     />
@@ -146,7 +147,7 @@ export const InteriorGRNModal = ({ isOpen, onClose, po, onSubmit }: InteriorGRNM
                 </div>
                 <div className="space-y-4">
                   <div className="space-y-1 relative">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Delivery Proof (Photo)</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">{tr("Delivery Proof (Photo)")}</label>
                     
                     {/* Hidden File Input */}
                     <input 
@@ -163,21 +164,21 @@ export const InteriorGRNModal = ({ isOpen, onClose, po, onSubmit }: InteriorGRNM
                         onClick={() => fileInputRef.current?.click()}
                         className="w-full border border-dashed border-[hsl(var(--border))] rounded-md h-10 flex items-center justify-center gap-2 text-xs font-medium text-[hsl(var(--muted-foreground))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
                       >
-                        <Camera className="w-4 h-4" /> Capture / Upload
+                        <Camera className="w-4 h-4" />{tr(" Capture / Upload")}
                       </button>
                     ) : (
                       <div className="w-full border border-[hsl(var(--border))] rounded-md overflow-hidden relative group">
-                        <img loading="lazy" decoding="async" src={proofUrl} alt="Delivery Proof Preview" className="w-full h-24 object-cover" />
+                        <img loading="lazy" decoding="async" src={proofUrl} alt={tr("Delivery Proof Preview")} className="w-full h-24 object-cover" />
                         <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2">
                           <div className="flex items-center gap-1 text-white font-bold text-xs">
-                            <CheckCircle2 className="w-4 h-4 text-green-400" /> Attached
+                            <CheckCircle2 className="w-4 h-4 text-green-400" />{tr(" Attached")}
                           </div>
                           <div className="flex items-center gap-2">
-                            <button type="button" onClick={() => window.open(proofUrl, '_blank')} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-[10px] font-bold">
-                              View
+                            <button type="button" onClick={() => window.open(proofUrl, '_blank')} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-[0.625rem] font-bold">
+                              {tr("View")}
                             </button>
-                            <button type="button" onClick={() => setProofUrl('')} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-[10px] font-bold">
-                              Remove
+                            <button type="button" onClick={() => setProofUrl('')} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-[0.625rem] font-bold">
+                              {tr("Remove")}
                             </button>
                           </div>
                         </div>
@@ -185,7 +186,7 @@ export const InteriorGRNModal = ({ isOpen, onClose, po, onSubmit }: InteriorGRNM
                     )}
                   </div>
                   <div className="space-y-1 relative">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Invoice (Photo)</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">{tr("Invoice (Photo)")}</label>
                     
                     {/* Hidden File Input */}
                     <input 
@@ -202,21 +203,21 @@ export const InteriorGRNModal = ({ isOpen, onClose, po, onSubmit }: InteriorGRNM
                         onClick={() => invoiceInputRef.current?.click()}
                         className="w-full border border-dashed border-[hsl(var(--border))] rounded-md h-10 flex items-center justify-center gap-2 text-xs font-medium text-[hsl(var(--muted-foreground))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
                       >
-                        <Camera className="w-4 h-4" /> Capture / Upload
+                        <Camera className="w-4 h-4" />{tr(" Capture / Upload")}
                       </button>
                     ) : (
                       <div className="w-full border border-[hsl(var(--border))] rounded-md overflow-hidden relative group">
-                        <img loading="lazy" decoding="async" src={invoiceUrl} alt="Invoice Preview" className="w-full h-24 object-cover" />
+                        <img loading="lazy" decoding="async" src={invoiceUrl} alt={tr("Invoice Preview")} className="w-full h-24 object-cover" />
                         <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2">
                           <div className="flex items-center gap-1 text-white font-bold text-xs">
-                            <CheckCircle2 className="w-4 h-4 text-green-400" /> Attached
+                            <CheckCircle2 className="w-4 h-4 text-green-400" />{tr(" Attached")}
                           </div>
                           <div className="flex items-center gap-2">
-                            <button type="button" onClick={() => window.open(invoiceUrl, '_blank')} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-[10px] font-bold">
-                              View
+                            <button type="button" onClick={() => window.open(invoiceUrl, '_blank')} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-[0.625rem] font-bold">
+                              {tr("View")}
                             </button>
-                            <button type="button" onClick={() => setInvoiceUrl('')} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-[10px] font-bold">
-                              Remove
+                            <button type="button" onClick={() => setInvoiceUrl('')} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-[0.625rem] font-bold">
+                              {tr("Remove")}
                             </button>
                           </div>
                         </div>
@@ -228,23 +229,23 @@ export const InteriorGRNModal = ({ isOpen, onClose, po, onSubmit }: InteriorGRNM
 
               {/* Items Verification */}
               <div className="space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Verify Quantities</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">{tr("Verify Quantities")}</h4>
                 <div className="border border-[hsl(var(--border))] rounded-lg divide-y divide-[hsl(var(--border))] overflow-hidden">
-                  <div className="bg-[hsl(var(--muted)/0.3)] grid grid-cols-12 gap-2 p-3 text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase">
-                    <div className="col-span-4">Material</div>
-                    <div className="col-span-4 text-center">Prev. Received / Total</div>
-                    <div className="col-span-4 text-right">Receiving Now</div>
+                  <div className="bg-[hsl(var(--muted)/0.3)] grid grid-cols-12 gap-2 p-3 text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase">
+                    <div className="col-span-4">{tr("Material")}</div>
+                    <div className="col-span-4 text-center">{tr("Prev. Received / Total")}</div>
+                    <div className="col-span-4 text-end">{tr("Receiving Now")}</div>
                   </div>
                   {receivedItems.length > 0 ? (
                     receivedItems.map((item: any, idx: number) => (
                       <div key={idx} className="grid grid-cols-12 gap-2 p-3 items-center bg-[hsl(var(--card))]">
                         <div className="col-span-4">
-                          <p className="text-xs font-bold text-[hsl(var(--foreground))] line-clamp-1">{item.name}</p>
-                          <p className="text-[10px] text-[hsl(var(--muted-foreground))] font-mono">{item.unit}</p>
+                          <p className="text-xs font-bold text-[hsl(var(--foreground))] line-clamp-1">{tr(item.name)}</p>
+                          <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))] font-mono">{tr(item.unit)}</p>
                         </div>
                         <div className="col-span-4 flex flex-col items-center">
-                          <span className="font-mono text-xs font-bold text-[hsl(var(--primary))]">{item.previouslyReceived} <span className="text-[hsl(var(--muted-foreground))]">/ {item.quantity}</span></span>
-                          <span className="text-[9px] text-[hsl(var(--muted-foreground))] uppercase tracking-wider mt-0.5">Remaining: {item.remainingQuantity}</span>
+                          <span className="font-mono text-xs font-bold text-[hsl(var(--primary))]">{tr(item.previouslyReceived)} <span className="text-[hsl(var(--muted-foreground))]">/ {item.quantity}</span></span>
+                          <span className="text-[0.5625rem] text-[hsl(var(--muted-foreground))] uppercase tracking-wider mt-0.5">{tr("Remaining: ")}{tr(item.remainingQuantity)}</span>
                         </div>
                         <div className="col-span-4 flex justify-end">
                           <input 
@@ -253,29 +254,29 @@ export const InteriorGRNModal = ({ isOpen, onClose, po, onSubmit }: InteriorGRNM
                             max={item.remainingQuantity}
                             value={item.receivedQuantity === 0 ? '' : item.receivedQuantity}
                             onChange={(e) => handleQuantityChange(idx, e.target.value)}
-                            className="w-20 px-2 py-1 text-right text-xs border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.05)] rounded focus:outline-none focus:border-[hsl(var(--primary))] font-mono font-bold"
+                            className="w-20 px-2 py-1 text-end text-xs border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.05)] rounded focus:outline-none focus:border-[hsl(var(--primary))] font-mono font-bold"
                           />
                         </div>
                       </div>
                     ))
                   ) : (
                     <div className="p-4 text-center text-xs text-[hsl(var(--muted-foreground))]">
-                      No items found for this PO.
+                      {tr("No items found for this PO.")}
                     </div>
                   )}
                 </div>
-                <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                  * Verify the exact quantities received on site. The system will automatically update the inventory based on these verified numbers.
+                <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
+                  {tr("* Verify the exact quantities received on site. The system will automatically update the inventory based on these verified numbers.")}
                 </p>
               </div>
 
             </form>
             
             <div className="p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)] flex justify-end gap-3">
-              <Button variant="outline" onClick={onClose} disabled={submitting}>Cancel</Button>
+              <Button variant="outline" onClick={onClose} disabled={submitting}>{tr("Cancel")}</Button>
               <Button onClick={handleSubmit} disabled={submitting || !challanNumber}>
-                {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Confirm Receipt & Add to Inventory
+                {submitting && <Loader2 className="w-4 h-4 me-2 animate-spin" />}
+                {tr("Confirm Receipt & Add to Inventory")}
               </Button>
             </div>
           </motion.div>

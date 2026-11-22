@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState } from 'react';
 import {
@@ -63,9 +64,9 @@ export function QuotationPreview({
     let emailToUse = lead?.email;
     if (!emailToUse) {
       const custom = await prompt({
-        title: 'Recipient Email Required',
-        message: 'No email address saved for this lead. Please enter target email address:',
-        placeholder: 'client@example.com',
+        title: tr("Recipient Email Required"),
+        message: tr("No email address saved for this lead. Please enter target email address:"),
+        placeholder: tr("client@example.com"),
       });
       if (!custom) return;
       emailToUse = custom.trim();
@@ -77,10 +78,10 @@ export function QuotationPreview({
         quotation: quote,
         recipientEmail: emailToUse,
       });
-      toast.success(`Quotation emailed to ${emailToUse}!`);
+      toast.success(tr("Quotation emailed to {{emailToUse}}!", { emailToUse: emailToUse }));
       onSuccess();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to send email');
+      toast.error(err.response?.data?.message || tr("Failed to send email"));
     } finally {
       setIsSendingEmail(false);
     }
@@ -110,17 +111,17 @@ export function QuotationPreview({
         remarks: `Quotation v${quote.version} (${quote.title || 'Option ' + quote.version}) was marked as ${status}`,
       });
 
-      toast.success(`Quotation marked as ${status}.`);
+      toast.success(tr("Quotation marked as {{status}}.", { status: status }));
       onSuccess();
     } catch (error: any) {
-      toast.error('Failed to update quotation status');
+      toast.error(tr("Failed to update quotation status"));
     }
   };
 
   const handleConvertToProject = async () => {
     const ok = await confirm({
-      title: 'Convert Lead to Project',
-      message: 'Are you sure you want to convert this Lead into an active Project? This will hand it over to the Execution team.',
+      title: tr("Convert Lead to Project"),
+      message: tr("Are you sure you want to convert this Lead into an active Project? This will hand it over to the Execution team."),
       confirmText: 'Convert',
       type: 'warning',
     });
@@ -129,10 +130,10 @@ export function QuotationPreview({
     setIsConverting(true);
     try {
       await interiorCrmService.convertCustomer(lead._id, { quotationIndex });
-      toast.success('🎉 Successfully converted to Project!');
+      toast.success(tr("🎉 Successfully converted to Project!"));
       router.push('/interior-new/crm');
     } catch (error: any) {
-      toast.error(error.response?.data?.message || error.message || 'Failed to convert to project');
+      toast.error(error.response?.data?.message || error.message || tr("Failed to convert to project"));
       setIsConverting(false);
     }
   };
@@ -141,9 +142,9 @@ export function QuotationPreview({
     const rawTitle = quote?.title || `Quotation Option ${quote?.version || quotationIndex + 1}`;
     const displayTitle = rawTitle.length > 50 ? `${rawTitle.slice(0, 50)}...` : rawTitle;
     const ok = await confirm({
-      title: 'Delete Quotation',
-      message: `Are you sure you want to delete "${displayTitle}" (${currencySymbol} ${formatMillionBillion(grandTotal)})? This action cannot be undone.`,
-      confirmText: 'Delete Quotation',
+      title: tr("Delete Quotation"),
+      message: tr("Are you sure you want to delete \"{{displayTitle}}\" ({{currencySymbol}} {{formatMillionBillion}})? This action cannot be undone.", { displayTitle: displayTitle, currencySymbol: currencySymbol, formatMillionBillion: formatMillionBillion(grandTotal) }),
+      confirmText: tr("Delete Quotation"),
       type: 'danger',
     });
     if (!ok) return;
@@ -165,10 +166,10 @@ export function QuotationPreview({
         remarks: `Deleted Quotation Option ${quote?.version || quotationIndex + 1}`,
       });
 
-      toast.success(`Quotation Option ${quote?.version || quotationIndex + 1} deleted successfully!`);
+      toast.success(tr("Quotation Option {{value}} deleted successfully!", { value: quote?.version || quotationIndex + 1 }));
       onSuccess();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || err.message || 'Failed to delete quotation');
+      toast.error(err.response?.data?.message || err.message || tr("Failed to delete quotation"));
     } finally {
       setIsDeleting(false);
     }
@@ -204,7 +205,7 @@ export function QuotationPreview({
           <div className="flex items-center gap-2.5 flex-wrap min-w-0">
             <div className="flex items-center gap-2 min-w-0">
               <h3 className="font-extrabold text-[hsl(var(--foreground))] text-sm sm:text-base truncate max-w-xs sm:max-w-md">
-                {quote.title || `Quotation #${quotationIndex + 1}`}
+                {quote.title || tr("Quotation #{{value}}", { value: quotationIndex + 1 })}
               </h3>
             </div>
             <span
@@ -217,14 +218,14 @@ export function QuotationPreview({
                   : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
               )}
             >
-              {quote.status || 'Draft'}
+              {quote.status || tr("Draft")}
             </span>
             {isOverBudget && (
               <span
                 className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 border border-rose-500/30 flex items-center gap-1"
                 title={`${currencySymbol} ${formatInternational(excessAmount, 2, 2)}`}
               >
-                <AlertTriangle size={11} /> Over Budget by {currencySymbol} {formatMillionBillion(excessAmount)}
+                <AlertTriangle size={11} />{tr(" Over Budget by ")}{tr(currencySymbol)} {formatMillionBillion(excessAmount)}
               </span>
             )}
           </div>
@@ -237,14 +238,14 @@ export function QuotationPreview({
                   onClick={() => handleStatusUpdate('Accepted')}
                   className="text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95 shadow-xs cursor-pointer"
                 >
-                  <CheckCircle2 size={15} /> Mark Accepted
+                  <CheckCircle2 size={15} />{tr(" Mark Accepted")}
                 </button>
                 <button
                   type="button"
                   onClick={() => handleStatusUpdate('Rejected')}
                   className="text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95 shadow-xs cursor-pointer"
                 >
-                  <XCircle size={15} /> Mark Rejected
+                  <XCircle size={15} />{tr(" Mark Rejected")}
                 </button>
                 <div className="hidden sm:block w-px h-6 bg-[hsl(var(--border))] mx-1" />
               </>
@@ -259,7 +260,7 @@ export function QuotationPreview({
                   className="text-xs font-bold bg-emerald-600 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition flex items-center gap-1.5 disabled:opacity-50 active:scale-95 shadow-sm cursor-pointer"
                 >
                   <Rocket size={15} />
-                  {isConverting ? 'Converting...' : '🎉 Convert to Project'}
+                  {isConverting ? tr("Converting...") : tr("🎉 Convert to Project")}
                 </button>
                 <div className="hidden sm:block w-px h-6 bg-[hsl(var(--border))] mx-1" />
               </>
@@ -270,9 +271,9 @@ export function QuotationPreview({
               onClick={handleSendEmail}
               disabled={isSendingEmail}
               className="text-xs font-bold bg-white hover:bg-blue-50 text-blue-600 border border-blue-200 hover:border-blue-300 px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 disabled:opacity-50 active:scale-95 shadow-xs cursor-pointer"
-              title="Email Quotation to client"
+              title={tr("Email Quotation to client")}
             >
-              <Mail size={15} /> {isSendingEmail ? 'Sending...' : 'Send Email'}
+              <Mail size={15} /> {isSendingEmail ? tr("Sending...") : tr("Send Email")}
             </button>
 
             <button
@@ -280,7 +281,7 @@ export function QuotationPreview({
               onClick={handlePrint}
               className="text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95 shadow-xs cursor-pointer"
             >
-              <Printer size={15} /> Print / PDF
+              <Printer size={15} />{tr(" Print / PDF")}
             </button>
 
             {!isConverted && (
@@ -289,9 +290,9 @@ export function QuotationPreview({
                 onClick={handleDeleteQuotation}
                 disabled={isDeleting}
                 className="text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95 shadow-xs cursor-pointer disabled:opacity-50"
-                title="Delete this quotation"
+                title={tr("Delete this quotation")}
               >
-                <Trash2 size={15} /> {isDeleting ? 'Deleting...' : 'Delete'}
+                <Trash2 size={15} /> {isDeleting ? tr("Deleting...") : tr("Delete")}
               </button>
             )}
 
@@ -302,9 +303,9 @@ export function QuotationPreview({
                   type="button"
                   onClick={onClosePreview}
                   className="text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 px-3 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95 shadow-xs cursor-pointer"
-                  title="Close Preview"
+                  title={tr("Close Preview")}
                 >
-                  <X size={15} /> Close Preview
+                  <X size={15} />{tr(" Close Preview")}
                 </button>
               </>
             )}
@@ -329,29 +330,29 @@ export function QuotationPreview({
               <div className="min-w-0 max-w-full sm:max-w-[58%] space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/60 font-mono">
-                    <Sparkles size={11} className="text-indigo-600" /> Commercial Quotation
+                    <Sparkles size={11} className="text-indigo-600" />{tr(" Commercial Quotation")}
                   </span>
                   <span className="text-[11px] font-mono font-bold text-slate-400">
-                    {qtnNumber}
+                    {tr(qtnNumber)}
                   </span>
                 </div>
 
                 {hasCustomTitle ? (
                   <div>
                     <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight break-words [overflow-wrap:anywhere] break-all leading-snug">
-                      {rawTitle}
+                      {tr(rawTitle)}
                     </h1>
                     <p className="text-xs font-semibold text-slate-500 mt-1">
-                      Quotation Option #{quotationIndex + 1} • Version {quote.version || quotationIndex + 1}
+                      {tr("Quotation Option #")}{quotationIndex + 1}{tr(" • Version ")}{quote.version || quotationIndex + 1}
                     </p>
                   </div>
                 ) : (
                   <div>
                     <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-snug">
-                      Commercial Estimate & Scope
+                      {tr("Commercial Estimate & Scope")}
                     </h1>
                     <p className="text-xs font-semibold text-slate-500 mt-1">
-                      Quotation Option #{quotationIndex + 1} • Version {quote.version || quotationIndex + 1}
+                      {tr("Quotation Option #")}{quotationIndex + 1}{tr(" • Version ")}{quote.version || quotationIndex + 1}
                     </p>
                   </div>
                 )}
@@ -361,20 +362,20 @@ export function QuotationPreview({
               <div className="sm:text-right flex flex-col sm:items-end justify-between shrink-0 space-y-1.5">
                 <div className="flex items-center gap-2.5 sm:justify-end">
                   <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-900 text-white flex items-center justify-center font-black text-sm shadow-sm shrink-0">
-                    SI
+                    {tr("SI")}
                   </div>
                   <div className="sm:text-right">
                     <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-none">
-                      SKY INTERIOR
+                      {tr("SKY INTERIOR")}
                     </h2>
                     <span className="text-[10px] font-bold text-indigo-600 tracking-wide uppercase">
-                      Architecture & Design
+                      {tr("Architecture & Design")}
                     </span>
                   </div>
                 </div>
                 <div className="text-xs text-slate-500 space-y-0.5 sm:text-right leading-relaxed">
-                  <p>123 Design Avenue, Tech Park</p>
-                  <p>contact@skyinterior.com</p>
+                  <p>{tr("123 Design Avenue, Tech Park")}</p>
+                  <p>{tr("contact@skyinterior.com")}</p>
                   <p>+1 (555) 234-5678</p>
                 </div>
               </div>
@@ -385,16 +386,16 @@ export function QuotationPreview({
               {/* Client Info Card */}
               <div className="bg-slate-50/80 rounded-2xl p-4 sm:p-5 border border-slate-200/70 shadow-2xs">
                 <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                  <User size={13} className="text-indigo-600" /> Prepared For
+                  <User size={13} className="text-indigo-600" />{tr(" Prepared For")}
                 </div>
                 <p className="text-base font-extrabold text-slate-900 break-words [overflow-wrap:anywhere] break-all leading-tight">
-                  {lead.name || 'Valued Client'}
+                  {lead.name || tr("Valued Client")}
                 </p>
                 <div className="mt-2.5 space-y-1 text-xs text-slate-600">
                   {lead.mobileNumber && (
                     <p className="flex items-center gap-2 break-words [overflow-wrap:anywhere] break-all">
                       <Phone size={12} className="text-slate-400 shrink-0" />
-                      <span>{lead.mobileNumber}</span>
+                      <span>{tr(lead.mobileNumber)}</span>
                     </p>
                   )}
                   {lead.email && (
@@ -409,23 +410,23 @@ export function QuotationPreview({
               {/* Quotation Details Card */}
               <div className="bg-slate-50/80 rounded-2xl p-4 sm:p-5 border border-slate-200/70 shadow-2xs">
                 <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                  <Calendar size={13} className="text-indigo-600" /> Quotation Details
+                  <Calendar size={13} className="text-indigo-600" />{tr(" Quotation Details")}
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div>
-                    <span className="text-[11px] text-slate-400 block font-medium">Issue Date</span>
-                    <span className="font-bold text-slate-800">{quoteDate}</span>
+                    <span className="text-[11px] text-slate-400 block font-medium">{tr("Issue Date")}</span>
+                    <span className="font-bold text-slate-800">{tr(quoteDate)}</span>
                   </div>
                   <div>
-                    <span className="text-[11px] text-slate-400 block font-medium">Lead Reference</span>
-                    <span className="font-bold text-slate-800 font-mono">{lead.leadNumber || 'LD-XXXX'}</span>
+                    <span className="text-[11px] text-slate-400 block font-medium">{tr("Lead Reference")}</span>
+                    <span className="font-bold text-slate-800 font-mono">{lead.leadNumber || tr("LD-XXXX")}</span>
                   </div>
                   <div>
-                    <span className="text-[11px] text-slate-400 block font-medium">Quote Reference</span>
-                    <span className="font-bold text-indigo-700 font-mono text-[11px]">{qtnNumber}</span>
+                    <span className="text-[11px] text-slate-400 block font-medium">{tr("Quote Reference")}</span>
+                    <span className="font-bold text-indigo-700 font-mono text-[11px]">{tr(qtnNumber)}</span>
                   </div>
                   <div>
-                    <span className="text-[11px] text-slate-400 block font-medium">Status</span>
+                    <span className="text-[11px] text-slate-400 block font-medium">{tr("Status")}</span>
                     <span
                       className={cn(
                         'inline-block text-[10px] font-black px-2 py-0.5 rounded-full border uppercase tracking-wider mt-0.5',
@@ -436,7 +437,7 @@ export function QuotationPreview({
                           : 'bg-amber-500/10 text-amber-700 border-amber-500/20'
                       )}
                     >
-                      {quote.status || 'Draft'}
+                      {quote.status || tr("Draft")}
                     </span>
                   </div>
                 </div>
@@ -456,10 +457,10 @@ export function QuotationPreview({
                 <thead>
                   <tr className="bg-slate-50/90 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
                     <th className="py-3 px-3 text-center">#</th>
-                    <th className="py-3 px-3 text-left">Description</th>
-                    <th className="py-3 px-3 text-center">Qty</th>
-                    <th className="py-3 px-3 text-right">Unit Rate ({currencySymbol})</th>
-                    <th className="py-3 px-3 text-right">Total ({currencySymbol})</th>
+                    <th className="py-3 px-3 text-left">{tr("Description")}</th>
+                    <th className="py-3 px-3 text-center">{tr("Qty")}</th>
+                    <th className="py-3 px-3 text-right">{tr("Unit Rate (")}{tr(currencySymbol)})</th>
+                    <th className="py-3 px-3 text-right">{tr("Total (")}{tr(currencySymbol)})</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs sm:text-sm">
@@ -481,11 +482,11 @@ export function QuotationPreview({
                           {/* Description */}
                           <td className="py-3.5 px-3 align-top min-w-0 overflow-hidden">
                             <div className="font-semibold text-slate-800 break-words [overflow-wrap:anywhere] break-all leading-snug">
-                              {itemTitle}
+                              {tr(itemTitle)}
                             </div>
                             {itemNotes && (
                               <div className="text-[11px] text-slate-500 mt-1 whitespace-pre-wrap break-words [overflow-wrap:anywhere] break-all leading-relaxed">
-                                {itemNotes}
+                                {tr(itemNotes)}
                               </div>
                             )}
                             {item.category && item.category !== 'General Scope' && (
@@ -494,7 +495,7 @@ export function QuotationPreview({
                                   className="inline-block max-w-[140px] truncate text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 align-middle"
                                   title={item.category}
                                 >
-                                  {item.category}
+                                  {tr(item.category)}
                                 </span>
                               </div>
                             )}
@@ -521,7 +522,7 @@ export function QuotationPreview({
                               const smartRate = formatSmartCurrency(Number(item.unitPrice || 0), currencySymbol, { threshold: 1_000_000 });
                               return (
                                 <span className="font-medium truncate block" title={smartRate.exact}>
-                                  {smartRate.display}
+                                  {tr(smartRate.display)}
                                 </span>
                               );
                             })()}
@@ -533,7 +534,7 @@ export function QuotationPreview({
                               const smartTotal = formatSmartCurrency(Number(item.total || 0), currencySymbol, { threshold: 1_000_000 });
                               return (
                                 <span className="truncate block" title={smartTotal.exact}>
-                                  {smartTotal.display}
+                                  {tr(smartTotal.display)}
                                 </span>
                               );
                             })()}
@@ -544,7 +545,7 @@ export function QuotationPreview({
                   ) : (
                     <tr>
                       <td colSpan={5} className="py-8 text-center text-slate-400 text-xs">
-                        No line items listed in this quotation.
+                        {tr("No line items listed in this quotation.")}
                       </td>
                     </tr>
                   )}
@@ -557,35 +558,35 @@ export function QuotationPreview({
               {/* Right: Modern Structured Totals Card */}
               <div className="w-full sm:w-80 rounded-2xl bg-slate-50/90 border border-slate-200/80 p-4 sm:p-5 space-y-2.5 shadow-2xs">
                 <div className="flex justify-between items-center text-xs text-slate-600">
-                  <span>Subtotal ({quote.items?.length || 0} items)</span>
+                  <span>{tr("Subtotal (")}{quote.items?.length || 0}{tr(" items)")}</span>
                   <span
                     className="font-semibold text-slate-900 tabular-nums"
                     title={`${currencySymbol} ${formatInternational(Number(quote.subtotal || 0), 2, 2)}`}
                   >
-                    {currencySymbol} {formatMillionBillion(Number(quote.subtotal || 0))}
+                    {tr(currencySymbol)} {formatMillionBillion(Number(quote.subtotal || 0))}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center text-xs text-slate-600">
-                  <span>Tax ({quote.taxPercentage || 0}%)</span>
+                  <span>{tr("Tax (")}{quote.taxPercentage || 0}%)</span>
                   <span
                     className="font-semibold text-slate-900 tabular-nums"
                     title={`${currencySymbol} ${formatInternational(Number(quote.tax || 0), 2, 2)}`}
                   >
-                    {currencySymbol} {formatMillionBillion(Number(quote.tax || 0))}
+                    {tr(currencySymbol)} {formatMillionBillion(Number(quote.tax || 0))}
                   </span>
                 </div>
 
                 {Number(quote.discount || 0) > 0 && (
                   <div className="flex justify-between items-center text-xs text-emerald-600">
                     <span className="flex items-center gap-1 font-medium">
-                      <Tag size={12} /> Discount Applied
+                      <Tag size={12} />{tr(" Discount Applied")}
                     </span>
                     <span
                       className="font-bold tabular-nums"
                       title={`- ${currencySymbol} ${formatInternational(Number(quote.discount), 2, 2)}`}
                     >
-                      - {currencySymbol} {formatMillionBillion(Number(quote.discount))}
+                      - {tr(currencySymbol)} {formatMillionBillion(Number(quote.discount))}
                     </span>
                   </div>
                 )}
@@ -595,16 +596,16 @@ export function QuotationPreview({
                   <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-xl p-3 sm:p-3.5 flex items-center justify-between shadow-sm">
                     <div>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300 block">
-                        Grand Total
+                        {tr("Grand Total")}
                       </span>
-                      <span className="text-xs text-slate-300 font-medium">Net Payable</span>
+                      <span className="text-xs text-slate-300 font-medium">{tr("Net Payable")}</span>
                     </div>
                     <div className="text-right">
                       <span
                         className="text-base sm:text-xl font-black text-white tabular-nums tracking-tight block"
                         title={`${currencySymbol} ${formatInternational(Number(quote.grandTotal || 0), 2, 2)}`}
                       >
-                        {currencySymbol} {formatMillionBillion(Number(quote.grandTotal || 0))}
+                        {tr(currencySymbol)} {formatMillionBillion(Number(quote.grandTotal || 0))}
                       </span>
                     </div>
                   </div>
@@ -617,10 +618,10 @@ export function QuotationPreview({
               <div className="pt-2 print:break-inside-avoid min-w-0">
                 <div className="rounded-2xl bg-amber-500/[0.04] border border-amber-500/20 p-4 sm:p-5">
                   <p className="text-xs font-bold text-amber-950 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                    <FileText size={14} className="text-amber-600" /> Notes & Remarks
+                    <FileText size={14} className="text-amber-600" />{tr(" Notes & Remarks")}
                   </p>
                   <p className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere] break-all">
-                    {quote.notes}
+                    {tr(quote.notes)}
                   </p>
                 </div>
               </div>

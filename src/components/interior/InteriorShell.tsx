@@ -7,6 +7,7 @@ import { InteriorSidebar } from '@/components/interior/InteriorSidebar';
 import { InteriorHeader } from '@/components/interior/InteriorHeader';
 import { getInteriorUser, isInteriorSession } from '@/lib/interiorAuth';
 import { useQueryClient } from '@tanstack/react-query';
+import { I18nProvider } from '@/i18n/I18nProvider';
 import { ensureFreshInteriorUser, PERMISSIONS_CHANGED_EVENT } from '@/features/interior-new/hooks/usePermissions';
 import {
   getCachedSidebarCollapsed,
@@ -19,7 +20,16 @@ interface InteriorShellProps {
 
 let isVerifiedInSession = false;
 
+// English / Arabic for the whole interior app (language switch + right-to-left)
 export function InteriorShell({ children }: InteriorShellProps) {
+  return (
+    <I18nProvider>
+      <InteriorShellInner>{children}</InteriorShellInner>
+    </I18nProvider>
+  );
+}
+
+function InteriorShellInner({ children }: InteriorShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Port of interior-os-frontend's projects/[projectId]/milestones/page.tsx.
 // Permission gating (useProjectPermissions) and useConfirm dialog are not
@@ -80,7 +81,7 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
   }, [projectId]);
 
   const handleDeleteMilestone = async (milestoneId: string, milestoneName: string) => {
-    if (!window.confirm(`Are you sure you want to delete milestone "${milestoneName}"?`)) {
+    if (!window.confirm(tr("Are you sure you want to delete milestone \"{{milestoneName}}\"?", { milestoneName: milestoneName }))) {
       return;
     }
 
@@ -88,13 +89,13 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
       setDeletingId(milestoneId);
       const res = await interiorProjectService.deleteMilestone(projectId, milestoneId);
       if (res?.success) {
-        toast.success(`Milestone "${milestoneName}" was removed.`);
+        toast.success(tr("Milestone \"{{milestoneName}}\" was removed.", { milestoneName: milestoneName }));
         setMilestones((prev) => prev.filter((m) => m._id !== milestoneId));
       } else {
-        toast.error(res?.message || 'Could not delete milestone.');
+        toast.error(res?.message || tr("Could not delete milestone."));
       }
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to delete milestone.');
+      toast.error(err?.message || tr("Failed to delete milestone."));
     } finally {
       setDeletingId(null);
     }
@@ -103,7 +104,7 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
   const handleCreateMilestone = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim() || !newDueDate) {
-      toast.error('Milestone name and target date are required.');
+      toast.error(tr("Milestone name and target date are required."));
       return;
     }
 
@@ -122,17 +123,17 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
           });
 
       if (res?.success) {
-        toast.success(editingId ? `Milestone "${newName.trim()}" updated.` : `Milestone "${newName.trim()}" added successfully.`);
+        toast.success(editingId ? tr("Milestone \"{{newName}}\" updated.", { newName: newName.trim() }) : tr("Milestone \"{{newName}}\" added successfully.", { newName: newName.trim() }));
         setShowCreateModal(false);
         setEditingId(null);
         setNewName('');
         setNewDueDate('');
         fetchMilestones();
       } else {
-        toast.error(res?.message || 'Failed to create milestone.');
+        toast.error(res?.message || tr("Failed to create milestone."));
       }
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || err?.response?.data?.message || (editingId ? 'Failed to update milestone.' : 'Failed to create milestone.'));
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || (editingId ? tr("Failed to update milestone.") : tr("Failed to create milestone.")));
     } finally {
       setCreating(false);
     }
@@ -142,8 +143,8 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
     <div className="p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Milestones & Key Targets</h2>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">Track major targets, deliverables, and timeline milestones.</p>
+          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">{tr("Milestones & Key Targets")}</h2>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{tr("Track major targets, deliverables, and timeline milestones.")}</p>
         </div>
       </div>
 
@@ -154,24 +155,24 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
       ) : milestones.length === 0 ? (
         <Card className="p-12 text-center text-slate-500 rounded-2xl border border-slate-200 bg-white">
           <Milestone className="w-10 h-10 mx-auto text-slate-300 mb-3" />
-          <p className="font-semibold text-slate-700 text-sm">No Milestones Found</p>
+          <p className="font-semibold text-slate-700 text-sm">{tr("No Milestones Found")}</p>
           <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-            Mark activities as &quot;Milestone Activity&quot; when creating or editing activities in the WBS tab.
+            {tr("Mark activities as \"Milestone Activity\" when creating or editing activities in the WBS tab.")}
           </p>
         </Card>
       ) : (
         <Card className="p-6 md:p-8 rounded-2xl border border-slate-200 bg-white shadow-xs max-w-4xl">
           <div className="flex items-center justify-between pb-4 mb-6 border-b border-slate-100">
             <div>
-              <h3 className="text-base font-bold text-slate-900 tracking-tight">Visual Timeline Gantt</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Chronological milestone sequence across project execution</p>
+              <h3 className="text-base font-bold text-slate-900 tracking-tight">{tr("Visual Timeline Gantt")}</h3>
+              <p className="text-xs text-slate-500 mt-0.5">{tr("Chronological milestone sequence across project execution")}</p>
             </div>
             <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-              {milestones.length} Milestone{milestones.length > 1 ? 's' : ''}
+              {milestones.length}{tr(" Milestone")}{milestones.length > 1 ? 's' : ''}
             </span>
           </div>
 
-          <div className="relative border-l-2 border-slate-200 pl-6 ml-3 space-y-7 py-2">
+          <div className="relative border-s-2 border-slate-200 ps-6 ms-3 space-y-7 py-2">
             {milestones.map((m) => {
               const isAchieved = m.status === 'achieved' || m.progress === 100;
               const isDelayed = m.status === 'delayed';
@@ -182,7 +183,7 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
                   {/* Dot */}
                   <div
                     className={cn(
-                      'absolute -left-[32px] top-1.5 w-3.5 h-3.5 rounded-full border-2 bg-white transition-transform group-hover:scale-125 shadow-2xs',
+                      'absolute -left-[2rem] top-1.5 w-3.5 h-3.5 rounded-full border-2 bg-white transition-transform group-hover:scale-125 shadow-2xs',
                       isAchieved
                         ? 'border-emerald-500 bg-emerald-500'
                         : isDelayed
@@ -195,13 +196,13 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <Milestone size={14} className="text-blue-600 shrink-0" />
-                        <h4 className="text-sm font-bold text-slate-900">{m.name}</h4>
+                        <h4 className="text-sm font-bold text-slate-900">{tr(m.name)}</h4>
                       </div>
 
                       <div className="flex items-center gap-2">
                         <span
                           className={cn(
-                            'px-2 py-0.5 text-[10px] font-bold rounded-full uppercase border',
+                            'px-2 py-0.5 text-[0.625rem] font-bold rounded-full uppercase border',
                             isAchieved
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                               : isDelayed
@@ -209,7 +210,7 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
                               : 'bg-blue-50 text-blue-700 border-blue-200'
                           )}
                         >
-                          {isAchieved ? 'Achieved' : isDelayed ? 'Delayed' : 'Planned'}
+                          {isAchieved ? tr("Achieved") : isDelayed ? tr("Delayed") : tr("Planned")}
                         </span>
 
                         {canDo('milestones', 'delete') && (
@@ -217,7 +218,7 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
                             type="button"
                             onClick={() => handleDeleteMilestone(m._id, m.name)}
                             disabled={isDeleting}
-                            title="Delete Milestone"
+                            title={tr("Delete Milestone")}
                             className="p-1 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
                           >
                             {isDeleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
@@ -229,26 +230,26 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
                     <div className="flex items-center gap-4 text-xs text-slate-500 flex-wrap">
                       <span className="flex items-center gap-1.5 font-medium">
                         <CalendarRange className="w-3.5 h-3.5 text-blue-600" />
-                        Target Date: {m.dueDate ? new Date(m.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Not set'}
+                        {tr("Target Date: ")}{m.dueDate ? new Date(m.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : tr("Not set")}
                       </span>
                     </div>
 
                     {m.linkedTasks && m.linkedTasks.length > 0 && (
                       <div className="pt-2 border-t border-slate-200/60 flex flex-wrap items-center gap-1.5">
-                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mr-1">
-                          Linked Tasks:
+                        <span className="text-[0.625rem] font-semibold text-slate-400 uppercase tracking-wide me-1">
+                          {tr("Linked Tasks:")}
                         </span>
                         {m.linkedTasks.map((task: any) => (
                           <span
                             key={task._id}
                             className={cn(
-                              'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border',
+                              'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[0.6875rem] font-medium border',
                               task.status === 'completed'
                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200 line-through opacity-80'
                                 : 'bg-white text-slate-700 border-slate-200 shadow-2xs'
                             )}
                           >
-                            {task.name}
+                            {tr(task.name)}
                           </span>
                         ))}
                       </div>
@@ -268,7 +269,7 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <Milestone size={18} className="text-blue-600" />
-                <h3 className="text-base font-bold text-slate-900">{editingId ? 'Edit Milestone' : 'Create New Milestone'}</h3>
+                <h3 className="text-base font-bold text-slate-900">{editingId ? tr("Edit Milestone") : tr("Create New Milestone")}</h3>
               </div>
               <button
                 onClick={closeModal}
@@ -281,12 +282,12 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
             <form onSubmit={handleCreateMilestone} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Milestone Name <span className="text-red-500">*</span>
+                  {tr("Milestone Name ")}<span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Kitchen Cabinetry Handover"
+                  placeholder={tr("e.g. Kitchen Cabinetry Handover")}
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
@@ -295,7 +296,7 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Target Due Date <span className="text-red-500">*</span>
+                  {tr("Target Due Date ")}<span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
@@ -308,15 +309,15 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
 
               {editingId && (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Status</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">{tr("Status")}</label>
                   <select
                     value={editStatus}
                     onChange={(e) => setEditStatus(e.target.value as 'planned' | 'achieved' | 'delayed')}
                     className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500 bg-white"
                   >
-                    <option value="planned">Planned</option>
-                    <option value="achieved">Achieved</option>
-                    <option value="delayed">Delayed</option>
+                    <option value="planned">{tr("Planned")}</option>
+                    <option value="achieved">{tr("Achieved")}</option>
+                    <option value="delayed">{tr("Delayed")}</option>
                   </select>
                 </div>
               )}
@@ -327,7 +328,7 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
                   onClick={closeModal}
                   className="px-3.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </button>
                 <button
                   type="submit"
@@ -335,7 +336,7 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
                   className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-xs"
                 >
                   {creating && <Loader2 size={13} className="animate-spin" />}
-                  <span>{editingId ? 'Save Changes' : 'Save Milestone'}</span>
+                  <span>{editingId ? tr("Save Changes") : tr("Save Milestone")}</span>
                 </button>
               </div>
             </form>

@@ -1,11 +1,14 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Port of interior-os-frontend's components/layout/header.tsx, wired to the
 // interior-only localStorage session instead of Zustand's useAuthStore.
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Bell, LogOut, ChevronDown, User, Settings, Menu } from 'lucide-react';
+import { Search, Bell, LogOut, ChevronDown, User, Settings, Menu, Globe } from 'lucide-react';
+import { LanguageToggleButton } from './LanguageSwitcher';
+import { useI18n } from '@/i18n/I18nProvider';
 import { Button } from '@/components/interior/ui';
 import { cn } from '@/lib/utils';
 import { logoutInterior } from '@/lib/interiorAuth';
@@ -19,6 +22,7 @@ export function InteriorHeader({ user, onMobileMenuClick }: InteriorHeaderProps)
   const router = useRouter();
   const [showUserMenu, setShowUserMenu] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
+  const { lang, setLanguage } = useI18n();
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -47,7 +51,8 @@ export function InteriorHeader({ user, onMobileMenuClick }: InteriorHeaderProps)
        
       </div>
 
-      <div className="flex items-center gap-2 ml-4">
+      <div className="flex items-center gap-2 ms-4">
+        <LanguageToggleButton className="hidden sm:inline-flex" />
         <Button variant="outline" size="sm" className="relative text-[hsl(var(--muted-foreground))] px-2">
           <Bell className="w-4 h-4" />
           <span className="absolute top-1 right-1 w-2 h-2 bg-[hsl(var(--destructive))] rounded-full" />
@@ -56,29 +61,30 @@ export function InteriorHeader({ user, onMobileMenuClick }: InteriorHeaderProps)
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-2 h-9 pl-1 pr-2 rounded-lg hover:bg-[hsl(var(--muted))] transition-colors"
+            className="flex items-center gap-2 h-9 ps-1 pe-2 rounded-lg hover:bg-[hsl(var(--muted))] transition-colors"
           >
             <div className="w-7 h-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-white text-xs font-semibold">
-              {initials}
+              {tr(initials)}
             </div>
             {user && (
-              <span className="hidden md:block capitalize text-sm font-medium text-[hsl(var(--foreground))] max-w-[120px] truncate">
-                {user.firstName}
+              <span className="hidden md:block capitalize text-sm font-medium text-[hsl(var(--foreground))] max-w-[7.5rem] truncate">
+                {tr(user.firstName)}
               </span>
             )}
             <ChevronDown className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
           </button>
 
           {showUserMenu && (
-            <div className="absolute right-0 top-full mt-1 w-56 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--popover))] shadow-lg py-1 z-50">
+            <div className="absolute end-0 top-full mt-1 w-56 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--popover))] shadow-lg py-1 z-50">
               <div className="px-3 py-2 border-b border-[hsl(var(--border))]">
                 <p className="text-sm font-medium capitalize text-[hsl(var(--foreground))]">
-                  {user?.firstName} {user?.lastName}
+                  {tr(user?.firstName)} {tr(user?.lastName)}
                 </p>
                 <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">{user?.email}</p>
               </div>
               <div className="py-1">
-                <DropdownItem icon={LogOut} label="Sign out" onClick={handleLogout} destructive />
+                <DropdownItem icon={Globe} label={lang === 'ar' ? tr("English") : 'العربية'} onClick={() => { setShowUserMenu(false); setLanguage(lang === 'ar' ? 'en' : 'ar'); }} />
+                <DropdownItem icon={LogOut} label={tr("Sign out")} onClick={handleLogout} destructive />
               </div>
             </div>
           )}
@@ -98,7 +104,7 @@ function DropdownItem({ icon: Icon, label, onClick, destructive }: { icon: React
       )}
     >
       <Icon className="w-4 h-4" />
-      {label}
+      {tr(label)}
     </button>
   );
 }

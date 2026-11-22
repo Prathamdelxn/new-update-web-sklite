@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Interior Project Quotations View
@@ -173,7 +174,7 @@ export default function InteriorProjectQuotationView() {
       }
     } catch (err) {
       console.error('Failed to load project quotations:', err);
-      toast.error('Failed to load quotations data');
+      toast.error(tr("Failed to load quotations data"));
     } finally {
       setLoading(false);
     }
@@ -216,9 +217,9 @@ export default function InteriorProjectQuotationView() {
     const displayTitle = quoteTitle.length > 50 ? `${quoteTitle.slice(0, 50)}...` : quoteTitle;
 
     const confirmed = await confirm({
-      title: 'Delete Quotation',
-      message: `Are you sure you want to delete "${displayTitle}" (v${q?.version || idxToDelete + 1})? This action cannot be undone.`,
-      confirmText: 'Delete Quotation',
+      title: tr("Delete Quotation"),
+      message: tr("Are you sure you want to delete \"{{displayTitle}}\" (v{{value}})? This action cannot be undone.", { displayTitle: displayTitle, value: q?.version || idxToDelete + 1 }),
+      confirmText: tr("Delete Quotation"),
       type: 'danger',
     });
 
@@ -250,10 +251,10 @@ export default function InteriorProjectQuotationView() {
         quotations: updatedQuotations,
       }));
 
-      toast.success(`Quotation "${quoteTitle}" deleted successfully.`);
+      toast.success(tr("Quotation \"{{quoteTitle}}\" deleted successfully.", { quoteTitle: quoteTitle }));
       setActiveQuotationIndex(null);
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || err?.message || 'Failed to delete quotation');
+      toast.error(err?.response?.data?.error || err?.message || tr("Failed to delete quotation"));
     }
   };
 
@@ -291,11 +292,11 @@ export default function InteriorProjectQuotationView() {
             <div>
               <div className="flex items-center gap-2.5 flex-wrap">
                 <h2 className="text-sm sm:text-base font-bold text-[hsl(var(--foreground))]">
-                  Commercial Quotations & Proposals
+                  {tr("Commercial Quotations & Proposals")}
                 </h2>
                 <span
                   className={cn(
-                    'text-[11px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 flex items-center gap-1.5',
+                    'text-[0.6875rem] font-bold px-2.5 py-0.5 rounded-full border shrink-0 flex items-center gap-1.5',
                     hasQuotations
                       ? isLatestQuoteRejected
                         ? 'bg-rose-500/10 text-rose-600 border-rose-500/20'
@@ -319,11 +320,11 @@ export default function InteriorProjectQuotationView() {
                   />
                   {hasQuotations
                     ? `${quotations.length} ${quotations.length === 1 ? 'Proposal' : 'Proposals'} Generated`
-                    : 'Pending Creation'}
+                    : tr("Pending Creation")}
                 </span>
               </div>
               <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                Generate commercial proposals, apply taxes, discounts and manage client approvals.
+                {tr("Generate commercial proposals, apply taxes, discounts and manage client approvals.")}
               </p>
             </div>
           </div>
@@ -337,7 +338,7 @@ export default function InteriorProjectQuotationView() {
                 }}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
               >
-                <Plus size={14} /> Create Quotation
+                <Plus size={14} />{tr(" Create Quotation")}
               </button>
             )}
           </div>
@@ -346,8 +347,8 @@ export default function InteriorProjectQuotationView() {
         {/* ── 2. Summary KPI Metrics Ribbon ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors min-w-0 overflow-hidden">
-            <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-              Grand Total
+            <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+              {tr("Grand Total")}
             </p>
             <p 
               className="font-extrabold text-sm sm:text-base text-blue-600 dark:text-blue-400 mt-1 truncate block"
@@ -357,42 +358,42 @@ export default function InteriorProjectQuotationView() {
             </p>
             {hasQuotations && formatSmartCurrency(quotationInfo.grandTotal, currencySymbol).isLarge && (
               <p 
-                className="text-[10px] font-mono text-[hsl(var(--muted-foreground))] truncate block"
+                className="text-[0.625rem] font-mono text-[hsl(var(--muted-foreground))] truncate block"
                 title={formatSmartCurrency(quotationInfo.grandTotal, currencySymbol).exact}
               >
-                ({formatSmartCurrency(quotationInfo.grandTotal, currencySymbol).exact})
+                ({tr(formatSmartCurrency(quotationInfo.grandTotal, currencySymbol).exact)})
               </p>
             )}
           </div>
 
           <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors">
-            <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-              Breakdown
+            <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+              {tr("Breakdown")}
             </p>
             <p className="font-bold text-xs sm:text-sm text-[hsl(var(--foreground))] mt-1 truncate">
               {hasQuotations
-                ? `${quotationInfo.taxPercentage}% Tax • ${quotationInfo.itemsCount} Items`
-                : 'No items'}
+                ? tr("{{taxPercentage}}% Tax • {{itemsCount}} Items", { taxPercentage: quotationInfo.taxPercentage, itemsCount: quotationInfo.itemsCount })
+                : tr("No items")}
             </p>
           </div>
 
           <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors">
-            <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-              Latest Status
+            <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+              {tr("Latest Status")}
             </p>
             <p className="font-bold text-xs sm:text-sm text-[hsl(var(--foreground))] mt-1">
-              {quotationInfo.currentQuote?.status || (hasQuotations ? 'Generated' : 'Pending')}
+              {quotationInfo.currentQuote?.status || (hasQuotations ? tr("Generated") : tr("Pending"))}
             </p>
           </div>
 
           <div className="bg-[hsl(var(--muted)/0.35)] rounded-xl p-3 border border-[hsl(var(--border))] transition-colors">
-            <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-              Target Budget
+            <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+              {tr("Target Budget")}
             </p>
             <p className="font-bold text-xs sm:text-sm text-[hsl(var(--foreground))] mt-1">
               {project?.budget?.amount
                 ? formatCurrency(project.budget.amount)
-                : lead?.budgetRange || 'Not specified'}
+                : lead?.budgetRange || tr("Not specified")}
             </p>
           </div>
         </div>
@@ -406,10 +407,10 @@ export default function InteriorProjectQuotationView() {
           </div>
           <div className="max-w-md space-y-1">
             <h3 className="text-base font-bold text-[hsl(var(--foreground))]">
-              No Quotations Created Yet
+              {tr("No Quotations Created Yet")}
             </h3>
             <p className="text-[hsl(var(--muted-foreground))] text-xs">
-              Generate itemized pricing proposals directly from project BOQ estimation, apply custom discounts and taxes.
+              {tr("Generate itemized pricing proposals directly from project BOQ estimation, apply custom discounts and taxes.")}
             </p>
           </div>
           {canDo('crm_quotations', 'create') && (
@@ -420,7 +421,7 @@ export default function InteriorProjectQuotationView() {
               }}
               className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer shadow-sm"
             >
-              <Plus size={15} /> Create First Quotation
+              <Plus size={15} />{tr(" Create First Quotation")}
             </button>
           )}
         </div>
@@ -431,28 +432,28 @@ export default function InteriorProjectQuotationView() {
             <div className="px-4 py-3 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.25)] flex items-center justify-between gap-3">
               <div>
                 <h3 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
-                  <span>Quotation Versions & Options</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                  <span>{tr("Quotation Versions & Options")}</span>
+                  <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20">
                     {quotations.length}
                   </span>
                 </h3>
               </div>
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))] hidden sm:block">
-                Click &quot;View&quot; to inspect document preview, print, or download PDF
+              <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] hidden sm:block">
+                {tr("Click \"View\" to inspect document preview, print, or download PDF")}
               </p>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
+              <table className="w-full text-start text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.4)] text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wider text-[10px]">
+                  <tr className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.4)] text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wider text-[0.625rem]">
                     <th className="py-3 px-4 w-12 text-center">#</th>
-                    <th className="py-3 px-4 min-w-[200px] max-w-[320px]">Quotation Title</th>
-                    <th className="py-3 px-4 whitespace-nowrap">Scope / Items</th>
-                    <th className="py-3 px-4 whitespace-nowrap">Subtotal & Tax</th>
-                    <th className="py-3 px-4 whitespace-nowrap">Grand Total</th>
-                    <th className="py-3 px-4 text-center whitespace-nowrap">Status</th>
-                    <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
+                    <th className="py-3 px-4 min-w-[12.5rem] max-w-[20rem]">{tr("Quotation Title")}</th>
+                    <th className="py-3 px-4 whitespace-nowrap">{tr("Scope / Items")}</th>
+                    <th className="py-3 px-4 whitespace-nowrap">{tr("Subtotal & Tax")}</th>
+                    <th className="py-3 px-4 whitespace-nowrap">{tr("Grand Total")}</th>
+                    <th className="py-3 px-4 text-center whitespace-nowrap">{tr("Status")}</th>
+                    <th className="py-3 px-4 text-end whitespace-nowrap">{tr("Actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border))]">
@@ -468,14 +469,14 @@ export default function InteriorProjectQuotationView() {
                         className="group cursor-pointer transition-all hover:bg-[hsl(var(--muted)/0.4)]"
                       >
                         {/* Index */}
-                        <td className="py-3.5 px-4 text-center font-mono text-[11px] text-[hsl(var(--muted-foreground))]">
+                        <td className="py-3.5 px-4 text-center font-mono text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
                           <span className="inline-flex items-center justify-center w-6 h-6 rounded-md font-semibold text-xs bg-slate-100 dark:bg-[hsl(var(--muted))] text-slate-600 dark:text-[hsl(var(--muted-foreground))]">
                             {idx + 1}
                           </span>
                         </td>
 
                         {/* Quotation Title */}
-                        <td className="py-3.5 px-4 font-bold text-[hsl(var(--foreground))] min-w-[200px] max-w-[320px]">
+                        <td className="py-3.5 px-4 font-bold text-[hsl(var(--foreground))] min-w-[12.5rem] max-w-[20rem]">
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-all bg-blue-50 text-blue-600 border-blue-200 group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-500/10 dark:border-blue-500/20">
                               <FileText size={14} />
@@ -485,15 +486,15 @@ export default function InteriorProjectQuotationView() {
                                 className="text-xs font-bold text-[hsl(var(--foreground))] block truncate"
                                 title={quoteTitle}
                               >
-                                {quoteTitle}
+                                {tr(quoteTitle)}
                               </span>
-                              <p className="text-[10px] text-[hsl(var(--muted-foreground))] font-normal truncate">
-                                Version {q.version || idx + 1}
-                                {q.sourceBoqVersion && ` • BOQ v${q.sourceBoqVersion}`}
+                              <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))] font-normal truncate">
+                                {tr("Version ")}{q.version || idx + 1}
+                                {q.sourceBoqVersion && tr(" • BOQ v{{sourceBoqVersion}}", { sourceBoqVersion: q.sourceBoqVersion })}
                                 {Array.isArray(q.vendorQuotes) && q.vendorQuotes.length > 0 && (
-                                  <span className="text-indigo-600 dark:text-indigo-400 font-semibold ml-1.5">
-                                    • {q.vendorQuotes.length} Vendor{' '}
-                                    {q.vendorQuotes.length === 1 ? 'Quote' : 'Quotes'}
+                                  <span className="text-indigo-600 dark:text-indigo-400 font-semibold ms-1.5">
+                                    • {q.vendorQuotes.length}{tr(" Vendor")}{' '}
+                                    {q.vendorQuotes.length === 1 ? tr("Quote") : tr("Quotes")}
                                   </span>
                                 )}
                               </p>
@@ -502,30 +503,30 @@ export default function InteriorProjectQuotationView() {
                         </td>
 
                         {/* Items / Scope */}
-                        <td className="py-3.5 px-4 text-[11px] text-[hsl(var(--muted-foreground))] whitespace-nowrap">
+                        <td className="py-3.5 px-4 text-[0.6875rem] text-[hsl(var(--muted-foreground))] whitespace-nowrap">
                           <div className="flex items-center gap-1.5">
                             <span className="font-semibold text-slate-700 dark:text-[hsl(var(--foreground))] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-[hsl(var(--muted))] border border-slate-200/80 dark:border-[hsl(var(--border))]">
-                              {itemCount} {itemCount === 1 ? 'item' : 'items'}
+                              {tr(itemCount)} {itemCount === 1 ? tr("item") : tr("items")}
                             </span>
                           </div>
                         </td>
 
                         {/* Subtotal & Tax */}
-                        <td className="py-3.5 px-4 text-[11px] text-[hsl(var(--muted-foreground))] whitespace-nowrap">
+                        <td className="py-3.5 px-4 text-[0.6875rem] text-[hsl(var(--muted-foreground))] whitespace-nowrap">
                           <div 
-                            className="font-medium text-[hsl(var(--foreground))] truncate max-w-[140px]"
+                            className="font-medium text-[hsl(var(--foreground))] truncate max-w-[8.75rem]"
                             title={formatSmartCurrency(q.subtotal || q.subTotal || 0, currencySymbol).exact}
                           >
-                            {formatSmartCurrency(q.subtotal || q.subTotal || 0, currencySymbol).display}
+                            {tr(formatSmartCurrency(q.subtotal || q.subTotal || 0, currencySymbol).display)}
                           </div>
-                          <div className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                            Tax: {q.taxPercentage || 0}%
+                          <div className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
+                            {tr("Tax: ")}{q.taxPercentage || 0}%
                             {Number(q.discountAmount || 0) > 0 && (
                               <span 
-                                className="ml-1 text-emerald-600 font-semibold truncate"
+                                className="ms-1 text-emerald-600 font-semibold truncate"
                                 title={formatSmartCurrency(Number(q.discountAmount), currencySymbol).exact}
                               >
-                                • Disc: {formatSmartCurrency(Number(q.discountAmount), currencySymbol).display}
+                                {tr("• Disc: ")}{tr(formatSmartCurrency(Number(q.discountAmount), currencySymbol).display)}
                               </span>
                             )}
                           </div>
@@ -534,10 +535,10 @@ export default function InteriorProjectQuotationView() {
                         {/* Grand Total */}
                         <td className="py-3.5 px-4 whitespace-nowrap">
                           <span 
-                            className="text-xs font-extrabold text-blue-600 dark:text-blue-400 truncate block max-w-[150px]"
+                            className="text-xs font-extrabold text-blue-600 dark:text-blue-400 truncate block max-w-[9.375rem]"
                             title={formatSmartCurrency(q.grandTotal || 0, currencySymbol).exact}
                           >
-                            {formatSmartCurrency(q.grandTotal || 0, currencySymbol).display}
+                            {tr(formatSmartCurrency(q.grandTotal || 0, currencySymbol).display)}
                           </span>
                         </td>
 
@@ -545,17 +546,17 @@ export default function InteriorProjectQuotationView() {
                         <td className="py-3.5 px-4 whitespace-nowrap text-center">
                           <span
                             className={cn(
-                              'text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wider inline-flex items-center gap-1',
+                              'text-[0.625rem] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wider inline-flex items-center gap-1',
                               getStatusBadge(status)
                             )}
                           >
                             <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
-                            {status}
+                            {tr(status)}
                           </span>
                         </td>
 
                         {/* Actions */}
-                        <td className="py-3.5 px-4 whitespace-nowrap text-right">
+                        <td className="py-3.5 px-4 whitespace-nowrap text-end">
                           <div
                             className="inline-flex items-center gap-1.5 justify-end"
                             onClick={(e) => e.stopPropagation()}
@@ -564,9 +565,9 @@ export default function InteriorProjectQuotationView() {
                               type="button"
                               onClick={() => setActiveQuotationIndex(idx)}
                               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs bg-white hover:bg-blue-50 text-blue-700 border border-blue-500 dark:bg-[hsl(var(--card))] dark:text-blue-400"
-                              title="View Quotation Modal"
+                              title={tr("View Quotation Modal")}
                             >
-                              <Eye size={13} /> View
+                              <Eye size={13} />{tr(" View")}
                             </button>
 
                             {canDo('crm_quotations', 'update') && (
@@ -577,9 +578,9 @@ export default function InteriorProjectQuotationView() {
                                   setIsQuotationModalOpen(true);
                                 }}
                                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-200 transition-colors cursor-pointer shadow-xs dark:bg-[hsl(var(--card))] dark:border-[hsl(var(--border))] dark:text-[hsl(var(--foreground))]"
-                                title="Edit Quotation"
+                                title={tr("Edit Quotation")}
                               >
-                                <Pencil size={12} /> Edit
+                                <Pencil size={12} />{tr(" Edit")}
                               </button>
                             )}
 
@@ -588,7 +589,7 @@ export default function InteriorProjectQuotationView() {
                                 type="button"
                                 onClick={() => handleDeleteQuotationByIndex(idx)}
                                 className="inline-flex items-center justify-center p-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors cursor-pointer shadow-xs dark:bg-[hsl(var(--card))] dark:border-[hsl(var(--border))] dark:text-[hsl(var(--muted-foreground))]"
-                                title="Delete Quotation"
+                                title={tr("Delete Quotation")}
                               >
                                 <Trash2 size={13} />
                               </button>

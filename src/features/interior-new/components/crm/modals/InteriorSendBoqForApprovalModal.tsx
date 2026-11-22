@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -72,19 +73,19 @@ export function InteriorSendBoqForApprovalModal({
     e.preventDefault();
 
     if (!assignedReviewer) {
-      setErrors({ reviewer: 'Please select a reviewer / manager to send for approval.' });
-      toast.error('Please select an approver.');
+      setErrors({ reviewer: tr("Please select a reviewer / manager to send for approval.") });
+      toast.error(tr("Please select an approver."));
       return;
     }
 
     if (!targetBoq) {
-      toast.error('Target BOQ not found.');
+      toast.error(tr("Target BOQ not found."));
       return;
     }
 
     if (remarks.trim().length > 500) {
-      setErrors({ remarks: 'Handover note cannot exceed 500 characters.' });
-      toast.error('Handover note cannot exceed 500 characters.');
+      setErrors({ remarks: tr("Handover note cannot exceed 500 characters.") });
+      toast.error(tr("Handover note cannot exceed 500 characters."));
       return;
     }
 
@@ -119,11 +120,11 @@ export function InteriorSendBoqForApprovalModal({
         completedDate: new Date(),
       });
 
-      toast.success(`BOQ Version ${versionNumber} submitted for approval to ${reviewerName}!`);
+      toast.success(tr("BOQ Version {{versionNumber}} submitted for approval to {{reviewerName}}!", { versionNumber: versionNumber, reviewerName: reviewerName }));
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to submit BOQ for approval.');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || tr("Failed to submit BOQ for approval."));
     } finally {
       setIsSubmitting(false);
     }
@@ -153,10 +154,10 @@ export function InteriorSendBoqForApprovalModal({
             </div>
             <div>
               <h3 className="font-extrabold text-sm text-[hsl(var(--foreground))]">
-                Send BOQ for Internal Approval
+                {tr("Send BOQ for Internal Approval")}
               </h3>
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                {customerName ? `Lead: ${customerName}` : 'Review Request'}
+              <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
+                {customerName ? `Lead: ${customerName}` : tr("Review Request")}
               </p>
             </div>
           </div>
@@ -174,22 +175,22 @@ export function InteriorSendBoqForApprovalModal({
             <div className="bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))] rounded-xl p-3 space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-[hsl(var(--muted-foreground))] font-medium flex items-center gap-1.5">
-                  <FileSpreadsheet size={13} className="text-indigo-500" /> BOQ Target
+                  <FileSpreadsheet size={13} className="text-indigo-500" />{tr(" BOQ Target")}
                 </span>
-                <span className="font-bold text-[hsl(var(--foreground))]">Version {versionNumber}</span>
+                <span className="font-bold text-[hsl(var(--foreground))]">{tr("Version ")}{tr(versionNumber)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[hsl(var(--muted-foreground))] font-medium flex items-center gap-1.5">
-                  <Calculator size={13} className="text-emerald-500" /> Total Valuation
+                  <Calculator size={13} className="text-emerald-500" />{tr(" Total Valuation")}
                 </span>
                 <span className="font-extrabold text-emerald-600">
                   {formatExactCurrency(targetBoq.totalAmount || 0)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[hsl(var(--muted-foreground))] font-medium">Scope Categories</span>
+                <span className="text-[hsl(var(--muted-foreground))] font-medium">{tr("Scope Categories")}</span>
                 <span className="font-bold text-[hsl(var(--foreground))]">
-                  {categoryLabel}
+                  {tr(categoryLabel)}
                 </span>
               </div>
             </div>
@@ -198,7 +199,7 @@ export function InteriorSendBoqForApprovalModal({
           {/* Reviewer Select */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-              <User size={13} className="text-indigo-500" /> Assign Reviewer / Approver{' '}
+              <User size={13} className="text-indigo-500" />{tr(" Assign Reviewer / Approver")}{' '}
               <span className="text-rose-500">*</span>
             </label>
             <select
@@ -209,7 +210,7 @@ export function InteriorSendBoqForApprovalModal({
               }}
               className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-semibold text-[hsl(var(--foreground))] outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer"
             >
-              <option value="">-- Select Reviewer / Manager --</option>
+              <option value="">{tr("-- Select Reviewer / Manager --")}</option>
               {users.map((u) => (
                 <option key={u._id || u.id} value={u._id || u.id}>
                   {userLabel(u)}
@@ -217,8 +218,8 @@ export function InteriorSendBoqForApprovalModal({
               ))}
             </select>
             {errors.reviewer && (
-              <p className="text-[11px] text-rose-500 font-medium flex items-center gap-1">
-                <AlertCircle size={11} /> {errors.reviewer}
+              <p className="text-[0.6875rem] text-rose-500 font-medium flex items-center gap-1">
+                <AlertCircle size={11} /> {tr(errors.reviewer)}
               </p>
             )}
           </div>
@@ -227,9 +228,9 @@ export function InteriorSendBoqForApprovalModal({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                <MessageSquare size={13} className="text-indigo-500" /> Handover Notes / Review Focus (Optional)
+                <MessageSquare size={13} className="text-indigo-500" />{tr(" Handover Notes / Review Focus (Optional)")}
               </label>
-              <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
+              <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))] font-mono">
                 {remarks.length}/500
               </span>
             </div>
@@ -241,12 +242,12 @@ export function InteriorSendBoqForApprovalModal({
                 setRemarks(e.target.value);
                 if (errors.remarks) setErrors((prev) => ({ ...prev, remarks: undefined }));
               }}
-              placeholder="e.g. Please check custom veneer rates and kitchen hardware quantities..."
+              placeholder={tr("e.g. Please check custom veneer rates and kitchen hardware quantities...")}
               className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-medium text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none"
             />
             {errors.remarks && (
-              <p className="text-[11px] text-rose-500 font-medium flex items-center gap-1">
-                <AlertCircle size={11} /> {errors.remarks}
+              <p className="text-[0.6875rem] text-rose-500 font-medium flex items-center gap-1">
+                <AlertCircle size={11} /> {tr(errors.remarks)}
               </p>
             )}
           </div>
@@ -259,7 +260,7 @@ export function InteriorSendBoqForApprovalModal({
               disabled={isSubmitting}
               className="px-3.5 py-1.5 text-xs font-bold rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] transition-all cursor-pointer"
             >
-              Cancel
+              {tr("Cancel")}
             </button>
             <button
               type="submit"
@@ -267,10 +268,10 @@ export function InteriorSendBoqForApprovalModal({
               className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
             >
               {isSubmitting ? (
-                'Submitting...'
+                tr("Submitting...")
               ) : (
                 <>
-                  <Send size={13} /> Send for Approval
+                  <Send size={13} />{tr(" Send for Approval")}
                 </>
               )}
             </button>

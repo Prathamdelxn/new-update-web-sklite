@@ -59,6 +59,17 @@
    renders correctly without touching sky-lite's global Tailwind theme.
    ============================================================================= */
 
+/* Interior app density on laptops/desktops: at 100% browser zoom it renders
+   like ~80% zoom. Tailwind v4 spacing, text and icon sizes are rem-based, so a
+   smaller root font-size scales them together. Breakpoints are unaffected
+   (media-query rem always uses the browser default), and phones/tablets plus
+   the construction app (no .interior-os-theme) keep their normal size. */
+@media (min-width: 1024px) {
+  html:has(.interior-os-theme) {
+    font-size: 85%;
+  }
+}
+
 .interior-os-theme {
   --background: 0 0% 100%;
   --foreground: 222.2 84% 4.9%;
@@ -192,3 +203,33 @@ svg.recharts-surface:focus-visible,
   -webkit-tap-highlight-color: transparent;
 }
 
+
+/* =============================================================================
+   Arabic / right-to-left (set on <html lang="ar" dir="rtl"> by the I18nProvider)
+   ============================================================================= */
+html[lang="ar"] {
+  --font-sans: var(--font-arabic), var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, sans-serif;
+}
+html[lang="ar"] body {
+  font-family: var(--font-sans);
+}
+/* Direction arrows point the other way in RTL */
+html[dir="rtl"] .lucide-chevron-right,
+html[dir="rtl"] .lucide-chevron-left,
+html[dir="rtl"] .lucide-arrow-right,
+html[dir="rtl"] .lucide-arrow-left,
+html[dir="rtl"] .lucide-chevrons-right,
+html[dir="rtl"] .lucide-chevrons-left,
+html[dir="rtl"] .lucide-arrow-up-right,
+html[dir="rtl"] .lucide-arrow-down-left,
+html[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+/* Keep numbers, codes, emails and amounts left-to-right inside Arabic text */
+html[dir="rtl"] .font-mono,
+html[dir="rtl"] .tabular-nums,
+html[dir="rtl"] input[type="email"],
+html[dir="rtl"] input[type="tel"],
+html[dir="rtl"] input[type="number"] {
+  unicode-bidi: plaintext;
+}

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Port of src/components/modals/SendToSiteVisitModal.tsx, rewired to interiorCrmService.
 
@@ -117,9 +118,9 @@ export function InteriorSendToSiteVisitModal({
     e.preventDefault();
     if (!validateForm()) {
       if (remarks.trim().length > 500) {
-        toast.error('Instructions / site notes cannot exceed 500 characters.');
+        toast.error(tr("Instructions / site notes cannot exceed 500 characters."));
       } else {
-        toast.error('Please fill in all required fields');
+        toast.error(tr("Please fill in all required fields"));
       }
       return;
     }
@@ -166,14 +167,14 @@ export function InteriorSendToSiteVisitModal({
         );
       }).catch(() => {});
 
-      toast.success(isRescheduling ? 'Site visit rescheduled successfully!' : 'Follow-up completed & scheduled for Site Visit!');
+      toast.success(isRescheduling ? tr("Site visit rescheduled successfully!") : tr("Follow-up completed & scheduled for Site Visit!"));
       if (onSuccess) {
         onSuccess({ _id: customerId, ...updatePayload });
       }
       onClose();
       setErrors({});
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to send to site visit');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || tr("Failed to send to site visit"));
     } finally {
       setIsSubmitting(false);
     }
@@ -210,18 +211,18 @@ export function InteriorSendToSiteVisitModal({
         >
           {/* Header */}
           <div className="flex items-start justify-between px-6 py-5 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
-            <div className="flex items-start gap-3.5 pr-2">
+            <div className="flex items-start gap-3.5 pe-2">
               <div className="w-10 h-10 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0 shadow-sm mt-0.5">
                 <MapPin size={20} />
               </div>
               <div>
                 <h2 className="text-lg sm:text-xl font-black text-[hsl(var(--foreground))] tracking-tight flex items-center gap-2">
-                  {isRescheduling ? 'Reschedule Site Visit' : 'Send to Site Visit'}
+                  {isRescheduling ? tr("Reschedule Site Visit") : tr("Send to Site Visit")}
                 </h2>
                 <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5 leading-relaxed">
                   {isRescheduling
-                    ? 'Update scheduled visit date, time, and assigned member.'
-                    : 'Assign a member and schedule the on-site visit.'}
+                    ? tr("Update scheduled visit date, time, and assigned member.")
+                    : tr("Assign a member and schedule the on-site visit.")}
                 </p>
                
               </div>
@@ -231,7 +232,7 @@ export function InteriorSendToSiteVisitModal({
               type="button"
               onClick={onClose}
               className="p-2 rounded-xl bg-[hsl(var(--muted)/0.6)] hover:bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors cursor-pointer shrink-0"
-              title="Close modal"
+              title={tr("Close modal")}
             >
               <X size={18} />
             </button>
@@ -243,11 +244,11 @@ export function InteriorSendToSiteVisitModal({
             {isRescheduling && (
               <div className="bg-purple-500/5 border border-purple-500/20 rounded-2xl p-4 space-y-2.5 shadow-xs min-w-0 overflow-hidden">
                 <div className="flex items-center justify-between gap-2 min-w-0">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-purple-700 dark:text-purple-400 flex items-center gap-1.5 shrink-0">
-                    <History size={13} /> Previous Schedule (Reference)
+                  <span className="text-[0.625rem] font-black uppercase tracking-wider text-purple-700 dark:text-purple-400 flex items-center gap-1.5 shrink-0">
+                    <History size={13} />{tr(" Previous Schedule (Reference)")}
                   </span>
-                  <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20 shrink-0">
-                    Site Survey
+                  <span className="text-[0.625rem] font-bold text-purple-700 dark:text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20 shrink-0">
+                    {tr("Site Survey")}
                   </span>
                 </div>
 
@@ -270,7 +271,7 @@ export function InteriorSendToSiteVisitModal({
                     <div className="flex items-center gap-2 bg-[hsl(var(--background))] px-3 py-2 rounded-xl border border-[hsl(var(--border))] text-xs text-[hsl(var(--muted-foreground))] min-w-0 overflow-hidden">
                       <User size={13} className="text-blue-500 shrink-0" />
                       <span className="truncate">
-                        <strong className="text-[hsl(var(--foreground))] font-semibold">{previousAssignedUser}</strong>
+                        <strong className="text-[hsl(var(--foreground))] font-semibold">{tr(previousAssignedUser)}</strong>
                       </span>
                     </div>
                   )}
@@ -278,7 +279,7 @@ export function InteriorSendToSiteVisitModal({
 
                 {initialData?.remarks && (
                   <div className="text-xs text-[hsl(var(--muted-foreground))] italic bg-[hsl(var(--background))] p-2.5 rounded-xl border border-[hsl(var(--border)/0.8)] leading-relaxed break-words [overflow-wrap:anywhere] whitespace-pre-wrap min-w-0">
-                    "{initialData.remarks}"
+                    "{tr(initialData.remarks)}"
                   </div>
                 )}
               </div>
@@ -289,10 +290,10 @@ export function InteriorSendToSiteVisitModal({
               <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <User size={13} className="text-purple-600" />
-                  Assign Team Member to Site Visit <span className="text-rose-500">*</span>
+                  {tr("Assign Team Member to Site Visit ")}<span className="text-rose-500">*</span>
                 </span>
-                <span className="text-[10px] font-medium text-[hsl(var(--muted-foreground))]">
-                  {users.length} available
+                <span className="text-[0.625rem] font-medium text-[hsl(var(--muted-foreground))]">
+                  {users.length}{tr(" available")}
                 </span>
               </label>
 
@@ -303,13 +304,13 @@ export function InteriorSendToSiteVisitModal({
                     setAssignedSalesExecutive(e.target.value);
                     if (errors.assignedSalesExecutive) setErrors((prev) => ({ ...prev, assignedSalesExecutive: null }));
                   }}
-                  className={`w-full appearance-none pl-3.5 pr-10 py-2.5 sm:py-3 rounded-xl border bg-[hsl(var(--background))] text-xs sm:text-sm font-medium text-[hsl(var(--foreground))] outline-none transition-all cursor-pointer ${
+                  className={`w-full appearance-none ps-3.5 pe-10 py-2.5 sm:py-3 rounded-xl border bg-[hsl(var(--background))] text-xs sm:text-sm font-medium text-[hsl(var(--foreground))] outline-none transition-all cursor-pointer ${
                     errors.assignedSalesExecutive
                       ? 'border-rose-500 focus:ring-2 focus:ring-rose-500/20'
                       : 'border-[hsl(var(--border))] focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500'
                   }`}
                 >
-                  <option value="">-- Select Team Member --</option>
+                  <option value="">{tr("-- Select Team Member --")}</option>
                   {users.map((u) => (
                     <option key={u._id || u.id || u.clerkUserId} value={u._id || u.id || u.clerkUserId}>
                       {userLabel(u)}
@@ -323,7 +324,7 @@ export function InteriorSendToSiteVisitModal({
 
               {errors.assignedSalesExecutive && (
                 <p className="text-xs text-rose-500 font-medium flex items-center gap-1 pt-0.5">
-                  <AlertCircle size={12} /> {errors.assignedSalesExecutive}
+                  <AlertCircle size={12} /> {tr(errors.assignedSalesExecutive)}
                 </p>
               )}
             </div>
@@ -333,7 +334,7 @@ export function InteriorSendToSiteVisitModal({
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
                   <Calendar size={13} className="text-purple-600" />
-                  Scheduled Date & Time <span className="text-rose-500">*</span>
+                  {tr("Scheduled Date & Time ")}<span className="text-rose-500">*</span>
                 </label>
               </div>
 
@@ -362,7 +363,7 @@ export function InteriorSendToSiteVisitModal({
 
               {errors.scheduledDate && (
                 <p className="text-xs text-rose-500 font-medium flex items-center gap-1 pt-0.5">
-                  <AlertCircle size={12} /> {errors.scheduledDate}
+                  <AlertCircle size={12} /> {tr(errors.scheduledDate)}
                 </p>
               )}
             </div>
@@ -372,9 +373,9 @@ export function InteriorSendToSiteVisitModal({
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
                   <FileText size={13} className="text-purple-600" />
-                  Instructions / Site Notes
+                  {tr("Instructions / Site Notes")}
                 </label>
-                <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-mono">
+                <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))] font-mono">
                   {remarks.length}/500
                 </span>
               </div>
@@ -384,7 +385,7 @@ export function InteriorSendToSiteVisitModal({
                 maxLength={500}
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                placeholder="Any specific instructions for the person visiting the site..."
+                placeholder={tr("Any specific instructions for the person visiting the site...")}
                 className="w-full px-3.5 py-2.5 sm:py-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs sm:text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground)/0.6)] focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none resize-none leading-relaxed transition-all"
               />
             </div>
@@ -397,7 +398,7 @@ export function InteriorSendToSiteVisitModal({
                 disabled={isSubmitting}
                 className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] border border-[hsl(var(--border))] transition-colors cursor-pointer text-center"
               >
-                Cancel
+                {tr("Cancel")}
               </button>
 
               <button
@@ -408,11 +409,11 @@ export function InteriorSendToSiteVisitModal({
                 {isSubmitting ? (
                   <>
                     <Loader2 size={14} className="animate-spin" />
-                    <span>Saving...</span>
+                    <span>{tr("Saving...")}</span>
                   </>
                 ) : (
                   <>
-                    <span>{isRescheduling ? 'Confirm Reschedule' : 'Send to Site Visit'}</span>
+                    <span>{isRescheduling ? tr("Confirm Reschedule") : tr("Send to Site Visit")}</span>
                     <ArrowRight size={14} />
                   </>
                 )}

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Weekly Progress Reports (WPR) View
@@ -91,7 +92,7 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
       }
     } catch (err) {
       console.error('Failed to load weekly reports:', err);
-      toast.error('Failed to load Weekly Progress Reports');
+      toast.error(tr("Failed to load Weekly Progress Reports"));
     } finally {
       setLoading(false);
     }
@@ -195,7 +196,7 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
   const handleGenerateReport = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!startDate || !endDate) {
-      toast.error('Please specify both start and end dates');
+      toast.error(tr("Please specify both start and end dates"));
       return;
     }
 
@@ -211,12 +212,12 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
       });
 
       if (res?.success) {
-        toast.success('Weekly Progress Report compiled & saved successfully');
+        toast.success(tr("Weekly Progress Report compiled & saved successfully"));
         setIsModalOpen(false);
         loadData();
       }
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || err?.message || 'Failed to compile report');
+      toast.error(err?.response?.data?.error || err?.message || tr("Failed to compile report"));
     } finally {
       setGenerating(false);
     }
@@ -227,10 +228,10 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
     try {
       setDownloadingId(report._id);
       await downloadWprPdf(report, project);
-      toast.success('WPR PDF generated & downloaded successfully');
+      toast.success(tr("WPR PDF generated & downloaded successfully"));
     } catch (err: any) {
       console.error('PDF error:', err);
-      toast.error('Failed to generate PDF');
+      toast.error(tr("Failed to generate PDF"));
     } finally {
       setDownloadingId(null);
     }
@@ -247,9 +248,9 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
     const eDate = new Date(report.weekEnd).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
     const ok = await confirm({
-      title: 'Delete Weekly Progress Report',
-      message: `Are you sure you want to delete the Weekly Report for ${sDate} - ${eDate}? This action cannot be undone.`,
-      confirmText: 'Delete Report',
+      title: tr("Delete Weekly Progress Report"),
+      message: tr("Are you sure you want to delete the Weekly Report for {{sDate}} - {{eDate}}? This action cannot be undone.", { sDate: sDate, eDate: eDate }),
+      confirmText: tr("Delete Report"),
       type: 'danger',
     });
 
@@ -258,10 +259,10 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
     try {
       setDeletingId(report._id);
       await interiorProjectService.deleteWeeklyReport(projectId, report._id);
-      toast.success('Weekly Report deleted successfully');
+      toast.success(tr("Weekly Report deleted successfully"));
       setReports((prev) => prev.filter((r) => r._id !== report._id));
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || 'Failed to delete report');
+      toast.error(err?.response?.data?.error || tr("Failed to delete report"));
     } finally {
       setDeletingId(null);
     }
@@ -273,21 +274,21 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[hsl(var(--border))] pb-5">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Weekly Progress Reports (WPR)</h2>
+            <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">{tr("Weekly Progress Reports (WPR)")}</h2>
             <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-50 text-blue-600 border border-blue-200">
-              SkyStruct Lite Standard
+              {tr("SkyStruct Lite Standard")}
             </span>
           </div>
           <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
-            Official executive weekly summaries, milestone tracking, delay logs, and next-week target planning for{' '}
-            <strong className="text-[hsl(var(--foreground))]">{project?.name || 'Project'}</strong>.
+            {tr("Official executive weekly summaries, milestone tracking, delay logs, and next-week target planning for")}{' '}
+            <strong className="text-[hsl(var(--foreground))]">{project?.name || tr("Project")}</strong>.
           </p>
         </div>
 
         {canDo('weekly_reports', 'create') && (
           <Button onClick={handleOpenModal} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer">
             <Sparkles className="w-4 h-4" />
-            Generate Weekly Report
+            {tr("Generate Weekly Report")}
           </Button>
         )}
       </div>
@@ -296,21 +297,21 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
       {loading ? (
         <div className="flex flex-col items-center justify-center py-16 gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          <p className="text-sm text-[hsl(var(--muted-foreground))]">Loading Weekly Reports...</p>
+          <p className="text-sm text-[hsl(var(--muted-foreground))]">{tr("Loading Weekly Reports...")}</p>
         </div>
       ) : reports.length === 0 ? (
         <Card className="p-12 text-center border-dashed">
           <div className="mx-auto w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 mb-4 border border-blue-100">
             <FileSpreadsheet className="w-7 h-7" />
           </div>
-          <h3 className="text-base font-bold text-[hsl(var(--foreground))] mb-1">No Weekly Reports Generated Yet</h3>
+          <h3 className="text-base font-bold text-[hsl(var(--foreground))] mb-1">{tr("No Weekly Reports Generated Yet")}</h3>
           <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-md mx-auto mb-6">
-            Auto-aggregate this week&apos;s finished tasks, delayed milestones, identified risks, and next week plan into an official executive WPR sheet.
+            {tr("Auto-aggregate this week's finished tasks, delayed milestones, identified risks, and next week plan into an official executive WPR sheet.")}
           </p>
           {canDo('weekly_reports', 'create') && (
             <Button onClick={handleOpenModal} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer">
               <Sparkles className="w-4 h-4" />
-              Generate First Weekly Report
+              {tr("Generate First Weekly Report")}
             </Button>
           )}
         </Card>
@@ -343,7 +344,7 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
                     <div className="p-2.5 rounded-xl bg-blue-100/60 text-blue-600 font-bold flex items-center gap-2">
                       <CalendarDays className="w-4 h-4" />
                       <span className="text-xs sm:text-sm font-semibold">
-                        Weekly Cycle: {startFormatted} - {endFormatted}
+                        {tr("Weekly Cycle: ")}{tr(startFormatted)} - {tr(endFormatted)}
                       </span>
                     </div>
                   </div>
@@ -358,7 +359,7 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
                         className="gap-1.5 text-xs h-8 cursor-pointer"
                       >
                         <Printer className="w-3.5 h-3.5" />
-                        Print
+                        {tr("Print")}
                       </Button>
                     )}
                     {canDo('weekly_reports', 'export') && (
@@ -373,7 +374,7 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
                         ) : (
                           <Download className="w-3.5 h-3.5" />
                         )}
-                        <span>Export PDF</span>
+                        <span>{tr("Export PDF")}</span>
                       </Button>
                     )}
                     {canDo('weekly_reports', 'delete') && (
@@ -383,7 +384,7 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
                         onClick={() => handleDeleteReport(report)}
                         disabled={deletingId === report._id}
                         className="text-xs h-8 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 cursor-pointer"
-                        title="Delete Report"
+                        title={tr("Delete Report")}
                       >
                         {deletingId === report._id ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -399,34 +400,34 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
                   {/* Summary Metric Strip */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="p-3 rounded-xl bg-emerald-50/60 border border-emerald-100">
-                      <p className="text-[10px] uppercase font-bold text-emerald-800 tracking-wider">Completed Work</p>
+                      <p className="text-[0.625rem] uppercase font-bold text-emerald-800 tracking-wider">{tr("Completed Work")}</p>
                       <p className="text-base font-extrabold text-emerald-950 mt-0.5 flex items-center gap-1.5">
                         <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        {completedCount} tasks
+                        {tr(completedCount)}{tr(" tasks")}
                       </p>
                     </div>
 
                     <div className="p-3 rounded-xl bg-rose-50/60 border border-rose-100">
-                      <p className="text-[10px] uppercase font-bold text-rose-800 tracking-wider">Delays & Deviations</p>
+                      <p className="text-[0.625rem] uppercase font-bold text-rose-800 tracking-wider">{tr("Delays & Deviations")}</p>
                       <p className="text-base font-extrabold text-rose-950 mt-0.5 flex items-center gap-1.5">
                         <Clock className="w-4 h-4 text-rose-600" />
-                        {delayedCount} items
+                        {tr(delayedCount)}{tr(" items")}
                       </p>
                     </div>
 
                     <div className="p-3 rounded-xl bg-amber-50/60 border border-amber-100">
-                      <p className="text-[10px] uppercase font-bold text-amber-800 tracking-wider">Active Risks</p>
+                      <p className="text-[0.625rem] uppercase font-bold text-amber-800 tracking-wider">{tr("Active Risks")}</p>
                       <p className="text-base font-extrabold text-amber-950 mt-0.5 flex items-center gap-1.5">
                         <AlertTriangle className="w-4 h-4 text-amber-600" />
-                        {riskCount} risks
+                        {tr(riskCount)}{tr(" risks")}
                       </p>
                     </div>
 
                     <div className="p-3 rounded-xl bg-blue-50/60 border border-blue-100">
-                      <p className="text-[10px] uppercase font-bold text-blue-800 tracking-wider">Next Week Target</p>
+                      <p className="text-[0.625rem] uppercase font-bold text-blue-800 tracking-wider">{tr("Next Week Target")}</p>
                       <p className="text-base font-extrabold text-blue-950 mt-0.5 flex items-center gap-1.5">
                         <Target className="w-4 h-4 text-blue-600" />
-                        {nextCount} activities
+                        {tr(nextCount)}{tr(" activities")}
                       </p>
                     </div>
                   </div>
@@ -439,16 +440,16 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
                       <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/30 space-y-2">
                         <h4 className="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1.5">
                           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                          1. Completed Activities & Milestones ({completedCount})
+                          {tr("1. Completed Activities & Milestones (")}{tr(completedCount)})
                         </h4>
                         {completedCount === 0 ? (
-                          <p className="text-xs text-slate-400 italic">No activities finalized in this timeframe.</p>
+                          <p className="text-xs text-slate-400 italic">{tr("No activities finalized in this timeframe.")}</p>
                         ) : (
                           <ul className="text-xs space-y-1.5">
                             {report.completedActivities.map((act: string, idx: number) => (
                               <li key={idx} className="flex items-start gap-2 text-slate-800 font-medium">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
-                                <span>{act}</span>
+                                <span>{tr(act)}</span>
                               </li>
                             ))}
                           </ul>
@@ -459,18 +460,18 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
                       <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/30 space-y-2">
                         <h4 className="text-xs font-bold text-rose-700 uppercase tracking-wider flex items-center gap-1.5">
                           <Clock className="w-4 h-4 text-rose-600" />
-                          2. Delayed Milestones & Blockers ({delayedCount})
+                          {tr("2. Delayed Milestones & Blockers (")}{tr(delayedCount)})
                         </h4>
                         {delayedCount === 0 ? (
                           <p className="text-xs text-emerald-700 font-medium flex items-center gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Zero milestone delays logged. Project timeline on track!
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />{tr(" Zero milestone delays logged. Project timeline on track!")}
                           </p>
                         ) : (
                           <ul className="text-xs space-y-1.5">
                             {report.delayedActivities.map((act: string, idx: number) => (
                               <li key={idx} className="flex items-start gap-2 text-rose-900 font-medium">
                                 <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0" />
-                                <span>{act}</span>
+                                <span>{tr(act)}</span>
                               </li>
                             ))}
                           </ul>
@@ -484,18 +485,18 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
                       <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/30 space-y-2">
                         <h4 className="text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
                           <ShieldAlert className="w-4 h-4 text-amber-600" />
-                          3. Identified Risks & Quality Notes ({riskCount})
+                          {tr("3. Identified Risks & Quality Notes (")}{tr(riskCount)})
                         </h4>
                         {riskCount === 0 ? (
                           <p className="text-xs text-emerald-700 font-medium flex items-center gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> No critical risks flagged for this period.
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />{tr(" No critical risks flagged for this period.")}
                           </p>
                         ) : (
                           <ul className="text-xs space-y-1.5">
                             {report.risks.map((risk: string, idx: number) => (
                               <li key={idx} className="flex items-start gap-2 text-amber-900 font-medium">
                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
-                                <span>{risk}</span>
+                                <span>{tr(risk)}</span>
                               </li>
                             ))}
                           </ul>
@@ -506,16 +507,16 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
                       <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/30 space-y-2">
                         <h4 className="text-xs font-bold text-blue-700 uppercase tracking-wider flex items-center gap-1.5">
                           <Calendar className="w-4 h-4 text-blue-600" />
-                          4. Next Week Planned Target Scope ({nextCount})
+                          {tr("4. Next Week Planned Target Scope (")}{tr(nextCount)})
                         </h4>
                         {nextCount === 0 ? (
-                          <p className="text-xs text-slate-400 italic">No specific plan logged.</p>
+                          <p className="text-xs text-slate-400 italic">{tr("No specific plan logged.")}</p>
                         ) : (
                           <ul className="text-xs space-y-1.5">
                             {report.nextWeekPlan.map((item: string, idx: number) => (
                               <li key={idx} className="flex items-start gap-2 text-blue-950 font-medium">
                                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
-                                <span>{item}</span>
+                                <span>{tr(item)}</span>
                               </li>
                             ))}
                           </ul>
@@ -549,9 +550,9 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
                     <FileSpreadsheet className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">Compile Weekly Progress Report</h3>
+                    <h3 className="text-base font-bold text-slate-900">{tr("Compile Weekly Progress Report")}</h3>
                     <p className="text-xs text-slate-500">
-                      SkyStruct Lite Standard • {project?.name || 'Project'}
+                      {tr("SkyStruct Lite Standard • ")}{project?.name || tr("Project")}
                     </p>
                   </div>
                 </div>
@@ -571,36 +572,36 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-blue-600" />
-                        Select Weekly Timeline Period
+                        {tr("Select Weekly Timeline Period")}
                       </span>
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => setQuickDatePreset('this_week')}
-                          className="px-2 py-0.5 text-[11px] font-semibold rounded-md bg-white border border-blue-200 text-blue-700 hover:bg-blue-100 cursor-pointer"
+                          className="px-2 py-0.5 text-[0.6875rem] font-semibold rounded-md bg-white border border-blue-200 text-blue-700 hover:bg-blue-100 cursor-pointer"
                         >
-                          This Week
+                          {tr("This Week")}
                         </button>
                         <button
                           type="button"
                           onClick={() => setQuickDatePreset('last_week')}
-                          className="px-2 py-0.5 text-[11px] font-semibold rounded-md bg-white border border-blue-200 text-blue-700 hover:bg-blue-100 cursor-pointer"
+                          className="px-2 py-0.5 text-[0.6875rem] font-semibold rounded-md bg-white border border-blue-200 text-blue-700 hover:bg-blue-100 cursor-pointer"
                         >
-                          Last Week
+                          {tr("Last Week")}
                         </button>
                         <button
                           type="button"
                           onClick={() => setQuickDatePreset('last_7_days')}
-                          className="px-2 py-0.5 text-[11px] font-semibold rounded-md bg-white border border-blue-200 text-blue-700 hover:bg-blue-100 cursor-pointer"
+                          className="px-2 py-0.5 text-[0.6875rem] font-semibold rounded-md bg-white border border-blue-200 text-blue-700 hover:bg-blue-100 cursor-pointer"
                         >
-                          Last 7 Days
+                          {tr("Last 7 Days")}
                         </button>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1">
-                        <label className="text-[11px] font-semibold text-slate-700">Week Start Date *</label>
+                        <label className="text-[0.6875rem] font-semibold text-slate-700">{tr("Week Start Date *")}</label>
                         <Input
                           required
                           type="date"
@@ -612,7 +613,7 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[11px] font-semibold text-slate-700">Week End Date *</label>
+                        <label className="text-[0.6875rem] font-semibold text-slate-700">{tr("Week End Date *")}</label>
                         <Input
                           required
                           type="date"
@@ -631,36 +632,36 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
                     <div className="flex items-center gap-2">
                       <Sparkles className="w-4 h-4 text-blue-600" />
                       <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                        Live Auto-Generation Scope
+                        {tr("Live Auto-Generation Scope")}
                       </h4>
                     </div>
                     <p className="text-xs text-slate-500">
-                      The system will automatically scan and compile the report directly from your live project WBS, completed tasks, overdue items, active risks, and upcoming schedule for this date range:
+                      {tr("The system will automatically scan and compile the report directly from your live project WBS, completed tasks, overdue items, active risks, and upcoming schedule for this date range:")}
                     </p>
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
                       <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-100 text-center">
-                        <p className="text-[10px] uppercase font-bold text-emerald-700">Completed</p>
+                        <p className="text-[0.625rem] uppercase font-bold text-emerald-700">{tr("Completed")}</p>
                         <p className="text-sm font-extrabold text-emerald-950 mt-0.5">
-                          {completedActivities.length} tasks
+                          {completedActivities.length}{tr(" tasks")}
                         </p>
                       </div>
                       <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-100 text-center">
-                        <p className="text-[10px] uppercase font-bold text-rose-700">Delays</p>
+                        <p className="text-[0.625rem] uppercase font-bold text-rose-700">{tr("Delays")}</p>
                         <p className="text-sm font-extrabold text-rose-950 mt-0.5">
-                          {delayedActivities.length} overdue
+                          {delayedActivities.length}{tr(" overdue")}
                         </p>
                       </div>
                       <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-100 text-center">
-                        <p className="text-[10px] uppercase font-bold text-amber-700">Risks</p>
+                        <p className="text-[0.625rem] uppercase font-bold text-amber-700">{tr("Risks")}</p>
                         <p className="text-sm font-extrabold text-amber-950 mt-0.5">
-                          {reportRisks.length} flagged
+                          {reportRisks.length}{tr(" flagged")}
                         </p>
                       </div>
                       <div className="p-2.5 rounded-lg bg-blue-50 border border-blue-100 text-center">
-                        <p className="text-[10px] uppercase font-bold text-blue-700">Next Plan</p>
+                        <p className="text-[0.625rem] uppercase font-bold text-blue-700">{tr("Next Plan")}</p>
                         <p className="text-sm font-extrabold text-blue-950 mt-0.5">
-                          {nextWeekPlan.length} targets
+                          {nextWeekPlan.length}{tr(" targets")}
                         </p>
                       </div>
                     </div>
@@ -670,11 +671,11 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
                 {/* Modal Footer */}
                 <div className="flex items-center justify-end gap-2 p-4 border-t border-slate-200 bg-slate-50">
                   <Button variant="outline" type="button" size="sm" onClick={() => setIsModalOpen(false)}>
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                   <Button type="submit" size="sm" disabled={generating} className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5 cursor-pointer">
                     {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                    <span>Generate Weekly Report</span>
+                    <span>{tr("Generate Weekly Report")}</span>
                   </Button>
                 </div>
               </form>

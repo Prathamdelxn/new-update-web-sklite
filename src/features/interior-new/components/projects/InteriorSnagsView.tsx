@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Modern Interior OS Quality Snag Register
@@ -81,7 +82,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
       }
     } catch (err) {
       console.error('Failed to load snags', err);
-      toast.error('Failed to fetch Snag registry');
+      toast.error(tr("Failed to fetch Snag registry"));
     } finally {
       setLoading(false);
     }
@@ -203,7 +204,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
   const handleCreateOrUpdateSnag = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!description || !location) {
-      toast.error('Please fill in description and location');
+      toast.error(tr("Please fill in description and location"));
       return;
     }
 
@@ -231,13 +232,13 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
       }
 
       if (res?.success) {
-        toast.success(`Snag ${editingSnagId ? 'updated' : 'logged'} successfully!`);
+        toast.success(tr("Snag {{value}} successfully!", { value: editingSnagId ? 'updated' : 'logged' }));
         closeModal();
         fetchSnags();
       }
     } catch (err) {
       console.error('Snag submit fail', err);
-      toast.error(`Failed to ${editingSnagId ? 'update' : 'log'} snag`);
+      toast.error(tr("Failed to {{value}} snag", { value: editingSnagId ? 'update' : 'log' }));
     } finally {
       setSubmitting(false);
     }
@@ -271,13 +272,13 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
 
     try {
       setIsUploadingImage(true);
-      toast.info('Uploading image...');
+      toast.info(tr("Uploading image..."));
       const url = await uploadToCloudinary(file);
       setPhotos((prev) => [...prev, url]);
-      toast.success('Image uploaded successfully');
+      toast.success(tr("Image uploaded successfully"));
     } catch (error) {
       console.error('Failed to upload image', error);
-      toast.error('Failed to upload image');
+      toast.error(tr("Failed to upload image"));
     } finally {
       setIsUploadingImage(false);
       e.target.value = '';
@@ -286,8 +287,8 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
 
   const handleDeleteSnag = async (snagId: string) => {
     const isConfirmed = await confirm({
-      title: 'Delete Snag Item',
-      message: 'Are you sure you want to delete this snag defect?',
+      title: tr("Delete Snag Item"),
+      message: tr("Are you sure you want to delete this snag defect?"),
       confirmText: 'Delete',
       cancelText: 'Cancel',
       type: 'danger',
@@ -298,7 +299,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
     try {
       const res = await interiorProjectService.deleteSnag(projectId, snagId);
       if (res?.success) {
-        toast.success('Snag deleted successfully');
+        toast.success(tr("Snag deleted successfully"));
         if (selectedDetailSnag?._id === snagId) {
           setSelectedDetailSnag(null);
         }
@@ -306,7 +307,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
       }
     } catch (err) {
       console.error('Failed to delete snag', err);
-      toast.error('Failed to delete snag');
+      toast.error(tr("Failed to delete snag"));
     }
   };
 
@@ -320,7 +321,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
           : 'open';
       const res = await interiorProjectService.updateSnag(projectId, { snagId, status: nextStatus });
       if (res?.success) {
-        toast.success(`Snag status updated to: ${nextStatus.toUpperCase()}`);
+        toast.success(tr("Snag status updated to: {{nextStatus}}", { nextStatus: nextStatus.toUpperCase() }));
         if (selectedDetailSnag?._id === snagId) {
           setSelectedDetailSnag((prev: any) => (prev ? { ...prev, status: nextStatus } : null));
         }
@@ -328,7 +329,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
       }
     } catch (err) {
       console.error('Toggle status failed', err);
-      toast.error('Failed to update status');
+      toast.error(tr("Failed to update status"));
     }
   };
 
@@ -365,13 +366,13 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-slate-200/60">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Quality Snag Register</h2>
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">{tr("Quality Snag Register")}</h2>
+            <span className="px-2 py-0.5 rounded-full text-[0.6875rem] font-bold bg-slate-100 text-slate-700 border border-slate-200">
               {metrics.total}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Site defect tracking with bi-directional 2D/3D blueprint pin synchronization.
+            {tr("Site defect tracking with bi-directional 2D/3D blueprint pin synchronization.")}
           </p>
         </div>
 
@@ -380,8 +381,8 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
             onClick={() => setIsModalOpen(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white shadow-xs font-semibold text-xs px-3.5 h-8.5 self-start sm:self-auto"
           >
-            <Plus className="w-3.5 h-3.5 mr-1 stroke-[2.5]" />
-            Log Snag
+            <Plus className="w-3.5 h-3.5 me-1 stroke-[2.5]" />
+            {tr("Log Snag")}
           </Button>
         )}
       </div>
@@ -396,7 +397,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
           )}
         >
           <div>
-            <span className="text-[11px] font-medium text-slate-500 block">Total Defects</span>
+            <span className="text-[0.6875rem] font-medium text-slate-500 block">{tr("Total Defects")}</span>
             <span className="text-lg font-bold text-slate-900 leading-tight">{metrics.total}</span>
           </div>
           <div className="w-7 h-7 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
@@ -412,8 +413,8 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
           )}
         >
           <div>
-            <span className="text-[11px] font-medium text-blue-700 block">Pinned on Plans</span>
-            <span className="text-lg font-bold text-blue-700 leading-tight">{metrics.linked}</span>
+            <span className="text-[0.6875rem] font-medium text-blue-700 block">{tr("Pinned on Plans")}</span>
+            <span className="text-lg font-bold text-blue-700 leading-tight">{tr(metrics.linked)}</span>
           </div>
           <div className="w-7 h-7 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
             <Layers className="w-3.5 h-3.5" />
@@ -428,8 +429,8 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
           )}
         >
           <div>
-            <span className="text-[11px] font-medium text-amber-700 block">Active Open</span>
-            <span className="text-lg font-bold text-amber-700 leading-tight">{metrics.open}</span>
+            <span className="text-[0.6875rem] font-medium text-amber-700 block">{tr("Active Open")}</span>
+            <span className="text-lg font-bold text-amber-700 leading-tight">{tr(metrics.open)}</span>
           </div>
           <div className="w-7 h-7 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
             <Clock className="w-3.5 h-3.5" />
@@ -444,8 +445,8 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
           )}
         >
           <div>
-            <span className="text-[11px] font-medium text-emerald-700 block">Resolved / Closed</span>
-            <span className="text-lg font-bold text-emerald-700 leading-tight">{metrics.resolved}</span>
+            <span className="text-[0.6875rem] font-medium text-emerald-700 block">{tr("Resolved / Closed")}</span>
+            <span className="text-lg font-bold text-emerald-700 leading-tight">{tr(metrics.resolved)}</span>
           </div>
           <div className="w-7 h-7 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
             <CheckCircle2 className="w-3.5 h-3.5" />
@@ -460,10 +461,10 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
           <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search snags, pins, or blueprints..."
+            placeholder={tr("Search snags, pins, or blueprints...")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-8.5 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
+            className="w-full ps-8.5 pe-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
           />
           {searchQuery && (
             <button
@@ -482,38 +483,38 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
             <button
               onClick={() => setFilterStatus('all')}
               className={cn(
-                'px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer text-[11px]',
+                'px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer text-[0.6875rem]',
                 filterStatus === 'all' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-600 hover:text-slate-900'
               )}
             >
-              All ({metrics.total})
+              {tr("All (")}{metrics.total})
             </button>
             <button
               onClick={() => setFilterStatus('linked')}
               className={cn(
-                'px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer text-[11px]',
+                'px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer text-[0.6875rem]',
                 filterStatus === 'linked' ? 'bg-white text-blue-700 shadow-xs font-semibold' : 'text-slate-600 hover:text-slate-900'
               )}
             >
-              Pinned ({metrics.linked})
+              {tr("Pinned (")}{tr(metrics.linked)})
             </button>
             <button
               onClick={() => setFilterStatus('open')}
               className={cn(
-                'px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer text-[11px]',
+                'px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer text-[0.6875rem]',
                 filterStatus === 'open' ? 'bg-white text-amber-700 shadow-xs font-semibold' : 'text-slate-600 hover:text-slate-900'
               )}
             >
-              Open ({metrics.open})
+              {tr("Open (")}{tr(metrics.open)})
             </button>
             <button
               onClick={() => setFilterStatus('resolved')}
               className={cn(
-                'px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer text-[11px]',
+                'px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer text-[0.6875rem]',
                 filterStatus === 'resolved' ? 'bg-white text-emerald-700 shadow-xs font-semibold' : 'text-slate-600 hover:text-slate-900'
               )}
             >
-              Resolved ({metrics.resolved})
+              {tr("Resolved (")}{tr(metrics.resolved)})
             </button>
           </div>
 
@@ -525,7 +526,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                 'p-1.5 rounded-md transition-colors cursor-pointer',
                 viewMode === 'table' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-500 hover:text-slate-800'
               )}
-              title="Table List View"
+              title={tr("Table List View")}
             >
               <ListIcon className="w-3.5 h-3.5" />
             </button>
@@ -535,7 +536,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                 'p-1.5 rounded-md transition-colors cursor-pointer',
                 viewMode === 'grid' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-500 hover:text-slate-800'
               )}
-              title="Grid Card View"
+              title={tr("Grid Card View")}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
             </button>
@@ -547,33 +548,33 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
       {loading ? (
         <div className="flex flex-col items-center justify-center py-14 text-center space-y-2 bg-white rounded-xl border border-slate-200/80">
           <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-          <p className="text-xs font-medium text-slate-500">Loading quality registry...</p>
+          <p className="text-xs font-medium text-slate-500">{tr("Loading quality registry...")}</p>
         </div>
       ) : filteredSnags.length === 0 ? (
         <div className="p-10 text-center rounded-xl border border-dashed border-slate-200 bg-white space-y-2">
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 mx-auto flex items-center justify-center">
             <Bug className="w-5 h-5" />
           </div>
-          <h4 className="text-xs font-bold text-slate-800">No Snags Found</h4>
-          <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
-            {searchQuery ? `No results for "${searchQuery}".` : 'No defects match current filters.'}
+          <h4 className="text-xs font-bold text-slate-800">{tr("No Snags Found")}</h4>
+          <p className="text-[0.6875rem] text-slate-500 max-w-xs mx-auto">
+            {searchQuery ? tr("No results for \"{{searchQuery}}\".", { searchQuery: searchQuery }) : tr("No defects match current filters.")}
           </p>
         </div>
       ) : viewMode === 'table' ? (
         /* ── Modern High-Density Table View (Linear / PlanGrid Style) ── */
         <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-start text-xs">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/75 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                  <th className="py-2.5 px-4 w-16">PIN</th>
-                  <th className="py-2.5 px-4 min-w-[200px]">DEFECT OBSERVATION</th>
-                  <th className="py-2.5 px-4 min-w-[180px]">BLUEPRINT PLAN</th>
-                  <th className="py-2.5 px-4">LOCATION</th>
-                  <th className="py-2.5 px-3">PRIORITY</th>
-                  <th className="py-2.5 px-3">STATUS</th>
-                  <th className="py-2.5 px-4">TARGET DUE</th>
-                  <th className="py-2.5 px-4 text-right">ACTIONS</th>
+                <tr className="border-b border-slate-200 bg-slate-50/75 text-[0.6875rem] font-semibold text-slate-500 uppercase tracking-wider">
+                  <th className="py-2.5 px-4 w-16">{tr("PIN")}</th>
+                  <th className="py-2.5 px-4 min-w-[12.5rem]">{tr("DEFECT OBSERVATION")}</th>
+                  <th className="py-2.5 px-4 min-w-[11.25rem]">{tr("BLUEPRINT PLAN")}</th>
+                  <th className="py-2.5 px-4">{tr("LOCATION")}</th>
+                  <th className="py-2.5 px-3">{tr("PRIORITY")}</th>
+                  <th className="py-2.5 px-3">{tr("STATUS")}</th>
+                  <th className="py-2.5 px-4">{tr("TARGET DUE")}</th>
+                  <th className="py-2.5 px-4 text-end">{tr("ACTIONS")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -589,11 +590,11 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                       {/* Pin # */}
                       <td className="py-2.5 px-4 font-mono font-bold text-xs" onClick={(e) => e.stopPropagation()}>
                         {dwgInfo.pinNumber ? (
-                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-blue-50 text-blue-700 border border-blue-200 text-[11px]">
-                            #{dwgInfo.pinNumber}
+                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-blue-50 text-blue-700 border border-blue-200 text-[0.6875rem]">
+                            #{tr(dwgInfo.pinNumber)}
                           </span>
                         ) : (
-                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-slate-100 text-slate-500 text-[11px]">
+                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-slate-100 text-slate-500 text-[0.6875rem]">
                             <Bug className="w-3 h-3" />
                           </span>
                         )}
@@ -603,10 +604,10 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                       <td className="py-2.5 px-4">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-slate-900 line-clamp-1 hover:text-blue-600 transition-colors">
-                            {snag.description}
+                            {tr(snag.description)}
                           </span>
                           {snag.photos && snag.photos.length > 0 && (
-                            <span className="inline-flex items-center gap-0.5 text-[10px] text-slate-400 shrink-0 font-medium">
+                            <span className="inline-flex items-center gap-0.5 text-[0.625rem] text-slate-400 shrink-0 font-medium">
                               <ImageIcon className="w-3 h-3" /> {snag.photos.length}
                             </span>
                           )}
@@ -617,12 +618,12 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                       <td className="py-2.5 px-4" onClick={(e) => e.stopPropagation()}>
                         {dwgInfo.isLinked ? (
                           <div className="flex items-center gap-1.5">
-                            <span className="font-medium text-slate-800 truncate max-w-[130px]">
-                              {dwgInfo.drawingTitle || 'Blueprint'}
+                            <span className="font-medium text-slate-800 truncate max-w-[8.125rem]">
+                              {dwgInfo.drawingTitle || tr("Blueprint")}
                             </span>
                             {dwgInfo.drawingNumber && (
-                              <span className="px-1 py-0.2 rounded text-[10px] font-mono bg-blue-50 text-blue-700 border border-blue-200 font-bold shrink-0">
-                                {dwgInfo.drawingNumber}
+                              <span className="px-1 py-0.2 rounded text-[0.625rem] font-mono bg-blue-50 text-blue-700 border border-blue-200 font-bold shrink-0">
+                                {tr(dwgInfo.drawingNumber)}
                               </span>
                             )}
                             {dwgInfo.drawingId && (
@@ -630,22 +631,22 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                                 type="button"
                                 onClick={() => router.push(`/interior-new/projects/${projectId}/drawings/${dwgInfo.drawingId}`)}
                                 className="p-1 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded transition-colors"
-                                title="Open in Drawing Studio"
+                                title={tr("Open in Drawing Studio")}
                               >
                                 <ExternalLink className="w-3 h-3" />
                               </button>
                             )}
                           </div>
                         ) : (
-                          <span className="text-slate-400 italic text-[11px]">Direct site item</span>
+                          <span className="text-slate-400 italic text-[0.6875rem]">{tr("Direct site item")}</span>
                         )}
                       </td>
 
                       {/* Location */}
-                      <td className="py-2.5 px-4 text-slate-600 truncate max-w-[120px]">
+                      <td className="py-2.5 px-4 text-slate-600 truncate max-w-[7.5rem]">
                         <span className="flex items-center gap-1">
                           <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                          <span className="truncate">{snag.location}</span>
+                          <span className="truncate">{tr(snag.location)}</span>
                         </span>
                       </td>
 
@@ -653,11 +654,11 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                       <td className="py-2.5 px-3">
                         <span
                           className={cn(
-                            'px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border',
+                            'px-2 py-0.5 rounded text-[0.625rem] font-bold uppercase tracking-wider border',
                             getPriorityBadge(snag.priority)
                           )}
                         >
-                          {snag.priority}
+                          {tr(snag.priority)}
                         </span>
                       </td>
 
@@ -668,18 +669,18 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                             type="button"
                             onClick={() => handleToggleStatus(snag._id, snag.status)}
                             className={cn(
-                              'px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider border hover:opacity-80 transition-opacity cursor-pointer flex items-center gap-1',
+                              'px-2 py-0.5 rounded text-[0.625rem] font-semibold uppercase tracking-wider border hover:opacity-80 transition-opacity cursor-pointer flex items-center gap-1',
                               getStatusBadge(snag.status)
                             )}
-                            title="Click to toggle status"
+                            title={tr("Click to toggle status")}
                           >
-                            <span>{snag.status === 'open' ? 'Open' : snag.status.replace('_', ' ')}</span>
+                            <span>{snag.status === 'open' ? tr("Open") : snag.status.replace('_', ' ')}</span>
                           </button>
                         )}
                       </td>
 
                       {/* Due Date */}
-                      <td className="py-2.5 px-4 text-[11px] text-slate-500 whitespace-nowrap">
+                      <td className="py-2.5 px-4 text-[0.6875rem] text-slate-500 whitespace-nowrap">
                         {snag.dueDate ? (
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3 h-3 text-slate-400" />
@@ -691,13 +692,13 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                       </td>
 
                       {/* Actions */}
-                      <td className="py-2.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                      <td className="py-2.5 px-4 text-end" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
                           <button
                             type="button"
                             onClick={() => setSelectedDetailSnag(snag)}
                             className="p-1 hover:bg-slate-100 text-slate-400 hover:text-blue-600 rounded transition-colors"
-                            title="Deep Details"
+                            title={tr("Deep Details")}
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
@@ -706,7 +707,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                               type="button"
                               onClick={() => openEditModal(snag)}
                               className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded transition-colors"
-                              title="Edit"
+                              title={tr("Edit")}
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
@@ -716,7 +717,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                               type="button"
                               onClick={() => handleDeleteSnag(snag._id)}
                               className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded transition-colors"
-                              title="Delete"
+                              title={tr("Delete")}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -745,15 +746,15 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                   {/* Top Badges */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={cn('px-1.5 py-0.5 rounded text-[10px] uppercase font-bold border', getPriorityBadge(snag.priority))}>
-                        {snag.priority}
+                      <span className={cn('px-1.5 py-0.5 rounded text-[0.625rem] uppercase font-bold border', getPriorityBadge(snag.priority))}>
+                        {tr(snag.priority)}
                       </span>
-                      <span className={cn('px-1.5 py-0.5 rounded text-[10px] uppercase font-semibold border', getStatusBadge(snag.status))}>
-                        {snag.status}
+                      <span className={cn('px-1.5 py-0.5 rounded text-[0.625rem] uppercase font-semibold border', getStatusBadge(snag.status))}>
+                        {tr(snag.status)}
                       </span>
                       {dwgInfo.pinNumber && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                          Pin #{dwgInfo.pinNumber}
+                        <span className="px-1.5 py-0.5 rounded text-[0.625rem] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                          {tr("Pin #")}{tr(dwgInfo.pinNumber)}
                         </span>
                       )}
                     </div>
@@ -785,44 +786,44 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                     onClick={() => setSelectedDetailSnag(snag)}
                     className="text-xs font-bold text-slate-900 leading-snug cursor-pointer hover:text-blue-600 transition-colors line-clamp-2"
                   >
-                    {snag.description}
+                    {tr(snag.description)}
                   </h3>
 
                   {/* Inline Blueprint Link */}
                   {dwgInfo.isLinked && (
-                    <div className="p-2 rounded-lg bg-blue-50/70 border border-blue-200/70 text-[11px] flex items-center justify-between">
+                    <div className="p-2 rounded-lg bg-blue-50/70 border border-blue-200/70 text-[0.6875rem] flex items-center justify-between">
                       <div className="flex items-center gap-1.5 min-w-0 flex-1">
                         <Layers className="w-3 h-3 text-blue-600 shrink-0" />
                         <span className="font-semibold text-blue-950 truncate">
-                          {dwgInfo.drawingTitle || 'Drawing Plan'}
+                          {dwgInfo.drawingTitle || tr("Drawing Plan")}
                         </span>
                         {dwgInfo.drawingNumber && (
-                          <span className="text-[10px] font-mono text-blue-700">({dwgInfo.drawingNumber})</span>
+                          <span className="text-[0.625rem] font-mono text-blue-700">({tr(dwgInfo.drawingNumber)})</span>
                         )}
                       </div>
                       {dwgInfo.drawingId && (
                         <button
                           type="button"
                           onClick={() => router.push(`/interior-new/projects/${projectId}/drawings/${dwgInfo.drawingId}`)}
-                          className="text-[11px] font-semibold text-blue-700 hover:underline shrink-0 ml-1.5 flex items-center gap-0.5"
+                          className="text-[0.6875rem] font-semibold text-blue-700 hover:underline shrink-0 ms-1.5 flex items-center gap-0.5"
                         >
-                          <span>Plan</span>
+                          <span>{tr("Plan")}</span>
                           <ExternalLink className="w-2.5 h-2.5" />
                         </button>
                       )}
                     </div>
                   )}
 
-                  <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
+                  <div className="flex items-center gap-1 text-[0.6875rem] text-slate-500 font-medium">
                     <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                    <span className="truncate">{snag.location}</span>
+                    <span className="truncate">{tr(snag.location)}</span>
                   </div>
                 </div>
 
                 {/* Bottom Bar */}
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[0.6875rem]">
                   <span className="text-slate-400">
-                    {snag.dueDate ? new Date(snag.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'No date'}
+                    {snag.dueDate ? new Date(snag.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : tr("No date")}
                   </span>
 
                   <button
@@ -830,7 +831,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                     onClick={() => setSelectedDetailSnag(snag)}
                     className="font-semibold text-blue-600 hover:text-blue-700 transition-colors cursor-pointer text-xs"
                   >
-                    Deep Info ↗
+                    {tr("Deep Info ↗")}
                   </button>
                 </div>
               </div>
@@ -867,13 +868,13 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                         <div>
                           <div className="flex items-center gap-2">
                             <h3 className="text-sm font-bold text-slate-900">
-                              {dwgInfo.pinNumber ? `Inspection Pin #${dwgInfo.pinNumber}` : 'Defect Item'}
+                              {dwgInfo.pinNumber ? tr("Inspection Pin #{{pinNumber}}", { pinNumber: dwgInfo.pinNumber }) : tr("Defect Item")}
                             </h3>
-                            <span className={cn('px-2 py-0.2 rounded text-[10px] uppercase font-bold border', getPriorityBadge(selectedDetailSnag.priority))}>
-                              {selectedDetailSnag.priority}
+                            <span className={cn('px-2 py-0.2 rounded text-[0.625rem] uppercase font-bold border', getPriorityBadge(selectedDetailSnag.priority))}>
+                              {tr(selectedDetailSnag.priority)}
                             </span>
-                            <span className={cn('px-2 py-0.2 rounded text-[10px] uppercase font-semibold border', getStatusBadge(selectedDetailSnag.status))}>
-                              {selectedDetailSnag.status}
+                            <span className={cn('px-2 py-0.2 rounded text-[0.625rem] uppercase font-semibold border', getStatusBadge(selectedDetailSnag.status))}>
+                              {tr(selectedDetailSnag.status)}
                             </span>
                           </div>
                         </div>
@@ -891,28 +892,28 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                     <div className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
                       {/* Observation */}
                       <div className="space-y-1">
-                        <span className="text-[11px] font-semibold text-slate-500 uppercase">Observation Description</span>
+                        <span className="text-[0.6875rem] font-semibold text-slate-500 uppercase">{tr("Observation Description")}</span>
                         <div className="p-3 rounded-lg bg-slate-50 border border-slate-200/80 text-slate-800 font-normal leading-relaxed whitespace-pre-wrap">
-                          {selectedDetailSnag.description}
+                          {tr(selectedDetailSnag.description)}
                         </div>
                       </div>
 
                       {/* Blueprint Box */}
                       {dwgInfo.isLinked && (
                         <div className="space-y-1">
-                          <span className="text-[11px] font-semibold text-blue-700 uppercase">Linked Drawing Blueprint</span>
+                          <span className="text-[0.6875rem] font-semibold text-blue-700 uppercase">{tr("Linked Drawing Blueprint")}</span>
                           <div className="p-3 rounded-lg border border-blue-200 bg-blue-50/50 flex items-center justify-between gap-3">
                             <div className="space-y-0.5">
                               <div className="flex items-center gap-1.5 font-bold text-blue-950">
-                                <span>{dwgInfo.drawingTitle || 'Blueprint Plan'}</span>
+                                <span>{dwgInfo.drawingTitle || tr("Blueprint Plan")}</span>
                                 {dwgInfo.drawingNumber && (
-                                  <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-white text-blue-700 border border-blue-200">
-                                    {dwgInfo.drawingNumber}
+                                  <span className="px-1.5 py-0.2 rounded text-[0.625rem] font-mono bg-white text-blue-700 border border-blue-200">
+                                    {tr(dwgInfo.drawingNumber)}
                                   </span>
                                 )}
                               </div>
-                              <p className="text-[11px] text-blue-700/80">
-                                Pinned at marker #{dwgInfo.pinNumber} • Location: {selectedDetailSnag.location}
+                              <p className="text-[0.6875rem] text-blue-700/80">
+                                {tr("Pinned at marker #")}{tr(dwgInfo.pinNumber)}{tr(" • Location: ")}{tr(selectedDetailSnag.location)}
                               </p>
                             </div>
 
@@ -922,8 +923,8 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                                 onClick={() => router.push(`/interior-new/projects/${projectId}/drawings/${dwgInfo.drawingId}`)}
                                 className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-7 px-3 shadow-xs"
                               >
-                                <span>Open Plan</span>
-                                <ExternalLink className="w-3 h-3 ml-1" />
+                                <span>{tr("Open Plan")}</span>
+                                <ExternalLink className="w-3 h-3 ms-1" />
                               </Button>
                             )}
                           </div>
@@ -933,7 +934,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                       {/* Photos */}
                       {selectedDetailSnag.photos && selectedDetailSnag.photos.length > 0 && (
                         <div className="space-y-1.5">
-                          <span className="text-[11px] font-semibold text-slate-500 uppercase">Photo Evidence ({selectedDetailSnag.photos.length})</span>
+                          <span className="text-[0.6875rem] font-semibold text-slate-500 uppercase">{tr("Photo Evidence (")}{selectedDetailSnag.photos.length})</span>
                           <div className="grid grid-cols-3 gap-2">
                             {selectedDetailSnag.photos.map((photo: string, idx: number) => (
                               <div
@@ -941,7 +942,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                                 className="relative h-20 rounded-lg overflow-hidden border border-slate-200 cursor-pointer group"
                                 onClick={() => setViewingImage(photo)}
                               >
-                                <img loading="lazy" decoding="async" src={photo} alt="Defect photo" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                <img loading="lazy" decoding="async" src={photo} alt={tr("Defect photo")} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                               </div>
                             ))}
                           </div>
@@ -951,15 +952,15 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                       {/* Schedule info */}
                       <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-slate-50 border border-slate-200/80">
                         <div>
-                          <span className="text-slate-400 text-[10px] font-medium block">Target Resolution Date</span>
+                          <span className="text-slate-400 text-[0.625rem] font-medium block">{tr("Target Resolution Date")}</span>
                           <span className="font-semibold text-slate-800 mt-0.5 block">
-                            {selectedDetailSnag.dueDate ? new Date(selectedDetailSnag.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No date set'}
+                            {selectedDetailSnag.dueDate ? new Date(selectedDetailSnag.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : tr("No date set")}
                           </span>
                         </div>
                         <div>
-                          <span className="text-slate-400 text-[10px] font-medium block">Current Status</span>
+                          <span className="text-slate-400 text-[0.625rem] font-medium block">{tr("Current Status")}</span>
                           <span className="font-semibold text-slate-800 mt-0.5 block capitalize">
-                            {selectedDetailSnag.status.replace('_', ' ')}
+                            {tr(selectedDetailSnag.status.replace('_', ' '))}
                           </span>
                         </div>
                       </div>
@@ -973,12 +974,12 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                           onClick={() => handleToggleStatus(selectedDetailSnag._id, selectedDetailSnag.status)}
                           className="h-8 text-xs font-semibold"
                         >
-                          <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />
+                          <CheckCircle2 className="w-3.5 h-3.5 me-1.5 text-emerald-600" />
                           {selectedDetailSnag.status === 'open' || selectedDetailSnag.status === 'assigned' || selectedDetailSnag.status === 'in_progress'
-                            ? 'Mark as Resolved'
+                            ? tr("Mark as Resolved")
                             : selectedDetailSnag.status === 'resolved'
-                            ? 'Verify & Close'
-                            : 'Reopen Snag'}
+                            ? tr("Verify & Close")
+                            : tr("Reopen Snag")}
                         </Button>
                       )}
 
@@ -987,7 +988,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                         onClick={() => setSelectedDetailSnag(null)}
                         className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition-colors"
                       >
-                        Done
+                        {tr("Done")}
                       </button>
                     </div>
                   </>
@@ -1011,7 +1012,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
               <div className="flex items-center justify-between p-4 border-b border-slate-100">
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
                   <Bug className="w-4 h-4 text-blue-600" />
-                  {editingSnagId ? 'Edit Snag Item' : 'Log New Quality Snag'}
+                  {editingSnagId ? tr("Edit Snag Item") : tr("Log New Quality Snag")}
                 </h3>
                 <button type="button" onClick={closeModal} className="p-1 rounded text-slate-400 hover:text-slate-600">
                   <X className="w-4 h-4" />
@@ -1021,10 +1022,10 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
               <form onSubmit={handleCreateOrUpdateSnag}>
                 <div className="p-4 space-y-3.5 text-xs">
                   <div className="space-y-1">
-                    <label className="font-semibold text-slate-700">Defect Description <span className="text-rose-500">*</span></label>
+                    <label className="font-semibold text-slate-700">{tr("Defect Description ")}<span className="text-rose-500">*</span></label>
                     <Input
                       required
-                      placeholder="e.g. Scratched premium wall paint near main pantry"
+                      placeholder={tr("e.g. Scratched premium wall paint near main pantry")}
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       className="text-xs h-8.5"
@@ -1032,10 +1033,10 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                   </div>
 
                   <div className="space-y-1">
-                    <label className="font-semibold text-slate-700">Location / Area <span className="text-rose-500">*</span></label>
+                    <label className="font-semibold text-slate-700">{tr("Location / Area ")}<span className="text-rose-500">*</span></label>
                     <Input
                       required
-                      placeholder="e.g. Floor 4, Cafeteria Pantry Zone"
+                      placeholder={tr("e.g. Floor 4, Cafeteria Pantry Zone")}
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
                       className="text-xs h-8.5"
@@ -1045,19 +1046,19 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                   {drawings.length > 0 && (
                     <div className="space-y-1">
                       <label className="font-semibold text-slate-700 flex items-center justify-between">
-                        <span>Link to Blueprint Plan</span>
-                        <span className="text-[10px] text-slate-400 font-normal">Optional</span>
+                        <span>{tr("Link to Blueprint Plan")}</span>
+                        <span className="text-[0.625rem] text-slate-400 font-normal">{tr("Optional")}</span>
                       </label>
                       <select
                         className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
                         value={selectedDrawingId}
                         onChange={(e) => setSelectedDrawingId(e.target.value)}
                       >
-                        <option value="">General Site Snag (No Drawing Linked)</option>
+                        <option value="">{tr("General Site Snag (No Drawing Linked)")}</option>
                         {drawings.map((dwg: any) => (
                           <option key={dwg._id || dwg.id} value={dwg._id || dwg.id}>
                             {dwg.drawingNumber ? `[${dwg.drawingNumber}] ` : ''}
-                            {dwg.title || 'Untitled Blueprint'}
+                            {dwg.title || tr("Untitled Blueprint")}
                           </option>
                         ))}
                       </select>
@@ -1066,30 +1067,30 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="font-semibold text-slate-700">Priority</label>
+                      <label className="font-semibold text-slate-700">{tr("Priority")}</label>
                       <select
                         className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
                         value={priority}
                         onChange={(e) => setPriority(e.target.value)}
                       >
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                        <option value="critical">Critical</option>
+                        <option value="low">{tr("Low")}</option>
+                        <option value="medium">{tr("Medium")}</option>
+                        <option value="high">{tr("High")}</option>
+                        <option value="critical">{tr("Critical")}</option>
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="font-semibold text-slate-700">Target Due Date</label>
+                      <label className="font-semibold text-slate-700">{tr("Target Due Date")}</label>
                       <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="text-xs h-8.5" />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="font-semibold text-slate-700">Photo Attachments</label>
+                    <label className="font-semibold text-slate-700">{tr("Photo Attachments")}</label>
                     <div className="flex flex-wrap gap-2">
                       {photos.map((photo, i) => (
                         <div key={i} className="relative w-14 h-14 rounded-lg border overflow-hidden">
-                          <img loading="lazy" decoding="async" src={photo} alt="Snag photo" className="w-full h-full object-cover" />
+                          <img loading="lazy" decoding="async" src={photo} alt={tr("Snag photo")} className="w-full h-full object-cover" />
                           <button
                             type="button"
                             onClick={() => setPhotos((prev) => prev.filter((_, idx) => idx !== i))}
@@ -1115,11 +1116,11 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
 
                 <div className="flex items-center justify-end gap-2 p-3.5 border-t border-slate-100 bg-slate-50/60">
                   <Button variant="outline" size="sm" type="button" onClick={closeModal} className="h-8 text-xs">
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                   <Button size="sm" type="submit" disabled={submitting} className="h-8 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white">
-                    {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-                    {editingSnagId ? 'Save Changes' : 'Log Snag'}
+                    {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin me-1.5" />}
+                    {editingSnagId ? tr("Save Changes") : tr("Log Snag")}
                   </Button>
                 </div>
               </form>
@@ -1144,7 +1145,7 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <img loading="lazy" decoding="async" src={viewingImage} alt="Snag Evidence" className="max-w-full max-h-[85vh] object-contain" />
+              <img loading="lazy" decoding="async" src={viewingImage} alt={tr("Snag Evidence")} className="max-w-full max-h-[85vh] object-contain" />
             </div>
           </div>
         )}

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -60,26 +61,26 @@ export const InteriorDeleteLeadModal: React.FC<InteriorDeleteLeadModalProps> = (
 
               {/* Title */}
               <h3 className="text-xl font-extrabold text-[hsl(var(--foreground))] tracking-tight mb-2">
-                Delete Lead
+                {tr("Delete Lead")}
               </h3>
 
               {/* Description */}
               <p className="text-sm text-[hsl(var(--muted-foreground))] leading-relaxed mb-4">
-                Are you sure you want to delete{' '}
+                {tr("Are you sure you want to delete")}{' '}
                 {leadName ? (
                   <span className="font-bold text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded-md border border-[hsl(var(--border))]">
-                    <span className="font-bold text-[hsl(var(--foreground))] truncate max-w-[200px] inline-block align-bottom" title={leadName}>{leadName}</span>
+                    <span className="font-bold text-[hsl(var(--foreground))] truncate max-w-[12.5rem] inline-block align-bottom" title={leadName}>{tr(leadName)}</span>
                   </span>
                 ) : (
-                  'this lead'
+                  tr("this lead")
                 )}
                 ?
               </p>
 
-              <div className="w-full p-3 mb-6 bg-rose-500/5 border border-rose-500/15 rounded-2xl text-left flex items-start gap-2.5">
+              <div className="w-full p-3 mb-6 bg-rose-500/5 border border-rose-500/15 rounded-2xl text-start flex items-start gap-2.5">
                 <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
                 <p className="text-xs text-rose-600 font-medium leading-normal">
-                  This action cannot be undone. All site visits, requirements, quotations, and activity history for this lead will be permanently deleted.
+                  {tr("This action cannot be undone. All site visits, requirements, quotations, and activity history for this lead will be permanently deleted.")}
                 </p>
               </div>
 
@@ -91,7 +92,7 @@ export const InteriorDeleteLeadModal: React.FC<InteriorDeleteLeadModalProps> = (
                   disabled={isLoading}
                   className="flex-1 py-3 px-4 rounded-xl bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] font-semibold text-sm transition-all border border-[hsl(var(--border))] disabled:opacity-50 active:scale-[0.98]"
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </button>
                 <button
                   type="button"
@@ -102,12 +103,12 @@ export const InteriorDeleteLeadModal: React.FC<InteriorDeleteLeadModalProps> = (
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Deleting...</span>
+                      <span>{tr("Deleting...")}</span>
                     </>
                   ) : (
                     <>
                       <Trash2 className="w-4 h-4" />
-                      <span>Delete Lead</span>
+                      <span>{tr("Delete Lead")}</span>
                     </>
                   )}
                 </button>

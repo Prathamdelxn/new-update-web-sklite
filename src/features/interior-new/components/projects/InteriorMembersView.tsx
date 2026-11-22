@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Port of interior-os-frontend's projects/[projectId]/members/page.tsx.
 // Simplifications vs source:
@@ -185,7 +186,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
       const res = await interiorProjectService.getProjectMembers(projectId);
       if (res?.success) setMembers(res.data || []);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to load members');
+      toast.error(err?.response?.data?.message || tr("Failed to load members"));
     } finally {
       setLoading(false);
     }
@@ -228,7 +229,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
       const list = Array.isArray(res) ? res : (res?.data ?? []);
       setOrgUsers(list);
     } catch {
-      toast.error('Failed to load organisation users');
+      toast.error(tr("Failed to load organisation users"));
     } finally {
       setOrgUsersLoading(false);
     }
@@ -243,7 +244,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
   };
 
   const handleAddExistingMember = async () => {
-    if (!addMemberUserId) { toast.error('Please select a user'); return; }
+    if (!addMemberUserId) { toast.error(tr("Please select a user")); return; }
     setIsAddingMember(true);
     try {
       const chosen = orgRoles.find((r) => r._id === addMemberRole);
@@ -251,11 +252,11 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
         projectId,
         chosen ? { userId: addMemberUserId, roleId: chosen._id } : { userId: addMemberUserId, projectRole: addMemberRole }
       );
-      toast.success('Member added to project');
+      toast.success(tr("Member added to project"));
       setIsAddMemberOpen(false);
       fetchMembers();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? 'Failed to add member');
+      toast.error(err?.response?.data?.message ?? tr("Failed to add member"));
     } finally {
       setIsAddingMember(false);
     }
@@ -264,20 +265,20 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteForm.firstName || !inviteForm.lastName || !inviteForm.email) {
-      toast.error('Please fill all required fields');
+      toast.error(tr("Please fill all required fields"));
       return;
     }
     setIsInviting(true);
     try {
       const res = await interiorProjectService.inviteProjectMember(projectId, inviteForm);
       if (res?.success) {
-        toast.success('User created and added to project');
+        toast.success(tr("User created and added to project"));
         setIsInviteModalOpen(false);
         setInviteForm({ firstName: '', lastName: '', email: '', password: '', projectRole: 'viewer', roleId: orgRoles.find((r) => r.slug === 'viewer')?._id || '', designation: '', department: '' });
         fetchMembers();
       }
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to invite member');
+      toast.error(err?.response?.data?.message || tr("Failed to invite member"));
     } finally {
       setIsInviting(false);
     }
@@ -285,20 +286,20 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
 
   const handleDeleteMember = async (memberId: string) => {
     const ok = await confirm({
-      title: 'Remove Member',
-      message: 'Are you sure you want to remove this member from the project? They will lose access to all tasks and documents.',
-      confirmText: 'Remove Member',
+      title: tr("Remove Member"),
+      message: tr("Are you sure you want to remove this member from the project? They will lose access to all tasks and documents."),
+      confirmText: tr("Remove Member"),
       type: 'danger',
     });
     if (!ok) return;
     try {
       const res = await interiorProjectService.deleteProjectMember(projectId, memberId);
       if (res?.success) {
-        toast.success('Member removed from project');
+        toast.success(tr("Member removed from project"));
         fetchMembers();
       }
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to remove member');
+      toast.error(err?.response?.data?.message || tr("Failed to remove member"));
     }
   };
 
@@ -362,7 +363,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
     const role = orgRoles.find((r) => r._id === roleId);
     setEditedPermissions(JSON.parse(JSON.stringify(role?.permissions || [])));
     setPermMode('role');
-    if (role) toast.success(`Using the "${role.name}" role's permissions`);
+    if (role) toast.success(tr("Using the \"{{name}}\" role's permissions", { name: role.name }));
   };
 
   const handleSavePermissions = async () => {
@@ -376,7 +377,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
         : { permissions: editedPermissions };
       const res = await interiorProjectService.updateProjectMember(projectId, permModalMember._id, payload);
       if (res?.success) {
-        toast.success('Permissions updated successfully');
+        toast.success(tr("Permissions updated successfully"));
         // Apply the change to open screens right away (this browser)
         invalidateProjectPermissions(projectId);
         refreshInteriorUser(true);
@@ -384,7 +385,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
         fetchMembers();
       }
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to update permissions');
+      toast.error(err?.response?.data?.message || tr("Failed to update permissions"));
     } finally {
       setIsSavingPerms(false);
     }
@@ -394,7 +395,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
     const role = orgRoles.find((r) => r._id === editedRole);
     setEditedPermissions(JSON.parse(JSON.stringify(role?.permissions || [])));
     setPermMode('role');
-    toast.success(`Reset to the "${role?.name || 'selected'}" role's permissions`);
+    toast.success(tr("Reset to the \"{{value}}\" role's permissions", { value: role?.name || 'selected' }));
   };
 
   const filteredMembers = members.filter(
@@ -409,9 +410,9 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
     <div className="p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Team & Access Control</h2>
+          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">{tr("Team & Access Control")}</h2>
           <p className="text-sm text-[hsl(var(--muted-foreground))]">
-            Manage users, assign project roles, and configure granular permissions.
+            {tr("Manage users, assign project roles, and configure granular permissions.")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -421,7 +422,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
               className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium border border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] rounded-xl transition-all shadow-sm active:scale-95"
             >
               <UserPlus className="w-4 h-4" />
-              Add Member
+              {tr("Add Member")}
             </button>
           )}
           {canDo('users', 'create') && (
@@ -430,7 +431,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
               className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[hsl(var(--primary))] rounded-xl transition-all shadow-sm active:scale-95"
             >
               <Plus className="w-4 h-4" />
-              Create Member
+              {tr("Create Member")}
             </button>
           )}
         </div>
@@ -441,14 +442,14 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
           <input
             type="text"
-            placeholder="Search team members..."
+            placeholder={tr("Search team members...")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] transition-all"
+            className="w-full ps-9 pe-4 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] transition-all"
           />
         </div>
         <div className="text-sm text-[hsl(var(--muted-foreground))] font-medium">
-          {members.length} {members.length === 1 ? 'Member' : 'Members'}
+          {members.length} {members.length === 1 ? tr("Member") : tr("Members")}
         </div>
       </div>
 
@@ -461,9 +462,9 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
           <div className="w-16 h-16 rounded-full bg-[hsl(var(--muted))] flex items-center justify-center mb-4">
             <Users className="w-8 h-8 text-[hsl(var(--muted-foreground))]" />
           </div>
-          <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">No members found</h3>
+          <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">{tr("No members found")}</h3>
           <p className="text-sm text-[hsl(var(--muted-foreground))] max-w-sm mt-1">
-            {searchQuery ? 'Try adjusting your search query.' : 'Start by adding members to collaborate on this project.'}
+            {searchQuery ? tr("Try adjusting your search query.") : tr("Start by adding members to collaborate on this project.")}
           </p>
           {!searchQuery && (
             canDo('users', 'create') && (
@@ -472,7 +473,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                 className="mt-4 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)] hover:bg-[hsl(var(--primary)/0.2)] rounded-xl transition-all"
               >
                 <Plus className="w-4 h-4" />
-                Add Member
+                {tr("Add Member")}
               </button>
             )
           )}
@@ -500,7 +501,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                       <button
                         onClick={() => openPermissionsModal(member)}
                         className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                        title="Edit Permissions"
+                        title={tr("Edit Permissions")}
                       >
                         <Settings2 className="w-4 h-4" />
                       </button>
@@ -509,7 +510,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                       <button
                         onClick={() => handleDeleteMember(member._id)}
                         className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                        title="Remove Member"
+                        title={tr("Remove Member")}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -518,11 +519,11 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
 
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary)/0.7)] flex items-center justify-center text-white font-bold text-lg shadow-inner shrink-0">
-                      {member.userId?.firstName?.[0]}{member.userId?.lastName?.[0]}
+                      {tr(member.userId?.firstName?.[0])}{tr(member.userId?.lastName?.[0])}
                     </div>
-                    <div className="flex-1 min-w-0 pr-12">
+                    <div className="flex-1 min-w-0 pe-12">
                       <h3 className="font-semibold text-[hsl(var(--foreground))] truncate">
-                        {member.userId?.firstName} {member.userId?.lastName}
+                        {tr(member.userId?.firstName)} {tr(member.userId?.lastName)}
                       </h3>
                       <p className="text-xs text-[hsl(var(--muted-foreground))] truncate flex items-center gap-1 mt-0.5">
                         <Mail className="w-3 h-3 shrink-0" />
@@ -531,7 +532,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                       {member.userId?.designation && (
                         <p className="text-xs text-[hsl(var(--muted-foreground))] truncate flex items-center gap-1 mt-0.5">
                           <Briefcase className="w-3 h-3 shrink-0" />
-                          {member.userId?.designation}
+                          {tr(member.userId?.designation)}
                         </p>
                       )}
                     </div>
@@ -548,10 +549,10 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                     {canDo('users', 'update') && !isVirtualAdminMember(member) && (
                       <button
                         onClick={() => openPermissionsModal(member)}
-                        className="text-[10px] font-medium text-[hsl(var(--muted-foreground))] flex items-center gap-1 bg-[hsl(var(--muted))] px-2 py-0.5 rounded-full hover:bg-[hsl(var(--primary)/0.1)] hover:text-[hsl(var(--primary))] transition-colors cursor-pointer"
+                        className="text-[0.625rem] font-medium text-[hsl(var(--muted-foreground))] flex items-center gap-1 bg-[hsl(var(--muted))] px-2 py-0.5 rounded-full hover:bg-[hsl(var(--primary)/0.1)] hover:text-[hsl(var(--primary))] transition-colors cursor-pointer"
                       >
                         <Shield className="w-3 h-3" />
-                        {permCount} permissions
+                        {tr(permCount)}{tr(" permissions")}
                       </button>
                     )}
                   </div>
@@ -578,8 +579,8 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
               {/* Header */}
               <div className="p-5 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--muted)/0.3)]">
                 <div>
-                  <h3 className="text-base font-semibold text-[hsl(var(--foreground))]">Add Existing Member</h3>
-                  <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">Select a user from your organisation and assign a project role.</p>
+                  <h3 className="text-base font-semibold text-[hsl(var(--foreground))]">{tr("Add Existing Member")}</h3>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{tr("Select a user from your organisation and assign a project role.")}</p>
                 </div>
                 <button onClick={() => setIsAddMemberOpen(false)} disabled={isAddingMember}
                   className="p-2 text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] rounded-xl transition-colors">
@@ -593,10 +594,10 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
                   <input
                     type="text"
-                    placeholder="Search by name or email..."
+                    placeholder={tr("Search by name or email...")}
                     value={addMemberSearch}
                     onChange={(e) => { setAddMemberSearch(e.target.value); setAddMemberUserId(''); }}
-                    className="w-full pl-9 pr-4 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+                    className="w-full ps-9 pe-4 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
                   />
                 </div>
 
@@ -620,7 +621,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                     if (filtered.length === 0) {
                       return (
                         <div className="py-8 text-center text-sm text-[hsl(var(--muted-foreground))]">
-                          {addMemberSearch ? 'No users match your search.' : 'All organisation users are already members.'}
+                          {addMemberSearch ? tr("No users match your search.") : tr("All organisation users are already members.")}
                         </div>
                       );
                     }
@@ -630,17 +631,17 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                         type="button"
                         onClick={() => setAddMemberUserId(u._id)}
                         className={cn(
-                          'w-full flex items-center gap-3 px-4 py-3 text-left transition-colors',
+                          'w-full flex items-center gap-3 px-4 py-3 text-start transition-colors',
                           addMemberUserId === u._id
-                            ? 'bg-[hsl(var(--primary)/0.1)] border-l-2 border-[hsl(var(--primary))]'
+                            ? 'bg-[hsl(var(--primary)/0.1)] border-s-2 border-[hsl(var(--primary))]'
                             : 'hover:bg-[hsl(var(--muted)/0.5)]'
                         )}
                       >
                         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary)/0.6)] flex items-center justify-center text-white text-xs font-bold shrink-0">
-                          {u.firstName?.[0]}{u.lastName?.[0]}
+                          {tr(u.firstName?.[0])}{tr(u.lastName?.[0])}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-[hsl(var(--foreground))] truncate">{u.firstName} {u.lastName}</p>
+                          <p className="text-sm font-medium text-[hsl(var(--foreground))] truncate">{tr(u.firstName)} {tr(u.lastName)}</p>
                           <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">{u.email}</p>
                         </div>
                         {addMemberUserId === u._id && (
@@ -653,15 +654,15 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
 
                 {/* Role selector */}
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-[hsl(var(--foreground))]">Project Role</label>
+                  <label className="text-sm font-medium text-[hsl(var(--foreground))]">{tr("Project Role")}</label>
                   <select
                     value={addMemberRole}
                     onChange={(e) => setAddMemberRole(e.target.value)}
                     className="w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
                   >
-                    {orgRoles.length === 0 && <option value="">Loading roles…</option>}
+                    {orgRoles.length === 0 && <option value="">{tr("Loading roles…")}</option>}
                     {orgRoles.map((r) => (
-                      <option key={r._id} value={r._id}>{r.name}</option>
+                      <option key={r._id} value={r._id}>{tr(r.name)}</option>
                     ))}
                   </select>
                 </div>
@@ -670,7 +671,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                 <div className="flex items-center justify-end gap-3 pt-1">
                   <button type="button" onClick={() => setIsAddMemberOpen(false)} disabled={isAddingMember}
                     className="px-4 py-2 text-sm font-medium text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] rounded-xl transition-colors">
-                    Cancel
+                    {tr("Cancel")}
                   </button>
                   <button
                     type="button"
@@ -679,7 +680,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                     className="inline-flex items-center justify-center gap-2 px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {isAddingMember ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
-                    {isAddingMember ? 'Adding...' : 'Add to Project'}
+                    {isAddingMember ? tr("Adding...") : tr("Add to Project")}
                   </button>
                 </div>
               </div>
@@ -703,9 +704,9 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
             >
               <div className="p-6 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--muted)/0.3)]">
                 <div>
-                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">Create Project Member</h3>
+                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">{tr("Create Project Member")}</h3>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                    Create a new user with login credentials and assign them to this project.
+                    {tr("Create a new user with login credentials and assign them to this project.")}
                   </p>
                 </div>
                 <button onClick={() => !isInviting && setIsInviteModalOpen(false)} className="p-2 text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] rounded-xl transition-colors" disabled={isInviting}>
@@ -716,27 +717,27 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
               <form onSubmit={handleInvite} className="p-6 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">First Name <span className="text-red-500">*</span></label>
+                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">{tr("First Name ")}<span className="text-red-500">*</span></label>
                     <input type="text" required value={inviteForm.firstName} onChange={(e) => setInviteForm({ ...inviteForm, firstName: e.target.value })}
                       className="w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">Last Name <span className="text-red-500">*</span></label>
+                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">{tr("Last Name ")}<span className="text-red-500">*</span></label>
                     <input type="text" required value={inviteForm.lastName} onChange={(e) => setInviteForm({ ...inviteForm, lastName: e.target.value })}
                       className="w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-[hsl(var(--foreground))]">Email Address <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-medium text-[hsl(var(--foreground))]">{tr("Email Address ")}<span className="text-red-500">*</span></label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
                     <input type="email" required value={inviteForm.email} onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
-                      className="w-full pl-9 pr-3 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
-                      placeholder="user@example.com" />
+                      className="w-full ps-9 pe-3 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+                      placeholder={tr("user@example.com")} />
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-[hsl(var(--foreground))]">Temporary Password <span className="text-[hsl(var(--muted-foreground))] font-normal">(optional)</span></label>
+                  <label className="text-sm font-medium text-[hsl(var(--foreground))]">{tr("Temporary Password ")}<span className="text-[hsl(var(--muted-foreground))] font-normal">{tr("(optional)")}</span></label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
                     <input
@@ -744,55 +745,55 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                       minLength={8}
                       value={inviteForm.password}
                       onChange={(e) => setInviteForm({ ...inviteForm, password: e.target.value })}
-                      className="w-full pl-9 pr-9 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
-                      placeholder="Leave blank to use welcome123"
+                      className="w-full ps-9 pe-9 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+                      placeholder={tr("Leave blank to use welcome123")}
                     />
                     <button
                       type="button"
                       onClick={() => setShowInvitePassword((prev) => !prev)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors p-0.5 rounded focus:outline-none cursor-pointer"
-                      title={showInvitePassword ? 'Hide password' : 'Show password'}
+                      title={showInvitePassword ? tr("Hide password") : tr("Show password")}
                     >
                       {showInvitePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-[hsl(var(--foreground))]">Project Role <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-medium text-[hsl(var(--foreground))]">{tr("Project Role ")}<span className="text-red-500">*</span></label>
                   <select value={inviteForm.roleId} onChange={(e) => setInviteForm({ ...inviteForm, roleId: e.target.value })}
                     className="w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]">
-                    {orgRoles.length === 0 && <option value="">Loading roles…</option>}
+                    {orgRoles.length === 0 && <option value="">{tr("Loading roles…")}</option>}
                     {orgRoles.map((r) => (
-                      <option key={r._id} value={r._id}>{r.name}</option>
+                      <option key={r._id} value={r._id}>{tr(r.name)}</option>
                     ))}
                   </select>
-                  <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                    Default permissions will be auto-assigned based on this role. You can customize them afterwards.
+                  <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
+                    {tr("Default permissions will be auto-assigned based on this role. You can customize them afterwards.")}
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">Designation (Optional)</label>
+                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">{tr("Designation (Optional)")}</label>
                     <input type="text" value={inviteForm.designation} onChange={(e) => setInviteForm({ ...inviteForm, designation: e.target.value })}
                       className="w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
-                      placeholder="e.g. Lead Architect" />
+                      placeholder={tr("e.g. Lead Architect")} />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">Department (Optional)</label>
+                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">{tr("Department (Optional)")}</label>
                     <input type="text" value={inviteForm.department} onChange={(e) => setInviteForm({ ...inviteForm, department: e.target.value })}
                       className="w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
-                      placeholder="e.g. Engineering" />
+                      placeholder={tr("e.g. Engineering")} />
                   </div>
                 </div>
                 <div className="pt-4 flex items-center justify-end gap-3">
                   <button type="button" onClick={() => setIsInviteModalOpen(false)} disabled={isInviting}
                     className="px-4 py-2 text-sm font-medium text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] rounded-xl transition-colors">
-                    Cancel
+                    {tr("Cancel")}
                   </button>
                   <button type="submit" disabled={isInviting}
                     className="inline-flex items-center justify-center gap-2 px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed">
                     {isInviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                    {isInviting ? 'Creating...' : 'Create User'}
+                    {isInviting ? tr("Creating...") : tr("Create User")}
                   </button>
                 </div>
               </form>
@@ -817,11 +818,11 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
               <div className="p-6 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--muted)/0.3)] shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary)/0.7)] flex items-center justify-center text-white font-bold shadow-inner">
-                    {permModalMember.userId?.firstName?.[0]}{permModalMember.userId?.lastName?.[0]}
+                    {tr(permModalMember.userId?.firstName?.[0])}{tr(permModalMember.userId?.lastName?.[0])}
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
-                      {permModalMember.userId?.firstName} {permModalMember.userId?.lastName}
+                      {tr(permModalMember.userId?.firstName)} {tr(permModalMember.userId?.lastName)}
                     </h3>
                     <p className="text-xs text-[hsl(var(--muted-foreground))]">
                       {permModalMember.userId?.email}
@@ -836,27 +837,27 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
               <div className="px-6 pt-5 pb-3 border-b border-[hsl(var(--border))] shrink-0">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">Project Role:</label>
+                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">{tr("Project Role:")}</label>
                     <div className="relative">
                       <select
                         value={editedRole}
                         onChange={(e) => handleRoleChange(e.target.value)}
-                        className="appearance-none pl-3 pr-8 py-1.5 text-sm font-medium bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] cursor-pointer"
+                        className="appearance-none ps-3 pe-8 py-1.5 text-sm font-medium bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] cursor-pointer"
                       >
-                        {!editedRole && <option value="">Select a role…</option>}
+                        {!editedRole && <option value="">{tr("Select a role…")}</option>}
                         {orgRoles.map((r) => (
-                          <option key={r._id} value={r._id}>{r.name}</option>
+                          <option key={r._id} value={r._id}>{tr(r.name)}</option>
                         ))}
                       </select>
                       <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))] pointer-events-none" />
                     </div>
                     {permMode === 'custom' ? (
-                      <span className="text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-500/20" title="These permissions apply to this member only and won't follow role changes">
-                        Custom permissions
+                      <span className="text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-500/20" title={tr("These permissions apply to this member only and won't follow role changes")}>
+                        {tr("Custom permissions")}
                       </span>
                     ) : editedRole !== memberRoleId(permModalMember) ? (
                       <span className="text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-500/20">
-                        Role changed
+                        {tr("Role changed")}
                       </span>
                     ) : null}
                   </div>
@@ -866,7 +867,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] hover:bg-[hsl(var(--muted)/0.8)] rounded-lg transition-colors"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
-                    Reset to Defaults
+                    {tr("Reset to Defaults")}
                   </button>
                 </div>
               </div>
@@ -876,10 +877,10 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-[hsl(var(--muted)/0.5)]">
-                        <th className="text-left py-3 px-4 font-semibold text-[hsl(var(--foreground))] border-b border-[hsl(var(--border))] w-48">Module</th>
+                        <th className="text-start py-3 px-4 font-semibold text-[hsl(var(--foreground))] border-b border-[hsl(var(--border))] w-48">{tr("Module")}</th>
                         {PERMISSION_ACTIONS.map((action) => (
                           <th key={action} className="text-center py-3 px-2 font-medium text-[hsl(var(--muted-foreground))] border-b border-[hsl(var(--border))] capitalize text-xs">
-                            {action}
+                            {tr(action)}
                           </th>
                         ))}
                       </tr>
@@ -891,7 +892,7 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
                           idx % 2 === 0 ? 'bg-transparent' : 'bg-[hsl(var(--muted)/0.15)]'
                         )}>
                           <td className="py-2.5 px-4 font-medium text-[hsl(var(--foreground))] border-b border-[hsl(var(--border)/0.5)] text-xs">
-                            {mod.label}
+                            {tr(mod.label)}
                           </td>
                           {PERMISSION_ACTIONS.map((action) => {
                             const active = hasAction(mod.module, action);
@@ -926,17 +927,17 @@ export default function InteriorMembersView({ projectId }: InteriorMembersViewPr
 
               <div className="p-4 border-t border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--muted)/0.2)] shrink-0">
                 <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                  {editedPermissions.reduce((acc, p) => acc + p.actions.length, 0)} total permissions across {editedPermissions.length} modules
+                  {editedPermissions.reduce((acc, p) => acc + p.actions.length, 0)}{tr(" total permissions across ")}{editedPermissions.length}{tr(" modules")}
                 </p>
                 <div className="flex items-center gap-3">
                   <button onClick={closePermissionsModal} disabled={isSavingPerms}
                     className="px-4 py-2 text-sm font-medium text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] rounded-xl transition-colors">
-                    Cancel
+                    {tr("Cancel")}
                   </button>
                   <button onClick={handleSavePermissions} disabled={isSavingPerms}
                     className="inline-flex items-center justify-center gap-2 px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed">
                     {isSavingPerms ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                    {isSavingPerms ? 'Saving...' : 'Save Permissions'}
+                    {isSavingPerms ? tr("Saving...") : tr("Save Permissions")}
                   </button>
                 </div>
               </div>

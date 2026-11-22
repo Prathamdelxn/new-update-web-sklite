@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Port of interior-os-frontend's projects/[projectId]/layout.tsx banner + tab nav.
 // Tabs are filtered by View permission (project role, or org role for the CRM
@@ -12,6 +13,7 @@ import { ChevronDown, ChevronRight, Folder, Calendar, MapPin, Building } from 'l
 import { cn } from '@/lib/utils';
 import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
+import { ProjectHealthBadge } from './ProjectHealthBadge';
 
 interface InteriorProjectBannerProps {
   projectId: string;
@@ -146,7 +148,7 @@ export function InteriorProjectBanner({ projectId, project, loading }: InteriorP
     <div className="px-3.5 sm:px-6 pt-3.5 sm:pt-6 pb-0 lg:px-8 lg:pt-8 bg-[hsl(var(--card))] border-b border-[hsl(var(--border))] space-y-3 sm:space-y-4">
       <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--muted-foreground))]">
         <Link href="/interior-new/projects" className="hover:text-[hsl(var(--primary))] transition-colors">
-          Projects
+          {tr("Projects")}
         </Link>
         <ChevronRight className="w-3.5 h-3.5" />
         {loading ? <SkeletonBar className="h-3.5 w-14" /> : <span className="font-medium text-[hsl(var(--foreground))]">{project?.code}</span>}
@@ -161,13 +163,13 @@ export function InteriorProjectBanner({ projectId, project, loading }: InteriorP
             {loading ? (
               <SkeletonBar className="h-6 w-48" />
             ) : (
-              <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-[hsl(var(--foreground))] tracking-tight truncate">{project?.name}</h1>
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-[hsl(var(--foreground))] tracking-tight truncate">{tr(project?.name)}</h1>
             )}
             <p className="text-xs text-[hsl(var(--muted-foreground))] font-medium mt-0.5">
               {loading ? (
                 <SkeletonBar className="h-3 w-28" />
               ) : (
-                <>Client: <span className="text-[hsl(var(--foreground))]">{project?.client}</span></>
+                <>{tr("Client: ")}<span className="text-[hsl(var(--foreground))]">{tr(project?.client)}</span></>
               )}
             </p>
           </div>
@@ -175,25 +177,14 @@ export function InteriorProjectBanner({ projectId, project, loading }: InteriorP
 
         {!loading && (
           <div className="flex items-center gap-2 sm:gap-3 self-start sm:self-center flex-wrap">
-            {project?.health && (
-              <span
-                className={cn(
-                  'px-2.5 py-0.5 text-[11px] sm:text-xs font-semibold rounded-full border capitalize',
-                  project.health === 'on-track' && 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                  project.health === 'at-risk' && 'bg-amber-50 text-amber-700 border-amber-200',
-                  project.health === 'delayed' && 'bg-red-50 text-red-700 border-red-200'
-                )}
-              >
-                {project.healthLabel || project.health.replace('-', ' ')}
-              </span>
-            )}
+            {project?.health && <ProjectHealthBadge projectId={projectId} project={project} />}
             <span
               className={cn(
-                'px-2.5 py-0.5 text-[11px] sm:text-xs font-semibold rounded-full border',
+                'px-2.5 py-0.5 text-[0.6875rem] sm:text-xs font-semibold rounded-full border',
                 project?.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
               )}
             >
-              {project?.status === 'active' ? 'Active' : 'On Hold'}
+              {project?.status === 'active' ? tr("Active") : tr("On Hold")}
             </span>
           </div>
         )}
@@ -206,17 +197,17 @@ export function InteriorProjectBanner({ projectId, project, loading }: InteriorP
           <>
             <div className="flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
-              {project?.location?.city || project?.location?.address ? `${project.location.city || project.location.address}, ${project.location.country || 'India'}` : 'Location not set'}
+              {project?.location?.city || project?.location?.address ? `${project.location.city || project.location.address}, ${project.location.country || 'India'}` : tr("Location not set")}
             </div>
             <div className="flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
               {project?.startDate && project?.endDate
                 ? `${new Date(project.startDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })} - ${new Date(project.endDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}`
-                : 'Dates not set'}
+                : tr("Dates not set")}
             </div>
             <div className="flex items-center gap-1.5">
               <Building className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
-              {project?.type || 'General Fit-out'}
+              {project?.type || tr("General Fit-out")}
             </div>
           </>
         )}
@@ -237,9 +228,9 @@ export function InteriorProjectBanner({ projectId, project, loading }: InteriorP
                 )}
               >
                 <span>{cat.icon}</span>
-                <span>{isActive ? activeItem.label : cat.name}</span>
+                <span>{isActive ? tr(activeItem.label) : tr(cat.name)}</span>
                 <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', openCategory === cat.name && 'rotate-180')} />
-                {isActive && <motion.div layoutId="activeProjectTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[hsl(var(--primary))]" />}
+                {isActive && <motion.div layoutId="activeProjectTab" className="absolute bottom-0 start-0 end-0 h-0.5 bg-[hsl(var(--primary))]" />}
               </button>
 
               <AnimatePresence>
@@ -249,7 +240,7 @@ export function InteriorProjectBanner({ projectId, project, loading }: InteriorP
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 6, scale: 0.96 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 mt-1 z-50 min-w-[210px] py-1.5 border border-[hsl(var(--border))] rounded-xl bg-white shadow-xl"
+                    className="absolute top-full start-0 mt-1 z-50 min-w-[13.125rem] py-1.5 border border-[hsl(var(--border))] rounded-xl bg-white shadow-xl"
                   >
                     {cat.items.map((item) => {
                       const itemActive = 'exact' in item && item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + '/');
@@ -263,7 +254,7 @@ export function InteriorProjectBanner({ projectId, project, loading }: InteriorP
                             itemActive ? 'text-[hsl(var(--primary))] font-semibold bg-[hsl(var(--muted)/0.25)]' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
                           )}
                         >
-                          {item.label}
+                          {tr(item.label)}
                         </Link>
                       );
                     })}

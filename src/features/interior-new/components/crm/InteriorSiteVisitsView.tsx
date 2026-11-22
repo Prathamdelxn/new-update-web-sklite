@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Enhanced Site Visits View with Search, Pagination, and Stage Handlers
 
@@ -91,13 +92,13 @@ const { hasPermission: canDo } = usePermissions();
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search site visits..."
+              placeholder={tr("Search site visits...")}
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-8 pr-8 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+              className="w-full ps-8 pe-8 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
             />
             {searchTerm && (
               <button
@@ -126,7 +127,7 @@ const { hasPermission: canDo } = usePermissions();
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               )}
             >
-              All ({leads.length})
+              {tr("All (")}{leads.length})
             </button>
             <button
               onClick={() => {
@@ -140,7 +141,7 @@ const { hasPermission: canDo } = usePermissions();
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               )}
             >
-              Pending ({pendingCount})
+              {tr("Pending (")}{tr(pendingCount)})
             </button>
             <button
               onClick={() => {
@@ -154,7 +155,7 @@ const { hasPermission: canDo } = usePermissions();
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               )}
             >
-              Completed ({completedCount})
+              {tr("Completed (")}{tr(completedCount)})
             </button>
           </div>
         </div>
@@ -167,11 +168,11 @@ const { hasPermission: canDo } = usePermissions();
             <div className="w-12 h-12 sm:w-14 sm:h-14 bg-purple-500/10 border border-purple-500/20 text-purple-600 rounded-2xl flex items-center justify-center mb-3">
               <MapPin size={24} />
             </div>
-            <h3 className="text-sm sm:text-base font-extrabold text-[hsl(var(--foreground))] mb-1">No Site Visits Found</h3>
+            <h3 className="text-sm sm:text-base font-extrabold text-[hsl(var(--foreground))] mb-1">{tr("No Site Visits Found")}</h3>
             <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-md mx-auto">
               {searchTerm || statusFilter !== 'all'
-                ? 'No site visits matched your current filter criteria.'
-                : 'Leads moved to "Under Site Visit" or "Measurement Done" will appear here for tracking.'}
+                ? tr("No site visits matched your current filter criteria.")
+                : tr("Leads moved to \"Under Site Visit\" or \"Measurement Done\" will appear here for tracking.")}
             </p>
           </div>
         ) : (
@@ -197,40 +198,40 @@ const { hasPermission: canDo } = usePermissions();
                         </div>
                         <div className="min-w-0 flex-1">
                           <h4 
-                            className="text-xs font-bold text-[hsl(var(--foreground))] truncate max-w-[150px] sm:max-w-[220px]"
+                            className="text-xs font-bold text-[hsl(var(--foreground))] truncate max-w-[9.375rem] sm:max-w-[13.75rem]"
                             title={lead.name}
                           >
-                            {lead.name}
+                            {tr(lead.name)}
                           </h4>
-                          <div className="flex items-center gap-1.5 text-[10px]">
+                          <div className="flex items-center gap-1.5 text-[0.625rem]">
                             <span className="font-mono text-purple-600 bg-purple-500/10 px-1.5 py-0.2 rounded border border-purple-500/20 font-bold shrink-0">
-                              {lead.leadNumber || 'LD-XXXX'}
+                              {lead.leadNumber || tr("LD-XXXX")}
                             </span>
                             <span className="text-[hsl(var(--muted-foreground))]">•</span>
-                            <span className="text-[hsl(var(--muted-foreground))] truncate">{lead.mobileNumber}</span>
+                            <span className="text-[hsl(var(--muted-foreground))] truncate">{tr(lead.mobileNumber)}</span>
                           </div>
                         </div>
                       </div>
 
                       <span
                         className={cn(
-'shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border',
+'shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[0.5625rem] font-black uppercase tracking-wider border',
                           lead.siteMeasurements
                             ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                             : 'bg-purple-500/10 text-purple-600 border-purple-500/20'
                         )}
                       >
-                        {lead.siteMeasurements ? 'Measured ' : 'Pending Survey'}
+                        {lead.siteMeasurements ? tr("Measured ") : tr("Pending Survey")}
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between gap-2 text-[11px] bg-[hsl(var(--muted)/0.4)] p-2 rounded-xl border border-[hsl(var(--border)/0.5)]">
+                    <div className="flex items-center justify-between gap-2 text-[0.6875rem] bg-[hsl(var(--muted)/0.4)] p-2 rounded-xl border border-[hsl(var(--border)/0.5)]">
                       <div className="flex items-center gap-1.5 truncate">
                         <MapPin size={11} className="text-purple-500 shrink-0" />
-                        <span className="truncate text-[hsl(var(--foreground))]">{lead.projectLocation || lead.city || 'Location pending'}</span>
+                        <span className="truncate text-[hsl(var(--foreground))]">{lead.projectLocation || lead.city || tr("Location pending")}</span>
                       </div>
-                      <div className="text-[10px] text-[hsl(var(--muted-foreground))] shrink-0 font-medium">
-                        {lead.propertyType || 'Residential'}
+                      <div className="text-[0.625rem] text-[hsl(var(--muted-foreground))] shrink-0 font-medium">
+                        {lead.propertyType || tr("Residential")}
                       </div>
                     </div>
 
@@ -238,7 +239,7 @@ const { hasPermission: canDo } = usePermissions();
                       const isOverdue = !lead.siteMeasurements && new Date(resolvedScheduledDate).getTime() < Date.now();
                       return (
                         <div className={cn(
-                          "flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg border font-bold w-fit",
+                          "flex items-center gap-1.5 text-[0.625rem] px-2.5 py-1 rounded-lg border font-bold w-fit",
                           isOverdue
                             ? "text-rose-600 bg-rose-500/10 border-rose-500/30"
                             : "text-purple-700 bg-purple-500/10 border-purple-500/20"
@@ -253,8 +254,8 @@ const { hasPermission: canDo } = usePermissions();
                             })}
                           </span>
                           {isOverdue && (
-                            <span className="ml-1 text-[9px] font-black uppercase text-rose-600 bg-rose-500/20 px-1 py-0.2 rounded">
-                              Overdue
+                            <span className="ms-1 text-[0.5625rem] font-black uppercase text-rose-600 bg-rose-500/20 px-1 py-0.2 rounded">
+                              {tr("Overdue")}
                             </span>
                           )}
                         </div>
@@ -262,10 +263,10 @@ const { hasPermission: canDo } = usePermissions();
                     })()}
 
                     {(pendingSiteVisit?.remarks || lead.remarks) && (
-                      <div className="flex items-start gap-1.5 text-[11px] bg-purple-500/[0.06] border border-purple-500/20 p-2 rounded-xl text-[hsl(var(--foreground))]">
+                      <div className="flex items-start gap-1.5 text-[0.6875rem] bg-purple-500/[0.06] border border-purple-500/20 p-2 rounded-xl text-[hsl(var(--foreground))]">
                         <MessageSquare size={12} className="text-purple-600 shrink-0 mt-0.5" />
                         <p className="line-clamp-2 leading-relaxed">
-                          <span className="font-bold text-purple-700 dark:text-purple-300">Note: </span>
+                          <span className="font-bold text-purple-700 dark:text-purple-300">{tr("Note: ")}</span>
                           {pendingSiteVisit?.remarks || lead.remarks}
                         </p>
                       </div>
@@ -282,13 +283,13 @@ const { hasPermission: canDo } = usePermissions();
                               ? 'p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]'
                               : 'gap-1 px-2.5 py-1.5 bg-purple-600 text-white'
                           )}
-                          title="Edit Site Visit Measurements & Photos"
+                          title={tr("Edit Site Visit Measurements & Photos")}
                         >
                           {lead.siteMeasurements ? (
                             <Pencil size={13} className="text-purple-600" />
                           ) : (
                             <>
-                              <Ruler size={11} /> Log Survey
+                              <Ruler size={11} />{tr(" Log Survey")}
                             </>
                           )}
                         </button>
@@ -298,17 +299,17 @@ const { hasPermission: canDo } = usePermissions();
                         (Boolean(Array.isArray(lead.quotations) && lead.quotations.some((q: any) => ['accepted', 'approved', 'converted', 'signed & accepted'].includes(String(q.status).toLowerCase()))) ||
                          ['Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) ||
                          Boolean((lead as any).linkedProject)) ? (
-                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
-                            Passed
+                          <span className="text-[0.625rem] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
+                            {tr("Passed")}
                           </span>
                         ) : (
                           (canDo('crm_site_visits', 'update') || canDo('crm_drawing', 'update') || canDo('crm_drawing', 'create') || canDo('crm_requirements', 'update')) && (
                             <button
                               onClick={() => (onPassToDrawing ? onPassToDrawing(lead._id) : onPassToRequirements?.(lead._id))}
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
-                              title="Pass to 2D/3D Drawing"
+                              title={tr("Pass to 2D/3D Drawing")}
                             >
-                              Pass <ArrowRight size={11} />
+                              {tr("Pass ")}<ArrowRight size={11} />
                             </button>
                           )
                         )
@@ -321,14 +322,14 @@ const { hasPermission: canDo } = usePermissions();
 
             {/* DESKTOP TABLE VIEW (>= md) - Senior Enterprise CRM Table */}
             <div className="hidden md:block w-full overflow-hidden">
-              <table className="w-full text-left text-xs border-collapse table-fixed">
-                <thead className="bg-[hsl(var(--muted)/0.45)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] text-[11px] font-bold uppercase tracking-wider">
+              <table className="w-full text-start text-xs border-collapse table-fixed">
+                <thead className="bg-[hsl(var(--muted)/0.45)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] text-[0.6875rem] font-bold uppercase tracking-wider">
                   <tr>
-                    <th className="px-4.5 py-3 rounded-tl-2xl w-[28%]">Lead & Contact</th>
-                    <th className="px-4 py-3 w-[22%]">Property & Location</th>
-                    <th className="px-4 py-3 w-[20%]">Scheduled Date & Note</th>
-                    <th className="px-4 py-3 w-[15%]">Survey Status</th>
-                    <th className="px-4.5 py-3 text-right rounded-tr-2xl w-[15%]">Actions</th>
+                    <th className="px-4.5 py-3 rounded-ss-2xl w-[28%]">{tr("Lead & Contact")}</th>
+                    <th className="px-4 py-3 w-[22%]">{tr("Property & Location")}</th>
+                    <th className="px-4 py-3 w-[20%]">{tr("Scheduled Date & Note")}</th>
+                    <th className="px-4 py-3 w-[15%]">{tr("Survey Status")}</th>
+                    <th className="px-4.5 py-3 text-end rounded-se-2xl w-[15%]">{tr("Actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border)/0.7)] text-xs">
@@ -353,17 +354,17 @@ const { hasPermission: canDo } = usePermissions();
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span 
-                                  className="font-bold text-xs text-[hsl(var(--foreground))] group-hover:text-purple-600 transition-colors truncate max-w-[160px] lg:max-w-[220px]"
+                                  className="font-bold text-xs text-[hsl(var(--foreground))] group-hover:text-purple-600 transition-colors truncate max-w-[10rem] lg:max-w-[13.75rem]"
                                   title={lead.name}
                                 >
-                                  {lead.name}
+                                  {tr(lead.name)}
                                 </span>
-                                <span className="text-[10px] font-mono font-bold text-purple-600 bg-purple-500/10 px-1.5 py-0.2 rounded border border-purple-500/20 shrink-0">
-                                  {lead.leadNumber || 'LD-XXXX'}
+                                <span className="text-[0.625rem] font-mono font-bold text-purple-600 bg-purple-500/10 px-1.5 py-0.2 rounded border border-purple-500/20 shrink-0">
+                                  {lead.leadNumber || tr("LD-XXXX")}
                                 </span>
                               </div>
-                              <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[hsl(var(--muted-foreground))]">
-                                <span className="font-medium text-[hsl(var(--foreground))] truncate">{lead.mobileNumber}</span>
+                              <div className="flex items-center gap-2 mt-0.5 text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
+                                <span className="font-medium text-[hsl(var(--foreground))] truncate">{tr(lead.mobileNumber)}</span>
                               </div>
                             </div>
                           </div>
@@ -372,13 +373,13 @@ const { hasPermission: canDo } = usePermissions();
                         {/* 2. Location */}
                         <td className="px-4 py-3 max-w-0">
                           <div className="min-w-0 space-y-0.5">
-                            <div className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--foreground))] min-w-0" title={lead.propertyType || 'Residential'}>
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--foreground))] min-w-0" title={lead.propertyType || tr("Residential")}>
                               <Home size={12} className="text-amber-500 shrink-0" />
-                              <span className="truncate block">{lead.propertyType || 'Residential'}</span>
+                              <span className="truncate block">{lead.propertyType || tr("Residential")}</span>
                             </div>
-                            <div className="flex items-center gap-1 text-[11px] text-[hsl(var(--muted-foreground))] min-w-0" title={lead.projectLocation || lead.city || 'Location Pending'}>
+                            <div className="flex items-center gap-1 text-[0.6875rem] text-[hsl(var(--muted-foreground))] min-w-0" title={lead.projectLocation || lead.city || tr("Location Pending")}>
                               <MapPin size={11} className="shrink-0 text-purple-500" />
-                              <span className="truncate block">{lead.projectLocation || lead.city || 'Location Pending'}</span>
+                              <span className="truncate block">{lead.projectLocation || lead.city || tr("Location Pending")}</span>
                             </div>
                           </div>
                         </td>
@@ -390,7 +391,7 @@ const { hasPermission: canDo } = usePermissions();
                               const isOverdue = !lead.siteMeasurements && new Date(resolvedScheduledDate).getTime() < Date.now();
                               return (
                                 <div className={cn(
-                                  "inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-bold",
+                                  "inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[0.625rem] font-bold",
                                   isOverdue
                                     ? "bg-rose-500/10 border-rose-500/30 text-rose-600"
                                     : "bg-purple-500/10 border-purple-500/20 text-purple-700"
@@ -405,17 +406,17 @@ const { hasPermission: canDo } = usePermissions();
                                     })}
                                   </span>
                                   {isOverdue && (
-                                    <span className="ml-0.5 text-[8px] font-black uppercase text-rose-600 bg-rose-500/20 px-1 py-0.2 rounded">
-                                      Late
+                                    <span className="ms-0.5 text-[0.5rem] font-black uppercase text-rose-600 bg-rose-500/20 px-1 py-0.2 rounded">
+                                      {tr("Late")}
                                     </span>
                                   )}
                                 </div>
                               );
                             })() : (
-                              <span className="text-[11px] text-[hsl(var(--muted-foreground))] italic">Not scheduled</span>
+                              <span className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] italic">{tr("Not scheduled")}</span>
                             )}
                             {(pendingSiteVisit?.remarks || lead.remarks) && (
-                              <div className="flex items-center gap-1 text-[10px] text-purple-700 dark:text-purple-300 max-w-[200px] truncate" title={`Note: ${pendingSiteVisit?.remarks || lead.remarks}`}>
+                              <div className="flex items-center gap-1 text-[0.625rem] text-purple-700 dark:text-purple-300 max-w-[12.5rem] truncate" title={`Note: ${pendingSiteVisit?.remarks || lead.remarks}`}>
                                 <MessageSquare size={9} className="shrink-0 text-purple-600" />
                                 <span className="truncate font-medium">{pendingSiteVisit?.remarks || lead.remarks}</span>
                               </div>
@@ -427,25 +428,25 @@ const { hasPermission: canDo } = usePermissions();
                         <td className="px-4 py-3">
                           <span
                             className={cn(
-                              'inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold tracking-tight uppercase border',
+                              'inline-flex items-center px-2 py-0.5 rounded-full text-[0.5625rem] font-bold tracking-tight uppercase border',
                               lead.siteMeasurements
                                 ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                                 : 'bg-purple-500/10 text-purple-600 border-purple-500/20'
                             )}
                           >
-                            {lead.siteMeasurements ? 'Done ' : lead.status}
+                            {lead.siteMeasurements ? tr("Done ") : lead.status}
                           </span>
                         </td>
 
                         {/* 5. Actions */}
-                        <td className="px-4.5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                        <td className="px-4.5 py-3 text-end" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-1.5">
                             {lead.siteMeasurements ? (
                               (canDo('crm_site_visits', 'update')) && (
                                 <button
                                   onClick={() => onLogSiteVisit(lead._id)}
                                   className="p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs inline-flex items-center justify-center"
-                                  title="Edit Site Visit Measurements & Photos"
+                                  title={tr("Edit Site Visit Measurements & Photos")}
                                 >
                                   <Pencil size={13} className="text-purple-600" />
                                 </button>
@@ -456,7 +457,7 @@ const { hasPermission: canDo } = usePermissions();
                                   onClick={() => onLogSiteVisit(lead._id)}
                                   className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 text-white hover:bg-purple-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
                                 >
-                                  <Ruler size={11} /> + Log
+                                  <Ruler size={11} />{tr(" + Log")}
                                 </button>
                               )
                             )}
@@ -465,19 +466,19 @@ const { hasPermission: canDo } = usePermissions();
                                ['Under Drawing', 'Design Approved', 'Under BOQ Creation', 'Under Quotation', 'Negotiation', 'Booking Pending', 'Won', 'Converted'].includes(lead.status) ||
                                Boolean((lead as any).linkedProject)) ? (
                                 <span
-                                  className="inline-flex items-center gap-1 px-2 py-1 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[11px] font-bold"
-                                  title="Passed to 2D/3D Drawing"
+                                  className="inline-flex items-center gap-1 px-2 py-1 text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[0.6875rem] font-bold"
+                                  title={tr("Passed to 2D/3D Drawing")}
                                 >
-                                  Passed
+                                  {tr("Passed")}
                                 </span>
                               ) : (
                                 (canDo('crm_site_visits', 'update') || canDo('crm_drawing', 'update') || canDo('crm_drawing', 'create') || canDo('crm_requirements', 'update')) && (
                                   <button
                                     onClick={() => (onPassToDrawing ? onPassToDrawing(lead._id) : onPassToRequirements?.(lead._id))}
                                     className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                    title="Pass to 2D/3D Drawing"
+                                    title={tr("Pass to 2D/3D Drawing")}
                                   >
-                                    Pass <ArrowRight size={11} />
+                                    {tr("Pass ")}<ArrowRight size={11} />
                                   </button>
                                 )
                               ))}
@@ -486,7 +487,7 @@ const { hasPermission: canDo } = usePermissions();
                                 <button
                                   onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
                                   className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
-                                  title="Mark as Lost"
+                                  title={tr("Mark as Lost")}
                                 >
                                   <XCircle size={13} />
                                 </button>
@@ -508,13 +509,13 @@ const { hasPermission: canDo } = usePermissions();
           <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-[hsl(var(--card))] border-t border-[hsl(var(--border))] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[hsl(var(--muted-foreground))] font-medium">
               <span>
-                Showing <strong>{(currentPage - 1) * pageSize + 1}</strong> to{' '}
-                <strong>{Math.min(currentPage * pageSize, filteredLeads.length)}</strong> of{' '}
-                <strong>{filteredLeads.length}</strong> site visits
+                {tr("Showing ")}<strong>{(currentPage - 1) * pageSize + 1}</strong>{tr(" to")}{' '}
+                <strong>{Math.min(currentPage * pageSize, filteredLeads.length)}</strong>{tr(" of")}{' '}
+                <strong>{filteredLeads.length}</strong>{tr(" site visits")}
               </span>
 
-              <div className="flex items-center gap-1.5 ml-auto sm:ml-2">
-                <span>Per page:</span>
+              <div className="flex items-center gap-1.5 ms-auto sm:ms-2">
+                <span>{tr("Per page:")}</span>
                 <select
                   value={pageSize}
                   onChange={(e) => {
@@ -536,12 +537,12 @@ const { hasPermission: canDo } = usePermissions();
                   onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                   disabled={currentPage === 1}
                   className="p-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                  title="Previous Page"
+                  title={tr("Previous Page")}
                 >
                   <ChevronLeft size={15} />
                 </button>
 
-                <div className="flex items-center gap-1 px-1 overflow-x-auto max-w-[200px] sm:max-w-none">
+                <div className="flex items-center gap-1 px-1 overflow-x-auto max-w-[12.5rem] sm:max-w-none">
                   {[...Array(totalPages)].map((_, i) => {
                     const pageNum = i + 1;
                     return (
@@ -555,7 +556,7 @@ const { hasPermission: canDo } = usePermissions();
                             : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]'
                         )}
                       >
-                        {pageNum}
+                        {tr(pageNum)}
                       </button>
                     );
                   })}
@@ -565,7 +566,7 @@ const { hasPermission: canDo } = usePermissions();
                   onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
                   disabled={currentPage === totalPages}
                   className="p-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                  title="Next Page"
+                  title={tr("Next Page")}
                 >
                   <ChevronRight size={15} />
                 </button>

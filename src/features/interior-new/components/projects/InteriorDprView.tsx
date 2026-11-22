@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Daily Progress Reports (DPR) View
@@ -268,7 +269,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
   const handleSubmitDpr = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!dprDate) {
-      toast.error('Please select a DPR date');
+      toast.error(tr("Please select a DPR date"));
       return;
     }
 
@@ -307,12 +308,12 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
 
       const res = await interiorProjectService.createDpr(projectId, payload);
       if (res?.success) {
-        toast.success('Daily Progress Report submitted successfully');
+        toast.success(tr("Daily Progress Report submitted successfully"));
         setIsFormOpen(false);
         queryClient.invalidateQueries({ queryKey: ['project-site-logs', projectId] });
       }
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || err?.message || 'Submission failed');
+      toast.error(err?.response?.data?.error || err?.message || tr("Submission failed"));
     } finally {
       setSubmitting(false);
     }
@@ -325,7 +326,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
     try {
       setDownloadingId(dpr._id || 'direct');
       await downloadDprPdf(dpr, project);
-      toast.success('DPR PDF generated & downloaded successfully');
+      toast.success(tr("DPR PDF generated & downloaded successfully"));
     } catch (err: any) {
       console.error('Error generating PDF:', err);
       toast.error('Failed to download PDF: ' + (err?.message || err));
@@ -350,9 +351,9 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
     });
 
     const ok = await confirm({
-      title: 'Delete Daily Progress Report',
-      message: `Are you sure you want to delete the DPR recorded for ${formattedDate}? This action cannot be undone.`,
-      confirmText: 'Delete Report',
+      title: tr("Delete Daily Progress Report"),
+      message: tr("Are you sure you want to delete the DPR recorded for {{formattedDate}}? This action cannot be undone.", { formattedDate: formattedDate }),
+      confirmText: tr("Delete Report"),
       type: 'danger',
     });
 
@@ -361,11 +362,11 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
     try {
       setDeletingId(dpr._id);
       await interiorProjectService.deleteDpr(projectId, dpr._id);
-      toast.success('DPR report deleted successfully');
+      toast.success(tr("DPR report deleted successfully"));
       queryClient.invalidateQueries({ queryKey: ['project-site-logs', projectId] });
     } catch (err: any) {
       console.error('Failed to delete DPR:', err);
-      toast.error(err?.response?.data?.error || 'Failed to delete DPR report');
+      toast.error(err?.response?.data?.error || tr("Failed to delete DPR report"));
     } finally {
       setDeletingId(null);
     }
@@ -386,7 +387,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
       siteInstructions: '',
     };
     await downloadDprPdf(blankDpr, project);
-    toast.success('Blank DPR template downloaded');
+    toast.success(tr("Blank DPR template downloaded"));
   };
 
   return (
@@ -395,26 +396,26 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[hsl(var(--border))] pb-5">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Daily Progress Reports (DPR)</h2>
+            <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">{tr("Daily Progress Reports (DPR)")}</h2>
             <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20">
-              SkyStruct Lite
+              {tr("SkyStruct Lite")}
             </span>
           </div>
           <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
-            Site log, manpower status, material receipt, tomorrow planning & PDF generation for{' '}
-            <strong className="text-[hsl(var(--foreground))]">{project?.name || 'Project'}</strong>.
+            {tr("Site log, manpower status, material receipt, tomorrow planning & PDF generation for")}{' '}
+            <strong className="text-[hsl(var(--foreground))]">{project?.name || tr("Project")}</strong>.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleDownloadBlankTemplate} className="gap-1.5 text-xs">
             <Download className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Blank Template PDF</span>
+            <span className="hidden md:inline">{tr("Blank Template PDF")}</span>
           </Button>
           {canDo('dpr', 'create') && (
             <Button onClick={handleOpenCreateForm} className="gap-1.5">
               <Plus className="w-4 h-4" />
-              Log New DPR
+              {tr("Log New DPR")}
             </Button>
           )}
         </div>
@@ -424,21 +425,21 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-16 gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-[hsl(var(--primary))]" />
-          <p className="text-sm text-[hsl(var(--muted-foreground))]">Loading Daily Progress Reports...</p>
+          <p className="text-sm text-[hsl(var(--muted-foreground))]">{tr("Loading Daily Progress Reports...")}</p>
         </div>
       ) : dprs.length === 0 ? (
         <Card className="p-12 text-center border-dashed">
           <div className="mx-auto w-14 h-14 rounded-2xl bg-[hsl(var(--primary)/0.1)] flex items-center justify-center text-[hsl(var(--primary))] mb-4">
             <FileText className="w-7 h-7" />
           </div>
-          <h3 className="text-base font-bold text-[hsl(var(--foreground))] mb-1">No DPRs Recorded Yet</h3>
+          <h3 className="text-base font-bold text-[hsl(var(--foreground))] mb-1">{tr("No DPRs Recorded Yet")}</h3>
           <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-md mx-auto mb-6">
-            Log site manpower, ongoing work progress, materials received, and tomorrow&apos;s planning. Click below to generate your first official DPR report.
+            {tr("Log site manpower, ongoing work progress, materials received, and tomorrow's planning. Click below to generate your first official DPR report.")}
           </p>
           {canDo('dpr', 'create') && (
             <Button onClick={handleOpenCreateForm} className="gap-2">
               <Plus className="w-4 h-4" />
-              Create First DPR
+              {tr("Create First DPR")}
             </Button>
           )}
         </Card>
@@ -475,11 +476,11 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                     <div className="flex items-center gap-3">
                       <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
-                        <span className="text-sm font-semibold">{dateFormatted}</span>
+                        <span className="text-sm font-semibold">{tr(dateFormatted)}</span>
                       </div>
                       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[hsl(var(--muted)/0.5)] text-xs text-[hsl(var(--foreground))]">
                         <CloudSun className="w-3.5 h-3.5 text-amber-500" />
-                        <span>{dpr.weather || 'Sunny'}</span>
+                        <span>{dpr.weather || tr("Sunny")}</span>
                       </div>
                     </div>
 
@@ -492,7 +493,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                         className="gap-1.5 text-xs h-8"
                       >
                         <Eye className="w-3.5 h-3.5" />
-                        Preview Sheet
+                        {tr("Preview Sheet")}
                       </Button>
                       {canDo('dpr', 'export') && (
                         <Button
@@ -502,7 +503,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                           className="gap-1.5 text-xs h-8"
                         >
                           <Printer className="w-3.5 h-3.5" />
-                          Print
+                          {tr("Print")}
                         </Button>
                       )}
                       {canDo('dpr', 'export') && (
@@ -517,7 +518,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                           ) : (
                             <Download className="w-3.5 h-3.5" />
                           )}
-                          <span>Download PDF</span>
+                          <span>{tr("Download PDF")}</span>
                         </Button>
                       )}
                       {canDo('dpr', 'delete') && (
@@ -527,7 +528,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                           onClick={() => handleDeleteDpr(dpr)}
                           disabled={deletingId === dpr._id}
                           className="text-xs h-8 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
-                          title="Delete DPR"
+                          title={tr("Delete DPR")}
                         >
                           {deletingId === dpr._id ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -542,34 +543,34 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                   {/* Summary Metric Chips */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="p-3 rounded-xl bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))]">
-                      <p className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider">Total Manpower</p>
+                      <p className="text-[0.625rem] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider">{tr("Total Manpower")}</p>
                       <p className="text-base font-extrabold text-[hsl(var(--foreground))] mt-0.5 flex items-center gap-1.5">
                         <Users className="w-4 h-4 text-blue-500" />
-                        {totalWorkers} workers
+                        {tr(totalWorkers)}{tr(" workers")}
                       </p>
                     </div>
 
                     <div className="p-3 rounded-xl bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))]">
-                      <p className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider">Ongoing Works</p>
+                      <p className="text-[0.625rem] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider">{tr("Ongoing Works")}</p>
                       <p className="text-base font-extrabold text-[hsl(var(--foreground))] mt-0.5 flex items-center gap-1.5">
                         <ClipboardList className="w-4 h-4 text-emerald-500" />
-                        {labourList.length} activities
+                        {labourList.length}{tr(" activities")}
                       </p>
                     </div>
 
                     <div className="p-3 rounded-xl bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))]">
-                      <p className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider">Materials Received</p>
+                      <p className="text-[0.625rem] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider">{tr("Materials Received")}</p>
                       <p className="text-base font-extrabold text-[hsl(var(--foreground))] mt-0.5 flex items-center gap-1.5">
                         <PackageCheck className="w-4 h-4 text-purple-500" />
-                        {matReceiptCount} items
+                        {tr(matReceiptCount)}{tr(" items")}
                       </p>
                     </div>
 
                     <div className="p-3 rounded-xl bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))]">
-                      <p className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider">Tomorrow Planned</p>
+                      <p className="text-[0.625rem] uppercase font-bold text-[hsl(var(--muted-foreground))] tracking-wider">{tr("Tomorrow Planned")}</p>
                       <p className="text-base font-extrabold text-[hsl(var(--foreground))] mt-0.5 flex items-center gap-1.5">
                         <CalendarClock className="w-4 h-4 text-amber-500" />
-                        {tomorrowCount} tasks
+                        {tr(tomorrowCount)}{tr(" tasks")}
                       </p>
                     </div>
                   </div>
@@ -577,7 +578,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                   {/* Labour Activities Preview */}
                   <div className="space-y-2">
                     <h4 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                      Labour Report & Ongoing Work Status
+                      {tr("Labour Report & Ongoing Work Status")}
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                       {dpr.labourReports && dpr.labourReports.length > 0 ? (
@@ -587,15 +588,15 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                             className="p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-xs space-y-1.5"
                           >
                             <div className="flex items-center justify-between">
-                              <span className="font-bold text-[hsl(var(--foreground))]">{row.agencyActivity}</span>
-                              <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold text-[10px]">
-                                {row.statusAsPerBarChart || 'In Progress'}
+                              <span className="font-bold text-[hsl(var(--foreground))]">{tr(row.agencyActivity)}</span>
+                              <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold text-[0.625rem]">
+                                {row.statusAsPerBarChart || tr("In Progress")}
                               </span>
                             </div>
-                            <p className="text-[hsl(var(--muted-foreground))]">{row.currentWork}</p>
-                            <div className="text-[10px] text-[hsl(var(--muted-foreground))] flex gap-3 pt-0.5">
-                              <span>Skilled: <strong className="text-[hsl(var(--foreground))]">{row.skilled || 0}</strong></span>
-                              <span>Unskilled: <strong className="text-[hsl(var(--foreground))]">{row.unskilled || 0}</strong></span>
+                            <p className="text-[hsl(var(--muted-foreground))]">{tr(row.currentWork)}</p>
+                            <div className="text-[0.625rem] text-[hsl(var(--muted-foreground))] flex gap-3 pt-0.5">
+                              <span>{tr("Skilled: ")}<strong className="text-[hsl(var(--foreground))]">{row.skilled || 0}</strong></span>
+                              <span>{tr("Unskilled: ")}<strong className="text-[hsl(var(--foreground))]">{row.unskilled || 0}</strong></span>
                             </div>
                           </div>
                         ))
@@ -605,12 +606,12 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                           className="p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-xs space-y-1.5"
                         >
                           <div className="flex items-center justify-between">
-                            <span className="font-bold text-[hsl(var(--foreground))]">{act.category}</span>
-                            <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 font-semibold text-[10px]">
-                              {act.actualProgress}%
+                            <span className="font-bold text-[hsl(var(--foreground))]">{tr(act.category)}</span>
+                            <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 font-semibold text-[0.625rem]">
+                              {tr(act.actualProgress)}%
                             </span>
                           </div>
-                          <p className="text-[hsl(var(--muted-foreground))]">{act.description}</p>
+                          <p className="text-[hsl(var(--muted-foreground))]">{tr(act.description)}</p>
                         </div>
                       ))}
                     </div>
@@ -621,9 +622,9 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                     <div className="p-3 rounded-lg bg-[hsl(var(--muted)/0.2)] border border-[hsl(var(--border))] text-xs">
                       <div className="font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5 mb-1">
                         <MessageSquareQuote className="w-3.5 h-3.5 text-blue-500" />
-                        Site Instructions / MOMs:
+                        {tr("Site Instructions / MOMs:")}
                       </div>
-                      <p className="text-[hsl(var(--muted-foreground))] whitespace-pre-line">{dpr.siteInstructions}</p>
+                      <p className="text-[hsl(var(--muted-foreground))] whitespace-pre-line">{tr(dpr.siteInstructions)}</p>
                     </div>
                   )}
                 </CardContent>
@@ -652,9 +653,9 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                     <FileText className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-[hsl(var(--foreground))]">Log Daily Progress Report (DPR)</h3>
+                    <h3 className="text-base font-bold text-[hsl(var(--foreground))]">{tr("Log Daily Progress Report (DPR)")}</h3>
                     <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                     SkyStruct Lite • {project?.name || 'Site Project'}
+                     {tr("SkyStruct Lite • ")}{project?.name || tr("Site Project")}
                     </p>
                   </div>
                 </div>
@@ -666,11 +667,11 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                     className="h-8 text-xs text-blue-600 border-blue-200 hover:bg-blue-50 cursor-pointer"
                     onClick={() => {
                       populateFromLiveProject();
-                      toast.success('Live tasks and progress synchronized!');
+                      toast.success(tr("Live tasks and progress synchronized!"));
                     }}
                   >
-                    <Sparkles className="w-3.5 h-3.5 mr-1 text-blue-600" />
-                    Sync Live Data
+                    <Sparkles className="w-3.5 h-3.5 me-1 text-blue-600" />
+                    {tr("Sync Live Data")}
                   </Button>
                   <button
                     type="button"
@@ -693,7 +694,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                       : 'border-transparent text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
                   }`}
                 >
-                  1. Labour & Works ({labourReports.length})
+                  {tr("1. Labour & Works (")}{labourReports.length})
                 </button>
                 <button
                   type="button"
@@ -704,7 +705,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                       : 'border-transparent text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
                   }`}
                 >
-                  2. Material Receipts ({materialReceipts.length})
+                  {tr("2. Material Receipts (")}{materialReceipts.length})
                 </button>
                 <button
                   type="button"
@@ -715,7 +716,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                       : 'border-transparent text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
                   }`}
                 >
-                  3. Tomorrow&apos;s Plan ({tomorrowPlanning.length})
+                  {tr("3. Tomorrow's Plan (")}{tomorrowPlanning.length})
                 </button>
                 <button
                   type="button"
@@ -726,7 +727,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                       : 'border-transparent text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
                   }`}
                 >
-                  4. Requirements & MOMs
+                  {tr("4. Requirements & MOMs")}
                 </button>
               </div>
 
@@ -736,7 +737,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                   {/* Basic Info Bar (Always Visible) */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3.5 rounded-xl bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))]">
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-[hsl(var(--foreground))]">DPR Date *</label>
+                      <label className="text-xs font-bold text-[hsl(var(--foreground))]">{tr("DPR Date *")}</label>
                       <Input
                         required
                         type="date"
@@ -746,17 +747,17 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-[hsl(var(--foreground))]">Weather Conditions</label>
+                      <label className="text-xs font-bold text-[hsl(var(--foreground))]">{tr("Weather Conditions")}</label>
                       <select
                         className="w-full px-3 py-2 text-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none"
                         value={weather}
                         onChange={(e) => setWeather(e.target.value)}
                       >
-                        <option value="Sunny">Sunny</option>
-                        <option value="Clear / Pleasant">Clear / Pleasant</option>
-                        <option value="Cloudy">Cloudy</option>
-                        <option value="Rainy">Rainy</option>
-                        <option value="Heavy Wind / Thunderstorm">Heavy Wind / Thunderstorm</option>
+                        <option value="Sunny">{tr("Sunny")}</option>
+                        <option value="Clear / Pleasant">{tr("Clear / Pleasant")}</option>
+                        <option value="Cloudy">{tr("Cloudy")}</option>
+                        <option value="Rainy">{tr("Rainy")}</option>
+                        <option value="Heavy Wind / Thunderstorm">{tr("Heavy Wind / Thunderstorm")}</option>
                       </select>
                     </div>
                   </div>
@@ -767,10 +768,10 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div>
                           <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))]">
-                            Labour Report & Ongoing Work Status
+                            {tr("Labour Report & Ongoing Work Status")}
                           </h4>
-                          <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                            Auto-aligned with WBS elements, assigned members, and live activity completion status.
+                          <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
+                            {tr("Auto-aligned with WBS elements, assigned members, and live activity completion status.")}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -782,11 +783,11 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                             className="gap-1.5 text-xs text-blue-600 border-blue-200 bg-blue-50/50 hover:bg-blue-50"
                           >
                             <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-                            Auto-Fill from Project
+                            {tr("Auto-Fill from Project")}
                           </Button>
                           <Button type="button" variant="outline" size="sm" onClick={addLabourRow} className="gap-1 text-xs">
                             <Plus className="w-3.5 h-3.5" />
-                            Add Row
+                            {tr("Add Row")}
                           </Button>
                         </div>
                       </div>
@@ -798,7 +799,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                             className="p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.15)] space-y-3 relative"
                           >
                             <div className="flex items-center justify-between text-xs font-bold text-[hsl(var(--muted-foreground))]">
-                              <span>Entry #{idx + 1}</span>
+                              <span>{tr("Entry #")}{idx + 1}</span>
                               {labourReports.length > 1 && (
                                 <button
                                   type="button"
@@ -813,8 +814,8 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                             {/* Quick Select from Project Tasks */}
                             {tasks.length > 0 && (
                               <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
-                                  Link to Project Activity / WBS
+                                <label className="text-[0.625rem] font-bold text-blue-600 uppercase tracking-wider">
+                                  {tr("Link to Project Activity / WBS")}
                                 </label>
                                 <select
                                   className="w-full px-3 py-1.5 text-xs rounded-lg border border-blue-200 bg-blue-50/30 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
@@ -845,14 +846,14 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                                     setLabourReports(updated);
                                   }}
                                 >
-                                  <option value="">Choose an existing activity to auto-fill...</option>
+                                  <option value="">{tr("Choose an existing activity to auto-fill...")}</option>
                                   {tasks.map((t: any) => {
                                     const wbsName = t.packageId?.name ? `[${t.packageId.name}] ` : '';
                                     const statusLabel = t.status === 'completed' ? 'Completed' : t.status === 'in_progress' ? 'In Progress' : 'To Do';
                                     const assigneeLabel = t.assignees?.[0] ? ` • ${t.assignees[0].firstName || t.assignees[0].name || ''}` : '';
                                     return (
                                       <option key={t._id} value={t._id}>
-                                        {wbsName}{t.name} ({statusLabel}{assigneeLabel})
+                                        {tr(wbsName)}{tr(t.name)} ({tr(statusLabel)}{tr(assigneeLabel)})
                                       </option>
                                     );
                                   })}
@@ -862,31 +863,31 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                               <div className="sm:col-span-2 space-y-1">
-                                <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">WBS Element & Activity *</label>
+                                <label className="text-[0.6875rem] font-semibold text-[hsl(var(--foreground))]">{tr("WBS Element & Activity *")}</label>
                                 <Input
                                   required
-                                  placeholder="e.g. [Kitchen Furniture] Base Cabinets Assembly"
+                                  placeholder={tr("e.g. [Kitchen Furniture] Base Cabinets Assembly")}
                                   value={row.agencyActivity}
                                   onChange={(e) => updateLabourRow(idx, 'agencyActivity', e.target.value)}
                                 />
                               </div>
                               <div className="grid grid-cols-2 gap-2">
                                 <div className="space-y-1">
-                                  <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">Skilled</label>
+                                  <label className="text-[0.6875rem] font-semibold text-[hsl(var(--foreground))]">{tr("Skilled")}</label>
                                   <Input
                                     type="number"
                                     min={0}
-                                    placeholder="Skilled"
+                                    placeholder={tr("Skilled")}
                                     value={row.skilled}
                                     onChange={(e) => updateLabourRow(idx, 'skilled', parseInt(e.target.value) || 0)}
                                   />
                                 </div>
                                 <div className="space-y-1">
-                                  <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">Unskilled</label>
+                                  <label className="text-[0.6875rem] font-semibold text-[hsl(var(--foreground))]">{tr("Unskilled")}</label>
                                   <Input
                                     type="number"
                                     min={0}
-                                    placeholder="Unskilled"
+                                    placeholder={tr("Unskilled")}
                                     value={row.unskilled}
                                     onChange={(e) => updateLabourRow(idx, 'unskilled', parseInt(e.target.value) || 0)}
                                   />
@@ -896,18 +897,18 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                               <div className="sm:col-span-2 space-y-1">
-                                <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">Current Work / Assignees *</label>
+                                <label className="text-[0.6875rem] font-semibold text-[hsl(var(--foreground))]">{tr("Current Work / Assignees *")}</label>
                                 <Input
                                   required
-                                  placeholder="e.g. Assigned: John Doe • Living room cabinet installation"
+                                  placeholder={tr("e.g. Assigned: John Doe • Living room cabinet installation")}
                                   value={row.currentWork}
                                   onChange={(e) => updateLabourRow(idx, 'currentWork', e.target.value)}
                                 />
                               </div>
                               <div className="space-y-1">
-                                <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">Completion Status</label>
+                                <label className="text-[0.6875rem] font-semibold text-[hsl(var(--foreground))]">{tr("Completion Status")}</label>
                                 <Input
-                                  placeholder="e.g. Completed (100%) / In Progress (60%)"
+                                  placeholder={tr("e.g. Completed (100%) / In Progress (60%)")}
                                   value={row.statusAsPerBarChart}
                                   onChange={(e) => updateLabourRow(idx, 'statusAsPerBarChart', e.target.value)}
                                 />
@@ -925,21 +926,21 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                       <div className="flex items-center justify-between">
                         <div>
                           <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))]">
-                            Material Receipt Details
+                            {tr("Material Receipt Details")}
                           </h4>
-                          <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                            Log goods / materials delivered to site with challan & receipt numbers.
+                          <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
+                            {tr("Log goods / materials delivered to site with challan & receipt numbers.")}
                           </p>
                         </div>
                         <Button type="button" variant="outline" size="sm" onClick={addMaterialReceiptRow} className="gap-1 text-xs">
                           <Plus className="w-3.5 h-3.5" />
-                          Add Receipt
+                          {tr("Add Receipt")}
                         </Button>
                       </div>
 
                       {materialReceipts.length === 0 ? (
                         <div className="p-6 text-center border border-dashed rounded-xl text-xs text-[hsl(var(--muted-foreground))]">
-                          No materials delivered today. Click &quot;Add Receipt&quot; if site received materials.
+                          {tr("No materials delivered today. Click \"Add Receipt\" if site received materials.")}
                         </div>
                       ) : (
                         <div className="space-y-3">
@@ -949,7 +950,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                               className="p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.15)] space-y-3 relative"
                             >
                               <div className="flex items-center justify-between text-xs font-bold text-[hsl(var(--muted-foreground))]">
-                                <span>Material Item #{idx + 1}</span>
+                                <span>{tr("Material Item #")}{idx + 1}</span>
                                 <button
                                   type="button"
                                   onClick={() => removeMaterialReceiptRow(idx)}
@@ -961,25 +962,25 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
 
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div className="space-y-1">
-                                  <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">Name of Supplier</label>
+                                  <label className="text-[0.6875rem] font-semibold text-[hsl(var(--foreground))]">{tr("Name of Supplier")}</label>
                                   <Input
-                                    placeholder="e.g. Sri Balaji Hardware"
+                                    placeholder={tr("e.g. Sri Balaji Hardware")}
                                     value={row.supplierName}
                                     onChange={(e) => updateMaterialReceiptRow(idx, 'supplierName', e.target.value)}
                                   />
                                 </div>
                                 <div className="space-y-1">
-                                  <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">Delivery Challan No</label>
+                                  <label className="text-[0.6875rem] font-semibold text-[hsl(var(--foreground))]">{tr("Delivery Challan No")}</label>
                                   <Input
-                                    placeholder="e.g. DC-1049"
+                                    placeholder={tr("e.g. DC-1049")}
                                     value={row.challanNo}
                                     onChange={(e) => updateMaterialReceiptRow(idx, 'challanNo', e.target.value)}
                                   />
                                 </div>
                                 <div className="space-y-1">
-                                  <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">Material Receipt No</label>
+                                  <label className="text-[0.6875rem] font-semibold text-[hsl(var(--foreground))]">{tr("Material Receipt No")}</label>
                                   <Input
-                                    placeholder="e.g. MR-084"
+                                    placeholder={tr("e.g. MR-084")}
                                     value={row.receiptNo}
                                     onChange={(e) => updateMaterialReceiptRow(idx, 'receiptNo', e.target.value)}
                                   />
@@ -988,23 +989,23 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
 
                               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                                 <div className="sm:col-span-2 space-y-1">
-                                  <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">Material Details</label>
+                                  <label className="text-[0.6875rem] font-semibold text-[hsl(var(--foreground))]">{tr("Material Details")}</label>
                                   <Input
-                                    placeholder="e.g. 18mm Marine Plywood (BWP Grade)"
+                                    placeholder={tr("e.g. 18mm Marine Plywood (BWP Grade)")}
                                     value={row.materialDetails}
                                     onChange={(e) => updateMaterialReceiptRow(idx, 'materialDetails', e.target.value)}
                                   />
                                 </div>
                                 <div className="space-y-1">
-                                  <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">UOM</label>
+                                  <label className="text-[0.6875rem] font-semibold text-[hsl(var(--foreground))]">{tr("UOM")}</label>
                                   <Input
-                                    placeholder="e.g. Sheets / Nos / Bags"
+                                    placeholder={tr("e.g. Sheets / Nos / Bags")}
                                     value={row.uom}
                                     onChange={(e) => updateMaterialReceiptRow(idx, 'uom', e.target.value)}
                                   />
                                 </div>
                                 <div className="space-y-1">
-                                  <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">Qty</label>
+                                  <label className="text-[0.6875rem] font-semibold text-[hsl(var(--foreground))]">{tr("Qty")}</label>
                                   <Input
                                     placeholder="e.g. 20"
                                     value={row.qty}
@@ -1025,15 +1026,15 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                       <div className="flex items-center justify-between">
                         <div>
                           <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))]">
-                            Tomorrow&apos;s Planning
+                            {tr("Tomorrow's Planning")}
                           </h4>
-                          <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                            Schedule targets, agency manpower requirements, and potential site concerns.
+                          <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
+                            {tr("Schedule targets, agency manpower requirements, and potential site concerns.")}
                           </p>
                         </div>
                         <Button type="button" variant="outline" size="sm" onClick={addTomorrowPlanningRow} className="gap-1 text-xs">
                           <Plus className="w-3.5 h-3.5" />
-                          Add Plan Row
+                          {tr("Add Plan Row")}
                         </Button>
                       </div>
 
@@ -1044,7 +1045,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                             className="p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.15)] space-y-3 relative"
                           >
                             <div className="flex items-center justify-between text-xs font-bold text-[hsl(var(--muted-foreground))]">
-                              <span>Tomorrow Target #{idx + 1}</span>
+                              <span>{tr("Tomorrow Target #")}{idx + 1}</span>
                               {tomorrowPlanning.length > 1 && (
                                 <button
                                   type="button"
@@ -1059,8 +1060,8 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                             {/* Quick Select from Project Tasks */}
                             {tasks.length > 0 && (
                               <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
-                                  Link to Project Activity / WBS
+                                <label className="text-[0.625rem] font-bold text-blue-600 uppercase tracking-wider">
+                                  {tr("Link to Project Activity / WBS")}
                                 </label>
                                 <select
                                   className="w-full px-3 py-1.5 text-xs rounded-lg border border-blue-200 bg-blue-50/30 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
@@ -1080,14 +1081,14 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                                     setTomorrowPlanning(updated);
                                   }}
                                 >
-                                  <option value="">Choose an upcoming activity to auto-fill...</option>
+                                  <option value="">{tr("Choose an upcoming activity to auto-fill...")}</option>
                                   {tasks.map((t: any) => {
                                     const wbsName = t.packageId?.name ? `[${t.packageId.name}] ` : '';
                                     const statusLabel = t.status === 'completed' ? 'Completed' : t.status === 'in_progress' ? 'In Progress' : 'To Do';
                                     const assigneeLabel = t.assignees?.[0] ? ` • ${t.assignees[0].firstName || t.assignees[0].name || ''}` : '';
                                     return (
                                       <option key={t._id} value={t._id}>
-                                        {wbsName}{t.name} ({statusLabel}{assigneeLabel})
+                                        {tr(wbsName)}{tr(t.name)} ({tr(statusLabel)}{tr(assigneeLabel)})
                                       </option>
                                     );
                                   })}
@@ -1097,30 +1098,30 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                               <div className="sm:col-span-2 space-y-1">
-                                <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">Agency - Activity</label>
+                                <label className="text-[0.6875rem] font-semibold text-[hsl(var(--foreground))]">{tr("Agency - Activity")}</label>
                                 <Input
-                                  placeholder="e.g. [False Ceiling] GI Channel Fixing"
+                                  placeholder={tr("e.g. [False Ceiling] GI Channel Fixing")}
                                   value={row.agencyActivity}
                                   onChange={(e) => updateTomorrowPlanningRow(idx, 'agencyActivity', e.target.value)}
                                 />
                               </div>
                               <div className="grid grid-cols-2 gap-2">
                                 <div className="space-y-1">
-                                  <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">Skilled Req</label>
+                                  <label className="text-[0.6875rem] font-semibold text-[hsl(var(--foreground))]">{tr("Skilled Req")}</label>
                                   <Input
                                     type="number"
                                     min={0}
-                                    placeholder="Skilled"
+                                    placeholder={tr("Skilled")}
                                     value={row.skilled}
                                     onChange={(e) => updateTomorrowPlanningRow(idx, 'skilled', parseInt(e.target.value) || 0)}
                                   />
                                 </div>
                                 <div className="space-y-1">
-                                  <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">Unskilled Req</label>
+                                  <label className="text-[0.6875rem] font-semibold text-[hsl(var(--foreground))]">{tr("Unskilled Req")}</label>
                                   <Input
                                     type="number"
                                     min={0}
-                                    placeholder="Unskilled"
+                                    placeholder={tr("Unskilled")}
                                     value={row.unskilled}
                                     onChange={(e) => updateTomorrowPlanningRow(idx, 'unskilled', parseInt(e.target.value) || 0)}
                                   />
@@ -1130,17 +1131,17 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                               <div className="sm:col-span-2 space-y-1">
-                                <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">Targeted Works</label>
+                                <label className="text-[0.6875rem] font-semibold text-[hsl(var(--foreground))]">{tr("Targeted Works")}</label>
                                 <Input
-                                  placeholder="e.g. Master Bedroom perimeter GI channel fixing"
+                                  placeholder={tr("e.g. Master Bedroom perimeter GI channel fixing")}
                                   value={row.targetedWorks}
                                   onChange={(e) => updateTomorrowPlanningRow(idx, 'targetedWorks', e.target.value)}
                                 />
                               </div>
                               <div className="space-y-1">
-                                <label className="text-[11px] font-semibold text-[hsl(var(--foreground))]">Remark / Concern</label>
+                                <label className="text-[0.6875rem] font-semibold text-[hsl(var(--foreground))]">{tr("Remark / Concern")}</label>
                                 <Input
-                                  placeholder="e.g. Require drawing confirmation"
+                                  placeholder={tr("e.g. Require drawing confirmation")}
                                   value={row.remarkConcern}
                                   onChange={(e) => updateTomorrowPlanningRow(idx, 'remarkConcern', e.target.value)}
                                 />
@@ -1160,15 +1161,15 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                         <div className="flex items-center justify-between">
                           <div>
                             <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))]">
-                              Material Requirement (Site Requisition)
+                              {tr("Material Requirement (Site Requisition)")}
                             </h4>
-                            <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                              Materials requested for upcoming days on site.
+                            <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
+                              {tr("Materials requested for upcoming days on site.")}
                             </p>
                           </div>
                           <Button type="button" variant="outline" size="sm" onClick={addMaterialRequirementRow} className="gap-1 text-xs">
                             <Plus className="w-3.5 h-3.5" />
-                            Add Item
+                            {tr("Add Item")}
                           </Button>
                         </div>
 
@@ -1178,21 +1179,21 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                               <span className="text-xs font-bold text-[hsl(var(--muted-foreground))] w-5 text-center">{idx + 1}</span>
                               <div className="flex-1">
                                 <Input
-                                  placeholder="Material Description (e.g. 1mm Laminate L-904)"
+                                  placeholder={tr("Material Description (e.g. 1mm Laminate L-904)")}
                                   value={row.materialDescription}
                                   onChange={(e) => updateMaterialRequirementRow(idx, 'materialDescription', e.target.value)}
                                 />
                               </div>
                               <div className="w-24">
                                 <Input
-                                  placeholder="UOM"
+                                  placeholder={tr("UOM")}
                                   value={row.uom}
                                   onChange={(e) => updateMaterialRequirementRow(idx, 'uom', e.target.value)}
                                 />
                               </div>
                               <div className="w-20">
                                 <Input
-                                  placeholder="Qty"
+                                  placeholder={tr("Qty")}
                                   value={row.qty}
                                   onChange={(e) => updateMaterialRequirementRow(idx, 'qty', e.target.value)}
                                 />
@@ -1216,11 +1217,11 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <label className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
                             <MessageSquareQuote className="w-3.5 h-3.5 text-blue-600" />
-                            5. Minutes of Meeting (MOM) & Directives
+                            {tr("5. Minutes of Meeting (MOM) & Directives")}
                           </label>
                           {moms.length > 0 && (
                             <select
-                              className="text-[11px] px-2.5 py-1 border border-blue-200 rounded-lg bg-blue-50/50 text-blue-900 focus:outline-none cursor-pointer"
+                              className="text-[0.6875rem] px-2.5 py-1 border border-blue-200 rounded-lg bg-blue-50/50 text-blue-900 focus:outline-none cursor-pointer"
                               onChange={(e) => {
                                 const selectedMom = moms.find((m: any) => m._id === e.target.value);
                                 if (selectedMom) {
@@ -1228,15 +1229,15 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                                     selectedMom.actionItems?.length ? '\nAction Items: ' + selectedMom.actionItems.map((a: any) => `• ${a.description} [${a.status || 'open'}]`).join('; ') : ''
                                   }`;
                                   setSiteInstructions(text);
-                                  toast.success(`Inserted MOM: ${selectedMom.title}`);
+                                  toast.success(tr("Inserted MOM: {{title}}", { title: selectedMom.title }));
                                 }
                               }}
                               defaultValue=""
                             >
-                              <option value="" disabled>Insert from Project MOMs...</option>
+                              <option value="" disabled>{tr("Insert from Project MOMs...")}</option>
                               {moms.map((m: any) => (
                                 <option key={m._id} value={m._id}>
-                                  {m.title} ({new Date(m.date).toLocaleDateString('en-IN')})
+                                  {tr(m.title)} ({new Date(m.date).toLocaleDateString('en-IN')})
                                 </option>
                               ))}
                             </select>
@@ -1247,7 +1248,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                           value={siteInstructions}
                           onChange={(e) => setSiteInstructions(e.target.value)}
                           className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none font-sans"
-                          placeholder="Official Minutes of Meeting directives, decisions, and site action points..."
+                          placeholder={tr("Official Minutes of Meeting directives, decisions, and site action points...")}
                         />
                       </div>
                     </div>
@@ -1268,7 +1269,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                           else if (activeFormTab === 'receipts') setActiveFormTab('labour');
                         }}
                       >
-                        Previous
+                        {tr("Previous")}
                       </Button>
                     )}
                     {activeFormTab !== 'requirements' && (
@@ -1282,18 +1283,18 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
                           else if (activeFormTab === 'tomorrow') setActiveFormTab('requirements');
                         }}
                       >
-                        Next Section
+                        {tr("Next Section")}
                       </Button>
                     )}
                   </div>
 
                   <div className="flex items-center gap-2">
                     <Button variant="outline" type="button" onClick={() => setIsFormOpen(false)}>
-                      Cancel
+                      {tr("Cancel")}
                     </Button>
                     <Button type="submit" disabled={submitting} className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
                       {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-                      <span>Save & Generate DPR</span>
+                      <span>{tr("Save & Generate DPR")}</span>
                     </Button>
                   </div>
                 </div>

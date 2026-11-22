@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Interior CRM Quotation Builder Modal
@@ -322,7 +323,7 @@ export function InteriorQuotationBuilderModal({
     setSelectedCategoryNames(catMap);
     setSelectedBoqItemIds(itemMap);
     populateQuotationItems(itemMap);
-    toast.success('Selected all BOQ categories and items.');
+    toast.success(tr("Selected all BOQ categories and items."));
   };
 
   // Item Table Handlers
@@ -372,35 +373,35 @@ export function InteriorQuotationBuilderModal({
     e.preventDefault();
 
     if (!quotationTitle.trim()) {
-      setTitleError('Please enter a quotation title');
+      setTitleError(tr("Please enter a quotation title"));
       titleInputRef.current?.focus();
       return;
     }
     if (quotationTitle.trim().length > 60) {
-      setTitleError('Quotation title cannot exceed 60 characters');
+      setTitleError(tr("Quotation title cannot exceed 60 characters"));
       titleInputRef.current?.focus();
       return;
     }
     if (items.length === 0 || items.every((i) => !i.description.trim())) {
-      return toast.error('Please add at least one line item to the quotation.');
+      return toast.error(tr("Please add at least one line item to the quotation."));
     }
     if (items.some((i) => i.quantity <= 0 || isNaN(i.quantity))) {
-      return toast.error('Quantity must be greater than 0 for all items.');
+      return toast.error(tr("Quantity must be greater than 0 for all items."));
     }
     if (items.some((i) => i.unitPrice < 0 || isNaN(i.unitPrice))) {
-      return toast.error('Unit price cannot be negative.');
+      return toast.error(tr("Unit price cannot be negative."));
     }
     if (discount < 0 || isNaN(discount)) {
-      return toast.error('Discount cannot be negative.');
+      return toast.error(tr("Discount cannot be negative."));
     }
     if (discount > subtotal + tax) {
-      return toast.error('Discount cannot exceed subtotal plus tax.');
+      return toast.error(tr("Discount cannot exceed subtotal plus tax."));
     }
     if (grandTotal < 0) {
-      return toast.error('Grand total amount cannot be negative.');
+      return toast.error(tr("Grand total amount cannot be negative."));
     }
     if (notes && notes.length > 500) {
-      return toast.error('Quotation notes cannot exceed 500 characters.');
+      return toast.error(tr("Quotation notes cannot exceed 500 characters."));
     }
 
     setIsSubmitting(true);
@@ -447,7 +448,7 @@ export function InteriorQuotationBuilderModal({
           completedDate: new Date(),
         });
 
-        toast.success(`Quotation "${quotationPayload.title}" updated successfully!`);
+        toast.success(tr("Quotation \"{{title}}\" updated successfully!", { title: quotationPayload.title }));
       } else {
         const newQuotationNum = updatedQuotations.length + 1;
         const quotationPayload = {
@@ -490,13 +491,13 @@ export function InteriorQuotationBuilderModal({
           completedDate: new Date(),
         });
 
-        toast.success(`Quotation "${quotationPayload.title}" created successfully!`);
+        toast.success(tr("Quotation \"{{title}}\" created successfully!", { title: quotationPayload.title }));
       }
 
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to save quotation');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || tr("Failed to save quotation"));
     } finally {
       setIsSubmitting(false);
     }
@@ -530,19 +531,19 @@ export function InteriorQuotationBuilderModal({
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))]">
-                    {isEditing ? 'Edit Quotation' : 'Quotation Builder'}
+                    {isEditing ? tr("Edit Quotation") : tr("Quotation Builder")}
                   </h2>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-700 border border-indigo-500/20 font-mono">
-                    {isEditing ? `Quotation #${(editingQuotationIndex || 0) + 1}` : `Quotation #${(existingQuotations?.length || 0) + 1}`}
+                  <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-700 border border-indigo-500/20 font-mono">
+                    {isEditing ? tr("Quotation #{{value}}", { value: (editingQuotationIndex || 0) + 1 }) : tr("Quotation #{{value}}", { value: (existingQuotations?.length || 0) + 1 })}
                   </span>
                   {activeBoq && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 flex items-center gap-1">
-                      <CheckCircle2 size={11} /> Linked to BOQ
+                    <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 flex items-center gap-1">
+                      <CheckCircle2 size={11} />{tr(" Linked to BOQ")}
                     </span>
                   )}
                 </div>
                 <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                  {isEditing ? 'Modify scope items, rates, quantities, taxes, and payment conditions.' : 'Import entire BOQ, pick specific categories, or select particular line items.'}
+                  {isEditing ? tr("Modify scope items, rates, quantities, taxes, and payment conditions.") : tr("Import entire BOQ, pick specific categories, or select particular line items.")}
                 </p>
               </div>
             </div>
@@ -561,9 +562,9 @@ export function InteriorQuotationBuilderModal({
               <div className="md:col-span-2 space-y-1">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                    <Tag size={13} className={titleError ? "text-rose-500" : "text-indigo-500"} /> Quotation Title <span className="text-rose-500">*</span>
+                    <Tag size={13} className={titleError ? "text-rose-500" : "text-indigo-500"} />{tr(" Quotation Title ")}<span className="text-rose-500">*</span>
                   </label>
-                  <span className={`text-[10px] font-mono ${quotationTitle.length >= 60 ? 'text-rose-500 font-bold' : 'text-[hsl(var(--muted-foreground))]'}`}>
+                  <span className={`text-[0.625rem] font-mono ${quotationTitle.length >= 60 ? 'text-rose-500 font-bold' : 'text-[hsl(var(--muted-foreground))]'}`}>
                     {quotationTitle.length}/60
                   </span>
                 </div>
@@ -576,9 +577,9 @@ export function InteriorQuotationBuilderModal({
                     setQuotationTitle(e.target.value);
                     if (titleError) {
                       if (!e.target.value.trim()) {
-                        setTitleError('Quotation title is required');
+                        setTitleError(tr("Quotation title is required"));
                       } else if (e.target.value.length > 60) {
-                        setTitleError('Quotation title cannot exceed 60 characters');
+                        setTitleError(tr("Quotation title cannot exceed 60 characters"));
                       } else {
                         setTitleError(null);
                       }
@@ -586,12 +587,12 @@ export function InteriorQuotationBuilderModal({
                   }}
                   onBlur={() => {
                     if (!quotationTitle.trim()) {
-                      setTitleError('Quotation title is required');
+                      setTitleError(tr("Quotation title is required"));
                     } else if (quotationTitle.trim().length > 60) {
-                      setTitleError('Quotation title cannot exceed 60 characters');
+                      setTitleError(tr("Quotation title cannot exceed 60 characters"));
                     }
                   }}
-                  placeholder="Enter Quotation Title (e.g. Option A - Premium Fitout)"
+                  placeholder={tr("Enter Quotation Title (e.g. Option A - Premium Fitout)")}
                   className={cn(
                     "w-full px-3.5 py-2.5 rounded-xl border bg-[hsl(var(--background))] text-xs font-bold text-[hsl(var(--foreground))] outline-none transition-all",
                     titleError
@@ -600,9 +601,9 @@ export function InteriorQuotationBuilderModal({
                   )}
                 />
                 {titleError && (
-                  <p className="text-[11px] font-medium text-rose-500 flex items-center gap-1 mt-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <p className="text-[0.6875rem] font-medium text-rose-500 flex items-center gap-1 mt-1 animate-in fade-in slide-in-from-top-1 duration-150">
                     <AlertCircle size={12} className="shrink-0" />
-                    <span>{titleError}</span>
+                    <span>{tr(titleError)}</span>
                   </p>
                 )}
               </div>
@@ -610,7 +611,7 @@ export function InteriorQuotationBuilderModal({
               {boqList.length > 1 && (
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                    <FileSpreadsheet size={13} className="text-indigo-500" /> Source BOQ Version
+                    <FileSpreadsheet size={13} className="text-indigo-500" />{tr(" Source BOQ Version")}
                   </label>
                   <select
                     value={selectedBoqIndex}
@@ -628,7 +629,7 @@ export function InteriorQuotationBuilderModal({
                       const metaParts = [creatorStr, dateStr].filter(Boolean).join(' • ');
                       return (
                         <option key={idx} value={idx}>
-                          Version {b.version || idx + 1} ({b.status === 'approved' ? 'Approved' : 'Draft'}) {metaParts ? `[${metaParts}]` : ''} — {currencySymbol} {(b.totalAmount || 0).toLocaleString()}
+                          {tr("Version ")}{b.version || idx + 1} ({b.status === 'approved' ? tr("Approved") : tr("Draft")}) {metaParts ? `[${metaParts}]` : ''} — {tr(currencySymbol)} {(b.totalAmount || 0).toLocaleString()}
                         </option>
                       );
                     })}
@@ -648,14 +649,14 @@ export function InteriorQuotationBuilderModal({
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">
-                          Select Scope from BOQ v{activeBoq.version || 1}
+                          {tr("Select Scope from BOQ v")}{activeBoq.version || 1}
                         </h4>
                         {(activeBoq.createdByName || activeBoq.createdAt) && (
-                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] text-[10px] text-[hsl(var(--muted-foreground))]">
+                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] text-[0.625rem] text-[hsl(var(--muted-foreground))]">
                             {activeBoq.createdByName && (
                               <span className="inline-flex items-center gap-1 font-semibold text-[hsl(var(--foreground))]">
                                 <User size={10} className="text-indigo-500" />
-                                {activeBoq.createdByName}
+                                {tr(activeBoq.createdByName)}
                               </span>
                             )}
                             {activeBoq.createdByName && activeBoq.createdAt && <span>•</span>}
@@ -674,8 +675,8 @@ export function InteriorQuotationBuilderModal({
                           </div>
                         )}
                       </div>
-                      <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                        {selectedItemCount} of {totalBoqItemCount} items selected ({structuredBoqSections.length} categories)
+                      <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
+                        {tr(selectedItemCount)}{tr(" of ")}{tr(totalBoqItemCount)}{tr(" items selected (")}{structuredBoqSections.length}{tr(" categories)")}
                       </p>
                     </div>
                   </div>
@@ -693,7 +694,7 @@ export function InteriorQuotationBuilderModal({
                       )}
                     >
                       <CheckCheck size={14} className={scopeMode === 'all' ? 'text-white' : 'text-indigo-500'} />
-                      All Items
+                      {tr("All Items")}
                     </button>
                     <button
                       type="button"
@@ -706,7 +707,7 @@ export function InteriorQuotationBuilderModal({
                       )}
                     >
                       <LayoutGrid size={13} className={scopeMode === 'categories' ? 'text-white' : 'text-indigo-500'} />
-                      By Category
+                      {tr("By Category")}
                     </button>
                     <button
                       type="button"
@@ -719,7 +720,7 @@ export function InteriorQuotationBuilderModal({
                       )}
                     >
                       <ListChecks size={14} className={scopeMode === 'items' ? 'text-white' : 'text-indigo-500'} />
-                      Pick Particular Items
+                      {tr("Pick Particular Items")}
                     </button>
                   </div>
                 </div>
@@ -747,17 +748,17 @@ export function InteriorQuotationBuilderModal({
                               <Square size={16} className="text-slate-400 shrink-0" />
                             )}
                             <div className="min-w-0">
-                              <p className="text-xs font-bold truncate">{sec.sectionTitle}</p>
-                              <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                                {sec.items.length} {sec.items.length === 1 ? 'item' : 'items'}
+                              <p className="text-xs font-bold truncate">{tr(sec.sectionTitle)}</p>
+                              <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
+                                {sec.items.length} {sec.items.length === 1 ? tr("item") : tr("items")}
                               </p>
                             </div>
                           </div>
                           <span 
-                            className="text-xs font-mono font-bold shrink-0 truncate max-w-[100px]"
+                            className="text-xs font-mono font-bold shrink-0 truncate max-w-[6.25rem]"
                             title={formatSmartCurrency(sec.subTotal, currencySymbol).exact}
                           >
-                            {formatSmartCurrency(sec.subTotal, currencySymbol).display}
+                            {tr(formatSmartCurrency(sec.subTotal, currencySymbol).display)}
                           </span>
                         </div>
                       );
@@ -767,7 +768,7 @@ export function InteriorQuotationBuilderModal({
 
                 {/* Scope Selection View: Granular Particular Items */}
                 {scopeMode === 'items' && (
-                  <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                  <div className="space-y-2.5 max-h-60 overflow-y-auto pe-1">
                     {structuredBoqSections.map((sec) => {
                       const isExpanded = Boolean(expandedSections[sec.id]);
                       const isCatSelected = Boolean(selectedCategoryNames[sec.sectionTitle]);
@@ -780,18 +781,18 @@ export function InteriorQuotationBuilderModal({
                             >
                               {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                               <span className="text-xs font-bold text-[hsl(var(--foreground))] truncate">
-                                {sec.sectionTitle}
+                                {tr(sec.sectionTitle)}
                               </span>
-                              <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                                ({sec.items.length} items)
+                              <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
+                                ({sec.items.length}{tr(" items)")}
                               </span>
                             </div>
                             <button
                               type="button"
                               onClick={() => toggleCategory(sec.sectionTitle, !isCatSelected)}
-                              className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 px-2 py-0.5 rounded bg-indigo-50 border border-indigo-200 cursor-pointer"
+                              className="text-[0.625rem] font-bold text-indigo-600 hover:text-indigo-700 px-2 py-0.5 rounded bg-indigo-50 border border-indigo-200 cursor-pointer"
                             >
-                              {isCatSelected ? 'Deselect All' : 'Select All'}
+                              {isCatSelected ? tr("Deselect All") : tr("Select All")}
                             </button>
                           </div>
 
@@ -817,23 +818,23 @@ export function InteriorQuotationBuilderModal({
                                     />
                                     <div className="flex-1 min-w-0">
                                       <p className="font-bold text-[hsl(var(--foreground))] truncate">
-                                        {it.itemName}
+                                        {tr(it.itemName)}
                                       </p>
                                       {it.description && (
-                                        <p className="text-[11px] text-[hsl(var(--muted-foreground))] line-clamp-1">
-                                          {it.description}
+                                        <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] line-clamp-1">
+                                          {tr(it.description)}
                                         </p>
                                       )}
                                     </div>
-                                    <div className="text-right shrink-0 max-w-[140px]">
+                                    <div className="text-end shrink-0 max-w-[8.75rem]">
                                       <p 
                                         className="font-mono font-bold text-[hsl(var(--foreground))] truncate"
                                         title={formatSmartCurrency(Number(it.amount) || Number(it.quantity || 0) * Number(it.rate || 0), currencySymbol).exact}
                                       >
-                                        {formatSmartCurrency(Number(it.amount) || Number(it.quantity || 0) * Number(it.rate || 0), currencySymbol).display}
+                                        {tr(formatSmartCurrency(Number(it.amount) || Number(it.quantity || 0) * Number(it.rate || 0), currencySymbol).display)}
                                       </p>
-                                      <p className="text-[10px] text-[hsl(var(--muted-foreground))] truncate">
-                                        {it.quantity} {it.unit || 'Nos'} × {currencySymbol} {formatMillionBillion(Number(it.rate) || 0)}
+                                      <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))] truncate">
+                                        {it.quantity} {it.unit || tr("Nos")} × {tr(currencySymbol)} {formatMillionBillion(Number(it.rate) || 0)}
                                       </p>
                                     </div>
                                   </div>
@@ -854,18 +855,18 @@ export function InteriorQuotationBuilderModal({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <h3 className="text-xs font-bold text-[hsl(var(--foreground))] uppercase tracking-wider">
-                    Quotation Line Items ({items.length})
+                    {tr("Quotation Line Items (")}{items.length})
                   </h3>
                 </div>
               </div>
 
               <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl overflow-hidden shadow-xs">
-                <div className="grid grid-cols-12 gap-2.5 p-3 bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                  <div className="col-span-5">Item Description & Scope</div>
-                  <div className="col-span-2 text-center">Unit</div>
-                  <div className="col-span-1 text-center">Qty</div>
-                  <div className="col-span-2 text-right">Unit Price ({currencySymbol})</div>
-                  <div className="col-span-2 text-right pr-2">Total ({currencySymbol})</div>
+                <div className="grid grid-cols-12 gap-2.5 p-3 bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-[0.6875rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                  <div className="col-span-5">{tr("Item Description & Scope")}</div>
+                  <div className="col-span-2 text-center">{tr("Unit")}</div>
+                  <div className="col-span-1 text-center">{tr("Qty")}</div>
+                  <div className="col-span-2 text-end">{tr("Unit Price (")}{tr(currencySymbol)})</div>
+                  <div className="col-span-2 text-end pe-2">{tr("Total (")}{tr(currencySymbol)})</div>
                 </div>
 
                 <div className="p-3 space-y-3 max-h-80 overflow-y-auto">
@@ -877,7 +878,7 @@ export function InteriorQuotationBuilderModal({
                           type="button"
                           onClick={() => removeItem(index)}
                           className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-500/10 rounded-xl transition-colors shrink-0 mt-0.5 cursor-pointer"
-                          title="Remove item"
+                          title={tr("Remove item")}
                         >
                           <Trash2 size={14} />
                         </button>
@@ -888,16 +889,16 @@ export function InteriorQuotationBuilderModal({
                             maxLength={150}
                             value={item.description}
                             onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                            placeholder="Item description / specification"
+                            placeholder={tr("Item description / specification")}
                             className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-semibold text-[hsl(var(--foreground))] focus:border-indigo-500 outline-none transition-all placeholder:text-[hsl(var(--muted-foreground))]"
                           />
                           {item.category && item.category !== 'General Scope' && (
                             <span 
-                              className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 max-w-[220px] truncate"
+                              className="inline-flex items-center gap-1 text-[0.625rem] font-semibold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 max-w-[13.75rem] truncate"
                               title={item.category}
                             >
                               <Tag size={10} className="shrink-0" />
-                              <span className="truncate">{item.category}</span>
+                              <span className="truncate">{tr(item.category)}</span>
                             </span>
                           )}
                         </div>
@@ -910,8 +911,8 @@ export function InteriorQuotationBuilderModal({
                           maxLength={10}
                           value={item.unit || 'Nos'}
                           onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
-                          placeholder="Unit"
-                          className="w-full max-w-[90px] px-2.5 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-bold text-center focus:border-indigo-500 outline-none uppercase font-mono"
+                          placeholder={tr("Unit")}
+                          className="w-full max-w-[5.625rem] px-2.5 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-bold text-center focus:border-indigo-500 outline-none uppercase font-mono"
                         />
                       </div>
 
@@ -925,7 +926,7 @@ export function InteriorQuotationBuilderModal({
                           step="any"
                           value={item.quantity || ''}
                           onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value) || 0)}
-                          className="w-full max-w-[70px] px-2 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-bold text-center focus:border-indigo-500 outline-none font-mono"
+                          className="w-full max-w-[4.375rem] px-2 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-bold text-center focus:border-indigo-500 outline-none font-mono"
                         />
                       </div>
 
@@ -939,16 +940,16 @@ export function InteriorQuotationBuilderModal({
                           step="any"
                           value={item.unitPrice || ''}
                           onChange={(e) => handleItemChange(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                          className="w-full max-w-[125px] px-3 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-bold text-right focus:border-indigo-500 outline-none font-mono"
+                          className="w-full max-w-[7.8125rem] px-3 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-bold text-end focus:border-indigo-500 outline-none font-mono"
                         />
                       </div>
 
                       {/* Total */}
                       <div 
-                        className="col-span-2 flex items-center justify-end pr-2 py-2 text-right font-mono font-extrabold text-xs text-[hsl(var(--foreground))] min-w-0 truncate"
+                        className="col-span-2 flex items-center justify-end pe-2 py-2 text-end font-mono font-extrabold text-xs text-[hsl(var(--foreground))] min-w-0 truncate"
                         title={formatSmartCurrency(Number(item.total) || 0, currencySymbol).exact}
                       >
-                        {formatSmartCurrency(Number(item.total) || 0, currencySymbol).display}
+                        {tr(formatSmartCurrency(Number(item.total) || 0, currencySymbol).display)}
                       </div>
                     </div>
                   ))}
@@ -960,7 +961,7 @@ export function InteriorQuotationBuilderModal({
                     onClick={addCustomItem}
                     className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 px-3 py-1.5 rounded-xl transition-colors w-full justify-center border border-indigo-200 border-dashed cursor-pointer"
                   >
-                    <Plus size={14} /> Add Custom Line Item
+                    <Plus size={14} />{tr(" Add Custom Line Item")}
                   </button>
                 </div>
               </div>
@@ -972,9 +973,9 @@ export function InteriorQuotationBuilderModal({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-[hsl(var(--foreground))] uppercase tracking-wider flex items-center gap-1">
-                    Quotation Notes / Remarks (Optional)
+                    {tr("Quotation Notes / Remarks (Optional)")}
                   </label>
-                  <span className={`text-[10px] font-mono ${notes.length >= 500 ? 'text-rose-500 font-bold' : 'text-[hsl(var(--muted-foreground))]'}`}>
+                  <span className={`text-[0.625rem] font-mono ${notes.length >= 500 ? 'text-rose-500 font-bold' : 'text-[hsl(var(--muted-foreground))]'}`}>
                     {notes.length}/500
                   </span>
                 </div>
@@ -983,7 +984,7 @@ export function InteriorQuotationBuilderModal({
                   maxLength={500}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Optional notes or remarks for this quotation..."
+                  placeholder={tr("Optional notes or remarks for this quotation...")}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs text-[hsl(var(--foreground))] focus:border-indigo-500 outline-none resize-none leading-relaxed"
                 />
               </div>
@@ -991,18 +992,18 @@ export function InteriorQuotationBuilderModal({
               {/* Right Side: Calculation Totals */}
               <div className="bg-[hsl(var(--muted)/0.4)] border border-[hsl(var(--border))] rounded-2xl p-4 space-y-3 min-w-0 overflow-hidden">
                 <div className="flex justify-between items-center text-xs font-semibold text-[hsl(var(--muted-foreground))] gap-2">
-                  <span className="shrink-0">Scope Subtotal ({items.length} items)</span>
+                  <span className="shrink-0">{tr("Scope Subtotal (")}{items.length}{tr(" items)")}</span>
                   <span 
-                    className="font-mono font-bold text-[hsl(var(--foreground))] truncate text-right"
+                    className="font-mono font-bold text-[hsl(var(--foreground))] truncate text-end"
                     title={formatSmartCurrency(subtotal, currencySymbol).exact}
                   >
-                    {formatSmartCurrency(subtotal, currencySymbol).display}
+                    {tr(formatSmartCurrency(subtotal, currencySymbol).display)}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center text-xs gap-2">
                   <span className="font-semibold text-[hsl(var(--muted-foreground))] flex items-center gap-2 shrink-0">
-                    Tax / VAT %
+                    {tr("Tax / VAT %")}
                     <input
                       type="number"
                       min="0"
@@ -1013,16 +1014,16 @@ export function InteriorQuotationBuilderModal({
                     />
                   </span>
                   <span 
-                    className="font-mono font-semibold text-[hsl(var(--muted-foreground))] truncate text-right"
+                    className="font-mono font-semibold text-[hsl(var(--muted-foreground))] truncate text-end"
                     title={formatSmartCurrency(tax, currencySymbol).exact}
                   >
-                    + {formatSmartCurrency(tax, currencySymbol).display}
+                    + {tr(formatSmartCurrency(tax, currencySymbol).display)}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center text-xs gap-2">
                   <span className="font-semibold text-[hsl(var(--muted-foreground))] shrink-0">
-                    Discount ({currencySymbol})
+                    {tr("Discount (")}{tr(currencySymbol)})
                   </span>
                   <input
                     type="number"
@@ -1030,34 +1031,34 @@ export function InteriorQuotationBuilderModal({
                     value={discount || ''}
                     onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
                     placeholder="0"
-                    className="w-28 px-2 py-0.5 text-xs rounded border border-[hsl(var(--border))] text-right focus:border-indigo-500 outline-none text-rose-600 font-mono font-bold bg-[hsl(var(--background))]"
+                    className="w-28 px-2 py-0.5 text-xs rounded border border-[hsl(var(--border))] text-end focus:border-indigo-500 outline-none text-rose-600 font-mono font-bold bg-[hsl(var(--background))]"
                   />
                 </div>
 
                 <div className="pt-3 border-t border-[hsl(var(--border))] flex justify-between items-center gap-3 min-w-0">
                   <div className="shrink-0">
                     <span className="text-xs font-extrabold text-[hsl(var(--foreground))] block">
-                      Grand Total Quotation
+                      {tr("Grand Total Quotation")}
                     </span>
                     {isOverBudget && (
-                      <span className="text-[10px] font-bold text-amber-600 flex items-center gap-1 mt-0.5">
-                        <AlertTriangle size={11} /> Over Target Budget
+                      <span className="text-[0.625rem] font-bold text-amber-600 flex items-center gap-1 mt-0.5">
+                        <AlertTriangle size={11} />{tr(" Over Target Budget")}
                       </span>
                     )}
                   </div>
-                  <div className="min-w-0 text-right">
+                  <div className="min-w-0 text-end">
                     <span 
                       className="text-lg sm:text-xl font-black text-indigo-600 dark:text-indigo-400 font-mono truncate block"
                       title={formatSmartCurrency(grandTotal, currencySymbol).exact}
                     >
-                      {formatSmartCurrency(grandTotal, currencySymbol).display}
+                      {tr(formatSmartCurrency(grandTotal, currencySymbol).display)}
                     </span>
                     {formatSmartCurrency(grandTotal, currencySymbol).isLarge && (
                       <span 
-                        className="text-[10px] font-mono text-[hsl(var(--muted-foreground))] truncate block"
+                        className="text-[0.625rem] font-mono text-[hsl(var(--muted-foreground))] truncate block"
                         title={formatSmartCurrency(grandTotal, currencySymbol).exact}
                       >
-                        ({formatSmartCurrency(grandTotal, currencySymbol).exact})
+                        ({tr(formatSmartCurrency(grandTotal, currencySymbol).exact)})
                       </span>
                     )}
                   </div>
@@ -1069,7 +1070,7 @@ export function InteriorQuotationBuilderModal({
           {/* 3. Modal Footer */}
           <div className="px-6 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)] flex items-center justify-between gap-3 shrink-0">
             <span className="text-xs text-[hsl(var(--muted-foreground))]">
-              {isEditing ? `Editing Quotation #${(editingQuotationIndex || 0) + 1}` : `Creates Quotation #${(existingQuotations?.length || 0) + 1}`}
+              {isEditing ? tr("Editing Quotation #{{value}}", { value: (editingQuotationIndex || 0) + 1 }) : tr("Creates Quotation #{{value}}", { value: (existingQuotations?.length || 0) + 1 })}
             </span>
             <div className="flex items-center gap-2">
               <button
@@ -1078,7 +1079,7 @@ export function InteriorQuotationBuilderModal({
                 disabled={isSubmitting}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] transition-colors cursor-pointer"
               >
-                Cancel
+                {tr("Cancel")}
               </button>
               <button
                 type="button"
@@ -1087,7 +1088,7 @@ export function InteriorQuotationBuilderModal({
                 className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
               >
                 <Save size={14} />
-                {isSubmitting ? (isEditing ? 'Updating Quotation...' : 'Creating Quotation...') : (isEditing ? 'Update Quotation' : 'Create & Save Quotation')}
+                {isSubmitting ? (isEditing ? tr("Updating Quotation...") : tr("Creating Quotation...")) : (isEditing ? tr("Update Quotation") : tr("Create & Save Quotation"))}
               </button>
             </div>
           </div>

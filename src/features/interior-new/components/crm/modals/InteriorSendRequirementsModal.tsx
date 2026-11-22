@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Send Requirements Questionnaire Modal
@@ -80,7 +81,7 @@ export function InteriorSendRequirementsModal({
 
     setCustomSubject(`✨ Complete Your Interior Design Wishlist - ${leadName} | SkyStruct Interior`);
     setCustomMessage(
-      `Hi ${firstName},\n\nWe are excited to begin designing your dream space! Please take 3 minutes to complete your interactive design questionnaire. You can select your favorite interior styles, detail your room-by-room wishlist, and upload inspiration photos so our design team can craft tailored 2D plans and 3D renders for you.\n\nWarm regards,\nDesign Team`
+      tr("Hi {{firstName}},\n\nWe are excited to begin designing your dream space! Please take 3 minutes to complete your interactive design questionnaire. You can select your favorite interior styles, detail your room-by-room wishlist, and upload inspiration photos so our design team can craft tailored 2D plans and 3D renders for you.\n\nWarm regards,\nDesign Team", { firstName: firstName })
     );
 
     // Check or generate token
@@ -109,7 +110,7 @@ export function InteriorSendRequirementsModal({
     if (!requirementsUrl) return;
     navigator.clipboard.writeText(requirementsUrl);
     setCopiedLink(true);
-    toast.success('Requirements link copied to clipboard!');
+    toast.success(tr("Requirements link copied to clipboard!"));
     setTimeout(() => setCopiedLink(false), 2500);
   };
 
@@ -118,12 +119,12 @@ export function InteriorSendRequirementsModal({
 
     const trimmedEmail = recipientEmail.trim();
     if (!trimmedEmail) {
-      setEmailError('Please enter a recipient email address.');
+      setEmailError(tr("Please enter a recipient email address."));
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(trimmedEmail)) {
-      setEmailError('Please enter a valid email address.');
+      setEmailError(tr("Please enter a valid email address."));
       return;
     }
     setEmailError('');
@@ -140,18 +141,18 @@ export function InteriorSendRequirementsModal({
       });
 
       if (res.success) {
-        toast.success(res.message || `Requirements link successfully emailed to ${trimmedEmail}!`);
+        toast.success(res.message || tr("Requirements link successfully emailed to {{trimmedEmail}}!", { trimmedEmail: trimmedEmail }));
         if (onSuccess) onSuccess();
         onClose();
       } else {
-        toast.error(res.error || 'Failed to dispatch email');
+        toast.error(res.error || tr("Failed to dispatch email"));
       }
     } catch (err: any) {
       console.error('Send requirements email error:', err);
       toast.error(
         err?.response?.data?.error ||
         err?.message ||
-        'Failed to send email. Please verify SMTP configuration.'
+        tr("Failed to send email. Please verify SMTP configuration.")
       );
     } finally {
       setIsSubmitting(false);
@@ -159,21 +160,21 @@ export function InteriorSendRequirementsModal({
   };
 
   const handleStopLink = async () => {
-    if (!confirm('Are you sure you want to stop this link? Anyone attempting to open it will be blocked.')) {
+    if (!confirm(tr("Are you sure you want to stop this link? Anyone attempting to open it will be blocked."))) {
       return;
     }
     try {
       setIsRevoking(true);
       const res = await interiorCrmService.revokeRequirementsLink(lead._id);
       if (res.success) {
-        toast.success('Requirements link stopped and access revoked.');
+        toast.success(tr("Requirements link stopped and access revoked."));
         if (onSuccess) onSuccess();
         onClose();
       } else {
-        toast.error(res.error || 'Failed to stop link');
+        toast.error(res.error || tr("Failed to stop link"));
       }
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || 'Failed to stop link');
+      toast.error(err?.response?.data?.error || tr("Failed to stop link"));
     } finally {
       setIsRevoking(false);
     }
@@ -224,14 +225,14 @@ export function InteriorSendRequirementsModal({
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-base font-bold tracking-tight text-[hsl(var(--foreground))]">
-                    Email Design Questionnaire
+                    {tr("Email Design Questionnaire")}
                   </h2>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
-                    Client Portal
+                  <span className="px-2 py-0.5 rounded-full text-[0.625rem] font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
+                    {tr("Client Portal")}
                   </span>
                 </div>
                 <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                  Send the self-service requirements questionnaire directly to <strong>{lead.name}</strong>.
+                  {tr("Send the self-service requirements questionnaire directly to ")}<strong>{tr(lead.name)}</strong>.
                 </p>
               </div>
             </div>
@@ -253,12 +254,12 @@ export function InteriorSendRequirementsModal({
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
                   <Mail size={13} className="text-indigo-600" />
-                  <span>Recipient Client Email</span>
+                  <span>{tr("Recipient Client Email")}</span>
                   <span className="text-rose-500">*</span>
                 </label>
                 {lead.name && (
-                  <span className="text-[11px] text-[hsl(var(--muted-foreground))] flex items-center gap-1">
-                    <User size={11} /> {lead.name}
+                  <span className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+                    <User size={11} /> {tr(lead.name)}
                   </span>
                 )}
               </div>
@@ -269,7 +270,7 @@ export function InteriorSendRequirementsModal({
                   setRecipientEmail(e.target.value);
                   if (emailError) setEmailError('');
                 }}
-                placeholder="client@example.com"
+                placeholder={tr("client@example.com")}
                 className={cn(
                   'w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 transition-all',
                   emailError
@@ -279,7 +280,7 @@ export function InteriorSendRequirementsModal({
               />
               {emailError && (
                 <p className="text-xs text-rose-500 mt-1 flex items-center gap-1">
-                  <AlertCircle size={12} /> {emailError}
+                  <AlertCircle size={12} /> {tr(emailError)}
                 </p>
               )}
             </div>
@@ -287,13 +288,13 @@ export function InteriorSendRequirementsModal({
             {/* Email Subject */}
             <div>
               <label className="text-xs font-bold text-[hsl(var(--foreground))] mb-1.5 block">
-                Email Subject
+                {tr("Email Subject")}
               </label>
               <input
                 type="text"
                 value={customSubject}
                 onChange={(e) => setCustomSubject(e.target.value)}
-                placeholder="Subject line..."
+                placeholder={tr("Subject line...")}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-[hsl(var(--border))] text-sm font-medium bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
               />
             </div>
@@ -302,17 +303,17 @@ export function InteriorSendRequirementsModal({
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-bold text-[hsl(var(--foreground))] block">
-                  Personal Message / Note from Designer
+                  {tr("Personal Message / Note from Designer")}
                 </label>
-                <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                  Appears inside the branded email card
+                <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
+                  {tr("Appears inside the branded email card")}
                 </span>
               </div>
               <textarea
                 rows={4}
                 value={customMessage}
                 onChange={(e) => setCustomMessage(e.target.value)}
-                placeholder="Write a personalized note to the client..."
+                placeholder={tr("Write a personalized note to the client...")}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-[hsl(var(--border))] text-xs leading-relaxed bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none"
               />
             </div>
@@ -322,10 +323,10 @@ export function InteriorSendRequirementsModal({
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
                   <Clock size={13} className="text-indigo-600" />
-                  <span>Link Expiration Period</span>
+                  <span>{tr("Link Expiration Period")}</span>
                 </label>
-                <span className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                  {expiresDays === null ? 'Never expires' : `Valid for ${expiresDays} days from dispatch`}
+                <span className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
+                  {expiresDays === null ? tr("Never expires") : tr("Valid for {{expiresDays}} days from dispatch", { expiresDays: expiresDays })}
                 </span>
               </div>
 
@@ -347,8 +348,8 @@ export function InteriorSendRequirementsModal({
                         : 'bg-[hsl(var(--background))] border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:border-[hsl(var(--border-strong))]'
                     )}
                   >
-                    <div className="text-xs">{opt.label}</div>
-                    <div className="text-[10px] opacity-75">{opt.desc}</div>
+                    <div className="text-xs">{tr(opt.label)}</div>
+                    <div className="text-[0.625rem] opacity-75">{tr(opt.desc)}</div>
                   </button>
                 ))}
               </div>
@@ -359,10 +360,10 @@ export function InteriorSendRequirementsModal({
               <div className="bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/40 rounded-xl p-3 flex items-center justify-between gap-3">
                 <div>
                   <span className="text-xs font-bold text-rose-900 dark:text-rose-200 flex items-center gap-1.5">
-                    <Ban size={13} className="text-rose-600" /> Need to disable this link?
+                    <Ban size={13} className="text-rose-600" />{tr(" Need to disable this link?")}
                   </span>
-                  <span className="text-[11px] text-rose-700/80 dark:text-rose-400 block mt-0.5">
-                    Stopping the link immediately blocks clients from accessing or submitting preferences.
+                  <span className="text-[0.6875rem] text-rose-700/80 dark:text-rose-400 block mt-0.5">
+                    {tr("Stopping the link immediately blocks clients from accessing or submitting preferences.")}
                   </span>
                 </div>
                 <button
@@ -371,7 +372,7 @@ export function InteriorSendRequirementsModal({
                   onClick={handleStopLink}
                   className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs disabled:opacity-50"
                 >
-                  {isRevoking ? 'Stopping...' : 'Stop Link'}
+                  {isRevoking ? tr("Stopping...") : tr("Stop Link")}
                 </button>
               </div>
             )}
@@ -379,7 +380,7 @@ export function InteriorSendRequirementsModal({
             {lead.shareSettings?.isPublic === false && (
               <div className="bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 rounded-xl p-3 text-xs text-amber-900 dark:text-amber-200 flex items-center gap-2">
                 <AlertCircle size={14} className="text-amber-600 shrink-0" />
-                <span>This link is currently <strong>stopped / disabled</strong>. Sending an email will automatically reactivate it for the client.</span>
+                <span>{tr("This link is currently ")}<strong>{tr("stopped / disabled")}</strong>{tr(". Sending an email will automatically reactivate it for the client.")}</span>
               </div>
             )}
 
@@ -388,18 +389,18 @@ export function InteriorSendRequirementsModal({
               <div className="flex items-center justify-between text-xs font-bold">
                 <span className="flex items-center gap-1.5 text-[hsl(var(--foreground))]">
                   <Link2 size={13} className="text-indigo-600" />
-                  <span>Shareable Questionnaire Link</span>
+                  <span>{tr("Shareable Questionnaire Link")}</span>
                 </span>
                 {isLoadingToken && (
-                  <span className="text-[11px] text-[hsl(var(--muted-foreground))] flex items-center gap-1">
-                    <Loader2 size={11} className="animate-spin" /> Generating...
+                  <span className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+                    <Loader2 size={11} className="animate-spin" />{tr(" Generating...")}
                   </span>
                 )}
               </div>
 
               <div className="flex items-center gap-2">
                 <div className="flex-1 bg-[hsl(var(--background))] px-3 py-2 rounded-lg border border-[hsl(var(--border))] text-xs font-mono text-[hsl(var(--foreground))] truncate select-all">
-                  {requirementsUrl || 'Preparing unique link...'}
+                  {requirementsUrl || tr("Preparing unique link...")}
                 </div>
 
                 <button
@@ -407,10 +408,10 @@ export function InteriorSendRequirementsModal({
                   onClick={handleCopy}
                   disabled={!requirementsUrl}
                   className="px-3 py-2 bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-2xs"
-                  title="Copy Link to Clipboard"
+                  title={tr("Copy Link to Clipboard")}
                 >
                   {copiedLink ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
-                  <span>{copiedLink ? 'Copied' : 'Copy'}</span>
+                  <span>{copiedLink ? tr("Copied") : tr("Copy")}</span>
                 </button>
 
                 {requirementsUrl && (
@@ -419,7 +420,7 @@ export function InteriorSendRequirementsModal({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-2 bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] rounded-lg transition-all shrink-0 cursor-pointer shadow-2xs"
-                    title="Preview Client Questionnaire in New Tab"
+                    title={tr("Preview Client Questionnaire in New Tab")}
                   >
                     <ExternalLink size={13} />
                   </a>
@@ -427,23 +428,23 @@ export function InteriorSendRequirementsModal({
               </div>
 
               {/* What Client Does Feature Summary */}
-              <div className="pt-2 border-t border-[hsl(var(--border))] flex items-center justify-between text-[11px] text-[hsl(var(--muted-foreground))]">
+              <div className="pt-2 border-t border-[hsl(var(--border))] flex items-center justify-between text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
                 <span className="flex items-center gap-1">
-                  <Palette size={11} className="text-purple-500" /> Visual Theme Picker
+                  <Palette size={11} className="text-purple-500" />{tr(" Visual Theme Picker")}
                 </span>
                 <span className="flex items-center gap-1">
-                  <Sparkles size={11} className="text-amber-500" /> Pinterest Inspiration
+                  <Sparkles size={11} className="text-amber-500" />{tr(" Pinterest Inspiration")}
                 </span>
                 <span className="flex items-center gap-1">
-                  <Check size={11} className="text-emerald-500" /> Auto-syncs to CRM
+                  <Check size={11} className="text-emerald-500" />{tr(" Auto-syncs to CRM")}
                 </span>
               </div>
             </div>
 
             {/* Other Sharing Channels (WhatsApp & Mailto) */}
             <div className="flex items-center justify-between pt-1">
-              <span className="text-[11px] text-[hsl(var(--muted-foreground))] font-medium">
-                Alternative dispatch options:
+              <span className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] font-medium">
+                {tr("Alternative dispatch options:")}
               </span>
 
               <div className="flex items-center gap-2">
@@ -452,18 +453,18 @@ export function InteriorSendRequirementsModal({
                     type="button"
                     onClick={handleWhatsAppShare}
                     disabled={!requirementsUrl}
-                    className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 flex items-center gap-1 hover:underline cursor-pointer"
+                    className="text-[0.6875rem] font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 flex items-center gap-1 hover:underline cursor-pointer"
                   >
-                    <MessageCircle size={12} /> WhatsApp
+                    <MessageCircle size={12} />{tr(" WhatsApp")}
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={handleMailtoFallback}
                   disabled={!requirementsUrl}
-                  className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 flex items-center gap-1 hover:underline cursor-pointer"
+                  className="text-[0.6875rem] font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 flex items-center gap-1 hover:underline cursor-pointer"
                 >
-                  <Mail size={12} /> Open in Email App (mailto)
+                  <Mail size={12} />{tr(" Open in Email App (mailto)")}
                 </button>
               </div>
             </div>
@@ -476,7 +477,7 @@ export function InteriorSendRequirementsModal({
                 disabled={isSubmitting}
                 className="px-4 py-2.5 rounded-xl text-xs font-bold text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] transition-colors cursor-pointer"
               >
-                Cancel
+                {tr("Cancel")}
               </button>
 
               <button
@@ -487,12 +488,12 @@ export function InteriorSendRequirementsModal({
                 {isSubmitting ? (
                   <>
                     <Loader2 size={13} className="animate-spin" />
-                    <span>Sending Email via SMTP...</span>
+                    <span>{tr("Sending Email via SMTP...")}</span>
                   </>
                 ) : (
                   <>
                     <Send size={13} />
-                    <span>Send Intake Link via Email</span>
+                    <span>{tr("Send Intake Link via Email")}</span>
                   </>
                 )}
               </button>

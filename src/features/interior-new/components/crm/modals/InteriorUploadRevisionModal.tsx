@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState } from 'react';
 import {
@@ -93,7 +94,7 @@ export const InteriorUploadRevisionModal: React.FC<Props> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFile) {
-      toast.error('Please select a revision drawing file to upload.');
+      toast.error(tr("Please select a revision drawing file to upload."));
       return;
     }
 
@@ -119,11 +120,11 @@ export const InteriorUploadRevisionModal: React.FC<Props> = ({
         assignedReviewerName: assignedReviewerName
       });
 
-      toast.success(`Revision v${nextVersion} uploaded successfully and sent for review!`);
+      toast.success(tr("Revision v{{nextVersion}} uploaded successfully and sent for review!", { nextVersion: nextVersion }));
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || err.message || 'Failed to upload revision');
+      toast.error(err.response?.data?.error || err.message || tr("Failed to upload revision"));
     } finally {
       setIsSubmitting(false);
     }
@@ -151,10 +152,10 @@ export const InteriorUploadRevisionModal: React.FC<Props> = ({
               </div>
               <div>
                 <h3 className="text-base font-bold text-slate-900">
-                  Upload Revision (v{nextVersion})
+                  {tr("Upload Revision (v")}{tr(nextVersion)})
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Upload an updated design version & assign a team member for approval
+                  {tr("Upload an updated design version & assign a team member for approval")}
                 </p>
               </div>
             </div>
@@ -163,7 +164,7 @@ export const InteriorUploadRevisionModal: React.FC<Props> = ({
               onClick={onClose}
               disabled={isSubmitting}
               className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-lg transition cursor-pointer"
-              title="Close modal"
+              title={tr("Close modal")}
             >
               <X className="w-5 h-5" />
             </button>
@@ -178,14 +179,14 @@ export const InteriorUploadRevisionModal: React.FC<Props> = ({
                 </div>
                 <div className="min-w-0">
                   <h4 className="text-sm font-bold text-slate-900 truncate">
-                    {drawing.name}
+                    {tr(drawing.name)}
                   </h4>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider ${badgeInfo.color}`}>
-                      {badgeInfo.label}
+                    <span className={`text-[0.5625rem] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider ${badgeInfo.color}`}>
+                      {tr(badgeInfo.label)}
                     </span>
                     <span className="text-xs text-slate-500">
-                      Current: <span className="font-semibold text-slate-700">v{currentVersion}</span> &rarr; <strong className="text-indigo-600 font-extrabold">New: v{nextVersion}</strong>
+                      {tr("Current: ")}<span className="font-semibold text-slate-700">v{tr(currentVersion)}</span> &rarr; <strong className="text-indigo-600 font-extrabold">{tr("New: v")}{tr(nextVersion)}</strong>
                     </span>
                   </div>
                 </div>
@@ -198,15 +199,15 @@ export const InteriorUploadRevisionModal: React.FC<Props> = ({
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5 text-rose-800 font-bold text-xs uppercase tracking-wide">
                     <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                    <span>Internal Rejection Reason & Required Changes:</span>
+                    <span>{tr("Internal Rejection Reason & Required Changes:")}</span>
                   </div>
-                  <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full border border-rose-200 shrink-0">
-                    Action Required
+                  <span className="text-[0.625rem] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full border border-rose-200 shrink-0">
+                    {tr("Action Required")}
                   </span>
                 </div>
                 <div className="p-3 bg-white rounded-lg border border-rose-200/90 shadow-2xs max-h-40 overflow-y-auto overflow-x-hidden">
                   <p className="text-xs sm:text-sm text-rose-950 font-normal leading-relaxed whitespace-pre-wrap break-all select-text">
-                    {rejectionReason || internalNotes || 'Drawing was rejected during internal review and requires modifications.'}
+                    {rejectionReason || internalNotes || tr("Drawing was rejected during internal review and requires modifications.")}
                   </p>
                 </div>
               </div>
@@ -218,15 +219,15 @@ export const InteriorUploadRevisionModal: React.FC<Props> = ({
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5 text-amber-800 font-bold text-xs uppercase tracking-wide">
                     <MessageSquare className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span>Client Feedback to Address:</span>
+                    <span>{tr("Client Feedback to Address:")}</span>
                   </div>
-                  <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200 shrink-0">
-                    Client Changes Requested
+                  <span className="text-[0.625rem] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200 shrink-0">
+                    {tr("Client Changes Requested")}
                   </span>
                 </div>
                 <div className="p-3 bg-white rounded-lg border border-amber-200/90 shadow-2xs max-h-40 overflow-y-auto overflow-x-hidden">
                   <p className="text-xs sm:text-sm text-amber-950 font-normal leading-relaxed whitespace-pre-wrap break-all select-text">
-                    {clientFeedback || 'Client requested modifications on the previous version.'}
+                    {clientFeedback || tr("Client requested modifications on the previous version.")}
                   </p>
                 </div>
               </div>
@@ -235,7 +236,7 @@ export const InteriorUploadRevisionModal: React.FC<Props> = ({
             {/* File Upload Box */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700">
-                Upload Revised Drawing / Model File <span className="text-rose-500">*</span>
+                {tr("Upload Revised Drawing / Model File ")}<span className="text-rose-500">*</span>
               </label>
 
               {!selectedFile ? (
@@ -244,10 +245,10 @@ export const InteriorUploadRevisionModal: React.FC<Props> = ({
                     <UploadCloud className="w-6 h-6" />
                   </div>
                   <span className="text-xs font-bold text-slate-800">
-                    Click to select or drag and drop revised file
+                    {tr("Click to select or drag and drop revised file")}
                   </span>
-                  <span className="text-[11px] text-slate-400 mt-1">
-                    DWG, DXF, SKP, OBJ, FBX, PDF, JPG, PNG (Max 50MB)
+                  <span className="text-[0.6875rem] text-slate-400 mt-1">
+                    {tr("DWG, DXF, SKP, OBJ, FBX, PDF, JPG, PNG (Max 50MB)")}
                   </span>
                   <input
                     type="file"
@@ -264,10 +265,10 @@ export const InteriorUploadRevisionModal: React.FC<Props> = ({
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs font-bold text-slate-900 truncate">
-                        {selectedFile.name}
+                        {tr(selectedFile.name)}
                       </p>
-                      <p className="text-[11px] text-slate-500 font-medium">
-                        {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • {detectFileType(selectedFile.name).toUpperCase()}
+                      <p className="text-[0.6875rem] text-slate-500 font-medium">
+                        {(selectedFile.size / (1024 * 1024)).toFixed(2)}{tr(" MB • ")}{detectFileType(selectedFile.name).toUpperCase()}
                       </p>
                     </div>
                   </div>
@@ -275,7 +276,7 @@ export const InteriorUploadRevisionModal: React.FC<Props> = ({
                     type="button"
                     onClick={() => setSelectedFile(null)}
                     className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                    title="Remove file"
+                    title={tr("Remove file")}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -288,14 +289,14 @@ export const InteriorUploadRevisionModal: React.FC<Props> = ({
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                   <User className="w-3.5 h-3.5 text-indigo-600" />
-                  Send for Approval To (Team Member / Lead Architect)
+                  {tr("Send for Approval To (Team Member / Lead Architect)")}
                 </label>
                 <select
                   value={assignedReviewer}
                   onChange={(e) => setAssignedReviewer(e.target.value)}
                   className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition shadow-2xs font-medium cursor-pointer"
                 >
-                  <option value="">-- Select Team Member to Review (Optional) --</option>
+                  <option value="">{tr("-- Select Team Member to Review (Optional) --")}</option>
                   {users.map((u) => {
                     const uId = u._id || u.id || u.clerkUserId;
                     return (
@@ -311,13 +312,13 @@ export const InteriorUploadRevisionModal: React.FC<Props> = ({
             {/* Custom Name */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700">
-                Drawing Title / Label
+                {tr("Drawing Title / Label")}
               </label>
               <input
                 type="text"
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
-                placeholder="e.g. Master Bedroom 3D Render - Revised Layout"
+                placeholder={tr("e.g. Master Bedroom 3D Render - Revised Layout")}
                 className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition shadow-2xs font-medium"
               />
             </div>
@@ -325,12 +326,12 @@ export const InteriorUploadRevisionModal: React.FC<Props> = ({
             {/* Revision Notes */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700">
-                Revision Changelog / Notes
+                {tr("Revision Changelog / Notes")}
               </label>
               <textarea
                 value={revisionNotes}
                 onChange={(e) => setRevisionNotes(e.target.value)}
-                placeholder="Describe what changes were made in this version (e.g., updated lighting fixtures as per client feedback)..."
+                placeholder={tr("Describe what changes were made in this version (e.g., updated lighting fixtures as per client feedback)...")}
                 rows={3}
                 className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition shadow-2xs resize-none font-medium"
               />
@@ -340,7 +341,7 @@ export const InteriorUploadRevisionModal: React.FC<Props> = ({
             <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-xl text-xs text-blue-800 flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
               <span>
-                Uploading a revision will set this drawing's status to <strong>Pending Internal Approval</strong>. Your assigned team member will review it before publishing to the client portal.
+                {tr("Uploading a revision will set this drawing's status to ")}<strong>{tr("Pending Internal Approval")}</strong>{tr(". Your assigned team member will review it before publishing to the client portal.")}
               </span>
             </div>
 
@@ -352,7 +353,7 @@ export const InteriorUploadRevisionModal: React.FC<Props> = ({
                 disabled={isSubmitting}
                 className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition cursor-pointer"
               >
-                Cancel
+                {tr("Cancel")}
               </button>
 
               <button
@@ -361,7 +362,7 @@ export const InteriorUploadRevisionModal: React.FC<Props> = ({
                 className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 shadow-md shadow-indigo-600/20 rounded-xl transition disabled:opacity-50 cursor-pointer"
               >
                 <UploadCloud className="w-4 h-4" />
-                {isSubmitting ? 'Uploading Revision...' : `Send v${nextVersion} for Approval`}
+                {isSubmitting ? tr("Uploading Revision...") : tr("Send v{{nextVersion}} for Approval", { nextVersion: nextVersion })}
               </button>
             </div>
           </form>

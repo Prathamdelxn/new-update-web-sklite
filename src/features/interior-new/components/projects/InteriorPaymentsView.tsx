@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Interior-OS Project Payments & Financial View
@@ -89,7 +90,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
   const { can: canDo } = useProjectPermissions(projectId);
   const { currencySymbol, formatExactCurrency } = useCurrency();
   const { confirm } = useConfirm();
-  const [activeCategory, setActiveCategory] = useState<'incoming' | 'outgoing' | 'debitNote'>('incoming');
+  const [activeCategory, setActiveCategory] = useState<'incoming' | 'outgoing'>('incoming');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
 
@@ -101,7 +102,6 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
   // Modals & Preview
   const [isIncomingModalOpen, setIsIncomingModalOpen] = useState(false);
   const [isOutgoingModalOpen, setIsOutgoingModalOpen] = useState(false);
-  const [isDebitNoteModalOpen, setIsDebitNoteModalOpen] = useState(false);
   const [previewInvoice, setPreviewInvoice] = useState<PaymentRecord | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -134,17 +134,6 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
   const [purchaseOrders, setPurchaseOrders] = useState<any[]>([]);
   const [selectedPoId, setSelectedPoId] = useState<string>('');
 
-  // Form 3: Debit Note
-  const [debitNoteForm, setDebitNoteForm] = useState({
-    debitNoteNo: genRef('DN'),
-    vendorName: '',
-    reason: '',
-    amount: '',
-    issueDate: new Date().toISOString().split('T')[0],
-    remarks: '',
-  });
-  const [debitNoteErrors, setDebitNoteErrors] = useState<ValidationErrors>({});
-
   // ---------------------------------------------------------------------------
   // Fetch all payments for this project
   // ---------------------------------------------------------------------------
@@ -156,7 +145,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
       const list = res?.data ?? res ?? [];
       setPayments(Array.isArray(list) ? list : []);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? 'Failed to load payment records');
+      toast.error(err?.response?.data?.message ?? tr("Failed to load payment records"));
     } finally {
       setIsLoading(false);
     }
@@ -164,8 +153,8 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
 
   const handleDeletePayment = async (paymentId: string) => {
     const ok = await confirm({
-      title: 'Delete Payment Record',
-      message: 'Are you sure you want to delete this payment record? This action cannot be undone.',
+      title: tr("Delete Payment Record"),
+      message: tr("Are you sure you want to delete this payment record? This action cannot be undone."),
       confirmText: 'Delete',
       type: 'danger',
     });
@@ -175,14 +164,14 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
       setIsLoading(true);
       const res = await interiorProjectService.deletePayment(projectId, paymentId);
       if (res?.success) {
-        toast.success('Payment record deleted successfully');
+        toast.success(tr("Payment record deleted successfully"));
         loadPayments();
       } else {
-        toast.error(res?.message || 'Failed to delete payment');
+        toast.error(res?.message || tr("Failed to delete payment"));
       }
     } catch (err: any) {
       console.error('Delete payment failed', err);
-      toast.error(err?.response?.data?.message || 'Failed to delete payment');
+      toast.error(err?.response?.data?.message || tr("Failed to delete payment"));
     } finally {
       setIsLoading(false);
     }
@@ -214,11 +203,11 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
   const handleDownloadInvoice = async (record: PaymentRecord) => {
     try {
       setIsDownloadingPdf(record._id);
-      toast.success('Generating PDF invoice...');
+      toast.success(tr("Generating PDF invoice..."));
       await downloadInvoicePdf(record, project, currencySymbol);
     } catch (err) {
       console.error('PDF download error', err);
-      toast.error('Failed to generate PDF invoice');
+      toast.error(tr("Failed to generate PDF invoice"));
     } finally {
       setIsDownloadingPdf(null);
     }
@@ -229,7 +218,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
       printInvoice(record, project, currencySymbol);
     } catch (err) {
       console.error('Print invoice error', err);
-      toast.error('Failed to open print preview');
+      toast.error(tr("Failed to open print preview"));
     }
   };
 
@@ -266,7 +255,6 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
   // Derived lists per category
   const incomingPayments = payments.filter((p) => p.type === 'incoming');
   const outgoingPayments = payments.filter((p) => p.type === 'outgoing');
-  const debitNotes = payments.filter((p) => p.type === 'debit_note');
 
   // ---------------------------------------------------------------------------
   // Submit Handlers (POST to backend)
@@ -280,7 +268,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
     };
     setIncomingErrors(errors);
     if (Object.values(errors).some((err) => err !== null)) {
-      toast.error('Please fix the errors in the incoming payment form');
+      toast.error(tr("Please fix the errors in the incoming payment form"));
       return;
     }
 
@@ -309,15 +297,15 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
       };
 
       if (shouldGenInvoice) {
-        toast.success('Payment recorded! Generating PDF invoice...');
+        toast.success(tr("Payment recorded! Generating PDF invoice..."));
         try {
           await downloadInvoicePdf(createdRecord, project, currencySymbol);
         } catch (pdfErr) {
           console.error('Failed to generate PDF', pdfErr);
-          toast.error('Payment saved, but PDF invoice generation failed.');
+          toast.error(tr("Payment saved, but PDF invoice generation failed."));
         }
       } else {
-        toast.success('Incoming client payment recorded successfully!');
+        toast.success(tr("Incoming client payment recorded successfully!"));
       }
 
       setIsIncomingModalOpen(false);
@@ -333,7 +321,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
       setIncomingErrors({});
       await loadPayments();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? 'Failed to record incoming payment');
+      toast.error(err?.response?.data?.message ?? tr("Failed to record incoming payment"));
     } finally {
       setIsSubmitting(false);
     }
@@ -349,7 +337,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
     };
     setOutgoingErrors(errors);
     if (Object.values(errors).some((err) => err !== null)) {
-      toast.error('Please fix the errors in the outgoing payment form');
+      toast.error(tr("Please fix the errors in the outgoing payment form"));
       return;
     }
 
@@ -366,7 +354,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
         referenceNo: outgoingForm.referenceNo.trim(),
         remarks: outgoingForm.remarks.trim(),
       });
-      toast.success('Outgoing vendor payment recorded successfully!');
+      toast.success(tr("Outgoing vendor payment recorded successfully!"));
       setIsOutgoingModalOpen(false);
       setOutgoingForm({
         poNo: genRef('PO'),
@@ -381,51 +369,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
       setOutgoingErrors({});
       await loadPayments();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? 'Failed to record outgoing payment');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleDebitNoteSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const errors: ValidationErrors = {
-      vendorName: validateNonEmpty(debitNoteForm.vendorName, 'Vendor name'),
-      reason: validateNonEmpty(debitNoteForm.reason, 'Reason / defect details'),
-      amount: validatePositiveNumber(debitNoteForm.amount, 'Debit amount'),
-      issueDate: validateRequiredDate(debitNoteForm.issueDate, 'Issue date'),
-    };
-    setDebitNoteErrors(errors);
-    if (Object.values(errors).some((err) => err !== null)) {
-      toast.error('Please fix the errors in the debit note form');
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await interiorProjectService.createPayment(projectId, {
-        type: 'debit_note',
-        debitNoteNo: debitNoteForm.debitNoteNo,
-        vendorName: debitNoteForm.vendorName.trim(),
-        reason: debitNoteForm.reason.trim(),
-        amount: parseFloat(debitNoteForm.amount),
-        issueDate: debitNoteForm.issueDate,
-        remarks: debitNoteForm.remarks.trim(),
-      });
-      toast.success('Debit note issued successfully!');
-      setIsDebitNoteModalOpen(false);
-      setDebitNoteForm({
-        debitNoteNo: genRef('DN'),
-        vendorName: '',
-        reason: '',
-        amount: '',
-        issueDate: new Date().toISOString().split('T')[0],
-        remarks: '',
-      });
-      setDebitNoteErrors({});
-      await loadPayments();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? 'Failed to issue debit note');
+      toast.error(err?.response?.data?.message ?? tr("Failed to record outgoing payment"));
     } finally {
       setIsSubmitting(false);
     }
@@ -455,16 +399,6 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
     return matchesSearch && matchesStatus;
   });
 
-  const filteredDebitNotes = debitNotes.filter((t) => {
-    const q = searchQuery.toLowerCase();
-    const matchesSearch =
-      (t.debitNoteNo ?? '').toLowerCase().includes(q) ||
-      (t.vendorName ?? '').toLowerCase().includes(q) ||
-      (t.reason ?? '').toLowerCase().includes(q);
-    const matchesStatus = statusFilter === 'All' || t.debitNoteStatus === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
@@ -475,10 +409,10 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[hsl(var(--foreground))] flex items-center gap-2.5">
             <CreditCard className="w-6 h-6 sm:w-7 sm:h-7 text-[hsl(var(--primary))]" />
-            Project Payments &amp; Financial Ledger
+            {tr("Project Payments & Financial Ledger")}
           </h1>
           <p className="text-xs sm:text-sm text-[hsl(var(--muted-foreground))] mt-1">
-            Manage incoming client receipts, outgoing vendor payouts, and debit notes.
+            {tr("Manage incoming client receipts and outgoing vendor payouts.")}
           </p>
         </div>
 
@@ -491,7 +425,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                 onClick={() => setIsIncomingModalOpen(true)}
                 className="text-xs sm:text-sm font-semibold"
               >
-                <ArrowDownLeft className="w-4 h-4 mr-1.5 text-emerald-300" /> Record Incoming Payment
+                <ArrowDownLeft className="w-4 h-4 me-1.5 text-emerald-300" />{tr(" Record Incoming Payment")}
               </Button>
             )
           )}
@@ -504,32 +438,20 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                 onClick={() => setIsOutgoingModalOpen(true)}
                 className="text-xs sm:text-sm font-semibold"
               >
-                <ArrowUpRight className="w-4 h-4 mr-1.5 text-rose-300" /> Record Outgoing Payment
+                <ArrowUpRight className="w-4 h-4 me-1.5 text-rose-300" />{tr(" Record Outgoing Payment")}
               </Button>
             )
           )}
 
-          {activeCategory === 'debitNote' && (
-            canDo('financials', 'create') && (
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => setIsDebitNoteModalOpen(true)}
-                className="text-xs sm:text-sm font-semibold"
-              >
-                <Plus className="w-4 h-4 mr-1.5" /> Issue Debit Note
-              </Button>
-            )
-          )}
         </div>
       </div>
 
       {/* ── Summary Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Net Balance */}
         <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Net Balance</span>
+            <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{tr("Net Balance")}</span>
             <div className="w-8 h-8 rounded-lg bg-[hsl(var(--primary)/0.12)] flex items-center justify-center">
               <Wallet className="w-4 h-4 text-[hsl(var(--primary))]" />
             </div>
@@ -543,13 +465,13 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                 : 'text-rose-600 dark:text-rose-400'
             }`}>
               {incomingPayments.reduce((s, p) => s + p.amount, 0) - outgoingPayments.reduce((s, p) => s + p.amount, 0) < 0 ? '-' : ''}
-              {currencySymbol} {Math.abs(
+              {tr(currencySymbol)} {Math.abs(
                 incomingPayments.reduce((s, p) => s + p.amount, 0) -
                 outgoingPayments.reduce((s, p) => s + p.amount, 0)
               ).toLocaleString()}
             </p>
           )}
-          <p className="text-xs text-[hsl(var(--muted-foreground))]">Incoming minus outgoing</p>
+          <p className="text-xs text-[hsl(var(--muted-foreground))]">{tr("Incoming minus outgoing")}</p>
         </div>
 
         {/* Total Incoming */}
@@ -558,7 +480,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
           className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 flex flex-col gap-2 cursor-pointer hover:border-emerald-400/60 transition-colors"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Total Incoming</span>
+            <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{tr("Total Incoming")}</span>
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
               <TrendingUp className="w-4 h-4 text-emerald-500" />
             </div>
@@ -567,10 +489,10 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
             <div className="h-7 w-24 rounded bg-[hsl(var(--muted))] animate-pulse" />
           ) : (
             <p className="text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
-              +{currencySymbol} {incomingPayments.reduce((s, p) => s + p.amount, 0).toLocaleString()}
+              +{tr(currencySymbol)} {incomingPayments.reduce((s, p) => s + p.amount, 0).toLocaleString()}
             </p>
           )}
-          <p className="text-xs text-[hsl(var(--muted-foreground))]">{incomingPayments.length} client receipt{incomingPayments.length !== 1 ? 's' : ''}</p>
+          <p className="text-xs text-[hsl(var(--muted-foreground))]">{incomingPayments.length}{tr(" client receipt")}{incomingPayments.length !== 1 ? 's' : ''}</p>
         </div>
 
         {/* Total Outgoing */}
@@ -579,7 +501,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
           className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 flex flex-col gap-2 cursor-pointer hover:border-rose-400/60 transition-colors"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Total Outgoing</span>
+            <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{tr("Total Outgoing")}</span>
             <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center">
               <TrendingDown className="w-4 h-4 text-rose-500" />
             </div>
@@ -588,35 +510,15 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
             <div className="h-7 w-24 rounded bg-[hsl(var(--muted))] animate-pulse" />
           ) : (
             <p className="text-xl font-bold tracking-tight text-rose-600 dark:text-rose-400">
-              -{currencySymbol} {outgoingPayments.reduce((s, p) => s + p.amount, 0).toLocaleString()}
+              -{tr(currencySymbol)} {outgoingPayments.reduce((s, p) => s + p.amount, 0).toLocaleString()}
             </p>
           )}
-          <p className="text-xs text-[hsl(var(--muted-foreground))]">{outgoingPayments.length} vendor payout{outgoingPayments.length !== 1 ? 's' : ''}</p>
+          <p className="text-xs text-[hsl(var(--muted-foreground))]">{outgoingPayments.length}{tr(" vendor payout")}{outgoingPayments.length !== 1 ? 's' : ''}</p>
         </div>
 
-        {/* Debit Notes */}
-        <div
-          onClick={() => { setActiveCategory('debitNote'); setStatusFilter('All'); }}
-          className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 flex flex-col gap-2 cursor-pointer hover:border-amber-400/60 transition-colors"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Debit Notes</span>
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-              <FileText className="w-4 h-4 text-amber-500" />
-            </div>
-          </div>
-          {isLoading ? (
-            <div className="h-7 w-24 rounded bg-[hsl(var(--muted))] animate-pulse" />
-          ) : (
-            <p className="text-xl font-bold tracking-tight text-amber-600 dark:text-amber-400">
-              {currencySymbol} {debitNotes.reduce((s, p) => s + p.amount, 0).toLocaleString()}
-            </p>
-          )}
-          <p className="text-xs text-[hsl(var(--muted-foreground))]">{debitNotes.length} debit note{debitNotes.length !== 1 ? 's' : ''} issued</p>
-        </div>
       </div>
 
-      {/* Main 3 Categories Navigation Tabs */}
+      {/* Category Navigation Tabs */}
       <div className="flex items-center gap-2 border-b border-[hsl(var(--border))] pb-3 overflow-x-auto">
         <button
           onClick={() => {
@@ -629,7 +531,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
               : 'text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]'
           }`}
         >
-          <ArrowDownLeft className="w-4 h-4 text-emerald-400" /> Incoming Payments ({incomingPayments.length})
+          <ArrowDownLeft className="w-4 h-4 text-emerald-400" />{tr(" Incoming Payments (")}{incomingPayments.length})
         </button>
 
         <button
@@ -643,22 +545,9 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
               : 'text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]'
           }`}
         >
-          <ArrowUpRight className="w-4 h-4 text-rose-400" /> Outgoing Payments ({outgoingPayments.length})
+          <ArrowUpRight className="w-4 h-4 text-rose-400" />{tr(" Outgoing Payments (")}{outgoingPayments.length})
         </button>
 
-        <button
-          onClick={() => {
-            setActiveCategory('debitNote');
-            setStatusFilter('All');
-          }}
-          className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
-            activeCategory === 'debitNote'
-              ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
-              : 'text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]'
-          }`}
-        >
-          <FileText className="w-4 h-4 text-amber-400" /> Debit Notes ({debitNotes.length})
-        </button>
       </div>
 
       {/* Shared Filter Bar */}
@@ -670,10 +559,8 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={
               activeCategory === 'incoming'
-                ? 'Search invoice, UTR, or milestone...'
-                : activeCategory === 'outgoing'
-                ? 'Search PO, vendor, or category...'
-                : 'Search debit note, vendor, or reason...'
+                ? tr("Search invoice, UTR, or milestone...")
+                : tr("Search PO, vendor, or category...")
             }
             icon={<Search className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />}
           />
@@ -686,24 +573,17 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
           >
-            <option value="All">All Statuses</option>
+            <option value="All">{tr("All Statuses")}</option>
             {activeCategory === 'incoming' && (
               <>
-                <option value="Completed">Completed</option>
-                <option value="Pending Verification">Pending Verification</option>
+                <option value="Completed">{tr("Completed")}</option>
+                <option value="Pending Verification">{tr("Pending Verification")}</option>
               </>
             )}
             {activeCategory === 'outgoing' && (
               <>
-                <option value="Paid">Paid</option>
-                <option value="Processing">Processing</option>
-              </>
-            )}
-            {activeCategory === 'debitNote' && (
-              <>
-                <option value="Issued">Issued</option>
-                <option value="Adjusted">Adjusted</option>
-                <option value="Settled">Settled</option>
+                <option value="Paid">{tr("Paid")}</option>
+                <option value="Processing">{tr("Processing")}</option>
               </>
             )}
           </select>
@@ -713,8 +593,8 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
       {/* Loading Skeleton */}
       {isLoading && (
         <div className="flex items-center justify-center py-16 text-[hsl(var(--muted-foreground))]">
-          <Loader2 className="w-6 h-6 animate-spin mr-2" />
-          <span className="text-sm font-medium">Loading payment records…</span>
+          <Loader2 className="w-6 h-6 animate-spin me-2" />
+          <span className="text-sm font-medium">{tr("Loading payment records…")}</span>
         </div>
       )}
 
@@ -722,22 +602,22 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
       {!isLoading && activeCategory === 'incoming' && (
         <Card className="overflow-hidden p-0 border border-[hsl(var(--border))]">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs sm:text-sm">
+            <table className="w-full text-start text-xs sm:text-sm">
               <thead className="bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-xs uppercase font-semibold text-[hsl(var(--muted-foreground))] tracking-wider">
                 <tr>
-                  <th className="px-5 py-3.5">Invoice / Milestone</th>
-                  <th className="px-5 py-3.5">Date</th>
-                  <th className="px-5 py-3.5">Method &amp; UTR</th>
-                  <th className="px-5 py-3.5">Amount</th>
-                  <th className="px-5 py-3.5 text-center">Status</th>
-                  <th className="px-5 py-3.5 text-right">Actions</th>
+                  <th className="px-5 py-3.5">{tr("Invoice / Milestone")}</th>
+                  <th className="px-5 py-3.5">{tr("Date")}</th>
+                  <th className="px-5 py-3.5">{tr("Method & UTR")}</th>
+                  <th className="px-5 py-3.5">{tr("Amount")}</th>
+                  <th className="px-5 py-3.5 text-center">{tr("Status")}</th>
+                  <th className="px-5 py-3.5 text-end">{tr("Actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[hsl(var(--border))]">
                 {filteredIncoming.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-8 text-center text-[hsl(var(--muted-foreground))] font-medium">
-                      No incoming client payments match your search.
+                      {tr("No incoming client payments match your search.")}
                     </td>
                   </tr>
                 ) : (
@@ -745,30 +625,30 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                     <tr key={tx._id} className="hover:bg-[hsl(var(--muted)/0.3)] transition-colors">
                       <td className="px-5 py-3.5">
                         <span className="font-bold text-[hsl(var(--foreground))] block text-xs sm:text-sm">
-                          {tx.invoiceNo}
+                          {tr(tx.invoiceNo)}
                         </span>
-                        <span className="text-xs text-[hsl(var(--muted-foreground))]">{tx.milestoneName}</span>
+                        <span className="text-xs text-[hsl(var(--muted-foreground))]">{tr(tx.milestoneName)}</span>
                       </td>
                       <td className="px-5 py-3.5 text-xs font-medium text-[hsl(var(--foreground))]">
                         {formatDate(tx.paymentDate)}
                       </td>
                       <td className="px-5 py-3.5">
-                        <span className="font-semibold text-[hsl(var(--foreground))] block text-xs sm:text-sm">{tx.paymentMethod}</span>
-                        <span className="text-xs font-mono text-[hsl(var(--muted-foreground))]">Ref: {tx.referenceNo}</span>
+                        <span className="font-semibold text-[hsl(var(--foreground))] block text-xs sm:text-sm">{tr(tx.paymentMethod)}</span>
+                        <span className="text-xs font-mono text-[hsl(var(--muted-foreground))]">{tr("Ref: ")}{tr(tx.referenceNo)}</span>
                       </td>
                       <td className="px-5 py-3.5 font-bold text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm">
-                        +{currencySymbol} {tx.amount.toLocaleString()}
+                        +{tr(currencySymbol)} {tx.amount.toLocaleString()}
                       </td>
                       <td className="px-5 py-3.5 text-center">
                         <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400">
-                          {tx.incomingStatus ?? 'Completed'}
+                          {tx.incomingStatus ?? tr("Completed")}
                         </span>
                       </td>
-                      <td className="px-5 py-3.5 text-right">
+                      <td className="px-5 py-3.5 text-end">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => setPreviewInvoice(tx)}
-                            title="View / Print Invoice"
+                            title={tr("View / Print Invoice")}
                             className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded transition-colors cursor-pointer"
                           >
                             <Eye className="w-4 h-4" />
@@ -777,7 +657,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                             <button
                               onClick={() => handleDownloadInvoice(tx)}
                               disabled={isDownloadingPdf === tx._id}
-                              title="Download PDF Invoice"
+                              title={tr("Download PDF Invoice")}
                               className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded transition-colors cursor-pointer disabled:opacity-50"
                             >
                               {isDownloadingPdf === tx._id ? (
@@ -790,7 +670,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                           {canDo('financials', 'delete') && (
                             <button
                               onClick={() => handleDeletePayment(tx._id)}
-                              title="Delete payment record"
+                              title={tr("Delete payment record")}
                               className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded transition-colors cursor-pointer"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -811,22 +691,22 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
       {!isLoading && activeCategory === 'outgoing' && (
         <Card className="overflow-hidden p-0 border border-[hsl(var(--border))]">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs sm:text-sm">
+            <table className="w-full text-start text-xs sm:text-sm">
               <thead className="bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-xs uppercase font-semibold text-[hsl(var(--muted-foreground))] tracking-wider">
                 <tr>
-                  <th className="px-5 py-3.5">PO Ref / Vendor</th>
-                  <th className="px-5 py-3.5">Category</th>
-                  <th className="px-5 py-3.5">Date &amp; Mode</th>
-                  <th className="px-5 py-3.5">Amount</th>
-                  <th className="px-5 py-3.5 text-center">Status</th>
-                  <th className="px-5 py-3.5 text-right">Actions</th>
+                  <th className="px-5 py-3.5">{tr("PO Ref / Vendor")}</th>
+                  <th className="px-5 py-3.5">{tr("Category")}</th>
+                  <th className="px-5 py-3.5">{tr("Date & Mode")}</th>
+                  <th className="px-5 py-3.5">{tr("Amount")}</th>
+                  <th className="px-5 py-3.5 text-center">{tr("Status")}</th>
+                  <th className="px-5 py-3.5 text-end">{tr("Actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[hsl(var(--border))]">
                 {filteredOutgoing.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-8 text-center text-[hsl(var(--muted-foreground))] font-medium">
-                      No outgoing vendor payouts match your search.
+                      {tr("No outgoing vendor payouts match your search.")}
                     </td>
                   </tr>
                 ) : (
@@ -834,21 +714,21 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                     <tr key={tx._id} className="hover:bg-[hsl(var(--muted)/0.3)] transition-colors">
                       <td className="px-5 py-3.5">
                         <span className="font-bold text-[hsl(var(--foreground))] block text-xs sm:text-sm">
-                          {tx.vendorName}
+                          {tr(tx.vendorName)}
                         </span>
-                        <span className="text-xs font-mono text-[hsl(var(--muted-foreground))]">{tx.poNo}</span>
+                        <span className="text-xs font-mono text-[hsl(var(--muted-foreground))]">{tr(tx.poNo)}</span>
                       </td>
                       <td className="px-5 py-3.5 text-xs font-medium text-[hsl(var(--foreground))]">
                         <span className="px-2 py-0.5 rounded bg-[hsl(var(--muted))] text-[hsl(var(--foreground))]">
-                          {tx.category}
+                          {tr(tx.category)}
                         </span>
                       </td>
                       <td className="px-5 py-3.5">
                         <span className="font-semibold text-[hsl(var(--foreground))] block text-xs sm:text-sm">{formatDate(tx.paymentDate)}</span>
-                        <span className="text-xs text-[hsl(var(--muted-foreground))]">{tx.paymentMethod} • {tx.referenceNo}</span>
+                        <span className="text-xs text-[hsl(var(--muted-foreground))]">{tr(tx.paymentMethod)} • {tr(tx.referenceNo)}</span>
                       </td>
                       <td className="px-5 py-3.5 font-bold text-rose-600 dark:text-rose-400 text-xs sm:text-sm">
-                        -{currencySymbol} {tx.amount.toLocaleString()}
+                        -{tr(currencySymbol)} {tx.amount.toLocaleString()}
                       </td>
                       <td className="px-5 py-3.5 text-center">
                         <span
@@ -858,14 +738,14 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                               : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400'
                           }`}
                         >
-                          {tx.outgoingStatus ?? 'Paid'}
+                          {tx.outgoingStatus ?? tr("Paid")}
                         </span>
                       </td>
-                      <td className="px-5 py-3.5 text-right">
+                      <td className="px-5 py-3.5 text-end">
                         {canDo('financials', 'delete') && (
                           <button
                             onClick={() => handleDeletePayment(tx._id)}
-                            title="Delete payment record"
+                            title={tr("Delete payment record")}
                             className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -881,78 +761,6 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
         </Card>
       )}
 
-      {/* Category 3: Debit Notes */}
-      {!isLoading && activeCategory === 'debitNote' && (
-        <Card className="overflow-hidden p-0 border border-[hsl(var(--border))]">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs sm:text-sm">
-              <thead className="bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-xs uppercase font-semibold text-[hsl(var(--muted-foreground))] tracking-wider">
-                <tr>
-                  <th className="px-5 py-3.5">Debit Note # / Vendor</th>
-                  <th className="px-5 py-3.5">Reason / Description</th>
-                  <th className="px-5 py-3.5">Issue Date</th>
-                  <th className="px-5 py-3.5">Amount</th>
-                  <th className="px-5 py-3.5 text-center">Status</th>
-                  <th className="px-5 py-3.5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[hsl(var(--border))]">
-                {filteredDebitNotes.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-[hsl(var(--muted-foreground))] font-medium">
-                      No debit notes match your search.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredDebitNotes.map((dn) => (
-                    <tr key={dn._id} className="hover:bg-[hsl(var(--muted)/0.3)] transition-colors">
-                      <td className="px-5 py-3.5">
-                        <span className="font-bold text-[hsl(var(--foreground))] block text-xs sm:text-sm">
-                          {dn.debitNoteNo}
-                        </span>
-                        <span className="text-xs text-[hsl(var(--muted-foreground))]">{dn.vendorName}</span>
-                      </td>
-                      <td className="px-5 py-3.5 text-xs text-[hsl(var(--foreground))] font-medium max-w-xs">
-                        {dn.reason}
-                      </td>
-                      <td className="px-5 py-3.5 text-xs font-medium text-[hsl(var(--foreground))]">
-                        {formatDate(dn.issueDate)}
-                      </td>
-                      <td className="px-5 py-3.5 font-bold text-amber-600 dark:text-amber-400 text-xs sm:text-sm">
-                        {currencySymbol} {dn.amount.toLocaleString()}
-                      </td>
-                      <td className="px-5 py-3.5 text-center">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                            dn.debitNoteStatus === 'Adjusted'
-                              ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400'
-                              : dn.debitNoteStatus === 'Settled'
-                              ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400'
-                              : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400'
-                          }`}
-                        >
-                          {dn.debitNoteStatus ?? 'Issued'}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5 text-right">
-                        {canDo('financials', 'delete') && (
-                          <button
-                            onClick={() => handleDeletePayment(dn._id)}
-                            title="Delete debit note"
-                            className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
 
       {/* Modal 1: Record Incoming Client Payment */}
       <AnimatePresence>
@@ -974,10 +782,10 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
               <div className="flex items-center justify-between border-b border-[hsl(var(--border))] pb-4">
                 <div>
                   <h2 className="text-lg font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
-                    <ArrowDownLeft className="w-5 h-5 text-emerald-500" /> Record Incoming Payment
+                    <ArrowDownLeft className="w-5 h-5 text-emerald-500" />{tr(" Record Incoming Payment")}
                   </h2>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                    Log a client milestone receipt or advance payment.
+                    {tr("Log a client milestone receipt or advance payment.")}
                   </p>
                 </div>
                 <button
@@ -990,22 +798,22 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
 
               <form onSubmit={handleIncomingSubmit} className="space-y-4">
                 <div>
-                  <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Contract Milestone</label>
+                  <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">{tr("Contract Milestone")}</label>
                   <select
                     value={incomingForm.milestoneName}
                     onChange={(e) => setIncomingForm({ ...incomingForm, milestoneName: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
                   >
-                    <option value="Booking Advance (10%)">Booking Advance (10%)</option>
-                    <option value="Design Approval & Site Start (30%)">Design Approval &amp; Site Start (30%)</option>
-                    <option value="Carpentry & Midpoint (40%)">Carpentry &amp; Midpoint (40%)</option>
-                    <option value="Final Handover (20%)">Final Handover (20%)</option>
+                    <option value="Booking Advance (10%)">{tr("Booking Advance (10%)")}</option>
+                    <option value="Design Approval & Site Start (30%)">{tr("Design Approval & Site Start (30%)")}</option>
+                    <option value="Carpentry & Midpoint (40%)">{tr("Carpentry & Midpoint (40%)")}</option>
+                    <option value="Final Handover (20%)">{tr("Final Handover (20%)")}</option>
                   </select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Amount ({currencySymbol}) *</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">{tr("Amount (")}{tr(currencySymbol)}) *</label>
                     <input
                       type="number"
                       value={incomingForm.amount}
@@ -1022,7 +830,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Payment Date *</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">{tr("Payment Date *")}</label>
                     <input
                       type="date"
                       value={incomingForm.paymentDate}
@@ -1034,28 +842,28 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                         incomingErrors.paymentDate ? 'border-[hsl(var(--destructive))]' : 'border-[hsl(var(--border))]'
                       }`}
                     />
-                    {incomingErrors.paymentDate && <p className="text-xs text-[hsl(var(--destructive))] mt-1">{incomingErrors.paymentDate}</p>}
+                    {incomingErrors.paymentDate && <p className="text-xs text-[hsl(var(--destructive))] mt-1">{tr(incomingErrors.paymentDate)}</p>}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Payment Mode</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">{tr("Payment Mode")}</label>
                     <select
                       value={incomingForm.paymentMethod}
                       onChange={(e) => setIncomingForm({ ...incomingForm, paymentMethod: e.target.value as any })}
                       className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
                     >
-                      <option value="Bank Transfer">Bank Transfer</option>
-                      <option value="UPI">UPI</option>
-                      <option value="RTGS/NEFT">RTGS / NEFT</option>
-                      <option value="Cheque">Cheque</option>
-                      <option value="Cash">Cash</option>
+                      <option value="Bank Transfer">{tr("Bank Transfer")}</option>
+                      <option value="UPI">{tr("UPI")}</option>
+                      <option value="RTGS/NEFT">{tr("RTGS / NEFT")}</option>
+                      <option value="Cheque">{tr("Cheque")}</option>
+                      <option value="Cash">{tr("Cash")}</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Ref / Transaction Number *</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">{tr("Ref / Transaction Number *")}</label>
                     <input
                       type="text"
                       value={incomingForm.referenceNo}
@@ -1063,22 +871,22 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                         setIncomingForm({ ...incomingForm, referenceNo: e.target.value });
                         if (incomingErrors.referenceNo) setIncomingErrors({ ...incomingErrors, referenceNo: null });
                       }}
-                      placeholder="e.g. WIRE-89210928 / CHQ-4401"
+                      placeholder={tr("e.g. WIRE-89210928 / CHQ-4401")}
                       className={`w-full px-3 py-2 rounded-lg border bg-[hsl(var(--background))] text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] ${
                         incomingErrors.referenceNo ? 'border-[hsl(var(--destructive))]' : 'border-[hsl(var(--border))]'
                       }`}
                     />
-                    {incomingErrors.referenceNo && <p className="text-xs text-[hsl(var(--destructive))] mt-1">{incomingErrors.referenceNo}</p>}
+                    {incomingErrors.referenceNo && <p className="text-xs text-[hsl(var(--destructive))] mt-1">{tr(incomingErrors.referenceNo)}</p>}
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Remarks / Notes</label>
+                  <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">{tr("Remarks / Notes")}</label>
                   <textarea
                     rows={3}
                     value={incomingForm.remarks}
                     onChange={(e) => setIncomingForm({ ...incomingForm, remarks: e.target.value })}
-                    placeholder="Enter transaction notes..."
+                    placeholder={tr("Enter transaction notes...")}
                     className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] resize-none"
                   />
                 </div>
@@ -1093,7 +901,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                     className="w-4 h-4 rounded text-[hsl(var(--primary))] focus:ring-[hsl(var(--ring))] cursor-pointer accent-[hsl(var(--primary))]"
                   />
                   <label htmlFor="generateInvoiceCheckbox" className="text-xs text-[hsl(var(--foreground))] font-medium cursor-pointer select-none">
-                    Auto-generate &amp; download official PDF invoice upon saving
+                    {tr("Auto-generate & download official PDF invoice upon saving")}
                   </label>
                 </div>
 
@@ -1104,7 +912,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                     onClick={() => setIsIncomingModalOpen(false)}
                     className="text-xs font-semibold"
                   >
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                   <Button
                     type="button"
@@ -1113,7 +921,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                     onClick={() => handleIncomingSubmit(undefined, true)}
                     className="text-xs font-semibold flex items-center gap-1.5 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
                   >
-                    <Download className="w-3.5 h-3.5" /> Save &amp; Generate Invoice
+                    <Download className="w-3.5 h-3.5" />{tr(" Save & Generate Invoice")}
                   </Button>
                   <Button
                     type="submit"
@@ -1121,7 +929,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                     isLoading={isSubmitting}
                     className="text-xs font-semibold"
                   >
-                    Save Payment
+                    {tr("Save Payment")}
                   </Button>
                 </div>
               </form>
@@ -1150,10 +958,10 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
               <div className="flex items-center justify-between border-b border-[hsl(var(--border))] pb-4">
                 <div>
                   <h2 className="text-lg font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
-                    <ArrowUpRight className="w-5 h-5 text-rose-500" /> Record Outgoing Payment
+                    <ArrowUpRight className="w-5 h-5 text-rose-500" />{tr(" Record Outgoing Payment")}
                   </h2>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                    Log a payout to a vendor, contractor, or material supplier.
+                    {tr("Log a payout to a vendor, contractor, or material supplier.")}
                   </p>
                 </div>
                 <button
@@ -1168,14 +976,14 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                 {purchaseOrders && purchaseOrders.length > 0 && (
                   <div>
                     <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">
-                      Link Purchase Order (PO)
+                      {tr("Link Purchase Order (PO)")}
                     </label>
                     <select
                       value={selectedPoId}
                       onChange={(e) => handlePoSelect(e.target.value)}
                       className="w-full px-3 py-2 rounded-lg border border-blue-200 bg-blue-50/30 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
                     >
-                      <option value="">-- Direct Payment (No PO) --</option>
+                      <option value="">{tr("-- Direct Payment (No PO) --")}</option>
                       {purchaseOrders.map((po) => {
                         const paidForPo = payments
                           .filter((p) => p.type === 'outgoing' && p.poNo === po.poNumber)
@@ -1183,7 +991,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                         const remaining = Math.max(0, (po.amount || 0) - paidForPo);
                         return (
                           <option key={po._id} value={po._id}>
-                            {po.poNumber} - {po.materialName} ({po.vendorName || 'Vendor'}) • Total: {currencySymbol} {(po.amount || 0).toLocaleString()}{remaining < (po.amount || 0) ? ` (Bal: ${currencySymbol} ${remaining.toLocaleString()})` : ''}
+                            {tr(po.poNumber)} - {tr(po.materialName)} ({po.vendorName || tr("Vendor")}{tr(") • Total: ")}{tr(currencySymbol)} {(po.amount || 0).toLocaleString()}{remaining < (po.amount || 0) ? tr(" (Bal: {{currencySymbol}} {{remaining}})", { currencySymbol: currencySymbol, remaining: remaining.toLocaleString() }) : ''}
                           </option>
                         );
                       })}
@@ -1192,7 +1000,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                 )}
 
                 <div>
-                  <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Vendor / Contractor Name *</label>
+                  <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">{tr("Vendor / Contractor Name *")}</label>
                   <input
                     type="text"
                     value={outgoingForm.vendorName}
@@ -1200,33 +1008,33 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                       setOutgoingForm({ ...outgoingForm, vendorName: e.target.value });
                       if (outgoingErrors.vendorName) setOutgoingErrors({ ...outgoingErrors, vendorName: null });
                     }}
-                    placeholder="e.g. Apex Timber & Woodworks"
+                    placeholder={tr("e.g. Apex Timber & Woodworks")}
                     className={`w-full px-3 py-2 rounded-lg border bg-[hsl(var(--background))] text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] ${
                       outgoingErrors.vendorName ? 'border-[hsl(var(--destructive))]' : 'border-[hsl(var(--border))]'
                     }`}
                   />
-                  {outgoingErrors.vendorName && <p className="text-xs text-[hsl(var(--destructive))] mt-1">{outgoingErrors.vendorName}</p>}
+                  {outgoingErrors.vendorName && <p className="text-xs text-[hsl(var(--destructive))] mt-1">{tr(outgoingErrors.vendorName)}</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Expense Category</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">{tr("Expense Category")}</label>
                     <select
                       value={outgoingForm.category}
                       onChange={(e) => setOutgoingForm({ ...outgoingForm, category: e.target.value })}
                       className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
                     >
-                      <option value="Wood & Plywood">Wood &amp; Plywood</option>
-                      <option value="Electrical Services">Electrical Services</option>
-                      <option value="Hardware & Fittings">Hardware &amp; Fittings</option>
-                      <option value="Plumbing & Sanitary">Plumbing &amp; Sanitary</option>
-                      <option value="Paint & Finishes">Paint &amp; Finishes</option>
-                      <option value="Civil Materials">Civil Materials</option>
+                      <option value="Wood & Plywood">{tr("Wood & Plywood")}</option>
+                      <option value="Electrical Services">{tr("Electrical Services")}</option>
+                      <option value="Hardware & Fittings">{tr("Hardware & Fittings")}</option>
+                      <option value="Plumbing & Sanitary">{tr("Plumbing & Sanitary")}</option>
+                      <option value="Paint & Finishes">{tr("Paint & Finishes")}</option>
+                      <option value="Civil Materials">{tr("Civil Materials")}</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Amount ({currencySymbol}) *</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">{tr("Amount (")}{tr(currencySymbol)}) *</label>
                     <input
                       type="number"
                       value={outgoingForm.amount}
@@ -1245,7 +1053,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Payment Date *</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">{tr("Payment Date *")}</label>
                     <input
                       type="date"
                       value={outgoingForm.paymentDate}
@@ -1257,11 +1065,11 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                         outgoingErrors.paymentDate ? 'border-[hsl(var(--destructive))]' : 'border-[hsl(var(--border))]'
                       }`}
                     />
-                    {outgoingErrors.paymentDate && <p className="text-xs text-[hsl(var(--destructive))] mt-1">{outgoingErrors.paymentDate}</p>}
+                    {outgoingErrors.paymentDate && <p className="text-xs text-[hsl(var(--destructive))] mt-1">{tr(outgoingErrors.paymentDate)}</p>}
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Ref / Transaction Number *</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">{tr("Ref / Transaction Number *")}</label>
                     <input
                       type="text"
                       value={outgoingForm.referenceNo}
@@ -1269,12 +1077,12 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                         setOutgoingForm({ ...outgoingForm, referenceNo: e.target.value });
                         if (outgoingErrors.referenceNo) setOutgoingErrors({ ...outgoingErrors, referenceNo: null });
                       }}
-                      placeholder="e.g. TXN-9812401"
+                      placeholder={tr("e.g. TXN-9812401")}
                       className={`w-full px-3 py-2 rounded-lg border bg-[hsl(var(--background))] text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] ${
                         outgoingErrors.referenceNo ? 'border-[hsl(var(--destructive))]' : 'border-[hsl(var(--border))]'
                       }`}
                     />
-                    {outgoingErrors.referenceNo && <p className="text-xs text-[hsl(var(--destructive))] mt-1">{outgoingErrors.referenceNo}</p>}
+                    {outgoingErrors.referenceNo && <p className="text-xs text-[hsl(var(--destructive))] mt-1">{tr(outgoingErrors.referenceNo)}</p>}
                   </div>
                 </div>
 
@@ -1285,7 +1093,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                     onClick={() => setIsOutgoingModalOpen(false)}
                     className="text-xs font-semibold"
                   >
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                   <Button
                     type="submit"
@@ -1293,7 +1101,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                     isLoading={isSubmitting}
                     className="text-xs font-semibold"
                   >
-                    Save Outgoing Payment
+                    {tr("Save Outgoing Payment")}
                   </Button>
                 </div>
               </form>
@@ -1302,133 +1110,6 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
         )}
       </AnimatePresence>
 
-      {/* Modal 3: Issue Debit Note */}
-      <AnimatePresence>
-        {isDebitNoteModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsDebitNoteModalOpen(false)}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6 z-10 space-y-5"
-            >
-              <div className="flex items-center justify-between border-b border-[hsl(var(--border))] pb-4">
-                <div>
-                  <h2 className="text-lg font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-amber-500" /> Issue Debit Note
-                  </h2>
-                  <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                    Issue a deduction or adjustment against a vendor.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setIsDebitNoteModalOpen(false)}
-                  className="p-2 hover:bg-[hsl(var(--muted))] rounded-lg text-[hsl(var(--muted-foreground))] transition-colors cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <form onSubmit={handleDebitNoteSubmit} className="space-y-4">
-                <div>
-                  <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Vendor / Party Name *</label>
-                  <input
-                    type="text"
-                    value={debitNoteForm.vendorName}
-                    onChange={(e) => {
-                      setDebitNoteForm({ ...debitNoteForm, vendorName: e.target.value });
-                      if (debitNoteErrors.vendorName) setDebitNoteErrors({ ...debitNoteErrors, vendorName: null });
-                    }}
-                    placeholder="e.g. Apex Timber & Woodworks"
-                    className={`w-full px-3 py-2 rounded-lg border bg-[hsl(var(--background))] text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] ${
-                      debitNoteErrors.vendorName ? 'border-[hsl(var(--destructive))]' : 'border-[hsl(var(--border))]'
-                    }`}
-                  />
-                  {debitNoteErrors.vendorName && <p className="text-xs text-[hsl(var(--destructive))] mt-1">{debitNoteErrors.vendorName}</p>}
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Reason / Defect Detail *</label>
-                  <textarea
-                    rows={2}
-                    value={debitNoteForm.reason}
-                    onChange={(e) => {
-                      setDebitNoteForm({ ...debitNoteForm, reason: e.target.value });
-                      if (debitNoteErrors.reason) setDebitNoteErrors({ ...debitNoteErrors, reason: null });
-                    }}
-                    placeholder="e.g. Damaged Acoustic Panels Returned (5 sheets)"
-                    className={`w-full px-3 py-2 rounded-lg border bg-[hsl(var(--background))] text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] resize-none ${
-                      debitNoteErrors.reason ? 'border-[hsl(var(--destructive))]' : 'border-[hsl(var(--border))]'
-                    }`}
-                  />
-                  {debitNoteErrors.reason && <p className="text-xs text-[hsl(var(--destructive))] mt-1">{debitNoteErrors.reason}</p>}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Amount ({currencySymbol}) *</label>
-                    <input
-                      type="number"
-                      value={debitNoteForm.amount}
-                      onChange={(e) => {
-                        setDebitNoteForm({ ...debitNoteForm, amount: e.target.value });
-                        if (debitNoteErrors.amount) setDebitNoteErrors({ ...debitNoteErrors, amount: null });
-                      }}
-                      placeholder="e.g. 45000"
-                      className={`w-full px-3 py-2 rounded-lg border bg-[hsl(var(--background))] text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] ${
-                        debitNoteErrors.amount ? 'border-[hsl(var(--destructive))]' : 'border-[hsl(var(--border))]'
-                      }`}
-                    />
-                    {debitNoteErrors.amount && <p className="text-xs text-[hsl(var(--destructive))] mt-1">{debitNoteErrors.amount}</p>}
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))] mb-1 block">Issue Date *</label>
-                    <input
-                      type="date"
-                      value={debitNoteForm.issueDate}
-                      onChange={(e) => {
-                        setDebitNoteForm({ ...debitNoteForm, issueDate: e.target.value });
-                        if (debitNoteErrors.issueDate) setDebitNoteErrors({ ...debitNoteErrors, issueDate: null });
-                      }}
-                      className={`w-full px-3 py-2 rounded-lg border bg-[hsl(var(--background))] text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] ${
-                        debitNoteErrors.issueDate ? 'border-[hsl(var(--destructive))]' : 'border-[hsl(var(--border))]'
-                      }`}
-                    />
-                    {debitNoteErrors.issueDate && <p className="text-xs text-[hsl(var(--destructive))] mt-1">{debitNoteErrors.issueDate}</p>}
-                  </div>
-                </div>
-
-                <div className="pt-2 flex justify-end gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsDebitNoteModalOpen(false)}
-                    className="text-xs font-semibold"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="default"
-                    isLoading={isSubmitting}
-                    className="text-xs font-semibold"
-                  >
-                    Issue Debit Note
-                  </Button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
       {/* Modal 4: Invoice Preview & Print */}
       <AnimatePresence>
         {previewInvoice && (
@@ -1453,10 +1134,10 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                   </div>
                   <div>
                     <h2 className="text-base font-bold text-[hsl(var(--foreground))]">
-                      Payment Invoice &amp; Receipt
+                      {tr("Payment Invoice & Receipt")}
                     </h2>
                     <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                      {previewInvoice.invoiceNo} &bull; {previewInvoice.milestoneName}
+                      {tr(previewInvoice.invoiceNo)} &bull; {tr(previewInvoice.milestoneName)}
                     </p>
                   </div>
                 </div>
@@ -1468,7 +1149,7 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                       onClick={() => handlePrintInvoice(previewInvoice)}
                       className="text-xs font-semibold flex items-center gap-1.5"
                     >
-                      <Printer className="w-3.5 h-3.5" /> Print
+                      <Printer className="w-3.5 h-3.5" />{tr(" Print")}
                     </Button>
                   )}
                   {canDo('financials', 'export') && (
@@ -1484,23 +1165,23 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
                       ) : (
                         <Download className="w-3.5 h-3.5" />
                       )}
-                      Download PDF
+                      {tr("Download PDF")}
                     </Button>
                   )}
                   <button
                     onClick={() => setPreviewInvoice(null)}
-                    className="p-2 hover:bg-[hsl(var(--muted))] rounded-lg text-[hsl(var(--muted-foreground))] transition-colors cursor-pointer ml-1"
+                    className="p-2 hover:bg-[hsl(var(--muted))] rounded-lg text-[hsl(var(--muted-foreground))] transition-colors cursor-pointer ms-1"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto rounded-xl border border-[hsl(var(--border))] bg-white shadow-inner p-1 min-h-[480px]">
+              <div className="flex-1 overflow-y-auto rounded-xl border border-[hsl(var(--border))] bg-white shadow-inner p-1 min-h-[30rem]">
                 <iframe
                   srcDoc={generateInvoiceHtml(previewInvoice, project, currencySymbol)}
-                  title="Invoice Preview"
-                  className="w-full h-[520px] rounded-lg border-0 bg-white"
+                  title={tr("Invoice Preview")}
+                  className="w-full h-[32.5rem] rounded-lg border-0 bg-white"
                 />
               </div>
             </motion.div>

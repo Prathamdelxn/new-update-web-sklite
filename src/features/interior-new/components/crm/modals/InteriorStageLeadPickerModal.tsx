@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Interior CRM — pick a lead to bring into a stage
@@ -42,10 +43,10 @@ export function InteriorStageLeadPickerModal({ isOpen, title, leads, onClose, on
       >
         <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--border))]">
           <div>
-            <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">{title}</h3>
-            <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Choose the lead to bring into this stage</p>
+            <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">{tr(title)}</h3>
+            <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">{tr("Choose the lead to bring into this stage")}</p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[hsl(var(--muted))]" aria-label="Close">
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[hsl(var(--muted))]" aria-label={tr("Close")}>
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -57,8 +58,8 @@ export function InteriorStageLeadPickerModal({ isOpen, title, leads, onClose, on
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name, phone, city…"
-              className="w-full pl-8 pr-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)]"
+              placeholder={tr("Search by name, phone, city…")}
+              className="w-full ps-8 pe-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)]"
             />
           </div>
         </div>
@@ -66,24 +67,24 @@ export function InteriorStageLeadPickerModal({ isOpen, title, leads, onClose, on
         <div className="flex-1 overflow-y-auto p-2">
           {shown.length === 0 ? (
             <p className="text-center text-xs text-[hsl(var(--muted-foreground))] py-10">
-              {leads.length === 0 ? 'No leads are waiting to enter this stage.' : 'No leads match your search.'}
+              {leads.length === 0 ? tr("No leads are waiting to enter this stage.") : tr("No leads match your search.")}
             </p>
           ) : (
             shown.map((lead) => (
               <button
                 key={lead._id}
                 onClick={() => { onPick(lead._id); onClose(); }}
-                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-[hsl(var(--muted)/0.5)] cursor-pointer"
+                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-start hover:bg-[hsl(var(--muted)/0.5)] cursor-pointer"
               >
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-[hsl(var(--foreground))] truncate">{lead.name}</p>
-                  <p className="text-[11px] text-[hsl(var(--muted-foreground))] truncate">
+                  <p className="text-sm font-semibold text-[hsl(var(--foreground))] truncate">{tr(lead.name)}</p>
+                  <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] truncate">
                     {[lead.mobileNumber, lead.city].filter(Boolean).join(' · ') || '—'}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
-                    {lead.status}
+                  <span className="text-[0.625rem] font-semibold px-2 py-0.5 rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
+                    {tr(lead.status)}
                   </span>
                   <ArrowRight className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
                 </div>

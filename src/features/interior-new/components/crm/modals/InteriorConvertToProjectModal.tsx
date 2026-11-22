@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Port of src/components/modals/ConvertToProjectModal.tsx, rewired to interiorCrmService.
 
@@ -42,13 +43,13 @@ export function InteriorConvertToProjectModal({ isOpen, onClose, customerId, onS
         remarks
       });
 
-      toast.success('Congratulations! Lead converted to an Active Project!');
+      toast.success(tr("Congratulations! Lead converted to an Active Project!"));
       if (onSuccess) {
         onSuccess({ _id: customerId, status: 'Converted' });
       }
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to convert lead to project');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || tr("Failed to convert lead to project"));
     } finally {
       setIsSubmitting(false);
     }
@@ -65,8 +66,8 @@ export function InteriorConvertToProjectModal({ isOpen, onClose, customerId, onS
               <Trophy size={20} />
             </div>
             <div>
-              <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))]">Win Project</h2>
-              <p className="text-sm text-[hsl(var(--muted-foreground))] mt-0.5">Convert this lead to an active project.</p>
+              <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))]">{tr("Win Project")}</h2>
+              <p className="text-sm text-[hsl(var(--muted-foreground))] mt-0.5">{tr("Convert this lead to an active project.")}</p>
             </div>
           </div>
           <button type="button" onClick={onClose} className="p-2 hover:bg-[hsl(var(--muted))] rounded-xl"><X size={20} className="text-[hsl(var(--muted-foreground))]" /></button>
@@ -74,7 +75,7 @@ export function InteriorConvertToProjectModal({ isOpen, onClose, customerId, onS
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5"><CalendarClock size={14} className="text-[hsl(var(--muted-foreground))]" /> Expected Project Start Date</label>
+            <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5"><CalendarClock size={14} className="text-[hsl(var(--muted-foreground))]" />{tr(" Expected Project Start Date")}</label>
             <input
               type="date"
               value={startDate}
@@ -85,20 +86,20 @@ export function InteriorConvertToProjectModal({ isOpen, onClose, customerId, onS
           </div>
 
           <div>
-            <label className="text-xs font-bold text-[hsl(var(--foreground))]">Handover Remarks (Optional)</label>
+            <label className="text-xs font-bold text-[hsl(var(--foreground))]">{tr("Handover Remarks (Optional)")}</label>
             <textarea
               rows={3}
               value={remarks}
               onChange={e => setRemarks(e.target.value)}
-              placeholder="Notes for the execution team..."
+              placeholder={tr("Notes for the execution team...")}
               className="w-full mt-1.5 px-4 py-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none resize-none"
             />
           </div>
 
           <div className="pt-4 flex justify-end gap-3 border-t border-[hsl(var(--border))]">
-            <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-bold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">Cancel</button>
+            <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-bold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]">{tr("Cancel")}</button>
             <button type="submit" disabled={isSubmitting} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-amber-500 hover:bg-amber-600 disabled:opacity-50">
-              {isSubmitting ? 'Converting...' : <><Trophy size={16} /> Convert to Project</>}
+              {isSubmitting ? tr("Converting...") : <><Trophy size={16} />{tr(" Convert to Project")}</>}
             </button>
           </div>
         </form>

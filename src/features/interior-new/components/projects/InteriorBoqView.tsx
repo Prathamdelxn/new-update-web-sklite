@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Interior-New BOQ (Bill of Quantities) View
@@ -212,7 +213,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
     try {
       const res = await interiorProjectService.boqApprovalAction(projectId, selectedBoq._id, { action, reason });
       if (res.success) {
-        toast.success(`BOQ successfully ${action}ed`);
+        toast.success(tr("BOQ successfully {{action}}ed", { action: action }));
         queryClient.invalidateQueries({ queryKey: ['project-boq', projectId] });
         queryClient.invalidateQueries({ queryKey: ['project-boq-detail', projectId, selectedBoq._id] });
         await refetchBoqs();
@@ -220,7 +221,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
       }
     } catch (err: any) {
       console.error(err);
-      toast.error(err.response?.data?.error || `Failed to ${action} BOQ`);
+      toast.error(err.response?.data?.error || tr("Failed to {{action}} BOQ", { action: action }));
     }
   };
 
@@ -229,40 +230,40 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
     try {
       const res = await interiorProjectService.reviseBoq(projectId, selectedBoq._id);
       if (res.success && res.data) {
-        toast.success(`New draft revision created: ${res.data.versionLabel}`);
+        toast.success(tr("New draft revision created: {{versionLabel}}", { versionLabel: res.data.versionLabel }));
         fetchBoqs(true);
       }
     } catch (err: any) {
       console.error(err);
-      toast.error(err.response?.data?.error || 'Failed to create BOQ revision');
+      toast.error(err.response?.data?.error || tr("Failed to create BOQ revision"));
     }
   };
 
   const handleDeleteBoq = async () => {
     if (!selectedBoq) return;
     const ok = await confirm({
-      title: 'Delete BOQ Draft',
-      message: 'Are you sure you want to delete this BOQ draft?',
-      confirmText: 'Delete Draft',
+      title: tr("Delete BOQ Draft"),
+      message: tr("Are you sure you want to delete this BOQ draft?"),
+      confirmText: tr("Delete Draft"),
       type: 'danger',
     });
     if (!ok) return;
     try {
       const res = await interiorProjectService.deleteBoq(projectId, selectedBoq._id);
       if (res.success) {
-        toast.success('Draft deleted successfully');
+        toast.success(tr("Draft deleted successfully"));
         fetchBoqs(true);
       }
     } catch (err: any) {
       console.error(err);
-      toast.error(err.response?.data?.error || 'Failed to delete BOQ');
+      toast.error(err.response?.data?.error || tr("Failed to delete BOQ"));
     }
   };
 
   const handleExcelImport = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!excelFile) {
-      toast.error('Please choose a valid Excel file first');
+      toast.error(tr("Please choose a valid Excel file first"));
       return;
     }
     try {
@@ -271,14 +272,14 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
       formData.append('file', excelFile);
       const res = await interiorProjectService.importBoqExcel(projectId, formData);
       if (res.success) {
-        toast.success(res.message || 'Excel BOQ Imported Successfully!');
+        toast.success(res.message || tr("Excel BOQ Imported Successfully!"));
         setIsImportOpen(false);
         setExcelFile(null);
         fetchBoqs(true);
       }
     } catch (err: any) {
       console.error(err);
-      toast.error(err.response?.data?.error || 'Failed to import Excel file');
+      toast.error(err.response?.data?.error || tr("Failed to import Excel file"));
     } finally {
       setImporting(false);
     }
@@ -345,25 +346,25 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[hsl(var(--border))] pb-5">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Bill of Quantities (BOQ)</h2>
+            <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">{tr("Bill of Quantities (BOQ)")}</h2>
             <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-50 text-blue-600 border border-blue-200">
-              SkyStruct Lite Standard
+              {tr("SkyStruct Lite Standard")}
             </span>
           </div>
           <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
-            Section-based hierarchical BOQ builder, technical specifications, brand/makes, versioning, and actual site consumption tracking.
+            {tr("Section-based hierarchical BOQ builder, technical specifications, brand/makes, versioning, and actual site consumption tracking.")}
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           {canDo('boq', 'create') && (
             <Button variant="outline" size="sm" onClick={() => setIsImportOpen(true)} className="gap-1.5 text-xs cursor-pointer">
-              <Upload className="w-3.5 h-3.5" /> Import Excel
+              <Upload className="w-3.5 h-3.5" />{tr(" Import Excel")}
             </Button>
           )}
           {canDo('boq', 'create') && (
             <Button size="sm" onClick={handleOpenCreateBuilder} className="gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white cursor-pointer">
-              <Plus className="w-3.5 h-3.5" /> Create BOQ Version
+              <Plus className="w-3.5 h-3.5" />{tr(" Create BOQ Version")}
             </Button>
           )}
         </div>
@@ -377,10 +378,10 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
             <div>
               <div className="flex items-center justify-between mb-2.5">
                 <h3 className="text-xs font-bold tracking-wider text-[hsl(var(--muted-foreground))] uppercase flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-blue-600" /> BOQ Versions
+                  <Layers className="w-3.5 h-3.5 text-blue-600" />{tr(" BOQ Versions")}
                 </h3>
-                <span className="text-[11px] text-slate-400 font-medium">
-                  {boqs.length} {boqs.length === 1 ? 'version' : 'versions'} available
+                <span className="text-[0.6875rem] text-slate-400 font-medium">
+                  {boqs.length} {boqs.length === 1 ? tr("version") : tr("versions")}{tr(" available")}
                 </span>
               </div>
 
@@ -390,7 +391,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                 </div>
               ) : boqs.length === 0 ? (
                 <div className="text-xs text-[hsl(var(--muted-foreground))] text-center py-4 border border-dashed rounded-xl p-3 bg-slate-50/50">
-                  No BOQ registered. Click &quot;Create BOQ Version&quot; to begin.
+                  {tr("No BOQ registered. Click \"Create BOQ Version\" to begin.")}
                 </div>
               ) : (
                 <div className="flex items-center gap-3 overflow-x-auto pb-1.5 scrollbar-thin">
@@ -401,24 +402,24 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                         key={boq._id}
                         onClick={() => fetchBoqDetail(boq._id)}
                         className={cn(
-                          'shrink-0 text-left p-3 rounded-xl border text-xs font-semibold transition-all flex flex-col gap-1.5 cursor-pointer min-w-[190px]',
+                          'shrink-0 text-start p-3 rounded-xl border text-xs font-semibold transition-all flex flex-col gap-1.5 cursor-pointer min-w-[11.875rem]',
                           isSelected
                             ? 'bg-blue-50/80 border-blue-500 text-blue-950 shadow-xs ring-1 ring-blue-500/20'
                             : 'border-[hsl(var(--border))] bg-white text-[hsl(var(--foreground))] hover:bg-slate-50 hover:border-slate-300'
                         )}
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-black text-sm text-slate-900">{boq.versionLabel}</span>
-                          <span className={cn('px-2 py-0.5 rounded-full text-[9px] uppercase font-bold border', getStatusBadge(boq.status))}>
-                            {boq.status.replace('_', ' ')}
+                          <span className="font-black text-sm text-slate-900">{tr(boq.versionLabel)}</span>
+                          <span className={cn('px-2 py-0.5 rounded-full text-[0.5625rem] uppercase font-bold border', getStatusBadge(boq.status))}>
+                            {tr(boq.status.replace('_', ' '))}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium pt-0.5">
-                          <span className="font-bold font-mono text-slate-800">{currencySymbol} {boq.totalAmount?.toLocaleString('en-IN')}</span>
-                          <span className="text-[10px] font-semibold text-slate-600">{new Date(boq.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                        <div className="flex items-center justify-between text-[0.6875rem] text-slate-500 font-medium pt-0.5">
+                          <span className="font-bold font-mono text-slate-800">{tr(currencySymbol)} {boq.totalAmount?.toLocaleString('en-IN')}</span>
+                          <span className="text-[0.625rem] font-semibold text-slate-600">{new Date(boq.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                         </div>
-                        <div className="text-[10px] text-slate-500 pt-0.5 border-t border-slate-100/80 truncate">
-                          by <strong className="font-semibold text-slate-700">{boq.createdBy?.firstName ? `${boq.createdBy.firstName} ${boq.createdBy.lastName || ''}`.trim() : boq.createdByName || 'Estimator'}</strong>
+                        <div className="text-[0.625rem] text-slate-500 pt-0.5 border-t border-slate-100/80 truncate">
+                          {tr("by ")}<strong className="font-semibold text-slate-700">{boq.createdBy?.firstName ? `${boq.createdBy.firstName} ${boq.createdBy.lastName || ''}`.trim() : boq.createdByName || tr("Estimator")}</strong>
                         </div>
                       </button>
                     );
@@ -432,21 +433,21 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
               <div className="pt-3.5 border-t border-[hsl(var(--border))] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="text-[hsl(var(--muted-foreground))] text-[11px]">Total Cost:</span>
+                    <span className="text-[hsl(var(--muted-foreground))] text-[0.6875rem]">{tr("Total Cost:")}</span>
                     <span className="font-black font-mono text-sm text-slate-900 bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200">
-                      {currencySymbol} {selectedBoq.totalAmount?.toLocaleString('en-IN')}
+                      {tr(currencySymbol)} {selectedBoq.totalAmount?.toLocaleString('en-IN')}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[hsl(var(--muted-foreground))] text-[11px]">Created By:</span>
+                    <span className="text-[hsl(var(--muted-foreground))] text-[0.6875rem]">{tr("Created By:")}</span>
                     <span className="font-semibold text-slate-800">
-                      {selectedBoq.createdBy?.firstName ? `${selectedBoq.createdBy.firstName} ${selectedBoq.createdBy.lastName || ''}`.trim() : selectedBoq.createdByName || 'System'}
+                      {selectedBoq.createdBy?.firstName ? `${selectedBoq.createdBy.firstName} ${selectedBoq.createdBy.lastName || ''}`.trim() : selectedBoq.createdByName || tr("System")}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[hsl(var(--muted-foreground))] text-[11px]">Created On:</span>
+                    <span className="text-[hsl(var(--muted-foreground))] text-[0.6875rem]">{tr("Created On:")}</span>
                     <span className="font-semibold text-slate-800">
                       {selectedBoq.createdAt ? new Date(selectedBoq.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
                     </span>
@@ -455,7 +456,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                   {selectedBoq.assignedReviewerName && (
                     <div className="flex items-center gap-1.5 text-xs text-amber-700 font-bold bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
                       <UserCheck size={13} className="shrink-0" />
-                      <span>Reviewer: {selectedBoq.assignedReviewerName}</span>
+                      <span>{tr("Reviewer: ")}{tr(selectedBoq.assignedReviewerName)}</span>
                     </div>
                   )}
 
@@ -463,16 +464,16 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                     <div className="flex items-center gap-1.5 text-xs text-rose-700 font-semibold bg-rose-50 px-2.5 py-1 rounded-xl border border-rose-200">
                       <XCircle size={13} className="shrink-0 text-rose-600" />
                       <span className="truncate max-w-sm" title={selectedBoq.rejectionReason}>
-                        Changes Requested: {selectedBoq.rejectionReason}
+                        {tr("Changes Requested: ")}{tr(selectedBoq.rejectionReason)}
                       </span>
                     </div>
                   )}
 
                   {selectedBoq.notes && (
                     <div className="flex items-center gap-1.5 max-w-md">
-                      <span className="text-[hsl(var(--muted-foreground))] text-[11px] shrink-0">Scope & Terms:</span>
-                      <span className="text-slate-600 text-[11px] truncate bg-slate-50 px-2 py-0.5 rounded border border-slate-200" title={selectedBoq.notes}>
-                        {selectedBoq.notes}
+                      <span className="text-[hsl(var(--muted-foreground))] text-[0.6875rem] shrink-0">{tr("Scope & Terms:")}</span>
+                      <span className="text-slate-600 text-[0.6875rem] truncate bg-slate-50 px-2 py-0.5 rounded border border-slate-200" title={selectedBoq.notes}>
+                        {tr(selectedBoq.notes)}
                       </span>
                     </div>
                   )}
@@ -488,7 +489,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                         onClick={() => handleOpenEditBuilder(selectedBoq)}
                         className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50 cursor-pointer"
                       >
-                        <Pencil className="w-3.5 h-3.5 mr-1" /> Edit in Builder
+                        <Pencil className="w-3.5 h-3.5 me-1" />{tr(" Edit in Builder")}
                       </Button>
                     )
                   )}
@@ -499,7 +500,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                         className="h-8 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-2xs"
                         onClick={() => setIsSendBoqApprovalOpen(true)}
                       >
-                        <Send className="w-3.5 h-3.5 mr-1" /> Submit for Approval
+                        <Send className="w-3.5 h-3.5 me-1" />{tr(" Submit for Approval")}
                       </Button>
                     )
                   )}
@@ -514,7 +515,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                             setIsBoqApprovalOpen(true);
                           }}
                         >
-                          <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Approve
+                          <CheckCircle2 className="w-3.5 h-3.5 me-1" />{tr(" Approve")}
                         </Button>
                       )}
                       {canDo('boq', 'approve') && (
@@ -526,7 +527,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                             setIsBoqApprovalOpen(true);
                           }}
                         >
-                          <XCircle className="w-3.5 h-3.5 mr-1" /> Reject
+                          <XCircle className="w-3.5 h-3.5 me-1" />{tr(" Reject")}
                         </Button>
                       )}
                     </>
@@ -539,7 +540,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                         className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50 cursor-pointer"
                         onClick={handleCreateRevision}
                       >
-                        <Plus className="w-3.5 h-3.5 mr-1" /> Create New Revision
+                        <Plus className="w-3.5 h-3.5 me-1" />{tr(" Create New Revision")}
                       </Button>
                     )
                   )}
@@ -551,7 +552,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                         className="h-8 text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
                         onClick={handleDeleteBoq}
                       >
-                        <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete Draft
+                        <Trash2 className="w-3.5 h-3.5 me-1" />{tr(" Delete Draft")}
                       </Button>
                     )
                   )}
@@ -574,12 +575,12 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                     : 'text-[hsl(var(--muted-foreground))] hover:text-slate-900'
                 )}
               >
-                <List className="w-3.5 h-3.5 text-blue-600" /> BOQ Line Items & Sections
+                <List className="w-3.5 h-3.5 text-blue-600" />{tr(" BOQ Line Items & Sections")}
               </button>
             </div>
 
             {selectedBoq && (
-              <div className="flex items-center gap-2 pr-1">
+              <div className="flex items-center gap-2 pe-1">
                 {(selectedBoq.status === 'draft' || selectedBoq.status === 'rejected') && (
                   canDo('boq', 'update') && (
                     <Button
@@ -588,8 +589,8 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                       onClick={() => handleOpenEditBuilder(selectedBoq)}
                       className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50"
                     >
-                      <Pencil className="w-3.5 h-3.5 mr-1" />
-                      Open in Builder
+                      <Pencil className="w-3.5 h-3.5 me-1" />
+                      {tr("Open in Builder")}
                     </Button>
                   )
                 )}
@@ -613,36 +614,36 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-mono font-bold text-xs px-2 py-0.5 rounded-md bg-blue-100 text-blue-800">
-                                Section {section.sectionNumber || sIdx + 1}
+                                {tr("Section ")}{section.sectionNumber || sIdx + 1}
                               </span>
-                              <h4 className="font-bold text-sm text-slate-900">{section.sectionTitle}</h4>
-                              <span className="text-[10px] text-slate-500 font-semibold bg-slate-200/80 px-2 py-0.5 rounded-full">
-                                {section.items?.length || 0} items
+                              <h4 className="font-bold text-sm text-slate-900">{tr(section.sectionTitle)}</h4>
+                              <span className="text-[0.625rem] text-slate-500 font-semibold bg-slate-200/80 px-2 py-0.5 rounded-full">
+                                {section.items?.length || 0}{tr(" items")}
                               </span>
                             </div>
                             {section.scopeDescription && (
-                              <p className="text-[11px] text-slate-500 mt-1">{section.scopeDescription}</p>
+                              <p className="text-[0.6875rem] text-slate-500 mt-1">{tr(section.scopeDescription)}</p>
                             )}
                           </div>
 
-                          <div className="text-right shrink-0 font-mono font-bold text-xs text-slate-900 bg-white px-3 py-1 rounded-lg border border-slate-200">
-                            Subtotal: {currencySymbol}{section.subTotal?.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                          <div className="text-end shrink-0 font-mono font-bold text-xs text-slate-900 bg-white px-3 py-1 rounded-lg border border-slate-200">
+                            {tr("Subtotal: ")}{tr(currencySymbol)}{section.subTotal?.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                           </div>
                         </div>
 
                         {/* Section Items Table */}
                         <CardContent className="p-0 overflow-x-auto">
-                          <table className="w-full text-xs text-left border-collapse min-w-[750px]">
+                          <table className="w-full text-xs text-start border-collapse min-w-[46.875rem]">
                             <thead>
-                              <tr className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200 text-[11px]">
-                                <th className="p-2.5 w-12 text-center">Code</th>
-                                <th className="p-2.5 w-44">Item Headline</th>
-                                <th className="p-2.5">Technical Specification</th>
-                                <th className="p-2.5 w-20 text-right">Qty</th>
-                                <th className="p-2.5 w-24 text-center">Unit</th>
-                                <th className="p-2.5 w-24 text-right">Rate ({currencySymbol})</th>
-                                <th className="p-2.5 w-28 text-right">Amount ({currencySymbol})</th>
-                                <th className="p-2.5 w-36">Remarks</th>
+                              <tr className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200 text-[0.6875rem]">
+                                <th className="p-2.5 w-12 text-center">{tr("Code")}</th>
+                                <th className="p-2.5 w-44">{tr("Item Headline")}</th>
+                                <th className="p-2.5">{tr("Technical Specification")}</th>
+                                <th className="p-2.5 w-20 text-end">{tr("Qty")}</th>
+                                <th className="p-2.5 w-24 text-center">{tr("Unit")}</th>
+                                <th className="p-2.5 w-24 text-end">{tr("Rate (")}{tr(currencySymbol)})</th>
+                                <th className="p-2.5 w-28 text-end">{tr("Amount (")}{tr(currencySymbol)})</th>
+                                <th className="p-2.5 w-36">{tr("Remarks")}</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -652,24 +653,24 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                                     {item.itemCode || item.serialNumber || idx + 1}
                                   </td>
                                   <td className="p-2.5 font-bold text-slate-900 align-top">
-                                    {item.itemName}
+                                    {tr(item.itemName)}
                                   </td>
-                                  <td className="p-2.5 text-slate-700 align-top leading-tight text-[11px]">
+                                  <td className="p-2.5 text-slate-700 align-top leading-tight text-[0.6875rem]">
                                     {item.description || '—'}
                                   </td>
-                                  <td className="p-2.5 text-right font-mono font-bold text-slate-900 align-top">
+                                  <td className="p-2.5 text-end font-mono font-bold text-slate-900 align-top">
                                     {item.quantity?.toLocaleString('en-IN')}
                                   </td>
-                                  <td className="p-2.5 text-center text-slate-600 font-semibold align-top uppercase text-[10px]">
-                                    {item.unit}
+                                  <td className="p-2.5 text-center text-slate-600 font-semibold align-top uppercase text-[0.625rem]">
+                                    {tr(item.unit)}
                                   </td>
-                                  <td className="p-2.5 text-right font-mono text-slate-800 align-top">
+                                  <td className="p-2.5 text-end font-mono text-slate-800 align-top">
                                     {item.rate?.toLocaleString('en-IN')}
                                   </td>
-                                  <td className="p-2.5 text-right font-mono font-bold text-slate-900 align-top">
-                                    {currencySymbol} {item.amount?.toLocaleString('en-IN')}
+                                  <td className="p-2.5 text-end font-mono font-bold text-slate-900 align-top">
+                                    {tr(currencySymbol)} {item.amount?.toLocaleString('en-IN')}
                                   </td>
-                                  <td className="p-2.5 text-slate-500 text-[11px] align-top">
+                                  <td className="p-2.5 text-slate-500 text-[0.6875rem] align-top">
                                     {item.remarks || '—'}
                                   </td>
                                 </tr>
@@ -681,22 +682,22 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                     ))
                   ) : (
                     <Card className="p-8 text-center text-xs text-slate-400 border-dashed">
-                      No line items in this BOQ version.
+                      {tr("No line items in this BOQ version.")}
                     </Card>
                   )}
 
                   {/* Grand Total Strip */}
                   <div className="p-4 rounded-2xl bg-slate-900 text-white flex items-center justify-between shadow-md">
                     <div>
-                      <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">
-                        Total Master BOQ Value ({selectedBoq.versionLabel})
+                      <span className="text-[0.625rem] uppercase tracking-wider text-slate-400 font-bold block">
+                        {tr("Total Master BOQ Value (")}{tr(selectedBoq.versionLabel)})
                       </span>
                       <span className="text-xs text-slate-300">
-                        {groupedSections.length} Sections • {selectedBoq.items?.length || 0} Total Specifications
+                        {groupedSections.length}{tr(" Sections • ")}{selectedBoq.items?.length || 0}{tr(" Total Specifications")}
                       </span>
                     </div>
                     <span className="text-lg sm:text-xl font-black font-mono text-white">
-                      {currencySymbol} {selectedBoq.totalAmount?.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                      {tr(currencySymbol)} {selectedBoq.totalAmount?.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                     </span>
                   </div>
                 </div>
@@ -705,7 +706,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
               {activeTab === 'items' && !selectedBoq && (
                 <Card className="p-12 text-center text-xs text-slate-500 border-dashed">
                   <FileSpreadsheet className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                  Select or create a BOQ version to view line items.
+                  {tr("Select or create a BOQ version to view line items.")}
                 </Card>
               )}
             </div>
@@ -741,7 +742,7 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
             >
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <h3 className="text-sm font-black text-[hsl(var(--foreground))] flex items-center gap-2">
-                  <FileSpreadsheet className="w-5 h-5 text-emerald-600" /> Import BOQ Excel Sheet
+                  <FileSpreadsheet className="w-5 h-5 text-emerald-600" />{tr(" Import BOQ Excel Sheet")}
                 </h3>
                 <button onClick={() => setIsImportOpen(false)} className="p-1 rounded hover:bg-[hsl(var(--muted))] cursor-pointer">
                   <X className="w-4 h-4" />
@@ -750,8 +751,8 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
 
               <form onSubmit={handleExcelImport}>
                 <div className="p-5 space-y-4">
-                  <p className="text-[11px] leading-relaxed text-[hsl(var(--muted-foreground))]">
-                    Upload your architecture spreadsheet (.xlsx or .xls). Columns will automatically map for Category, Item Name, Quantity, Unit, and Rate.
+                  <p className="text-[0.6875rem] leading-relaxed text-[hsl(var(--muted-foreground))]">
+                    {tr("Upload your architecture spreadsheet (.xlsx or .xls). Columns will automatically map for Category, Item Name, Quantity, Unit, and Rate.")}
                   </p>
 
                   <div className="border-2 border-dashed border-[hsl(var(--border))] rounded-xl p-6 flex flex-col items-center justify-center gap-2 hover:border-emerald-500/50 transition-colors relative cursor-pointer bg-[hsl(var(--background))]">
@@ -768,18 +769,18 @@ export default function InteriorBoqView({ projectId }: InteriorBoqViewProps) {
                     />
                     <FileSpreadsheet className="w-8 h-8 text-[hsl(var(--muted-foreground))]" />
                     <span className="text-xs font-semibold text-center text-[hsl(var(--foreground))] px-2 truncate w-full">
-                      {excelFile ? excelFile.name : 'Click or drag BOQ file here'}
+                      {excelFile ? excelFile.name : tr("Click or drag BOQ file here")}
                     </span>
-                    <span className="text-[9px] text-[hsl(var(--muted-foreground))]">Supports Excel spreadsheet files up to 10MB</span>
+                    <span className="text-[0.5625rem] text-[hsl(var(--muted-foreground))]">{tr("Supports Excel spreadsheet files up to 10MB")}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
                   <Button variant="outline" type="button" onClick={() => setIsImportOpen(false)}>
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                   <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer" disabled={importing}>
-                    {importing && <Loader2 className="w-4 h-4 animate-spin mr-2" />} Import & Process
+                    {importing && <Loader2 className="w-4 h-4 animate-spin me-2" />}{tr(" Import & Process")}
                   </Button>
                 </div>
               </form>

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -309,9 +310,9 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
         });
       }
       setAttachments((prev) => [...prev, ...newFiles]);
-      toast.success(`${newFiles.length} general order document(s) attached!`);
+      toast.success(tr("{{newFilesCount}} general order document(s) attached!", { newFilesCount: newFiles.length }));
     } catch {
-      toast.error('Failed to upload files');
+      toast.error(tr("Failed to upload files"));
     } finally {
       setIsUploadingAttachment(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -378,9 +379,9 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
         return { ...prev, [qIdx]: updatedList };
       });
 
-      toast.success(`${newFiles.length} offline document(s) attached to vendor!`);
+      toast.success(tr("{{newFilesCount}} offline document(s) attached to vendor!", { newFilesCount: newFiles.length }));
     } catch {
-      toast.error('Failed to upload vendor documents');
+      toast.error(tr("Failed to upload vendor documents"));
     } finally {
       setUploadingVendorId(null);
       setTargetVendorForUpload(null);
@@ -434,7 +435,7 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
   const handleAddNewVendorToQuote = (qIdx: number) => {
     const vName = newVendorName.trim();
     if (!vName) {
-      toast.error('Please enter or select a vendor name.');
+      toast.error(tr("Please enter or select a vendor name."));
       return;
     }
 
@@ -461,7 +462,7 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
       [qIdx]: [...(prev[qIdx] || []), newEntry],
     }));
 
-    toast.success(`"${vName}" added to ${qTitle}!`);
+    toast.success(tr("\"{{vName}}\" added to {{qTitle}}!", { vName: vName, qTitle: qTitle }));
     setNewVendorId('');
     setNewVendorName('');
     setNewVendorCategory('Carpentry / Woodwork');
@@ -486,18 +487,18 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
     e.preventDefault();
     const targetLeadId = lead?._id || lead?.id;
     if (!lead || !targetLeadId) {
-      toast.error('Lead identifier not found');
+      toast.error(tr("Lead identifier not found"));
       return;
     }
 
     if (allQuotations.length === 0) {
-      toast.error('No quotation found for this lead. Please create a quotation first.');
+      toast.error(tr("No quotation found for this lead. Please create a quotation first."));
       return;
     }
 
     const selectedQuote = allQuotations[selectedQuoteIdx];
     if (!selectedQuote) {
-      toast.error('Please select a quotation for this confirmed order.');
+      toast.error(tr("Please select a quotation for this confirmed order."));
       return;
     }
 
@@ -577,11 +578,11 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
         });
       }
 
-      toast.success('✅ Order confirmed and vendor documents linked successfully!');
+      toast.success(tr("✅ Order confirmed and vendor documents linked successfully!"));
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || err?.response?.data?.message || err.message || 'Failed to create confirmed order');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || err.message || tr("Failed to create confirmed order"));
     } finally {
       setIsSubmitting(false);
     }
@@ -624,14 +625,14 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-base sm:text-lg font-extrabold text-slate-900">
-                  Create Confirmed Order
+                  {tr("Create Confirmed Order")}
                 </h2>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  Commercial Sign-off & Vendor Quotes
+                <span className="px-2.5 py-0.5 rounded-full text-[0.6875rem] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  {tr("Commercial Sign-off & Vendor Quotes")}
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Review quotations, manage vendors who received each quotation, and attach their offline reply documents for <strong className="text-slate-800">{lead?.name}</strong>.
+                {tr("Review quotations, manage vendors who received each quotation, and attach their offline reply documents for ")}<strong className="text-slate-800">{tr(lead?.name)}</strong>.
               </p>
             </div>
           </div>
@@ -650,26 +651,26 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
               <div className="sm:col-span-8">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
-                  Order Title <span className="text-rose-500">*</span>
+                  {tr("Order Title ")}<span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={orderTitle}
                   onChange={(e) => setOrderTitle(e.target.value)}
-                  placeholder="e.g. Turnkey Execution - 3BHK Luxury Interior"
+                  placeholder={tr("e.g. Turnkey Execution - 3BHK Luxury Interior")}
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-blue-500 shadow-2xs"
                 />
               </div>
               <div className="sm:col-span-4">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
-                  Order Ref #
+                  {tr("Order Ref #")}
                 </label>
                 <input
                   type="text"
                   value={orderNumber}
                   onChange={(e) => setOrderNumber(e.target.value)}
-                  placeholder="ORD-2026-XXXX"
+                  placeholder={tr("ORD-2026-XXXX")}
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-2xs"
                 />
               </div>
@@ -678,7 +679,7 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-200/60">
               <div>
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
-                  Final Client Agreed Amount ({currencySymbol}) <span className="text-rose-500">*</span>
+                  {tr("Final Client Agreed Amount (")}{tr(currencySymbol)}) <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="number"
@@ -691,7 +692,7 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
-                  Advance Payment Received ({currencySymbol})
+                  {tr("Advance Payment Received (")}{tr(currencySymbol)})
                 </label>
                 <input
                   type="number"
@@ -710,23 +711,23 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
               <div>
                 <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
                   <Receipt size={16} className="text-indigo-600" />
-                  <span>Quotations & Vendor Dispatch Cards</span>
+                  <span>{tr("Quotations & Vendor Dispatch Cards")}</span>
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Select the primary approved quotation, and attach offline documents/rates from each vendor that received the quotation.
+                  {tr("Select the primary approved quotation, and attach offline documents/rates from each vendor that received the quotation.")}
                 </p>
               </div>
               <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
-                {allQuotations.length} Quotation{allQuotations.length === 1 ? '' : 's'}
+                {allQuotations.length}{tr(" Quotation")}{allQuotations.length === 1 ? '' : 's'}
               </span>
             </div>
 
             {allQuotations.length === 0 ? (
               <div className="p-5 text-center bg-amber-50 rounded-2xl border border-amber-200 space-y-2">
                 <AlertCircle size={20} className="mx-auto text-amber-600" />
-                <p className="text-xs font-bold text-amber-900">No Quotations Found</p>
+                <p className="text-xs font-bold text-amber-900">{tr("No Quotations Found")}</p>
                 <p className="text-xs text-amber-700">
-                  Create a quotation in the CRM leads page before confirming this order.
+                  {tr("Create a quotation in the CRM leads page before confirming this order.")}
                 </p>
               </div>
             ) : (
@@ -771,29 +772,29 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-sm font-black text-slate-900 truncate">
-                                {qTitle}
+                                {tr(qTitle)}
                               </span>
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
-                                v{qVersion}
+                              <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+                                v{tr(qVersion)}
                               </span>
                               {isSelectedForOrder ? (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-300">
-                                  <CheckCircle2 size={11} /> Primary Approved Quotation
+                                <span className="inline-flex items-center gap-1 text-[0.625rem] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-300">
+                                  <CheckCircle2 size={11} />{tr(" Primary Approved Quotation")}
                                 </span>
                               ) : null}
                             </div>
-                            <p className="text-[11px] text-slate-500 mt-0.5">
-                              {qItemsCount} Scope Items • Status: <strong className="text-slate-700">{quote.status || 'Generated'}</strong>
+                            <p className="text-[0.6875rem] text-slate-500 mt-0.5">
+                              {tr(qItemsCount)}{tr(" Scope Items • Status: ")}<strong className="text-slate-700">{quote.status || tr("Generated")}</strong>
                             </p>
                           </div>
                         </div>
 
-                        <div className="text-right shrink-0">
+                        <div className="text-end shrink-0">
                           <p className="text-sm font-black text-slate-900 font-mono">
-                            {currencySymbol} {qTotal.toLocaleString()}
+                            {tr(currencySymbol)} {qTotal.toLocaleString()}
                           </p>
-                          <span className="text-[11px] font-semibold text-indigo-600">
-                            {vendorQuotesList.length} Vendor{vendorQuotesList.length === 1 ? '' : 's'} Linked
+                          <span className="text-[0.6875rem] font-semibold text-indigo-600">
+                            {vendorQuotesList.length}{tr(" Vendor")}{vendorQuotesList.length === 1 ? '' : 's'}{tr(" Linked")}
                           </span>
                         </div>
                       </div>
@@ -803,7 +804,7 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
                             <Building2 size={14} className="text-indigo-600" />
-                            <span>Vendors Sent for {qTitle}:</span>
+                            <span>{tr("Vendors Sent for ")}{tr(qTitle)}:</span>
                           </div>
 
                           <button
@@ -821,7 +822,7 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
                             className="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-98"
                           >
                             <Plus size={12} />
-                            {isAddingVendorHere ? 'Cancel' : '+ Add Vendor to this Quote'}
+                            {isAddingVendorHere ? tr("Cancel") : tr("+ Add Vendor to this Quote")}
                           </button>
                         </div>
 
@@ -834,13 +835,13 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
                               exit={{ opacity: 0, height: 0 }}
                               className="p-3 bg-indigo-50/50 rounded-xl border border-indigo-200 space-y-2.5 overflow-hidden"
                             >
-                              <div className="text-[11px] font-bold text-indigo-900">
-                                Link a New Vendor Partner to {qTitle}
+                              <div className="text-[0.6875rem] font-bold text-indigo-900">
+                                {tr("Link a New Vendor Partner to ")}{tr(qTitle)}
                               </div>
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                 <div>
-                                  <label className="text-[10px] font-bold text-slate-600 block mb-0.5 uppercase">
-                                    Vendor Directory
+                                  <label className="text-[0.625rem] font-bold text-slate-600 block mb-0.5 uppercase">
+                                    {tr("Vendor Directory")}
                                   </label>
                                   {vendorsList.length > 0 ? (
                                     <select
@@ -848,36 +849,36 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
                                       onChange={(e) => handleSelectRegisteredVendor(e.target.value)}
                                       className="w-full px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-900 focus:outline-none focus:border-indigo-500"
                                     >
-                                      <option value="">-- Choose Vendor or type below --</option>
+                                      <option value="">{tr("-- Choose Vendor or type below --")}</option>
                                       {vendorsList.map((v) => (
                                         <option key={v._id || v.id} value={v._id || v.id}>
-                                          {v.name || v.companyName} ({v.vendorCategory || v.category || 'Vendor'})
+                                          {v.name || v.companyName} ({v.vendorCategory || v.category || tr("Vendor")})
                                         </option>
                                       ))}
                                     </select>
                                   ) : null}
                                 </div>
                                 <div>
-                                  <label className="text-[10px] font-bold text-slate-600 block mb-0.5 uppercase">
-                                    Vendor Name <span className="text-rose-500">*</span>
+                                  <label className="text-[0.625rem] font-bold text-slate-600 block mb-0.5 uppercase">
+                                    {tr("Vendor Name ")}<span className="text-rose-500">*</span>
                                   </label>
                                   <input
                                     type="text"
                                     value={newVendorName}
                                     onChange={(e) => setNewVendorName(e.target.value)}
-                                    placeholder="e.g. ABC Woodcrafts Ltd"
+                                    placeholder={tr("e.g. ABC Woodcrafts Ltd")}
                                     className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-900 focus:outline-none focus:border-indigo-500"
                                   />
                                 </div>
                                 <div>
-                                  <label className="text-[10px] font-bold text-slate-600 block mb-0.5 uppercase">
-                                    Trade Category
+                                  <label className="text-[0.625rem] font-bold text-slate-600 block mb-0.5 uppercase">
+                                    {tr("Trade Category")}
                                   </label>
                                   <input
                                     type="text"
                                     value={newVendorCategory}
                                     onChange={(e) => setNewVendorCategory(e.target.value)}
-                                    placeholder="e.g. Carpentry, False Ceiling"
+                                    placeholder={tr("e.g. Carpentry, False Ceiling")}
                                     className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-900 focus:outline-none focus:border-indigo-500"
                                   />
                                 </div>
@@ -888,14 +889,14 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
                                   onClick={() => setAddingVendorForQIdx(null)}
                                   className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-500 hover:bg-slate-200/60"
                                 >
-                                  Cancel
+                                  {tr("Cancel")}
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleAddNewVendorToQuote(qIdx)}
                                   className="px-3.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer"
                                 >
-                                  Add Vendor Card
+                                  {tr("Add Vendor Card")}
                                 </button>
                               </div>
                             </motion.div>
@@ -919,22 +920,22 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
                                     <div className="space-y-0.5">
                                       <div className="flex items-center gap-2 flex-wrap">
                                         <span className="text-xs font-black text-slate-900">
-                                          {vq.vendorName}
+                                          {tr(vq.vendorName)}
                                         </span>
                                         {vq.vendorCategory && (
-                                          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                            {vq.vendorCategory}
+                                          <span className="px-1.5 py-0.5 rounded text-[0.625rem] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                            {tr(vq.vendorCategory)}
                                           </span>
                                         )}
                                         {vq.sentAt && (
-                                          <span className="text-[10px] text-slate-400 font-medium">
-                                            Sent {new Date(vq.sentAt).toLocaleDateString()}
+                                          <span className="text-[0.625rem] text-slate-400 font-medium">
+                                            {tr("Sent ")}{new Date(vq.sentAt).toLocaleDateString()}
                                           </span>
                                         )}
                                       </div>
                                       {vq.vendorEmail && (
-                                        <p className="text-[11px] text-slate-500 font-mono">
-                                          ✉️ {vq.vendorEmail}
+                                        <p className="text-[0.6875rem] text-slate-500 font-mono">
+                                          ✉️ {tr(vq.vendorEmail)}
                                         </p>
                                       )}
                                     </div>
@@ -943,7 +944,7 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
                                       type="button"
                                       onClick={() => handleRemoveVendorFromQuote(qIdx, vq.id)}
                                       className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
-                                      title="Remove this vendor card"
+                                      title={tr("Remove this vendor card")}
                                     >
                                       <Trash2 size={13} />
                                     </button>
@@ -952,8 +953,8 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
                                   {/* Vendor Rate & Notes Inputs */}
                                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                     <div>
-                                      <label className="text-[10px] font-bold text-slate-600 block mb-0.5 uppercase">
-                                        Vendor Quoted Rate ({currencySymbol})
+                                      <label className="text-[0.625rem] font-bold text-slate-600 block mb-0.5 uppercase">
+                                        {tr("Vendor Quoted Rate (")}{tr(currencySymbol)})
                                       </label>
                                       <input
                                         type="number"
@@ -966,8 +967,8 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
                                       />
                                     </div>
                                     <div className="sm:col-span-2">
-                                      <label className="text-[10px] font-bold text-slate-600 block mb-0.5 uppercase">
-                                        Offline Specs / Scope Notes
+                                      <label className="text-[0.625rem] font-bold text-slate-600 block mb-0.5 uppercase">
+                                        {tr("Offline Specs / Scope Notes")}
                                       </label>
                                       <input
                                         type="text"
@@ -975,7 +976,7 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
                                         onChange={(e) =>
                                           handleUpdateVendorField(qIdx, vq.id, 'notes', e.target.value)
                                         }
-                                        placeholder="e.g. Included ply delivery, 1 year warranty, offline paper invoice provided"
+                                        placeholder={tr("e.g. Included ply delivery, 1 year warranty, offline paper invoice provided")}
                                         className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-normal text-slate-800 focus:outline-none focus:border-indigo-500 shadow-2xs"
                                       />
                                     </div>
@@ -988,19 +989,19 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
                                         vq.attachments.map((doc, dIdx) => (
                                           <div
                                             key={dIdx}
-                                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-slate-200 text-[11px] text-slate-700 font-medium shadow-2xs"
+                                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-slate-200 text-[0.6875rem] text-slate-700 font-medium shadow-2xs"
                                           >
                                             <FileText size={12} className="text-indigo-600 shrink-0" />
-                                            <span className="max-w-[130px] truncate" title={doc.name}>
-                                              {doc.name}
+                                            <span className="max-w-[8.125rem] truncate" title={doc.name}>
+                                              {tr(doc.name)}
                                             </span>
                                             {doc.url && (
                                               <a
                                                 href={doc.url}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="text-slate-400 hover:text-indigo-600 ml-0.5"
-                                                title="Preview document"
+                                                className="text-slate-400 hover:text-indigo-600 ms-0.5"
+                                                title={tr("Preview document")}
                                               >
                                                 <Eye size={11} />
                                               </a>
@@ -1008,16 +1009,16 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
                                             <button
                                               type="button"
                                               onClick={() => handleRemoveVendorAttachment(qIdx, vq.id, dIdx)}
-                                              className="text-slate-400 hover:text-rose-600 cursor-pointer ml-0.5"
-                                              title="Remove document"
+                                              className="text-slate-400 hover:text-rose-600 cursor-pointer ms-0.5"
+                                              title={tr("Remove document")}
                                             >
                                               <X size={11} />
                                             </button>
                                           </div>
                                         ))
                                       ) : (
-                                        <span className="text-[11px] text-slate-400 italic">
-                                          No offline documents (PDF/photo) uploaded yet for {vq.vendorName}.
+                                        <span className="text-[0.6875rem] text-slate-400 italic">
+                                          {tr("No offline documents (PDF/photo) uploaded yet for ")}{tr(vq.vendorName)}.
                                         </span>
                                       )}
                                     </div>
@@ -1029,7 +1030,7 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
                                       className="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-2xs shrink-0"
                                     >
                                       <UploadCloud size={12} className="text-indigo-600" />
-                                      <span>{isThisUploading ? 'Uploading...' : '+ Attach Offline PDF / Photo'}</span>
+                                      <span>{isThisUploading ? tr("Uploading...") : tr("+ Attach Offline PDF / Photo")}</span>
                                     </button>
                                   </div>
                                 </div>
@@ -1038,7 +1039,7 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
                           </div>
                         ) : (
                           <div className="p-3 text-center rounded-xl bg-slate-50 border border-dashed border-slate-200 text-xs text-slate-400">
-                            No vendors were dispatched {qTitle}. Click <strong className="text-indigo-600 font-semibold cursor-pointer" onClick={() => setAddingVendorForQIdx(qIdx)}>+ Add Vendor to this Quote</strong> to attach offline vendor quotes.
+                            {tr("No vendors were dispatched ")}{tr(qTitle)}{tr(". Click ")}<strong className="text-indigo-600 font-semibold cursor-pointer" onClick={() => setAddingVendorForQIdx(qIdx)}>{tr("+ Add Vendor to this Quote")}</strong>{tr(" to attach offline vendor quotes.")}
                           </div>
                         )}
                       </div>
@@ -1054,10 +1055,10 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
             <div className="flex items-center justify-between">
               <div>
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <Paperclip size={14} className="text-blue-600" /> General Client Contract / Signed Documents
+                  <Paperclip size={14} className="text-blue-600" />{tr(" General Client Contract / Signed Documents")}
                 </label>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Attach signed client agreement, waste calculation sheets, or general project files.
+                <p className="text-[0.6875rem] text-slate-500 mt-0.5">
+                  {tr("Attach signed client agreement, waste calculation sheets, or general project files.")}
                 </p>
               </div>
               <button
@@ -1067,7 +1068,7 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer"
               >
                 <UploadCloud size={13} className="text-blue-600" />
-                {isUploadingAttachment ? 'Uploading...' : 'Upload General Files'}
+                {isUploadingAttachment ? tr("Uploading...") : tr("Upload General Files")}
               </button>
               <input
                 type="file"
@@ -1092,11 +1093,11 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-slate-900 truncate" title={file.name}>
-                          {file.name}
+                          {tr(file.name)}
                         </p>
                         {file.size && (
-                          <span className="text-[10px] text-slate-400">
-                            {(file.size / 1024).toFixed(0)} KB
+                          <span className="text-[0.625rem] text-slate-400">
+                            {(file.size / 1024).toFixed(0)}{tr(" KB")}
                           </span>
                         )}
                       </div>
@@ -1108,7 +1109,7 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
                           target="_blank"
                           rel="noreferrer"
                           className="p-1 text-slate-400 hover:text-blue-600 rounded"
-                          title="Preview"
+                          title={tr("Preview")}
                         >
                           <Eye size={13} />
                         </a>
@@ -1117,7 +1118,7 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
                         type="button"
                         onClick={() => handleRemoveAttachment(idx)}
                         className="p-1 text-slate-400 hover:text-rose-600 rounded cursor-pointer"
-                        title="Remove"
+                        title={tr("Remove")}
                       >
                         <Trash2 size={13} />
                       </button>
@@ -1131,13 +1132,13 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
           {/* Remarks / Order Notes */}
           <div>
             <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
-              Order Remarks / Notes (Optional)
+              {tr("Order Remarks / Notes (Optional)")}
             </label>
             <textarea
               rows={2}
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
-              placeholder="e.g. Client confirmed execution schedule starting next Monday."
+              placeholder={tr("e.g. Client confirmed execution schedule starting next Monday.")}
               className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-normal text-slate-900 focus:outline-none focus:border-blue-500 shadow-2xs resize-none"
             />
           </div>
@@ -1149,7 +1150,7 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
               onClick={onClose}
               className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
             >
-              Cancel
+              {tr("Cancel")}
             </button>
             <button
               type="submit"
@@ -1157,7 +1158,7 @@ export function InteriorCreateConfirmOrderModal({ isOpen, onClose, lead, onSucce
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 shadow-xs cursor-pointer"
             >
               <ShieldCheck size={15} />
-              {isSubmitting ? 'Saving Confirmed Order...' : 'Confirm Order & Link Vendor Quotes'}
+              {isSubmitting ? tr("Saving Confirmed Order...") : tr("Confirm Order & Link Vendor Quotes")}
             </button>
           </div>
         </form>

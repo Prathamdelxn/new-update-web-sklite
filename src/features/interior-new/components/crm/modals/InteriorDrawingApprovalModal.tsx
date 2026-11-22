@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState } from 'react';
 import {
@@ -79,7 +80,7 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
   const handleAction = async (action: 'approve' | 'reject') => {
     if (action === 'reject') {
       if (!rejectionReason.trim()) {
-        toast.error('Please provide a rejection reason explaining the required changes for the designer.');
+        toast.error(tr("Please provide a rejection reason explaining the required changes for the designer."));
         textareaRef.current?.focus();
         return;
       }
@@ -95,14 +96,14 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
       });
 
       if (action === 'approve') {
-        toast.success('Drawing approved internally! It is now visible on the client share link.');
+        toast.success(tr("Drawing approved internally! It is now visible on the client share link."));
       } else {
-        toast.info('Drawing rejected with reason. Status updated for revision.');
+        toast.info(tr("Drawing rejected with reason. Status updated for revision."));
       }
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || err.message || 'Failed to update approval status');
+      toast.error(err.response?.data?.error || err.message || tr("Failed to update approval status"));
     } finally {
       setIsSubmitting(false);
       setActionType(null);
@@ -135,12 +136,12 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
               </div>
               <div>
                 <h3 className="text-base font-bold text-slate-900">
-                  {isRejectMode ? 'Reject Drawing with Reason' : 'Internal Drawing Review & Approval'}
+                  {isRejectMode ? tr("Reject Drawing with Reason") : tr("Internal Drawing Review & Approval")}
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
                   {isRejectMode 
-                    ? 'Specify required changes for the designer to upload the next revision'
-                    : 'Review drawing quality and approve for client presentation'
+                    ? tr("Specify required changes for the designer to upload the next revision")
+                    : tr("Review drawing quality and approve for client presentation")
                   }
                 </p>
               </div>
@@ -150,7 +151,7 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
               onClick={onClose}
               disabled={isSubmitting}
               className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200/60 transition cursor-pointer"
-              title="Close modal"
+              title={tr("Close modal")}
             >
               <X className="w-5 h-5" />
             </button>
@@ -166,24 +167,24 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
                   </div>
                   <div className="min-w-0">
                     <h4 className="text-sm font-bold text-slate-900 truncate" title={drawingTitle}>
-                      {drawingTitle}
+                      {tr(drawingTitle)}
                     </h4>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider ${badgeInfo.color}`}>
-                        {badgeInfo.label}
+                      <span className={`text-[0.5625rem] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider ${badgeInfo.color}`}>
+                        {tr(badgeInfo.label)}
                       </span>
-                      <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
-                        Version v{currentVersion}
+                      <span className="text-[0.625rem] font-extrabold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        {tr("Version v")}{tr(currentVersion)}
                       </span>
                       {drawing.roomTag && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          {drawing.roomTag}
+                        <span className="text-[0.625rem] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          {tr(drawing.roomTag)}
                         </span>
                       )}
                       {assignedReviewerName && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
+                        <span className="inline-flex items-center gap-1 text-[0.625rem] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
                           <UserCheck className="w-3 h-3" />
-                          Reviewer: {assignedReviewerName}
+                          {tr("Reviewer: ")}{tr(assignedReviewerName)}
                         </span>
                       )}
                     </div>
@@ -199,7 +200,7 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition"
                     >
                       <Eye className="w-3.5 h-3.5" />
-                      View File
+                      {tr("View File")}
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   )}
@@ -208,19 +209,19 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
 
               {/* Status Indicator */}
               <div className="pt-2.5 border-t border-slate-200 flex items-center justify-between text-xs">
-                <span className="text-slate-500 font-medium">Internal Status:</span>
+                <span className="text-slate-500 font-medium">{tr("Internal Status:")}</span>
                 <div>
                   {approvalStatus === 'internally_approved' ? (
                     <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Approved (Live to Client)
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />{tr(" Approved (Live to Client)")}
                     </span>
                   ) : approvalStatus === 'internally_rejected' ? (
                     <span className="inline-flex items-center gap-1 font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-                      <XCircle className="w-3.5 h-3.5 text-rose-600" /> Rejected (Needs Revision)
+                      <XCircle className="w-3.5 h-3.5 text-rose-600" />{tr(" Rejected (Needs Revision)")}
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                      <AlertCircle className="w-3.5 h-3.5 text-amber-600" /> Pending Internal Approval
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-600" />{tr(" Pending Internal Approval")}
                     </span>
                   )}
                 </div>
@@ -232,10 +233,10 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
               <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl space-y-1.5">
                 <div className="flex items-center gap-2 text-rose-800 font-bold text-xs uppercase tracking-wide">
                   <XCircle className="w-4 h-4 text-rose-600" />
-                  Current Rejection Reason & Required Changes:
+                  {tr("Current Rejection Reason & Required Changes:")}
                 </div>
                 <p className="text-sm text-rose-950 bg-white p-3 rounded-lg border border-rose-200 shadow-2xs font-medium">
-                  {pastRejectionReason}
+                  {tr(pastRejectionReason)}
                 </p>
               </div>
             )}
@@ -245,10 +246,10 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-1.5">
                 <div className="flex items-center gap-2 text-amber-800 font-bold text-xs uppercase tracking-wide">
                   <MessageSquare className="w-4 h-4 text-amber-600" />
-                  Client Feedback / Change Request
+                  {tr("Client Feedback / Change Request")}
                 </div>
                 <p className="text-sm text-amber-950 bg-white p-3 rounded-lg border border-amber-200 shadow-2xs">
-                  {clientFeedback || 'Client requested modifications on the previous version.'}
+                  {clientFeedback || tr("Client requested modifications on the previous version.")}
                 </p>
               </div>
             )}
@@ -258,9 +259,9 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                   <History className="w-3.5 h-3.5 text-slate-600" />
-                  Revision History ({versions.length} versions)
+                  {tr("Revision History (")}{versions.length}{tr(" versions)")}
                 </label>
-                <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                <div className="space-y-2 max-h-36 overflow-y-auto pe-1">
                   {versions.map((ver: any, index: number) => (
                     <div
                       key={index}
@@ -274,15 +275,15 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
                         <span className="font-bold text-slate-900">
                           v{ver.versionNumber || index + 1}
                         </span>
-                        <span className="text-slate-600 truncate max-w-[180px]">{ver.name}</span>
+                        <span className="text-slate-600 truncate max-w-[11.25rem]">{tr(ver.name)}</span>
                         {ver.approvalStatus === 'internally_approved' && (
-                          <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-bold">
-                            Approved
+                          <span className="text-[0.625rem] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-bold">
+                            {tr("Approved")}
                           </span>
                         )}
                         {ver.approvalStatus === 'internally_rejected' && (
-                          <span className="text-[10px] text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded font-bold">
-                            Rejected
+                          <span className="text-[0.625rem] text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded font-bold">
+                            {tr("Rejected")}
                           </span>
                         )}
                       </div>
@@ -293,7 +294,7 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
                           rel="noopener noreferrer"
                           className="text-blue-600 hover:text-blue-800 font-bold inline-flex items-center gap-1"
                         >
-                          View <ExternalLink className="w-2.5 h-2.5" />
+                          {tr("View ")}<ExternalLink className="w-2.5 h-2.5" />
                         </a>
                       )}
                     </div>
@@ -308,17 +309,17 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
                 <label className="text-xs font-bold text-rose-900 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <XCircle className="w-4 h-4 text-rose-600" />
-                    Rejection Reason & Required Modifications <span className="text-rose-600">*</span>
+                    {tr("Rejection Reason & Required Modifications ")}<span className="text-rose-600">*</span>
                   </span>
-                  <span className="text-rose-600 font-bold text-[11px]">
-                    (Required to reject)
+                  <span className="text-rose-600 font-bold text-[0.6875rem]">
+                    {tr("(Required to reject)")}
                   </span>
                 </label>
                 <textarea
                   ref={textareaRef}
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
-                  placeholder="Explain why this drawing is rejected so the designer can fix it in the next revision..."
+                  placeholder={tr("Explain why this drawing is rejected so the designer can fix it in the next revision...")}
                   rows={4}
                   className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-rose-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-2xs resize-none transition"
                 />
@@ -330,10 +331,10 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
               <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2 animate-in fade-in zoom-in-95 duration-150">
                 <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs uppercase tracking-wide">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  Confirm Drawing Approval & Client Publishing
+                  {tr("Confirm Drawing Approval & Client Publishing")}
                 </div>
                 <p className="text-xs text-emerald-950 leading-relaxed bg-white p-3 rounded-lg border border-emerald-200 shadow-2xs">
-                  Are you sure you want to approve <strong className="text-emerald-900">"{drawingTitle}" (Version v{currentVersion})</strong>? This drawing will be marked as internally verified and immediately made viewable on the client's shared portal.
+                  {tr("Are you sure you want to approve ")}<strong className="text-emerald-900">"{tr(drawingTitle)}{tr("\" (Version v")}{tr(currentVersion)})</strong>{tr("? This drawing will be marked as internally verified and immediately made viewable on the client's shared portal.")}
                 </p>
               </div>
             )}
@@ -349,7 +350,7 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
                   disabled={isSubmitting}
                   className="px-4 py-2 text-sm font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl shadow-2xs transition cursor-pointer"
                 >
-                  Back to Review
+                  {tr("Back to Review")}
                 </button>
 
                 <button
@@ -361,12 +362,12 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
                   {isSubmitting && actionType === 'reject' ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Rejecting...</span>
+                      <span>{tr("Rejecting...")}</span>
                     </>
                   ) : (
                     <>
                       <XCircle className="w-4 h-4" />
-                      <span>Confirm Rejection</span>
+                      <span>{tr("Confirm Rejection")}</span>
                     </>
                   )}
                 </button>
@@ -379,7 +380,7 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
                   disabled={isSubmitting}
                   className="px-4 py-2 text-sm font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl shadow-2xs transition cursor-pointer"
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </button>
 
                 <button
@@ -391,12 +392,12 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
                   {isSubmitting && actionType === 'approve' ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Approving Drawing...</span>
+                      <span>{tr("Approving Drawing...")}</span>
                     </>
                   ) : (
                     <>
                       <CheckCircle2 className="w-4 h-4" />
-                      <span>Yes, Confirm Approval</span>
+                      <span>{tr("Yes, Confirm Approval")}</span>
                     </>
                   )}
                 </button>
@@ -409,7 +410,7 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
                   disabled={isSubmitting}
                   className="px-4 py-2 text-sm font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl shadow-2xs transition cursor-pointer"
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </button>
 
                 <div className="flex items-center gap-2.5">
@@ -423,7 +424,7 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
                     className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl shadow-2xs transition disabled:opacity-50 cursor-pointer"
                   >
                     <XCircle className="w-4 h-4 text-rose-600" />
-                    Reject
+                    {tr("Reject")}
                   </button>
 
                   <button
@@ -433,7 +434,7 @@ export const InteriorDrawingApprovalModal: React.FC<Props> = ({
                     className="inline-flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 shadow-sm shadow-emerald-600/20 rounded-xl transition disabled:opacity-50 cursor-pointer"
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Approve & Publish to Client</span>
+                    <span>{tr("Approve & Publish to Client")}</span>
                   </button>
                 </div>
               </>

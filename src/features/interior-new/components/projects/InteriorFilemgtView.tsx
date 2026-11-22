@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -49,7 +50,7 @@ export default function InteriorFilemgtView({ projectId }: InteriorFilemgtViewPr
       }
     } catch (err) {
       console.error('Failed to load files', err);
-      toast.error('Failed to load file browser');
+      toast.error(tr("Failed to load file browser"));
     } finally {
       setLoading(false);
     }
@@ -64,12 +65,12 @@ export default function InteriorFilemgtView({ projectId }: InteriorFilemgtViewPr
     if (file) {
       try {
         setIsSubmitting(true);
-        toast.info('Uploading file to cloud storage...');
+        toast.info(tr("Uploading file to cloud storage..."));
         
         // Upload to Cloudinary from the frontend
         const fileUrl = await uploadToCloudinary(file);
         
-        toast.info('Saving file to project...');
+        toast.info(tr("Saving file to project..."));
         // Send the URL and metadata to the backend
         await interiorApiClient.post(`/projects/${projectId}/filemgt/upload`, {
           fileUrl,
@@ -79,11 +80,11 @@ export default function InteriorFilemgtView({ projectId }: InteriorFilemgtViewPr
           parentId: currentFolderId || null
         });
         
-        toast.success('File uploaded successfully');
+        toast.success(tr("File uploaded successfully"));
         await loadFiles();
       } catch (err) {
         console.error('Failed to upload file', err);
-        toast.error('Failed to upload file');
+        toast.error(tr("Failed to upload file"));
       } finally {
         setIsSubmitting(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -100,13 +101,13 @@ export default function InteriorFilemgtView({ projectId }: InteriorFilemgtViewPr
         name: newFolderName,
         parentId: currentFolderId
       });
-      toast.success('Folder created successfully');
+      toast.success(tr("Folder created successfully"));
       setCreateFolderOpen(false);
       setNewFolderName('');
       await loadFiles();
     } catch (err) {
       console.error('Failed to create folder', err);
-      toast.error('Failed to create folder');
+      toast.error(tr("Failed to create folder"));
     } finally {
       setIsSubmitting(false);
     }
@@ -126,10 +127,10 @@ export default function InteriorFilemgtView({ projectId }: InteriorFilemgtViewPr
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-[hsl(var(--foreground))]">
-            File Management
+            {tr("File Management")}
           </h1>
           <p className="text-sm text-[hsl(var(--muted-foreground))] mt-0.5">
-            Organize site specifications, drawings, project contracts, and photos
+            {tr("Organize site specifications, drawings, project contracts, and photos")}
           </p>
         </div>
 
@@ -142,15 +143,15 @@ export default function InteriorFilemgtView({ projectId }: InteriorFilemgtViewPr
           />
           {canDo('filemgt', 'create') && (
             <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-              <Upload className="w-4 h-4 mr-2" />
-              Upload File
+              <Upload className="w-4 h-4 me-2" />
+              {tr("Upload File")}
             </Button>
           )}
 
           {canDo('filemgt', 'create') && (
             <Button onClick={() => setCreateFolderOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Folder
+              <Plus className="w-4 h-4 me-2" />
+              {tr("New Folder")}
             </Button>
           )}
         </div>
@@ -159,10 +160,11 @@ export default function InteriorFilemgtView({ projectId }: InteriorFilemgtViewPr
       <div className="flex flex-wrap items-center gap-1.5 p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-xs font-medium">
         <button 
           onClick={() => setCurrentFolderId(null)}
+          title={tr("All files")}
+          aria-label={tr("All files")}
           className="text-[hsl(var(--foreground))] hover:text-[hsl(var(--primary))] flex items-center gap-1 transition-colors"
         >
           <HardDrive className="w-3.5 h-3.5" />
-          Root
         </button>
         {breadcrumbs.map((crumb, idx) => (
           <React.Fragment key={crumb._id}>
@@ -171,7 +173,7 @@ export default function InteriorFilemgtView({ projectId }: InteriorFilemgtViewPr
               onClick={() => setCurrentFolderId(crumb._id)}
               className="text-[hsl(var(--foreground))] hover:text-[hsl(var(--primary))] transition-colors"
             >
-              {crumb.name}
+              {tr(crumb.name)}
             </button>
           </React.Fragment>
         ))}
@@ -188,20 +190,20 @@ export default function InteriorFilemgtView({ projectId }: InteriorFilemgtViewPr
               <Folder className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <h3 className="text-sm font-semibold text-[hsl(var(--foreground))]">This folder is empty</h3>
+              <h3 className="text-sm font-semibold text-[hsl(var(--foreground))]">{tr("This folder is empty")}</h3>
               <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                Get started by creating a new folder or uploading a file.
+                {tr("Get started by creating a new folder or uploading a file.")}
               </p>
             </div>
             <div className="flex justify-center gap-3 pt-2">
               {canDo('filemgt', 'create') && (
                 <Button size="sm" variant="outline" onClick={() => setCreateFolderOpen(true)}>
-                  New Folder
+                  {tr("New Folder")}
                 </Button>
               )}
               {canDo('filemgt', 'create') && (
                 <Button size="sm" onClick={() => fileInputRef.current?.click()}>
-                  Upload File
+                  {tr("Upload File")}
                 </Button>
               )}
             </div>
@@ -230,9 +232,9 @@ export default function InteriorFilemgtView({ projectId }: InteriorFilemgtViewPr
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-[hsl(var(--foreground))] truncate">
-                  {file.name}
+                  {tr(file.name)}
                 </p>
-                <div className="flex items-center gap-2 mt-1 text-[10px] text-[hsl(var(--muted-foreground))]">
+                <div className="flex items-center gap-2 mt-1 text-[0.625rem] text-[hsl(var(--muted-foreground))]">
                   <span>
                     {file.createdAt ? formatDistanceToNow(new Date(file.createdAt), { addSuffix: true }) : '--'}
                   </span>
@@ -260,9 +262,9 @@ export default function InteriorFilemgtView({ projectId }: InteriorFilemgtViewPr
             >
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <div>
-                  <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">Create Folder</h3>
+                  <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">{tr("Create Folder")}</h3>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                    Add a new subdirectory folder to the current level
+                    {tr("Add a new subdirectory folder to the current level")}
                   </p>
                 </div>
                 <button
@@ -276,10 +278,10 @@ export default function InteriorFilemgtView({ projectId }: InteriorFilemgtViewPr
               <form onSubmit={handleCreateFolder}>
                 <div className="p-5 space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">Folder Name</label>
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">{tr("Folder Name")}</label>
                     <Input
                       required
-                      placeholder="e.g. Electrical Drawings"
+                      placeholder={tr("e.g. Electrical Drawings")}
                       value={newFolderName}
                       onChange={(e) => setNewFolderName(e.target.value)}
                     />
@@ -288,11 +290,11 @@ export default function InteriorFilemgtView({ projectId }: InteriorFilemgtViewPr
 
                 <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
                   <Button variant="outline" type="button" onClick={() => setCreateFolderOpen(false)} disabled={isSubmitting}>
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                   <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    Create Folder
+                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+                    {tr("Create Folder")}
                   </Button>
                 </div>
               </form>
@@ -316,8 +318,8 @@ export default function InteriorFilemgtView({ projectId }: InteriorFilemgtViewPr
                     <FileText className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-[hsl(var(--foreground))] truncate max-w-[300px] sm:max-w-[500px]">
-                      {viewingFile.name}
+                    <h3 className="text-sm font-bold text-[hsl(var(--foreground))] truncate max-w-[18.75rem] sm:max-w-[31.25rem]">
+                      {tr(viewingFile.name)}
                     </h3>
                     <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
                       {formatFileSize(viewingFile.fileSize)} • {viewingFile.fileType?.toUpperCase()}
@@ -326,7 +328,7 @@ export default function InteriorFilemgtView({ projectId }: InteriorFilemgtViewPr
                 </div>
                 <div className="flex items-center gap-2">
                   <Button size="sm" variant="outline" onClick={() => window.open(viewingFile.fileUrl, '_blank')}>
-                    Open in New Tab
+                    {tr("Open in New Tab")}
                   </Button>
                   <button
                     onClick={() => setViewingFile(null)}
@@ -356,8 +358,8 @@ export default function InteriorFilemgtView({ projectId }: InteriorFilemgtViewPr
                       <FileText className="w-8 h-8" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-[hsl(var(--foreground))]">No preview available for this file type.</p>
-                      <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">Please open it in a new tab to download or view it.</p>
+                      <p className="text-sm font-medium text-[hsl(var(--foreground))]">{tr("No preview available for this file type.")}</p>
+                      <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{tr("Please open it in a new tab to download or view it.")}</p>
                     </div>
                   </div>
                 )}

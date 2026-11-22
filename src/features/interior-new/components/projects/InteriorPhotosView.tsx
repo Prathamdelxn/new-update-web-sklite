@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Port of interior-os-frontend's projects/[projectId]/photos/page.tsx.
 // TanStack/sonner/zustand replaced with local useState/useEffect + interiorProjectService.
@@ -46,7 +47,7 @@ export default function InteriorPhotosView({ projectId }: InteriorPhotosViewProp
       if (res.success && res.data) setPhotos(res.data);
     } catch (err) {
       console.error('Failed to load photos', err);
-      toast.error('Failed to fetch site photos history');
+      toast.error(tr("Failed to fetch site photos history"));
     } finally {
       setLoading(false);
     }
@@ -59,13 +60,13 @@ export default function InteriorPhotosView({ projectId }: InteriorPhotosViewProp
   const handleUploadPhoto = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFile) {
-      toast.error('Please select a photo file to upload');
+      toast.error(tr("Please select a photo file to upload"));
       return;
     }
 
     try {
       setSubmitting(true);
-      const uploadToastId = toast.loading('Uploading photo...');
+      const uploadToastId = toast.loading(tr("Uploading photo..."));
       let secureUrl = '';
 
       try {
@@ -86,31 +87,31 @@ export default function InteriorPhotosView({ projectId }: InteriorPhotosViewProp
 
       const res = await interiorProjectService.createPhoto(projectId, payload);
       if (res.success) {
-        toast.success('Site photo logged successfully!');
+        toast.success(tr("Site photo logged successfully!"));
         closeModal();
         fetchPhotos();
       }
     } catch (err: any) {
       console.error('Photo upload fail', err);
-      toast.error(err.response?.data?.error || err.message || 'Failed to log site photo');
+      toast.error(err.response?.data?.error || err.message || tr("Failed to log site photo"));
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeletePhoto = async (photoId: string) => {
-    if (!window.confirm('Are you sure you want to delete this site photo?')) return;
+    if (!window.confirm(tr("Are you sure you want to delete this site photo?"))) return;
     try {
       setDeletingId(photoId);
       const res = await interiorProjectService.deletePhoto(projectId, photoId);
       if (res.success) {
-        toast.success('Site photo deleted');
+        toast.success(tr("Site photo deleted"));
         setPhotos((prev) => prev.filter((p) => p._id !== photoId));
       } else {
-        toast.error(res.error || 'Failed to delete photo');
+        toast.error(res.error || tr("Failed to delete photo"));
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.error || err.message || 'Failed to delete photo');
+      toast.error(err.response?.data?.error || err.message || tr("Failed to delete photo"));
     } finally {
       setDeletingId(null);
     }
@@ -122,15 +123,15 @@ export default function InteriorPhotosView({ projectId }: InteriorPhotosViewProp
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Site Progress Photos</h2>
+          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">{tr("Site Progress Photos")}</h2>
           <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-            Log site progress pictures, snag reports, and material delivery logs.
+            {tr("Log site progress pictures, snag reports, and material delivery logs.")}
           </p>
         </div>
         {canDo('photos', 'create') && (
           <Button onClick={() => setIsModalOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Log Photo
+            <Plus className="w-4 h-4 me-2" />
+            {tr("Log Photo")}
           </Button>
         )}
       </div>
@@ -147,7 +148,7 @@ export default function InteriorPhotosView({ projectId }: InteriorPhotosViewProp
                 : 'text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]'
             )}
           >
-            {cat}
+            {tr(cat)}
           </button>
         ))}
       </div>
@@ -158,7 +159,7 @@ export default function InteriorPhotosView({ projectId }: InteriorPhotosViewProp
         </div>
       ) : filteredPhotos.length === 0 ? (
         <Card className="p-8 text-center text-sm text-[hsl(var(--muted-foreground))]">
-          No photos found. Click &quot;Log Photo&quot; to upload.
+          {tr("No photos found. Click \"Log Photo\" to upload.")}
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
@@ -169,11 +170,11 @@ export default function InteriorPhotosView({ projectId }: InteriorPhotosViewProp
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img loading="lazy" decoding="async"
                   src={photo.url}
-                  alt={photo.caption || 'Site progress image'}
+                  alt={photo.caption || tr("Site progress image")}
                   className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold bg-black/60 text-white backdrop-blur-sm">
-                  {photo.category}
+                <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[0.5625rem] uppercase font-bold bg-black/60 text-white backdrop-blur-sm">
+                  {tr(photo.category)}
                 </span>
                 {canDo('photos', 'delete') && (
                   <button
@@ -184,7 +185,7 @@ export default function InteriorPhotosView({ projectId }: InteriorPhotosViewProp
                       handleDeletePhoto(photo._id);
                     }}
                     className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 hover:bg-red-600 text-white transition-colors opacity-0 group-hover:opacity-100 backdrop-blur-sm cursor-pointer"
-                    title="Delete photo"
+                    title={tr("Delete photo")}
                   >
                     {deletingId === photo._id ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -195,8 +196,8 @@ export default function InteriorPhotosView({ projectId }: InteriorPhotosViewProp
                 )}
               </div>
               <CardContent className="p-4 space-y-2">
-                <p className="text-sm font-medium text-[hsl(var(--foreground))] line-clamp-1">{photo.caption || 'No caption added'}</p>
-                <div className="flex items-center justify-between text-[10px] text-[hsl(var(--muted-foreground))] border-t border-[hsl(var(--border))] pt-2.5">
+                <p className="text-sm font-medium text-[hsl(var(--foreground))] line-clamp-1">{photo.caption || tr("No caption added")}</p>
+                <div className="flex items-center justify-between text-[0.625rem] text-[hsl(var(--muted-foreground))] border-t border-[hsl(var(--border))] pt-2.5">
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3 h-3 text-blue-500" />
                     {new Date(photo.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -220,7 +221,7 @@ export default function InteriorPhotosView({ projectId }: InteriorPhotosViewProp
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
                   <ImageIcon className="w-4 h-4 text-[hsl(var(--primary))]" />
-                  Log Progress Photo
+                  {tr("Log Progress Photo")}
                 </h3>
                 <button onClick={() => setIsModalOpen(false)} className="p-1 rounded hover:bg-[hsl(var(--muted))]">
                   <X className="w-4 h-4" />
@@ -230,24 +231,24 @@ export default function InteriorPhotosView({ projectId }: InteriorPhotosViewProp
               <form onSubmit={handleUploadPhoto}>
                 <div className="p-5 space-y-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold">Photo Caption / Note</label>
-                    <Input placeholder="e.g. Completed partition wall drywall boarding" value={caption} onChange={(e) => setCaption(e.target.value)} />
+                    <label className="text-xs font-semibold">{tr("Photo Caption / Note")}</label>
+                    <Input placeholder={tr("e.g. Completed partition wall drywall boarding")} value={caption} onChange={(e) => setCaption(e.target.value)} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold">Select Category</label>
+                    <label className="text-xs font-semibold">{tr("Select Category")}</label>
                     <select
                       className="w-full px-3 py-2 text-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:outline-none"
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
                     >
-                      <option value="progress">Daily Site Progress</option>
-                      <option value="snag">Quality Snag defect</option>
-                      <option value="delivery">Material Delivery check</option>
-                      <option value="other">General Photo</option>
+                      <option value="progress">{tr("Daily Site Progress")}</option>
+                      <option value="snag">{tr("Quality Snag defect")}</option>
+                      <option value="delivery">{tr("Material Delivery check")}</option>
+                      <option value="other">{tr("General Photo")}</option>
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold block mb-1">Upload Site Photo</label>
+                    <label className="text-xs font-semibold block mb-1">{tr("Upload Site Photo")}</label>
                     <div className="border-2 border-dashed border-[hsl(var(--border))] rounded-lg p-5 flex flex-col items-center justify-center gap-2 hover:border-[hsl(var(--primary)/0.5)] transition-colors relative cursor-pointer bg-[hsl(var(--background))]">
                       <input
                         type="file"
@@ -260,20 +261,20 @@ export default function InteriorPhotosView({ projectId }: InteriorPhotosViewProp
                       />
                       <ImageIcon className="w-8 h-8 text-[hsl(var(--muted-foreground))]" />
                       <span className="text-xs font-semibold text-center text-[hsl(var(--foreground))] px-2 truncate w-full">
-                        {selectedFile ? selectedFile.name : 'Click or drag site photo to upload'}
+                        {selectedFile ? selectedFile.name : tr("Click or drag site photo to upload")}
                       </span>
-                      <span className="text-[10px] text-[hsl(var(--muted-foreground))]">Images up to 50MB</span>
+                      <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">{tr("Images up to 50MB")}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
                   <Button variant="outline" type="button" onClick={closeModal}>
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                   <Button type="submit" disabled={submitting}>
-                    {submitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    Save & Upload Photo
+                    {submitting && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+                    {tr("Save & Upload Photo")}
                   </Button>
                 </div>
               </form>

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -44,12 +45,12 @@ export function InteriorMarkAsLostModal({ isOpen, onClose, customerId, leadName,
     e.preventDefault();
     const trimmed = reasonDetails.trim();
     if (!trimmed) {
-      setError('Reason for loss is required');
-      toast.error('Please provide a reason for marking this lead as lost');
+      setError(tr("Reason for loss is required"));
+      toast.error(tr("Please provide a reason for marking this lead as lost"));
       return;
     }
     if (trimmed.length < 3) {
-      setError('Please provide at least 3 characters for the reason');
+      setError(tr("Please provide at least 3 characters for the reason"));
       return;
     }
 
@@ -71,13 +72,13 @@ export function InteriorMarkAsLostModal({ isOpen, onClose, customerId, leadName,
         }),
       ]);
 
-      toast.success('Lead has been marked as Lost.');
+      toast.success(tr("Lead has been marked as Lost."));
       if (onSuccess) {
         onSuccess({ _id: customerId, ...updatePayload });
       }
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to mark lead as lost');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || tr("Failed to mark lead as lost"));
     } finally {
       setIsSubmitting(false);
     }
@@ -105,8 +106,8 @@ export function InteriorMarkAsLostModal({ isOpen, onClose, customerId, leadName,
                 <Frown size={20} />
               </div>
               <div>
-                <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))]">Mark as Lost</h2>
-                <p className="text-sm text-[hsl(var(--muted-foreground))] mt-0.5">Move lead to lost stage</p>
+                <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))]">{tr("Mark as Lost")}</h2>
+                <p className="text-sm text-[hsl(var(--muted-foreground))] mt-0.5">{tr("Move lead to lost stage")}</p>
               </div>
             </div>
             <button type="button" onClick={onClose} className="p-2 hover:bg-[hsl(var(--muted))] rounded-xl transition-colors cursor-pointer">
@@ -118,12 +119,12 @@ export function InteriorMarkAsLostModal({ isOpen, onClose, customerId, leadName,
             <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex gap-3 text-rose-700 dark:text-rose-300">
               <AlertCircle size={18} className="shrink-0 mt-0.5 text-rose-600" />
               <div className="text-xs font-medium">
-                You are about to mark <strong className="truncate max-w-[180px] inline-block align-bottom font-bold" title={leadName}>{leadName || 'this lead'}</strong> as Lost.
+                {tr("You are about to mark ")}<strong className="truncate max-w-[11.25rem] inline-block align-bottom font-bold" title={leadName}>{leadName || tr("this lead")}</strong>{tr(" as Lost.")}
               </div>
             </div>
 
             <div>
-              <label className="text-xs font-bold text-[hsl(var(--foreground))]">Loss Reason Category *</label>
+              <label className="text-xs font-bold text-[hsl(var(--foreground))]">{tr("Loss Reason Category *")}</label>
               <select
                 value={reasonCategory}
                 onChange={(e) => setReasonCategory(e.target.value as any)}
@@ -131,7 +132,7 @@ export function InteriorMarkAsLostModal({ isOpen, onClose, customerId, leadName,
               >
                 {LOST_REASON_CATEGORIES.map((cat) => (
                   <option key={cat.value} value={cat.value}>
-                    {cat.label}
+                    {tr(cat.label)}
                   </option>
                 ))}
               </select>
@@ -139,8 +140,8 @@ export function InteriorMarkAsLostModal({ isOpen, onClose, customerId, leadName,
 
             <div>
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-[hsl(var(--foreground))]">Reason & Notes *</label>
-                <span className="text-[10px] font-bold text-rose-500">Required</span>
+                <label className="text-xs font-bold text-[hsl(var(--foreground))]">{tr("Reason & Notes *")}</label>
+                <span className="text-[0.625rem] font-bold text-rose-500">{tr("Required")}</span>
               </div>
               <textarea
                 rows={3}
@@ -149,14 +150,14 @@ export function InteriorMarkAsLostModal({ isOpen, onClose, customerId, leadName,
                   setReasonDetails(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder="Explain why the lead was lost (e.g., Client finalized another vendor with lower quotation)..."
+                placeholder={tr("Explain why the lead was lost (e.g., Client finalized another vendor with lower quotation)...")}
                 className={`w-full mt-1.5 px-4 py-3 rounded-xl border bg-[hsl(var(--background))] text-sm outline-none resize-none transition-all ${
                   error
                     ? 'border-rose-500 focus:ring-2 focus:ring-rose-500/20'
                     : 'border-[hsl(var(--border))] focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20'
                 }`}
               />
-              {error && <p className="text-xs text-rose-500 font-semibold mt-1">{error}</p>}
+              {error && <p className="text-xs text-rose-500 font-semibold mt-1">{tr(error)}</p>}
             </div>
 
             <div className="pt-4 flex justify-end gap-3 border-t border-[hsl(var(--border))]">
@@ -165,14 +166,14 @@ export function InteriorMarkAsLostModal({ isOpen, onClose, customerId, leadName,
                 onClick={onClose}
                 className="px-5 py-2.5 rounded-xl text-sm font-bold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] transition-colors cursor-pointer"
               >
-                Cancel
+                {tr("Cancel")}
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
               >
-                {isSubmitting ? 'Updating...' : 'Confirm Lost'}
+                {isSubmitting ? tr("Updating...") : tr("Confirm Lost")}
               </button>
             </div>
           </form>

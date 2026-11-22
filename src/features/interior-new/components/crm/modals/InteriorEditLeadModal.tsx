@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Interior Edit Lead Modal
@@ -132,7 +133,7 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
     e.preventDefault();
     if (!lead) return;
     if (!validateForm()) {
-      toast.error('Please fix the validation errors before saving');
+      toast.error(tr("Please fix the validation errors before saving"));
       return;
     }
 
@@ -149,18 +150,18 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
 
       const leadId = lead._id || lead.id;
       if (!leadId) {
-        toast.error('Lead ID not found');
+        toast.error(tr("Lead ID not found"));
         return;
       }
 
       await interiorCrmService.updateCustomer(leadId, payload);
-      toast.success('Lead updated successfully!');
+      toast.success(tr("Lead updated successfully!"));
       if (onSuccess) {
         onSuccess({ _id: leadId, ...payload });
       }
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to update lead');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || tr("Failed to update lead"));
     } finally {
       setIsSubmitting(false);
     }
@@ -190,9 +191,9 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
           {/* Header */}
           <div className="px-6 py-5 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--muted)/0.5)]">
             <div>
-              <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))]">Edit Lead Details</h2>
-              <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5 truncate max-w-full" title={`Update prospect information for ${lead.name}`}>
-                Update prospect information for {lead.name}
+              <h2 className="text-xl font-extrabold text-[hsl(var(--foreground))]">{tr("Edit Lead Details")}</h2>
+              <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5 truncate max-w-full" title={tr("Update prospect information for {{name}}", { name: lead.name })}>
+                {tr("Update prospect information for ")}{tr(lead.name)}
               </p>
             </div>
             <button
@@ -211,9 +212,9 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                      <User size={14} className="text-[hsl(var(--muted-foreground))]" /> Full Name *
+                      <User size={14} className="text-[hsl(var(--muted-foreground))]" />{tr(" Full Name *")}
                     </label>
-                    <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                    <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
                       {formData.name.length}/50
                     </span>
                   </div>
@@ -229,13 +230,13 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                         ? 'border-red-500 focus:ring-red-500/20'
                         : 'border-[hsl(var(--border))] focus:ring-indigo-500/20 focus:border-indigo-500'
                     }`}
-                    placeholder="e.g., Alexander Wright"
+                    placeholder={tr("e.g., Alexander Wright")}
                     required
                   />
                   {errors.name && (
                     <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
                       <AlertCircle size={12} className="shrink-0" />
-                      {errors.name}
+                      {tr(errors.name)}
                     </p>
                   )}
                 </div>
@@ -244,10 +245,10 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                      <Phone size={14} className="text-[hsl(var(--muted-foreground))]" /> Mobile Number *
+                      <Phone size={14} className="text-[hsl(var(--muted-foreground))]" />{tr(" Mobile Number *")}
                     </label>
-                    <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                      10-15 digits
+                    <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
+                      {tr("10-15 digits")}
                     </span>
                   </div>
                   <input
@@ -268,7 +269,7 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                   {errors.mobileNumber && (
                     <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
                       <AlertCircle size={12} className="shrink-0" />
-                      {errors.mobileNumber}
+                      {tr(errors.mobileNumber)}
                     </p>
                   )}
                 </div>
@@ -277,10 +278,10 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                      <Mail size={14} className="text-[hsl(var(--muted-foreground))]" /> Email Address
+                      <Mail size={14} className="text-[hsl(var(--muted-foreground))]" />{tr(" Email Address")}
                     </label>
-                    <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                      Optional (max 100)
+                    <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
+                      {tr("Optional (max 100)")}
                     </span>
                   </div>
                   <input
@@ -295,7 +296,7 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                         ? 'border-red-500 focus:ring-red-500/20'
                         : 'border-[hsl(var(--border))] focus:ring-indigo-500/20 focus:border-indigo-500'
                     }`}
-                    placeholder="e.g., client@example.com"
+                    placeholder={tr("e.g., client@example.com")}
                   />
                   {errors.email && (
                     <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
@@ -308,7 +309,7 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                 {/* Lead Source */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                    <Activity size={14} className="text-[hsl(var(--muted-foreground))]" /> Lead Source
+                    <Activity size={14} className="text-[hsl(var(--muted-foreground))]" />{tr(" Lead Source")}
                   </label>
                   <select
                     name="leadSource"
@@ -319,14 +320,14 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                   >
                     {LEAD_SOURCES.map((source) => (
                       <option key={source} value={source}>
-                        {source}
+                        {tr(source)}
                       </option>
                     ))}
                   </select>
                   {errors.leadSource && (
                     <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
                       <AlertCircle size={12} className="shrink-0" />
-                      {errors.leadSource}
+                      {tr(errors.leadSource)}
                     </p>
                   )}
                 </div>
@@ -334,7 +335,7 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                 {/* Property Type */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                    <Building size={14} className="text-[hsl(var(--muted-foreground))]" /> Property Type
+                    <Building size={14} className="text-[hsl(var(--muted-foreground))]" />{tr(" Property Type")}
                   </label>
                   <select
                     name="propertyType"
@@ -345,14 +346,14 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                   >
                     {PROPERTY_TYPES.map((type) => (
                       <option key={type} value={type}>
-                        {type}
+                        {tr(type)}
                       </option>
                     ))}
                   </select>
                   {errors.propertyType && (
                     <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
                       <AlertCircle size={12} className="shrink-0" />
-                      {errors.propertyType}
+                      {tr(errors.propertyType)}
                     </p>
                   )}
                 </div>
@@ -361,9 +362,9 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                      <MapPin size={14} className="text-[hsl(var(--muted-foreground))]" /> Project Location
+                      <MapPin size={14} className="text-[hsl(var(--muted-foreground))]" />{tr(" Project Location")}
                     </label>
-                    <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                    <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
                       {formData.projectLocation.length}/150
                     </span>
                   </div>
@@ -379,12 +380,12 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
                         ? 'border-red-500 focus:ring-red-500/20'
                         : 'border-[hsl(var(--border))] focus:ring-indigo-500/20 focus:border-indigo-500'
                     }`}
-                    placeholder="e.g., West End Avenue, Suite 400"
+                    placeholder={tr("e.g., West End Avenue, Suite 400")}
                   />
                   {errors.projectLocation && (
                     <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
                       <AlertCircle size={12} className="shrink-0" />
-                      {errors.projectLocation}
+                      {tr(errors.projectLocation)}
                     </p>
                   )}
                 </div>
@@ -400,7 +401,7 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
               disabled={isSubmitting}
               className="px-5 py-2.5 rounded-xl text-sm font-bold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] transition-colors"
             >
-              Cancel
+              {tr("Cancel")}
             </button>
             <button
               type="submit"
@@ -408,7 +409,7 @@ export const InteriorEditLeadModal: React.FC<EditLeadModalProps> = ({
               disabled={isSubmitting}
               className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
             >
-              {isSubmitting ? 'Saving Changes...' : 'Save Changes'}
+              {isSubmitting ? tr("Saving Changes...") : tr("Save Changes")}
             </button>
           </div>
         </motion.div>

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
@@ -302,7 +303,7 @@ export function InteriorConfirmedOrderStageView({
       onRefresh();
     } catch (err: any) {
       console.error('Failed to sync vendor quotes:', err);
-      toast.error('Failed to save vendor details');
+      toast.error(tr("Failed to save vendor details"));
     }
   };
 
@@ -342,7 +343,7 @@ export function InteriorConfirmedOrderStageView({
     if (!file) return;
 
     if (file.size > 15 * 1024 * 1024) {
-      toast.error('File size exceeds 15MB limit.');
+      toast.error(tr("File size exceeds 15MB limit."));
       return;
     }
 
@@ -377,10 +378,10 @@ export function InteriorConfirmedOrderStageView({
 
       setVendorQuotesMap(updatedMap);
       await persistVendorQuotes(updatedMap);
-      toast.success('Document uploaded successfully!');
+      toast.success(tr("Document uploaded successfully!"));
     } catch (err) {
       console.error('File upload failed:', err);
-      toast.error('Failed to upload file to cloud storage. Please try again.');
+      toast.error(tr("Failed to upload file to cloud storage. Please try again."));
     } finally {
       setUploadingVendorId(null);
       setTargetVendorForUpload(null);
@@ -405,7 +406,7 @@ export function InteriorConfirmedOrderStageView({
 
     setVendorQuotesMap(updatedMap);
     await persistVendorQuotes(updatedMap);
-    toast.success('Document removed');
+    toast.success(tr("Document removed"));
   };
 
   // Remove a Vendor Row with clean cross-array clearing
@@ -423,7 +424,7 @@ export function InteriorConfirmedOrderStageView({
       vendorName: itemToRemove?.vendorName,
       vendorId: itemToRemove?.vendorId,
     });
-    toast.success('Vendor entry removed');
+    toast.success(tr("Vendor entry removed"));
   };
 
   // General Attachments Upload
@@ -438,7 +439,7 @@ export function InteriorConfirmedOrderStageView({
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         if (file.size > 15 * 1024 * 1024) {
-          toast.error(`File "${file.name}" exceeds 15MB limit.`);
+          toast.error(tr("File \"{{name}}\" exceeds 15MB limit.", { name: file.name }));
           continue;
         }
 
@@ -470,11 +471,11 @@ export function InteriorConfirmedOrderStageView({
         },
       });
 
-      toast.success(`${newFiles.length} file(s) uploaded`);
+      toast.success(tr("{{newFilesCount}} file(s) uploaded", { newFilesCount: newFiles.length }));
       onRefresh();
     } catch (err) {
       console.error('General file upload failed:', err);
-      toast.error('Failed to upload general files to cloud storage.');
+      toast.error(tr("Failed to upload general files to cloud storage."));
     } finally {
       setIsUploadingGeneral(false);
       if (generalFileInputRef.current) generalFileInputRef.current.value = '';
@@ -494,10 +495,10 @@ export function InteriorConfirmedOrderStageView({
           attachments: updatedAttachments,
         },
       });
-      toast.success('Document removed');
+      toast.success(tr("Document removed"));
       onRefresh();
     } catch {
-      toast.error('Failed to remove document');
+      toast.error(tr("Failed to remove document"));
     }
   };
 
@@ -584,14 +585,14 @@ export function InteriorConfirmedOrderStageView({
         <div className="p-3.5 sm:p-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-1 flex-wrap">
             {/* Search Input */}
-            <div className="relative min-w-[220px] sm:max-w-xs">
+            <div className="relative min-w-[13.75rem] sm:max-w-xs">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search quote or vendor..."
-                className="w-full pl-8.5 pr-8 py-1.5 rounded-lg border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
+                placeholder={tr("Search quote or vendor...")}
+                className="w-full ps-8.5 pe-8 py-1.5 rounded-lg border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
               />
               {searchQuery && (
                 <button
@@ -623,7 +624,7 @@ export function InteriorConfirmedOrderStageView({
                         : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                     )}
                   >
-                    All Quotes
+                    {tr("All Quotes")}
                   </button>
                   {uniqueDispatchedQuoteIndices.map((idx) => {
                     const q = allQuotations[idx];
@@ -649,21 +650,21 @@ export function InteriorConfirmedOrderStageView({
           </div>
 
           <div className="text-xs text-slate-500 font-medium">
-            Showing <strong className="text-slate-900 font-bold">{filteredRows.length}</strong> dispatched quotation{filteredRows.length === 1 ? '' : 's'}
+            {tr("Showing ")}<strong className="text-slate-900 font-bold">{filteredRows.length}</strong>{tr(" dispatched quotation")}{filteredRows.length === 1 ? '' : 's'}
           </div>
         </div>
 
         {/* Professional Light Theme Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full text-start border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/90 text-[11px] font-bold uppercase tracking-wider text-slate-600 select-none">
+              <tr className="border-b border-slate-200 bg-slate-50/90 text-[0.6875rem] font-bold uppercase tracking-wider text-slate-600 select-none">
                 <th className="py-3 px-3.5 text-center w-12 font-bold text-slate-400">#</th>
-                <th className="py-3 px-4 min-w-[180px]">Quotation Name</th>
-                <th className="py-3 px-4 min-w-[200px]">Dispatched Vendor</th>
-                <th className="py-3 px-4 min-w-[170px]">Sent Date & Time</th>
-                <th className="py-3 px-4 min-w-[220px]">Vendor Documents</th>
-                <th className="py-3 px-3.5 text-center w-28">Action</th>
+                <th className="py-3 px-4 min-w-[11.25rem]">{tr("Quotation Name")}</th>
+                <th className="py-3 px-4 min-w-[12.5rem]">{tr("Dispatched Vendor")}</th>
+                <th className="py-3 px-4 min-w-[10.625rem]">{tr("Sent Date & Time")}</th>
+                <th className="py-3 px-4 min-w-[13.75rem]">{tr("Vendor Documents")}</th>
+                <th className="py-3 px-3.5 text-center w-28">{tr("Action")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white">
@@ -674,14 +675,14 @@ export function InteriorConfirmedOrderStageView({
                     {tableRows.length === 0 ? (
                       <div className="space-y-1">
                         <p className="font-semibold text-slate-800 text-sm">
-                          No Quotations Dispatched to Vendors Yet
+                          {tr("No Quotations Dispatched to Vendors Yet")}
                         </p>
                         <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                          Quotations will automatically appear here as soon as they are sent to vendor partners.
+                          {tr("Quotations will automatically appear here as soon as they are sent to vendor partners.")}
                         </p>
                       </div>
                     ) : (
-                      'No vendor dispatches match your search filter.'
+                      tr("No vendor dispatches match your search filter.")
                     )}
                   </td>
                 </tr>
@@ -703,14 +704,14 @@ export function InteriorConfirmedOrderStageView({
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-slate-900 text-xs sm:text-sm">
-                            {row.quotationTitle}
+                            {tr(row.quotationTitle)}
                           </span>
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                            v{row.quotationVersion}
+                          <span className="px-1.5 py-0.5 rounded text-[0.625rem] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                            v{tr(row.quotationVersion)}
                           </span>
                           {row.isPrimaryQuote && (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                              <CheckCircle2 size={11} className="text-emerald-600" /> Primary
+                            <span className="px-2 py-0.5 rounded-full text-[0.625rem] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                              <CheckCircle2 size={11} className="text-emerald-600" />{tr(" Primary")}
                             </span>
                           )}
                         </div>
@@ -720,11 +721,11 @@ export function InteriorConfirmedOrderStageView({
                       <td className="py-3.5 px-4">
                         <div className="space-y-0.5">
                           <p className="font-bold text-slate-900 text-xs sm:text-sm">
-                            {row.vendorName}
+                            {tr(row.vendorName)}
                           </p>
                           {row.vendorEmail && (
-                            <p className="text-[11px] text-slate-500 font-normal truncate max-w-[200px]" title={row.vendorEmail}>
-                              {row.vendorEmail}
+                            <p className="text-[0.6875rem] text-slate-500 font-normal truncate max-w-[12.5rem]" title={row.vendorEmail}>
+                              {tr(row.vendorEmail)}
                             </p>
                           )}
                         </div>
@@ -751,8 +752,8 @@ export function InteriorConfirmedOrderStageView({
                               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 font-medium transition-colors"
                             >
                               <FileText size={12} className="text-blue-600 shrink-0" />
-                              <span className="max-w-[100px] truncate font-medium" title={doc.name}>
-                                {doc.name}
+                              <span className="max-w-[6.25rem] truncate font-medium" title={doc.name}>
+                                {tr(doc.name)}
                               </span>
                               {doc.url && (
                                 <a
@@ -760,7 +761,7 @@ export function InteriorConfirmedOrderStageView({
                                   target="_blank"
                                   rel="noreferrer"
                                   className="text-slate-400 hover:text-blue-600 p-0.5 transition-colors"
-                                  title="Preview file"
+                                  title={tr("Preview file")}
                                 >
                                   <Eye size={12} />
                                 </a>
@@ -772,7 +773,7 @@ export function InteriorConfirmedOrderStageView({
                                     handleRemoveVendorAttachment(row.quotationIndex, row.id, dIdx)
                                   }
                                   className="text-slate-400 hover:text-rose-600 p-0.5 cursor-pointer transition-colors"
-                                  title="Remove document"
+                                  title={tr("Remove document")}
                                 >
                                   <X size={11} />
                                 </button>
@@ -788,10 +789,10 @@ export function InteriorConfirmedOrderStageView({
                                 onClick={() => triggerVendorUpload(row.quotationIndex, row.id)}
                                 disabled={isUploadingThis}
                                 className="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 hover:border-slate-400 rounded-md text-xs font-semibold transition-all shadow-2xs cursor-pointer shrink-0 active:scale-95"
-                                title="Upload vendor PDF / photo document"
+                                title={tr("Upload vendor PDF / photo document")}
                               >
                                 <UploadCloud size={12} className="text-slate-500" />
-                                <span>{isUploadingThis ? 'Uploading...' : '+ Upload'}</span>
+                                <span>{isUploadingThis ? tr("Uploading...") : tr("+ Upload")}</span>
                               </button>
                             )
                           )}
@@ -808,10 +809,10 @@ export function InteriorConfirmedOrderStageView({
                               setIsPreviewModalOpen(true);
                             }}
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/80 text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95"
-                            title={`View full ${row.quotationTitle}`}
+                            title={tr("View full {{quotationTitle}}", { quotationTitle: row.quotationTitle })}
                           >
                             <Eye size={13} />
-                            <span>View</span>
+                            <span>{tr("View")}</span>
                           </button>
                           {row.hasVendor && !isReadOnly && (
                             (canEditOrder) && (
@@ -819,7 +820,7 @@ export function InteriorConfirmedOrderStageView({
                                 type="button"
                                 onClick={() => handleRemoveVendorFromQuote(row.quotationIndex, row.id)}
                                 className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                                title="Delete vendor dispatch row"
+                                title={tr("Delete vendor dispatch row")}
                               >
                                 <Trash2 size={13} />
                               </button>
@@ -842,10 +843,10 @@ export function InteriorConfirmedOrderStageView({
           <div>
             <h4 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
               <Paperclip size={14} className="text-blue-600" />
-              <span>General Client Signed Contract & Waste Calculation Files</span>
+              <span>{tr("General Client Signed Contract & Waste Calculation Files")}</span>
             </h4>
             <p className="text-xs text-slate-500 mt-0.5">
-              Signed client proposals, floor plan execution attachments, or waste sheets.
+              {tr("Signed client proposals, floor plan execution attachments, or waste sheets.")}
             </p>
           </div>
 
@@ -858,7 +859,7 @@ export function InteriorConfirmedOrderStageView({
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 hover:border-slate-400 rounded-lg text-xs font-semibold transition-all shadow-2xs cursor-pointer"
               >
                 <UploadCloud size={13} className="text-slate-500" />
-                {isUploadingGeneral ? 'Uploading...' : 'Upload General Docs'}
+                {isUploadingGeneral ? tr("Uploading...") : tr("Upload General Docs")}
               </button>
             )
           )}
@@ -877,11 +878,11 @@ export function InteriorConfirmedOrderStageView({
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-slate-900 truncate" title={file.name}>
-                      {file.name}
+                      {tr(file.name)}
                     </p>
                     {file.size && (
-                      <span className="text-[10px] text-slate-400">
-                        {(file.size / 1024).toFixed(0)} KB
+                      <span className="text-[0.625rem] text-slate-400">
+                        {(file.size / 1024).toFixed(0)}{tr(" KB")}
                       </span>
                     )}
                   </div>
@@ -894,7 +895,7 @@ export function InteriorConfirmedOrderStageView({
                       target="_blank"
                       rel="noreferrer"
                       className="p-1 text-slate-400 hover:text-blue-600 rounded transition-colors"
-                      title="Preview"
+                      title={tr("Preview")}
                     >
                       <Eye size={13} />
                     </a>
@@ -905,7 +906,7 @@ export function InteriorConfirmedOrderStageView({
                         type="button"
                         onClick={() => handleRemoveGeneralAttachment(idx)}
                         className="p-1 text-slate-400 hover:text-rose-600 rounded cursor-pointer transition-colors"
-                        title="Remove"
+                        title={tr("Remove")}
                       >
                         <Trash2 size={13} />
                       </button>
@@ -917,7 +918,7 @@ export function InteriorConfirmedOrderStageView({
           </div>
         ) : (
           <div className="p-3 text-center rounded-lg bg-slate-50 border border-dashed border-slate-200 text-xs text-slate-400">
-            No general signed contract or waste files attached yet.
+            {tr("No general signed contract or waste files attached yet.")}
           </div>
         )}
       </div>

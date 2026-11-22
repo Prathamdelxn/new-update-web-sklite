@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React from 'react';
 import { motion } from 'framer-motion';
@@ -112,14 +113,14 @@ export function InteriorSiteVisitHistoryModal({
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-base sm:text-lg font-black text-[hsl(var(--foreground))]">
-                  Previous Site Visit Schedules
+                  {tr("Previous Site Visit Schedules")}
                 </h2>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 border border-purple-500/20">
-                  {siteVisits.length} {siteVisits.length === 1 ? 'Record' : 'Records'}
+                <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                  {siteVisits.length} {siteVisits.length === 1 ? tr("Record") : tr("Records")}
                 </span>
               </div>
-              <p className="text-[11px] sm:text-xs text-[hsl(var(--muted-foreground))] mt-0.5" title={leadName ? `Site history for ${leadName}` : ''}>
-                Full schedule history, assigned site members, and instructions {leadName ? `for ${leadName}` : ''}
+              <p className="text-[0.6875rem] sm:text-xs text-[hsl(var(--muted-foreground))] mt-0.5" title={leadName ? tr("Site history for {{leadName}}", { leadName: leadName }) : ''}>
+                {tr("Full schedule history, assigned site members, and instructions ")}{leadName ? `for ${leadName}` : ''}
               </p>
             </div>
           </div>
@@ -133,17 +134,17 @@ export function InteriorSiteVisitHistoryModal({
         </div>
 
         {/* Timeline Content List */}
-        <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto py-4 space-y-4 pe-1 scrollbar-thin">
           {siteVisits.length === 0 ? (
             <div className="py-12 text-center flex flex-col items-center justify-center bg-[hsl(var(--muted)/0.2)] border border-dashed border-[hsl(var(--border))] rounded-2xl">
               <Calendar className="w-10 h-10 text-[hsl(var(--muted-foreground))] opacity-40 mb-2" />
-              <p className="text-sm font-bold text-[hsl(var(--foreground))]">No Previous Site Visit Records</p>
+              <p className="text-sm font-bold text-[hsl(var(--foreground))]">{tr("No Previous Site Visit Records")}</p>
               <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5 max-w-sm">
-                When site visits are scheduled or rescheduled, the full audit trail and previous dates will appear here.
+                {tr("When site visits are scheduled or rescheduled, the full audit trail and previous dates will appear here.")}
               </p>
             </div>
           ) : (
-            <div className="relative border-l-2 border-[hsl(var(--border))] ml-3 sm:ml-4 pl-4 sm:pl-6 space-y-4">
+            <div className="relative border-s-2 border-[hsl(var(--border))] ms-3 sm:ms-4 ps-4 sm:ps-6 space-y-4">
               {siteVisits.map((item, idx) => {
                 const assignedName = getUserDisplayName(item.user);
                 const isItemPending = item.status === 'Pending';
@@ -185,11 +186,11 @@ export function InteriorSiteVisitHistoryModal({
                             <MapPin size={12} className={isLatest ? "text-purple-600" : "text-[hsl(var(--muted-foreground))]"} />
                           </span>
                           <span className="text-xs font-bold text-[hsl(var(--foreground))]">
-                            {isLatest ? 'Current / Latest Schedule' : `Previous Schedule #${siteVisits.length - idx}`}
+                            {isLatest ? tr("Current / Latest Schedule") : tr("Previous Schedule #{{value}}", { value: siteVisits.length - idx })}
                           </span>
                           <span
                             className={cn(
-                              "text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border",
+                              "text-[0.5625rem] font-black uppercase tracking-wider px-2 py-0.5 rounded border",
                               isOverdue
                                 ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30"
                                 : item.status === 'Completed'
@@ -200,17 +201,17 @@ export function InteriorSiteVisitHistoryModal({
                             )}
                           >
                             {isOverdue
-                              ? 'Overdue'
+                              ? tr("Overdue")
                               : item.status === 'Completed'
-                              ? 'Survey Completed'
+                              ? tr("Survey Completed")
                               : isLatest
-                              ? 'Active Schedule'
-                              : 'Archived / Past'}
+                              ? tr("Active Schedule")
+                              : tr("Archived / Past")}
                           </span>
                         </div>
 
                         {item.scheduledDate && (
-                          <div className="flex items-center gap-1.5 text-[11px] text-[hsl(var(--foreground))] font-bold">
+                          <div className="flex items-center gap-1.5 text-[0.6875rem] text-[hsl(var(--foreground))] font-bold">
                             <Clock size={12} className={isOverdue ? "text-rose-500" : "text-purple-600"} />
                             <span>
                               {new Date(item.scheduledDate).toLocaleString('en-US', {
@@ -228,22 +229,22 @@ export function InteriorSiteVisitHistoryModal({
 
                       {/* Instructions / Notes */}
                       <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3 space-y-1">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1">
-                          <MessageSquare size={11} className="text-purple-600" /> Instructions / Site Notes:
+                        <p className="text-[0.625rem] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+                          <MessageSquare size={11} className="text-purple-600" />{tr(" Instructions / Site Notes:")}
                         </p>
                         <p className="text-xs text-[hsl(var(--foreground))] font-medium leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-                          {item.remarks || 'No specific instructions entered.'}
+                          {item.remarks || tr("No specific instructions entered.")}
                         </p>
                       </div>
 
                       {/* Footer Metadata */}
-                      <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[10px] sm:text-[11px] text-[hsl(var(--muted-foreground))] font-medium">
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[0.625rem] sm:text-[0.6875rem] text-[hsl(var(--muted-foreground))] font-medium">
                         <span className="flex items-center gap-1">
-                          <User size={12} className="text-blue-500" /> Assigned: <strong className="text-[hsl(var(--foreground))]">{assignedName}</strong>
+                          <User size={12} className="text-blue-500" />{tr(" Assigned: ")}<strong className="text-[hsl(var(--foreground))]">{tr(assignedName)}</strong>
                         </span>
                         {item.createdAt && (
                           <span>
-                            Logged on: {new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                            {tr("Logged on: ")}{new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                           </span>
                         )}
                       </div>
@@ -257,8 +258,8 @@ export function InteriorSiteVisitHistoryModal({
 
         {/* Footer Actions */}
         <div className="pt-4 border-t border-[hsl(var(--border))] flex items-center justify-between gap-3 shrink-0">
-          <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-            Showing all site survey appointments.
+          <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
+            {tr("Showing all site survey appointments.")}
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -266,7 +267,7 @@ export function InteriorSiteVisitHistoryModal({
               onClick={onClose}
               className="px-4 py-2 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] text-xs font-bold rounded-xl transition-all cursor-pointer"
             >
-              Close
+              {tr("Close")}
             </button>
             {!isReadOnly && onReschedule && (
               <button
@@ -277,7 +278,7 @@ export function InteriorSiteVisitHistoryModal({
                 }}
                 className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer flex items-center gap-1.5"
               >
-                <Calendar size={13} /> Reschedule Site Visit
+                <Calendar size={13} />{tr(" Reschedule Site Visit")}
               </button>
             )}
           </div>

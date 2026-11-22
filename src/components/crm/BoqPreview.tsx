@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Interior CRM BOQ Preview Component
@@ -197,7 +198,7 @@ export function BoqPreview({
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-extrabold text-slate-900">
-                {isApproved ? "Internal Approval: Approved" : isPendingApproval ? "Internal Approval: Pending Review" : isRejected ? "Internal Approval: Changes Requested" : "Internal Approval: Draft"}
+                {isApproved ? tr("Internal Approval: Approved") : isPendingApproval ? tr("Internal Approval: Pending Review") : isRejected ? tr("Internal Approval: Changes Requested") : tr("Internal Approval: Draft")}
               </span>
               <span className={cn(
                 "text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border",
@@ -209,47 +210,47 @@ export function BoqPreview({
                   ? "bg-rose-50 text-rose-700 border-rose-300"
                   : "bg-slate-100 text-slate-700 border-slate-300"
               )}>
-                {isApproved ? "Approved" : isPendingApproval ? "Pending Review" : isRejected ? "Rejected" : "Draft"}
+                {isApproved ? tr("Approved") : isPendingApproval ? tr("Pending Review") : isRejected ? tr("Rejected") : tr("Draft")}
               </span>
             </div>
             {isRejected && boq.rejectionReason ? (
               <div className="mt-2 text-xs bg-rose-50 border border-rose-200/90 text-rose-950 px-3 py-1.5 rounded-xl flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2 max-w-2xl min-w-0 shadow-2xs overflow-hidden">
                 <span className="font-extrabold text-rose-800 shrink-0 text-[11px] select-none flex items-center gap-1">
                   <XCircle size={12} className="text-rose-600 shrink-0" />
-                  Revisions Required:
+                  {tr("Revisions Required:")}
                 </span>
                 <p className="font-medium leading-relaxed break-all [word-break:break-word] [overflow-wrap:anywhere] text-rose-950 italic text-[11px] min-w-0 flex-1">
-                  "{boq.rejectionReason}"
+                  "{tr(boq.rejectionReason)}"
                 </p>
               </div>
             ) : (
               <p className="text-xs text-slate-600 mt-0.5 leading-relaxed break-all [word-break:break-word] [overflow-wrap:anywhere] max-w-2xl min-w-0">
                 {isApproved
-                  ? `BOQ estimation approved${boq.approvedByName ? ` by ${boq.approvedByName}` : ''}. Ready for Quotations.`
+                  ? tr("BOQ estimation approved{{value}}. Ready for Quotations.", { value: boq.approvedByName ? ` by ${boq.approvedByName}` : '' })
                   : isPendingApproval
-                  ? `Submitted to ${boq.assignedReviewerName || 'Manager'} for review.`
+                  ? tr("Submitted to {{value}} for review.", { value: boq.assignedReviewerName || 'Manager' })
                   : isRejected
-                  ? "Revisions requested by manager. Please review items and resubmit."
-                  : "This estimation is in draft mode and requires manager approval before quotation."}
+                  ? tr("Revisions requested by manager. Please review items and resubmit.")
+                  : tr("This estimation is in draft mode and requires manager approval before quotation.")}
               </p>
             )}
 
             {/* Version Metadata: Date & Creator */}
             <div className="flex items-center gap-3 mt-1.5 flex-wrap text-[11px] text-slate-500 font-medium">
               <span className="inline-flex items-center gap-1 bg-white px-2 py-0.5 rounded-md border border-slate-200 text-slate-700 font-bold shadow-2xs">
-                Version {boq.version || boqIndex + 1}
+                {tr("Version ")}{boq.version || boqIndex + 1}
               </span>
               <span className="inline-flex items-center gap-1">
                 <Clock size={12} className="text-slate-400" />
-                <span>Created: <strong className="text-slate-800 font-semibold">{boq.createdAt ? new Date(boq.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recently'}</strong></span>
+                <span>{tr("Created: ")}<strong className="text-slate-800 font-semibold">{boq.createdAt ? new Date(boq.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : tr("Recently")}</strong></span>
               </span>
               <span className="inline-flex items-center gap-1">
                 <User size={12} className="text-slate-400" />
-                <span>By: <strong className="text-slate-800 font-semibold">{boq.createdByName || (boq.createdBy?.firstName ? `${boq.createdBy.firstName} ${boq.createdBy.lastName || ''}`.trim() : null) || 'Estimator'}</strong></span>
+                <span>{tr("By: ")}<strong className="text-slate-800 font-semibold">{boq.createdByName || (boq.createdBy?.firstName ? `${boq.createdBy.firstName} ${boq.createdBy.lastName || ''}`.trim() : null) || tr("Estimator")}</strong></span>
               </span>
               {boq.updatedAt && (
                 <span className="text-[10px] text-slate-400 italic">
-                  (Updated {new Date(boq.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}{boq.updatedByName ? ` by ${boq.updatedByName}` : ''})
+                  {tr("(Updated ")}{new Date(boq.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}{boq.updatedByName ? ` by ${boq.updatedByName}` : ''})
                 </span>
               )}
             </div>
@@ -258,10 +259,10 @@ export function BoqPreview({
               <div className="mt-2 text-xs bg-white/95 border border-amber-200 text-slate-800 px-3 py-1.5 rounded-xl flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2 max-w-2xl min-w-0 shadow-2xs overflow-hidden">
                 <span className="font-extrabold text-amber-800 shrink-0 text-[11px] select-none flex items-center gap-1">
                   <FileText size={12} className="text-amber-600 shrink-0" />
-                  Review Focus / Note:
+                  {tr("Review Focus / Note:")}
                 </span>
                 <p className="font-medium leading-relaxed break-all [word-break:break-word] [overflow-wrap:anywhere] text-slate-900 italic text-[11px] min-w-0 flex-1">
-                  "{boq.submissionNotes}"
+                  "{tr(boq.submissionNotes)}"
                 </p>
               </div>
             )}
@@ -277,7 +278,7 @@ export function BoqPreview({
                 onClick={() => onSendForApproval(boqIndex)}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
               >
-                <Send size={13} /> {isRejected ? "Resubmit for Approval" : "Send for Approval"}
+                <Send size={13} /> {isRejected ? tr("Resubmit for Approval") : tr("Send for Approval")}
               </button>
             )}
 
@@ -289,7 +290,7 @@ export function BoqPreview({
                     onClick={() => onApprove(boqIndex)}
                     className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
                   >
-                    <CheckCircle2 size={13} /> Approve
+                    <CheckCircle2 size={13} />{tr(" Approve")}
                   </button>
                 )}
                 {onReject && (
@@ -298,7 +299,7 @@ export function BoqPreview({
                     onClick={() => onReject(boqIndex)}
                     className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
                   >
-                    <XCircle size={13} /> Reject
+                    <XCircle size={13} />{tr(" Reject")}
                   </button>
                 )}
               </>
@@ -319,13 +320,13 @@ export function BoqPreview({
               )}
             >
               <Tag size={12} className="shrink-0" />
-              <span className="truncate max-w-[150px]" title={cat.name}>{cat.name}</span>
+              <span className="truncate max-w-[150px]" title={cat.name}>{tr(cat.name)}</span>
               <span className="opacity-60 text-[10px] shrink-0">({cat.count})</span>
               <span
                 className="font-extrabold text-slate-900 font-mono shrink-0 whitespace-nowrap"
                 title={`${currencySymbol} ${formatInternational(cat.total, 2, 2)}`}
               >
-                {currencySymbol} {formatMillionBillion(cat.total)}
+                {tr(currencySymbol)} {formatMillionBillion(cat.total)}
               </span>
             </div>
           ))}
@@ -343,23 +344,23 @@ export function BoqPreview({
             <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 <span className="px-2 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-blue-700 font-mono text-[11px] font-bold shrink-0">
-                  Sec {section.sectionNumber || secIdx + 1}
+                  {tr("Sec ")}{section.sectionNumber || secIdx + 1}
                 </span>
                 <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate max-w-xs sm:max-w-md min-w-0" title={section.sectionTitle}>
-                  {section.sectionTitle}
+                  {tr(section.sectionTitle)}
                 </h3>
                 <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full shrink-0">
-                  {section.items.length} {section.items.length === 1 ? 'item' : 'items'}
+                  {section.items.length} {section.items.length === 1 ? tr("item") : tr("items")}
                 </span>
               </div>
 
               <div className="text-right shrink-0">
-                <span className="text-[11px] font-semibold text-slate-500 mr-2">Section Subtotal:</span>
+                <span className="text-[11px] font-semibold text-slate-500 mr-2">{tr("Section Subtotal:")}</span>
                 <span
                   className="text-xs font-bold font-mono text-slate-900 whitespace-nowrap"
                   title={`${currencySymbol} ${formatInternational(section.subTotal, 2, 2)}`}
                 >
-                  {currencySymbol} {formatMillionBillion(section.subTotal)}
+                  {tr(currencySymbol)} {formatMillionBillion(section.subTotal)}
                 </span>
               </div>
             </div>
@@ -372,10 +373,10 @@ export function BoqPreview({
                   <div className="p-3 bg-blue-50/70 border border-blue-200/90 rounded-xl space-y-1 shadow-2xs max-w-full overflow-hidden">
                     <div className="flex items-center gap-1.5 text-[11px] font-bold text-blue-900">
                       <FileText size={13} className="text-blue-600 shrink-0" />
-                      <span>Section Scope of Work / Overview Note</span>
+                      <span>{tr("Section Scope of Work / Overview Note")}</span>
                     </div>
                     <p className="text-xs text-slate-900 font-normal leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-                      {section.scopeDescription}
+                      {tr(section.scopeDescription)}
                     </p>
                   </div>
                 )}
@@ -384,7 +385,7 @@ export function BoqPreview({
                 {section.attachments && section.attachments.length > 0 && (
                   <div className="flex items-center gap-2 flex-wrap pt-0.5">
                     <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1 shrink-0">
-                      <Paperclip size={12} className="text-blue-600" /> Attached Drawings:
+                      <Paperclip size={12} className="text-blue-600" />{tr(" Attached Drawings:")}
                     </span>
                     {section.attachments.map((att: any, attIdx: number) => {
                       const isImg = att.url.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i) || (att.fileType && att.fileType.includes('image'));
@@ -399,14 +400,14 @@ export function BoqPreview({
                           key={attIdx}
                           href={drawingViewerHref}
                           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs text-slate-800 shadow-2xs hover:border-blue-500 hover:text-blue-600 transition cursor-pointer group"
-                          title="Click to open Drawing Studio Viewport Page"
+                          title={tr("Click to open Drawing Studio Viewport Page")}
                         >
                           {isImg ? (
                             <img src={att.url} alt={att.name} className="w-4 h-4 rounded object-cover border border-slate-100 shrink-0" />
                           ) : (
                             <FileCode size={13} className="text-blue-600 shrink-0" />
                           )}
-                          <span className="font-semibold truncate max-w-[140px] text-[11px]">{att.name}</span>
+                          <span className="font-semibold truncate max-w-[140px] text-[11px]">{tr(att.name)}</span>
                           <ExternalLink size={12} className="text-slate-400 group-hover:text-blue-600" />
                         </Link>
                       );
@@ -421,13 +422,13 @@ export function BoqPreview({
               <table className="w-full min-w-[960px] text-xs text-left border-collapse table-fixed">
                 <thead>
                   <tr className="bg-slate-50 text-slate-600 font-bold text-[11px] uppercase tracking-wider border-b border-slate-200">
-                    <th className="p-3 w-14 text-center shrink-0">Sr. No</th>
-                    <th className="p-3 w-[38%] min-w-[260px]">Item Description & Technical Specifications</th>
-                    <th className="p-3 text-center w-20 shrink-0">Unit</th>
-                    <th className="p-3 text-center w-20 shrink-0">Quantity</th>
-                    <th className="p-3 text-right w-28 shrink-0">Rate ({currencySymbol})</th>
-                    <th className="p-3 text-right w-32 shrink-0">Amount ({currencySymbol})</th>
-                    <th className="p-3 w-[24%] min-w-[160px]">Remarks / Disposal</th>
+                    <th className="p-3 w-14 text-center shrink-0">{tr("Sr. No")}</th>
+                    <th className="p-3 w-[38%] min-w-[260px]">{tr("Item Description & Technical Specifications")}</th>
+                    <th className="p-3 text-center w-20 shrink-0">{tr("Unit")}</th>
+                    <th className="p-3 text-center w-20 shrink-0">{tr("Quantity")}</th>
+                    <th className="p-3 text-right w-28 shrink-0">{tr("Rate (")}{tr(currencySymbol)})</th>
+                    <th className="p-3 text-right w-32 shrink-0">{tr("Amount (")}{tr(currencySymbol)})</th>
+                    <th className="p-3 w-[24%] min-w-[160px]">{tr("Remarks / Disposal")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
@@ -446,11 +447,11 @@ export function BoqPreview({
                         <td
                           onClick={() => toggleExpandItem(itemId)}
                           className="p-3 space-y-1 cursor-pointer select-text transition-all duration-300 overflow-hidden"
-                          title="Click or hover to expand/collapse full specification"
+                          title={tr("Click or hover to expand/collapse full specification")}
                         >
                           <div className="flex items-start justify-between gap-1.5">
                             <div className="font-bold text-xs text-slate-900 group-hover:text-blue-600 transition-colors break-all [word-break:break-word] [overflow-wrap:anywhere] leading-snug">
-                              {item.itemName}
+                              {tr(item.itemName)}
                             </div>
                             {item.description && (
                               <ChevronDown
@@ -472,7 +473,7 @@ export function BoqPreview({
                               )}
                             >
                               <p className="whitespace-pre-wrap leading-relaxed break-all [word-break:break-word] [overflow-wrap:anywhere]">
-                                {item.description}
+                                {tr(item.description)}
                               </p>
                             </div>
                           )}
@@ -480,8 +481,8 @@ export function BoqPreview({
 
                         {/* Unit */}
                         <td className="p-3 text-center align-top w-20 shrink-0 overflow-hidden">
-                          <span className="inline-block max-w-[70px] truncate px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-700 uppercase tracking-wider" title={item.unit || 'Nos'}>
-                            {item.unit || 'Nos'}
+                          <span className="inline-block max-w-[70px] truncate px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-700 uppercase tracking-wider" title={item.unit || tr("Nos")}>
+                            {item.unit || tr("Nos")}
                           </span>
                         </td>
 
@@ -499,7 +500,7 @@ export function BoqPreview({
                             return (
                               <div className="flex flex-col items-end min-w-0" title={smartRate.exact}>
                                 <span className="truncate max-w-full font-bold">
-                                  {smartRate.display}
+                                  {tr(smartRate.display)}
                                 </span>
                               </div>
                             );
@@ -513,7 +514,7 @@ export function BoqPreview({
                             return (
                               <div className="flex flex-col items-end min-w-0" title={smartAmt.exact}>
                                 <span className="truncate max-w-full font-black text-slate-900">
-                                  {smartAmt.display}
+                                  {tr(smartAmt.display)}
                                 </span>
                               </div>
                             );
@@ -534,7 +535,7 @@ export function BoqPreview({
             {/* Section Subtotal Footer */}
             <div className="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
               <span className="text-xs font-bold text-slate-700 truncate min-w-0" title={section.sectionTitle}>
-                Sub Total of {section.sectionTitle}:
+                {tr("Sub Total of ")}{tr(section.sectionTitle)}:
               </span>
               {(() => {
                 const smartSub = formatSmartCurrency(section.subTotal, currencySymbol, { threshold: 1_000_000 });
@@ -543,7 +544,7 @@ export function BoqPreview({
                     className="text-xs font-black font-mono text-slate-900 bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-2xs shrink-0 whitespace-nowrap"
                     title={smartSub.exact}
                   >
-                    {smartSub.display}
+                    {tr(smartSub.display)}
                   </span>
                 );
               })()}
@@ -558,11 +559,11 @@ export function BoqPreview({
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <AlertTriangle size={16} className="shrink-0 text-rose-600" />
             <span className="break-words [overflow-wrap:anywhere]">
-              <strong>Over Target Budget Warning:</strong> Current BOQ total of {currencySymbol} {formatMillionBillion(totalBoqAmount)} exceeds estimated target budget of {currencySymbol} {formatMillionBillion(maxBudget || 0)} ({lead?.budgetRange || 'Estimate'}) by <strong className="font-extrabold text-rose-700">{currencySymbol} {formatMillionBillion(excessAmount)}</strong>.
+              <strong>{tr("Over Target Budget Warning:")}</strong>{tr(" Current BOQ total of ")}{tr(currencySymbol)} {formatMillionBillion(totalBoqAmount)}{tr(" exceeds estimated target budget of ")}{tr(currencySymbol)} {formatMillionBillion(maxBudget || 0)} ({lead?.budgetRange || tr("Estimate")}{tr(") by ")}<strong className="font-extrabold text-rose-700">{tr(currencySymbol)} {formatMillionBillion(excessAmount)}</strong>.
             </span>
           </div>
           <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200 shrink-0">
-            +{excessPercentage.toFixed(1)}% Over Budget
+            +{excessPercentage.toFixed(1)}{tr("% Over Budget")}
           </span>
         </div>
       )}
@@ -574,7 +575,7 @@ export function BoqPreview({
             <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1 min-w-0 overflow-hidden">
               <p className="text-[10px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                 <FileText size={12} className="text-blue-600" />
-                Estimator Remarks & Assumptions
+                {tr("Estimator Remarks & Assumptions")}
               </p>
               <p className="text-xs text-slate-900 font-medium whitespace-pre-wrap leading-relaxed break-all [word-break:break-word] [overflow-wrap:anywhere]">
                 {boq.notes.trim()}
@@ -585,7 +586,7 @@ export function BoqPreview({
             <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs shadow-2xs min-w-0 overflow-hidden">
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-amber-900 flex items-center gap-1">
                 <FileText size={12} className="text-amber-700" />
-                Review Focus / Handover Note
+                {tr("Review Focus / Handover Note")}
               </p>
               <p className="text-slate-900 font-semibold italic mt-1 whitespace-pre-wrap break-all [word-break:break-word] [overflow-wrap:anywhere] leading-relaxed">
                 "{boq.submissionNotes.trim()}"

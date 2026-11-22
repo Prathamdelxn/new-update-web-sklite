@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState } from 'react';
 import {
@@ -74,7 +75,7 @@ export const InteriorProjectDrawingApprovalModal: React.FC<Props> = ({
   const handleAction = async (action: 'approve' | 'reject') => {
     if (action === 'reject') {
       if (!rejectionReason.trim()) {
-        toast.error('Please provide a rejection reason explaining the required changes for the designer.');
+        toast.error(tr("Please provide a rejection reason explaining the required changes for the designer."));
         textareaRef.current?.focus();
         return;
       }
@@ -90,7 +91,7 @@ export const InteriorProjectDrawingApprovalModal: React.FC<Props> = ({
           approvedAt: new Date().toISOString(),
           rejectionReason: undefined,
         });
-        toast.success(`Drawing "${drawingTitle}" approved successfully!`);
+        toast.success(tr("Drawing \"{{drawingTitle}}\" approved successfully!", { drawingTitle: drawingTitle }));
       } else {
         await interiorProjectService.updateDrawing(projectId, {
           drawingId: String(drawing._id || drawing.id || drawingId),
@@ -98,12 +99,12 @@ export const InteriorProjectDrawingApprovalModal: React.FC<Props> = ({
           rejectionReason: rejectionReason.trim(),
           rejectedAt: new Date().toISOString(),
         });
-        toast.info(`Drawing marked as rejected with change request notes.`);
+        toast.info(tr("Drawing marked as rejected with change request notes."));
       }
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || err.message || 'Failed to update approval status');
+      toast.error(err.response?.data?.error || err.message || tr("Failed to update approval status"));
     } finally {
       setIsSubmitting(false);
       setActionType(null);
@@ -136,12 +137,12 @@ export const InteriorProjectDrawingApprovalModal: React.FC<Props> = ({
               </div>
               <div>
                 <h3 className="text-base font-bold text-slate-900">
-                  {isRejectMode ? 'Request Changes / Reject Drawing' : 'Verify & Approve Drawing'}
+                  {isRejectMode ? tr("Request Changes / Reject Drawing") : tr("Verify & Approve Drawing")}
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
                   {isRejectMode
-                    ? 'Document specific revision requests for the design team'
-                    : 'Formal sign-off to authorize blueprint for site execution'}
+                    ? tr("Document specific revision requests for the design team")
+                    : tr("Formal sign-off to authorize blueprint for site execution")}
                 </p>
               </div>
             </div>
@@ -150,7 +151,7 @@ export const InteriorProjectDrawingApprovalModal: React.FC<Props> = ({
               onClick={onClose}
               disabled={isSubmitting}
               className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200/60 transition"
-              title="Close modal"
+              title={tr("Close modal")}
             >
               <X className="w-5 h-5" />
             </button>
@@ -164,23 +165,23 @@ export const InteriorProjectDrawingApprovalModal: React.FC<Props> = ({
               </div>
               <div className="min-w-0 flex-1">
                 <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate" title={drawingTitle}>
-                  {drawingTitle}
+                  {tr(drawingTitle)}
                 </h4>
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider ${badgeInfo.color}`}>
-                    {badgeInfo.label}
+                  <span className={`text-[0.5625rem] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider ${badgeInfo.color}`}>
+                    {tr(badgeInfo.label)}
                   </span>
-                  <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
-                    Version v{currentVersion}
+                  <span className="text-[0.625rem] font-extrabold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                    {tr("Version v")}{tr(currentVersion)}
                   </span>
                   {drawing.drawingNumber && (
-                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                      #{drawing.drawingNumber}
+                    <span className="text-[0.625rem] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                      #{tr(drawing.drawingNumber)}
                     </span>
                   )}
                   {assignedReviewerName && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
-                      <UserCheck size={11} /> Reviewer: {assignedReviewerName}
+                    <span className="text-[0.625rem] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+                      <UserCheck size={11} />{tr(" Reviewer: ")}{tr(assignedReviewerName)}
                     </span>
                   )}
                 </div>
@@ -191,9 +192,9 @@ export const InteriorProjectDrawingApprovalModal: React.FC<Props> = ({
             {drawing.submissionNotes && (
               <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-100 text-xs text-blue-900">
                 <span className="font-bold flex items-center gap-1 mb-0.5 text-blue-700">
-                  <MessageSquare size={12} /> Submission Notes:
+                  <MessageSquare size={12} />{tr(" Submission Notes:")}
                 </span>
-                <p className="text-slate-700 leading-relaxed">{drawing.submissionNotes}</p>
+                <p className="text-slate-700 leading-relaxed">{tr(drawing.submissionNotes)}</p>
               </div>
             )}
 
@@ -201,9 +202,9 @@ export const InteriorProjectDrawingApprovalModal: React.FC<Props> = ({
             {pastRejectionReason && drawing.status === 'rejected' && (
               <div className="p-3 rounded-xl bg-rose-50 border border-rose-100 text-xs text-rose-900">
                 <span className="font-bold flex items-center gap-1 mb-0.5 text-rose-700">
-                  <AlertCircle size={12} /> Previous Rejection Reason:
+                  <AlertCircle size={12} />{tr(" Previous Rejection Reason:")}
                 </span>
-                <p className="text-slate-700 leading-relaxed">{pastRejectionReason}</p>
+                <p className="text-slate-700 leading-relaxed">{tr(pastRejectionReason)}</p>
               </div>
             )}
 
@@ -212,7 +213,7 @@ export const InteriorProjectDrawingApprovalModal: React.FC<Props> = ({
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                   <MessageSquare className="w-3.5 h-3.5 text-rose-600" />
-                  Reason for Rejection / Changes Required <span className="text-rose-500">*</span>
+                  {tr("Reason for Rejection / Changes Required ")}<span className="text-rose-500">*</span>
                 </label>
                 <textarea
                   ref={textareaRef}
@@ -220,20 +221,20 @@ export const InteriorProjectDrawingApprovalModal: React.FC<Props> = ({
                   rows={4}
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
-                  placeholder="Specify what needs correction (e.g., HVAC duct clash on grid B-4, missing elevation heights, inaccurate wall thickness)..."
+                  placeholder={tr("Specify what needs correction (e.g., HVAC duct clash on grid B-4, missing elevation heights, inaccurate wall thickness)...")}
                   className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-rose-200 bg-rose-50/20 text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-600 shadow-2xs transition resize-none placeholder:text-slate-400"
                 />
-                <p className="text-[11px] text-slate-500">
-                  This note will be saved in the drawing audit history and shown to the designer to guide version revision.
+                <p className="text-[0.6875rem] text-slate-500">
+                  {tr("This note will be saved in the drawing audit history and shown to the designer to guide version revision.")}
                 </p>
               </div>
             ) : (
               <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-100 text-xs text-emerald-900 space-y-1.5">
                 <div className="flex items-center gap-1.5 font-bold text-emerald-800">
-                  <CheckCircle2 size={15} /> Confirm Architectural Approval
+                  <CheckCircle2 size={15} />{tr(" Confirm Architectural Approval")}
                 </div>
-                <p className="text-slate-700 leading-relaxed text-[11px]">
-                  By approving this drawing version (v{currentVersion}), you confirm that dimensions, structural allowances, and working specifications comply with project requirements and are authorized for site execution.
+                <p className="text-slate-700 leading-relaxed text-[0.6875rem]">
+                  {tr("By approving this drawing version (v")}{tr(currentVersion)}{tr("), you confirm that dimensions, structural allowances, and working specifications comply with project requirements and are authorized for site execution.")}
                 </p>
               </div>
             )}
@@ -247,7 +248,7 @@ export const InteriorProjectDrawingApprovalModal: React.FC<Props> = ({
                   disabled={isSubmitting}
                   className="px-3.5 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 transition"
                 >
-                  ← Back to Approve Options
+                  {tr("← Back to Approve Options")}
                 </button>
               ) : (
                 <button
@@ -256,7 +257,7 @@ export const InteriorProjectDrawingApprovalModal: React.FC<Props> = ({
                   disabled={isSubmitting}
                   className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition"
                 >
-                  <XCircle size={14} /> Request Changes
+                  <XCircle size={14} />{tr(" Request Changes")}
                 </button>
               )}
 
@@ -267,7 +268,7 @@ export const InteriorProjectDrawingApprovalModal: React.FC<Props> = ({
                   disabled={isSubmitting}
                   className="px-4 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </button>
 
                 {isRejectMode ? (
@@ -280,12 +281,12 @@ export const InteriorProjectDrawingApprovalModal: React.FC<Props> = ({
                     {isSubmitting && actionType === 'reject' ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Rejecting...
+                        {tr("Rejecting...")}
                       </>
                     ) : (
                       <>
                         <XCircle className="w-4 h-4" />
-                        Confirm Rejection
+                        {tr("Confirm Rejection")}
                       </>
                     )}
                   </button>
@@ -299,12 +300,12 @@ export const InteriorProjectDrawingApprovalModal: React.FC<Props> = ({
                     {isSubmitting && actionType === 'approve' ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Approving...
+                        {tr("Approving...")}
                       </>
                     ) : (
                       <>
                         <CheckCircle2 className="w-4 h-4" />
-                        Approve Drawing (v{currentVersion})
+                        {tr("Approve Drawing (v")}{tr(currentVersion)})
                       </>
                     )}
                   </button>

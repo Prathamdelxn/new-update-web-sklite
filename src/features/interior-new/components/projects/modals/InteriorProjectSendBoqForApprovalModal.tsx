@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -70,14 +71,14 @@ export function InteriorProjectSendBoqForApprovalModal({
     e.preventDefault();
 
     if (!assignedReviewer) {
-      setError('Please select an approver/manager from the team.');
-      toast.error('Please select an approver.');
+      setError(tr("Please select an approver/manager from the team."));
+      toast.error(tr("Please select an approver."));
       return;
     }
 
     if (remarks.trim().length > 500) {
-      setError('Submission remarks cannot exceed 500 characters.');
-      toast.error('Submission remarks cannot exceed 500 characters.');
+      setError(tr("Submission remarks cannot exceed 500 characters."));
+      toast.error(tr("Submission remarks cannot exceed 500 characters."));
       return;
     }
 
@@ -106,11 +107,11 @@ export function InteriorProjectSendBoqForApprovalModal({
         });
       }
 
-      toast.success(`BOQ (${versionLabel}) submitted for approval to ${reviewerName}!`);
+      toast.success(tr("BOQ ({{versionLabel}}) submitted for approval to {{reviewerName}}!", { versionLabel: versionLabel, reviewerName: reviewerName }));
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to submit BOQ for approval.');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || tr("Failed to submit BOQ for approval."));
     } finally {
       setIsSubmitting(false);
     }
@@ -140,10 +141,10 @@ export function InteriorProjectSendBoqForApprovalModal({
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-900">
-                Submit BOQ for Approval
+                {tr("Submit BOQ for Approval")}
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Request internal sign-off for {versionLabel} of project &quot;{projectName}&quot;
+                {tr("Request internal sign-off for ")}{tr(versionLabel)}{tr(" of project \"")}{tr(projectName)}&quot;
               </p>
             </div>
           </div>
@@ -165,10 +166,10 @@ export function InteriorProjectSendBoqForApprovalModal({
               <div className="flex items-center gap-2">
                 <FileSpreadsheet className="w-4 h-4 text-blue-600" />
                 <span className="text-xs font-bold text-slate-800">
-                  BOQ {versionLabel}
+                  {tr("BOQ ")}{tr(versionLabel)}
                 </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                  {sectionsCount} {sectionsCount === 1 ? 'Section' : 'Sections'} • {itemsCount} items
+                <span className="px-2 py-0.5 rounded text-[0.625rem] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                  {tr(sectionsCount)} {sectionsCount === 1 ? tr("Section") : tr("Sections")} • {tr(itemsCount)}{tr(" items")}
                 </span>
               </div>
               <span className="text-sm font-black text-slate-900">
@@ -192,15 +193,15 @@ export function InteriorProjectSendBoqForApprovalModal({
                 )}
                 <div className="space-y-0.5 leading-snug">
                   <div className="font-bold">
-                    {isOverBudget ? 'Budget Excess Notice' : 'Within Budget Target'}
+                    {isOverBudget ? tr("Budget Excess Notice") : tr("Within Budget Target")}
                   </div>
-                  <div className="text-[11px] text-slate-600">
-                    Project Target Budget: <span className="font-semibold">{formatExactCurrency(maxBudget)}</span>
+                  <div className="text-[0.6875rem] text-slate-600">
+                    {tr("Project Target Budget: ")}<span className="font-semibold">{formatExactCurrency(maxBudget)}</span>
                     {isOverBudget && (
                       <>
                         {' • '}
                         <span className="text-amber-700 font-bold">
-                          Exceeds by {formatExactCurrency(excessAmount)}
+                          {tr("Exceeds by ")}{formatExactCurrency(excessAmount)}
                         </span>
                       </>
                     )}
@@ -214,16 +215,16 @@ export function InteriorProjectSendBoqForApprovalModal({
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
               <User className="w-3.5 h-3.5 text-blue-600" />
-              Select Approver / Manager <span className="text-rose-500">*</span>
+              {tr("Select Approver / Manager ")}<span className="text-rose-500">*</span>
             </label>
             <div className="relative">
               <select
                 required
                 value={assignedReviewer}
                 onChange={(e) => setAssignedReviewer(e.target.value)}
-                className="w-full pl-3.5 pr-10 py-2.5 text-sm font-medium rounded-xl border border-slate-300 bg-white text-slate-900 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 shadow-2xs cursor-pointer transition"
+                className="w-full ps-3.5 pe-10 py-2.5 text-sm font-medium rounded-xl border border-slate-300 bg-white text-slate-900 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 shadow-2xs cursor-pointer transition"
               >
-                <option value="" className="text-slate-400">-- Choose Project Manager / Approver --</option>
+                <option value="" className="text-slate-400">{tr("-- Choose Project Manager / Approver --")}</option>
                 {users.map((u) => {
                   const uId = u._id || u.id || u.clerkUserId;
                   return (
@@ -237,7 +238,7 @@ export function InteriorProjectSendBoqForApprovalModal({
                 ▼
               </div>
             </div>
-            {error && <p className="text-[11px] text-rose-600 font-medium">{error}</p>}
+            {error && <p className="text-[0.6875rem] text-rose-600 font-medium">{tr(error)}</p>}
           </div>
 
           {/* Remarks */}
@@ -245,9 +246,9 @@ export function InteriorProjectSendBoqForApprovalModal({
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <MessageSquare className="w-3.5 h-3.5 text-blue-600" />
-                Submission Remarks (Optional)
+                {tr("Submission Remarks (Optional)")}
               </label>
-              <span className="text-[10px] text-slate-400 font-mono">
+              <span className="text-[0.625rem] text-slate-400 font-mono">
                 {remarks.length}/500
               </span>
             </div>
@@ -256,7 +257,7 @@ export function InteriorProjectSendBoqForApprovalModal({
               maxLength={500}
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
-              placeholder="Highlight rate adjustments, brand selections, or major scope inclusions..."
+              placeholder={tr("Highlight rate adjustments, brand selections, or major scope inclusions...")}
               className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 shadow-2xs transition resize-none placeholder:text-slate-400"
             />
           </div>
@@ -269,7 +270,7 @@ export function InteriorProjectSendBoqForApprovalModal({
               disabled={isSubmitting}
               className="px-4 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
             >
-              Cancel
+              {tr("Cancel")}
             </button>
             <button
               type="submit"
@@ -279,12 +280,12 @@ export function InteriorProjectSendBoqForApprovalModal({
               {isSubmitting ? (
                 <>
                   <Calculator className="w-4 h-4 animate-spin" />
-                  Submitting...
+                  {tr("Submitting...")}
                 </>
               ) : (
                 <>
                   <Send className="w-4 h-4" />
-                  Submit for Approval
+                  {tr("Submit for Approval")}
                 </>
               )}
             </button>

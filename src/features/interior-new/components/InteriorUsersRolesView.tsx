@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Interior-OS Users & Roles Management
@@ -242,7 +243,7 @@ function AddUserModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim()) {
-      toast.error('First name, last name and email are required.');
+      toast.error(tr("First name, last name and email are required."));
       return;
     }
     setSaving(true);
@@ -263,11 +264,11 @@ function AddUserModal({
       if (form.phone.trim())     payload.phone    = form.phone.trim();
 
       await interiorProjectService.createUser(payload);
-      toast.success(`User ${form.firstName} ${form.lastName} created successfully`);
+      toast.success(tr("User {{firstName}} {{lastName}} created successfully", { firstName: form.firstName, lastName: form.lastName }));
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? 'Failed to create user');
+      toast.error(err?.response?.data?.message ?? tr("Failed to create user"));
     } finally {
       setSaving(false);
     }
@@ -288,8 +289,8 @@ function AddUserModal({
               <UserPlus className="w-4.5 h-4.5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-[hsl(var(--foreground))]">Add New Member</h2>
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Create an account and assign organization permissions</p>
+              <h2 className="text-sm font-bold text-[hsl(var(--foreground))]">{tr("Add New Member")}</h2>
+              <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">{tr("Create an account and assign organization permissions")}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-1.5 hover:bg-[hsl(var(--accent))] rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors cursor-pointer">
@@ -300,71 +301,71 @@ function AddUserModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-3.5 overflow-y-auto">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">First Name *</label>
-              <input value={form.firstName} onChange={set('firstName')} placeholder="John" className={fieldCls} required />
+              <label className="text-[0.6875rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{tr("First Name *")}</label>
+              <input value={form.firstName} onChange={set('firstName')} placeholder={tr("John")} className={fieldCls} required />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Last Name *</label>
-              <input value={form.lastName} onChange={set('lastName')} placeholder="Doe" className={fieldCls} required />
+              <label className="text-[0.6875rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{tr("Last Name *")}</label>
+              <input value={form.lastName} onChange={set('lastName')} placeholder={tr("Doe")} className={fieldCls} required />
             </div>
           </div>
 
           <div className="space-y-1">
-            <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Email Address *</label>
+            <label className="text-[0.6875rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{tr("Email Address *")}</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
-              <input type="email" value={form.email} onChange={set('email')} placeholder="john.doe@company.com" className={`${fieldCls} pl-9`} required />
+              <input type="email" value={form.email} onChange={set('email')} placeholder={tr("john.doe@company.com")} className={`${fieldCls} ps-9`} required />
             </div>
           </div>
 
           <div className="space-y-1">
-            <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Initial Password</label>
+            <label className="text-[0.6875rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{tr("Initial Password")}</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={form.password}
                 onChange={set('password')}
-                placeholder="Leave blank for default: welcome123"
-                className={`${fieldCls} pl-9 pr-9`}
+                placeholder={tr("Leave blank for default: welcome123")}
+                className={`${fieldCls} ps-9 pe-9`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors cursor-pointer"
-                title={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? tr("Hide password") : tr("Show password")}
               >
                 {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
             </div>
-            <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Default password is <span className="font-mono font-semibold text-[hsl(var(--foreground))]">welcome123</span></p>
+            <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">{tr("Default password is ")}<span className="font-mono font-semibold text-[hsl(var(--foreground))]">{tr("welcome123")}</span></p>
           </div>
 
           <div className="space-y-1">
-            <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Phone</label>
+            <label className="text-[0.6875rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{tr("Phone")}</label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
-              <input value={form.phone} onChange={set('phone')} placeholder="+91 98765 43210" className={`${fieldCls} pl-9`} />
+              <input value={form.phone} onChange={set('phone')} placeholder="+91 98765 43210" className={`${fieldCls} ps-9`} />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Designation</label>
-              <input value={form.designation} onChange={set('designation')} placeholder="e.g. Senior Architect" className={fieldCls} />
+              <label className="text-[0.6875rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{tr("Designation")}</label>
+              <input value={form.designation} onChange={set('designation')} placeholder={tr("e.g. Senior Architect")} className={fieldCls} />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Department</label>
-              <input value={form.department} onChange={set('department')} placeholder="e.g. Fit-Out Operations" className={fieldCls} />
+              <label className="text-[0.6875rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{tr("Department")}</label>
+              <input value={form.department} onChange={set('department')} placeholder={tr("e.g. Fit-Out Operations")} className={fieldCls} />
             </div>
           </div>
 
           <div className="space-y-1">
-            <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Organization Role *</label>
+            <label className="text-[0.6875rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{tr("Organization Role *")}</label>
             <select value={form.roleId} onChange={set('roleId')} className={fieldCls} required>
               {modalRoles.map((r) => (
                 <option key={r._id || r.slug} value={r._id || r.slug}>
-                  {r.name}
+                  {tr(r.name)}
                 </option>
               ))}
             </select>
@@ -372,11 +373,11 @@ function AddUserModal({
 
           <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[hsl(var(--border))]">
             <Button type="button" variant="outline" size="sm" onClick={onClose} className="h-8.5 text-xs font-semibold">
-              Cancel
+              {tr("Cancel")}
             </Button>
             <Button type="submit" variant="default" size="sm" disabled={saving} className="h-8.5 text-xs font-semibold gap-1.5 shadow-xs cursor-pointer">
               {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserPlus className="w-3.5 h-3.5" />}
-              <span>{saving ? 'Creating...' : 'Create Member'}</span>
+              <span>{saving ? tr("Creating...") : tr("Create Member")}</span>
             </Button>
           </div>
         </form>
@@ -453,7 +454,7 @@ function EditUserModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim()) {
-      toast.error('First name, last name and email are required.');
+      toast.error(tr("First name, last name and email are required."));
       return;
     }
     setSaving(true);
@@ -475,11 +476,11 @@ function EditUserModal({
       payload.phone = form.phone ? form.phone.trim() : '';
 
       await interiorProjectService.updateUser(user._id, payload);
-      toast.success(`User ${form.firstName} ${form.lastName} updated successfully`);
+      toast.success(tr("User {{firstName}} {{lastName}} updated successfully", { firstName: form.firstName, lastName: form.lastName }));
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? 'Failed to update user');
+      toast.error(err?.response?.data?.message ?? tr("Failed to update user"));
     } finally {
       setSaving(false);
     }
@@ -500,8 +501,8 @@ function EditUserModal({
               <Edit3 className="w-4.5 h-4.5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-[hsl(var(--foreground))]">Edit User Account</h2>
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Update profile details, permissions, and status</p>
+              <h2 className="text-sm font-bold text-[hsl(var(--foreground))]">{tr("Edit User Account")}</h2>
+              <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">{tr("Update profile details, permissions, and status")}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-1.5 hover:bg-[hsl(var(--accent))] rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors cursor-pointer">
@@ -512,25 +513,25 @@ function EditUserModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-3.5 overflow-y-auto">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">First Name *</label>
-              <input value={form.firstName} onChange={set('firstName')} placeholder="John" className={fieldCls} required />
+              <label className="text-[0.6875rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{tr("First Name *")}</label>
+              <input value={form.firstName} onChange={set('firstName')} placeholder={tr("John")} className={fieldCls} required />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Last Name *</label>
-              <input value={form.lastName} onChange={set('lastName')} placeholder="Doe" className={fieldCls} required />
+              <label className="text-[0.6875rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{tr("Last Name *")}</label>
+              <input value={form.lastName} onChange={set('lastName')} placeholder={tr("Doe")} className={fieldCls} required />
             </div>
           </div>
 
           <div className="space-y-1">
-            <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Email Address *</label>
+            <label className="text-[0.6875rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{tr("Email Address *")}</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
-              <input type="email" value={form.email} onChange={set('email')} placeholder="john@example.com" className={`${fieldCls} pl-9`} required />
+              <input type="email" value={form.email} onChange={set('email')} placeholder={tr("john@example.com")} className={`${fieldCls} ps-9`} required />
             </div>
           </div>
 
           <div className="space-y-1">
-            <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">New Password (leave blank to keep current)</label>
+            <label className="text-[0.6875rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{tr("New Password (leave blank to keep current)")}</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
               <input
@@ -538,13 +539,13 @@ function EditUserModal({
                 value={form.password}
                 onChange={set('password')}
                 placeholder="••••••••"
-                className={`${fieldCls} pl-9 pr-9`}
+                className={`${fieldCls} ps-9 pe-9`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors cursor-pointer"
-                title={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? tr("Hide password") : tr("Show password")}
               >
                 {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
@@ -552,53 +553,53 @@ function EditUserModal({
           </div>
 
           <div className="space-y-1">
-            <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Phone</label>
+            <label className="text-[0.6875rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{tr("Phone")}</label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
-              <input value={form.phone} onChange={set('phone')} placeholder="+91 98765 43210" className={`${fieldCls} pl-9`} />
+              <input value={form.phone} onChange={set('phone')} placeholder="+91 98765 43210" className={`${fieldCls} ps-9`} />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Designation</label>
-              <input value={form.designation} onChange={set('designation')} placeholder="e.g. Senior Architect" className={fieldCls} />
+              <label className="text-[0.6875rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{tr("Designation")}</label>
+              <input value={form.designation} onChange={set('designation')} placeholder={tr("e.g. Senior Architect")} className={fieldCls} />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Department</label>
-              <input value={form.department} onChange={set('department')} placeholder="e.g. Design Studio" className={fieldCls} />
+              <label className="text-[0.6875rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{tr("Department")}</label>
+              <input value={form.department} onChange={set('department')} placeholder={tr("e.g. Design Studio")} className={fieldCls} />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Role *</label>
+              <label className="text-[0.6875rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{tr("Role *")}</label>
               <select value={form.roleId} onChange={set('roleId')} className={fieldCls} required>
                 {modalRoles.map((r) => (
                   <option key={r._id || r.slug} value={r._id || r.slug}>
-                    {r.name}
+                    {tr(r.name)}
                   </option>
                 ))}
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Account Status</label>
+              <label className="text-[0.6875rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{tr("Account Status")}</label>
               <select value={form.status} onChange={set('status')} className={fieldCls}>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="suspended">Suspended</option>
-                <option value="pending">Pending</option>
+                <option value="active">{tr("Active")}</option>
+                <option value="inactive">{tr("Inactive")}</option>
+                <option value="suspended">{tr("Suspended")}</option>
+                <option value="pending">{tr("Pending")}</option>
               </select>
             </div>
           </div>
 
           <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[hsl(var(--border))]">
             <Button type="button" variant="outline" size="sm" onClick={onClose} className="h-8.5 text-xs font-semibold">
-              Cancel
+              {tr("Cancel")}
             </Button>
             <Button type="submit" variant="default" size="sm" disabled={saving} className="h-8.5 text-xs font-semibold gap-1.5 shadow-xs cursor-pointer">
               {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Edit3 className="w-3.5 h-3.5" />}
-              <span>{saving ? 'Saving...' : 'Save Changes'}</span>
+              <span>{saving ? tr("Saving...") : tr("Save Changes")}</span>
             </Button>
           </div>
         </form>
@@ -626,11 +627,11 @@ function DeleteUserModal({
     setDeleting(true);
     try {
       await interiorProjectService.deleteUser(user._id);
-      toast.success(`User ${user.firstName} ${user.lastName} deleted successfully`);
+      toast.success(tr("User {{firstName}} {{lastName}} deleted successfully", { firstName: user.firstName, lastName: user.lastName }));
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? 'Failed to delete user');
+      toast.error(err?.response?.data?.message ?? tr("Failed to delete user"));
     } finally {
       setDeleting(false);
     }
@@ -648,23 +649,23 @@ function DeleteUserModal({
             <AlertTriangle className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-[hsl(var(--foreground))]">Delete User Account</h2>
-            <p className="text-xs text-[hsl(var(--muted-foreground))]">This action cannot be undone.</p>
+            <h2 className="text-sm font-bold text-[hsl(var(--foreground))]">{tr("Delete User Account")}</h2>
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">{tr("This action cannot be undone.")}</p>
           </div>
         </div>
 
         <p className="text-xs text-[hsl(var(--muted-foreground))] leading-relaxed">
-          Are you sure you want to remove <strong className="text-[hsl(var(--foreground))] font-bold">{user.firstName} {user.lastName}</strong> ({user.email})?
+          {tr("Are you sure you want to remove ")}<strong className="text-[hsl(var(--foreground))] font-bold">{tr(user.firstName)} {tr(user.lastName)}</strong> ({user.email})?
           {user.projectAssignments.length > 0 && (
-            <span className="block mt-2 p-2.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 font-medium text-[11px]">
-              Warning: User has {user.projectAssignments.length} project assignment{user.projectAssignments.length > 1 ? 's' : ''} that will also be detached.
+            <span className="block mt-2 p-2.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 font-medium text-[0.6875rem]">
+              {tr("Warning: User has ")}{user.projectAssignments.length}{tr(" project assignment")}{user.projectAssignments.length > 1 ? 's' : ''}{tr(" that will also be detached.")}
             </span>
           )}
         </p>
 
         <div className="flex items-center justify-end gap-2 pt-2">
           <Button type="button" variant="outline" size="sm" onClick={onClose} className="h-8 text-xs font-semibold">
-            Cancel
+            {tr("Cancel")}
           </Button>
           <Button
             type="button"
@@ -675,7 +676,7 @@ function DeleteUserModal({
             className="h-8 text-xs font-semibold gap-1.5 shadow-xs cursor-pointer"
           >
             {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-            <span>{deleting ? 'Deleting...' : 'Delete'}</span>
+            <span>{deleting ? tr("Deleting...") : tr("Delete")}</span>
           </Button>
         </div>
       </motion.div>
@@ -705,7 +706,7 @@ function UserInspectorModal({
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopiedPayload(true);
-    toast.success('Copied to clipboard!');
+    toast.success(tr("Copied to clipboard!"));
     setTimeout(() => setCopiedPayload(false), 2000);
   };
 
@@ -722,17 +723,17 @@ function UserInspectorModal({
         <div className="flex items-center justify-between px-6 py-4.5 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-linear-to-br from-blue-600 to-blue-500 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
-              {initials}
+              {tr(initials)}
             </div>
             <div>
               <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
-                <span>{user.firstName} {user.lastName}</span>
+                <span>{tr(user.firstName)} {tr(user.lastName)}</span>
                 <span className="text-xs font-mono px-2 py-0.5 rounded bg-[hsl(var(--accent))] border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]">
                   #{user._id.slice(-6)}
                 </span>
               </h3>
               <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                {user.email} · Registered on {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                {user.email}{tr(" · Registered on ")}{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
               </p>
             </div>
           </div>
@@ -745,7 +746,7 @@ function UserInspectorModal({
               className="h-8.5 rounded-xl text-xs font-bold gap-1.5"
             >
               {copiedPayload ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copiedPayload ? 'Copied' : 'Copy JSON'}</span>
+              <span>{copiedPayload ? tr("Copied") : tr("Copy JSON")}</span>
             </Button>
 
             <button
@@ -769,7 +770,7 @@ function UserInspectorModal({
             )}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span>Profile & Account</span>
+            <span>{tr("Profile & Account")}</span>
           </button>
 
           <button
@@ -782,7 +783,7 @@ function UserInspectorModal({
             )}
           >
             <FolderKanban className="w-3.5 h-3.5" />
-            <span>Project Assignments ({user.projectAssignments.length})</span>
+            <span>{tr("Project Assignments (")}{user.projectAssignments.length})</span>
           </button>
 
           <button
@@ -795,7 +796,7 @@ function UserInspectorModal({
             )}
           >
             <FileCode className="w-3.5 h-3.5" />
-            <span>Raw Object</span>
+            <span>{tr("Raw Object")}</span>
           </button>
         </div>
 
@@ -806,48 +807,48 @@ function UserInspectorModal({
               {/* Overview Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 p-4 rounded-2xl bg-[hsl(var(--accent)/0.5)] border border-[hsl(var(--border))] text-xs">
                 <div>
-                  <span className="text-[hsl(var(--muted-foreground))] font-semibold uppercase text-[10px] tracking-wider block">
-                    Full Name
+                  <span className="text-[hsl(var(--muted-foreground))] font-semibold uppercase text-[0.625rem] tracking-wider block">
+                    {tr("Full Name")}
                   </span>
                   <span className="font-bold text-[hsl(var(--foreground))] text-sm mt-0.5 block">
-                    {user.firstName} {user.lastName}
+                    {tr(user.firstName)} {tr(user.lastName)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[hsl(var(--muted-foreground))] font-semibold uppercase text-[10px] tracking-wider block">
-                    Assigned Role
+                  <span className="text-[hsl(var(--muted-foreground))] font-semibold uppercase text-[0.625rem] tracking-wider block">
+                    {tr("Assigned Role")}
                   </span>
                   <span className="font-bold text-[hsl(var(--foreground))] text-sm mt-0.5 block">
-                    {displayRoleName}
+                    {tr(displayRoleName)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[hsl(var(--muted-foreground))] font-semibold uppercase text-[10px] tracking-wider block">
-                    Account Status
+                  <span className="text-[hsl(var(--muted-foreground))] font-semibold uppercase text-[0.625rem] tracking-wider block">
+                    {tr("Account Status")}
                   </span>
                   <span className="font-bold text-[hsl(var(--foreground))] text-sm mt-0.5 block capitalize">
-                    {user.status}
+                    {tr(user.status)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[hsl(var(--muted-foreground))] font-semibold uppercase text-[10px] tracking-wider block">
-                    Designation
+                  <span className="text-[hsl(var(--muted-foreground))] font-semibold uppercase text-[0.625rem] tracking-wider block">
+                    {tr("Designation")}
                   </span>
                   <span className="font-semibold text-[hsl(var(--foreground))] text-xs mt-0.5 block">
-                    {user.designation || 'Not specified'}
+                    {user.designation || tr("Not specified")}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[hsl(var(--muted-foreground))] font-semibold uppercase text-[10px] tracking-wider block">
-                    Department
+                  <span className="text-[hsl(var(--muted-foreground))] font-semibold uppercase text-[0.625rem] tracking-wider block">
+                    {tr("Department")}
                   </span>
                   <span className="font-semibold text-[hsl(var(--foreground))] text-xs mt-0.5 block">
-                    {user.department || 'Not specified'}
+                    {user.department || tr("Not specified")}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[hsl(var(--muted-foreground))] font-semibold uppercase text-[10px] tracking-wider block">
-                    Contact Phone
+                  <span className="text-[hsl(var(--muted-foreground))] font-semibold uppercase text-[0.625rem] tracking-wider block">
+                    {tr("Contact Phone")}
                   </span>
                   <span className="font-mono text-xs text-[hsl(var(--foreground))] mt-0.5 block">
                     {user.phone || '—'}
@@ -858,11 +859,11 @@ function UserInspectorModal({
               {/* Action Buttons */}
               <div className="flex items-center justify-end gap-2.5 pt-2">
                 <Button variant="outline" size="sm" onClick={onClose} className="text-xs font-semibold">
-                  Close
+                  {tr("Close")}
                 </Button>
                 <Button variant="default" size="sm" onClick={() => { onClose(); onEdit(); }} className="text-xs font-semibold gap-1.5 shadow-xs cursor-pointer">
                   <Edit3 className="w-3.5 h-3.5" />
-                  <span>Edit Member</span>
+                  <span>{tr("Edit Member")}</span>
                 </Button>
               </div>
             </div>
@@ -873,7 +874,7 @@ function UserInspectorModal({
               {user.projectAssignments.length === 0 ? (
                 <div className="py-12 text-center text-[hsl(var(--muted-foreground))]">
                   <FolderKanban className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm font-semibold">No project assignments linked to this member.</p>
+                  <p className="text-sm font-semibold">{tr("No project assignments linked to this member.")}</p>
                 </div>
               ) : (
                 <div className="space-y-2.5">
@@ -888,26 +889,26 @@ function UserInspectorModal({
                             <Building2 className="w-4.5 h-4.5 text-[hsl(var(--primary))]" />
                           </div>
                           <div>
-                            <h5 className="font-bold text-xs text-[hsl(var(--foreground))]">{asgn.projectName}</h5>
-                            <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                              Role: <span className="font-semibold text-[hsl(var(--foreground))]">{PROJECT_ROLE_LABELS[asgn.projectRole] ?? asgn.projectRole}</span>
+                            <h5 className="font-bold text-xs text-[hsl(var(--foreground))]">{tr(asgn.projectName)}</h5>
+                            <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
+                              {tr("Role: ")}<span className="font-semibold text-[hsl(var(--foreground))]">{PROJECT_ROLE_LABELS[asgn.projectRole] ?? asgn.projectRole}</span>
                               {asgn.projectType && ` · ${asgn.projectType}`}
                             </p>
                           </div>
                         </div>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${PROJECT_STATUS_COLORS[asgn.projectStatus] ?? 'bg-slate-100 text-slate-600'}`}>
-                          {asgn.projectStatus}
+                        <span className={`px-2 py-0.5 rounded text-[0.625rem] font-bold ${PROJECT_STATUS_COLORS[asgn.projectStatus] ?? 'bg-slate-100 text-slate-600'}`}>
+                          {tr(asgn.projectStatus)}
                         </span>
                       </div>
 
                       {asgn.permissions.length > 0 && (
                         <div className="pt-2 border-t border-[hsl(var(--border)/0.6)]">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block mb-1.5">
-                            Module Permissions ({asgn.permissions.length} modules)
+                          <span className="text-[0.625rem] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block mb-1.5">
+                            {tr("Module Permissions (")}{asgn.permissions.length}{tr(" modules)")}
                           </span>
                           <div className="flex flex-wrap gap-1.5">
                             {asgn.permissions.map((p) => (
-                              <span key={p.module} className="px-2 py-1 rounded-md text-[10px] font-semibold bg-[hsl(var(--accent)/0.6)] border border-[hsl(var(--border))] flex items-center gap-1">
+                              <span key={p.module} className="px-2 py-1 rounded-md text-[0.625rem] font-semibold bg-[hsl(var(--accent)/0.6)] border border-[hsl(var(--border))] flex items-center gap-1">
                                 <span className="font-bold text-[hsl(var(--foreground))] capitalize">{p.module.replace(/_/g, ' ')}:</span>
                                 <span className="text-[hsl(var(--muted-foreground))]">{p.actions.join(', ')}</span>
                               </span>
@@ -923,7 +924,7 @@ function UserInspectorModal({
           )}
 
           {modalTab === 'json' && (
-            <div className="relative rounded-2xl bg-slate-950 p-4 border border-slate-800 font-mono text-[11px] text-slate-200 overflow-x-auto max-h-[400px]">
+            <div className="relative rounded-2xl bg-slate-950 p-4 border border-slate-800 font-mono text-[0.6875rem] text-slate-200 overflow-x-auto max-h-[25rem]">
               <pre>{JSON.stringify(user, null, 2)}</pre>
             </div>
           )}
@@ -987,7 +988,7 @@ export default function InteriorUsersRolesView() {
       const res = await interiorProjectService.getUsersWithProjects();
       setUsers(res?.data ?? res ?? []);
     } catch (err: any) {
-      toast.error(err?.response?.data?.error ?? err?.response?.data?.message ?? 'Failed to load users');
+      toast.error(err?.response?.data?.error ?? err?.response?.data?.message ?? tr("Failed to load users"));
     } finally {
       setIsLoading(false);
     }
@@ -1081,24 +1082,24 @@ export default function InteriorUsersRolesView() {
   }, [page, totalPages]);
 
   return (
-    <div className="interior-os-theme p-4 lg:p-6 space-y-4 gradient-mesh min-h-full max-w-[1600px] mx-auto font-sans">
+    <div className="interior-os-theme p-4 lg:p-6 space-y-4 gradient-mesh min-h-full max-w-[100rem] mx-auto font-sans">
       {/* ── 1. Executive Header Ribbon (Matching Audit Management) ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl lg:text-2xl font-bold tracking-tight text-[hsl(var(--foreground))] flex items-center gap-2.5">
-            Users &amp; Roles
+            {tr("Users & Roles")}
             <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-[hsl(var(--accent))] border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]">
-              {users.length} members
+              {users.length}{tr(" members")}
             </span>
           </h1>
           <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-            Organization user directory, role permissions matrix, and project assignment access.
+            {tr("Organization user directory, role permissions matrix, and project assignment access.")}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           {/* Main Segment Switcher: Users vs Roles */}
-          <div className="flex items-center gap-1 p-1 rounded-lg border border-slate-200 bg-white shadow-xs mr-1">
+          <div className="flex items-center gap-1 p-1 rounded-lg border border-slate-200 bg-white shadow-xs me-1">
             {showUsersTab && (
               <button
                 onClick={() => { setActiveTab('users'); setPage(1); }}
@@ -1110,7 +1111,7 @@ export default function InteriorUsersRolesView() {
                 )}
               >
                 <Users className="w-3.5 h-3.5" />
-                <span>Users ({users.length})</span>
+                <span>{tr("Users (")}{users.length})</span>
               </button>
             )}
             {showRolesTab && (
@@ -1124,7 +1125,7 @@ export default function InteriorUsersRolesView() {
                 )}
               >
                 <Shield className="w-3.5 h-3.5" />
-                <span>Roles ({roles.length})</span>
+                <span>{tr("Roles (")}{roles.length})</span>
               </button>
             )}
           </div>
@@ -1137,7 +1138,7 @@ export default function InteriorUsersRolesView() {
             className="gap-1.5 h-8.5 text-xs bg-[hsl(var(--card))] shadow-xs cursor-pointer"
           >
             <RefreshCw className={cn('w-3.5 h-3.5', isLoading && 'animate-spin')} />
-            <span>Sync</span>
+            <span>{tr("Sync")}</span>
           </Button>
 
           {activeTab === 'users' && canAddUsers && (
@@ -1148,7 +1149,7 @@ export default function InteriorUsersRolesView() {
               className="gap-1.5 h-8.5 text-xs shadow-xs font-semibold cursor-pointer"
             >
               <UserPlus className="w-3.5 h-3.5" />
-              <span>Add Member</span>
+              <span>{tr("Add Member")}</span>
             </Button>
           )}
         </div>
@@ -1159,15 +1160,15 @@ export default function InteriorUsersRolesView() {
         <Card className="border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-xs hover:border-[hsl(var(--primary)/0.3)] transition-colors">
           <CardContent className="p-3.5 flex items-center justify-between">
             <div className="space-y-0.5 min-w-0">
-              <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider block">
-                Total Members
+              <span className="text-[0.6875rem] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider block">
+                {tr("Total Members")}
               </span>
               <div className="text-xl font-bold tracking-tight text-[hsl(var(--foreground))]">
                 {isLoading ? '—' : users.length}
               </div>
-              <span className="text-[10px] text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+              <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))] flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                Organization Roster
+                {tr("Organization Roster")}
               </span>
             </div>
             <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/20">
@@ -1179,15 +1180,15 @@ export default function InteriorUsersRolesView() {
         <Card className="border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-xs hover:border-[hsl(var(--primary)/0.3)] transition-colors">
           <CardContent className="p-3.5 flex items-center justify-between">
             <div className="space-y-0.5 min-w-0">
-              <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider block">
-                Active Accounts
+              <span className="text-[0.6875rem] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider block">
+                {tr("Active Accounts")}
               </span>
               <div className="text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
                 {isLoading ? '—' : activeUsers}
               </div>
-              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+              <span className="text-[0.625rem] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3" />
-                Live authorized access
+                {tr("Live authorized access")}
               </span>
             </div>
             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
@@ -1199,14 +1200,14 @@ export default function InteriorUsersRolesView() {
         <Card className="border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-xs hover:border-[hsl(var(--primary)/0.3)] transition-colors">
           <CardContent className="p-3.5 flex items-center justify-between">
             <div className="space-y-0.5 min-w-0">
-              <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider block">
-                Projects Covered
+              <span className="text-[0.6875rem] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider block">
+                {tr("Projects Covered")}
               </span>
               <div className="text-xl font-bold tracking-tight text-[hsl(var(--foreground))]">
                 {isLoading ? '—' : totalProjects}
               </div>
-              <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                Active project assignments
+              <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
+                {tr("Active project assignments")}
               </span>
             </div>
             <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/20">
@@ -1218,14 +1219,14 @@ export default function InteriorUsersRolesView() {
         <Card className="border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-xs hover:border-[hsl(var(--primary)/0.3)] transition-colors">
           <CardContent className="p-3.5 flex items-center justify-between">
             <div className="space-y-0.5 min-w-0">
-              <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider block">
-                Configured Roles
+              <span className="text-[0.6875rem] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider block">
+                {tr("Configured Roles")}
               </span>
               <div className="text-xl font-bold tracking-tight text-[hsl(var(--foreground))]">
                 {roles.length}
               </div>
-              <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                Permission matrix presets
+              <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
+                {tr("Permission matrix presets")}
               </span>
             </div>
             <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
@@ -1254,7 +1255,7 @@ export default function InteriorUsersRolesView() {
                         : 'bg-white text-slate-700 border-slate-200 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50/50'
                     )}
                   >
-                    {seg.label}
+                    {tr(seg.label)}
                   </button>
                 );
               })}
@@ -1267,7 +1268,7 @@ export default function InteriorUsersRolesView() {
                   {/* Search Input */}
                   <div className="md:col-span-6 relative">
                     <Input
-                      placeholder="Search member by name, email, designation, department..."
+                      placeholder={tr("Search member by name, email, designation, department...")}
                       value={searchTerm}
                       onChange={(e) => {
                         setSearchTerm(e.target.value);
@@ -1299,9 +1300,9 @@ export default function InteriorUsersRolesView() {
                       }}
                       className="w-full h-9 px-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-semibold text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
                     >
-                      <option value="all">All Roles</option>
+                      <option value="all">{tr("All Roles")}</option>
                       {roles.map((r) => (
-                        <option key={r._id || r.slug} value={r.name}>{r.name}</option>
+                        <option key={r._id || r.slug} value={r.name}>{tr(r.name)}</option>
                       ))}
                     </select>
                   </div>
@@ -1316,11 +1317,11 @@ export default function InteriorUsersRolesView() {
                       }}
                       className="w-full h-9 px-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs font-semibold text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
                     >
-                      <option value="all">All Statuses</option>
-                      <option value="active">Active Only</option>
-                      <option value="inactive">Inactive</option>
-                      <option value="suspended">Suspended</option>
-                      <option value="pending">Pending</option>
+                      <option value="all">{tr("All Statuses")}</option>
+                      <option value="active">{tr("Active Only")}</option>
+                      <option value="inactive">{tr("Inactive")}</option>
+                      <option value="suspended">{tr("Suspended")}</option>
+                      <option value="pending">{tr("Pending")}</option>
                     </select>
                   </div>
                 </div>
@@ -1332,9 +1333,9 @@ export default function InteriorUsersRolesView() {
               <Card className="border-[hsl(var(--border))] bg-[hsl(var(--card))] rounded-xl shadow-none">
                 <CardContent className="p-16 flex flex-col items-center justify-center text-center">
                   <RefreshCw className="w-7 h-7 text-[hsl(var(--primary))] animate-spin mb-3" />
-                  <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">Loading Directory...</h3>
+                  <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">{tr("Loading Directory...")}</h3>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                    Fetching organization members and project permissions
+                    {tr("Fetching organization members and project permissions")}
                   </p>
                 </CardContent>
               </Card>
@@ -1344,9 +1345,9 @@ export default function InteriorUsersRolesView() {
                   <div className="w-12 h-12 rounded-2xl bg-[hsl(var(--accent))] flex items-center justify-center mb-3 border border-[hsl(var(--border))]">
                     <Users className="w-6 h-6 text-[hsl(var(--muted-foreground))]" />
                   </div>
-                  <h3 className="text-base font-bold text-[hsl(var(--foreground))]">No users found</h3>
+                  <h3 className="text-base font-bold text-[hsl(var(--foreground))]">{tr("No users found")}</h3>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-md mt-1">
-                    No members match your active filters or search terms.
+                    {tr("No members match your active filters or search terms.")}
                   </p>
                   {(searchTerm || roleFilter !== 'all' || statusFilter !== 'all' || activeSegment !== 'all') && (
                     <Button
@@ -1361,7 +1362,7 @@ export default function InteriorUsersRolesView() {
                         setPage(1);
                       }}
                     >
-                      Reset All Filters
+                      {tr("Reset All Filters")}
                     </Button>
                   )}
                 </CardContent>
@@ -1370,16 +1371,16 @@ export default function InteriorUsersRolesView() {
               /* ── UNIFIED TABLE & PAGINATION CONTAINER ── */
               <Card className="border-[hsl(var(--border))] bg-[hsl(var(--card))] rounded-xl shadow-xs overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
+                  <table className="w-full text-start text-xs border-collapse">
                     <thead>
-                      <tr className="bg-[hsl(var(--muted)/0.4)] border-b border-[hsl(var(--border))] text-[11px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                        <th className="py-3 px-4">Member / User</th>
-                        <th className="py-3 px-4">Assigned Role</th>
-                        <th className="py-3 px-4">Department / Designation</th>
-                        <th className="py-3 px-4">Status</th>
-                        <th className="py-3 px-4">Projects</th>
-                        <th className="py-3 px-4">Created Date</th>
-                        <th className="py-3 px-4 text-right">Actions</th>
+                      <tr className="bg-[hsl(var(--muted)/0.4)] border-b border-[hsl(var(--border))] text-[0.6875rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                        <th className="py-3 px-4">{tr("Member / User")}</th>
+                        <th className="py-3 px-4">{tr("Assigned Role")}</th>
+                        <th className="py-3 px-4">{tr("Department / Designation")}</th>
+                        <th className="py-3 px-4">{tr("Status")}</th>
+                        <th className="py-3 px-4">{tr("Projects")}</th>
+                        <th className="py-3 px-4">{tr("Created Date")}</th>
+                        <th className="py-3 px-4 text-end">{tr("Actions")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[hsl(var(--border))]">
@@ -1403,13 +1404,13 @@ export default function InteriorUsersRolesView() {
                               <div className="flex items-center gap-2.5">
                                 {/* Member Avatar - Blue Theme */}
                                 <div className="w-8 h-8 rounded-lg bg-linear-to-br from-blue-600 to-blue-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
-                                  {initials}
+                                  {tr(initials)}
                                 </div>
                                 <div className="min-w-0">
-                                  <div className="font-bold text-xs text-[hsl(var(--foreground))] group-hover:text-blue-600 transition-colors truncate max-w-[160px]">
-                                    {user.firstName} {user.lastName}
+                                  <div className="font-bold text-xs text-[hsl(var(--foreground))] group-hover:text-blue-600 transition-colors truncate max-w-[10rem]">
+                                    {tr(user.firstName)} {tr(user.lastName)}
                                   </div>
-                                  <div className="text-[10px] text-[hsl(var(--muted-foreground))] truncate max-w-[160px] font-mono">
+                                  <div className="text-[0.625rem] text-[hsl(var(--muted-foreground))] truncate max-w-[10rem] font-mono">
                                     {user.email}
                                   </div>
                                 </div>
@@ -1418,9 +1419,9 @@ export default function InteriorUsersRolesView() {
 
                             {/* Assigned Role */}
                             <td className="py-3 px-4 whitespace-nowrap">
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border border-[hsl(var(--border))] bg-[hsl(var(--accent)/0.7)] text-[hsl(var(--foreground))]">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[0.6875rem] font-bold border border-[hsl(var(--border))] bg-[hsl(var(--accent)/0.7)] text-[hsl(var(--foreground))]">
                                 <Crown className="w-3 h-3 text-[hsl(var(--primary))]" />
-                                <span>{displayRoleName}</span>
+                                <span>{tr(displayRoleName)}</span>
                               </span>
                             </td>
 
@@ -1429,22 +1430,22 @@ export default function InteriorUsersRolesView() {
                               <div className="font-semibold text-xs text-[hsl(var(--foreground))]">
                                 {user.designation || '—'}
                               </div>
-                              <div className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                                {user.department || 'General'}
+                              <div className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
+                                {user.department || tr("General")}
                               </div>
                             </td>
 
                             {/* Status */}
                             <td className="py-3 px-4 whitespace-nowrap">
                               {user.status === 'active' ? (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[0.6875rem] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
                                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                  <span>Active</span>
+                                  <span>{tr("Active")}</span>
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/25 capitalize">
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[0.6875rem] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/25 capitalize">
                                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                                  <span>{user.status}</span>
+                                  <span>{tr(user.status)}</span>
                                 </span>
                               )}
                             </td>
@@ -1453,7 +1454,7 @@ export default function InteriorUsersRolesView() {
                             <td className="py-3 px-4 whitespace-nowrap">
                               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[hsl(var(--accent)/0.6)] border border-[hsl(var(--border))] text-xs font-semibold text-[hsl(var(--foreground))]">
                                 <Building2 className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
-                                <span>{user.projectAssignments.length} {user.projectAssignments.length === 1 ? 'project' : 'projects'}</span>
+                                <span>{user.projectAssignments.length} {user.projectAssignments.length === 1 ? tr("project") : tr("projects")}</span>
                               </div>
                             </td>
 
@@ -1465,22 +1466,22 @@ export default function InteriorUsersRolesView() {
                             </td>
 
                             {/* Actions / Inspection */}
-                            <td className="py-3 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                            <td className="py-3 px-4 text-end whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center justify-end gap-1.5">
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="h-7 px-2.5 rounded-md text-[11px] font-bold gap-1 shadow-2xs bg-[hsl(var(--card))] group-hover:border-[hsl(var(--primary))] cursor-pointer"
+                                  className="h-7 px-2.5 rounded-md text-[0.6875rem] font-bold gap-1 shadow-2xs bg-[hsl(var(--card))] group-hover:border-[hsl(var(--primary))] cursor-pointer"
                                   onClick={() => setInspectedUser(user)}
                                 >
                                   <Eye className="w-3 h-3 text-[hsl(var(--primary))]" />
-                                  <span>Inspect</span>
+                                  <span>{tr("Inspect")}</span>
                                 </Button>
 
                                 {canManageUsers && (
                                   <button
                                     onClick={() => setEditingUser(user)}
-                                    title="Edit User"
+                                    title={tr("Edit User")}
                                     className="p-1.5 rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:text-blue-600 hover:bg-blue-50/60 transition-colors cursor-pointer"
                                   >
                                     <Edit3 className="w-3.5 h-3.5" />
@@ -1490,7 +1491,7 @@ export default function InteriorUsersRolesView() {
                                 {canDeleteUsers && !isSelf && (
                                   <button
                                     onClick={() => setDeletingUser(user)}
-                                    title="Delete User"
+                                    title={tr("Delete User")}
                                     className="p-1.5 rounded-lg border border-rose-500/20 text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
@@ -1509,14 +1510,14 @@ export default function InteriorUsersRolesView() {
                 <div className="p-3 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.15)] flex flex-col sm:flex-row items-center justify-between gap-3">
                   {/* Left: Range and Rows per Page */}
                   <div className="flex items-center gap-3 flex-wrap">
-                    <p className="text-[11px] text-[hsl(var(--muted-foreground))] font-medium">
-                      Showing <strong className="text-[hsl(var(--foreground))]">{(page - 1) * limit + 1}</strong> –{' '}
-                      <strong className="text-[hsl(var(--foreground))]">{Math.min(page * limit, totalCount)}</strong> of{' '}
-                      <strong className="text-[hsl(var(--foreground))]">{totalCount}</strong> members
+                    <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] font-medium">
+                      {tr("Showing ")}<strong className="text-[hsl(var(--foreground))]">{(page - 1) * limit + 1}</strong> –{' '}
+                      <strong className="text-[hsl(var(--foreground))]">{Math.min(page * limit, totalCount)}</strong>{tr(" of")}{' '}
+                      <strong className="text-[hsl(var(--foreground))]">{tr(totalCount)}</strong>{tr(" members")}
                     </p>
 
-                    <div className="flex items-center gap-1.5 text-[11px] text-[hsl(var(--muted-foreground))]">
-                      <span>Per page:</span>
+                    <div className="flex items-center gap-1.5 text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
+                      <span>{tr("Per page:")}</span>
                       <select
                         value={limit}
                         onChange={(e) => {
@@ -1538,7 +1539,7 @@ export default function InteriorUsersRolesView() {
                     <button
                       onClick={() => setPage(1)}
                       disabled={page <= 1}
-                      title="First Page"
+                      title={tr("First Page")}
                       className="w-7 h-7 rounded-md flex items-center justify-center border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[hsl(var(--accent))] transition-colors cursor-pointer"
                     >
                       <ChevronsLeft className="w-3.5 h-3.5" />
@@ -1547,7 +1548,7 @@ export default function InteriorUsersRolesView() {
                     <button
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={page <= 1}
-                      title="Previous Page"
+                      title={tr("Previous Page")}
                       className="w-7 h-7 rounded-md flex items-center justify-center border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[hsl(var(--accent))] transition-colors cursor-pointer"
                     >
                       <ChevronLeft className="w-3.5 h-3.5" />
@@ -1558,7 +1559,7 @@ export default function InteriorUsersRolesView() {
                         return (
                           <span
                             key={`ellipsis-${index}`}
-                            className="w-7 h-7 flex items-center justify-center text-[11px] font-bold text-[hsl(var(--muted-foreground))]"
+                            className="w-7 h-7 flex items-center justify-center text-[0.6875rem] font-bold text-[hsl(var(--muted-foreground))]"
                           >
                             ...
                           </span>
@@ -1573,13 +1574,13 @@ export default function InteriorUsersRolesView() {
                           key={`page-${pageNum}`}
                           onClick={() => setPage(pageNum)}
                           className={cn(
-                            'min-w-[28px] h-7 px-1.5 rounded-md text-[11px] font-bold transition-all cursor-pointer border',
+                            'min-w-[1.75rem] h-7 px-1.5 rounded-md text-[0.6875rem] font-bold transition-all cursor-pointer border',
                             isActive
                               ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
                               : 'border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))]'
                           )}
                         >
-                          {pageNum}
+                          {tr(pageNum)}
                         </button>
                       );
                     })}
@@ -1587,7 +1588,7 @@ export default function InteriorUsersRolesView() {
                     <button
                       onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                       disabled={page >= totalPages}
-                      title="Next Page"
+                      title={tr("Next Page")}
                       className="w-7 h-7 rounded-md flex items-center justify-center border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[hsl(var(--accent))] transition-colors cursor-pointer"
                     >
                       <ChevronRight className="w-3.5 h-3.5" />
@@ -1596,7 +1597,7 @@ export default function InteriorUsersRolesView() {
                     <button
                       onClick={() => setPage(totalPages)}
                       disabled={page >= totalPages}
-                      title="Last Page"
+                      title={tr("Last Page")}
                       className="w-7 h-7 rounded-md flex items-center justify-center border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[hsl(var(--accent))] transition-colors cursor-pointer"
                     >
                       <ChevronsRight className="w-3.5 h-3.5" />

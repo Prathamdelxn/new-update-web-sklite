@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Enhanced Quotations View with Search, Quote Status Filter, and Pagination
 
@@ -76,13 +77,13 @@ const { hasPermission: canDo } = usePermissions();
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search quotations..."
+              placeholder={tr("Search quotations...")}
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-8 pr-8 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+              className="w-full ps-8 pe-8 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
             />
             {searchTerm && (
               <button
@@ -111,7 +112,7 @@ const { hasPermission: canDo } = usePermissions();
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               )}
             >
-              All ({leads.length})
+              {tr("All (")}{leads.length})
             </button>
             <button
               onClick={() => {
@@ -125,7 +126,7 @@ const { hasPermission: canDo } = usePermissions();
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               )}
             >
-              Pending ({pendingCount})
+              {tr("Pending (")}{tr(pendingCount)})
             </button>
             <button
               onClick={() => {
@@ -139,7 +140,7 @@ const { hasPermission: canDo } = usePermissions();
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               )}
             >
-              Completed ({completedCount})
+              {tr("Completed (")}{tr(completedCount)})
             </button>
           </div>
         </div>
@@ -152,11 +153,11 @@ const { hasPermission: canDo } = usePermissions();
             <div className="w-12 h-12 sm:w-14 sm:h-14 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center justify-center text-rose-500 mb-3">
               <FileText size={24} />
             </div>
-            <h2 className="text-sm sm:text-base font-extrabold text-[hsl(var(--foreground))] mb-1">No Quotations Found</h2>
+            <h2 className="text-sm sm:text-base font-extrabold text-[hsl(var(--foreground))] mb-1">{tr("No Quotations Found")}</h2>
             <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-sm mx-auto">
               {searchTerm || quoteFilter !== 'all'
-                ? 'No quotations match your current filter settings.'
-                : 'Leads moved to "Under Quotation" will appear here for pricing and proposal generation.'}
+                ? tr("No quotations match your current filter settings.")
+                : tr("Leads moved to \"Under Quotation\" will appear here for pricing and proposal generation.")}
             </p>
           </div>
         ) : (
@@ -182,24 +183,24 @@ const { hasPermission: canDo } = usePermissions();
                         </div>
                         <div className="min-w-0 flex-1">
                           <h4 
-                            className="text-xs font-bold text-[hsl(var(--foreground))] truncate max-w-[150px] sm:max-w-[220px]"
+                            className="text-xs font-bold text-[hsl(var(--foreground))] truncate max-w-[9.375rem] sm:max-w-[13.75rem]"
                             title={lead.name}
                           >
-                            {lead.name}
+                            {tr(lead.name)}
                           </h4>
-                          <div className="flex items-center gap-1.5 text-[10px]">
+                          <div className="flex items-center gap-1.5 text-[0.625rem]">
                             <span className="font-mono text-rose-600 bg-rose-500/10 px-1.5 py-0.2 rounded border border-rose-500/20 font-bold shrink-0">
-                              {lead.leadNumber || 'LD-XXXX'}
+                              {lead.leadNumber || tr("LD-XXXX")}
                             </span>
                             <span className="text-[hsl(var(--muted-foreground))]">•</span>
-                            <span className="text-[hsl(var(--muted-foreground))] truncate">{lead.mobileNumber}</span>
+                            <span className="text-[hsl(var(--muted-foreground))] truncate">{tr(lead.mobileNumber)}</span>
                           </div>
                         </div>
                       </div>
 
                       <span
                         className={cn(
-'shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border',
+'shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[0.5625rem] font-black uppercase tracking-wider border',
                           lead.status === 'Converted'
                             ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                             : (latestQuote?.status === 'Accepted' || lead.status === 'Booking Pending')
@@ -210,27 +211,27 @@ const { hasPermission: canDo } = usePermissions();
                         )}
                       >
                         {lead.status === 'Converted'
-                          ? 'Converted'
+                          ? tr("Converted")
                           : (latestQuote?.status === 'Accepted' || lead.status === 'Booking Pending')
-                          ? 'Approved '
+                          ? tr("Approved ")
                           : latestQuote?.status === 'Rejected'
-                          ? 'Rejected'
-                          : 'Pending'}
+                          ? tr("Rejected")
+                          : tr("Pending")}
                       </span>
                     </div>
 
-                    <div className="text-[11px] bg-[hsl(var(--muted)/0.4)] p-2 rounded-xl border border-[hsl(var(--border)/0.5)] flex items-center justify-between">
+                    <div className="text-[0.6875rem] bg-[hsl(var(--muted)/0.4)] p-2 rounded-xl border border-[hsl(var(--border)/0.5)] flex items-center justify-between">
                       {latestQuote ? (
                         <>
                           <span className="font-bold text-emerald-600">
-                            Grand Total: {currencySymbol} {latestQuote.grandTotal?.toLocaleString() || 0}
+                            {tr("Grand Total: ")}{tr(currencySymbol)} {latestQuote.grandTotal?.toLocaleString() || 0}
                           </span>
-                          <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))]">
-                            v{latestQuote.version}
+                          <span className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))]">
+                            v{tr(latestQuote.version)}
                           </span>
                         </>
                       ) : (
-                        <span className="text-[hsl(var(--muted-foreground))] italic">No quotation generated</span>
+                        <span className="text-[hsl(var(--muted-foreground))] italic">{tr("No quotation generated")}</span>
                       )}
                     </div>
 
@@ -242,7 +243,7 @@ const { hasPermission: canDo } = usePermissions();
                             onClick={() => onCreateQuotation(lead._id)}
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer shadow-xs"
                           >
-                            <FileText size={11} /> Create Quote
+                            <FileText size={11} />{tr(" Create Quote")}
                           </button>
                         )
                       ) : (
@@ -252,9 +253,9 @@ const { hasPermission: canDo } = usePermissions();
                               <button
                                 onClick={() => onCreateQuotation(lead._id)}
                                 className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer shadow-xs"
-                                title="Create next quotation version"
+                                title={tr("Create next quotation version")}
                               >
-                                <Edit3 size={11} /> New Version
+                                <Edit3 size={11} />{tr(" New Version")}
                               </button>
                             )
                           ) : latestQuote.status === 'Draft' ? (
@@ -262,7 +263,7 @@ const { hasPermission: canDo } = usePermissions();
                               <button
                                 onClick={() => onCreateQuotation(lead._id)}
                                 className="p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold active:scale-95 cursor-pointer inline-flex items-center justify-center"
-                                title="Edit draft quotation"
+                                title={tr("Edit draft quotation")}
                               >
                                 <Edit3 size={13} className="text-indigo-600" />
                               </button>
@@ -272,7 +273,7 @@ const { hasPermission: canDo } = usePermissions();
                             onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=quotation`)}
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
                           >
-                            View <ArrowRight size={11} />
+                            {tr("View ")}<ArrowRight size={11} />
                           </button>
                         </div>
                       )}
@@ -280,8 +281,8 @@ const { hasPermission: canDo } = usePermissions();
                       {onConvertToProject &&
                         latestQuote?.status === 'Accepted' &&
                         (lead.status === 'Won' || lead.status === 'Converted' ? (
-                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
-                            Converted 
+                          <span className="text-[0.625rem] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
+                            {tr("Converted")} 
                           </span>
                         ) : (
                           (canDo('crm_quotations', 'approve')) && (
@@ -289,7 +290,7 @@ const { hasPermission: canDo } = usePermissions();
                               onClick={() => onConvertToProject(lead._id)}
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer"
                             >
-                              <Trophy size={11} /> Convert
+                              <Trophy size={11} />{tr(" Convert")}
                             </button>
                           )
                         ))}
@@ -301,14 +302,14 @@ const { hasPermission: canDo } = usePermissions();
 
             {/* DESKTOP TABLE VIEW (>= md) - Senior Enterprise CRM Table */}
             <div className="hidden md:block w-full overflow-hidden">
-              <table className="w-full text-left text-xs border-collapse table-fixed">
-                <thead className="bg-[hsl(var(--muted)/0.45)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] text-[11px] font-bold uppercase tracking-wider">
+              <table className="w-full text-start text-xs border-collapse table-fixed">
+                <thead className="bg-[hsl(var(--muted)/0.45)] border-b border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] text-[0.6875rem] font-bold uppercase tracking-wider">
                   <tr>
-                    <th className="px-4.5 py-3 rounded-tl-2xl w-[28%]">Lead & Contact</th>
-                    <th className="px-4 py-3 w-[22%]">Property & Location</th>
-                    <th className="px-4 py-3 w-[20%]">Quotation Value</th>
-                    <th className="px-4 py-3 w-[14%]">Stage Status</th>
-                    <th className="px-4.5 py-3 text-right rounded-tr-2xl w-[16%]">Actions</th>
+                    <th className="px-4.5 py-3 rounded-ss-2xl w-[28%]">{tr("Lead & Contact")}</th>
+                    <th className="px-4 py-3 w-[22%]">{tr("Property & Location")}</th>
+                    <th className="px-4 py-3 w-[20%]">{tr("Quotation Value")}</th>
+                    <th className="px-4 py-3 w-[14%]">{tr("Stage Status")}</th>
+                    <th className="px-4.5 py-3 text-end rounded-se-2xl w-[16%]">{tr("Actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border)/0.7)]">
@@ -333,17 +334,17 @@ const { hasPermission: canDo } = usePermissions();
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span 
-                                  className="font-bold text-xs text-[hsl(var(--foreground))] group-hover:text-indigo-600 transition-colors truncate max-w-[160px] lg:max-w-[220px]"
+                                  className="font-bold text-xs text-[hsl(var(--foreground))] group-hover:text-indigo-600 transition-colors truncate max-w-[10rem] lg:max-w-[13.75rem]"
                                   title={lead.name}
                                 >
-                                  {lead.name}
+                                  {tr(lead.name)}
                                 </span>
-                                <span className="text-[10px] font-mono font-bold text-indigo-600 bg-indigo-500/10 px-1.5 py-0.2 rounded border border-indigo-500/20 shrink-0">
-                                  {lead.leadNumber || 'LD-XXXX'}
+                                <span className="text-[0.625rem] font-mono font-bold text-indigo-600 bg-indigo-500/10 px-1.5 py-0.2 rounded border border-indigo-500/20 shrink-0">
+                                  {lead.leadNumber || tr("LD-XXXX")}
                                 </span>
                               </div>
-                              <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[hsl(var(--muted-foreground))]">
-                                <span className="font-medium text-[hsl(var(--foreground))] truncate">{lead.mobileNumber}</span>
+                              <div className="flex items-center gap-2 mt-0.5 text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
+                                <span className="font-medium text-[hsl(var(--foreground))] truncate">{tr(lead.mobileNumber)}</span>
                               </div>
                             </div>
                           </div>
@@ -352,13 +353,13 @@ const { hasPermission: canDo } = usePermissions();
                         {/* 2. Property & Location */}
                         <td className="px-4 py-3 max-w-0">
                           <div className="min-w-0 space-y-0.5">
-                            <div className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--foreground))] min-w-0" title={lead.propertyType || 'Residential'}>
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--foreground))] min-w-0" title={lead.propertyType || tr("Residential")}>
                               <Home size={12} className="text-amber-500 shrink-0" />
-                              <span className="truncate block">{lead.propertyType || 'Residential'}</span>
+                              <span className="truncate block">{lead.propertyType || tr("Residential")}</span>
                             </div>
-                            <div className="flex items-center gap-1 text-[11px] text-[hsl(var(--muted-foreground))] min-w-0" title={lead.projectLocation || (lead as any).city || 'Location Pending'}>
+                            <div className="flex items-center gap-1 text-[0.6875rem] text-[hsl(var(--muted-foreground))] min-w-0" title={lead.projectLocation || (lead as any).city || tr("Location Pending")}>
                               <MapPin size={11} className="shrink-0 text-indigo-500" />
-                              <span className="truncate block">{lead.projectLocation || (lead as any).city || 'Location Pending'}</span>
+                              <span className="truncate block">{lead.projectLocation || (lead as any).city || tr("Location Pending")}</span>
                             </div>
                           </div>
                         </td>
@@ -369,16 +370,16 @@ const { hasPermission: canDo } = usePermissions();
                             <div className="space-y-0.5 min-w-0">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className="text-xs font-black text-[hsl(var(--foreground))]">
-                                  {currencySymbol} {latestQuote.grandTotal?.toLocaleString() || 0}
+                                  {tr(currencySymbol)} {latestQuote.grandTotal?.toLocaleString() || 0}
                                 </span>
-                                <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-0.5">
-                                  <FileText size={9} /> V{latestQuote.version}
+                                <span className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-0.5">
+                                  <FileText size={9} /> V{tr(latestQuote.version)}
                                 </span>
                               </div>
                               <div>
                                 <span
                                   className={cn(
-                                    'text-[9px] font-bold px-1.5 py-0.2 rounded uppercase border',
+                                    'text-[0.5625rem] font-bold px-1.5 py-0.2 rounded uppercase border',
                                     latestQuote.status === 'Accepted'
                                       ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                                       : latestQuote.status === 'Rejected'
@@ -386,13 +387,13 @@ const { hasPermission: canDo } = usePermissions();
                                       : 'bg-[hsl(var(--muted))] border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]'
                                   )}
                                 >
-                                  {latestQuote.status}
+                                  {tr(latestQuote.status)}
                                 </span>
                               </div>
                             </div>
                           ) : (
-                            <span className="text-[11px] text-[hsl(var(--muted-foreground))] italic">
-                              Pending quote
+                            <span className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] italic">
+                              {tr("Pending quote")}
                             </span>
                           )}
                         </td>
@@ -401,7 +402,7 @@ const { hasPermission: canDo } = usePermissions();
                         <td className="px-4 py-3">
                           <span
                             className={cn(
-                              'inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold tracking-tight uppercase border',
+                              'inline-flex items-center px-2 py-0.5 rounded-full text-[0.5625rem] font-bold tracking-tight uppercase border',
                               lead.status === 'Converted'
                                 ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                                 : (latestQuote?.status === 'Accepted' || lead.status === 'Booking Pending')
@@ -412,18 +413,18 @@ const { hasPermission: canDo } = usePermissions();
                             )}
                           >
                             {lead.status === 'Converted'
-                              ? 'Converted'
+                              ? tr("Converted")
                               : (latestQuote?.status === 'Accepted' || lead.status === 'Booking Pending')
-                              ? 'Approved '
+                              ? tr("Approved ")
                               : latestQuote?.status === 'Rejected'
-                              ? 'Rejected'
-                              : 'Under Quote'}
+                              ? tr("Rejected")
+                              : tr("Under Quote")}
                           </span>
                         </td>
 
                         {/* 5. Actions */}
                         <td
-                          className="px-4.5 py-3 text-right"
+                          className="px-4.5 py-3 text-end"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <div className="flex items-center justify-end gap-1.5">
@@ -433,7 +434,7 @@ const { hasPermission: canDo } = usePermissions();
                                   onClick={() => onCreateQuotation(lead._id)}
                                   className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
                                 >
-                                  <FileText size={11} /> + Quote
+                                  <FileText size={11} />{tr(" + Quote")}
                                 </button>
                               )
                             ) : (
@@ -443,9 +444,9 @@ const { hasPermission: canDo } = usePermissions();
                                     <button
                                       onClick={() => onCreateQuotation(lead._id)}
                                       className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                      title="Create next quotation version"
+                                      title={tr("Create next quotation version")}
                                     >
-                                      <Edit3 size={11} /> + Rev
+                                      <Edit3 size={11} />{tr(" + Rev")}
                                     </button>
                                   )
                                 ) : latestQuote.status === 'Draft' ? (
@@ -453,7 +454,7 @@ const { hasPermission: canDo } = usePermissions();
                                     <button
                                       onClick={() => onCreateQuotation(lead._id)}
                                       className="p-1.5 bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs inline-flex items-center justify-center"
-                                      title="Edit draft quotation"
+                                      title={tr("Edit draft quotation")}
                                     >
                                       <Edit3 size={13} className="text-indigo-600" />
                                     </button>
@@ -463,7 +464,7 @@ const { hasPermission: canDo } = usePermissions();
                                   onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=quotation`)}
                                   className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
                                 >
-                                  View <ArrowRight size={11} />
+                                  {tr("View ")}<ArrowRight size={11} />
                                 </button>
                               </>
                             )}
@@ -472,19 +473,19 @@ const { hasPermission: canDo } = usePermissions();
                               latestQuote?.status === 'Accepted' &&
                               (lead.status === 'Won' || lead.status === 'Converted' ? (
                                 <span
-                                  className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 rounded-lg text-[11px] font-bold"
-                                  title="Lead converted into Active Project"
+                                  className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 rounded-lg text-[0.6875rem] font-bold"
+                                  title={tr("Lead converted into Active Project")}
                                 >
-                                  <Trophy size={11} /> Converted 
+                                  <Trophy size={11} />{tr(" Converted")} 
                                 </span>
                               ) : (
                                 (canDo('crm_quotations', 'approve')) && (
                                   <button
                                     onClick={() => onConvertToProject(lead._id)}
                                     className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-500 text-white hover:bg-amber-600 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                    title="Convert to Project"
+                                    title={tr("Convert to Project")}
                                   >
-                                    <Trophy size={11} /> Convert
+                                    <Trophy size={11} />{tr(" Convert")}
                                   </button>
                                 )
                               ))}
@@ -494,7 +495,7 @@ const { hasPermission: canDo } = usePermissions();
                                 <button
                                   onClick={(e) => { e.stopPropagation(); onMarkAsLost(lead._id); }}
                                   className="p-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 rounded-lg text-xs font-bold transition-all border border-orange-500/20 cursor-pointer"
-                                  title="Mark as Lost"
+                                  title={tr("Mark as Lost")}
                                 >
                                   <XCircle size={13} />
                                 </button>
@@ -516,13 +517,13 @@ const { hasPermission: canDo } = usePermissions();
           <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-[hsl(var(--card))] border-t border-[hsl(var(--border))] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[hsl(var(--muted-foreground))] font-medium">
               <span>
-                Showing <strong>{(currentPage - 1) * pageSize + 1}</strong> to{' '}
-                <strong>{Math.min(currentPage * pageSize, filteredLeads.length)}</strong> of{' '}
-                <strong>{filteredLeads.length}</strong> quotes
+                {tr("Showing ")}<strong>{(currentPage - 1) * pageSize + 1}</strong>{tr(" to")}{' '}
+                <strong>{Math.min(currentPage * pageSize, filteredLeads.length)}</strong>{tr(" of")}{' '}
+                <strong>{filteredLeads.length}</strong>{tr(" quotes")}
               </span>
 
-              <div className="flex items-center gap-1.5 ml-auto sm:ml-2">
-                <span>Per page:</span>
+              <div className="flex items-center gap-1.5 ms-auto sm:ms-2">
+                <span>{tr("Per page:")}</span>
                 <select
                   value={pageSize}
                   onChange={(e) => {
@@ -544,12 +545,12 @@ const { hasPermission: canDo } = usePermissions();
                   onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                   disabled={currentPage === 1}
                   className="p-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                  title="Previous Page"
+                  title={tr("Previous Page")}
                 >
                   <ChevronLeft size={15} />
                 </button>
 
-                <div className="flex items-center gap-1 px-1 overflow-x-auto max-w-[200px] sm:max-w-none">
+                <div className="flex items-center gap-1 px-1 overflow-x-auto max-w-[12.5rem] sm:max-w-none">
                   {[...Array(totalPages)].map((_, i) => {
                     const pageNum = i + 1;
                     return (
@@ -563,7 +564,7 @@ const { hasPermission: canDo } = usePermissions();
                             : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]'
                         )}
                       >
-                        {pageNum}
+                        {tr(pageNum)}
                       </button>
                     );
                   })}
@@ -573,7 +574,7 @@ const { hasPermission: canDo } = usePermissions();
                   onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
                   disabled={currentPage === totalPages}
                   className="p-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                  title="Next Page"
+                  title={tr("Next Page")}
                 >
                   <ChevronRight size={15} />
                 </button>

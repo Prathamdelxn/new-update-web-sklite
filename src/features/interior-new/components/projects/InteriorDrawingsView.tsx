@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Project Drawings & 3D Blueprints Register
@@ -186,7 +187,7 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
       if (res.success && res.data) setDrawings(res.data);
     } catch (err) {
       console.error('Failed to load drawings', err);
-      toast.error('Failed to fetch Drawings register');
+      toast.error(tr("Failed to fetch Drawings register"));
     } finally {
       setLoading(false);
     }
@@ -351,13 +352,13 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
   const handleSubmitDrawing = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newUploadFiles.length === 0) {
-      toast.error('Please select at least one drawing or 3D model to upload');
+      toast.error(tr("Please select at least one drawing or 3D model to upload"));
       return;
     }
 
     try {
       setSubmitting(true);
-      const toastId = toast.loading(`Uploading ${newUploadFiles.length} file(s)...`);
+      const toastId = toast.loading(tr("Uploading {{newUploadFilesCount}} file(s)...", { newUploadFilesCount: newUploadFiles.length }));
 
       for (let i = 0; i < newUploadFiles.length; i++) {
         const item = newUploadFiles[i];
@@ -383,12 +384,12 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
       }
 
       toast.dismiss(toastId);
-      toast.success(`${newUploadFiles.length} ${newUploadFiles.length === 1 ? 'drawing' : 'drawings'} uploaded successfully!`);
+      toast.success(tr("{{newUploadFilesCount}} {{value}} uploaded successfully!", { newUploadFilesCount: newUploadFiles.length, value: newUploadFiles.length === 1 ? 'drawing' : 'drawings' }));
       closeCreateModal();
       fetchDrawings();
     } catch (err: any) {
       console.error(err);
-      toast.error(err.response?.data?.error || err.message || 'Failed to upload drawings');
+      toast.error(err.response?.data?.error || err.message || tr("Failed to upload drawings"));
     } finally {
       setSubmitting(false);
     }
@@ -398,26 +399,26 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
     try {
       const res = await interiorProjectService.updateDrawing(projectId, { drawingId, status });
       if (res.success) {
-        toast.success(`Drawing status updated to: ${status.replace('_', ' ').toUpperCase()}`);
+        toast.success(tr("Drawing status updated to: {{value}}", { value: status.replace('_', ' ').toUpperCase() }));
         fetchDrawings();
       }
     } catch (err) {
       console.error('Status update failed', err);
-      toast.error('Failed to update approval status');
+      toast.error(tr("Failed to update approval status"));
     }
   };
 
   const handleDeleteDrawing = async (drawingId: string, drawingTitle: string) => {
-    if (!confirm(`Are you sure you want to delete drawing "${drawingTitle}"?`)) return;
+    if (!confirm(tr("Are you sure you want to delete drawing \"{{drawingTitle}}\"?", { drawingTitle: drawingTitle }))) return;
     try {
       const res = await interiorProjectService.deleteDrawing(projectId, drawingId);
       if (res.success) {
-        toast.success('Drawing removed successfully');
+        toast.success(tr("Drawing removed successfully"));
         fetchDrawings();
       }
     } catch (err) {
       console.error('Failed to delete drawing', err);
-      toast.error('Failed to delete drawing');
+      toast.error(tr("Failed to delete drawing"));
     }
   };
 
@@ -433,11 +434,11 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
   const handleSubmitRevision = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!revName || !revChanges.trim()) {
-      toast.error('Please describe what changed in this revision');
+      toast.error(tr("Please describe what changed in this revision"));
       return;
     }
     if (!selectedRevFile) {
-      toast.error('Please select a revision file to upload');
+      toast.error(tr("Please select a revision file to upload"));
       return;
     }
 
@@ -446,7 +447,7 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
       const formData = new FormData();
       formData.append('file', selectedRevFile);
 
-      const uploadToastId = toast.loading('Uploading revision file...');
+      const uploadToastId = toast.loading(tr("Uploading revision file..."));
       const uploadRes = await interiorProjectService.uploadDrawingFile(projectId, formData);
       toast.dismiss(uploadToastId);
 
@@ -466,13 +467,13 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
       });
 
       if (res.success) {
-        toast.success('New revision uploaded successfully!');
+        toast.success(tr("New revision uploaded successfully!"));
         closeRevModal();
         fetchDrawings();
       }
     } catch (err: any) {
       console.error('Revision fail', err);
-      toast.error(err.response?.data?.error || err.message || 'Failed to upload revision');
+      toast.error(err.response?.data?.error || err.message || tr("Failed to upload revision"));
     } finally {
       setSubmitting(false);
     }
@@ -531,10 +532,10 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
             </div>
             <div>
               <h1 className="text-xl sm:text-xl font-black text-[hsl(var(--foreground))] tracking-tight flex items-center gap-2">
-                2D & 3D Drawings Register
+                {tr("2D & 3D Drawings Register")}
               </h1>
               <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                Manage 2D Working Plans and 3D Models.
+                {tr("Manage 2D Working Plans and 3D Models.")}
               </p>
             </div>
           </div>
@@ -546,7 +547,7 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
               onClick={() => setIsModalOpen(true)}
               className="rounded-xl font-bold text-xs gap-1.5"
             >
-              <UploadCloud size={15} /> Upload 2D / 3D Drawings
+              <UploadCloud size={15} />{tr(" Upload 2D / 3D Drawings")}
             </Button>
           )}
         </div>
@@ -571,7 +572,7 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
               )}
             >
               <PenTool size={14} />
-              <span>📐 2D Working Drawings ({count2D})</span>
+              <span>{tr("📐 2D Working Drawings (")}{tr(count2D)})</span>
             </button>
 
             <button
@@ -584,17 +585,17 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
               )}
             >
               <Box size={14} />
-              <span>🧊 3D Models & Renders ({count3D})</span>
+              <span>{tr("🧊 3D Models & Renders (")}{tr(count3D)})</span>
             </button>
           </div>
           <div className="relative w-full sm:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
             <input
               type="text"
-              placeholder="Search by name or DWG number..."
+              placeholder={tr("Search by name or DWG number...")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 text-xs rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full ps-9 pe-8 py-2 text-xs rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
             />
             {search && (
               <button
@@ -612,7 +613,7 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl">
           <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mb-3" />
-          <p className="text-xs font-bold text-[hsl(var(--muted-foreground))]">Loading Project Blueprints & 3D Assets...</p>
+          <p className="text-xs font-bold text-[hsl(var(--muted-foreground))]">{tr("Loading Project Blueprints & 3D Assets...")}</p>
         </div>
       ) : filteredDrawings.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl">
@@ -620,20 +621,19 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
             {drawingTypeFilter === '3D' ? <Box size={30} /> : <PenTool size={30} />}
           </div>
           <h3 className="text-base font-black text-[hsl(var(--foreground))] mb-1">
-            No {drawingTypeFilter === '3D' ? '3D Models or Renders' : '2D Drawings'} Found
+            {tr("No ")}{drawingTypeFilter === '3D' ? tr("3D Models or Renders") : tr("2D Drawings")}{tr(" Found")}
           </h3>
           <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-md mx-auto mb-5">
             {search || statusFilter !== 'all'
-              ? 'No project assets match your active filters. Try resetting search or filter options.'
-              : `Upload your first ${drawingTypeFilter === '3D' ? '3D DWG, SketchUp model, or CGI render' : '2D GFC plan, floor layout, or CAD drawing'
-              } to start tracking.`}
+              ? tr("No project assets match your active filters. Try resetting search or filter options.")
+              : tr("Upload your first {{value}} to start tracking.", { value: drawingTypeFilter === '3D' ? '3D DWG, SketchUp model, or CGI render' : '2D GFC plan, floor layout, or CAD drawing' })}
           </p>
           {canDo('drawings', 'create') && (
             <Button
               onClick={() => setIsModalOpen(true)}
               className="rounded-xl font-bold text-xs gap-1.5"
             >
-              <UploadCloud size={14} /> Upload {drawingTypeFilter === '3D' ? '3D Models / Renders' : '2D Drawings'}
+              <UploadCloud size={14} />{tr(" Upload ")}{drawingTypeFilter === '3D' ? tr("3D Models / Renders") : tr("2D Drawings")}
             </Button>
           )}
         </div>
@@ -670,7 +670,7 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                     <>
                       <img loading="lazy" decoding="async"
                         src={currentRev.url}
-                        alt={dwg.title}
+                        alt={tr(dwg.title)}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
@@ -681,7 +681,7 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                             router.push(`/interior-new/projects/${projectId}/drawings/${dwg._id || dwg.id || dwg.drawingNumber}`);
                           }}
                           className="p-2 rounded-full bg-white/90 text-slate-900 hover:bg-white transition-all shadow-md"
-                          title="Open Drawing Studio"
+                          title={tr("Open Drawing Studio")}
                         >
                           <Eye size={15} />
                         </button>
@@ -697,7 +697,7 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                       >
                         <BadgeIcon size={24} />
                       </div>
-                      <span className="text-[10px] font-mono font-bold text-[hsl(var(--muted-foreground))]">{badge.label}</span>
+                      <span className="text-[0.625rem] font-mono font-bold text-[hsl(var(--muted-foreground))]">{tr(badge.label)}</span>
                       
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                         <button
@@ -707,7 +707,7 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                             router.push(`/interior-new/projects/${projectId}/drawings/${dwg._id || dwg.id || dwg.drawingNumber}`);
                           }}
                           className="p-2 rounded-full bg-white/90 text-slate-900 hover:bg-white transition-all shadow-md"
-                          title="Open Drawing Studio"
+                          title={tr("Open Drawing Studio")}
                         >
                           <Eye size={15} />
                         </button>
@@ -719,19 +719,19 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                   <div className="absolute top-2.5 left-2.5 flex items-center gap-1">
                     <span
                       className={cn(
-                        'px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider backdrop-blur-md border',
+                        'px-2 py-0.5 rounded-lg text-[0.5625rem] font-black uppercase tracking-wider backdrop-blur-md border',
                         type === '3D'
                           ? 'bg-purple-600/90 text-white border-purple-400/30'
                           : 'bg-blue-600/90 text-white border-blue-400/30'
                       )}
                     >
-                      {type} Asset
+                      {tr(type)}{tr(" Asset")}
                     </span>
-                    <span className="px-1.5 py-0.5 rounded-lg text-[9px] font-mono font-bold bg-black/60 text-white backdrop-blur-md border border-white/10">
-                      {dwg.drawingNumber}
+                    <span className="px-1.5 py-0.5 rounded-lg text-[0.5625rem] font-mono font-bold bg-black/60 text-white backdrop-blur-md border border-white/10">
+                      {tr(dwg.drawingNumber)}
                     </span>
                     {dwg.annotations && dwg.annotations.length > 0 && (
-                      <span className="px-1.5 py-0.5 rounded-lg text-[9px] font-mono font-bold bg-amber-500/90 text-white backdrop-blur-md border border-amber-400/30 flex items-center gap-0.5 shadow-xs">
+                      <span className="px-1.5 py-0.5 rounded-lg text-[0.5625rem] font-mono font-bold bg-amber-500/90 text-white backdrop-blur-md border border-amber-400/30 flex items-center gap-0.5 shadow-xs">
                         <Pin size={9} className="fill-white" />
                         <span>{dwg.annotations.length}</span>
                       </span>
@@ -741,11 +741,11 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                   <div className="absolute top-2.5 right-2.5">
                     <span
                       className={cn(
-                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase backdrop-blur-md border',
+                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[0.5625rem] font-black uppercase backdrop-blur-md border',
                         statusInfo.classes
                       )}
                     >
-                      <StatusIcon size={11} /> {statusInfo.label}
+                      <StatusIcon size={11} /> {tr(statusInfo.label)}
                     </span>
                   </div>
                 </div>
@@ -753,18 +753,18 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                 {/* Card Body */}
                 <div className="p-3.5 flex-1 flex flex-col justify-between space-y-3">
                   <div className="space-y-1.5">
-                    <h3 className="text-xs font-black text-[hsl(var(--foreground))] line-clamp-2" title={dwg.title}>
-                      {dwg.title}
+                    <h3 className="text-xs font-black text-[hsl(var(--foreground))] line-clamp-2" title={tr(dwg.title)}>
+                      {tr(dwg.title)}
                     </h3>
                     {dwg.assignedReviewerName && (
-                      <div className="flex items-center gap-1 text-[10px] text-amber-700 font-medium bg-amber-50 px-2 py-0.5 rounded border border-amber-200/60 truncate">
+                      <div className="flex items-center gap-1 text-[0.625rem] text-amber-700 font-medium bg-amber-50 px-2 py-0.5 rounded border border-amber-200/60 truncate">
                         <UserCheck size={11} className="shrink-0" />
-                        <span className="truncate">Reviewer: {dwg.assignedReviewerName}</span>
+                        <span className="truncate">{tr("Reviewer: ")}{tr(dwg.assignedReviewerName)}</span>
                       </div>
                     )}
                     {dwg.status === 'rejected' && dwg.rejectionReason && (
-                      <p className="text-[10px] text-rose-600 line-clamp-1 italic bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100" title={dwg.rejectionReason}>
-                        Changes: {dwg.rejectionReason}
+                      <p className="text-[0.625rem] text-rose-600 line-clamp-1 italic bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100" title={dwg.rejectionReason}>
+                        {tr("Changes: ")}{tr(dwg.rejectionReason)}
                       </p>
                     )}
                   </div>
@@ -779,9 +779,9 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                           setSelectedDrawingForApproval(dwg);
                           setIsSendApprovalModalOpen(true);
                         }}
-                        className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold rounded-lg transition-all shadow-2xs cursor-pointer"
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[0.6875rem] font-bold rounded-lg transition-all shadow-2xs cursor-pointer"
                       >
-                        <Send size={12} /> Send for Approval
+                        <Send size={12} />{tr(" Send for Approval")}
                       </button>
                     )}
 
@@ -795,9 +795,9 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                               setApprovalInitialAction('approve');
                               setIsApprovalModalOpen(true);
                             }}
-                            className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold rounded-lg transition-all shadow-2xs cursor-pointer"
+                            className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[0.6875rem] font-bold rounded-lg transition-all shadow-2xs cursor-pointer"
                           >
-                            <CheckCircle2 size={12} /> Approve
+                            <CheckCircle2 size={12} />{tr(" Approve")}
                           </button>
                         )}
                         {canDo('drawings', 'approve') && (
@@ -808,9 +808,9 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                               setApprovalInitialAction('reject');
                               setIsApprovalModalOpen(true);
                             }}
-                            className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-[11px] font-bold rounded-lg transition-all cursor-pointer"
+                            className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-[0.6875rem] font-bold rounded-lg transition-all cursor-pointer"
                           >
-                            <XCircle size={12} /> Reject
+                            <XCircle size={12} />{tr(" Reject")}
                           </button>
                         )}
                       </div>
@@ -820,9 +820,9 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                       <button
                         type="button"
                         onClick={() => handleOpenRevModal(dwg)}
-                        className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold rounded-lg transition-all shadow-2xs cursor-pointer"
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-[0.6875rem] font-bold rounded-lg transition-all shadow-2xs cursor-pointer"
                       >
-                        <UploadCloud size={12} /> Upload Revision
+                        <UploadCloud size={12} />{tr(" Upload Revision")}
                       </button>
                     )}
 
@@ -830,16 +830,16 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                       <button
                         type="button"
                         onClick={() => router.push(`/interior-new/projects/${projectId}/drawings/${dwg._id || dwg.id || dwg.drawingNumber}`)}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] text-[11px] font-bold rounded-lg transition-all border border-[hsl(var(--border))] cursor-pointer"
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] text-[0.6875rem] font-bold rounded-lg transition-all border border-[hsl(var(--border))] cursor-pointer"
                       >
-                        <Eye size={13} className="text-indigo-600" /> View Drawing
+                        <Eye size={13} className="text-indigo-600" />{tr(" View Drawing")}
                       </button>
 
                       {canDo('drawings', 'delete') && (
                         <button
                           onClick={() => handleDeleteDrawing(dwg._id, dwg.title)}
                           className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-rose-600 hover:bg-rose-500/10 rounded-lg transition-all cursor-pointer"
-                          title="Delete Drawing"
+                          title={tr("Delete Drawing")}
                         >
                           <Trash2 size={14} />
                         </button>
@@ -876,8 +876,8 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                 <div className="flex items-center gap-2">
                   <GitBranch size={18} className="text-indigo-600" />
                   <div>
-                    <h3 className="text-base font-black text-[hsl(var(--foreground))]">Upload {revName}</h3>
-                    <p className="text-[10px] text-[hsl(var(--muted-foreground))] truncate max-w-xs">{targetDrawingTitle}</p>
+                    <h3 className="text-base font-black text-[hsl(var(--foreground))]">{tr("Upload ")}{tr(revName)}</h3>
+                    <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))] truncate max-w-xs">{tr(targetDrawingTitle)}</p>
                   </div>
                 </div>
                 <button onClick={closeRevModal} className="p-1.5 rounded-full hover:bg-[hsl(var(--muted))]">
@@ -887,10 +887,10 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
 
               <form onSubmit={handleSubmitRevision} className="p-5 space-y-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-[hsl(var(--foreground))]">Describe Revision Changes *</label>
+                  <label className="text-xs font-bold text-[hsl(var(--foreground))]">{tr("Describe Revision Changes *")}</label>
                   <Input
                     required
-                    placeholder="e.g. Updated electrical switches near wardrobe & adjusted ceiling drop"
+                    placeholder={tr("e.g. Updated electrical switches near wardrobe & adjusted ceiling drop")}
                     value={revChanges}
                     onChange={(e) => setRevChanges(e.target.value)}
                     className="rounded-xl text-xs"
@@ -898,7 +898,7 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-[hsl(var(--foreground))] block mb-1">New Revision File *</label>
+                  <label className="text-xs font-bold text-[hsl(var(--foreground))] block mb-1">{tr("New Revision File *")}</label>
                   <div className="border-2 border-dashed border-[hsl(var(--border))] hover:border-indigo-500/50 bg-[hsl(var(--muted)/0.2)] rounded-2xl p-5 flex flex-col items-center justify-center gap-2 transition-all relative cursor-pointer">
                     <input
                       type="file"
@@ -911,19 +911,19 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                     />
                     <FileDown className="w-8 h-8 text-indigo-500" />
                     <span className="text-xs font-bold text-center text-[hsl(var(--foreground))] px-2 truncate w-full">
-                      {selectedRevFile ? selectedRevFile.name : 'Click or drag new revision file'}
+                      {selectedRevFile ? selectedRevFile.name : tr("Click or drag new revision file")}
                     </span>
-                    <span className="text-[10px] text-[hsl(var(--muted-foreground))]">PDF, DWG, SKP, or Image files</span>
+                    <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">{tr("PDF, DWG, SKP, or Image files")}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[hsl(var(--border))]">
                   <Button variant="outline" type="button" onClick={closeRevModal} className="rounded-xl text-xs">
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                   <Button type="submit" disabled={submitting} className="rounded-xl text-xs font-bold">
-                    {submitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    Upload Revision
+                    {submitting && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+                    {tr("Upload Revision")}
                   </Button>
                 </div>
               </form>

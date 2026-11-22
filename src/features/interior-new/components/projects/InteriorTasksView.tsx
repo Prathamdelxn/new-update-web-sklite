@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // InteriorOS — Tasks & Execution View (Global Standard 3-Stage Suite)
@@ -220,6 +221,19 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
     if (projectId) fetchData();
   }, [projectId]);
 
+  // Deep link from the Gantt chart (?task=<id>): open that activity once loaded,
+  // then drop the param so closing the panel doesn't reopen it
+  useEffect(() => {
+    if (loading || tasks.length === 0 || typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    const taskId = url.searchParams.get('task');
+    if (!taskId) return;
+    const match = tasks.find((t: any) => String(t._id) === taskId);
+    if (match) setSelectedTask(match);
+    url.searchParams.delete('task');
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+  }, [loading, tasks]);
+
   // Open Add Activity Modal
   const handleOpenAddActivity = (packageId?: string) => {
     setActivityModalMode('create');
@@ -257,17 +271,17 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
   const handleSaveActivity = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activityName.trim()) {
-      toast.error('Please enter an Activity Name');
+      toast.error(tr("Please enter an Activity Name"));
       return;
     }
 
     if (!activityPackageId) {
-      toast.error('Please select a WBS Package');
+      toast.error(tr("Please select a WBS Package"));
       return;
     }
 
     if (activityStartDate && activityEndDate && new Date(activityStartDate) > new Date(activityEndDate)) {
-      toast.error('Start Date must be before or equal to End Date');
+      toast.error(tr("Start Date must be before or equal to End Date"));
       return;
     }
 
@@ -277,12 +291,12 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
     const wbsMax = selectedPkg?.endDate ? String(selectedPkg.endDate).split('T')[0] : null;
 
     if (wbsMin && activityStartDate && activityStartDate < wbsMin) {
-      toast.error(`Activity Start Date (${activityStartDate}) cannot be earlier than WBS "${selectedPkg?.name || ''}" Start Date (${wbsMin})`);
+      toast.error(tr("Activity Start Date ({{activityStartDate}}) cannot be earlier than WBS \"{{value}}\" Start Date ({{wbsMin}})", { activityStartDate: activityStartDate, value: selectedPkg?.name || '', wbsMin: wbsMin }));
       return;
     }
 
     if (wbsMax && activityEndDate && activityEndDate > wbsMax) {
-      toast.error(`Activity End Date (${activityEndDate}) cannot be later than WBS "${selectedPkg?.name || ''}" End Date (${wbsMax})`);
+      toast.error(tr("Activity End Date ({{activityEndDate}}) cannot be later than WBS \"{{value}}\" End Date ({{wbsMax}})", { activityEndDate: activityEndDate, value: selectedPkg?.name || '', wbsMax: wbsMax }));
       return;
     }
 
@@ -302,7 +316,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
         };
         const res = await interiorProjectService.updateTask(projectId, editingTaskId, payload);
         if (res?.success || res?.data) {
-          toast.success('Activity updated successfully!');
+          toast.success(tr("Activity updated successfully!"));
           setIsActivityModalOpen(false);
           if (selectedTask?._id === editingTaskId) {
             setSelectedTask((prev: any) => ({ ...prev, ...payload }));
@@ -326,14 +340,14 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
 
         const res = await interiorProjectService.createTask(projectId, payload);
         if (res?.success || res?.data) {
-          toast.success('Activity created successfully!');
+          toast.success(tr("Activity created successfully!"));
           setIsActivityModalOpen(false);
           fetchData();
         }
       }
     } catch (err: any) {
       console.error('Save activity failed', err);
-      toast.error(err?.response?.data?.error || 'Failed to save activity');
+      toast.error(err?.response?.data?.error || tr("Failed to save activity"));
     } finally {
       setSubmittingActivity(false);
     }
@@ -436,12 +450,12 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
         setProofImages([]);
         setProofNotes('');
         setMaterialUsages([]);
-        toast.success('Task marked as Completed with Material Usage logged!');
+        toast.success(tr("Task marked as Completed with Material Usage logged!"));
         fetchData();
       }
     } catch (err: any) {
       console.error('Failed to complete task', err);
-      toast.error(err?.response?.data?.error || 'Failed to complete task');
+      toast.error(err?.response?.data?.error || tr("Failed to complete task"));
     } finally {
       setSubmittingProof(false);
     }
@@ -454,7 +468,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
 
     const fileList = Array.from(files);
     setUploadingProofImages(true);
-    const toastId = toast.loading(`Uploading ${fileList.length} completion photo${fileList.length > 1 ? 's' : ''}...`);
+    const toastId = toast.loading(tr("Uploading {{fileListCount}} completion photo{{value}}...", { fileListCount: fileList.length, value: fileList.length > 1 ? 's' : '' }));
 
     try {
       const uploadedResults: Array<{ url: string; name: string; size?: number }> = [];
@@ -481,12 +495,12 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
       }
 
       toast.dismiss(toastId);
-      toast.success(`${uploadedResults.length} photo${uploadedResults.length > 1 ? 's' : ''} uploaded`);
+      toast.success(tr("{{uploadedResultsCount}} photo{{value}} uploaded", { uploadedResultsCount: uploadedResults.length, value: uploadedResults.length > 1 ? 's' : '' }));
       setProofImages((prev) => [...prev, ...uploadedResults]);
     } catch (err: any) {
       toast.dismiss(toastId);
       console.error('Failed to upload proof photos', err);
-      toast.error(err?.message || 'Failed to upload proof photos');
+      toast.error(err?.message || tr("Failed to upload proof photos"));
     } finally {
       setUploadingProofImages(false);
       if (e.target) e.target.value = '';
@@ -506,20 +520,20 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
   const handleDeleteTaskDirect = async (task: any, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     const ok = await confirm({
-      title: 'Delete Task',
-      message: `Are you sure you want to delete "${task.name}"? This action cannot be undone.`,
-      confirmText: 'Delete Task',
+      title: tr("Delete Task"),
+      message: tr("Are you sure you want to delete \"{{name}}\"? This action cannot be undone.", { name: task.name }),
+      confirmText: tr("Delete Task"),
       type: 'danger',
     });
     if (!ok) return;
     try {
       await interiorProjectService.deleteTask(projectId, task._id);
-      toast.success('Task deleted successfully');
+      toast.success(tr("Task deleted successfully"));
       if (selectedTask?._id === task._id) setSelectedTask(null);
       fetchData();
     } catch (err) {
       console.error('Failed to delete task', err);
-      toast.error('Failed to delete task');
+      toast.error(tr("Failed to delete task"));
     }
   };
 
@@ -656,21 +670,21 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[hsl(var(--border))] pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Activity / Task Management</h2>
-            <span className="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)]">
-              {tasks.length} Total
+            <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">{tr("Activity / Task Management")}</h2>
+            <span className="px-2 py-0.5 text-[0.6875rem] font-semibold rounded-full bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)]">
+              {tasks.length}{tr(" Total")}
             </span>
           </div>
           <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-            Actionable site execution, WBS tracking and verified proof-of-work completion.
+            {tr("Actionable site execution, WBS tracking and verified proof-of-work completion.")}
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
           {canDo('tasks', 'create') && (
             <Button onClick={() => handleOpenAddActivity()} className="shadow-sm">
-              <Plus className="w-4 h-4 mr-1.5" />
-              Add Activity / Task
+              <Plus className="w-4 h-4 me-1.5" />
+              {tr("Add Activity / Task")}
             </Button>
           )}
         </div>
@@ -680,43 +694,43 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
         <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white shadow-2xs">
           <div className="space-y-0.5">
-            <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Total</span>
+            <span className="text-[0.625rem] font-medium text-slate-500 uppercase tracking-wider">{tr("Total")}</span>
             <div className="text-base font-bold text-slate-900 leading-none">{metrics.total}</div>
           </div>
-          <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60">
-            {metrics.overallProgress}%
+          <span className="text-[0.625rem] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60">
+            {tr(metrics.overallProgress)}%
           </span>
         </div>
 
         <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white shadow-2xs">
           <div className="space-y-0.5">
-            <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">To Do</span>
-            <div className="text-base font-bold text-blue-600 leading-none">{metrics.todo}</div>
+            <span className="text-[0.625rem] font-medium text-slate-500 uppercase tracking-wider">{tr("To Do")}</span>
+            <div className="text-base font-bold text-blue-600 leading-none">{tr(metrics.todo)}</div>
           </div>
           <div className="w-2 h-2 rounded-full bg-blue-500" />
         </div>
 
         <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white shadow-2xs">
           <div className="space-y-0.5">
-            <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">In Progress</span>
-            <div className="text-base font-bold text-amber-600 leading-none">{metrics.inProgress}</div>
+            <span className="text-[0.625rem] font-medium text-slate-500 uppercase tracking-wider">{tr("In Progress")}</span>
+            <div className="text-base font-bold text-amber-600 leading-none">{tr(metrics.inProgress)}</div>
           </div>
           <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
         </div>
 
         <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white shadow-2xs">
           <div className="space-y-0.5">
-            <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Completed</span>
-            <div className="text-base font-bold text-emerald-600 leading-none">{metrics.completed}</div>
+            <span className="text-[0.625rem] font-medium text-slate-500 uppercase tracking-wider">{tr("Completed")}</span>
+            <div className="text-base font-bold text-emerald-600 leading-none">{tr(metrics.completed)}</div>
           </div>
           <div className="w-2 h-2 rounded-full bg-emerald-500" />
         </div>
 
         <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white shadow-2xs">
           <div className="space-y-0.5">
-            <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Overdue</span>
+            <span className="text-[0.625rem] font-medium text-slate-500 uppercase tracking-wider">{tr("Overdue")}</span>
             <div className={cn('text-base font-bold leading-none', metrics.overdue > 0 ? 'text-rose-600 font-extrabold' : 'text-slate-900')}>
-              {metrics.overdue}
+              {tr(metrics.overdue)}
             </div>
           </div>
           <div className={cn('w-2 h-2 rounded-full', metrics.overdue > 0 ? 'bg-rose-500' : 'bg-slate-300')} />
@@ -727,13 +741,13 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]">
         <div className="flex flex-wrap items-center gap-2.5 flex-1">
           {/* Live Search */}
-          <div className="relative min-w-[200px] flex-1 max-w-xs">
+          <div className="relative min-w-[12.5rem] flex-1 max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
             <Input
-              placeholder="Search tasks, packages, assignees..."
+              placeholder={tr("Search tasks, packages, assignees...")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 text-xs"
+              className="ps-9 h-9 text-xs"
             />
           </div>
 
@@ -743,10 +757,10 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
             value={filterPackage}
             onChange={(e) => setFilterPackage(e.target.value)}
           >
-            <option value="all">All WBS ({wbsPackages.length})</option>
+            <option value="all">{tr("All WBS (")}{wbsPackages.length})</option>
             {wbsPackages.map((pkg) => (
               <option key={pkg.id || pkg._id} value={pkg.id || pkg._id}>
-                {pkg.name}
+                {tr(pkg.name)}
               </option>
             ))}
           </select>
@@ -757,11 +771,11 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value)}
           >
-            <option value="all">All Priorities</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="critical">Critical</option>
+            <option value="all">{tr("All Priorities")}</option>
+            <option value="low">{tr("Low")}</option>
+            <option value="medium">{tr("Medium")}</option>
+            <option value="high">{tr("High")}</option>
+            <option value="critical">{tr("Critical")}</option>
           </select>
 
           {/* Assignee Filter */}
@@ -770,10 +784,10 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
             value={filterAssignee}
             onChange={(e) => setFilterAssignee(e.target.value)}
           >
-            <option value="all">All Assignees</option>
+            <option value="all">{tr("All Assignees")}</option>
             {projectMembers.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.name} ({m.role})
+                {tr(m.name)} ({tr(m.role)})
               </option>
             ))}
           </select>
@@ -784,25 +798,25 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
           >
-            <option value="all">All Statuses</option>
-            <option value="todo">To Do</option>
-            <option value="in_progress">In Progress</option>
-            <option value="completed">Completed</option>
+            <option value="all">{tr("All Statuses")}</option>
+            <option value="todo">{tr("To Do")}</option>
+            <option value="in_progress">{tr("In Progress")}</option>
+            <option value="completed">{tr("Completed")}</option>
           </select>
         </div>
 
         {/* View Switchers & Sort */}
         <div className="flex items-center gap-2 border-t lg:border-t-0 pt-2 lg:pt-0 border-[hsl(var(--border))]">
           <div className="flex items-center gap-1">
-            <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))] mr-1">Sort</span>
+            <span className="text-[0.625rem] uppercase font-bold text-[hsl(var(--muted-foreground))] me-1">{tr("Sort")}</span>
             <select
               className="h-8 px-2.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none"
               value={sortBy}
               onChange={(e: any) => setSortBy(e.target.value)}
             >
-              <option value="dueDate">Due Date</option>
-              <option value="priority">Priority</option>
-              <option value="name">Task Name</option>
+              <option value="dueDate">{tr("Due Date")}</option>
+              <option value="priority">{tr("Priority")}</option>
+              <option value="name">{tr("Task Name")}</option>
             </select>
           </div>
 
@@ -817,7 +831,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                   : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
               )}
             >
-              <Layers className="w-3.5 h-3.5 text-blue-600" /> By WBS
+              <Layers className="w-3.5 h-3.5 text-blue-600" />{tr(" By WBS")}
             </button>
             <button
               type="button"
@@ -829,7 +843,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                   : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
               )}
             >
-              <CheckSquare className="w-3.5 h-3.5 text-blue-600" /> Table List
+              <CheckSquare className="w-3.5 h-3.5 text-blue-600" />{tr(" Table List")}
             </button>
           </div>
         </div>
@@ -839,20 +853,20 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
       {loading ? (
         <div className="py-20 flex flex-col items-center justify-center gap-3">
           <Loader2 className="w-7 h-7 animate-spin text-[hsl(var(--primary))]" />
-          <p className="text-xs text-[hsl(var(--muted-foreground))]">Loading execution schedule...</p>
+          <p className="text-xs text-[hsl(var(--muted-foreground))]">{tr("Loading execution schedule...")}</p>
         </div>
       ) : filteredTasks.length === 0 ? (
         <div className="py-16 text-center border border-dashed border-[hsl(var(--border))] rounded-2xl bg-[hsl(var(--card))]">
           <Layers className="w-10 h-10 text-[hsl(var(--muted-foreground))] mx-auto mb-3 opacity-40" />
-          <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">No Activities Found</h3>
+          <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">{tr("No Activities Found")}</h3>
           <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-sm mx-auto mt-1">
             {searchQuery || filterPriority !== 'all' || filterPackage !== 'all'
-              ? 'Try changing your filters or search query.'
-              : 'Start organizing your site tasks by creating the first activity.'}
+              ? tr("Try changing your filters or search query.")
+              : tr("Start organizing your site tasks by creating the first activity.")}
           </p>
           {canDo('tasks', 'create') && (
             <Button className="mt-4" onClick={() => handleOpenAddActivity()}>
-              <Plus className="w-4 h-4 mr-1.5" /> Add First Task
+              <Plus className="w-4 h-4 me-1.5" />{tr(" Add First Task")}
             </Button>
           )}
         </div>
@@ -864,17 +878,17 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
           {viewMode === 'list' && (
             <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))]">
+                <table className="w-full text-start text-xs">
+                  <thead className="bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] text-[0.625rem] uppercase font-bold text-[hsl(var(--muted-foreground))]">
                     <tr>
-                      <th className="py-3 px-4">Task Name</th>
-                      <th className="py-3 px-4">WBS Package / Trade</th>
-                      <th className="py-3 px-4">Status</th>
-                      <th className="py-3 px-4">Priority</th>
-                      <th className="py-3 px-4">Proof of Work</th>
-                      <th className="py-3 px-4">Assignee</th>
-                      <th className="py-3 px-4">Due Date</th>
-                      <th className="py-3 px-4 text-right">Actions</th>
+                      <th className="py-3 px-4">{tr("Task Name")}</th>
+                      <th className="py-3 px-4">{tr("WBS Package / Trade")}</th>
+                      <th className="py-3 px-4">{tr("Status")}</th>
+                      <th className="py-3 px-4">{tr("Priority")}</th>
+                      <th className="py-3 px-4">{tr("Proof of Work")}</th>
+                      <th className="py-3 px-4">{tr("Assignee")}</th>
+                      <th className="py-3 px-4">{tr("Due Date")}</th>
+                      <th className="py-3 px-4 text-end">{tr("Actions")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[hsl(var(--border))]">
@@ -893,19 +907,19 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                           onClick={() => handleSelectTask(task)}
                         >
                           <td className="py-3 px-4 font-semibold text-[hsl(var(--foreground))] max-w-xs">
-                            <span className="truncate">{task.name}</span>
+                            <span className="truncate">{tr(task.name)}</span>
                           </td>
 
-                          <td className="py-3 px-4 font-mono text-[11px] text-[hsl(var(--muted-foreground))]">
+                          <td className="py-3 px-4 font-mono text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
                             <span className="px-2 py-0.5 rounded bg-[hsl(var(--muted))]">
-                              {task.packageId?.name ? `${task.packageId.name} (${task.packageId.trade})` : 'Unassigned'}
+                              {task.packageId?.name ? `${task.packageId.name} (${task.packageId.trade})` : tr("Unassigned")}
                             </span>
                           </td>
 
                           <td className="py-3 px-4">
                             <span
                               className={cn(
-                                'px-2.5 py-1 text-[11px] font-bold rounded-md inline-flex items-center gap-1.5 border',
+                                'px-2.5 py-1 text-[0.6875rem] font-bold rounded-md inline-flex items-center gap-1.5 border',
                                 task.status === 'completed'
                                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                   : task.status === 'in_progress'
@@ -919,35 +933,35 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                                   task.status === 'completed' ? 'bg-emerald-500' : task.status === 'in_progress' ? 'bg-amber-500 animate-pulse' : 'bg-blue-500'
                                 )}
                               />
-                              {task.status === 'completed' ? 'Completed' : task.status === 'in_progress' ? 'In Progress' : 'To Do'}
+                              {task.status === 'completed' ? tr("Completed") : task.status === 'in_progress' ? tr("In Progress") : tr("To Do")}
                             </span>
                           </td>
 
                           <td className="py-3 px-4">
-                            <span className={cn('px-2 py-0.5 text-[10px] font-bold rounded-md uppercase', priority.color)}>
-                              {priority.label}
+                            <span className={cn('px-2 py-0.5 text-[0.625rem] font-bold rounded-md uppercase', priority.color)}>
+                              {tr(priority.label)}
                             </span>
                           </td>
 
                           <td className="py-3 px-4">
                             {hasProof ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <Camera className="w-3 h-3" /> {task.completionProof.images.length} Photos
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[0.625rem] font-bold rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <Camera className="w-3 h-3" /> {task.completionProof.images.length}{tr(" Photos")}
                               </span>
                             ) : task.status === 'completed' ? (
-                              <span className="text-[10px] text-emerald-600 font-semibold">Done</span>
+                              <span className="text-[0.625rem] text-emerald-600 font-semibold">{tr("Done")}</span>
                             ) : (
-                              <span className="text-[11px] text-[hsl(var(--muted-foreground))]">—</span>
+                              <span className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">—</span>
                             )}
                           </td>
 
                           <td className="py-3 px-4">
                             {assignee ? (
                               <span className="font-medium text-[hsl(var(--foreground))]">
-                                {assignee.firstName} {assignee.lastName}
+                                {tr(assignee.firstName)} {tr(assignee.lastName)}
                               </span>
                             ) : (
-                              <span className="text-[hsl(var(--muted-foreground))] italic">Unassigned</span>
+                              <span className="text-[hsl(var(--muted-foreground))] italic">{tr("Unassigned")}</span>
                             )}
                           </td>
 
@@ -957,27 +971,27 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                             </span>
                           </td>
 
-                          <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                          <td className="py-3 px-4 text-end" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-end gap-1.5">
                               {task.status !== 'completed' ? (
                                 canDo('tasks', 'update') && (
                                   <button
                                     type="button"
                                     onClick={() => initiateCompleteTask(task)}
-                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
-                                    title="Complete Activity with Proof of Work"
+                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[0.6875rem] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
+                                    title={tr("Complete Activity with Proof of Work")}
                                   >
-                                    <Camera className="w-3 h-3 text-emerald-600" /> Complete with Proof
+                                    <Camera className="w-3 h-3 text-emerald-600" />{tr(" Complete with Proof")}
                                   </button>
                                 )
                               ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                  <CheckCircle2 className="w-3 h-3" /> Completed
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[0.625rem] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  <CheckCircle2 className="w-3 h-3" />{tr(" Completed")}
                                 </span>
                               )}
                               <button
                                 type="button"
-                                title="View Task Details"
+                                title={tr("View Task Details")}
                                 className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 transition-colors cursor-pointer shadow-2xs"
                                 onClick={() => handleSelectTask(task)}
                               >
@@ -986,7 +1000,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                               {canDo('tasks', 'update') && (
                                 <button
                                   type="button"
-                                  title="Edit Activity"
+                                  title={tr("Edit Activity")}
                                   className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-amber-600 hover:bg-amber-50 border border-slate-200 hover:border-amber-200 transition-colors cursor-pointer shadow-2xs"
                                   onClick={(e) => handleOpenEditActivity(task, e)}
                                 >
@@ -996,7 +1010,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                               {canDo('tasks', 'delete') && (
                                 <button
                                   type="button"
-                                  title="Delete Task"
+                                  title={tr("Delete Task")}
                                   className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-colors cursor-pointer shadow-2xs"
                                   onClick={(e) => handleDeleteTaskDirect(task, e)}
                                 >
@@ -1043,24 +1057,24 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                         </div>
                         <div>
                           <h4 className="text-sm font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
-                            {group.package.name}
+                            {tr(group.package.name)}
                             {group.package.trade && (
-                              <span className="text-[10px] font-mono uppercase bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-1.5 py-0.5 rounded">
-                                {group.package.trade}
+                              <span className="text-[0.625rem] font-mono uppercase bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-1.5 py-0.5 rounded">
+                                {tr(group.package.trade)}
                               </span>
                             )}
                           </h4>
                           {group.package.description ? (
-                            <p className="text-[11px] text-[hsl(var(--muted-foreground))]">{group.package.description}</p>
+                            <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">{tr(group.package.description)}</p>
                           ) : (
-                            <p className="text-[11px] text-[hsl(var(--muted-foreground))]">{group.tasks.length} activit{group.tasks.length === 1 ? 'y' : 'ies'}</p>
+                            <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">{group.tasks.length}{tr(" activit")}{group.tasks.length === 1 ? 'y' : tr("ies")}</p>
                           )}
                         </div>
                       </div>
 
                       <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <span className="text-xs font-bold text-[hsl(var(--foreground))]">{completedInGroup}/{group.tasks.length} Done</span>
+                        <div className="text-end">
+                          <span className="text-xs font-bold text-[hsl(var(--foreground))]">{tr(completedInGroup)}/{group.tasks.length}{tr(" Done")}</span>
                           <div className="w-24 h-1.5 bg-[hsl(var(--muted))] rounded-full overflow-hidden mt-1">
                             <div className="h-full bg-emerald-500 transition-all" style={{ width: `${pkgProgress}%` }} />
                           </div>
@@ -1073,14 +1087,14 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                       <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 border-t border-[hsl(var(--border))]">
                         {group.tasks.length === 0 ? (
                           <div className="p-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 flex items-center justify-between col-span-full text-xs text-slate-500">
-                            <span>No activities in this WBS package yet.</span>
+                            <span>{tr("No activities in this WBS package yet.")}</span>
                             {canDo('tasks', 'create') && (
                               <button
                                 type="button"
                                 onClick={() => handleOpenAddActivity(group.package.id)}
                                 className="text-blue-600 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
                               >
-                                <Plus size={12} /> Add First Activity
+                                <Plus size={12} />{tr(" Add First Activity")}
                               </button>
                             )}
                           </div>
@@ -1092,19 +1106,19 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                               onClick={() => handleSelectTask(task)}
                             >
                               <div className="flex items-center justify-between">
-                                <span className={cn('px-1.5 py-0.2 text-[9px] font-bold rounded uppercase', priorityConfig[task.priority]?.color)}>
-                                  {task.priority}
+                                <span className={cn('px-1.5 py-0.2 text-[0.5625rem] font-bold rounded uppercase', priorityConfig[task.priority]?.color)}>
+                                  {tr(task.priority)}
                                 </span>
-                                <span className="text-[10px] font-semibold uppercase text-[hsl(var(--muted-foreground))]">
-                                  {task.status.replace('_', ' ')}
+                                <span className="text-[0.625rem] font-semibold uppercase text-[hsl(var(--muted-foreground))]">
+                                  {tr(task.status.replace('_', ' '))}
                                 </span>
                               </div>
-                              <h5 className="text-xs font-bold text-[hsl(var(--foreground))] truncate">{task.name}</h5>
-                              <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-100">
-                                <span className="font-medium text-slate-600 truncate max-w-[120px]">
-                                  {task.assignees?.[0] ? `${task.assignees[0].firstName || ''} ${task.assignees[0].lastName || ''}`.trim() : 'Unassigned'}
+                              <h5 className="text-xs font-bold text-[hsl(var(--foreground))] truncate">{tr(task.name)}</h5>
+                              <div className="flex items-center justify-between text-[0.625rem] text-slate-500 pt-1 border-t border-slate-100">
+                                <span className="font-medium text-slate-600 truncate max-w-[7.5rem]">
+                                  {task.assignees?.[0] ? `${task.assignees[0].firstName || ''} ${task.assignees[0].lastName || ''}`.trim() : tr("Unassigned")}
                                 </span>
-                                <span>{task.endDate ? new Date(task.endDate).toLocaleDateString('en-IN') : 'No date'}</span>
+                                <span>{task.endDate ? new Date(task.endDate).toLocaleDateString('en-IN') : tr("No date")}</span>
                               </div>
 
                               <div className="flex items-center justify-between gap-1 pt-2 border-t border-slate-100" onClick={(e) => e.stopPropagation()}>
@@ -1113,21 +1127,21 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                                     <button
                                       type="button"
                                       onClick={() => initiateCompleteTask(task)}
-                                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[0.6875rem] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
                                     >
-                                      <Camera className="w-3 h-3 text-emerald-600" /> Complete with Proof
+                                      <Camera className="w-3 h-3 text-emerald-600" />{tr(" Complete with Proof")}
                                     </button>
                                   )
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    <CheckCircle2 className="w-3 h-3" /> Completed
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[0.625rem] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <CheckCircle2 className="w-3 h-3" />{tr(" Completed")}
                                   </span>
                                 )}
 
                                 <div className="flex items-center gap-1">
                                   <button
                                     type="button"
-                                    title="View Task Details"
+                                    title={tr("View Task Details")}
                                     onClick={() => handleSelectTask(task)}
                                     className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 transition-colors cursor-pointer shadow-2xs"
                                   >
@@ -1136,7 +1150,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                                   {canDo('tasks', 'update') && (
                                     <button
                                       type="button"
-                                      title="Edit Activity"
+                                      title={tr("Edit Activity")}
                                       onClick={(e) => handleOpenEditActivity(task, e)}
                                       className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-amber-600 hover:bg-amber-50 border border-slate-200 hover:border-amber-200 transition-colors cursor-pointer shadow-2xs"
                                     >
@@ -1146,7 +1160,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                                   {canDo('tasks', 'delete') && (
                                     <button
                                       type="button"
-                                      title="Delete Task"
+                                      title={tr("Delete Task")}
                                       onClick={(e) => handleDeleteTaskDirect(task, e)}
                                       className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-colors cursor-pointer shadow-2xs"
                                     >
@@ -1188,10 +1202,10 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-slate-900">
-                      {activityModalMode === 'create' ? 'Add Activity / Task' : 'Edit Activity / Task'}
+                      {activityModalMode === 'create' ? tr("Add Activity / Task") : tr("Edit Activity / Task")}
                     </h3>
                     <p className="text-xs text-slate-500">
-                      {activityModalMode === 'create' ? 'Schedule actionable work under WBS' : 'Update execution details'}
+                      {activityModalMode === 'create' ? tr("Schedule actionable work under WBS") : tr("Update execution details")}
                     </p>
                   </div>
                 </div>
@@ -1210,9 +1224,9 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                   <div className="flex items-center gap-2.5 p-3 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-900">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                     <div className="text-xs">
-                      <span className="font-bold">Completed Activity (Locked)</span>
-                      <p className="text-[11px] text-emerald-700 mt-0.5">
-                        This activity has been marked as completed and verified. Planning dates, trade scope, and details are locked.
+                      <span className="font-bold">{tr("Completed Activity (Locked)")}</span>
+                      <p className="text-[0.6875rem] text-emerald-700 mt-0.5">
+                        {tr("This activity has been marked as completed and verified. Planning dates, trade scope, and details are locked.")}
                       </p>
                     </div>
                   </div>
@@ -1221,7 +1235,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                 {/* WBS Package Selector */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-800 flex items-center gap-1">
-                    <span>WBS Package / Element</span>
+                    <span>{tr("WBS Package / Element")}</span>
                     <span className="text-rose-500">*</span>
                   </label>
                   <select
@@ -1231,10 +1245,10 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                     value={activityPackageId}
                     onChange={(e) => setActivityPackageId(e.target.value)}
                   >
-                    <option value="">Select WBS Element...</option>
+                    <option value="">{tr("Select WBS Element...")}</option>
                     {wbsPackages.map((pkg) => (
                       <option key={pkg.id || pkg._id} value={pkg.id || pkg._id}>
-                        {pkg.name}
+                        {tr(pkg.name)}
                       </option>
                     ))}
                   </select>
@@ -1243,13 +1257,13 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                 {/* 1. Activity Name * */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-800 flex items-center gap-1">
-                    <span>Activity Name</span>
+                    <span>{tr("Activity Name")}</span>
                     <span className="text-rose-500">*</span>
                   </label>
                   <Input
                     required
                     disabled={activityModalMode === 'edit' && activityStatus === 'completed'}
-                    placeholder="e.g. Base Cabinet Framing & Fitting"
+                    placeholder={tr("e.g. Base Cabinet Framing & Fitting")}
                     value={activityName}
                     onChange={(e) => setActivityName(e.target.value)}
                     className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 font-medium shadow-2xs disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
@@ -1258,11 +1272,11 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
 
                 {/* 2. Description */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-800">Description / Work Scope</label>
+                  <label className="text-xs font-semibold text-slate-800">{tr("Description / Work Scope")}</label>
                   <textarea
                     rows={2}
                     disabled={activityModalMode === 'edit' && activityStatus === 'completed'}
-                    placeholder="Provide specific execution details..."
+                    placeholder={tr("Provide specific execution details...")}
                     value={activityDescription}
                     onChange={(e) => setActivityDescription(e.target.value)}
                     className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 resize-none font-normal leading-relaxed shadow-2xs disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
@@ -1272,48 +1286,48 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                 {/* 3. Priority, Status & Assignee */}
                 <div className={cn('grid gap-3', activityModalMode === 'edit' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2')}>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-800">Priority</label>
+                    <label className="text-xs font-semibold text-slate-800">{tr("Priority")}</label>
                     <select
                       disabled={activityModalMode === 'edit' && activityStatus === 'completed'}
                       className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 font-medium shadow-2xs cursor-pointer disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
                       value={activityPriority}
                       onChange={(e) => setActivityPriority(e.target.value)}
                     >
-                      <option value="low">Low Priority</option>
-                      <option value="medium">Medium Priority</option>
-                      <option value="high">High Priority</option>
-                      <option value="critical">Critical Path</option>
+                      <option value="low">{tr("Low Priority")}</option>
+                      <option value="medium">{tr("Medium Priority")}</option>
+                      <option value="high">{tr("High Priority")}</option>
+                      <option value="critical">{tr("Critical Path")}</option>
                     </select>
                   </div>
 
                   {activityModalMode === 'edit' && (
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-800">Status</label>
+                      <label className="text-xs font-semibold text-slate-800">{tr("Status")}</label>
                       <select
                         disabled={activityModalMode === 'edit' && activityStatus === 'completed'}
                         className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 font-medium shadow-2xs cursor-pointer disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
                         value={activityStatus}
                         onChange={(e) => setActivityStatus(e.target.value)}
                       >
-                        <option value="todo">To Do</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="completed">Completed</option>
+                        <option value="todo">{tr("To Do")}</option>
+                        <option value="in_progress">{tr("In Progress")}</option>
+                        <option value="completed">{tr("Completed")}</option>
                       </select>
                     </div>
                   )}
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-800">Assignee</label>
+                    <label className="text-xs font-semibold text-slate-800">{tr("Assignee")}</label>
                     <select
                       disabled={activityModalMode === 'edit' && activityStatus === 'completed'}
                       className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 font-medium shadow-2xs cursor-pointer disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
                       value={activityAssigneeId}
                       onChange={(e) => setActivityAssigneeId(e.target.value)}
                     >
-                      <option value="">Unassigned</option>
+                      <option value="">{tr("Unassigned")}</option>
                       {projectMembers.map((m) => (
                         <option key={m.id} value={m.id}>
-                          {m.name} ({m.role})
+                          {tr(m.name)} ({tr(m.role)})
                         </option>
                       ))}
                     </select>
@@ -1329,17 +1343,17 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                   return (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold text-slate-900 tracking-tight">Planning Dates</label>
+                        <label className="text-xs font-bold text-slate-900 tracking-tight">{tr("Planning Dates")}</label>
                         {(wbsMinDate || wbsMaxDate) && (
-                          <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                            WBS Scope: {wbsMinDate || 'Any'} to {wbsMaxDate || 'Any'}
+                          <span className="text-[0.625rem] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                            {tr("WBS Scope: ")}{wbsMinDate || tr("Any")}{tr(" to ")}{wbsMaxDate || tr("Any")}
                           </span>
                         )}
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1">
-                          <span className="text-[11px] font-medium text-slate-600">Start Date</span>
+                          <span className="text-[0.6875rem] font-medium text-slate-600">{tr("Start Date")}</span>
                           <Input
                             type="date"
                             disabled={activityModalMode === 'edit' && activityStatus === 'completed'}
@@ -1352,7 +1366,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                         </div>
 
                         <div className="space-y-1">
-                          <span className="text-[11px] font-medium text-slate-600">End Date</span>
+                          <span className="text-[0.6875rem] font-medium text-slate-600">{tr("End Date")}</span>
                           <Input
                             type="date"
                             disabled={activityModalMode === 'edit' && activityStatus === 'completed'}
@@ -1384,14 +1398,14 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs font-bold text-purple-950 flex items-center gap-1">
-                          <MilestoneIcon size={12} className="text-purple-600" /> Mark as Milestone Activity
+                          <MilestoneIcon size={12} className="text-purple-600" />{tr(" Mark as Milestone Activity")}
                         </span>
-                        <span className="px-1.5 py-0.2 text-[9px] font-bold rounded uppercase bg-purple-100 text-purple-700">
-                          Milestones Tab
+                        <span className="px-1.5 py-0.2 text-[0.5625rem] font-bold rounded uppercase bg-purple-100 text-purple-700">
+                          {tr("Milestones Tab")}
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        Automatically links and displays this activity in the project&apos;s Milestones tracking section.
+                      <p className="text-[0.6875rem] text-slate-500 mt-0.5">
+                        {tr("Automatically links and displays this activity in the project's Milestones tracking section.")}
                       </p>
                     </div>
                   </label>
@@ -1405,7 +1419,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                       onClick={() => setIsActivityModalOpen(false)}
                       className="w-full py-3 px-4 bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200 rounded-full font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs"
                     >
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Activity Completed & Locked — Close
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />{tr(" Activity Completed & Locked — Close")}
                     </button>
                   ) : (
                     <button
@@ -1415,10 +1429,10 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                     >
                       {submittingActivity ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin" /> {activityModalMode === 'create' ? 'Creating Activity...' : 'Saving Changes...'}
+                          <Loader2 className="w-4 h-4 animate-spin" /> {activityModalMode === 'create' ? tr("Creating Activity...") : tr("Saving Changes...")}
                         </>
                       ) : (
-                        activityModalMode === 'create' ? 'Create Activity' : 'Save Changes'
+                        activityModalMode === 'create' ? tr("Create Activity") : tr("Save Changes")
                       )}
                     </button>
                   )}
@@ -1447,8 +1461,8 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                     <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">Complete Task & Proof of Work</h3>
-                    <p className="text-[11px] text-slate-600">Upload site completion and inspection photos</p>
+                    <h3 className="text-base font-bold text-slate-900">{tr("Complete Task & Proof of Work")}</h3>
+                    <p className="text-[0.6875rem] text-slate-600">{tr("Upload site completion and inspection photos")}</p>
                   </div>
                 </div>
                 <button
@@ -1467,13 +1481,13 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                   {/* Task summary header */}
                   <div className="p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.25)] flex items-center justify-between">
                     <div>
-                      <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">{proofTask.name}</h4>
-                      <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-0.5">
-                        {proofTask.packageId?.name ? `${proofTask.packageId.name} (${proofTask.packageId.trade || 'Trade'})` : 'WBS Element'}
+                      <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">{tr(proofTask.name)}</h4>
+                      <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))] mt-0.5">
+                        {proofTask.packageId?.name ? `${proofTask.packageId.name} (${proofTask.packageId.trade || 'Trade'})` : tr("WBS Element")}
                       </p>
                     </div>
-                    <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-100 text-emerald-800 border border-emerald-300 uppercase">
-                      Mark as Completed
+                    <span className="px-2 py-0.5 text-[0.625rem] font-bold rounded bg-emerald-100 text-emerald-800 border border-emerald-300 uppercase">
+                      {tr("Mark as Completed")}
                     </span>
                   </div>
 
@@ -1483,8 +1497,8 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                       <div className="flex items-center gap-2">
                         <Boxes className="w-4 h-4 text-blue-600" />
                         <div>
-                          <label className="text-xs font-bold text-slate-900 block">Link Inventory & Material Usage</label>
-                          <p className="text-[10px] text-slate-500">Record materials and quantities consumed for this activity</p>
+                          <label className="text-xs font-bold text-slate-900 block">{tr("Link Inventory & Material Usage")}</label>
+                          <p className="text-[0.625rem] text-slate-500">{tr("Record materials and quantities consumed for this activity")}</p>
                         </div>
                       </div>
                       <button
@@ -1492,16 +1506,16 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                         onClick={handleAddMaterialUsageRow}
                         className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-2xs transition-colors cursor-pointer"
                       >
-                        <Plus size={13} /> Add Material
+                        <Plus size={13} />{tr(" Add Material")}
                       </button>
                     </div>
 
                     {materialUsages.length === 0 ? (
                       <div className="text-center py-3 border border-dashed border-slate-200 rounded-lg bg-white text-xs text-slate-400">
-                        No materials linked yet. Click &quot;+ Add Material&quot; to log consumed stock.
+                        {tr("No materials linked yet. Click \"+ Add Material\" to log consumed stock.")}
                       </div>
                     ) : (
-                      <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                      <div className="space-y-2 max-h-52 overflow-y-auto pe-1">
                         {materialUsages.map((mat, idx) => (
                           <div key={idx} className="p-2.5 rounded-lg border border-slate-200 bg-white space-y-2 shadow-2xs">
                             <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
@@ -1513,16 +1527,16 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                                     value={mat.inventoryId}
                                     onChange={(e) => handleUpdateMaterialUsage(idx, 'inventoryId', e.target.value)}
                                   >
-                                    <option value="">-- Custom Material --</option>
+                                    <option value="">{tr("-- Custom Material --")}</option>
                                     {inventoryItems.map((inv) => (
                                       <option key={inv._id} value={inv._id}>
-                                        {inv.productName} (In Stock: {Math.max(0, (inv.totalReceived || 0) - (inv.installedQuantity || 0))} {inv.unit})
+                                        {tr(inv.productName)}{tr(" (In Stock: ")}{Math.max(0, (inv.totalReceived || 0) - (inv.installedQuantity || 0))} {tr(inv.unit)})
                                       </option>
                                     ))}
                                   </select>
                                 ) : (
                                   <Input
-                                    placeholder="Material name (e.g. 18mm Plywood)"
+                                    placeholder={tr("Material name (e.g. 18mm Plywood)")}
                                     value={mat.materialName}
                                     onChange={(e) => handleUpdateMaterialUsage(idx, 'materialName', e.target.value)}
                                     className="h-8 text-xs"
@@ -1537,13 +1551,13 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                                     type="number"
                                     min="0.01"
                                     step="any"
-                                    placeholder="Qty"
+                                    placeholder={tr("Qty")}
                                     value={mat.quantity}
                                     onChange={(e) => handleUpdateMaterialUsage(idx, 'quantity', e.target.value)}
                                     className="h-8 text-xs"
                                   />
                                   <Input
-                                    placeholder="Unit"
+                                    placeholder={tr("Unit")}
                                     value={mat.unit}
                                     onChange={(e) => handleUpdateMaterialUsage(idx, 'unit', e.target.value)}
                                     className="h-8 text-xs w-16"
@@ -1557,7 +1571,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                                   type="button"
                                   onClick={() => handleRemoveMaterialUsageRow(idx)}
                                   className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                                  title="Remove material"
+                                  title={tr("Remove material")}
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
@@ -1567,7 +1581,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                               {!mat.inventoryId && inventoryItems.length > 0 && (
                                 <div className="sm:col-span-12">
                                   <Input
-                                    placeholder="Enter custom material name / description"
+                                    placeholder={tr("Enter custom material name / description")}
                                     value={mat.materialName}
                                     onChange={(e) => handleUpdateMaterialUsage(idx, 'materialName', e.target.value)}
                                     className="h-8 text-xs"
@@ -1586,9 +1600,9 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                     <label className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
                         <Camera className="w-4 h-4 text-emerald-600" />
-                        Site Completion Photos ({proofImages.length})
+                        {tr("Site Completion Photos (")}{proofImages.length})
                       </span>
-                      <span className="text-[11px] font-normal text-[hsl(var(--muted-foreground))]">JPG, PNG, WebP</span>
+                      <span className="text-[0.6875rem] font-normal text-[hsl(var(--muted-foreground))]">{tr("JPG, PNG, WebP")}</span>
                     </label>
 
                     <label className={`border-2 border-dashed border-[hsl(var(--border))] rounded-xl p-4 flex flex-col items-center justify-center gap-2 bg-[hsl(var(--background))] transition-all text-center ${
@@ -1601,10 +1615,10 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                       )}
                       <div className="space-y-0.5">
                         <p className="text-xs font-semibold text-[hsl(var(--foreground))]">
-                          {uploadingProofImages ? 'Uploading photos to CDN...' : 'Click or Drag & Drop Site Photos'}
+                          {uploadingProofImages ? tr("Uploading photos to CDN...") : tr("Click or Drag & Drop Site Photos")}
                         </p>
-                        <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                          {uploadingProofImages ? 'Please wait a moment' : 'Upload clear proof of completed work'}
+                        <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
+                          {uploadingProofImages ? tr("Please wait a moment") : tr("Upload clear proof of completed work")}
                         </p>
                       </div>
                       <input
@@ -1630,11 +1644,11 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                               type="button"
                               onClick={() => handleRemoveProofImage(idx)}
                               className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-xs cursor-pointer"
-                              title="Remove photo"
+                              title={tr("Remove photo")}
                             >
                               <X className="w-3 h-3" />
                             </button>
-                            <span className="absolute bottom-1 left-1 px-1.5 py-0.2 bg-black/60 text-white rounded text-[9px] truncate max-w-[90%]">
+                            <span className="absolute bottom-1 left-1 px-1.5 py-0.2 bg-black/60 text-white rounded text-[0.5625rem] truncate max-w-[90%]">
                               {img.name || `Photo ${idx + 1}`}
                             </span>
                           </div>
@@ -1645,10 +1659,10 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
 
                   {/* ── 3. Notes ── */}
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-800">Completion Notes (Optional)</label>
+                    <label className="text-xs font-bold text-slate-800">{tr("Completion Notes (Optional)")}</label>
                     <textarea
                       rows={2}
-                      placeholder="Add any notes, inspection remarks, or quality observations..."
+                      placeholder={tr("Add any notes, inspection remarks, or quality observations...")}
                       value={proofNotes}
                       onChange={(e) => setProofNotes(e.target.value)}
                       className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500"
@@ -1666,15 +1680,15 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                       setProofTask(null);
                     }}
                   >
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                   <Button 
                     type="submit" 
                     disabled={submittingProof || uploadingProofImages} 
                     className="bg-emerald-600 hover:bg-emerald-700 text-white"
                   >
-                    {(submittingProof || uploadingProofImages) && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}
-                    {uploadingProofImages ? 'Uploading Photos...' : submittingProof ? 'Completing Task...' : 'Confirm & Complete Task'}
+                    {(submittingProof || uploadingProofImages) && <Loader2 className="w-4 h-4 animate-spin me-1.5" />}
+                    {uploadingProofImages ? tr("Uploading Photos...") : submittingProof ? tr("Completing Task...") : tr("Confirm & Complete Task")}
                   </Button>
                 </div>
               </form>
@@ -1699,7 +1713,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
               >
                 <X className="w-5 h-5" />
               </button>
-              <img loading="lazy" decoding="async" src={imageLightboxUrl} alt="Proof of Work Full Resolution" className="max-w-full max-h-[85vh] object-contain rounded-lg" />
+              <img loading="lazy" decoding="async" src={imageLightboxUrl} alt={tr("Proof of Work Full Resolution")} className="max-w-full max-h-[85vh] object-contain rounded-lg" />
             </div>
           </div>
         )}
@@ -1725,10 +1739,10 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
               {/* Drawer Header */}
               <div className="p-6 border-b border-[hsl(var(--border))] flex items-center justify-between border-t-0 shrink-0">
                 <div>
-                  <h3 className="text-base font-bold text-[hsl(var(--foreground))]">{selectedTask.name}</h3>
+                  <h3 className="text-base font-bold text-[hsl(var(--foreground))]">{tr(selectedTask.name)}</h3>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5 flex items-center gap-1">
                     <Layers className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
-                    {selectedTask.packageId?.name ? `${selectedTask.packageId.name} (${selectedTask.packageId.trade})` : 'Unassigned WBS Package'}
+                    {selectedTask.packageId?.name ? `${selectedTask.packageId.name} (${selectedTask.packageId.trade})` : tr("Unassigned WBS Package")}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1737,7 +1751,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                       type="button"
                       onClick={() => handleOpenEditActivity(selectedTask)}
                       className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer"
-                      title="Edit Activity"
+                      title={tr("Edit Activity")}
                     >
                       <Edit className="w-4 h-4" />
                     </button>
@@ -1745,7 +1759,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                   <button
                     onClick={() => setSelectedTask(null)}
                     className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                    title="Close"
+                    title={tr("Close")}
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -1756,7 +1770,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                 {/* Status Display & Execution Banner */}
                 <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between gap-4">
                   <div className="space-y-0.5">
-                    <span className="text-[10px] uppercase font-bold text-slate-500">Current Stage</span>
+                    <span className="text-[0.625rem] uppercase font-bold text-slate-500">{tr("Current Stage")}</span>
                     <div className="flex items-center gap-2">
                       <span
                         className={cn(
@@ -1779,17 +1793,17 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                           )}
                         />
                         {selectedTask.status === 'completed'
-                          ? 'Completed'
+                          ? tr("Completed")
                           : selectedTask.status === 'in_progress'
-                          ? 'In Progress (Active)'
-                          : 'To Do (Scheduled)'}
+                          ? tr("In Progress (Active)")
+                          : tr("To Do (Scheduled)")}
                       </span>
-                      <span className="text-[11px] text-slate-500">
+                      <span className="text-[0.6875rem] text-slate-500">
                         {selectedTask.status === 'completed'
-                          ? '• Work finished & verified'
+                          ? tr("• Work finished & verified")
                           : selectedTask.status === 'in_progress'
-                          ? '• Execution in progress'
-                          : '• Awaiting site start'}
+                          ? tr("• Execution in progress")
+                          : tr("• Awaiting site start")}
                       </span>
                     </div>
                   </div>
@@ -1803,11 +1817,11 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                         <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                         <div>
                           <h4 className="text-xs font-bold text-emerald-950 uppercase tracking-wide">
-                            Proof of Work Verified
+                            {tr("Proof of Work Verified")}
                           </h4>
                           {selectedTask.completionProof?.completedAt && (
-                            <p className="text-[10px] text-emerald-700">
-                              Completed on {new Date(selectedTask.completionProof.completedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                            <p className="text-[0.625rem] text-emerald-700">
+                              {tr("Completed on ")}{new Date(selectedTask.completionProof.completedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
                             </p>
                           )}
                         </div>
@@ -1816,19 +1830,19 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-7 text-[11px] px-2 text-emerald-800 hover:bg-emerald-100 border-emerald-300 bg-white"
+                          className="h-7 text-[0.6875rem] px-2 text-emerald-800 hover:bg-emerald-100 border-emerald-300 bg-white"
                           onClick={() => initiateCompleteTask(selectedTask)}
                         >
-                          <Camera className="w-3 h-3 mr-1" />
-                          Update Proof
+                          <Camera className="w-3 h-3 me-1" />
+                          {tr("Update Proof")}
                         </Button>
                       )}
                     </div>
 
                     {selectedTask.completionProof?.images?.length > 0 ? (
                       <div className="space-y-1.5 pt-1">
-                        <span className="text-[10px] uppercase font-bold text-emerald-800 block">
-                          Site Completion Photos ({selectedTask.completionProof.images.length})
+                        <span className="text-[0.625rem] uppercase font-bold text-emerald-800 block">
+                          {tr("Site Completion Photos (")}{selectedTask.completionProof.images.length})
                         </span>
                         <div className="grid grid-cols-3 gap-2">
                           {selectedTask.completionProof.images.map((img: any, idx: number) => (
@@ -1838,15 +1852,15 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                               onClick={() => setImageLightboxUrl(img.url)}
                             >
                               <img loading="lazy" decoding="async" src={img.url} alt={img.name || `Proof ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold gap-1">
-                                <ZoomIn className="w-3.5 h-3.5" /> View Photo
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[0.625rem] font-bold gap-1">
+                                <ZoomIn className="w-3.5 h-3.5" />{tr(" View Photo")}
                               </div>
                             </div>
                           ))}
                         </div>
                       </div>
                     ) : (
-                      <p className="text-[11px] text-emerald-800/80 italic">No site photos attached to this proof.</p>
+                      <p className="text-[0.6875rem] text-emerald-800/80 italic">{tr("No site photos attached to this proof.")}</p>
                     )}
 
                     {/* Material Usage Info in Drawer */}
@@ -1854,16 +1868,16 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                       <div className="space-y-2 p-3 rounded-lg border border-emerald-200 bg-white shadow-2xs mt-2">
                         <div className="flex items-center gap-1.5">
                           <Boxes className="w-3.5 h-3.5 text-emerald-700" />
-                          <h5 className="text-[11px] font-bold text-emerald-950 uppercase tracking-wide">
-                            Materials Consumed ({selectedTask.completionProof.materialUsage.length})
+                          <h5 className="text-[0.6875rem] font-bold text-emerald-950 uppercase tracking-wide">
+                            {tr("Materials Consumed (")}{selectedTask.completionProof.materialUsage.length})
                           </h5>
                         </div>
                         <div className="divide-y divide-slate-100">
                           {selectedTask.completionProof.materialUsage.map((mat: any, mIdx: number) => (
                             <div key={mIdx} className="py-1.5 flex items-center justify-between text-xs">
-                              <span className="font-semibold text-slate-800 truncate">{mat.materialName}</span>
-                              <span className="font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-[11px]">
-                                {mat.quantity} {mat.unit}
+                              <span className="font-semibold text-slate-800 truncate">{tr(mat.materialName)}</span>
+                              <span className="font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-[0.6875rem]">
+                                {mat.quantity} {tr(mat.unit)}
                               </span>
                             </div>
                           ))}
@@ -1876,29 +1890,29 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
                 {/* Metadata Card */}
                 <div className="grid grid-cols-2 gap-3.5 border border-[hsl(var(--border))] p-4 rounded-xl bg-[hsl(var(--card))]">
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))]">Priority</span>
-                    <p className="text-xs font-semibold capitalize text-[hsl(var(--foreground))]">{selectedTask.priority}</p>
+                    <span className="text-[0.625rem] uppercase font-bold text-[hsl(var(--muted-foreground))]">{tr("Priority")}</span>
+                    <p className="text-xs font-semibold capitalize text-[hsl(var(--foreground))]">{tr(selectedTask.priority)}</p>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted-foreground))]">Assignee</span>
+                    <span className="text-[0.625rem] uppercase font-bold text-[hsl(var(--muted-foreground))]">{tr("Assignee")}</span>
                     <p className="text-xs font-semibold text-[hsl(var(--foreground))] truncate">
-                      {selectedTask.assignees?.[0] ? `${selectedTask.assignees[0].firstName || ''} ${selectedTask.assignees[0].lastName || ''}`.trim() || selectedTask.assignees[0].email : 'Unassigned'}
+                      {selectedTask.assignees?.[0] ? `${selectedTask.assignees[0].firstName || ''} ${selectedTask.assignees[0].lastName || ''}`.trim() || selectedTask.assignees[0].email : tr("Unassigned")}
                     </p>
                   </div>
                   <div className="space-y-1 col-span-2 flex items-center gap-2 border-t border-[hsl(var(--border))/0.6] pt-3">
                     <CalendarDays className="w-4 h-4 text-[hsl(var(--primary))]" />
                     <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                      {selectedTask.startDate ? new Date(selectedTask.startDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Start Unset'} —{' '}
-                      {selectedTask.endDate ? new Date(selectedTask.endDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'End Unset'}
+                      {selectedTask.startDate ? new Date(selectedTask.startDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : tr("Start Unset")} —{' '}
+                      {selectedTask.endDate ? new Date(selectedTask.endDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : tr("End Unset")}
                     </span>
                   </div>
                 </div>
 
                 {/* Description */}
                 <div className="space-y-1.5 pt-2 border-t border-[hsl(var(--border))]">
-                  <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">Description</h4>
+                  <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">{tr("Description")}</h4>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] leading-relaxed">
-                    {selectedTask.description || 'No detailed instructions provided.'}
+                    {selectedTask.description || tr("No detailed instructions provided.")}
                   </p>
                 </div>
               </div>
@@ -1907,12 +1921,12 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
               <div className="p-4 border-t border-[hsl(var(--border))] bg-slate-50 flex items-center justify-between">
                 {canDo('tasks', 'delete') && (
                   <Button variant="outline" type="button" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={handleDeleteTask}>
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Task
+                    <Trash2 className="w-4 h-4 me-2" />
+                    {tr("Delete Task")}
                   </Button>
                 )}
                 <Button variant="outline" type="button" onClick={() => setSelectedTask(null)}>
-                  Close
+                  {tr("Close")}
                 </Button>
               </div>
             </motion.div>

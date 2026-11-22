@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -53,22 +54,22 @@ export function InteriorSendToBoqModal({ isOpen, onClose, customerId, onSuccess,
     e.preventDefault();
 
     if (designFiles.length === 0) {
-      toast.error('Cannot pass to BOQ: No drawings found. Please upload and approve drawings first.');
+      toast.error(tr("Cannot pass to BOQ: No drawings found. Please upload and approve drawings first."));
       return;
     }
 
     if (pendingDrawings.length > 0) {
-      toast.error(`Cannot pass to BOQ: ${pendingDrawings.length} drawing(s) are still drafted/pending approval. Please approve all drawings first.`);
+      toast.error(tr("Cannot pass to BOQ: {{pendingDrawingsCount}} drawing(s) are still drafted/pending approval. Please approve all drawings first.", { pendingDrawingsCount: pendingDrawings.length }));
       return;
     }
 
     if (!assignedEstimator) {
-      toast.error('Please assign an estimator / team member for BOQ creation.');
+      toast.error(tr("Please assign an estimator / team member for BOQ creation."));
       return;
     }
 
     if (remarks.trim().length > 500) {
-      toast.error('Handover remarks cannot exceed 500 characters.');
+      toast.error(tr("Handover remarks cannot exceed 500 characters."));
       return;
     }
 
@@ -94,13 +95,13 @@ export function InteriorSendToBoqModal({ isOpen, onClose, customerId, onSuccess,
         }),
       ]);
 
-      toast.success('Lead successfully passed to BOQ Creation!');
+      toast.success(tr("Lead successfully passed to BOQ Creation!"));
       if (onSuccess) {
         onSuccess({ _id: customerId, ...updatePayload });
       }
       onClose();
     } catch (error: any) {
-      toast.error('Failed to send to BOQ');
+      toast.error(tr("Failed to send to BOQ"));
     } finally {
       setIsSubmitting(false);
     }
@@ -128,10 +129,10 @@ export function InteriorSendToBoqModal({ isOpen, onClose, customerId, onSuccess,
               </div>
               <div>
                 <h3 className="text-base font-bold text-slate-900">
-                  Pass to BOQ Creation
+                  {tr("Pass to BOQ Creation")}
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Hand over approved design drawings to estimation for BOQ preparation
+                  {tr("Hand over approved design drawings to estimation for BOQ preparation")}
                 </p>
               </div>
             </div>
@@ -140,7 +141,7 @@ export function InteriorSendToBoqModal({ isOpen, onClose, customerId, onSuccess,
               onClick={onClose} 
               disabled={isSubmitting}
               className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200/60 transition"
-              title="Close modal"
+              title={tr("Close modal")}
             >
               <X className="w-5 h-5" />
             </button>
@@ -152,26 +153,26 @@ export function InteriorSendToBoqModal({ isOpen, onClose, customerId, onSuccess,
               <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl space-y-1">
                 <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
                   <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>Cannot Pass to BOQ — No Drawings Uploaded</span>
+                  <span>{tr("Cannot Pass to BOQ — No Drawings Uploaded")}</span>
                 </div>
-                <p className="text-[11px] text-amber-800 pl-6 leading-relaxed">
-                  Please upload and approve drawings first before passing this lead to the BOQ team.
+                <p className="text-[0.6875rem] text-amber-800 ps-6 leading-relaxed">
+                  {tr("Please upload and approve drawings first before passing this lead to the BOQ team.")}
                 </p>
               </div>
             ) : pendingDrawings.length > 0 ? (
               <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl space-y-1">
                 <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
                   <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>Cannot Pass to BOQ — {pendingDrawings.length} of {designFiles.length} Drawing(s) Not Approved</span>
+                  <span>{tr("Cannot Pass to BOQ — ")}{pendingDrawings.length}{tr(" of ")}{designFiles.length}{tr(" Drawing(s) Not Approved")}</span>
                 </div>
-                <p className="text-[11px] text-amber-800 pl-6 leading-relaxed">
-                  All drafted 2D layouts and 3D models must be internally approved before passing this lead to estimation.
+                <p className="text-[0.6875rem] text-amber-800 ps-6 leading-relaxed">
+                  {tr("All drafted 2D layouts and 3D models must be internally approved before passing this lead to estimation.")}
                 </p>
               </div>
             ) : (
               <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-emerald-800 text-xs font-semibold">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>All {designFiles.length} drawing(s) are approved and ready for BOQ estimation.</span>
+                <span>{tr("All ")}{designFiles.length}{tr(" drawing(s) are approved and ready for BOQ estimation.")}</span>
               </div>
             )}
 
@@ -179,17 +180,17 @@ export function InteriorSendToBoqModal({ isOpen, onClose, customerId, onSuccess,
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <User className="w-3.5 h-3.5 text-teal-600" />
-                Assign Estimator / QS <span className="text-rose-500">*</span>
+                {tr("Assign Estimator / QS ")}<span className="text-rose-500">*</span>
               </label>
               <div className="relative">
                 <select
                   value={assignedEstimator}
                   onChange={e => setAssignedEstimator(e.target.value)}
-                  className="w-full pl-3.5 pr-10 py-2.5 text-sm font-medium rounded-xl border border-slate-300 bg-white text-slate-900 appearance-none focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 shadow-2xs cursor-pointer transition disabled:bg-slate-100 disabled:cursor-not-allowed"
+                  className="w-full ps-3.5 pe-10 py-2.5 text-sm font-medium rounded-xl border border-slate-300 bg-white text-slate-900 appearance-none focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 shadow-2xs cursor-pointer transition disabled:bg-slate-100 disabled:cursor-not-allowed"
                   required
                   disabled={hasPendingDrawings}
                 >
-                  <option value="" className="text-slate-400">-- Select Estimator / Team Member --</option>
+                  <option value="" className="text-slate-400">{tr("-- Select Estimator / Team Member --")}</option>
                   {users.map(u => {
                     const uId = u._id || u.id || u.clerkUserId;
                     return (
@@ -206,8 +207,8 @@ export function InteriorSendToBoqModal({ isOpen, onClose, customerId, onSuccess,
             {/* Handover Remarks */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-800 flex items-center justify-between">
-                <span>Handover Remarks / Costing Notes</span>
-                <span className="text-slate-400 font-normal text-[11px] font-mono">
+                <span>{tr("Handover Remarks / Costing Notes")}</span>
+                <span className="text-slate-400 font-normal text-[0.6875rem] font-mono">
                   {remarks.length}/500
                 </span>
               </label>
@@ -216,7 +217,7 @@ export function InteriorSendToBoqModal({ isOpen, onClose, customerId, onSuccess,
                 maxLength={500}
                 value={remarks}
                 onChange={e => setRemarks(e.target.value)}
-                placeholder="Specific instructions for estimation..."
+                placeholder={tr("Specific instructions for estimation...")}
                 className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 shadow-2xs resize-none transition disabled:bg-slate-100 disabled:cursor-not-allowed"
                 disabled={hasPendingDrawings}
               />
@@ -230,7 +231,7 @@ export function InteriorSendToBoqModal({ isOpen, onClose, customerId, onSuccess,
                 disabled={isSubmitting}
                 className="px-4 py-2 text-sm font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl shadow-2xs transition"
               >
-                Cancel
+                {tr("Cancel")}
               </button>
               
               <button 
@@ -239,7 +240,7 @@ export function InteriorSendToBoqModal({ isOpen, onClose, customerId, onSuccess,
                 className="inline-flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 active:bg-teal-800 shadow-sm shadow-teal-600/20 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Calculator className="w-4 h-4" />
-                {isSubmitting ? 'Passing...' : hasPendingDrawings ? 'Drawings Pending Approval' : 'Pass to BOQ ➔'}
+                {isSubmitting ? tr("Passing...") : hasPendingDrawings ? tr("Drawings Pending Approval") : tr("Pass to BOQ ➔")}
               </button>
             </div>
           </form>

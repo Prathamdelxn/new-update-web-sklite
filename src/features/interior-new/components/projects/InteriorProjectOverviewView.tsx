@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Port of interior-os-frontend's projects/[projectId]/page.tsx (overview),
 // minus permission gating and the 3D .glb model viewer/upload (external
@@ -6,12 +7,13 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { CheckSquare, AlertTriangle, Clock, TrendingUp, Activity, DollarSign, Loader2 } from 'lucide-react';
+import { CheckSquare, AlertTriangle, Clock, TrendingUp, DollarSign, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useQuery } from '@tanstack/react-query';
 
 import { useCurrency } from '@/hooks/useCurrency';
+import InteriorProjectActionItems from './InteriorProjectActionItems';
 
 interface InteriorProjectOverviewViewProps {
   projectId: string;
@@ -121,11 +123,11 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
           <Card className="h-full flex flex-col border border-[hsl(var(--border))]">
             <CardContent className="p-3.5 sm:p-5 flex-1 flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] sm:text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Overall Progress</span>
+                <span className="text-[0.625rem] sm:text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Overall Progress")}</span>
                 <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500" />
               </div>
               <div className="my-2 sm:my-3 flex items-baseline gap-2">
-                <span className="text-xl sm:text-3xl font-extrabold tracking-tight text-[hsl(var(--foreground))]">{project?.progress}%</span>
+                <span className="text-xl sm:text-3xl font-extrabold tracking-tight text-[hsl(var(--foreground))]">{tr(project?.progress)}%</span>
               </div>
               <div className="w-full h-1.5 bg-[hsl(var(--muted))] rounded-full mt-auto overflow-hidden">
                 <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${project?.progress}%` }} />
@@ -138,16 +140,16 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
           <Card onClick={() => router.push(`/interior-new/projects/${projectId}/wbs`)} className="cursor-pointer hover:border-[hsl(var(--primary)/0.3)] h-full flex flex-col border border-[hsl(var(--border))]">
             <CardContent className="p-3.5 sm:p-5 flex-1 flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] sm:text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Tasks Status</span>
+                <span className="text-[0.625rem] sm:text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Tasks Status")}</span>
                 <CheckSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500" />
               </div>
               <div className="my-2 sm:my-3 flex items-baseline gap-1.5 flex-wrap">
                 <span className="text-xl sm:text-3xl font-extrabold tracking-tight text-[hsl(var(--foreground))]">
-                  {taskStats?.completed}/{taskStats?.total}
+                  {tr(taskStats?.completed)}/{taskStats?.total}
                 </span>
-                <span className="text-[10px] sm:text-xs text-[hsl(var(--muted-foreground))]">({taskStats?.remaining} left)</span>
+                <span className="text-[0.625rem] sm:text-xs text-[hsl(var(--muted-foreground))]">({tr(taskStats?.remaining)}{tr(" left)")}</span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-[hsl(var(--muted-foreground))] mt-auto">Completed Tasks scope</p>
+              <p className="text-[0.625rem] sm:text-[0.6875rem] text-[hsl(var(--muted-foreground))] mt-auto">{tr("Completed Tasks scope")}</p>
             </CardContent>
           </Card>
         </div>
@@ -156,16 +158,16 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
           <Card onClick={() => router.push(`/interior-new/projects/${projectId}/milestones`)} className="cursor-pointer hover:border-[hsl(var(--primary)/0.3)] h-full flex flex-col border border-[hsl(var(--border))]">
             <CardContent className="p-3.5 sm:p-5 flex-1 flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] sm:text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Milestones</span>
+                <span className="text-[0.625rem] sm:text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Milestones")}</span>
                 <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500" />
               </div>
               <div className="my-2 sm:my-3 flex items-baseline gap-1.5 flex-wrap">
                 <span className="text-xl sm:text-3xl font-extrabold tracking-tight text-[hsl(var(--foreground))]">
-                  {milestones?.achieved}/{milestones?.total}
+                  {tr(milestones?.achieved)}/{milestones?.total}
                 </span>
-                {milestones?.delayed > 0 && <span className="text-[10px] sm:text-xs font-medium text-red-500">({milestones?.delayed} delayed)</span>}
+                {milestones?.delayed > 0 && <span className="text-[0.625rem] sm:text-xs font-medium text-red-500">({tr(milestones?.delayed)}{tr(" delayed)")}</span>}
               </div>
-              <p className="text-[10px] sm:text-[11px] text-[hsl(var(--muted-foreground))] mt-auto">Checkpoints achieved</p>
+              <p className="text-[0.625rem] sm:text-[0.6875rem] text-[hsl(var(--muted-foreground))] mt-auto">{tr("Checkpoints achieved")}</p>
             </CardContent>
           </Card>
         </div>
@@ -174,31 +176,33 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
           <Card className="h-full flex flex-col border border-[hsl(var(--border))]">
             <CardContent className="p-3.5 sm:p-5 flex-1 flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] sm:text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Contract Budget</span>
+                <span className="text-[0.625rem] sm:text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Contract Budget")}</span>
                 <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600" />
               </div>
               <div className="my-2 sm:my-3 flex items-baseline gap-2">
                 <span className="text-lg sm:text-2xl font-extrabold tracking-tight text-[hsl(var(--foreground))] truncate">{formatBudget(project?.budget?.amount ?? project?.budget ?? project?.totalBudget)}</span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-[hsl(var(--muted-foreground))] mt-auto">Allocated value</p>
+              <p className="text-[0.625rem] sm:text-[0.6875rem] text-[hsl(var(--muted-foreground))] mt-auto">{tr("Allocated value")}</p>
             </CardContent>
           </Card>
         </div>
       </div>
 
+      <InteriorProjectActionItems projectId={projectId} projectStatus={project?.status} />
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <Card className="lg:col-span-2 border border-[hsl(var(--border))]">
           <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
             <div>
-              <h3 className="text-sm sm:text-base font-bold text-[hsl(var(--foreground))]">Scope Breakdown</h3>
-              <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">Task distribution across workflow columns</p>
+              <h3 className="text-sm sm:text-base font-bold text-[hsl(var(--foreground))]">{tr("Scope Breakdown")}</h3>
+              <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{tr("Task distribution across workflow columns")}</p>
             </div>
             <div className="space-y-3 sm:space-y-4">
               {breakdownRows.map((row) => (
                 <div key={row.label} className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-[hsl(var(--foreground))]">{row.label}</span>
-                    <span className="text-[hsl(var(--muted-foreground))]">{row.value || 0} tasks</span>
+                    <span className="font-medium text-[hsl(var(--foreground))]">{tr(row.label)}</span>
+                    <span className="text-[hsl(var(--muted-foreground))]">{row.value || 0}{tr(" tasks")}</span>
                   </div>
                   <div className="w-full h-2 bg-[hsl(var(--muted))] rounded-full overflow-hidden">
                     <div className={`h-full rounded-full ${row.color}`} style={{ width: `${((row.value || 0) / (taskStats?.total || 1)) * 100}%` }} />
@@ -214,38 +218,20 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
             <CardContent className="p-4 sm:p-5 space-y-3.5 sm:space-y-4">
               <h4 className="text-sm font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
                 <AlertTriangle className="w-4 h-4 text-amber-500" />
-                Quality & Risk Indicators
+                {tr("Quality & Risk Indicators")}
               </h4>
               <div className="space-y-2.5 sm:space-y-3">
                 <div onClick={() => router.push(`/interior-new/projects/${projectId}/snags`)} className="flex items-center justify-between p-2.5 rounded-xl border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)] transition-all cursor-pointer">
-                  <span className="text-xs text-[hsl(var(--muted-foreground))]">Open Snags</span>
-                  <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{quality?.openSnags} snags</span>
+                  <span className="text-xs text-[hsl(var(--muted-foreground))]">{tr("Open Snags")}</span>
+                  <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{tr(quality?.openSnags)}{tr(" snags")}</span>
                 </div>
                 <div onClick={() => router.push(`/interior-new/projects/${projectId}/rfis`)} className="flex items-center justify-between p-2.5 rounded-xl border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)] transition-all cursor-pointer">
-                  <span className="text-xs text-[hsl(var(--muted-foreground))]">Open RFIs</span>
-                  <span className="text-xs font-bold text-blue-600 bg-blue-50  px-2 py-0.5 rounded-full">{quality?.openRFIs} RFIs</span>
+                  <span className="text-xs text-[hsl(var(--muted-foreground))]">{tr("Open RFIs")}</span>
+                  <span className="text-xs font-bold text-blue-600 bg-blue-50  px-2 py-0.5 rounded-full">{tr(quality?.openRFIs)}{tr(" RFIs")}</span>
                 </div>
                 <div onClick={() => router.push(`/interior-new/projects/${projectId}/risks`)} className="flex items-center justify-between p-2.5 rounded-xl border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)] transition-all cursor-pointer">
-                  <span className="text-xs text-[hsl(var(--muted-foreground))]">Critical Risks</span>
-                  <span className="text-xs font-bold text-red-600 bg-red-50  px-2 py-0.5 rounded-full">{quality?.criticalRisks} risks</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border border-[hsl(var(--border))]">
-            <CardContent className="p-4 sm:p-5 space-y-3.5 sm:space-y-4">
-              <h4 className="text-sm font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                <Activity className="w-4 h-4 text-blue-500" />
-                Site Log Feed
-              </h4>
-              <div className="space-y-3">
-                <div className="flex items-start gap-2.5 text-xs text-[hsl(var(--muted-foreground))]">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
-                  <div>
-                    <p className="text-[hsl(var(--foreground))] font-semibold">Project initialized</p>
-                    <p className="text-[10px] mt-0.5">PM set default roles and configuration</p>
-                  </div>
+                  <span className="text-xs text-[hsl(var(--muted-foreground))]">{tr("Critical Risks")}</span>
+                  <span className="text-xs font-bold text-red-600 bg-red-50  px-2 py-0.5 rounded-full">{tr(quality?.criticalRisks)}{tr(" risks")}</span>
                 </div>
               </div>
             </CardContent>

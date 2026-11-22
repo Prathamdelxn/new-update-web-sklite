@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Enterprise Architectural Drawing Studio & Annotation Engine (Light Theme)
@@ -552,7 +553,7 @@ const { can: canDo } = useProjectPermissions(projectId);
 
       const handleError = (err: any) => {
         console.error('3D Load error', err);
-        setLoad3DError('Could not render 3D preview in browser.');
+        setLoad3DError(tr("Could not render 3D preview in browser."));
         setLoading3D(false);
       };
 
@@ -572,7 +573,7 @@ const { can: canDo } = useProjectPermissions(projectId);
         const loader = new GLTFLoader();
         loader.load(activeUrl, (gltf) => handleModelLoaded(gltf.scene), onProgress, handleError);
       } else {
-        setLoad3DError(`Preview unavailable for .${ext.toUpperCase()} files.`);
+        setLoad3DError(tr("Preview unavailable for .{{ext}} files.", { ext: ext.toUpperCase() }));
         setLoading3D(false);
       }
 
@@ -606,7 +607,7 @@ const { can: canDo } = useProjectPermissions(projectId);
     })().catch((err) => {
       console.error('3D engine failed to load', err);
       if (!cancelled) {
-        setLoad3DError('Could not load the 3D viewer. Check your connection and try again.');
+        setLoad3DError(tr("Could not load the 3D viewer. Check your connection and try again."));
         setLoading3D(false);
       }
     });
@@ -756,9 +757,9 @@ const { can: canDo } = useProjectPermissions(projectId);
           size: file.size,
         },
       ]);
-      toast.success('Photo attached');
+      toast.success(tr("Photo attached"));
     } catch (err: any) {
-      toast.error('Failed to attach image');
+      toast.error(tr("Failed to attach image"));
     } finally {
       setIsUploadingImage(false);
       e.target.value = '';
@@ -788,9 +789,9 @@ const { can: canDo } = useProjectPermissions(projectId);
           size: file.size,
         },
       ]);
-      toast.success('Video attached');
+      toast.success(tr("Video attached"));
     } catch (err: any) {
-      toast.error('Failed to attach video');
+      toast.error(tr("Failed to attach video"));
     } finally {
       setIsUploadingVideo(false);
       e.target.value = '';
@@ -800,7 +801,7 @@ const { can: canDo } = useProjectPermissions(projectId);
   const startAudioRecording = async () => {
     try {
       if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-        toast.error('Voice recording is not supported in this browser environment');
+        toast.error(tr("Voice recording is not supported in this browser environment"));
         return;
       }
 
@@ -838,7 +839,7 @@ const { can: canDo } = useProjectPermissions(projectId);
       }, 1000);
     } catch (err: any) {
       console.error('Failed to start recording:', err);
-      toast.error(err?.message || 'Microphone access denied or unavailable');
+      toast.error(err?.message || tr("Microphone access denied or unavailable"));
     }
   };
 
@@ -867,9 +868,9 @@ const { can: canDo } = useProjectPermissions(projectId);
         setAudioPlaybackTime(0);
         setIsPlayingAudio(false);
 
-        toast.success('Audio recorded! Click Play to listen.');
+        toast.success(tr("Audio recorded! Click Play to listen."));
       } catch (err: any) {
-        toast.error('Failed to process recorded audio');
+        toast.error(tr("Failed to process recorded audio"));
       } finally {
         if (mediaRecorderRef.current?.stream) {
           mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
@@ -963,13 +964,13 @@ const { can: canDo } = useProjectPermissions(projectId);
     setRecordedAudioFile(null);
     setAudioDuration(0);
     setAnnoAttachments((prev) => prev.filter((a) => a.type !== 'audio'));
-    toast.success('Voice note removed');
+    toast.success(tr("Voice note removed"));
   };
 
   const handleSaveAnnotation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!annoText.trim() && annoAttachments.length === 0 && !recordedAudioFile && !recordedAudioUrl) {
-      toast.error('Please enter an observation note, record voice, or attach media');
+      toast.error(tr("Please enter an observation note, record voice, or attach media"));
       return;
     }
 
@@ -1158,7 +1159,7 @@ const { can: canDo } = useProjectPermissions(projectId);
         setTimeout(() => {
           setHoveredAnnotationId((curr) => (curr === wasEditing ? null : curr));
         }, 3000);
-        toast.success(`Inspection Pin #${targetPinNumber} updated`);
+        toast.success(tr("Inspection Pin #{{targetPinNumber}} updated", { targetPinNumber: targetPinNumber }));
       } else {
         const createdId = updatedList[updatedList.length - 1]?.id;
         if (createdId) {
@@ -1168,13 +1169,13 @@ const { can: canDo } = useProjectPermissions(projectId);
           }, 3000);
         }
         if (annoType === 'issue' || annoType === 'snag') {
-          toast.success(`Inspection Pin #${targetPinNumber} placed & linked to Snags Register`);
+          toast.success(tr("Inspection Pin #{{targetPinNumber}} placed & linked to Snags Register", { targetPinNumber: targetPinNumber }));
         } else {
-          toast.success(`Inspection Pin #${targetPinNumber} placed`);
+          toast.success(tr("Inspection Pin #{{targetPinNumber}} placed", { targetPinNumber: targetPinNumber }));
         }
       }
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to save annotation');
+      toast.error(err?.message || tr("Failed to save annotation"));
     } finally {
       setIsSubmittingAnno(false);
     }
@@ -1183,11 +1184,11 @@ const { can: canDo } = useProjectPermissions(projectId);
   const handleDeleteAnnotation = async (annoId: string) => {
     const targetAnno = annotations.find((a) => a.id === annoId);
     const confirmed = await confirm({
-      title: 'Delete Inspection Pin',
+      title: tr("Delete Inspection Pin"),
       message: targetAnno?.snagId
-        ? 'Are you sure you want to delete this pin? The corresponding item in the Project Snags Register will also be removed.'
-        : 'Are you sure you want to permanently remove this pin and all attached photos/videos?',
-      confirmText: 'Delete Pin',
+        ? tr("Are you sure you want to delete this pin? The corresponding item in the Project Snags Register will also be removed.")
+        : tr("Are you sure you want to permanently remove this pin and all attached photos/videos?"),
+      confirmText: tr("Delete Pin"),
       type: 'danger',
     });
     if (!confirmed) return;
@@ -1225,9 +1226,9 @@ const { can: canDo } = useProjectPermissions(projectId);
       setAnnotations(updatedList);
       setDrawing((prev: any) => (prev ? { ...prev, annotations: updatedList } : prev));
       if (selectedAnnotation?.id === annoId) setSelectedAnnotation(null);
-      toast.success('Pin removed');
+      toast.success(tr("Pin removed"));
     } catch (err: any) {
-      toast.error('Failed to delete annotation');
+      toast.error(tr("Failed to delete annotation"));
     }
   };
 
@@ -1277,9 +1278,9 @@ const { can: canDo } = useProjectPermissions(projectId);
       if (selectedAnnotation?.id === annoId) {
         setSelectedAnnotation((prev) => (prev ? { ...prev, resolved: nextResolved } : null));
       }
-      toast.success(nextResolved ? 'Marked as Resolved & synced to Snags' : 'Reopened & synced to Snags');
+      toast.success(nextResolved ? tr("Marked as Resolved & synced to Snags") : tr("Reopened & synced to Snags"));
     } catch (err) {
-      toast.error('Failed to update status');
+      toast.error(tr("Failed to update status"));
     }
   };
 
@@ -1292,24 +1293,24 @@ const { can: canDo } = useProjectPermissions(projectId);
         status: newStatus,
       });
       if (res.success) {
-        toast.success(`Status updated: ${newStatus.replace('_', ' ').toUpperCase()}`);
+        toast.success(tr("Status updated: {{value}}", { value: newStatus.replace('_', ' ').toUpperCase() }));
         setDrawing((prev: any) => ({ ...prev, status: newStatus }));
         queryClient.invalidateQueries({ queryKey: ['interior-project-drawings', projectId] });
         refetchDrawings();
       }
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to update status');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || tr("Failed to update status"));
     }
   };
 
   const handleUploadRevision = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!revChanges.trim()) {
-      toast.error('Please describe what changed in this revision');
+      toast.error(tr("Please describe what changed in this revision"));
       return;
     }
     if (!selectedRevFile) {
-      toast.error('Please select a revision file');
+      toast.error(tr("Please select a revision file"));
       return;
     }
 
@@ -1336,7 +1337,7 @@ const { can: canDo } = useProjectPermissions(projectId);
       });
 
       if (res.success) {
-        toast.success('New revision uploaded successfully!');
+        toast.success(tr("New revision uploaded successfully!"));
         setIsRevisionModalOpen(false);
         setRevChanges('');
         setSelectedRevFile(null);
@@ -1344,7 +1345,7 @@ const { can: canDo } = useProjectPermissions(projectId);
         await refetchDrawings();
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.error || err.message || 'Failed to upload revision');
+      toast.error(err.response?.data?.error || err.message || tr("Failed to upload revision"));
     } finally {
       setIsSubmittingRev(false);
     }
@@ -1354,7 +1355,7 @@ const { can: canDo } = useProjectPermissions(projectId);
     if (typeof window !== 'undefined') {
       navigator.clipboard.writeText(window.location.href);
       setCopiedLink(true);
-      toast.success('Drawing viewport link copied');
+      toast.success(tr("Drawing viewport link copied"));
       setTimeout(() => setCopiedLink(false), 2000);
     }
   };
@@ -1458,7 +1459,7 @@ const { can: canDo } = useProjectPermissions(projectId);
     return (
       <div className="flex flex-col items-center justify-center min-h-[75vh] gap-3 font-sans bg-white text-slate-500">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-        <p className="text-xs font-mono font-bold tracking-wider uppercase text-slate-500">Loading Architectural Studio...</p>
+        <p className="text-xs font-mono font-bold tracking-wider uppercase text-slate-500">{tr("Loading Architectural Studio...")}</p>
       </div>
     );
   }
@@ -1470,14 +1471,14 @@ const { can: canDo } = useProjectPermissions(projectId);
           <Layers size={32} />
         </div>
         <div>
-          <h2 className="text-lg font-bold text-slate-900">Drawing Not Found</h2>
-          <p className="text-xs text-slate-500 mt-1">This drawing blueprint may have been removed or renamed.</p>
+          <h2 className="text-lg font-bold text-slate-900">{tr("Drawing Not Found")}</h2>
+          <p className="text-xs text-slate-500 mt-1">{tr("This drawing blueprint may have been removed or renamed.")}</p>
         </div>
         <Link
           href={`/interior-new/projects/${projectId}/drawings`}
           className="px-4 py-2 bg-blue-600 text-white font-bold text-xs rounded-xl shadow-xs"
         >
-          Back to Drawings Register
+          {tr("Back to Drawings Register")}
         </Link>
       </div>
     );
@@ -1491,32 +1492,32 @@ const { can: canDo } = useProjectPermissions(projectId);
           <Link
             href={`/interior-new/projects/${projectId}/drawings`}
             className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all active:scale-95 border border-slate-200 shrink-0"
-            title="Back to Project Drawings"
+            title={tr("Back to Project Drawings")}
           >
             <ArrowLeft size={16} />
           </Link>
 
           <nav className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 min-w-0">
             <Link href="/interior-new/projects" className="hover:text-slate-900 transition-colors shrink-0">
-              Projects
+              {tr("Projects")}
             </Link>
             <span className="text-slate-300">›</span>
             <Link
               href={`/interior-new/projects/${projectId}`}
-              className="hover:text-slate-900 transition-colors truncate max-w-[120px] sm:max-w-[180px]"
+              className="hover:text-slate-900 transition-colors truncate max-w-[7.5rem] sm:max-w-[11.25rem]"
             >
-              {project?.name || 'Project'}
+              {project?.name || tr("Project")}
             </Link>
             <span className="text-slate-300">›</span>
             <Link
               href={`/interior-new/projects/${projectId}/drawings`}
               className="hover:text-slate-900 transition-colors shrink-0"
             >
-              2D/3D Drawings
+              {tr("2D/3D Drawings")}
             </Link>
             <span className="text-slate-300">›</span>
-            <span className="text-slate-900 font-bold truncate max-w-[160px] sm:max-w-[280px]">
-              {activeTitle}
+            <span className="text-slate-900 font-bold truncate max-w-[10rem] sm:max-w-[17.5rem]">
+              {tr(activeTitle)}
             </span>
           </nav>
         </div>
@@ -1531,7 +1532,7 @@ const { can: canDo } = useProjectPermissions(projectId);
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-xs cursor-pointer"
             >
               <Send size={13} />
-              <span>Send for Approval</span>
+              <span>{tr("Send for Approval")}</span>
             </button>
           )}
 
@@ -1547,7 +1548,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-xs cursor-pointer"
                 >
                   <CheckCircle2 size={13} />
-                  <span>Approve (v{activeVersionNum})</span>
+                  <span>{tr("Approve (v")}{tr(activeVersionNum)})</span>
                 </button>
               )}
               {canDo('drawings', 'approve') && (
@@ -1560,7 +1561,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 transition-all cursor-pointer"
                 >
                   <XCircle size={13} />
-                  <span>Reject</span>
+                  <span>{tr("Reject")}</span>
                 </button>
               )}
             </div>
@@ -1573,7 +1574,7 @@ const { can: canDo } = useProjectPermissions(projectId);
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white transition-all shadow-xs cursor-pointer"
             >
               <UploadCloud size={13} />
-              <span>+ Upload Revision (v{allVersions.length + 1})</span>
+              <span>{tr("+ Upload Revision (v")}{allVersions.length + 1})</span>
             </button>
           )}
 
@@ -1590,7 +1591,7 @@ const { can: canDo } = useProjectPermissions(projectId);
             )}
           >
             <MessageSquare size={14} />
-            <span>Pins ({currentVersionAnnotations.length})</span>
+            <span>{tr("Pins (")}{currentVersionAnnotations.length})</span>
           </button>
 
           <button
@@ -1606,7 +1607,7 @@ const { can: canDo } = useProjectPermissions(projectId);
             )}
           >
             <History size={14} />
-            <span>Audit ({allVersions.length})</span>
+            <span>{tr("Audit (")}{allVersions.length})</span>
           </button>
         </div>
       </header>
@@ -1616,7 +1617,7 @@ const { can: canDo } = useProjectPermissions(projectId);
         {/* Left: Versions Selector */}
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs font-semibold text-slate-500 flex items-center gap-1.5 mr-1">
-            <Layers size={13} className="text-slate-400" /> Revisions:
+            <Layers size={13} className="text-slate-400" />{tr(" Revisions:")}
           </span>
 
           <div className="flex items-center gap-1.5">
@@ -1641,10 +1642,10 @@ const { can: canDo } = useProjectPermissions(projectId);
                       ver.status === 'approved' ? 'bg-emerald-400' : 'bg-blue-400'
                     )}
                   />
-                  <span>v{ver.versionNumber}</span>
+                  <span>v{tr(ver.versionNumber)}</span>
                   {isLatest && (
-                    <span className="text-[9px] px-1 py-0.2 rounded font-black uppercase tracking-wider bg-white/20 text-white">
-                      LATEST
+                    <span className="text-[0.5625rem] px-1 py-0.2 rounded font-black uppercase tracking-wider bg-white/20 text-white">
+                      {tr("LATEST")}
                     </span>
                   )}
                 </button>
@@ -1656,11 +1657,11 @@ const { can: canDo } = useProjectPermissions(projectId);
         {/* Right: Status Tag */}
         <div className="flex items-center gap-2 shrink-0">
           {drawing?.assignedReviewerName && (
-            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
-              <UserCheck size={11} /> Reviewer: {drawing.assignedReviewerName}
+            <span className="hidden sm:inline-flex items-center gap-1 text-[0.6875rem] font-bold px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
+              <UserCheck size={11} />{tr(" Reviewer: ")}{tr(drawing.assignedReviewerName)}
             </span>
           )}
-          <span className="text-xs text-slate-400 font-medium">Approval:</span>
+          <span className="text-xs text-slate-400 font-medium">{tr("Approval:")}</span>
           <span
             className={cn(
               'px-2.5 py-0.5 rounded-full text-xs font-bold border flex items-center gap-1.5',
@@ -1668,7 +1669,7 @@ const { can: canDo } = useProjectPermissions(projectId);
             )}
           >
             <span className={cn('w-1.5 h-1.5 rounded-full', statusPill.dot)} />
-            <span>{statusPill.label}</span>
+            <span>{tr(statusPill.label)}</span>
           </span>
         </div>
       </div>
@@ -1696,12 +1697,12 @@ const { can: canDo } = useProjectPermissions(projectId);
           {isAnnotationMode && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2.5 px-4 py-2 bg-white/95 text-slate-800 rounded-full shadow-lg border border-slate-200 text-xs font-semibold backdrop-blur-md">
               <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-              <span>Click on drawing to place pin</span>
+              <span>{tr("Click on drawing to place pin")}</span>
               <button
                 onClick={() => setIsAnnotationMode(false)}
                 className="ml-1 text-slate-400 hover:text-rose-600 text-xs font-bold cursor-pointer transition-colors"
               >
-                Cancel
+                {tr("Cancel")}
               </button>
             </div>
           )}
@@ -1714,14 +1715,14 @@ const { can: canDo } = useProjectPermissions(projectId);
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-xs z-30">
                   <Loader2 className="w-9 h-9 animate-spin text-purple-600 mb-2" />
                   <p className="text-xs font-bold text-slate-700">
-                    Loading 3D Model... {loading3DProgress}%
+                    {tr("Loading 3D Model... ")}{tr(loading3DProgress)}%
                   </p>
                 </div>
               )}
               {load3DError && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-30">
                   <Box className="w-12 h-12 text-slate-400 mb-2" />
-                  <p className="text-sm font-bold text-slate-800">{load3DError}</p>
+                  <p className="text-sm font-bold text-slate-800">{tr(load3DError)}</p>
                 </div>
               )}
             </div>
@@ -1790,7 +1791,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                       <div className="relative flex flex-col items-center filter drop-shadow-md transition-transform active:scale-90">
                         <div
                           className={cn(
-                            'relative px-2 py-1 rounded-xl flex items-center gap-1.5 font-bold text-[11px] shadow-lg transition-all border border-white/40',
+                            'relative px-2 py-1 rounded-xl flex items-center gap-1.5 font-bold text-[0.6875rem] shadow-lg transition-all border border-white/40',
                             anno.resolved
                               ? 'bg-gradient-to-br from-emerald-500 to-teal-700 text-white'
                               : `bg-gradient-to-br ${theme.gradient} text-white`,
@@ -1800,7 +1801,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                           {anno.resolved ? (
                             <Check size={12} className="stroke-[3]" />
                           ) : (
-                            <span className="font-mono text-[11px] tracking-tight">{anno.pinNumber || index + 1}</span>
+                            <span className="font-mono text-[0.6875rem] tracking-tight">{anno.pinNumber || index + 1}</span>
                           )}
 
                           {/* Media Icons Chip */}
@@ -1830,15 +1831,15 @@ const { can: canDo } = useProjectPermissions(projectId);
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 6, scale: 0.95 }}
                             transition={{ duration: 0.12 }}
-                            className="absolute left-1/2 -translate-x-1/2 bottom-full mb-3 bg-white/95 text-slate-900 p-3 rounded-2xl shadow-xl z-50 min-w-[210px] max-w-[280px] pointer-events-none backdrop-blur-xl border border-slate-200/90 font-sans"
+                            className="absolute left-1/2 -translate-x-1/2 bottom-full mb-3 bg-white/95 text-slate-900 p-3 rounded-2xl shadow-xl z-50 min-w-[13.125rem] max-w-[17.5rem] pointer-events-none backdrop-blur-xl border border-slate-200/90 font-sans"
                           >
                             <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-slate-100">
-                              <span className="font-bold text-[10px] uppercase tracking-wider text-blue-600">
-                                Marker #{anno.pinNumber || index + 1} • {theme.label}
+                              <span className="font-bold text-[0.625rem] uppercase tracking-wider text-blue-600">
+                                {tr("Marker #")}{anno.pinNumber || index + 1} • {tr(theme.label)}
                               </span>
                               <span
                                 className={cn(
-                                  'text-[9px] font-medium px-1.5 py-0.5 rounded-full border',
+                                  'text-[0.5625rem] font-medium px-1.5 py-0.5 rounded-full border',
                                   anno.type === 'comment'
                                     ? 'bg-blue-50 text-blue-700 border-blue-200'
                                     : anno.resolved
@@ -1846,12 +1847,12 @@ const { can: canDo } = useProjectPermissions(projectId);
                                     : 'bg-rose-50 text-rose-700 border-rose-200'
                                 )}
                               >
-                                {anno.type === 'comment' ? 'Note' : anno.resolved ? 'Resolved' : 'Open Snag'}
+                                {anno.type === 'comment' ? tr("Note") : anno.resolved ? tr("Resolved") : tr("Open Snag")}
                               </span>
                             </div>
 
                             <p className="text-xs text-slate-700 font-medium line-clamp-2 mt-1.5 leading-relaxed">
-                              {anno.text || '(Attachment inspection only)'}
+                              {anno.text || tr("(Attachment inspection only)")}
                             </p>
 
                             {/* Thumbnail strip in hover card */}
@@ -1875,15 +1876,15 @@ const { can: canDo } = useProjectPermissions(projectId);
                                     )}
                                   </div>
                                 ))}
-                                <span className="text-[10px] text-slate-500 pl-1 font-medium">
-                                  {anno.attachments.length} attachment(s)
+                                <span className="text-[0.625rem] text-slate-500 pl-1 font-medium">
+                                  {anno.attachments.length}{tr(" attachment(s)")}
                                 </span>
                               </div>
                             )}
 
-                            <div className="text-[9px] text-slate-400 pt-1.5 flex items-center justify-between border-t border-slate-100/60 mt-1">
-                              <span>Click to inspect details</span>
-                              <span>X: {anno.x}% Y: {anno.y}%</span>
+                            <div className="text-[0.5625rem] text-slate-400 pt-1.5 flex items-center justify-between border-t border-slate-100/60 mt-1">
+                              <span>{tr("Click to inspect details")}</span>
+                              <span>X: {tr(anno.x)}% Y: {tr(anno.y)}%</span>
                             </div>
                           </motion.div>
                         )}
@@ -1898,15 +1899,15 @@ const { can: canDo } = useProjectPermissions(projectId);
               <iframe
                 src={`${activeUrl}#toolbar=0`}
                 className="w-full h-full border border-slate-200 bg-white rounded-xl shadow-md"
-                title="PDF Blueprint Viewer"
+                title={tr("PDF Blueprint Viewer")}
               />
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center p-8 bg-white border border-slate-200 rounded-3xl shadow-md text-center max-w-sm">
               <FileText className="w-12 h-12 text-slate-400 mb-3" />
-              <h4 className="text-sm font-bold text-slate-800">{activeTitle}</h4>
+              <h4 className="text-sm font-bold text-slate-800">{tr(activeTitle)}</h4>
               <p className="text-xs text-slate-500 mt-1 mb-4">
-                This blueprint format is best viewed by downloading or opening externally.
+                {tr("This blueprint format is best viewed by downloading or opening externally.")}
               </p>
               {activeUrl && (
                 <a
@@ -1916,7 +1917,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                   download
                   className="px-4 py-2 bg-blue-600 text-white font-bold text-xs rounded-xl shadow-xs"
                 >
-                  Download Asset
+                  {tr("Download Asset")}
                 </a>
               )}
             </div>
@@ -1931,7 +1932,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                 'p-2 rounded-xl transition-all cursor-pointer',
                 !isAnnotationMode ? 'bg-slate-100 text-blue-600 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               )}
-              title="Pan Mode (Drag to navigate)"
+              title={tr("Pan Mode (Drag to navigate)")}
             >
               <Hand size={16} />
             </button>
@@ -1946,10 +1947,10 @@ const { can: canDo } = useProjectPermissions(projectId);
                     ? 'bg-rose-600 text-white shadow-md shadow-rose-200 ring-2 ring-rose-400/40'
                     : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
                 )}
-                title="Drop Marker Pin"
+                title={tr("Drop Marker Pin")}
               >
                 <Pin size={14} className={isAnnotationMode ? 'fill-white' : ''} />
-                <span>Marker</span>
+                <span>{tr("Marker")}</span>
               </button>
             )}
 
@@ -1959,7 +1960,7 @@ const { can: canDo } = useProjectPermissions(projectId);
             <button
               onClick={() => setZoomLevel((z) => Math.max(0.1, Number((z - 0.25).toFixed(2))))}
               className="p-2 rounded-xl hover:bg-slate-100 text-slate-700 transition-colors cursor-pointer"
-              title="Zoom Out"
+              title={tr("Zoom Out")}
             >
               <ZoomOut size={16} />
             </button>
@@ -1967,7 +1968,7 @@ const { can: canDo } = useProjectPermissions(projectId);
             <button
               onClick={resetViewport}
               className="px-2.5 py-1 text-xs font-mono font-bold text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-              title="Reset View 100%"
+              title={tr("Reset View 100%")}
             >
               {Math.round(zoomLevel * 100)}%
             </button>
@@ -1975,7 +1976,7 @@ const { can: canDo } = useProjectPermissions(projectId);
             <button
               onClick={() => setZoomLevel((z) => Math.min(10, Number((z + 0.25).toFixed(2))))}
               className="p-2 rounded-xl hover:bg-slate-100 text-slate-700 transition-colors cursor-pointer"
-              title="Zoom In"
+              title={tr("Zoom In")}
             >
               <ZoomIn size={16} />
             </button>
@@ -1986,7 +1987,7 @@ const { can: canDo } = useProjectPermissions(projectId);
             <button
               onClick={() => setRotation((r) => (r - 90) % 360)}
               className="p-2 rounded-xl hover:bg-slate-100 text-slate-700 transition-colors cursor-pointer"
-              title="Rotate Counter-Clockwise"
+              title={tr("Rotate Counter-Clockwise")}
             >
               <RotateCcw size={16} />
             </button>
@@ -1994,7 +1995,7 @@ const { can: canDo } = useProjectPermissions(projectId);
             <button
               onClick={() => setRotation((r) => (r + 90) % 360)}
               className="p-2 rounded-xl hover:bg-slate-100 text-slate-700 transition-colors cursor-pointer"
-              title="Rotate Clockwise"
+              title={tr("Rotate Clockwise")}
             >
               <RotateCw size={16} />
             </button>
@@ -2015,7 +2016,7 @@ const { can: canDo } = useProjectPermissions(projectId);
               )}
             >
               <MessageSquare size={14} />
-              <span>Pins ({currentVersionAnnotations.length})</span>
+              <span>{tr("Pins (")}{currentVersionAnnotations.length})</span>
             </button>
           </div>
         </div>
@@ -2039,15 +2040,15 @@ const { can: canDo } = useProjectPermissions(projectId);
                   <div>
                     <h3 className="text-sm font-bold text-slate-900">
                       {activeTab === 'annotations'
-                        ? 'Inspection Pins'
+                        ? tr("Inspection Pins")
                         : activeTab === 'details'
-                        ? 'Drawing Specifications'
-                        : 'Revisions & Audit Log'}
+                        ? tr("Drawing Specifications")
+                        : tr("Revisions & Audit Log")}
                     </h3>
-                    <p className="text-[11px] text-slate-500">
+                    <p className="text-[0.6875rem] text-slate-500">
                       {activeTab === 'annotations'
-                        ? `${currentVersionAnnotations.length} registered markers on v${activeVersionNum}`
-                        : `${allVersions.length} revisions tracked`}
+                        ? tr("{{currentVersionAnnotationsCount}} registered markers on v{{activeVersionNum}}", { currentVersionAnnotationsCount: currentVersionAnnotations.length, activeVersionNum: activeVersionNum })
+                        : tr("{{allVersionsCount}} revisions tracked", { allVersionsCount: allVersions.length })}
                     </p>
                   </div>
                 </div>
@@ -2071,7 +2072,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                   )}
                 >
                   <Pin size={13} />
-                  <span>Pins ({currentVersionAnnotations.length})</span>
+                  <span>{tr("Pins (")}{currentVersionAnnotations.length})</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('details')}
@@ -2082,7 +2083,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                       : 'border-transparent text-slate-500 hover:text-slate-800'
                   )}
                 >
-                  Specs
+                  {tr("Specs")}
                 </button>
                 <button
                   onClick={() => setActiveTab('history')}
@@ -2093,7 +2094,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                       : 'border-transparent text-slate-500 hover:text-slate-800'
                   )}
                 >
-                  Revisions ({allVersions.length})
+                  {tr("Revisions (")}{allVersions.length})
                 </button>
               </div>
 
@@ -2103,7 +2104,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                   <div className="space-y-3">
                     {/* Header Controls & Filter */}
                     <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                      <div className="flex items-center gap-1 text-[11px]">
+                      <div className="flex items-center gap-1 text-[0.6875rem]">
                         {['all', 'open', 'resolved', 'media'].map((f) => (
                           <button
                             key={f}
@@ -2115,7 +2116,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                             )}
                           >
-                            {f}
+                            {tr(f)}
                           </button>
                         ))}
                       </div>
@@ -2124,11 +2125,11 @@ const { can: canDo } = useProjectPermissions(projectId);
                         <button
                           onClick={() => {
                             setIsAnnotationMode(true);
-                            toast.info('Click anywhere on the blueprint to place marker.');
+                            toast.info(tr("Click anywhere on the blueprint to place marker."));
                           }}
                           className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1 cursor-pointer"
                         >
-                          <Pin size={12} /> Drop Pin
+                          <Pin size={12} />{tr(" Drop Pin")}
                         </button>
                       )}
                     </div>
@@ -2136,9 +2137,9 @@ const { can: canDo } = useProjectPermissions(projectId);
                     {currentVersionAnnotations.length === 0 ? (
                       <div className="p-8 text-center bg-slate-50 border border-dashed border-slate-200 rounded-2xl space-y-2">
                         <Pin className="w-8 h-8 text-slate-300 mx-auto" />
-                        <h4 className="text-xs font-bold text-slate-700">No Markers Found</h4>
-                        <p className="text-[11px] text-slate-500">
-                          Use the Marker tool in the bottom dock to flag defects, place notes, and attach inspection media.
+                        <h4 className="text-xs font-bold text-slate-700">{tr("No Markers Found")}</h4>
+                        <p className="text-[0.6875rem] text-slate-500">
+                          {tr("Use the Marker tool in the bottom dock to flag defects, place notes, and attach inspection media.")}
                         </p>
                       </div>
                     ) : (
@@ -2161,21 +2162,21 @@ const { can: canDo } = useProjectPermissions(projectId);
                               <div className="flex items-center gap-2">
                                 <span
                                   className={cn(
-                                    'w-6 h-6 rounded-xl flex items-center justify-center text-[10px] font-bold shadow-xs',
+                                    'w-6 h-6 rounded-xl flex items-center justify-center text-[0.625rem] font-bold shadow-xs',
                                     anno.resolved ? 'bg-emerald-600 text-white' : `${theme.bg} text-white`
                                   )}
                                 >
                                   {anno.resolved ? <Check size={12} /> : anno.pinNumber || idx + 1}
                                 </span>
-                                <span className="text-xs font-bold text-slate-900">{theme.label}</span>
+                                <span className="text-xs font-bold text-slate-900">{tr(theme.label)}</span>
                               </div>
-                              <span className="text-[10px] text-slate-400 font-mono">
-                                {anno.createdAt ? new Date(anno.createdAt).toLocaleDateString() : 'Recent'}
+                              <span className="text-[0.625rem] text-slate-400 font-mono">
+                                {anno.createdAt ? new Date(anno.createdAt).toLocaleDateString() : tr("Recent")}
                               </span>
                             </div>
 
                             <p className="text-xs text-slate-700 font-medium leading-relaxed">
-                              {anno.text || '(Attachment only)'}
+                              {anno.text || tr("(Attachment only)")}
                             </p>
 
                             {/* Attached Media Previews */}
@@ -2202,7 +2203,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                                     ) : att.type === 'audio' ? (
                                       <div className="w-full h-full flex flex-col items-center justify-center bg-indigo-50 text-indigo-600 group-hover/media:bg-indigo-100 transition-colors">
                                         <Volume2 size={16} />
-                                        <span className="text-[9px] font-bold mt-0.5">Audio</span>
+                                        <span className="text-[0.5625rem] font-bold mt-0.5">{tr("Audio")}</span>
                                       </div>
                                     ) : (
                                       <img src={att.url} alt={att.name} className="w-full h-full object-cover" />
@@ -2217,7 +2218,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                               </div>
                             )}
 
-                            <div className="flex items-center justify-between pt-1 text-[10px] border-t border-slate-100 text-slate-500">
+                            <div className="flex items-center justify-between pt-1 text-[0.625rem] border-t border-slate-100 text-slate-500">
                               <span
                                 className={cn(
                                   'font-medium',
@@ -2229,10 +2230,10 @@ const { can: canDo } = useProjectPermissions(projectId);
                                 )}
                               >
                                 {anno.type === 'comment'
-                                  ? '• Note'
+                                  ? tr("• Note")
                                   : anno.resolved
-                                  ? '✓ Resolved Snag'
-                                  : '• Open Snag'}
+                                  ? tr("✓ Resolved Snag")
+                                  : tr("• Open Snag")}
                               </span>
                               <div className="flex items-center gap-2">
                                 <button
@@ -2242,7 +2243,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                                     handleStartEditAnnotation(anno);
                                   }}
                                   className="text-slate-400 hover:text-blue-600 transition-colors p-1 cursor-pointer"
-                                  title="Edit Pin"
+                                  title={tr("Edit Pin")}
                                 >
                                   <Pencil size={12} />
                                 </button>
@@ -2255,7 +2256,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                                     }}
                                     className="text-blue-600 hover:text-blue-800 font-medium hover:underline cursor-pointer"
                                   >
-                                    {anno.resolved ? 'Reopen' : 'Resolve'}
+                                    {anno.resolved ? tr("Reopen") : tr("Resolve")}
                                   </button>
                                 )}
                                 <button
@@ -2265,7 +2266,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                                     handleDeleteAnnotation(anno.id);
                                   }}
                                   className="text-rose-500 hover:text-rose-700 p-1 cursor-pointer"
-                                  title="Delete Pin"
+                                  title={tr("Delete Pin")}
                                 >
                                   <Trash2 size={12} />
                                 </button>
@@ -2281,46 +2282,46 @@ const { can: canDo } = useProjectPermissions(projectId);
                     {/* Drawing Metadata Card */}
                     <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-3">
                       <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                          Blueprint Title
+                        <span className="text-[0.625rem] font-bold text-slate-400 uppercase tracking-wider">
+                          {tr("Blueprint Title")}
                         </span>
-                        <p className="text-xs font-bold text-slate-900 mt-0.5">{activeTitle}</p>
+                        <p className="text-xs font-bold text-slate-900 mt-0.5">{tr(activeTitle)}</p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/60 text-xs">
                         <div>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase">Discipline</span>
+                          <span className="text-[0.625rem] font-bold text-slate-400 uppercase">{tr("Discipline")}</span>
                           <p className="font-semibold text-slate-700 mt-0.5">
-                            {drawing?.discipline || 'Architectural'}
+                            {drawing?.discipline || tr("Architectural")}
                           </p>
                         </div>
                         <div>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase">Category</span>
+                          <span className="text-[0.625rem] font-bold text-slate-400 uppercase">{tr("Category")}</span>
                           <p className="font-semibold text-slate-700 mt-0.5">
-                            {drawing?.drawingType || '2D Drawing'}
+                            {drawing?.drawingType || tr("2D Drawing")}
                           </p>
                         </div>
                       </div>
 
                       <div className="pt-2 border-t border-slate-200/60">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase">Active Revision</span>
+                        <span className="text-[0.625rem] font-bold text-slate-400 uppercase">{tr("Active Revision")}</span>
                         <p className="text-xs font-semibold text-slate-700 mt-0.5">
                           {activeVersion?.revision || `Rev ${activeVersionNum - 1}`} •{' '}
-                          {activeVersion?.changes || 'Initial Blueprint release'}
+                          {activeVersion?.changes || tr("Initial Blueprint release")}
                         </p>
                       </div>
                     </div>
 
                     {/* Quick Approval Actions */}
                     <div className="space-y-2">
-                      <span className="text-xs font-bold text-slate-700">Approval Workflow</span>
+                      <span className="text-xs font-bold text-slate-700">{tr("Approval Workflow")}</span>
                       <div className="grid grid-cols-2 gap-2">
                         {canDo('drawings', 'approve') && (
                           <button
                             onClick={() => handleStatusChange('approved')}
                             className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
                           >
-                            <CheckCircle2 size={14} /> Approve
+                            <CheckCircle2 size={14} />{tr(" Approve")}
                           </button>
                         )}
                         {canDo('drawings', 'approve') && (
@@ -2328,7 +2329,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                             onClick={() => handleStatusChange('rejected')}
                             className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                           >
-                            <XCircle size={14} /> Request Change
+                            <XCircle size={14} />{tr(" Request Change")}
                           </button>
                         )}
                       </div>
@@ -2341,7 +2342,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                           onClick={() => setIsRevisionModalOpen(true)}
                           className="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer"
                         >
-                          <UploadCloud size={15} /> Upload Next Revision
+                          <UploadCloud size={15} />{tr(" Upload Next Revision")}
                         </button>
                       )}
 
@@ -2353,7 +2354,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                           download
                           className="w-full px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
                         >
-                          <Download size={14} /> Download Original File
+                          <Download size={14} />{tr(" Download Original File")}
                         </a>
                       )}
 
@@ -2361,7 +2362,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                         onClick={handleCopyLink}
                         className="w-full px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
                       >
-                        <Copy size={13} /> {copiedLink ? 'Link Copied!' : 'Copy Viewport Link'}
+                        <Copy size={13} /> {copiedLink ? tr("Link Copied!") : tr("Copy Viewport Link")}
                       </button>
                     </div>
                   </div>
@@ -2390,16 +2391,16 @@ const { can: canDo } = useProjectPermissions(projectId);
                                   ver.status === 'approved' ? 'bg-emerald-500' : 'bg-blue-500'
                                 )}
                               />
-                              v{ver.versionNumber} ({ver.revision})
+                              v{tr(ver.versionNumber)} ({tr(ver.revision)})
                             </span>
-                            <span className="text-[10px] text-slate-400 font-mono">
+                            <span className="text-[0.625rem] text-slate-400 font-mono">
                               {ver.uploadedAt ? new Date(ver.uploadedAt).toLocaleDateString() : 'N/A'}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-600 leading-relaxed">{ver.changes}</p>
-                          <div className="flex items-center justify-between pt-1 text-[10px] text-slate-400">
-                            <span>Uploaded by {ver.uploadedBy}</span>
-                            {isSelected && <span className="text-blue-600 font-bold">Active View</span>}
+                          <p className="text-xs text-slate-600 leading-relaxed">{tr(ver.changes)}</p>
+                          <div className="flex items-center justify-between pt-1 text-[0.625rem] text-slate-400">
+                            <span>{tr("Uploaded by ")}{tr(ver.uploadedBy)}</span>
+                            {isSelected && <span className="text-blue-600 font-bold">{tr("Active View")}</span>}
                           </div>
                         </div>
                       );
@@ -2427,10 +2428,10 @@ const { can: canDo } = useProjectPermissions(projectId);
               <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
                 <div>
                   <h3 className="text-sm font-semibold text-slate-900">
-                    {editingAnnoId ? 'Edit Inspection Pin' : 'Add Inspection Pin'}
+                    {editingAnnoId ? tr("Edit Inspection Pin") : tr("Add Inspection Pin")}
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Position: {pendingCoords.x}%, {pendingCoords.y}% • {activeTitle}
+                    {tr("Position: ")}{tr(pendingCoords.x)}%, {tr(pendingCoords.y)}% • {tr(activeTitle)}
                   </p>
                 </div>
                 <button
@@ -2449,7 +2450,7 @@ const { can: canDo } = useProjectPermissions(projectId);
               <form onSubmit={handleSaveAnnotation} className="p-5 space-y-4">
                 {/* Segmented Control for Category */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-700">Type</label>
+                  <label className="text-xs font-medium text-slate-700">{tr("Type")}</label>
                   <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-lg">
                     <button
                       type="button"
@@ -2462,7 +2463,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                       )}
                     >
                       <span className={cn('w-2 h-2 rounded-full', annoType === 'comment' ? 'bg-blue-500' : 'bg-slate-300')} />
-                      <span>Note</span>
+                      <span>{tr("Note")}</span>
                     </button>
 
                     <button
@@ -2476,15 +2477,15 @@ const { can: canDo } = useProjectPermissions(projectId);
                       )}
                     >
                       <span className={cn('w-2 h-2 rounded-full', annoType === 'issue' ? 'bg-rose-500' : 'bg-slate-300')} />
-                      <span>Snag / Defect</span>
+                      <span>{tr("Snag / Defect")}</span>
                     </button>
                   </div>
 
                   {annoType === 'issue' && (
-                    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-rose-50/80 border border-rose-200/70 text-[11px] text-rose-800 leading-tight">
+                    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-rose-50/80 border border-rose-200/70 text-[0.6875rem] text-rose-800 leading-tight">
                       <AlertTriangle size={13} className="text-rose-600 shrink-0" />
                       <span>
-                        <strong>Auto-linked to Quality Snags:</strong> This defect will automatically sync as an active item inside the Project Quality Snag Register.
+                        <strong>{tr("Auto-linked to Quality Snags:")}</strong>{tr(" This defect will automatically sync as an active item inside the Project Quality Snag Register.")}
                       </span>
                     </div>
                   )}
@@ -2493,12 +2494,12 @@ const { can: canDo } = useProjectPermissions(projectId);
                 {/* Observation Note */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-slate-700">
-                    Observation Note <span className="text-rose-500">*</span>
+                    {tr("Observation Note ")}<span className="text-rose-500">*</span>
                   </label>
                   <textarea
                     required
                     rows={3}
-                    placeholder="Describe the defect, required touch-up, or architectural note..."
+                    placeholder={tr("Describe the defect, required touch-up, or architectural note...")}
                     value={annoText}
                     onChange={(e) => setAnnoText(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 resize-none font-normal leading-relaxed"
@@ -2510,11 +2511,11 @@ const { can: canDo } = useProjectPermissions(projectId);
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
                       <Mic size={13} className="text-rose-600" />
-                      <span>Voice Memo / Audio Note</span>
+                      <span>{tr("Voice Memo / Audio Note")}</span>
                     </label>
                     {recordedAudioUrl && !isRecordingAudio && (
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
-                        <Check size={10} className="stroke-[3]" /> Recorded
+                      <span className="text-[0.625rem] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                        <Check size={10} className="stroke-[3]" />{tr(" Recorded")}
                       </span>
                     )}
                   </div>
@@ -2542,7 +2543,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                             <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-600"></span>
                           </span>
                           <span className="text-xs font-semibold text-rose-700 tracking-wide">
-                            Recording... {formatAudioTime(recordingDuration)}
+                            {tr("Recording... ")}{formatAudioTime(recordingDuration)}
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -2551,13 +2552,13 @@ const { can: canDo } = useProjectPermissions(projectId);
                             onClick={stopAudioRecording}
                             className="px-2.5 py-1 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-xs flex items-center gap-1 transition-colors cursor-pointer"
                           >
-                            <Square size={11} className="fill-white" /> Done
+                            <Square size={11} className="fill-white" />{tr(" Done")}
                           </button>
                           <button
                             type="button"
                             onClick={cancelAudioRecording}
                             className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-md transition-colors cursor-pointer"
-                            title="Cancel recording"
+                            title={tr("Cancel recording")}
                           >
                             <X size={14} />
                           </button>
@@ -2579,7 +2580,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                                 <Play size={12} className="fill-white ml-0.5" />
                               )}
                             </button>
-                            <div className="text-[11px] font-medium text-slate-700 font-mono">
+                            <div className="text-[0.6875rem] font-medium text-slate-700 font-mono">
                               {formatAudioTime(audioPlaybackTime)} / {formatAudioTime(audioDuration || recordingDuration || 1)}
                             </div>
                           </div>
@@ -2588,16 +2589,16 @@ const { can: canDo } = useProjectPermissions(projectId);
                             <button
                               type="button"
                               onClick={handleReRecordAudio}
-                              className="px-2 py-1 text-[11px] font-medium text-slate-600 hover:text-blue-600 hover:bg-white rounded-md border border-slate-200 transition-colors cursor-pointer flex items-center gap-1"
-                              title="Record again"
+                              className="px-2 py-1 text-[0.6875rem] font-medium text-slate-600 hover:text-blue-600 hover:bg-white rounded-md border border-slate-200 transition-colors cursor-pointer flex items-center gap-1"
+                              title={tr("Record again")}
                             >
-                              <RotateCcw size={11} /> Re-record
+                              <RotateCcw size={11} />{tr(" Re-record")}
                             </button>
                             <button
                               type="button"
                               onClick={handleDeleteRecordedAudio}
                               className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
-                              title="Delete voice note"
+                              title={tr("Delete voice note")}
                             >
                               <Trash2 size={13} />
                             </button>
@@ -2626,8 +2627,8 @@ const { can: canDo } = useProjectPermissions(projectId);
                     ) : (
                       /* State 3: Ready to Record */
                       <div className="flex items-center justify-between">
-                        <p className="text-[11px] text-slate-500">
-                          Click record to speak your inspection observations
+                        <p className="text-[0.6875rem] text-slate-500">
+                          {tr("Click record to speak your inspection observations")}
                         </p>
                         <button
                           type="button"
@@ -2635,7 +2636,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                           className="px-3 py-1.5 text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
                         >
                           <Mic size={13} className="text-rose-600" />
-                          <span>Record Audio</span>
+                          <span>{tr("Record Audio")}</span>
                         </button>
                       </div>
                     )}
@@ -2647,10 +2648,10 @@ const { can: canDo } = useProjectPermissions(projectId);
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
                       <Paperclip size={13} className="text-slate-500" />
-                      <span>Photo & Video Attachments</span>
+                      <span>{tr("Photo & Video Attachments")}</span>
                     </label>
-                    <span className="text-[11px] text-slate-400">
-                      {annoAttachments.length} attached
+                    <span className="text-[0.6875rem] text-slate-400">
+                      {annoAttachments.length}{tr(" attached")}
                     </span>
                   </div>
 
@@ -2658,7 +2659,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                   <div className="flex items-center gap-2">
                     <label className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-dashed border-slate-300 hover:border-blue-500 hover:bg-blue-50/50 rounded-lg text-xs font-medium text-slate-700 hover:text-blue-700 cursor-pointer transition-colors">
                       <ImageIcon size={14} className="text-blue-600" />
-                      <span>Add Photo</span>
+                      <span>{tr("Add Photo")}</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -2671,7 +2672,7 @@ const { can: canDo } = useProjectPermissions(projectId);
 
                     <label className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-dashed border-slate-300 hover:border-purple-500 hover:bg-purple-50/50 rounded-lg text-xs font-medium text-slate-700 hover:text-purple-700 cursor-pointer transition-colors">
                       <Video size={14} className="text-purple-600" />
-                      <span>Add Video</span>
+                      <span>{tr("Add Video")}</span>
                       <input
                         type="file"
                         accept="video/*"
@@ -2685,7 +2686,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                   {(isUploadingImage || isUploadingVideo) && (
                     <div className="flex items-center gap-2 py-1 text-xs text-blue-600">
                       <Loader2 size={13} className="animate-spin" />
-                      <span>Uploading media to cloud...</span>
+                      <span>{tr("Uploading media to cloud...")}</span>
                     </div>
                   )}
 
@@ -2705,7 +2706,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                             ) : (
                               <Volume2 size={14} className="text-rose-600 shrink-0" />
                             )}
-                            <span className="truncate font-medium text-slate-700">{att.name}</span>
+                            <span className="truncate font-medium text-slate-700">{tr(att.name)}</span>
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0 ml-2">
                             <button
@@ -2715,7 +2716,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                                 setMediaPreviewType(att.type);
                               }}
                               className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
-                              title="Preview"
+                              title={tr("Preview")}
                             >
                               <Eye size={13} />
                             </button>
@@ -2723,7 +2724,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                               type="button"
                               onClick={() => setAnnoAttachments((prev) => prev.filter((_, i) => i !== idx))}
                               className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
-                              title="Remove"
+                              title={tr("Remove")}
                             >
                               <Trash2 size={13} />
                             </button>
@@ -2745,7 +2746,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                     }}
                     className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                   >
-                    Cancel
+                    {tr("Cancel")}
                   </button>
                   <button
                     type="submit"
@@ -2754,11 +2755,11 @@ const { can: canDo } = useProjectPermissions(projectId);
                   >
                     {isSubmittingAnno ? (
                       <>
-                        <Loader2 size={13} className="animate-spin" /> Saving...
+                        <Loader2 size={13} className="animate-spin" />{tr(" Saving...")}
                       </>
                     ) : (
                       <>
-                        <Check size={13} /> {editingAnnoId ? 'Update Pin' : 'Save Pin'}
+                        <Check size={13} /> {editingAnnoId ? tr("Update Pin") : tr("Save Pin")}
                       </>
                     )}
                   </button>
@@ -2799,19 +2800,19 @@ const { can: canDo } = useProjectPermissions(projectId);
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="text-base font-bold text-slate-900 tracking-tight">
-                        Pin #{selectedAnnotation.pinNumber || 1}
+                        {tr("Pin #")}{selectedAnnotation.pinNumber || 1}
                       </h3>
                       {selectedAnnotation.type === 'comment' ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/80">
-                          Note
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[0.6875rem] font-semibold bg-blue-50 text-blue-700 border border-blue-200/80">
+                          {tr("Note")}
                         </span>
                       ) : selectedAnnotation.resolved ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
-                          <CheckCircle2 size={11} className="stroke-[2.5]" /> Resolved
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[0.6875rem] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                          <CheckCircle2 size={11} className="stroke-[2.5]" />{tr(" Resolved")}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/80">
-                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> Open Snag
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[0.6875rem] font-semibold bg-rose-50 text-rose-700 border border-rose-200/80">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />{tr(" Open Snag")}
                         </span>
                       )}
                     </div>
@@ -2836,7 +2837,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                   type="button"
                   onClick={() => setSelectedAnnotation(null)}
                   className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
-                  title="Close"
+                  title={tr("Close")}
                 >
                   <X size={18} />
                 </button>
@@ -2847,14 +2848,14 @@ const { can: canDo } = useProjectPermissions(projectId);
                 {/* 1. Observation Note Section */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                    <label className="text-[0.6875rem] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                       <FileText size={13} className="text-slate-400" />
-                      <span>Observation Note</span>
+                      <span>{tr("Observation Note")}</span>
                     </label>
                     {selectedAnnotation.author?.name && (
-                      <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
+                      <span className="text-[0.6875rem] font-medium text-slate-500 flex items-center gap-1">
                         <User size={11} className="text-slate-400" />
-                        {selectedAnnotation.author.name}
+                        {tr(selectedAnnotation.author.name)}
                       </span>
                     )}
                   </div>
@@ -2862,7 +2863,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                     {selectedAnnotation.text ? (
                       selectedAnnotation.text
                     ) : (
-                      <span className="text-slate-400 italic text-xs">No text observation provided.</span>
+                      <span className="text-slate-400 italic text-xs">{tr("No text observation provided.")}</span>
                     )}
                   </div>
                 </div>
@@ -2870,9 +2871,9 @@ const { can: canDo } = useProjectPermissions(projectId);
                 {/* 2. Audio Voice Note (if present) */}
                 {selectedAnnotation.attachments?.some((a) => a.type === 'audio') && (
                   <div className="space-y-2">
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                    <label className="text-[0.6875rem] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                       <Mic size={13} className="text-rose-500" />
-                      <span>Voice Memo / Audio Note</span>
+                      <span>{tr("Voice Memo / Audio Note")}</span>
                     </label>
 
                     {selectedAnnotation.attachments
@@ -2887,7 +2888,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                               <Volume2 size={16} />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="text-xs font-semibold text-slate-800 truncate">{aud.name || 'Voice Note'}</p>
+                              <p className="text-xs font-semibold text-slate-800 truncate">{aud.name || tr("Voice Note")}</p>
                               <audio
                                 src={aud.url}
                                 controls
@@ -2901,7 +2902,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                             rel="noreferrer"
                             download
                             className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-white border border-transparent hover:border-slate-200 transition-colors shrink-0"
-                            title="Download Voice Note"
+                            title={tr("Download Voice Note")}
                           >
                             <Download size={14} />
                           </a>
@@ -2914,10 +2915,10 @@ const { can: canDo } = useProjectPermissions(projectId);
                 {selectedAnnotation.attachments?.some((a) => a.type !== 'audio') && (
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                      <label className="text-[0.6875rem] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                         <Paperclip size={13} className="text-slate-400" />
                         <span>
-                          Media Attachments (
+                          {tr("Media Attachments (")}
                           {selectedAnnotation.attachments.filter((a) => a.type !== 'audio').length}
                           )
                         </span>
@@ -2947,7 +2948,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                                 />
                                 <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-xs font-semibold backdrop-blur-[1px]">
-                                  <Maximize2 size={14} /> View Photo
+                                  <Maximize2 size={14} />{tr(" View Photo")}
                                 </div>
                               </div>
                             ) : att.type === 'video' ? (
@@ -2967,7 +2968,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                             {/* Info bar below thumbnail */}
                             <div className="p-2.5 flex items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/50">
                               <span className="text-xs font-medium text-slate-700 truncate" title={att.name}>
-                                {att.name}
+                                {tr(att.name)}
                               </span>
                               <a
                                 href={att.url}
@@ -2975,7 +2976,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                                 rel="noreferrer"
                                 download
                                 className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded transition-colors shrink-0"
-                                title="Download file"
+                                title={tr("Download file")}
                               >
                                 <Download size={13} />
                               </a>
@@ -2996,7 +2997,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                     className="px-2.5 py-1.5 text-xs font-medium text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
                   >
                     <Trash2 size={13} />
-                    <span>Delete Pin</span>
+                    <span>{tr("Delete Pin")}</span>
                   </button>
                 )}
 
@@ -3008,10 +3009,10 @@ const { can: canDo } = useProjectPermissions(projectId);
                         router.push(`/interior-new/projects/${projectId}/snags`);
                       }}
                       className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
-                      title="Open Project Snags Register"
+                      title={tr("Open Project Snags Register")}
                     >
                       <ExternalLink size={12} className="text-slate-500" />
-                      <span>Snags Register</span>
+                      <span>{tr("Snags Register")}</span>
                     </button>
                   )}
 
@@ -3028,7 +3029,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                         )}
                       >
                         <CheckCircle2 size={13} />
-                        <span>{selectedAnnotation.resolved ? 'Reopen Snag' : 'Mark as Resolved'}</span>
+                        <span>{selectedAnnotation.resolved ? tr("Reopen Snag") : tr("Mark as Resolved")}</span>
                       </button>
                     )
                   )}
@@ -3040,7 +3041,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                       className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
                     >
                       <Pencil size={13} />
-                      <span>Edit Pin</span>
+                      <span>{tr("Edit Pin")}</span>
                     </button>
                   )}
 
@@ -3049,7 +3050,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                     onClick={() => setSelectedAnnotation(null)}
                     className="px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-colors cursor-pointer"
                   >
-                    Close
+                    {tr("Close")}
                   </button>
                 </div>
               </div>
@@ -3078,7 +3079,7 @@ const { can: canDo } = useProjectPermissions(projectId);
               {mediaPreviewType === 'video' ? (
                 <video src={mediaPreviewUrl} controls autoPlay className="max-w-full max-h-[82vh] rounded-2xl" />
               ) : (
-                <img src={mediaPreviewUrl} alt="Evidence preview" className="max-w-full max-h-[82vh] object-contain rounded-2xl" />
+                <img src={mediaPreviewUrl} alt={tr("Evidence preview")} className="max-w-full max-h-[82vh] object-contain rounded-2xl" />
               )}
             </div>
           </div>
@@ -3102,9 +3103,9 @@ const { can: canDo } = useProjectPermissions(projectId);
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-slate-900">
-                      Upload Rev {allVersions.length}
+                      {tr("Upload Rev ")}{allVersions.length}
                     </h3>
-                    <p className="text-[11px] text-slate-500 truncate max-w-xs">{activeTitle}</p>
+                    <p className="text-[0.6875rem] text-slate-500 truncate max-w-xs">{tr(activeTitle)}</p>
                   </div>
                 </div>
                 <button
@@ -3117,10 +3118,10 @@ const { can: canDo } = useProjectPermissions(projectId);
 
               <form onSubmit={handleUploadRevision} className="p-5 space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700">Describe Changes in this Revision *</label>
+                  <label className="text-xs font-bold text-slate-700">{tr("Describe Changes in this Revision *")}</label>
                   <input
                     required
-                    placeholder="e.g. Revised partition dimensions and rectified masonry lintel elevation"
+                    placeholder={tr("e.g. Revised partition dimensions and rectified masonry lintel elevation")}
                     value={revChanges}
                     onChange={(e) => setRevChanges(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
@@ -3128,7 +3129,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 block mb-1">New Revision Blueprint File *</label>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">{tr("New Revision Blueprint File *")}</label>
                   <div className="border-2 border-dashed border-slate-200 hover:border-blue-500/50 bg-slate-50 rounded-2xl p-5 flex flex-col items-center justify-center gap-2 transition-all relative cursor-pointer">
                     <input
                       type="file"
@@ -3141,9 +3142,9 @@ const { can: canDo } = useProjectPermissions(projectId);
                     />
                     <FileDown className="w-8 h-8 text-blue-500" />
                     <span className="text-xs font-bold text-center text-slate-700 px-2 truncate w-full">
-                      {selectedRevFile ? selectedRevFile.name : 'Click or drag new revision blueprint'}
+                      {selectedRevFile ? selectedRevFile.name : tr("Click or drag new revision blueprint")}
                     </span>
-                    <span className="text-[10px] text-slate-400">PDF, DWG, SKP, OBJ, or High-Res Image</span>
+                    <span className="text-[0.625rem] text-slate-400">{tr("PDF, DWG, SKP, OBJ, or High-Res Image")}</span>
                   </div>
                 </div>
 
@@ -3153,7 +3154,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                     onClick={() => setIsRevisionModalOpen(false)}
                     className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
                   >
-                    Cancel
+                    {tr("Cancel")}
                   </button>
                   <button
                     type="submit"
@@ -3161,7 +3162,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-2 disabled:opacity-50 cursor-pointer"
                   >
                     {isSubmittingRev && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Upload Revision
+                    {tr("Upload Revision")}
                   </button>
                 </div>
               </form>

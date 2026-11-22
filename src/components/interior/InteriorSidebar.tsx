@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Port of interior-os-frontend's components/layout/sidebar.tsx, wired to the
 // interior-only localStorage session instead of Zustand's useAuthStore.
@@ -119,7 +120,7 @@ export function InteriorSidebar({
         onClick={(e) => {
           if (!item.wired) {
             e.preventDefault();
-            toast.info(`"${item.label}" is coming soon.`);
+            toast.info(tr("\"{{label}}\" is coming soon.", { label: item.label }));
             return;
           }
           onCloseMobile();
@@ -131,7 +132,7 @@ export function InteriorSidebar({
             : 'text-[hsl(var(--foreground)/0.7)] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))]',
           collapsed ? 'justify-center px-0' : 'gap-3 px-3'
         )}
-        title={collapsed ? item.label : undefined}
+        title={collapsed ? tr(item.label) : undefined}
       >
         <div className="flex items-center justify-center shrink-0 w-4 h-4">
           <item.icon className="w-4 h-4 shrink-0" />
@@ -144,18 +145,18 @@ export function InteriorSidebar({
             animate="expanded"
             className="flex-1 truncate"
           >
-            {item.label}
+            {tr(item.label)}
           </motion.span>
         )}
 
         {!collapsed && item.badge ? (
           <span
             className={cn(
-              'min-w-[20px] h-5 flex items-center justify-center rounded-full text-[10px] font-semibold px-1.5',
+              'min-w-[1.25rem] h-5 flex items-center justify-center rounded-full text-[0.625rem] font-semibold px-1.5',
               active ? 'bg-white/20 text-white' : 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]'
             )}
           >
-            {item.badge}
+            {tr(item.badge)}
           </span>
         ) : null}
       </Link>
@@ -182,9 +183,9 @@ export function InteriorSidebar({
         }}
         transition={isMounted ? SIDEBAR_TRANSITION : { duration: 0 }}
         className={cn(
-          'interior-os-theme h-screen h-dvh flex flex-col border-r border-[hsl(var(--border))] bg-[hsl(var(--background))] overflow-hidden shrink-0',
+          'interior-os-theme h-screen h-dvh flex flex-col border-e border-[hsl(var(--border))] bg-[hsl(var(--background))] overflow-hidden shrink-0',
           'will-change-[width]',
-          'fixed md:static top-0 left-0 z-50 md:z-40',
+          'fixed md:static top-0 start-0 z-50 md:z-40',
           mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         )}
       >
@@ -207,10 +208,10 @@ export function InteriorSidebar({
                 className="min-w-0 flex-1 overflow-hidden"
               >
                 <h2 className="text-sm font-bold tracking-tight text-[hsl(var(--foreground))] truncate">
-                  SkyStruct-Lite Interior
+                  {tr("SkyStruct-Lite Interior")}
                 </h2>
-                <p className="text-[10px] text-[hsl(var(--muted-foreground))] truncate">
-                  {organizationName || 'Workspace'}
+                <p className="text-[0.625rem] text-[hsl(var(--muted-foreground))] truncate">
+                  {organizationName || tr("Workspace")}
                 </p>
               </motion.div>
             )}
@@ -234,7 +235,7 @@ export function InteriorSidebar({
               'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))]',
               collapsed ? 'justify-center px-0' : 'gap-3 px-3'
             )}
-            title={collapsed ? 'Expand sidebar' : undefined}
+            title={collapsed ? tr("Expand sidebar") : undefined}
           >
             <div className="flex items-center justify-center shrink-0 w-4 h-4">
               <motion.div
@@ -253,7 +254,7 @@ export function InteriorSidebar({
                 animate="expanded"
                 className="overflow-hidden whitespace-nowrap"
               >
-                Collapse
+                {tr("Collapse")}
               </motion.span>
             )}
           </button>

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // Port of interior-os-frontend's projects/[projectId]/rfis/page.tsx.
 // TanStack/sonner/zustand replaced with local useState/useEffect + interiorProjectService.
@@ -42,7 +43,7 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
       if (res.success && res.data) setRfis(res.data);
     } catch (err) {
       console.error('Failed to load RFIs', err);
-      toast.error('Failed to fetch RFIs registry');
+      toast.error(tr("Failed to fetch RFIs registry"));
     } finally {
       setLoading(false);
     }
@@ -55,7 +56,7 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
   const handleCreateRFI = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!subject || !question) {
-      toast.error('Please fill in subject and question');
+      toast.error(tr("Please fill in subject and question"));
       return;
     }
 
@@ -70,7 +71,7 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
 
       const res = await interiorProjectService.createRfi(projectId, payload);
       if (res.success) {
-        toast.success('RFI raised successfully!');
+        toast.success(tr("RFI raised successfully!"));
         setIsModalOpen(false);
         setSubject('');
         setQuestion('');
@@ -79,7 +80,7 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
         fetchRFIs();
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to submit RFI');
+      toast.error(err.response?.data?.error || tr("Failed to submit RFI"));
     } finally {
       setSubmitting(false);
     }
@@ -96,14 +97,14 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
         response: responseText,
       });
       if (res.success) {
-        toast.success('Response posted successfully!');
+        toast.success(tr("Response posted successfully!"));
         setResponseText('');
         setSelectedRfi(null);
         fetchRFIs();
       }
     } catch (err) {
       console.error('Response submit failed', err);
-      toast.error('Failed to post response');
+      toast.error(tr("Failed to post response"));
     } finally {
       setSubmitting(false);
     }
@@ -113,20 +114,20 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
     try {
       const res = await interiorProjectService.updateRfi(projectId, { rfiId, status: 'closed' });
       if (res.success) {
-        toast.success('RFI closed and verified');
+        toast.success(tr("RFI closed and verified"));
         setSelectedRfi(null);
         fetchRFIs();
       }
     } catch (err) {
       console.error('Close RFI failed', err);
-      toast.error('Failed to close RFI');
+      toast.error(tr("Failed to close RFI"));
     }
   };
 
   const handleDeleteRFI = async (rfiId: string) => {
     const ok = await confirm({
-      title: 'Delete RFI',
-      message: 'Are you sure you want to delete this RFI and its responses? This action cannot be undone.',
+      title: tr("Delete RFI"),
+      message: tr("Are you sure you want to delete this RFI and its responses? This action cannot be undone."),
       confirmText: 'Delete',
       type: 'danger',
     });
@@ -134,13 +135,13 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
     try {
       const res = await interiorProjectService.deleteRfi(projectId, rfiId);
       if (res.success) {
-        toast.success('RFI deleted');
+        toast.success(tr("RFI deleted"));
         setSelectedRfi(null);
         fetchRFIs();
       }
     } catch (err: any) {
       console.error('Delete RFI failed', err);
-      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to delete RFI');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || tr("Failed to delete RFI"));
     }
   };
 
@@ -159,15 +160,15 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Requests For Information (RFI)</h2>
+          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">{tr("Requests For Information (RFI)")}</h2>
           <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-            Clarify design discrepancies, drawings mismatches, or site coordinates with consultants.
+            {tr("Clarify design discrepancies, drawings mismatches, or site coordinates with consultants.")}
           </p>
         </div>
         {canDo('rfis', 'create') && (
           <Button onClick={() => setIsModalOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Raise RFI
+            <Plus className="w-4 h-4 me-2" />
+            {tr("Raise RFI")}
           </Button>
         )}
       </div>
@@ -178,7 +179,7 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
         </div>
       ) : rfis.length === 0 ? (
         <Card className="p-8 text-center text-sm text-[hsl(var(--muted-foreground))]">
-          No RFIs raised yet. Click &quot;Raise RFI&quot; to submit a question.
+          {tr("No RFIs raised yet. Click \"Raise RFI\" to submit a question.")}
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -191,15 +192,15 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
               <CardContent className="p-5 space-y-3">
                 <div className="flex items-center justify-between flex-wrap gap-2 text-xs">
                   <div className="flex items-center gap-1.5 font-mono text-slate-500">
-                    <MessageSquare className="w-3.5 h-3.5" /> {rfi.rfiNumber}
+                    <MessageSquare className="w-3.5 h-3.5" /> {tr(rfi.rfiNumber)}
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase border', getPriorityStyle(rfi.priority))}>
-                      {rfi.priority}
+                    <span className={cn('px-2 py-0.5 rounded-full text-[0.625rem] font-semibold uppercase border', getPriorityStyle(rfi.priority))}>
+                      {tr(rfi.priority)}
                     </span>
                     <span
                       className={cn(
-                        'px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase border',
+                        'px-2 py-0.5 rounded-full text-[0.625rem] font-semibold uppercase border',
                         rfi.status === 'closed'
                           ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
                           : rfi.status === 'responded'
@@ -207,20 +208,20 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
                           : 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20'
                       )}
                     >
-                      {rfi.status}
+                      {tr(rfi.status)}
                     </span>
                   </div>
                 </div>
 
-                <h3 className="text-sm font-bold text-[hsl(var(--foreground))] line-clamp-1">{rfi.subject}</h3>
-                <p className="text-xs text-[hsl(var(--muted-foreground))] line-clamp-2">{rfi.question}</p>
+                <h3 className="text-sm font-bold text-[hsl(var(--foreground))] line-clamp-1">{tr(rfi.subject)}</h3>
+                <p className="text-xs text-[hsl(var(--muted-foreground))] line-clamp-2">{tr(rfi.question)}</p>
 
-                <div className="flex items-center justify-between text-[10px] text-[hsl(var(--muted-foreground))] border-t border-[hsl(var(--border))] pt-3 mt-1.5">
+                <div className="flex items-center justify-between text-[0.625rem] text-[hsl(var(--muted-foreground))] border-t border-[hsl(var(--border))] pt-3 mt-1.5">
                   <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3 text-blue-500" /> Due:{' '}
+                    <Calendar className="w-3 h-3 text-blue-500" />{tr(" Due:")}{' '}
                     {new Date(rfi.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                   </span>
-                  <span>Click to view thread &rarr;</span>
+                  <span>{tr("Click to view thread →")}</span>
                 </div>
               </CardContent>
             </Card>
@@ -240,7 +241,7 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
               <div className="flex items-center justify-between p-5 border-b border-[hsl(var(--border))]">
                 <h3 className="text-base font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-[hsl(var(--primary))]" />
-                  Raise design RFI
+                  {tr("Raise design RFI")}
                 </h3>
                 <button onClick={() => setIsModalOpen(false)} className="p-1 rounded hover:bg-[hsl(var(--muted))]">
                   <X className="w-4 h-4" />
@@ -250,36 +251,36 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
               <form onSubmit={handleCreateRFI}>
                 <div className="p-5 space-y-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold">Subject Title</label>
-                    <Input required placeholder="e.g. Glass partition core alignment" value={subject} onChange={(e) => setSubject(e.target.value)} />
+                    <label className="text-xs font-semibold">{tr("Subject Title")}</label>
+                    <Input required placeholder={tr("e.g. Glass partition core alignment")} value={subject} onChange={(e) => setSubject(e.target.value)} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold">Clarification Question</label>
+                    <label className="text-xs font-semibold">{tr("Clarification Question")}</label>
                     <textarea
                       required
                       rows={3}
                       className="w-full px-3 py-2 text-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:outline-none"
-                      placeholder="Specify drawing discrepancy details..."
+                      placeholder={tr("Specify drawing discrepancy details...")}
                       value={question}
                       onChange={(e) => setQuestion(e.target.value)}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold">Priority</label>
+                      <label className="text-xs font-semibold">{tr("Priority")}</label>
                       <select
                         className="w-full px-3 py-2 text-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:outline-none"
                         value={priority}
                         onChange={(e) => setPriority(e.target.value)}
                       >
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                        <option value="critical">Critical</option>
+                        <option value="low">{tr("Low")}</option>
+                        <option value="medium">{tr("Medium")}</option>
+                        <option value="high">{tr("High")}</option>
+                        <option value="critical">{tr("Critical")}</option>
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold">Due Date</label>
+                      <label className="text-xs font-semibold">{tr("Due Date")}</label>
                       <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
                     </div>
                   </div>
@@ -287,11 +288,11 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
 
                 <div className="flex items-center justify-end gap-3 p-5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
                   <Button variant="outline" type="button" onClick={() => setIsModalOpen(false)}>
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                   <Button type="submit" disabled={submitting}>
-                    {submitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    Submit RFI
+                    {submitting && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+                    {tr("Submit RFI")}
                   </Button>
                 </div>
               </form>
@@ -308,12 +309,12 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: '100%', opacity: 0.9 }}
               transition={{ type: 'tween', duration: 0.3 }}
-              className="w-full max-w-lg border-l border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-2xl flex flex-col h-full"
+              className="w-full max-w-lg border-s border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-2xl flex flex-col h-full"
             >
               <div className="p-5 border-b border-[hsl(var(--border))] flex items-center justify-between shrink-0">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-500 font-mono">{selectedRfi.rfiNumber}</h3>
-                  <h2 className="text-base font-bold text-[hsl(var(--foreground))] line-clamp-1">{selectedRfi.subject}</h2>
+                  <h3 className="text-sm font-bold text-slate-500 font-mono">{tr(selectedRfi.rfiNumber)}</h3>
+                  <h2 className="text-base font-bold text-[hsl(var(--foreground))] line-clamp-1">{tr(selectedRfi.subject)}</h2>
                 </div>
                 <button onClick={() => setSelectedRfi(null)} className="p-1 rounded hover:bg-[hsl(var(--muted))]">
                   <X className="w-4 h-4" />
@@ -322,17 +323,17 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
 
               <div className="p-6 flex-1 overflow-y-auto space-y-6">
                 <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Question Description</h4>
+                  <h4 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Question Description")}</h4>
                   <div className="p-4 rounded-lg bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))] text-sm whitespace-pre-wrap">
-                    {selectedRfi.question}
+                    {tr(selectedRfi.question)}
                   </div>
                 </div>
 
                 {selectedRfi.response && (
                   <div className="space-y-2">
-                    <h4 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Official Response / Clarification</h4>
+                    <h4 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">{tr("Official Response / Clarification")}</h4>
                     <div className="p-4 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 text-sm whitespace-pre-wrap text-emerald-950 dark:text-emerald-200">
-                      {selectedRfi.response}
+                      {tr(selectedRfi.response)}
                     </div>
                   </div>
                 )}
@@ -340,14 +341,14 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
                 <div className="flex items-center gap-2">
                   {selectedRfi.status !== 'closed' && canDo('rfis', 'update') && (
                     <Button variant="outline" className="text-emerald-600 border-emerald-200" onClick={() => handleCloseRFI(selectedRfi._id)}>
-                      <CheckCircle className="w-4 h-4 mr-1.5" />
-                      Mark Resolved & Close
+                      <CheckCircle className="w-4 h-4 me-1.5" />
+                      {tr("Mark Resolved & Close")}
                     </Button>
                   )}
                   {canDo('rfis', 'delete') && (
-                    <Button variant="outline" className="text-red-600 border-red-200 ml-auto" onClick={() => handleDeleteRFI(selectedRfi._id)}>
-                      <Trash2 className="w-4 h-4 mr-1.5" />
-                      Delete RFI
+                    <Button variant="outline" className="text-red-600 border-red-200 ms-auto" onClick={() => handleDeleteRFI(selectedRfi._id)}>
+                      <Trash2 className="w-4 h-4 me-1.5" />
+                      {tr("Delete RFI")}
                     </Button>
                   )}
                 </div>
@@ -358,7 +359,7 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
                   <form onSubmit={handlePostResponse} className="p-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.15)] flex gap-2 shrink-0">
                     <Input
                       required
-                      placeholder="Type consultant response or clarification note..."
+                      placeholder={tr("Type consultant response or clarification note...")}
                       value={responseText}
                       onChange={(e) => setResponseText(e.target.value)}
                     />

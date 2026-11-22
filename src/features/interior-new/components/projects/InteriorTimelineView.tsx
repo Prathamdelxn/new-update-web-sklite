@@ -1,6 +1,8 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Loader2,
   ChevronRight,
@@ -80,6 +82,13 @@ const statusBadges: Record<'completed' | 'in_progress' | 'todo', { label: string
 };
 
 export default function InteriorTimelineView({ projectId }: InteriorTimelineViewProps) {
+  const router = useRouter();
+  // Clicking a bar opens that item in its own page
+  const openTask = (taskId: string) => router.push(`/interior-new/projects/${projectId}/tasks?task=${encodeURIComponent(taskId)}`);
+  const openWbs = (wbsId: string) =>
+    wbsId === UNASSIGNED_WBS_ID
+      ? router.push(`/interior-new/projects/${projectId}/tasks`)
+      : router.push(`/interior-new/projects/${projectId}/wbs?node=${encodeURIComponent(wbsId)}`);
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState<any[]>([]);
@@ -108,7 +117,7 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
           setWbsRootNodes(wbsRes.data);
         }
         if (tasksResult.status === 'rejected' && wbsResult.status === 'rejected') {
-          toast.error("You don't have permission to view the timeline (needs WBS or Activity/Task view)");
+          toast.error(tr("You don't have permission to view the timeline (needs WBS or Activity/Task view)"));
         }
       } catch (err) {
         console.error('Failed to load timeline data', err);
@@ -174,12 +183,12 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
       });
       toast.success(
         newStatus === 'completed'
-          ? `Activity completed! (${format(new Date(), 'MMM dd')})`
-          : 'Activity reopened'
+          ? tr("Activity completed! ({{format}})", { format: format(new Date(), 'MMM dd') })
+          : tr("Activity reopened")
       );
     } catch (err) {
       console.error('Failed to update task status:', err);
-      toast.error('Failed to update activity status');
+      toast.error(tr("Failed to update activity status"));
       // Revert if error
       setTasks((prev) =>
         prev.map((t) =>
@@ -346,24 +355,24 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
     return (
       <div className="flex flex-col items-center justify-center py-24">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-2" />
-        <p className="text-xs text-slate-400 font-medium">Loading project Gantt chart...</p>
+        <p className="text-xs text-slate-400 font-medium">{tr("Loading project Gantt chart...")}</p>
       </div>
     );
   }
 
   return (
-    <div className="p-6 lg:p-8 flex flex-col h-[calc(100vh-140px)] min-h-[700px] max-w-full">
+    <div className="p-6 lg:p-8 flex flex-col h-[calc(100vh-140px)] min-h-[43.75rem] max-w-full">
       {/* Header & Controls */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-5 shrink-0">
         <div>
           <div className="flex items-center gap-2.5">
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Project Timeline & Gantt</h2>
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">{tr("Project Timeline & Gantt")}</h2>
             <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-              {timelineData.length} WBS • {totalTasksCount} Activit{totalTasksCount !== 1 ? 'ies' : 'y'}
+              {timelineData.length}{tr(" WBS • ")}{tr(totalTasksCount)}{tr(" Activit")}{totalTasksCount !== 1 ? tr("ies") : 'y'}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Work Breakdown Structure & Activity schedule visualization.
+            {tr("Work Breakdown Structure & Activity schedule visualization.")}
           </p>
         </div>
 
@@ -373,7 +382,7 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-2xs transition-colors"
           >
             <Calendar className="w-3.5 h-3.5 text-blue-600" />
-            <span>Today</span>
+            <span>{tr("Today")}</span>
           </button>
 
           <button
@@ -383,12 +392,12 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
             {expandedWbs.size === timelineData.length ? (
               <>
                 <Minimize2 className="w-3.5 h-3.5 text-slate-500" />
-                <span>Collapse All</span>
+                <span>{tr("Collapse All")}</span>
               </>
             ) : (
               <>
                 <Maximize2 className="w-3.5 h-3.5 text-slate-500" />
-                <span>Expand All</span>
+                <span>{tr("Expand All")}</span>
               </>
             )}
           </button>
@@ -398,20 +407,21 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
       {timelineData.length === 0 ? (
         <Card className="p-16 text-center border border-dashed border-slate-200 bg-white rounded-2xl shadow-xs">
           <FolderTree className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-sm font-bold text-slate-800">No WBS & Activities Found</h3>
+          <h3 className="text-sm font-bold text-slate-800">{tr("No WBS & Activities Found")}</h3>
           <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-            Create WBS packages and actionable activities in the WBS tab to see your visual timeline schedule.
+            {tr("Create WBS packages and actionable activities in the WBS tab to see your visual timeline schedule.")}
           </p>
         </Card>
       ) : (
         <Card className="flex-1 flex flex-col overflow-hidden border border-slate-200 rounded-2xl shadow-xs bg-white isolate">
           {/* Main Scroll Container */}
-          <div ref={scrollContainerRef} className="flex-1 overflow-auto relative bg-white select-none">
+          {/* The chart itself stays left-to-right (time runs left to right) even in Arabic */}
+          <div ref={scrollContainerRef} dir="ltr" className="flex-1 overflow-auto relative bg-white select-none">
             <div className="min-w-max flex flex-col relative">
               
               {/* Vertical Grid Lines (Background) */}
               <div
-                className="absolute top-[57px] bottom-0 z-0 pointer-events-none flex"
+                className="absolute top-[3.5625rem] bottom-0 z-0 pointer-events-none flex"
                 style={{ left: '440px', width: `${totalDays * DAY_WIDTH}px` }}
               >
                 {dates.map((date, i) => {
@@ -421,7 +431,7 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                     <div
                       key={i}
                       className={cn(
-                        'border-r border-slate-100 shrink-0 h-full relative',
+                        'border-e border-slate-100 shrink-0 h-full relative',
                         isWeekend ? 'bg-slate-50/70' : '',
                         today ? 'bg-blue-50/40' : ''
                       )}
@@ -436,15 +446,15 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
               </div>
 
               {/* Header Row */}
-              <div className="flex h-[57px] sticky top-0 z-30 shadow-2xs">
+              <div className="flex h-[3.5625rem] sticky top-0 z-30 shadow-2xs">
                 {/* Left Tree Header */}
-                <div className="w-[440px] shrink-0 sticky left-0 z-40 bg-slate-50 border-r border-b border-slate-200 flex items-center px-4 text-[11px] font-bold text-slate-600 uppercase tracking-wider shadow-xs">
+                <div className="w-[27.5rem] shrink-0 sticky left-0 z-40 bg-slate-50 border-e border-b border-slate-200 flex items-center px-4 text-[0.6875rem] font-bold text-slate-600 uppercase tracking-wider shadow-xs">
                   <div className="flex-1 flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5 text-blue-600" />
-                    <span>WBS Element / Activity</span>
+                    <span>{tr("WBS Element / Activity")}</span>
                   </div>
-                  <div className="w-[85px] text-center">Start</div>
-                  <div className="w-[85px] text-center" title="Planned end date and actual completion date">End / Done</div>
+                  <div className="w-[5.3125rem] text-center">{tr("Start")}</div>
+                  <div className="w-[5.3125rem] text-center" title={tr("Planned end date and actual completion date")}>{tr("End / Done")}</div>
                 </div>
 
                 {/* Right Timeline Date Header */}
@@ -473,11 +483,11 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                       return months.map((m, i) => (
                         <div
                           key={i}
-                          className="border-r border-slate-200 flex items-center overflow-hidden"
+                          className="border-e border-slate-200 flex items-center overflow-hidden"
                           style={{ width: `${m.days * DAY_WIDTH}px` }}
                         >
-                          <span className="sticky left-0 px-3 text-[10px] font-bold text-slate-700 uppercase tracking-wider whitespace-nowrap">
-                            {m.label}
+                          <span className="sticky left-0 px-3 text-[0.625rem] font-bold text-slate-700 uppercase tracking-wider whitespace-nowrap">
+                            {tr(m.label)}
                           </span>
                         </div>
                       ));
@@ -493,7 +503,7 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                         <div
                           key={i}
                           className={cn(
-                            'border-r border-slate-200 shrink-0 flex items-center justify-center text-[10px]',
+                            'border-e border-slate-200 shrink-0 flex items-center justify-center text-[0.625rem]',
                             today
                               ? 'bg-blue-600 text-white font-bold'
                               : isWeekend
@@ -530,10 +540,10 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                       {/* =========================================================
                           1. TOP-LEVEL WBS ROW
                          ========================================================= */}
-                      <div className="flex h-[44px] border-b border-slate-200 bg-slate-50/80 hover:bg-slate-100/70 transition-colors group/wbsrow">
+                      <div className="flex h-[2.75rem] border-b border-slate-200 bg-slate-50/80 hover:bg-slate-100/70 transition-colors group/wbsrow">
                         {/* Left Cell (Tree Node) */}
                         <div
-                          className="w-[440px] shrink-0 sticky left-0 z-20 bg-slate-50/90 group-hover/wbsrow:bg-slate-100/90 border-r border-slate-200 shadow-xs cursor-pointer transition-colors"
+                          className="w-[27.5rem] shrink-0 sticky left-0 z-20 bg-slate-50/90 group-hover/wbsrow:bg-slate-100/90 border-e border-slate-200 shadow-xs cursor-pointer transition-colors"
                           onClick={() => toggleWbs(wbs._id)}
                         >
                           <div className="flex items-center px-4 w-full h-full">
@@ -551,24 +561,24 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
 
                               <FolderTree className="w-4 h-4 text-blue-600 shrink-0" />
                               <span className="text-xs font-bold text-slate-900 tracking-tight truncate" title={wbs.name}>
-                                {wbs.name}
+                                {tr(wbs.name)}
                               </span>
 
                               {wbs.trade && (
-                                <span className="px-1.5 py-0.5 text-[9px] font-semibold rounded bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
-                                  {wbs.trade}
+                                <span className="px-1.5 py-0.5 text-[0.5625rem] font-semibold rounded bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
+                                  {tr(wbs.trade)}
                                 </span>
                               )}
 
-                              <span className="text-[10px] text-slate-400 font-medium shrink-0 ml-auto mr-2">
-                                ({wbs.tasks.length} task{wbs.tasks.length !== 1 ? 's' : ''})
+                              <span className="text-[0.625rem] text-slate-400 font-medium shrink-0 ms-auto me-2">
+                                ({wbs.tasks.length}{tr(" task")}{wbs.tasks.length !== 1 ? 's' : ''})
                               </span>
                             </div>
 
-                            <div className="w-[85px] text-center text-[10px] font-semibold text-slate-600">
+                            <div className="w-[5.3125rem] text-center text-[0.625rem] font-semibold text-slate-600">
                               {wbs.startDate ? format(wbs.startDate, 'MMM dd') : '—'}
                             </div>
-                            <div className="w-[85px] text-center text-[10px] font-semibold text-slate-600">
+                            <div className="w-[5.3125rem] text-center text-[0.625rem] font-semibold text-slate-600">
                               {wbs.endDate ? format(wbs.endDate, 'MMM dd') : '—'}
                             </div>
                           </div>
@@ -581,18 +591,20 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                         >
                           {hasWbsDates && (
                             <div
-                              className="absolute top-1/2 -translate-y-1/2 h-5 rounded-md shadow-xs bg-slate-800 text-white flex items-center justify-between px-2 text-[10px] font-bold border border-slate-900 transition-all hover:brightness-110 cursor-pointer"
+                              className="absolute top-1/2 -translate-y-1/2 h-5 rounded-md shadow-xs bg-slate-800 text-white flex items-center justify-between px-2 text-[0.625rem] font-bold border border-slate-900 transition-all hover:brightness-110 cursor-pointer"
                               style={{
                                 left: `${Math.max(0, wbsLeft)}px`,
                                 width: `${Math.max(DAY_WIDTH, wbsWidth)}px`,
                               }}
-                              title={`WBS: ${wbs.name} (${wbs.progress}% complete)`}
+                              title={tr("WBS: {{name}} ({{progress}}% complete) — click to open", { name: wbs.name, progress: wbs.progress })}
+                              role="link"
+                              onClick={() => openWbs(wbs._id)}
                             >
-                              <span className="truncate pr-1">
-                                {wbs.name}
+                              <span className="truncate pe-1">
+                                {tr(wbs.name)}
                               </span>
-                              <span className="text-[9px] text-blue-300 font-mono shrink-0">
-                                {wbs.progress}%
+                              <span className="text-[0.5625rem] text-blue-300 font-mono shrink-0">
+                                {tr(wbs.progress)}%
                               </span>
                             </div>
                           )}
@@ -605,9 +617,9 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                       {isWbsExpanded && (
                         <>
                           {wbs.tasks.length === 0 ? (
-                            <div className="flex h-[36px] border-b border-slate-100 bg-white">
-                              <div className="w-[440px] shrink-0 sticky left-0 z-20 bg-white border-r border-slate-100 pl-12 pr-4 flex items-center text-xs text-slate-400 italic">
-                                No activities inside this WBS element yet.
+                            <div className="flex h-[2.25rem] border-b border-slate-100 bg-white">
+                              <div className="w-[27.5rem] shrink-0 sticky left-0 z-20 bg-white border-e border-slate-100 ps-12 pe-4 flex items-center text-xs text-slate-400 italic">
+                                {tr("No activities inside this WBS element yet.")}
                               </div>
                               <div style={{ width: `${totalDays * DAY_WIDTH}px` }} />
                             </div>
@@ -658,15 +670,15 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                                 <div
                                   key={task._id}
                                   className={cn(
-                                    'flex h-[40px] border-b border-slate-100 transition-colors group/taskrow relative',
+                                    'flex h-[2.5rem] border-b border-slate-100 transition-colors group/taskrow relative',
                                     isCompleted
-                                      ? 'border-l-4 border-l-emerald-500 bg-emerald-50/15 hover:bg-emerald-50/30'
+                                      ? 'border-s-4 border-s-emerald-500 bg-emerald-50/15 hover:bg-emerald-50/30'
                                       : 'hover:bg-blue-50/30'
                                   )}
                                 >
                                   {/* Left Cell (Task Name & Dates) */}
-                                  <div className="w-[440px] shrink-0 sticky left-0 z-20 bg-white group-hover/taskrow:bg-slate-50/90 border-r border-slate-200 shadow-2xs transition-colors">
-                                    <div className="flex items-center px-4 pl-10 w-full h-full">
+                                  <div className="w-[27.5rem] shrink-0 sticky left-0 z-20 bg-white group-hover/taskrow:bg-slate-50/90 border-e border-slate-200 shadow-2xs transition-colors">
+                                    <div className="flex items-center px-4 ps-10 w-full h-full">
                                       <div className="flex-1 flex items-center gap-2 overflow-hidden">
                                         <button
                                           type="button"
@@ -675,7 +687,7 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                                             handleToggleTaskStatus(task);
                                           }}
                                           className="p-0.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer group/chk"
-                                          title={isCompleted ? 'Click to reopen activity' : 'Click to mark as completed'}
+                                          title={isCompleted ? tr("Click to reopen activity") : tr("Click to mark as completed")}
                                         >
                                           {isCompleted ? (
                                             <CheckCircle2 className="w-4 h-4 text-emerald-600 fill-emerald-100 shrink-0 group-hover/chk:scale-110 transition-transform" />
@@ -687,45 +699,47 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                                         </button>
 
                                         <span
+                                          role="link"
+                                          onClick={() => openTask(task._id)}
                                           className={cn(
-                                            'text-xs font-medium text-slate-800 truncate',
+                                            'text-xs font-medium text-slate-800 truncate cursor-pointer hover:text-blue-600 hover:underline',
                                             isCompleted ? 'line-through text-slate-400' : ''
                                           )}
-                                          title={task.name}
+                                          title={tr("{{name}} — click to open", { name: task.name })}
                                         >
-                                          {task.name}
+                                          {tr(task.name)}
                                         </span>
 
                                         <span
                                           className={cn(
-                                            'px-1.5 py-0.2 text-[9px] font-bold rounded-full uppercase border shrink-0 inline-flex items-center gap-1',
+                                            'px-1.5 py-0.2 text-[0.5625rem] font-bold rounded-full uppercase border shrink-0 inline-flex items-center gap-1',
                                             badge.bg,
                                             badge.text
                                           )}
                                           title={
                                             isCompleted && completedDate
-                                              ? `Completed on ${format(completedDate, 'MMMM dd, yyyy')}`
-                                              : badge.label
+                                              ? tr("Completed on {{format}}", { format: format(completedDate, 'MMMM dd, yyyy') })
+                                              : tr(badge.label)
                                           }
                                         >
-                                          <span>{badge.label}</span>
+                                          <span>{tr(badge.label)}</span>
                                           {isCompleted && completedDate && (
-                                            <span className="font-semibold text-emerald-800 lowercase text-[8.5px]">
+                                            <span className="font-semibold text-emerald-800 lowercase text-[0.5312rem]">
                                               • {format(completedDate, 'MMM dd')}
                                             </span>
                                           )}
                                         </span>
                                       </div>
 
-                                      <div className="w-[85px] text-center text-[10px] text-slate-500">
+                                      <div className="w-[5.3125rem] text-center text-[0.625rem] text-slate-500">
                                         {taskStart ? format(taskStart, 'MMM dd') : '—'}
                                       </div>
-                                      <div className="w-[85px] text-center flex flex-col items-center justify-center">
+                                      <div className="w-[5.3125rem] text-center flex flex-col items-center justify-center">
                                         <span
                                           className={cn(
-                                            'text-[10px] font-medium',
+                                            'text-[0.625rem] font-medium',
                                             isCompleted && completedDate
-                                              ? 'text-slate-400 line-through text-[9px]'
+                                              ? 'text-slate-400 line-through text-[0.5625rem]'
                                               : 'text-slate-500'
                                           )}
                                           title={taskEnd ? `Planned: ${format(taskEnd, 'MMMM dd, yyyy')}` : undefined}
@@ -734,8 +748,8 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                                         </span>
                                         {isCompleted && completedDate && (
                                           <span
-                                            className="text-[9px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300 inline-flex items-center gap-0.5 mt-0.5 whitespace-nowrap leading-none shadow-2xs"
-                                            title={`Completed on ${format(completedDate, 'MMMM dd, yyyy')}`}
+                                            className="text-[0.5625rem] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300 inline-flex items-center gap-0.5 mt-0.5 whitespace-nowrap leading-none shadow-2xs"
+                                            title={tr("Completed on {{format}}", { format: format(completedDate, 'MMMM dd, yyyy') })}
                                           >
                                             ✓ {format(completedDate, 'MMM dd')}
                                           </span>
@@ -757,7 +771,7 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                                           left: `${completedLeft}px`,
                                           width: `${DAY_WIDTH}px`,
                                         }}
-                                        title={`Activity Completed Date: ${format(completedDate!, 'MMMM dd, yyyy')}`}
+                                        title={tr("Activity Completed Date: {{format}}", { format: format(completedDate!, 'MMMM dd, yyyy') })}
                                       />
                                     )}
 
@@ -786,15 +800,16 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                                     {hasDates && (
                                       <div
                                         className={cn(
-                                          'absolute top-1/2 -translate-y-1/2 h-6 rounded-md shadow-xs text-white flex items-center px-2.5 text-[11px] font-medium border transition-transform hover:scale-101 hover:shadow-md cursor-pointer overflow-hidden',
+                                          'absolute top-1/2 -translate-y-1/2 h-6 rounded-md shadow-xs text-white flex items-center px-2.5 text-[0.6875rem] font-medium border transition-transform hover:scale-101 hover:shadow-md cursor-pointer overflow-hidden',
                                           badge.barBg
                                         )}
                                         style={{
                                           left: `${Math.max(0, taskLeft)}px`,
                                           width: `${Math.max(DAY_WIDTH, taskWidth)}px`,
                                         }}
-                                        title={`${task.name} • ${
-                                          isCompleted
+                                        role="link"
+                                        onClick={() => openTask(task._id)}
+                                        title={tr("{{name}} • {{value}} • Planned: {{value2}} - {{value3}}", { name: task.name, value: isCompleted
                                             ? `Completed on ${format(completedDate!, 'MMMM dd, yyyy')}${
                                                 isEarly
                                                   ? ` (${Math.abs(daysDiff)}d early)`
@@ -802,36 +817,35 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                                                   ? ` (${daysDiff}d overdue)`
                                                   : ' (on schedule)'
                                               }`
-                                            : badge.label
-                                        } • Planned: ${taskStart ? format(taskStart, 'MMM dd') : ''} - ${taskEnd ? format(taskEnd, 'MMM dd') : ''}`}
+                                            : badge.label, value2: taskStart ? format(taskStart, 'MMM dd') : '', value3: taskEnd ? format(taskEnd, 'MMM dd') : '' })}
                                       >
                                         {/* If completed early, render visual demarcation notch on the bar */}
                                         {isCompleted && isEarly && (
                                           <div
-                                            className="absolute top-0 bottom-0 right-0 bg-emerald-950/25 border-l-2 border-white/60 border-dashed flex items-center justify-end px-1.5"
+                                            className="absolute top-0 bottom-0 right-0 bg-emerald-950/25 border-s-2 border-white/60 border-dashed flex items-center justify-end px-1.5"
                                             style={{
                                               width: `${Math.min(taskWidth, Math.abs(daysDiff) * DAY_WIDTH)}px`,
                                             }}
-                                            title={`Completed ${Math.abs(daysDiff)} day${Math.abs(daysDiff) > 1 ? 's' : ''} ahead of deadline`}
+                                            title={tr("Completed {{Math}} day{{value}} ahead of deadline", { Math: Math.abs(daysDiff), value: Math.abs(daysDiff) > 1 ? 's' : '' })}
                                           >
                                             {Math.abs(daysDiff) * DAY_WIDTH > 36 && (
-                                              <span className="text-[8.5px] font-bold text-emerald-100/90 whitespace-nowrap">
-                                                {Math.abs(daysDiff)}d early
+                                              <span className="text-[0.5312rem] font-bold text-emerald-100/90 whitespace-nowrap">
+                                                {Math.abs(daysDiff)}{tr("d early")}
                                               </span>
                                             )}
                                           </div>
                                         )}
 
-                                        <span className="truncate pr-1 text-[10px] font-semibold flex items-center gap-1.5 z-10 relative">
+                                        <span className="truncate pe-1 text-[0.625rem] font-semibold flex items-center gap-1.5 z-10 relative">
                                           {isCompleted && (
                                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-100 shrink-0 stroke-[2.5]" />
                                           )}
-                                          <span>{task.name}</span>
+                                          <span>{tr(task.name)}</span>
                                         </span>
 
                                         {assigneeName && taskWidth > 180 && (
-                                          <span className="ml-auto text-[9px] bg-black/20 px-1.5 py-0.5 rounded text-white/90 truncate max-w-[90px] z-10 relative">
-                                            {assigneeName}
+                                          <span className="ms-auto text-[0.5625rem] bg-black/20 px-1.5 py-0.5 rounded text-white/90 truncate max-w-[5.625rem] z-10 relative">
+                                            {tr(assigneeName)}
                                           </span>
                                         )}
                                       </div>
@@ -841,6 +855,7 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                                     {isCompleted && isCompletedVisible && (
                                       <div
                                         className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-30 flex items-center group/pin cursor-pointer select-none"
+                                        onClick={() => openTask(task._id)}
                                         style={{
                                           left: `${completedMarkerCenter}px`,
                                         }}
@@ -848,27 +863,27 @@ export default function InteriorTimelineView({ projectId }: InteriorTimelineView
                                         {/* Visual Milestone Pin Flag/Badge */}
                                         <div className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md border-2 border-white ring-2 ring-emerald-400/60 rounded-full px-2 py-0.5 transition-all group-hover/pin:scale-115">
                                           <Check className="w-3 h-3 text-white stroke-[3] shrink-0" />
-                                          <span className="text-[9.5px] font-bold tracking-tight whitespace-nowrap">
+                                          <span className="text-[0.5938rem] font-bold tracking-tight whitespace-nowrap">
                                             {format(completedDate!, 'MMM dd')}
                                           </span>
                                         </div>
 
                                         {/* Floating Detailed Tooltip on Hover */}
                                         <div className="hidden group-hover/pin:flex absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 flex-col items-center pointer-events-none z-50">
-                                          <div className="bg-slate-900 text-white text-[11px] font-medium px-2.5 py-1 rounded shadow-xl whitespace-nowrap flex items-center gap-1.5 border border-slate-700">
+                                          <div className="bg-slate-900 text-white text-[0.6875rem] font-medium px-2.5 py-1 rounded shadow-xl whitespace-nowrap flex items-center gap-1.5 border border-slate-700">
                                             <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block shrink-0" />
                                             <span>
-                                              Activity completed on <strong className="text-emerald-300 font-bold">{format(completedDate!, 'MMMM dd, yyyy')}</strong>
+                                              {tr("Activity completed on ")}<strong className="text-emerald-300 font-bold">{format(completedDate!, 'MMMM dd, yyyy')}</strong>
                                               {isEarly ? (
-                                                <span className="text-emerald-300 ml-1">({Math.abs(daysDiff)} day{Math.abs(daysDiff) > 1 ? 's' : ''} early)</span>
+                                                <span className="text-emerald-300 ms-1">({Math.abs(daysDiff)}{tr(" day")}{Math.abs(daysDiff) > 1 ? 's' : ''}{tr(" early)")}</span>
                                               ) : isLate ? (
-                                                <span className="text-amber-300 ml-1">({daysDiff} day{daysDiff > 1 ? 's' : ''} late)</span>
+                                                <span className="text-amber-300 ms-1">({tr(daysDiff)}{tr(" day")}{daysDiff > 1 ? 's' : ''}{tr(" late)")}</span>
                                               ) : (
-                                                <span className="text-emerald-300 ml-1">(on schedule)</span>
+                                                <span className="text-emerald-300 ms-1">{tr("(on schedule)")}</span>
                                               )}
                                             </span>
                                           </div>
-                                          <div className="w-2 h-2 bg-slate-900 rotate-45 -mt-1 border-r border-b border-slate-700" />
+                                          <div className="w-2 h-2 bg-slate-900 rotate-45 -mt-1 border-e border-b border-slate-700" />
                                         </div>
                                       </div>
                                     )}

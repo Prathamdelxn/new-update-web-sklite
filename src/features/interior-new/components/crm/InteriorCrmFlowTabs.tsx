@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React from 'react';
 import { cn } from '@/lib/utils';
@@ -79,7 +80,7 @@ export const InteriorCrmFlowTabs: React.FC<InteriorCrmFlowTabsProps> = ({
                 )}
               />
 
-              <span className="whitespace-nowrap tracking-tight">{stage.label}</span>
+              <span className="whitespace-nowrap tracking-tight">{tr(stage.label)}</span>
             </button>
           );
         })}

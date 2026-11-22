@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 // =============================================================================
 // Sky-Lite Web — Interior CRM BOQ Builder Modal
@@ -345,7 +346,7 @@ export function InteriorBoqBuilderModal({
 
   const removeSection = (secId: string) => {
     if (sections.length <= 1) {
-      toast.error('BOQ must have at least one section.');
+      toast.error(tr("BOQ must have at least one section."));
       return;
     }
     setSections((prev) => prev.filter((s) => s.id !== secId));
@@ -359,7 +360,7 @@ export function InteriorBoqBuilderModal({
 
     setUploadingSecId(secId);
     try {
-      toast.info(`Uploading ${file.name}...`);
+      toast.info(tr("Uploading {{name}}...", { name: file.name }));
       const secureUrl = await uploadToCloudinary(file);
       
       const newAttachment: BoqAttachment = {
@@ -376,9 +377,9 @@ export function InteriorBoqBuilderModal({
         )
       );
 
-      toast.success(`Attached ${file.name} to section`);
+      toast.success(tr("Attached {{name}} to section", { name: file.name }));
     } catch (err: any) {
-      toast.error(err.message || 'Failed to upload attachment');
+      toast.error(err.message || tr("Failed to upload attachment"));
     } finally {
       setUploadingSecId(null);
       if (fileInputRefs.current[secId]) {
@@ -390,7 +391,7 @@ export function InteriorBoqBuilderModal({
   const handleLinkDrawing = (secId: string, drawing: any) => {
     const drawingUrl = drawing.url || (drawing.versions && drawing.versions[drawing.versions.length - 1]?.url);
     if (!drawingUrl) {
-      toast.error('Drawing does not have a valid file URL.');
+      toast.error(tr("Drawing does not have a valid file URL."));
       return;
     }
 
@@ -409,7 +410,7 @@ export function InteriorBoqBuilderModal({
           (a) => a.url === drawingUrl || (a.drawingId && a.drawingId === newAttachment.drawingId)
         );
         if (exists) {
-          toast.info('This drawing is already attached to this section.');
+          toast.info(tr("This drawing is already attached to this section."));
           return s;
         }
         return { ...s, attachments: [...(s.attachments || []), newAttachment] };
@@ -417,7 +418,7 @@ export function InteriorBoqBuilderModal({
     );
 
     setActiveDrawingPickerSecId(null);
-    toast.success(`Linked ${drawingName} to section`);
+    toast.success(tr("Linked {{drawingName}} to section", { drawingName: drawingName }));
   };
 
   const removeAttachment = (secId: string, index: number) => {
@@ -473,7 +474,7 @@ export function InteriorBoqBuilderModal({
   const removeItem = (itemId: string, secId: string) => {
     const sectionItems = items.filter((i) => i.sectionId === secId);
     if (sectionItems.length <= 1) {
-      toast.error('Each section must have at least one item.');
+      toast.error(tr("Each section must have at least one item."));
       return;
     }
     setItems((prev) => prev.filter((i) => i.id !== itemId));
@@ -496,57 +497,57 @@ export function InteriorBoqBuilderModal({
     e.preventDefault();
 
     if (isReadOnly) {
-      return toast.error('BOQ cannot be edited because the quotation has already been approved.');
+      return toast.error(tr("BOQ cannot be edited because the quotation has already been approved."));
     }
 
     if (sections.length === 0 || items.length === 0) {
-      return toast.error('Please add at least one section/category and line item to the BOQ.');
+      return toast.error(tr("Please add at least one section/category and line item to the BOQ."));
     }
 
     for (const s of sections) {
       if (!s.sectionTitle || !s.sectionTitle.trim()) {
-        return toast.error('Please provide a category/section name for all sections.');
+        return toast.error(tr("Please provide a category/section name for all sections."));
       }
       if (s.sectionTitle.trim().length > 80) {
-        return toast.error(`Section name "${s.sectionTitle.slice(0, 25)}..." exceeds maximum allowed length of 80 characters.`);
+        return toast.error(tr("Section name \"{{sectionTitle}}...\" exceeds maximum allowed length of 80 characters.", { sectionTitle: s.sectionTitle.slice(0, 25) }));
       }
       if (s.sectionNumber && s.sectionNumber.trim().length > 15) {
-        return toast.error(`Section number "${s.sectionNumber}" exceeds maximum allowed length of 15 characters.`);
+        return toast.error(tr("Section number \"{{sectionNumber}}\" exceeds maximum allowed length of 15 characters.", { sectionNumber: s.sectionNumber }));
       }
       if (s.scopeDescription && s.scopeDescription.trim().length > 1000) {
-        return toast.error(`Section Scope Note in "${s.sectionTitle.slice(0, 25)}" exceeds maximum allowed length of 1000 characters.`);
+        return toast.error(tr("Section Scope Note in \"{{sectionTitle}}\" exceeds maximum allowed length of 1000 characters.", { sectionTitle: s.sectionTitle.slice(0, 25) }));
       }
     }
 
     for (const i of items) {
       if (!i.itemName || !i.itemName.trim()) {
-        return toast.error('Please provide an Item Short Description for all line items.');
+        return toast.error(tr("Please provide an Item Short Description for all line items."));
       }
       if (i.itemName.trim().length > 120) {
-        return toast.error(`Item title "${i.itemName.slice(0, 25)}..." exceeds maximum allowed length of 120 characters.`);
+        return toast.error(tr("Item title \"{{itemName}}...\" exceeds maximum allowed length of 120 characters.", { itemName: i.itemName.slice(0, 25) }));
       }
       if (i.description && i.description.trim().length > 1000) {
-        return toast.error(`Item description for "${i.itemName.slice(0, 25)}" exceeds maximum allowed length of 1000 characters.`);
+        return toast.error(tr("Item description for \"{{itemName}}\" exceeds maximum allowed length of 1000 characters.", { itemName: i.itemName.slice(0, 25) }));
       }
       if (i.unit && i.unit.trim().length > 15) {
-        return toast.error(`Unit "${i.unit}" exceeds maximum allowed length of 15 characters.`);
+        return toast.error(tr("Unit \"{{unit}}\" exceeds maximum allowed length of 15 characters.", { unit: i.unit }));
       }
       if (i.remarks && i.remarks.trim().length > 500) {
-        return toast.error(`Remarks for "${i.itemName.slice(0, 25)}" exceeds maximum allowed length of 500 characters.`);
+        return toast.error(tr("Remarks for \"{{itemName}}\" exceeds maximum allowed length of 500 characters.", { itemName: i.itemName.slice(0, 25) }));
       }
       if (!i.quantity || Number(i.quantity) <= 0) {
-        return toast.error(`Quantity must be greater than 0 for "${i.itemName.slice(0, 25)}".`);
+        return toast.error(tr("Quantity must be greater than 0 for \"{{itemName}}\".", { itemName: i.itemName.slice(0, 25) }));
       }
       if (Number(i.quantity) > 999999999) {
-        return toast.error(`Quantity is too large for "${i.itemName.slice(0, 25)}" (maximum 999,999,999).`);
+        return toast.error(tr("Quantity is too large for \"{{itemName}}\" (maximum 999,999,999).", { itemName: i.itemName.slice(0, 25) }));
       }
       if (Number(i.rate) > 999999999) {
-        return toast.error(`Rate is too large for "${i.itemName.slice(0, 25)}" (maximum 999,999,999).`);
+        return toast.error(tr("Rate is too large for \"{{itemName}}\" (maximum 999,999,999).", { itemName: i.itemName.slice(0, 25) }));
       }
     }
 
     if (notes && notes.trim().length > 2000) {
-      return toast.error('Overall BOQ terms/notes cannot exceed 2000 characters.');
+      return toast.error(tr("Overall BOQ terms/notes cannot exceed 2000 characters."));
     }
 
     setIsSubmitting(true);
@@ -657,11 +658,11 @@ export function InteriorBoqBuilderModal({
         completedDate: new Date(),
       });
 
-      toast.success(isEditing ? 'BOQ updated successfully!' : `BOQ Version ${updatedBoqs.length} created successfully!`);
+      toast.success(isEditing ? tr("BOQ updated successfully!") : tr("BOQ Version {{updatedBoqsCount}} created successfully!", { updatedBoqsCount: updatedBoqs.length }));
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Failed to save BOQ');
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || tr("Failed to save BOQ"));
     } finally {
       setIsSubmitting(false);
     }
@@ -695,37 +696,37 @@ export function InteriorBoqBuilderModal({
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="text-base font-bold text-slate-900 leading-tight">
                     {isReadOnly
-                      ? `View BOQ (Version ${currentVersionNumber})`
+                      ? tr("View BOQ (Version {{currentVersionNumber}})", { currentVersionNumber: currentVersionNumber })
                       : isEditing
-                      ? `Edit BOQ (Version ${currentVersionNumber})`
-                      : `New BOQ Version (Version ${currentVersionNumber})`}
+                      ? tr("Edit BOQ (Version {{currentVersionNumber}})", { currentVersionNumber: currentVersionNumber })
+                      : tr("New BOQ Version (Version {{currentVersionNumber}})", { currentVersionNumber: currentVersionNumber })}
                   </h3>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 font-mono">
-                    v{currentVersionNumber}
+                  <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 font-mono">
+                    v{tr(currentVersionNumber)}
                   </span>
                   {isReadOnly && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      Approved & Locked
+                    <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      {tr("Approved & Locked")}
                     </span>
                   )}
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5 truncate flex items-center gap-1.5 flex-wrap">
                   <span>
                     {isReadOnly
-                      ? `Preserved in read-only mode`
+                      ? tr("Preserved in read-only mode")
                       : isEditing
-                      ? `Editing Version ${currentVersionNumber}`
-                      : `Creating Version ${currentVersionNumber}`}
+                      ? tr("Editing Version {{currentVersionNumber}}", { currentVersionNumber: currentVersionNumber })
+                      : tr("Creating Version {{currentVersionNumber}}", { currentVersionNumber: currentVersionNumber })}
                   </span>
                   <span>•</span>
                   <span>
-                    By <strong className="text-slate-800 font-semibold">{currentUserName}</strong>
+                    {tr("By ")}<strong className="text-slate-800 font-semibold">{tr(currentUserName)}</strong>
                   </span>
                   <span>•</span>
                   <span>
                     {isEditing && sourceBoq?.createdAt
-                      ? `Created on ${format(new Date(sourceBoq.createdAt), 'MMM dd, yyyy')}`
-                      : `Today, ${format(new Date(), 'MMM dd, yyyy')}`}
+                      ? tr("Created on {{format}}", { format: format(new Date(sourceBoq.createdAt), 'MMM dd, yyyy') })
+                      : tr("Today, {{format}}", { format: format(new Date(), 'MMM dd, yyyy') })}
                   </span>
                 </p>
               </div>
@@ -739,7 +740,7 @@ export function InteriorBoqBuilderModal({
                   className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition cursor-pointer shadow-2xs active:scale-[0.98]"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Add Section</span>
+                  <span>{tr("Add Section")}</span>
                 </button>
               )}
               <button
@@ -747,7 +748,7 @@ export function InteriorBoqBuilderModal({
                 onClick={onClose}
                 disabled={isSubmitting}
                 className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200/60 transition cursor-pointer disabled:opacity-40 shrink-0"
-                title="Close modal"
+                title={tr("Close modal")}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -787,9 +788,9 @@ export function InteriorBoqBuilderModal({
                             maxLength={15}
                             value={section.sectionNumber}
                             onChange={(e) => updateSection(section.id, 'sectionNumber', e.target.value)}
-                            placeholder="Sec #"
+                            placeholder={tr("Sec #")}
                             className="w-16 h-7 px-2 text-xs font-mono font-bold text-center text-slate-800 bg-white border border-slate-200 rounded-lg outline-none focus:border-blue-500 disabled:bg-slate-50"
-                            title="Section Number / Code (e.g. 3, A, 5)"
+                            title={tr("Section Number / Code (e.g. 3, A, 5)")}
                           />
                           <input
                             required
@@ -798,25 +799,25 @@ export function InteriorBoqBuilderModal({
                             list={`boq-categories-${section.id}`}
                             value={section.sectionTitle}
                             onChange={(e) => updateSection(section.id, 'sectionTitle', e.target.value)}
-                            placeholder="Category / Section Name *"
-                            className="flex-1 min-w-[180px] h-7 px-2.5 text-xs font-bold text-slate-900 bg-white border border-slate-200 rounded-lg outline-none focus:border-blue-500 disabled:bg-slate-50 placeholder:font-normal placeholder:text-slate-400"
+                            placeholder={tr("Category / Section Name *")}
+                            className="flex-1 min-w-[11.25rem] h-7 px-2.5 text-xs font-bold text-slate-900 bg-white border border-slate-200 rounded-lg outline-none focus:border-blue-500 disabled:bg-slate-50 placeholder:font-normal placeholder:text-slate-400"
                           />
                           <datalist id={`boq-categories-${section.id}`}>
                             {BOQ_CATEGORIES.map((cat) => (
                               <option key={cat} value={cat} />
                             ))}
                           </datalist>
-                          <span className="text-[10px] font-semibold text-slate-500 bg-slate-200/80 px-2 py-0.5 rounded-full">
-                            {sectionItems.length} {sectionItems.length === 1 ? 'item' : 'items'}
+                          <span className="text-[0.625rem] font-semibold text-slate-500 bg-slate-200/80 px-2 py-0.5 rounded-full">
+                            {sectionItems.length} {sectionItems.length === 1 ? tr("item") : tr("items")}
                           </span>
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
-                        <div className="text-right">
-                          <span className="text-[11px] font-semibold text-slate-500 mr-2">Subtotal:</span>
+                        <div className="text-end">
+                          <span className="text-[0.6875rem] font-semibold text-slate-500 me-2">{tr("Subtotal:")}</span>
                           <span className="text-xs font-bold font-mono text-slate-900">
-                            {currencySymbol}{subTotal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                            {tr(currencySymbol)}{subTotal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                           </span>
                         </div>
 
@@ -825,7 +826,7 @@ export function InteriorBoqBuilderModal({
                             type="button"
                             onClick={() => removeSection(section.id)}
                             className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition cursor-pointer"
-                            title="Delete Section"
+                            title={tr("Delete Section")}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -837,13 +838,13 @@ export function InteriorBoqBuilderModal({
                       <div className="p-3 sm:p-4 space-y-3.5">
                         {/* Section Scope of Work Notes */}
                         <div className="space-y-1">
-                          <label className="text-[11px] font-semibold text-slate-700 flex items-center justify-between gap-1.5">
+                          <label className="text-[0.6875rem] font-semibold text-slate-700 flex items-center justify-between gap-1.5">
                             <span className="flex items-center gap-1.5">
                               <FileText className="w-3 h-3 text-blue-600" />
-                              <span>Section Scope of Work / Overview Note (Optional)</span>
+                              <span>{tr("Section Scope of Work / Overview Note (Optional)")}</span>
                             </span>
                             {!isReadOnly && (
-                              <span className="text-[10px] font-normal text-slate-400">
+                              <span className="text-[0.625rem] font-normal text-slate-400">
                                 {(section.scopeDescription || '').length}/1000
                               </span>
                             )}
@@ -851,11 +852,11 @@ export function InteriorBoqBuilderModal({
                           {isReadOnly ? (
                             section.scopeDescription ? (
                               <div className="w-full px-3.5 py-2 text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-xl leading-relaxed whitespace-pre-wrap">
-                                {section.scopeDescription}
+                                {tr(section.scopeDescription)}
                               </div>
                             ) : (
                               <div className="w-full px-3.5 py-2 text-xs text-slate-400 italic bg-slate-50 border border-dashed border-slate-200 rounded-xl">
-                                No scope overview note entered for this section.
+                                {tr("No scope overview note entered for this section.")}
                               </div>
                             )
                           ) : (
@@ -864,7 +865,7 @@ export function InteriorBoqBuilderModal({
                               maxLength={1000}
                               value={section.scopeDescription || ''}
                               onChange={(e) => updateSection(section.id, 'scopeDescription', e.target.value)}
-                              placeholder="e.g. This scope of work covers the careful removal and dismantling of items that are identified as salvageable for reuse or safe disposal..."
+                              placeholder={tr("e.g. This scope of work covers the careful removal and dismantling of items that are identified as salvageable for reuse or safe disposal...")}
                               className="w-full px-3 py-1.5 text-xs text-slate-800 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition resize-y placeholder:text-slate-400"
                             />
                           )}
@@ -875,8 +876,8 @@ export function InteriorBoqBuilderModal({
                           <div className="flex items-center justify-between gap-2 flex-wrap">
                             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
                               <Paperclip className="w-3.5 h-3.5 text-blue-600" />
-                              <span>Attached Drawings & Reference Images</span>
-                              <span className="text-[10px] font-semibold text-blue-700 bg-blue-100/80 px-1.5 py-0.2 rounded-md font-mono">
+                              <span>{tr("Attached Drawings & Reference Images")}</span>
+                              <span className="text-[0.625rem] font-semibold text-blue-700 bg-blue-100/80 px-1.5 py-0.2 rounded-md font-mono">
                                 {section.attachments?.length || 0}
                               </span>
                             </div>
@@ -897,14 +898,14 @@ export function InteriorBoqBuilderModal({
                                   type="button"
                                   disabled={isUploading}
                                   onClick={() => fileInputRefs.current[section.id]?.click()}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-blue-700 bg-white hover:bg-blue-50 border border-blue-200 rounded-lg shadow-2xs transition cursor-pointer disabled:opacity-50"
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 text-[0.6875rem] font-bold text-blue-700 bg-white hover:bg-blue-50 border border-blue-200 rounded-lg shadow-2xs transition cursor-pointer disabled:opacity-50"
                                 >
                                   {isUploading ? (
                                     <Loader2 className="w-3 h-3 animate-spin text-blue-600" />
                                   ) : (
                                     <UploadCloud className="w-3 h-3 text-blue-600" />
                                   )}
-                                  <span>{isUploading ? 'Uploading...' : 'Upload Drawing / Image'}</span>
+                                  <span>{isUploading ? tr("Uploading...") : tr("Upload Drawing / Image")}</span>
                                 </button>
 
                                 {/* Select from Existing Lead Drawings */}
@@ -917,17 +918,17 @@ export function InteriorBoqBuilderModal({
                                           isDrawingPickerOpen ? null : section.id
                                         )
                                       }
-                                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg shadow-2xs transition cursor-pointer"
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[0.6875rem] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg shadow-2xs transition cursor-pointer"
                                     >
                                       <FileCode className="w-3 h-3 text-indigo-600" />
-                                      <span>Link Lead Drawing</span>
+                                      <span>{tr("Link Lead Drawing")}</span>
                                     </button>
 
                                     {/* Dropdown Popover */}
                                     {isDrawingPickerOpen && (
-                                      <div className="absolute right-0 top-full mt-1.5 z-30 w-72 bg-white border border-slate-200 rounded-xl shadow-xl p-2 space-y-1 max-h-56 overflow-y-auto">
-                                        <div className="text-[10px] font-bold text-slate-500 px-2 py-1 uppercase tracking-wider">
-                                          Select Lead Drawing
+                                      <div className="absolute end-0 top-full mt-1.5 z-30 w-72 bg-white border border-slate-200 rounded-xl shadow-xl p-2 space-y-1 max-h-56 overflow-y-auto">
+                                        <div className="text-[0.625rem] font-bold text-slate-500 px-2 py-1 uppercase tracking-wider">
+                                          {tr("Select Lead Drawing")}
                                         </div>
                                         {designFiles.map((df: any) => {
                                           const drawingUrl =
@@ -941,7 +942,7 @@ export function InteriorBoqBuilderModal({
                                               key={df._id || df.id || df.name}
                                               type="button"
                                               onClick={() => handleLinkDrawing(section.id, df)}
-                                              className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between gap-2 transition ${
+                                              className={`w-full text-start px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between gap-2 transition ${
                                                 isAlreadyAttached
                                                   ? 'bg-slate-50 text-slate-400 cursor-default'
                                                   : 'hover:bg-blue-50 text-slate-800 hover:text-blue-700 cursor-pointer'
@@ -949,7 +950,7 @@ export function InteriorBoqBuilderModal({
                                             >
                                               <div className="min-w-0 flex-1 truncate">
                                                 <div className="font-semibold truncate">{df.title || df.name}</div>
-                                                <div className="text-[10px] text-slate-400 font-mono">
+                                                <div className="text-[0.625rem] text-slate-400 font-mono">
                                                   {df.category || '2D'} • v{df.currentVersion || 1}
                                                 </div>
                                               </div>
@@ -978,13 +979,13 @@ export function InteriorBoqBuilderModal({
                                 return (
                                   <div
                                     key={attIdx}
-                                    className="inline-flex items-center gap-1.5 pl-1.5 pr-1 py-1 rounded-lg bg-white border border-slate-200 text-xs text-slate-800 shadow-2xs group hover:border-blue-300 transition"
+                                    className="inline-flex items-center gap-1.5 ps-1.5 pe-1 py-1 rounded-lg bg-white border border-slate-200 text-xs text-slate-800 shadow-2xs group hover:border-blue-300 transition"
                                   >
                                     <button
                                       type="button"
                                       onClick={() => setPreviewAttachment(att)}
-                                      className="flex items-center gap-1.5 cursor-pointer text-left hover:opacity-80 transition"
-                                      title="Click to preview image/drawing in modal"
+                                      className="flex items-center gap-1.5 cursor-pointer text-start hover:opacity-80 transition"
+                                      title={tr("Click to preview image/drawing in modal")}
                                     >
                                       {isImg ? (
                                         <img loading="lazy" decoding="async"
@@ -995,8 +996,8 @@ export function InteriorBoqBuilderModal({
                                       ) : (
                                         <FileCode className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                                       )}
-                                      <span className="font-medium truncate max-w-[130px]" title={att.name}>
-                                        {att.name}
+                                      <span className="font-medium truncate max-w-[8.125rem]" title={att.name}>
+                                        {tr(att.name)}
                                       </span>
                                     </button>
 
@@ -1005,7 +1006,7 @@ export function InteriorBoqBuilderModal({
                                       type="button"
                                       onClick={() => setPreviewAttachment(att)}
                                       className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition cursor-pointer"
-                                      title="Preview in modal"
+                                      title={tr("Preview in modal")}
                                     >
                                       <Eye className="w-3.5 h-3.5" />
                                     </button>
@@ -1017,7 +1018,7 @@ export function InteriorBoqBuilderModal({
                                         type="button"
                                         onClick={() => removeAttachment(section.id, attIdx)}
                                         className="p-1 text-slate-400 hover:text-rose-600 rounded transition cursor-pointer"
-                                        title="Remove drawing"
+                                        title={tr("Remove drawing")}
                                       >
                                         <X className="w-3 h-3" />
                                       </button>
@@ -1027,8 +1028,8 @@ export function InteriorBoqBuilderModal({
                               })}
                             </div>
                           ) : (
-                            <p className="text-[11px] text-slate-400 italic">
-                              No drawings or images attached to this section yet.
+                            <p className="text-[0.6875rem] text-slate-400 italic">
+                              {tr("No drawings or images attached to this section yet.")}
                             </p>
                           )}
                         </div>
@@ -1036,16 +1037,16 @@ export function InteriorBoqBuilderModal({
                         {/* Section Items Table */}
                         <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-2xs">
                           <div className="overflow-x-auto">
-                            <table className="w-full text-xs text-left border-collapse min-w-[900px]">
+                            <table className="w-full text-xs text-start border-collapse min-w-[56.25rem]">
                               <thead>
-                                <tr className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200 uppercase tracking-wider text-[10px]">
-                                  <th className="py-2 px-2.5 w-14 text-center text-slate-400">Sr. No</th>
-                                  <th className="py-2 px-3 min-w-[280px]">Item Description & Technical Specifications</th>
-                                  <th className="py-2 px-2.5 w-24 text-center">Unit</th>
-                                  <th className="py-2 px-2.5 w-20 text-center">Qty</th>
-                                  <th className="py-2 px-2.5 w-28 text-right">Rate ({currencySymbol}) <span className="text-[9px] font-normal lowercase opacity-70">(opt)</span></th>
-                                  <th className="py-2 px-2.5 w-28 text-right">Amount ({currencySymbol})</th>
-                                  <th className="py-2 px-2.5 min-w-[160px]">Remarks / Disposal</th>
+                                <tr className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200 uppercase tracking-wider text-[0.625rem]">
+                                  <th className="py-2 px-2.5 w-14 text-center text-slate-400">{tr("Sr. No")}</th>
+                                  <th className="py-2 px-3 min-w-[17.5rem]">{tr("Item Description & Technical Specifications")}</th>
+                                  <th className="py-2 px-2.5 w-24 text-center">{tr("Unit")}</th>
+                                  <th className="py-2 px-2.5 w-20 text-center">{tr("Qty")}</th>
+                                  <th className="py-2 px-2.5 w-28 text-end">{tr("Rate (")}{tr(currencySymbol)}) <span className="text-[0.5625rem] font-normal lowercase opacity-70">{tr("(opt)")}</span></th>
+                                  <th className="py-2 px-2.5 w-28 text-end">{tr("Amount (")}{tr(currencySymbol)})</th>
+                                  <th className="py-2 px-2.5 min-w-[10rem]">{tr("Remarks / Disposal")}</th>
                                   {!isReadOnly && <th className="py-2 px-2 w-9 text-center" />}
                                 </tr>
                               </thead>
@@ -1072,7 +1073,7 @@ export function InteriorBoqBuilderModal({
                                         maxLength={120}
                                         value={item.itemName}
                                         onChange={(e) => updateItem(item.id, 'itemName', e.target.value)}
-                                        placeholder="Item Short Description*"
+                                        placeholder={tr("Item Short Description*")}
                                         className="w-full h-7 px-2.5 text-xs capitalize font-bold text-slate-900 bg-white border border-slate-200 rounded-lg outline-none focus:border-blue-500 placeholder:text-slate-400 placeholder:font-normal disabled:bg-slate-50 transition"
                                       />
 
@@ -1082,8 +1083,8 @@ export function InteriorBoqBuilderModal({
                                         maxLength={1000}
                                         value={item.description}
                                         onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                                        placeholder="Item Long Description..."
-                                        className="w-full px-2.5 py-1 text-[11px] capitalize text-slate-600 bg-slate-50/60 border border-slate-200/80 rounded-md outline-none focus:border-blue-500 focus:bg-white placeholder:text-slate-400 disabled:bg-slate-50 transition resize-y"
+                                        placeholder={tr("Item Long Description...")}
+                                        className="w-full px-2.5 py-1 text-[0.6875rem] capitalize text-slate-600 bg-slate-50/60 border border-slate-200/80 rounded-md outline-none focus:border-blue-500 focus:bg-white placeholder:text-slate-400 disabled:bg-slate-50 transition resize-y"
                                       />
                                     </td>
 
@@ -1095,13 +1096,13 @@ export function InteriorBoqBuilderModal({
                                         maxLength={15}
                                         value={item.unit || ''}
                                         onChange={(e) => updateItem(item.id, 'unit', e.target.value)}
-                                        placeholder="Unit"
+                                        placeholder={tr("Unit")}
                                         className="w-full h-7 px-1 text-xs font-bold uppercase tracking-wider text-center text-slate-800 bg-white border border-slate-200 rounded-lg outline-none focus:border-blue-500 disabled:bg-slate-50 placeholder:normal-case placeholder:font-normal placeholder:text-slate-400 transition"
                                       />
                                       <datalist id={`boq-units-${item.id}`}>
                                         {BOQ_UNITS.map((u) => (
                                           <option key={u.value} value={u.value}>
-                                            {u.label}
+                                            {tr(u.label)}
                                           </option>
                                         ))}
                                       </datalist>
@@ -1123,10 +1124,10 @@ export function InteriorBoqBuilderModal({
                                     </td>
 
                                     {/* Rate */}
-                                    <td className="py-2 px-2 text-right">
+                                    <td className="py-2 px-2 text-end">
                                       <div className="relative flex items-center">
-                                        <span className="absolute left-2 text-[11px] text-slate-400 font-semibold pointer-events-none">
-                                          {currencySymbol}
+                                        <span className="absolute left-2 text-[0.6875rem] text-slate-400 font-semibold pointer-events-none">
+                                          {tr(currencySymbol)}
                                         </span>
                                         <input
                                           type="number"
@@ -1137,14 +1138,14 @@ export function InteriorBoqBuilderModal({
                                           value={item.rate !== undefined && item.rate !== null && item.rate !== 0 ? item.rate : ''}
                                           onChange={(e) => updateItem(item.id, 'rate', e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
                                           placeholder="0.00"
-                                          className="w-full h-7 pl-5 pr-1.5 text-xs font-mono font-bold text-right text-slate-800 bg-white border border-slate-200 rounded-lg outline-none focus:border-blue-500 placeholder:text-slate-400 disabled:bg-slate-50 transition"
+                                          className="w-full h-7 ps-5 pe-1.5 text-xs font-mono font-bold text-end text-slate-800 bg-white border border-slate-200 rounded-lg outline-none focus:border-blue-500 placeholder:text-slate-400 disabled:bg-slate-50 transition"
                                         />
                                       </div>
                                     </td>
 
                                     {/* Amount */}
-                                    <td className="py-2 px-2.5 text-right font-mono font-bold text-slate-900 text-xs">
-                                      {currencySymbol}{(item.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                                    <td className="py-2 px-2.5 text-end font-mono font-bold text-slate-900 text-xs">
+                                      {tr(currencySymbol)}{(item.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                                     </td>
 
                                     {/* Remarks / Scope Note */}
@@ -1155,8 +1156,8 @@ export function InteriorBoqBuilderModal({
                                         maxLength={500}
                                         value={item.remarks}
                                         onChange={(e) => updateItem(item.id, 'remarks', e.target.value)}
-                                        placeholder="e.g. scrap will be taken away"
-                                        className="w-full px-2 py-1 text-[10px] text-slate-600 bg-slate-50/50 border border-slate-200 rounded-md outline-none focus:border-blue-500 focus:bg-white placeholder:text-slate-400 disabled:bg-slate-50 transition resize-y"
+                                        placeholder={tr("e.g. scrap will be taken away")}
+                                        className="w-full px-2 py-1 text-[0.625rem] text-slate-600 bg-slate-50/50 border border-slate-200 rounded-md outline-none focus:border-blue-500 focus:bg-white placeholder:text-slate-400 disabled:bg-slate-50 transition resize-y"
                                       />
                                     </td>
 
@@ -1169,7 +1170,7 @@ export function InteriorBoqBuilderModal({
                                           onClick={() => removeItem(item.id, section.id)}
                                           disabled={sectionItems.length === 1}
                                           className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed transition cursor-pointer"
-                                          title="Remove line item"
+                                          title={tr("Remove line item")}
                                         >
                                           <Trash2 className="w-3.5 h-3.5" />
                                         </button>
@@ -1190,16 +1191,16 @@ export function InteriorBoqBuilderModal({
                                 className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg shadow-2xs transition cursor-pointer"
                               >
                                 <Plus className="w-3.5 h-3.5 text-blue-600" />
-                                <span>Add Item to Section</span>
+                                <span>{tr("Add Item to Section")}</span>
                               </button>
                             ) : (
                               <div />
                             )}
 
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-semibold text-slate-600">Sub Total of Section:</span>
+                              <span className="text-xs font-semibold text-slate-600">{tr("Sub Total of Section:")}</span>
                               <span className="text-xs font-extrabold font-mono text-slate-900 bg-white px-2 py-0.5 rounded-md border border-slate-200">
-                                {currencySymbol}{subTotal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                                {tr(currencySymbol)}{subTotal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                               </span>
                             </div>
                           </div>
@@ -1219,7 +1220,7 @@ export function InteriorBoqBuilderModal({
                     className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-dashed border-blue-300 rounded-xl transition cursor-pointer shadow-2xs active:scale-[0.99]"
                   >
                     <Plus className="w-4 h-4 text-blue-600" />
-                    <span>Add New Section / Scope Category</span>
+                    <span>{tr("Add New Section / Scope Category")}</span>
                   </button>
                 </div>
               )}
@@ -1227,9 +1228,9 @@ export function InteriorBoqBuilderModal({
               {/* Overall Remarks / Scope Terms */}
               <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-1.5 shadow-2xs">
                 <label className="text-xs font-bold text-slate-800 flex items-center justify-between">
-                  <span>Overall BOQ Terms, Exclusions & Notes (Optional)</span>
+                  <span>{tr("Overall BOQ Terms, Exclusions & Notes (Optional)")}</span>
                   {!isReadOnly && (
-                    <span className="text-[10px] font-normal text-slate-400">
+                    <span className="text-[0.625rem] font-normal text-slate-400">
                       {notes.length}/2000
                     </span>
                   )}
@@ -1240,7 +1241,7 @@ export function InteriorBoqBuilderModal({
                   disabled={isReadOnly}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Add general terms, payment milestones, exclusions, site access conditions, or warranty clauses..."
+                  placeholder={tr("Add general terms, payment milestones, exclusions, site access conditions, or warranty clauses...")}
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 outline-none transition resize-none disabled:bg-slate-50"
                 />
               </div>
@@ -1252,14 +1253,14 @@ export function InteriorBoqBuilderModal({
                 <div className="flex items-center gap-2 min-w-0">
                   <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
                   <span className="truncate">
-                    <strong>Over Budget Warning:</strong> Exceeds estimated budget ({budgetRange}) by{' '}
+                    <strong>{tr("Over Budget Warning:")}</strong>{tr(" Exceeds estimated budget (")}{tr(budgetRange)}{tr(") by")}{' '}
                     <strong className="font-bold font-mono">
-                      {currencySymbol}{budgetExcess.toLocaleString('en-US')}
+                      {tr(currencySymbol)}{budgetExcess.toLocaleString('en-US')}
                     </strong>
                   </span>
                 </div>
                 {maxBudget && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-200/80 text-rose-800 shrink-0 font-mono">
+                  <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-rose-200/80 text-rose-800 shrink-0 font-mono">
                     +{(((totalAmount - maxBudget) / maxBudget) * 100).toFixed(1)}%
                   </span>
                 )}
@@ -1269,26 +1270,26 @@ export function InteriorBoqBuilderModal({
             {/* Modal Footer */}
             <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
               <div className="text-xs text-slate-600 font-medium hidden sm:flex items-center gap-2">
-                <span>{sections.length} sections</span>
+                <span>{sections.length}{tr(" sections")}</span>
                 <span>•</span>
-                <span>{items.length} total items</span>
+                <span>{items.length}{tr(" total items")}</span>
                 <span>•</span>
                 <span>
-                  Grand Total:{' '}
+                  {tr("Grand Total:")}{' '}
                   <strong className="text-slate-900 font-black font-mono text-sm">
-                    {currencySymbol}{totalAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                    {tr(currencySymbol)}{totalAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                   </strong>
                 </span>
               </div>
 
-              <div className="flex items-center gap-2.5 ml-auto">
+              <div className="flex items-center gap-2.5 ms-auto">
                 <button
                   type="button"
                   onClick={onClose}
                   disabled={isSubmitting}
                   className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl shadow-2xs transition cursor-pointer disabled:opacity-50"
                 >
-                  {isReadOnly ? 'Close' : 'Cancel'}
+                  {isReadOnly ? tr("Close") : tr("Cancel")}
                 </button>
 
                 {!isReadOnly && (
@@ -1300,12 +1301,12 @@ export function InteriorBoqBuilderModal({
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Saving BOQ...</span>
+                        <span>{tr("Saving BOQ...")}</span>
                       </>
                     ) : (
                       <>
                         <Save className="w-3.5 h-3.5" />
-                        <span>{isEditing ? 'Update BOQ' : 'Save BOQ Version'}</span>
+                        <span>{isEditing ? tr("Update BOQ") : tr("Save BOQ Version")}</span>
                       </>
                     )}
                   </button>
@@ -1320,7 +1321,7 @@ export function InteriorBoqBuilderModal({
           isOpen={Boolean(previewAttachment)}
           onClose={() => setPreviewAttachment(null)}
           attachment={previewAttachment}
-          title="BOQ Attachment Preview"
+          title={tr("BOQ Attachment Preview")}
         />
       </div>
     </AnimatePresence>

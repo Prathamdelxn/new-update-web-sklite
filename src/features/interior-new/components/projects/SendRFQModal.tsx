@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,7 +35,7 @@ export const SendRFQModal = ({ isOpen, onClose, po, vendors, onSuccess }: SendRF
   const handleSendRFQ = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedVendors.length === 0) {
-      toast.error('Please select at least one vendor to send the quotation request.');
+      toast.error(tr("Please select at least one vendor to send the quotation request."));
       return;
     }
 
@@ -50,14 +51,14 @@ export const SendRFQModal = ({ isOpen, onClose, po, vendors, onSuccess }: SendRF
       
       po.rfqSent = true;
 
-      toast.success(`Quotation request sent to ${selectedVendors.length} vendors!`);
+      toast.success(tr("Quotation request sent to {{selectedVendorsCount}} vendors!", { selectedVendorsCount: selectedVendors.length }));
       setSelectedVendors([]);
       setNotes('');
       onClose();
       onSuccess?.();
     } catch (err: any) {
       console.error('Failed to send RFQ', err);
-      toast.error(err?.response?.data?.message || err?.message || 'Failed to send quotation requests.');
+      toast.error(err?.response?.data?.message || err?.message || tr("Failed to send quotation requests."));
     } finally {
       setSending(false);
     }
@@ -80,10 +81,10 @@ export const SendRFQModal = ({ isOpen, onClose, po, vendors, onSuccess }: SendRF
               </div>
               <div>
                 <h3 className="text-base font-black text-[hsl(var(--foreground))]">
-                  Send Quotation Request
+                  {tr("Send Quotation Request")}
                 </h3>
                 <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                  Request price quotes and delivery estimates from verified vendors
+                  {tr("Request price quotes and delivery estimates from verified vendors")}
                 </p>
               </div>
             </div>
@@ -102,12 +103,12 @@ export const SendRFQModal = ({ isOpen, onClose, po, vendors, onSuccess }: SendRF
               {/* Draft PO Summary */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] uppercase font-black text-[hsl(var(--foreground))] tracking-wider flex items-center gap-1.5">
+                  <span className="text-[0.6875rem] uppercase font-black text-[hsl(var(--foreground))] tracking-wider flex items-center gap-1.5">
                     <Package className="w-3.5 h-3.5 text-blue-600" />
-                    Requested Materials
+                    {tr("Requested Materials")}
                   </span>
-                  <span className="text-[11px] font-mono font-bold text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded-md">
-                    {po.poNumber || 'Draft PO'}
+                  <span className="text-[0.6875rem] font-mono font-bold text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded-md">
+                    {po.poNumber || tr("Draft PO")}
                   </span>
                 </div>
 
@@ -119,19 +120,19 @@ export const SendRFQModal = ({ isOpen, onClose, po, vendors, onSuccess }: SendRF
                           {idx + 1}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-bold text-[hsl(var(--foreground))] truncate">{item.name}</p>
+                          <p className="font-bold text-[hsl(var(--foreground))] truncate">{tr(item.name)}</p>
                         </div>
                         <span className="font-black text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] px-2.5 py-1 rounded-lg shrink-0 border border-[hsl(var(--border))]">
-                          {item.quantity} {item.unit || 'nos'}
+                          {item.quantity} {item.unit || tr("nos")}
                         </span>
                       </div>
                     ))
                   ) : (
                     <div className="p-3.5 flex items-center gap-3 text-xs bg-[hsl(var(--card))]">
                       <Package className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                      <p className="font-bold text-[hsl(var(--foreground))] flex-1">{po.materialName || 'Material Items'}</p>
+                      <p className="font-bold text-[hsl(var(--foreground))] flex-1">{po.materialName || tr("Material Items")}</p>
                       <span className="font-black text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] px-2.5 py-1 rounded-lg border border-[hsl(var(--border))]">
-                        1 unit
+                        {tr("1 unit")}
                       </span>
                     </div>
                   )}
@@ -141,30 +142,30 @@ export const SendRFQModal = ({ isOpen, onClose, po, vendors, onSuccess }: SendRF
               {/* Vendor Selection */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] uppercase font-black text-[hsl(var(--foreground))] tracking-wider flex items-center gap-1.5">
+                  <span className="text-[0.6875rem] uppercase font-black text-[hsl(var(--foreground))] tracking-wider flex items-center gap-1.5">
                     <Building2 className="w-3.5 h-3.5 text-blue-600" />
-                    Select Vendors to Contact
+                    {tr("Select Vendors to Contact")}
                   </span>
                   <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">
-                    {selectedVendors.length} of {vendors.length} selected
+                    {selectedVendors.length}{tr(" of ")}{vendors.length}{tr(" selected")}
                   </span>
                 </div>
                 
                 {vendors.length === 0 ? (
                   <div className="text-xs text-[hsl(var(--muted-foreground))] p-6 text-center border border-dashed border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--muted)/0.2)]">
                     <Building2 className="w-8 h-8 text-[hsl(var(--muted-foreground))] mx-auto mb-2 opacity-40" />
-                    <p className="font-bold">No vendors registered</p>
-                    <p className="text-[11px] mt-0.5">Please add vendors in your master supplier catalog first.</p>
+                    <p className="font-bold">{tr("No vendors registered")}</p>
+                    <p className="text-[0.6875rem] mt-0.5">{tr("Please add vendors in your master supplier catalog first.")}</p>
                   </div>
                 ) : (
-                  <div className="border border-[hsl(var(--border))] rounded-xl divide-y divide-[hsl(var(--border))] max-h-[220px] overflow-y-auto bg-[hsl(var(--card))] shadow-inner">
+                  <div className="border border-[hsl(var(--border))] rounded-xl divide-y divide-[hsl(var(--border))] max-h-[13.75rem] overflow-y-auto bg-[hsl(var(--card))] shadow-inner">
                     {vendors.map((v) => {
                       const isSelected = selectedVendors.includes(v._id);
                       return (
                         <label 
                           key={v._id} 
                           className={`p-3.5 flex items-center gap-3 cursor-pointer transition-all hover:bg-[hsl(var(--muted)/0.5)] ${
-                            isSelected ? 'bg-blue-50/80 border-l-4 border-blue-600' : ''
+                            isSelected ? 'bg-blue-50/80 border-s-4 border-blue-600' : ''
                           }`}
                         >
                           <input
@@ -181,12 +182,12 @@ export const SendRFQModal = ({ isOpen, onClose, po, vendors, onSuccess }: SendRF
                             {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="font-bold text-xs text-[hsl(var(--foreground))] truncate">{v.name}</p>
-                            {v.email && <p className="text-[11px] text-[hsl(var(--muted-foreground))] truncate">{v.email}</p>}
+                            <p className="font-bold text-xs text-[hsl(var(--foreground))] truncate">{tr(v.name)}</p>
+                            {v.email && <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))] truncate">{v.email}</p>}
                           </div>
                           {v.vendorCategory && (
-                            <span className="ml-auto text-[10px] font-bold uppercase bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-2.5 py-1 rounded-md shrink-0 border border-[hsl(var(--border))]">
-                              {v.vendorCategory}
+                            <span className="ms-auto text-[0.625rem] font-bold uppercase bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-2.5 py-1 rounded-md shrink-0 border border-[hsl(var(--border))]">
+                              {tr(v.vendorCategory)}
                             </span>
                           )}
                         </label>
@@ -198,14 +199,14 @@ export const SendRFQModal = ({ isOpen, onClose, po, vendors, onSuccess }: SendRF
 
               {/* Extra Notes */}
               <div className="space-y-1.5">
-                <label className="text-[11px] uppercase font-black text-[hsl(var(--foreground))] tracking-wider">
-                  RFQ Instructions / Notes (Optional)
+                <label className="text-[0.6875rem] uppercase font-black text-[hsl(var(--foreground))] tracking-wider">
+                  {tr("RFQ Instructions / Notes (Optional)")}
                 </label>
                 <textarea 
                   rows={3}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="e.g. Please provide your best quote including delivery charges and lead time by next Monday..."
+                  placeholder={tr("e.g. Please provide your best quote including delivery charges and lead time by next Monday...")}
                   className="w-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl p-3 text-xs text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none transition-all"
                 />
               </div>
@@ -220,7 +221,7 @@ export const SendRFQModal = ({ isOpen, onClose, po, vendors, onSuccess }: SendRF
                 onClick={onClose}
                 className="text-xs font-bold px-4 py-2 rounded-xl"
               >
-                Cancel
+                {tr("Cancel")}
               </Button>
               <button 
                 type="submit" 
@@ -228,7 +229,7 @@ export const SendRFQModal = ({ isOpen, onClose, po, vendors, onSuccess }: SendRF
                 className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-all active:scale-95 flex items-center gap-2 shadow-md shadow-blue-600/20"
               >
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-                Send RFQ to {selectedVendors.length} {selectedVendors.length === 1 ? 'Vendor' : 'Vendors'}
+                {tr("Send RFQ to ")}{selectedVendors.length} {selectedVendors.length === 1 ? tr("Vendor") : tr("Vendors")}
               </button>
             </div>
           </form>
